@@ -1,22 +1,21 @@
-import React from "react";
-import { 
-  MdDiamond, 
-  MdCheckCircle, 
-  MdToken, 
-  MdLock, 
-  MdStar, 
-  MdMilitaryTech, 
-  MdCheck, 
-  MdBolt, 
-  MdRocketLaunch, 
-  MdShield, 
-  MdLogin, 
-  MdGroupAdd, 
-  MdEmojiEvents, 
-  MdArrowForward, 
-  MdAccountBalanceWallet, 
-  MdConfirmationNumber, 
-  MdLocalMall 
+import {
+  MdDiamond,
+  MdCheckCircle,
+  MdToken,
+  MdLock,
+  MdStar,
+  MdMilitaryTech,
+  MdCheck,
+  MdBolt,
+  MdRocketLaunch,
+  MdShield,
+  MdLogin,
+  MdGroupAdd,
+  MdEmojiEvents,
+  MdArrowForward,
+  MdAccountBalanceWallet,
+  MdConfirmationNumber,
+  MdLocalMall,
 } from "react-icons/md";
 
 const Loyalty = () => {
@@ -177,7 +176,8 @@ const Loyalty = () => {
                 <MdCheck className="text-[14px] text-secondary" /> Basic Support
               </li>
               <li className="flex gap-2 items-center">
-                <MdCheck className="text-[14px] text-secondary" /> Standard Multiplier
+                <MdCheck className="text-[14px] text-secondary" /> Standard
+                Multiplier
               </li>
             </ul>
           </div>
@@ -199,7 +199,8 @@ const Loyalty = () => {
             </div>
             <ul className="text-xs space-y-2 text-on-surface/70">
               <li className="flex gap-2 items-center">
-                <MdCheck className="text-[14px] text-secondary" /> 1.2x PZA Multiplier
+                <MdCheck className="text-[14px] text-secondary" /> 1.2x PZA
+                Multiplier
               </li>
               <li className="flex gap-2 items-center">
                 <MdCheck className="text-[14px] text-secondary" /> Priority Chat
@@ -222,7 +223,8 @@ const Loyalty = () => {
             </div>
             <ul className="text-xs space-y-2 text-on-surface/70">
               <li className="flex gap-2 items-center">
-                <MdBolt className="text-[14px] text-primary" /> 1.5x PZA Multiplier
+                <MdBolt className="text-[14px] text-primary" /> 1.5x PZA
+                Multiplier
               </li>
               <li className="flex gap-2 items-center">
                 <MdStar className="text-[14px] text-primary" /> Weekly Rewards
@@ -243,10 +245,12 @@ const Loyalty = () => {
             </div>
             <ul className="text-xs space-y-2 text-on-surface/70">
               <li className="flex gap-2 items-center">
-                <MdRocketLaunch className="text-[14px] text-primary" /> 2.0x PZA Multiplier
+                <MdRocketLaunch className="text-[14px] text-primary" /> 2.0x PZA
+                Multiplier
               </li>
               <li className="flex gap-2 items-center">
-                <MdShield className="text-[14px] text-primary" /> Dedicated Manager
+                <MdShield className="text-[14px] text-primary" /> Dedicated
+                Manager
               </li>
             </ul>
           </div>
