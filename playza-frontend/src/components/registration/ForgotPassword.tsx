@@ -1,13 +1,12 @@
 import { ArrowBigLeft } from "lucide-react";
-import React from "react";
 import { MdAlternateEmail, MdVerifiedUser } from "react-icons/md";
 import { RxReset } from "react-icons/rx";
 
 const ForgotPassword = ({ onClick }: { onClick: (value: string) => void }) => {
   return (
     <main className="flex-1 h-full flex items-center justify-center">
-      <div className="glass-card w-full max-w-[480px] rounded-xl p-2 md:p-12 shadow-2xl relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-50"></div>
+      <div className="glass-card w-full max-w-120 rounded-xl p-2 md:p-12 shadow-2xl relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-transparent via-primary to-transparent opacity-50"></div>
         <div className="flex flex-col items-center text-center mb-10">
           <div className="bg-primary/10 p-4 rounded-full mb-6">
             <RxReset className="material-symbols-outlined text-primary text-4xl" />

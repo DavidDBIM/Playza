@@ -143,7 +143,7 @@ const Achievements = () => {
         {filteredAchievements.map((achievement) => (
           <div 
             key={achievement.id}
-            className={`p-6 rounded-[2rem] border transition-all duration-500 group relative overflow-hidden shadow-lg ${
+            className={`p-6 rounded-xl border transition-all duration-500 group relative overflow-hidden shadow-lg ${
               achievement.unlocked 
               ? "border-primary/20 bg-white dark:bg-primary/5 shadow-primary/5" 
               : "border-slate-200 dark:border-white/5 bg-slate-50/50 dark:bg-transparent opacity-80 grayscale"

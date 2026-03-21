@@ -28,11 +28,11 @@ export const CompleteProfileModal = ({ onClose, onSuccess }: CompleteProfileModa
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-300">
       <div className="relative w-full max-w-md glass-card rounded-3xl shadow-2xl border border-white/10 bg-slate-900 overflow-hidden animate-in zoom-in-95 duration-300">
         <div className="absolute -top-20 -right-20 w-48 h-48 bg-primary/10 blur-[80px] rounded-full"></div>
-        
-        <button 
+
+        <button
           onClick={onClose}
           className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/5 text-slate-500 hover:text-white transition-all z-20"
         >
@@ -44,15 +44,25 @@ export const CompleteProfileModal = ({ onClose, onSuccess }: CompleteProfileModa
             <ShieldCheck className="text-primary" size={32} />
           </div>
 
-          <h2 className="text-2xl font-black text-white italic tracking-tight mb-2 uppercase">Complete Profile</h2>
-          <p className="text-slate-400 text-sm mb-8">To withdraw funds, you need to provide your real name for verification. This must match your bank account.</p>
+          <h2 className="text-2xl font-black text-white italic tracking-tight mb-2 uppercase">
+            Complete Profile
+          </h2>
+          <p className="text-slate-400 text-sm mb-8">
+            To withdraw funds, you need to provide your real name for
+            verification. This must match your bank account.
+          </p>
 
           <form onSubmit={handleSave} className="space-y-6 text-left">
             <div className="space-y-4">
               <div className="space-y-1.5">
-                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">First Name</label>
+                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">
+                  First Name
+                </label>
                 <div className="relative group">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-primary transition-colors" size={18} />
+                  <User
+                    className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-primary transition-colors"
+                    size={18}
+                  />
                   <input
                     required
                     value={firstName}
@@ -65,9 +75,14 @@ export const CompleteProfileModal = ({ onClose, onSuccess }: CompleteProfileModa
               </div>
 
               <div className="space-y-1.5">
-                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Last Name</label>
+                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">
+                  Last Name
+                </label>
                 <div className="relative group">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-primary transition-colors" size={18} />
+                  <User
+                    className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-primary transition-colors"
+                    size={18}
+                  />
                   <input
                     required
                     value={lastName}
@@ -81,14 +96,14 @@ export const CompleteProfileModal = ({ onClose, onSuccess }: CompleteProfileModa
             </div>
 
             <div className="flex flex-col gap-3 pt-2">
-              <Button 
+              <Button
                 disabled={isSaving || !firstName || !lastName}
                 className="w-full h-14 bg-primary text-black font-black uppercase tracking-widest rounded-xl shadow-lg shadow-primary/20 hover:shadow-primary/40 active:scale-[0.98] transition-all border-none"
                 type="submit"
               >
                 {isSaving ? "Saving..." : "Save & Continue"}
               </Button>
-              <button 
+              <button
                 type="button"
                 onClick={onClose}
                 className="w-full py-4 text-xs font-black text-slate-500 uppercase tracking-widest hover:text-white transition-all"

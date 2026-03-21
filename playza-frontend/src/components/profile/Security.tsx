@@ -125,7 +125,7 @@ const Security = () => {
                   className="sr-only peer"
                   defaultChecked
                 />
-                <div className="w-14 h-7 bg-slate-200 dark:bg-white/5 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white dark:after:bg-slate-700 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary shadow-inner transition-colors"></div>
+                <div className="w-14 h-7 bg-slate-200 dark:bg-white/5 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-1 after:left-1 after:bg-white dark:after:bg-slate-700 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary shadow-inner transition-colors"></div>
               </label>
             </div>
           </div>
@@ -162,7 +162,7 @@ const Security = () => {
                     setIsFingerprintEnabled(!isFingerprintEnabled)
                   }
                 />
-                <div className="w-14 h-7 bg-slate-200 dark:bg-white/5 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white dark:after:bg-slate-700 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary shadow-inner transition-colors"></div>
+                <div className="w-14 h-7 bg-slate-200 dark:bg-white/5 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-1 after:left-1 after:bg-white dark:after:bg-slate-700 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary shadow-inner transition-colors"></div>
               </label>
             </div>
 
@@ -185,7 +185,7 @@ const Security = () => {
                   disabled
                   checked={isFaceIDEnabled}
                 />
-                <div className="w-14 h-7 bg-slate-100 dark:bg-white/5 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white dark:peer-checked:after:border-background-dark after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-slate-300 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary/20 shadow-inner transition-colors"></div>
+                <div className="w-14 h-7 bg-slate-100 dark:bg-white/5 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white dark:peer-checked:after:border-background-dark after:content-[''] after:absolute after:top-1 after:left-1 after:bg-slate-300 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary/20 shadow-inner transition-colors"></div>
               </label>
             </div>
           </div>
@@ -255,7 +255,7 @@ const Security = () => {
               {activeSessions.map((session) => (
                 <div
                   key={session.id}
-                  className="p-6 flex items-center justify-between group hover:bg-white/[0.02] transition-colors"
+                  className="p-6 flex items-center justify-between group hover:bg-white/2 transition-colors"
                 >
                   <div className="flex items-center gap-5">
                     <div
@@ -316,13 +316,29 @@ const Security = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Link to="/terms" className="glass-card p-6 rounded-3xl border-slate-200 dark:border-white/5 flex items-center justify-between group hover:border-primary/30 transition-all">
-              <span className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-widest italic group-hover:text-primary transition-colors">Terms & Conditions</span>
-              <ArrowRight className="text-slate-400 group-hover:text-primary group-hover:translate-x-1 transition-all" size={16} />
+            <Link
+              to="/terms"
+              className="glass-card p-6 rounded-3xl border-slate-200 dark:border-white/5 flex items-center justify-between group hover:border-primary/30 transition-all"
+            >
+              <span className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-widest italic group-hover:text-primary transition-colors">
+                Terms & Conditions
+              </span>
+              <ArrowRight
+                className="text-slate-400 group-hover:text-primary group-hover:translate-x-1 transition-all"
+                size={16}
+              />
             </Link>
-            <Link to="/privacy" className="glass-card p-6 rounded-3xl border-slate-200 dark:border-white/5 flex items-center justify-between group hover:border-accent/30 transition-all">
-              <span className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-widest italic group-hover:text-accent transition-colors">Privacy Policy</span>
-              <ArrowRight className="text-slate-400 group-hover:text-accent group-hover:translate-x-1 transition-all" size={16} />
+            <Link
+              to="/privacy"
+              className="glass-card p-6 rounded-3xl border-slate-200 dark:border-white/5 flex items-center justify-between group hover:border-accent/30 transition-all"
+            >
+              <span className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-widest italic group-hover:text-accent transition-colors">
+                Privacy Policy
+              </span>
+              <ArrowRight
+                className="text-slate-400 group-hover:text-accent group-hover:translate-x-1 transition-all"
+                size={16}
+              />
             </Link>
           </div>
         </section>

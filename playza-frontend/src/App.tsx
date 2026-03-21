@@ -11,7 +11,6 @@ import Footer from "./components/Footer";
 import RightSideBar from "./components/RightSideBar";
 import Game from "./pages/Game";
 import MatchSession from "./pages/MatchSession";
-import TempleRunFrame from "./components/gameFrame/TempleRunFrame";
 import Registration from "./pages/Registration";
 import Wallet from "./pages/Wallet";
 import Transactions from "./pages/Transactions";
@@ -102,7 +101,6 @@ const AppContent = () => {
             <Route path="/games" element={<Games />} />
             <Route path="/games/:id" element={<Game />} />
             <Route path="/games/:id/session" element={<MatchSession />} />
-            <Route path="/gameSession/Session" element={<TempleRunFrame />} />
             <Route path="/registration" element={<Registration />} />
             <Route path="/wallet/transactions" element={<Transactions />} />
             <Route path="/referral" element={<Referral />} />
