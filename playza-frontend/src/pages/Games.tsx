@@ -1,5 +1,4 @@
 import FullGame from "@/components/game/FullGame";
-import React from "react";
 
 const Games = () => {
   return (

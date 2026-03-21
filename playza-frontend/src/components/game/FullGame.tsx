@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import Search from "../Search";
-// import Filter from "./Filter";
 import GamesCard from "@/utils/GamesCard";
 import { games } from "@/data/games";
 import { cn } from "@/lib/utils";
@@ -11,11 +10,6 @@ import { filterGames } from "@/lib/filterGames";
 import { Link } from "react-router";
 
 const FullGame = () => {
-  // const [tab, setTab] = useState("All");
-  // const [activeTab, setActiveTab] = useState("All Games");
-
-  // const [filterBy, setFilterBy] = useState("");
-
   const [filterBy, setFilterBy] = useState<FilterOption | "">("Filter By");
   const [activeTab, setActiveTab] = useState("All Games");
   const [query, setQuery] = useState("");
@@ -29,22 +23,19 @@ const FullGame = () => {
     ),
   }));
 
-  
   const handleFiltering = (option: FilterOption) => {
     setFilterBy(option);
   };
-  
+
   const biggestPoolGame = [...allGames].sort(
     (a, b) => b.pricePool - a.pricePool,
   )[0];
-  
-  
+
   // const gameCategories = [...new Set(games.map((game) => game.category))];
 
   const filteredGames = useMemo(() => {
     return filterGames(allGames, activeTab, filterBy, query);
   }, [query, allGames, activeTab, filterBy]);
-
 
   const categories = useMemo(
     () => ["All Games", ...new Set(games.map((game) => game.category))],
@@ -90,7 +81,9 @@ const FullGame = () => {
               key={t}
               onClick={() => setActiveTab(t)}
               className={cn(
-                activeTab === t ? "text-slate-900 dark:text-white bg-secondary" : "text-slate-600",
+                activeTab === t
+                  ? "text-slate-900 dark:text-white bg-secondary"
+                  : "text-slate-600",
                 "text-xs md:text-sm uppercase font-bold px-4 py-2 rounded-lg cursor-pointer",
               )}
             >
