@@ -1,20 +1,4 @@
-// export interface Player {
-//   rank: number;
-//   name: string;
-//   score: number;
-//   avatar: string;
-//   gamesPlayed: number;
-// }
-
 import type { DAYS_OF_WEEK, MONTHS } from "@/constants/constants";
-
-// export interface GameLeaderboard {
-//   gameId: string;
-//   gameName: string;
-//   gameIcon: string;
-//   players: Player[];
-// }
-
 export interface Transaction {
   id: number;
   type: "deposit" | "withdrawal" | "game";
@@ -152,7 +136,7 @@ export interface Session {
   prizePool: string;
   startTime: string;
   endTime: string;
-  status: 'live' | 'upcoming' | 'starting soon' | 'ended';
-  type: 'tournament' | 'daily';
+  status: "live" | "upcoming" | "starting soon" | "ended";
+  type: "tournament" | "daily";
   winnersCount?: number;
 }

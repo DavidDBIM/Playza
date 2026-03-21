@@ -175,7 +175,7 @@ const Settings = () => {
                   className="sr-only peer"
                   defaultChecked
                 />
-                <div className="w-14 h-7 bg-slate-200 dark:bg-white/5 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white dark:after:bg-slate-700 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary shadow-inner transition-colors"></div>
+                <div className="w-14 h-7 bg-slate-200 dark:bg-white/5 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-1 after:left-1 after:bg-white dark:after:bg-slate-700 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary shadow-inner transition-colors"></div>
               </label>
             </div>
 
@@ -193,7 +193,7 @@ const Settings = () => {
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input type="checkbox" className="sr-only peer" />
-                <div className="w-14 h-7 bg-slate-200 dark:bg-white/5 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white dark:after:bg-slate-700 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary shadow-inner transition-colors"></div>
+                <div className="w-14 h-7 bg-slate-200 dark:bg-white/5 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-1 after:left-1 after:bg-white dark:after:bg-slate-700 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary shadow-inner transition-colors"></div>
               </label>
             </div>
 
@@ -205,8 +205,8 @@ const Settings = () => {
                   Show Activity on Profile
                 </p>
                 <p className="text-xs text-slate-500 dark:text-slate-500 font-bold max-w-sm">
-                  Allow other players to see your recent matches and achievements
-                  on your public profile.
+                  Allow other players to see your recent matches and
+                  achievements on your public profile.
                 </p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
@@ -215,7 +215,7 @@ const Settings = () => {
                   className="sr-only peer"
                   defaultChecked
                 />
-                <div className="w-14 h-7 bg-slate-200 dark:bg-white/5 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white dark:after:bg-slate-700 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary shadow-inner transition-colors"></div>
+                <div className="w-14 h-7 bg-slate-200 dark:bg-white/5 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-1 after:left-1 after:bg-white dark:after:bg-slate-700 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary shadow-inner transition-colors"></div>
               </label>
             </div>
           </div>
@@ -285,13 +285,13 @@ const Settings = () => {
               onClick={() => setShowAddMethod(true)}
               className="border-2 border-dashed border-slate-200 dark:border-white/10 rounded-[2.5rem] flex flex-col items-center justify-center p-8 text-center group cursor-pointer hover:border-primary/40 hover:bg-primary/5 transition-all duration-500"
             >
-              <div className="size-16 rounded-[1.5rem] bg-slate-100 dark:bg-white/5 flex items-center justify-center mb-4 group-hover:scale-110 group-hover:bg-primary/20 group-hover:text-primary transition-all text-2xl text-slate-500 shadow-inner">
+              <div className="size-16 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center mb-4 group-hover:scale-110 group-hover:bg-primary/20 group-hover:text-primary transition-all text-2xl text-slate-500 shadow-inner">
                 <MdAdd />
               </div>
               <h4 className="text-slate-900 dark:text-white font-black italic text-lg uppercase tracking-tighter mb-1">
                 New Method
               </h4>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-bold max-w-[180px]">
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-bold max-w-45">
                 Add a bank account or digital wallet to receive winnings.
               </p>
             </div>
@@ -308,7 +308,7 @@ const Settings = () => {
             <button className="flex-1 sm:flex-none h-12 px-8 rounded-2xl text-xs font-black text-slate-500 uppercase tracking-widest hover:text-slate-900 dark:hover:text-white transition-all bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 shadow-sm">
               Reset
             </button>
-            <button 
+            <button
               onClick={handleSave}
               className="flex-1 sm:flex-none h-12 px-10 rounded-2xl bg-primary text-white text-xs font-black uppercase tracking-[0.1em] hover:scale-105 hover:brightness-110 shadow-2xl glow-accent transition-all"
             >

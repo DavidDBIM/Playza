@@ -1,6 +1,5 @@
 import { formatNaira } from "@/lib/formatNaira";
 import { Gamepad2, PlayCircle, Users } from "lucide-react";
-import { Link } from "react-router";
 
 type SessionHeroProps = {
   title: string;
@@ -51,7 +50,9 @@ const SessionHero = ({
           </p>
           <p className="flex items-baseline md:text-4xl font-black text-transparent bg-clip-text bg-linear-to-r from-yellow-400 via-amber-200 to-yellow-600 glow-primary">
             {formatNaira(pricePool)}
-            <span className="text-playza-green text-xs font-black ml-1">↑ 1.2%</span>
+            <span className="text-playza-green text-xs font-black ml-1">
+              ↑ 1.2%
+            </span>
           </p>
         </div>
       </div>
@@ -99,12 +100,10 @@ const SessionHero = ({
               <PlayCircle className="md:text-xl" />
               Enter Live Game
             </button>
-            <Link to="/gameSession/Session">
-              <button className="sm:flex-none bg-accent hover:bg-accent/80 dark:text-white font-bold px-2 md:px-4 lg:px-8 py-3 rounded-lg border border-slate-900/10 dark:border-white/10 transition-all flex items-center text-xs sm:text-base justify-center gap-2 cursor-pointer">
-                <Gamepad2 className="md:text-xl" />
-                Play Demo
-              </button>
-            </Link>
+            <button className="sm:flex-none bg-accent hover:bg-accent/80 dark:text-white font-bold px-2 md:px-4 lg:px-8 py-3 rounded-lg border border-slate-900/10 dark:border-white/10 transition-all flex items-center text-xs sm:text-base justify-center gap-2 cursor-pointer">
+              <Gamepad2 className="md:text-xl" />
+              Play Demo
+            </button>
           </div>
         </div>
       </div>

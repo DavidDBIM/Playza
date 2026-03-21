@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { Link } from "react-router";
 import { MdArrowBack, MdTimer, MdTrendingUp, MdInfo } from "react-icons/md";
 import { Loader2 } from "lucide-react";
@@ -60,7 +60,7 @@ const ReferralLeaderboard = () => {
   useEffect(() => {
     if (searchQuery.trim().length > 1) {
       const matchIndex = leaderboardData.findIndex((u) =>
-        u.name.toLowerCase().includes(searchQuery.toLowerCase())
+        u.name.toLowerCase().includes(searchQuery.toLowerCase()),
       );
 
       if (matchIndex !== -1) {
@@ -83,12 +83,15 @@ const ReferralLeaderboard = () => {
       <span>
         {parts.map((part, i) =>
           part.toLowerCase() === query.toLowerCase() ? (
-            <mark key={i} className="bg-primary/20 text-primary font-black rounded-sm px-0.5 underline decoration-primary/30">
+            <mark
+              key={i}
+              className="bg-primary/20 text-primary font-black rounded-sm px-0.5 underline decoration-primary/30"
+            >
               {part}
             </mark>
           ) : (
             part
-          )
+          ),
         )}
       </span>
     );
@@ -198,11 +201,14 @@ const ReferralLeaderboard = () => {
               setSearchQuery(val);
               if (val.trim().length > 1) {
                 const matchIndex = leaderboardData.findIndex((u) =>
-                  u.name.toLowerCase().includes(val.toLowerCase())
+                  u.name.toLowerCase().includes(val.toLowerCase()),
                 );
                 if (matchIndex !== -1) {
                   const newStart = Math.max(0, matchIndex - 4);
-                  const newEnd = Math.min(leaderboardData.length, matchIndex + 10);
+                  const newEnd = Math.min(
+                    leaderboardData.length,
+                    matchIndex + 10,
+                  );
                   setRange({ start: newStart, end: newEnd });
                 }
               }
@@ -280,65 +286,75 @@ const ReferralLeaderboard = () => {
               <TableBody className="divide-y divide-slate-50 dark:divide-slate-800/10">
                 {currentItems.length > 0 ? (
                   currentItems.map((user, idx) => {
-                    const isMatch = searchQuery && user.name.toLowerCase().includes(searchQuery.toLowerCase());
+                    const isMatch =
+                      searchQuery &&
+                      user.name
+                        .toLowerCase()
+                        .includes(searchQuery.toLowerCase());
                     return (
-                    <TableRow
-                      key={user.rank}
-                      ref={(el) => {
-                        rowRefs.current[user.rank] = el;
-                      }}
-                      className={`group hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-all border-slate-50 dark:border-slate-800/50 ${isMatch ? "bg-primary/10 dark:bg-primary/10 ring-1 ring-inset ring-primary/30" : (range.start + idx < 3 && !searchQuery ? "bg-primary/5 dark:bg-primary/5" : "")}`}
-                    >
-                      <TableCell className="px-3 md:px-6 py-4 md:py-6 font-display font-black italic tracking-tighter text-base md:text-lg">
-                        <span
-                          className={`${range.start + idx === 0 && !searchQuery ? "text-primary" : range.start + idx === 1 && !searchQuery ? "text-slate-400" : range.start + idx === 2 && !searchQuery ? "text-amber-600" : "text-slate-300 dark:text-slate-700"}`}
-                        >
-                          #{user.rank < 10 ? `0${user.rank}` : user.rank}
-                        </span>
-                      </TableCell>
-                      <TableCell className="px-3 md:px-6 py-4 md:py-6">
-                        <div className="flex items-center gap-2 md:gap-3">
-                          <div
-                            className={`w-6 h-6 md:w-10 md:h-10 rounded-lg overflow-hidden border shrink-0 ${range.start + idx === 0 && !searchQuery ? "border-primary" : "border-slate-200 dark:border-slate-800"}`}
+                      <TableRow
+                        key={user.rank}
+                        ref={(el) => {
+                          rowRefs.current[user.rank] = el;
+                        }}
+                        className={`group hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-all border-slate-50 dark:border-slate-800/50 ${isMatch ? "bg-primary/10 dark:bg-primary/10 ring-1 ring-inset ring-primary/30" : range.start + idx < 3 && !searchQuery ? "bg-primary/5 dark:bg-primary/5" : ""}`}
+                      >
+                        <TableCell className="px-3 md:px-6 py-4 md:py-6 font-display font-black italic tracking-tighter text-base md:text-lg">
+                          <span
+                            className={`${range.start + idx === 0 && !searchQuery ? "text-primary" : range.start + idx === 1 && !searchQuery ? "text-slate-400" : range.start + idx === 2 && !searchQuery ? "text-amber-600" : "text-slate-300 dark:text-slate-700"}`}
                           >
-                            <img
-                              src={user.avatar}
-                              alt={user.name}
-                              className="w-full h-full object-cover"
-                            />
+                            #{user.rank < 10 ? `0${user.rank}` : user.rank}
+                          </span>
+                        </TableCell>
+                        <TableCell className="px-3 md:px-6 py-4 md:py-6">
+                          <div className="flex items-center gap-2 md:gap-3">
+                            <div
+                              className={`w-6 h-6 md:w-10 md:h-10 rounded-lg overflow-hidden border shrink-0 ${range.start + idx === 0 && !searchQuery ? "border-primary" : "border-slate-200 dark:border-slate-800"}`}
+                            >
+                              <img
+                                src={user.avatar}
+                                alt={user.name}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="font-display font-black text-slate-900 dark:text-slate-100 text-[11px] md:text-sm tracking-tight uppercase italic group-hover:text-primary transition-colors truncate max-w-17.5 xs:max-w-25 sm:max-w-none">
+                                <HighlightMatch
+                                  text={user.name}
+                                  query={searchQuery}
+                                />
+                              </p>
+                              <p className="text-[8px] md:text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest sm:hidden leading-none">
+                                {user.referrals} Recruits
+                              </p>
+                            </div>
                           </div>
-                          <div className="min-w-0">
-                            <p className="font-display font-black text-slate-900 dark:text-slate-100 text-[11px] md:text-sm tracking-tight uppercase italic group-hover:text-primary transition-colors truncate max-w-[70px] xs:max-w-25 sm:max-w-none">
-                              <HighlightMatch text={user.name} query={searchQuery} />
-                            </p>
-                            <p className="text-[8px] md:text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest sm:hidden leading-none">
-                              {user.referrals} Recruits
-                            </p>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="px-3 md:px-6 py-4 md:py-6 hidden sm:table-cell font-display font-black text-slate-900 dark:text-slate-100 italic">
-                        {user.referrals}
-                      </TableCell>
-                      <TableCell className="px-3 md:px-6 py-4 md:py-6 text-right font-display font-black italic tracking-tighter text-xs md:text-base pr-4 md:pr-6 whitespace-nowrap">
-                        <span
-                          className={
-                            range.start + idx < 3 && !searchQuery
-                              ? "text-primary"
-                              : "text-slate-900 dark:text-slate-100"
-                          }
-                        >
-                          {user.earnings}
-                        </span>
-                      </TableCell>
-                    </TableRow>
-                      )
-                    })
+                        </TableCell>
+                        <TableCell className="px-3 md:px-6 py-4 md:py-6 hidden sm:table-cell font-display font-black text-slate-900 dark:text-slate-100 italic">
+                          {user.referrals}
+                        </TableCell>
+                        <TableCell className="px-3 md:px-6 py-4 md:py-6 text-right font-display font-black italic tracking-tighter text-xs md:text-base pr-4 md:pr-6 whitespace-nowrap">
+                          <span
+                            className={
+                              range.start + idx < 3 && !searchQuery
+                                ? "text-primary"
+                                : "text-slate-900 dark:text-slate-100"
+                            }
+                          >
+                            {user.earnings}
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
                 ) : (
                   <TableRow>
-                     <TableCell colSpan={4} className="p-10 text-center text-slate-400 text-xs font-bold uppercase tracking-[0.2em]">
-                       No Rankings Found
-                     </TableCell>
+                    <TableCell
+                      colSpan={4}
+                      className="p-10 text-center text-slate-400 text-xs font-bold uppercase tracking-[0.2em]"
+                    >
+                      No Rankings Found
+                    </TableCell>
                   </TableRow>
                 )}
               </TableBody>
