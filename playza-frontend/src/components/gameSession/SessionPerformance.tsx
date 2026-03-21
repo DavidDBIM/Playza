@@ -1,0 +1,198 @@
+import { History, PlusCircle, TrendingUp, Target, Zap, Clock, Trophy } from "lucide-react";
+import { IoArrowForward } from "react-icons/io5";
+import { MdReplay } from "react-icons/md";
+
+const SessionPerformance = () => {
+  return (
+    <main className="flex h-full flex-col bg-transparent rounded-2xl p-2 md:p-6 overflow-hidden relative transition-colors duration-300">
+       {/* Ambient Glow */}
+       <div className="absolute -top-32 -left-32 w-64 h-64 bg-primary/20 dark:bg-primary/20 blur-[120px] rounded-full pointer-events-none" />
+       <div className="absolute -bottom-32 -right-32 w-64 h-64 bg-secondary/10 dark:bg-secondary/10 blur-[120px] rounded-full pointer-events-none" />
+
+      <div className="md:px-4 flex flex-1 justify-center py-2 md:py-4 relative z-10 w-full">
+        <div className="flex flex-col flex-1 w-full">
+          {/* <!-- Header Section --> */}
+          <div className="flex flex-wrap items-end justify-between gap-2 md:gap-6 mb-3 md:mb-8">
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-2">
+                <span className="px-3 py-1 bg-primary/10 border border-primary/20 rounded-full text-[10px] font-black uppercase text-primary tracking-widest">
+                  Live Analytics
+                </span>
+                <span className="px-3 py-1 bg-blue-500/10 border border-blue-500/20 rounded-full text-[10px] font-black uppercase text-blue-500 dark:text-blue-400 tracking-widest">
+                  Session #402
+                </span>
+              </div>
+              <h1 className=" tracking-tighter text-3xl lg:text-5xl font-black leading-tight text-slate-900 dark:text-white uppercase italic transition-colors">
+                My <span className="text-primary font-black italic">Performance</span>
+              </h1>
+              <div className="flex items-center gap-2 text-playza-green">
+                <TrendingUp className="size-4 animate-pulse" />
+                <p className="text-xs font-black uppercase tracking-tight">
+                  You are 210 pts away from the Winning Zone
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-4">
+               <div className="hidden lg:flex flex-col items-end">
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500 font-black uppercase tracking-widest">Estimated Prize</p>
+                  <p className="text-2xl font-black text-slate-900 dark:text-white transition-colors">₦0.00</p>
+               </div>
+               <button className="group relative flex min-w-40 cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-2xl h-14 px-8 bg-primary text-slate-900 text-base font-black uppercase tracking-widest transition-all hover:scale-[1.03] active:scale-95">
+                  <MdReplay className="text-xl group-hover:rotate-180 transition-transform duration-500" />
+                 <span className="truncate">Enter Match</span>
+               </button>
+            </div>
+          </div>
+
+          {/* <!-- Stats Grid --> */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 pb-3 md:pb-8">
+            {/* Custom Dynamic Cards */}
+            <div className="p-2 md:p-4 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 flex flex-col justify-between group hover:border-primary/50 transition-colors shadow-sm">
+               <div className="flex justify-between items-start mb-2 md:mb-4">
+                  <div className="p-2 bg-primary/10 rounded-xl">
+                    <History className="text-primary size-5" />
+                  </div>
+                  <span className="text-emerald-500 dark:text-emerald-400 text-xs font-black">+12%</span>
+               </div>
+               <div>
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest mb-1">Total Matches</p>
+                  <p className="text-3xl font-black text-slate-900 dark:text-white transition-colors">24</p>
+               </div>
+            </div>
+
+            <div className="p-2 md:p-4 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 flex flex-col justify-between group hover:border-blue-500/50 transition-colors shadow-sm">
+               <div className="flex justify-between items-start mb-2 md:mb-4">
+                  <div className="p-2 bg-blue-500/10 rounded-xl">
+                    <Target className="text-blue-500 size-5" />
+                   </div>
+                   <span className="text-slate-400 text-[10px] font-bold opacity-40 italic">Avg. 72k</span>
+               </div>
+               <div>
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest mb-1">Accuracy</p>
+                  <p className="text-3xl font-black text-slate-900 dark:text-white transition-colors">88.4<span className="text-sm opacity-50">%</span></p>
+               </div>
+            </div>
+
+            <div className="p-2 md:p-4 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 flex flex-col justify-between group hover:border-purple-500/50 transition-colors shadow-sm">
+               <div className="flex justify-between items-start mb-2 md:mb-4">
+                  <div className="p-2 bg-purple-500/10 rounded-xl">
+                    <Zap className="text-purple-500 size-5" />
+                  </div>
+                  <div className="flex h-1.5 w-1.5 rounded-full bg-purple-500 animate-ping"></div>
+               </div>
+               <div>
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest mb-1">Top Streak</p>
+                  <p className="text-3xl font-black text-slate-900 dark:text-white transition-colors">12</p>
+               </div>
+            </div>
+
+            <div className="p-2 md:p-4 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 flex flex-col justify-between group hover:border-orange-500/50 transition-colors shadow-sm">
+               <div className="flex justify-between items-start mb-2 md:mb-4">
+                  <div className="p-2 bg-orange-500/10 rounded-xl">
+                    <Clock className="text-orange-500 size-5" />
+                  </div>
+               </div>
+               <div>
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest mb-1">Time Played</p>
+                  <p className="text-3xl font-black text-slate-900 dark:text-white transition-colors">2.4<span className="text-sm opacity-50">h</span></p>
+               </div>
+            </div>
+          </div>
+
+          {/* <!-- Secondary Stats Grid --> */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-4 md:mb-8">
+             <div className="md:col-span-2 space-y-4">
+                <div className="flex items-center justify-between px-2">
+                   <h2 className="text-sm font-black uppercase tracking-widest text-slate-500 dark:text-white/60">Skills Breakdown</h2>
+                   <button className="text-[10px] font-black uppercase tracking-widest text-primary hover:underline">Full Analysis</button>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                   <div className="p-5 rounded-2xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/5 space-y-4 shadow-sm">
+                      <div className="flex justify-between text-xs font-black uppercase tracking-tighter">
+                         <span className="text-slate-500 dark:text-slate-400 uppercase tracking-widest">Reaction Speed</span>
+                         <span className="text-primary font-black">Superhuman</span>
+                      </div>
+                      <div className="h-1.5 w-full bg-slate-200 dark:bg-white/5 rounded-full overflow-hidden">
+                         <div className="h-full bg-primary w-[92%] shadow-[0_0_10px_rgba(244,192,37,0.5)]"></div>
+                      </div>
+                   </div>
+                   <div className="p-5 rounded-2xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/5 space-y-4 shadow-sm">
+                      <div className="flex justify-between text-xs font-black uppercase tracking-tighter">
+                         <span className="text-slate-500 dark:text-slate-400 uppercase tracking-widest">Consistency</span>
+                         <span className="text-blue-500 dark:text-blue-400 font-black">Stable</span>
+                      </div>
+                      <div className="h-1.5 w-full bg-slate-200 dark:bg-white/5 rounded-full overflow-hidden">
+                         <div className="h-full bg-blue-500 w-[65%]"></div>
+                      </div>
+                   </div>
+                </div>
+             </div>
+
+             <div className=" dark:bg-linear-to-br dark:from-primary/10 dark:to-transparent border border-slate-200 dark:border-primary/20 rounded-3xl p-6 flex flex-col justify-center items-center text-center group shadow-sm transition-colors">
+                <div className="p-4 bg-primary text-slate-900 rounded-2xl mb-4 group-hover:scale-110 transition-transform duration-500 shadow-[0_0_20px_rgba(244,192,37,0.3)]">
+                   <Trophy size={32} />
+                </div>
+                <h3 className="text-lg font-black uppercase tracking-tight text-slate-900 dark:text-white mb-2 italic">Climb Higher</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed max-w-50 mb-6 font-medium">
+                  Boost your consistency by 12% to reach the top 50 today!
+                </p>
+                <button className="w-full py-3 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] text-slate-600 dark:text-white transition-all">
+                  Get Strategy Tips
+                </button>
+             </div>
+          </div>
+
+          {/* <!-- Recent Activity --> */}
+          <div className="mt-4">
+            <div className="flex items-center justify-between pb-3 md:pb-6 border-b border-slate-200 dark:border-white/5 mb-3 md:mb-6">
+              <h2 className=" text-xl font-black leading-tight tracking-[0.1em] uppercase italic text-slate-400 dark:text-white/40">
+                Performance Log
+              </h2>
+              <button className="text-primary text-[10px] font-black tracking-widest uppercase flex items-center gap-1 hover:underline">
+                View History <IoArrowForward className="text-xs" />
+              </button>
+            </div>
+            <div className="flex flex-col gap-2 md:gap-4">
+              {/* <!-- Activity Item 1 --> */}
+              <div className="flex items-center justify-between rounded-xl p-2 md:p-5 border border-slate-200 dark:border-white/5 bg-white dark:bg-slate-900/40 group hover:border-primary/20 transition-all cursor-pointer shadow-sm">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center group-hover:bg-emerald-500 group-hover:text-white dark:group-hover:text-slate-900 transition-all">
+                    <PlusCircle className="size-6 text-emerald-500 group-hover:text-inherit" />
+                  </div>
+                  <div>
+                    <p className="font-black uppercase tracking-tight text-xs text-slate-900 dark:text-white">New Personal High Score</p>
+                    <p className="text-slate-400 dark:text-slate-500 text-[10px] font-black uppercase tracking-widest">Global Arena • 2 hours ago</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="font-black text-xl text-emerald-500 dark:text-emerald-400 font-mono tracking-tighter drop-shadow-[0_0_8px_rgba(52,211,153,0.3)]">+1,450</p>
+                  <p className="text-primary text-[10px] font-black uppercase tracking-widest">Rank Up: #15 → #12</p>
+                </div>
+              </div>
+              
+              {/* <!-- Activity Item 2 --> */}
+              <div className="flex items-center justify-between rounded-xl p-2 md:p-4 border border-slate-200 dark:border-white/5 bg-white dark:bg-slate-900/40 group hover:border-blue-500/20 transition-all cursor-pointer shadow-sm">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center group-hover:bg-blue-500 group-hover:text-white dark:group-hover:text-slate-900 transition-all">
+                    <History className="size-6 text-blue-500 group-hover:text-inherit" />
+                  </div>
+                  <div>
+                    <p className="font-black uppercase tracking-tight text-xs text-slate-900 dark:text-white">Entry Validated</p>
+                    <p className="text-slate-400 dark:text-slate-500 text-[10px] font-black uppercase tracking-widest">Match Credit Used • 3 hours ago</p>
+                  </div>
+                </div>
+                <div className="text-right flex flex-col items-end">
+                   <div className="flex items-center gap-1 bg-slate-100 dark:bg-white/5 px-2 py-0.5 rounded text-[10px] font-black text-slate-500 dark:text-slate-400 mb-1 tracking-widest">SLOT #5</div>
+                   <p className="text-slate-400 dark:text-white/40 text-[10px] font-black uppercase tracking-widest text-shadow-sm">Match Commenced</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  );
+};
+
+export default SessionPerformance;

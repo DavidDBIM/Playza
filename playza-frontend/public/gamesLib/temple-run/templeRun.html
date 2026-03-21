@@ -1,0 +1,749 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Playza: Temple Rush</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        touch-action: none;
+      }
+      body {
+        font-family: "Segoe UI", system-ui, sans-serif;
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        color: white;
+        overflow: hidden;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+      #gameContainer {
+        position: relative;
+        width: 100%;
+        max-width: 480px;
+        aspect-ratio: 9/16;
+        background: #0f0f1a;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+      }
+      canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          to bottom,
+          #87ceeb 0%,
+          #e0f7fa 60%,
+          #8b4513 100%
+        );
+      }
+      #ui {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        padding: 12px;
+        display: flex;
+        justify-content: space-between;
+        font-weight: 600;
+        font-size: 14px;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+        z-index: 10;
+        pointer-events: none;
+      }
+      #score,
+      #coins {
+        background: rgba(0, 0, 0, 0.4);
+        padding: 4px 10px;
+        border-radius: 20px;
+      }
+      #startScreen,
+      #gameOverScreen {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.85);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 20;
+        text-align: center;
+        padding: 20px;
+      }
+      #gameOverScreen {
+        display: none;
+      }
+      h1 {
+        font-size: 28px;
+        margin-bottom: 8px;
+        color: #ffd700;
+        text-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
+      }
+      p {
+        margin: 8px 0;
+        font-size: 14px;
+        opacity: 0.9;
+      }
+      .btn {
+        margin-top: 20px;
+        padding: 12px 32px;
+        background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+        color: white;
+        border: none;
+        border-radius: 30px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        box-shadow: 0 4px 15px rgba(238, 90, 36, 0.4);
+        transition: transform 0.1s;
+      }
+      .btn:active {
+        transform: scale(0.98);
+      }
+      .controls-hint {
+        position: absolute;
+        bottom: 20px;
+        left: 0;
+        right: 0;
+        text-align: center;
+        font-size: 12px;
+        opacity: 0.8;
+        pointer-events: none;
+      }
+      @media (max-width: 480px) {
+        #gameContainer {
+          border-radius: 0;
+          max-width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="gameContainer">
+      <canvas id="gameCanvas"></canvas>
+
+      <div id="ui">
+        <div id="score">Score: 0</div>
+        <div id="coins">💰 0</div>
+      </div>
+
+      <div id="startScreen">
+        <h1>🏃 TEMPLE RUSH</h1>
+        <p>Swipe ← → to change lanes<br />Swipe ↑ to JUMP • Swipe ↓ to SLIDE</p>
+        <p style="font-size: 12px; margin-top: 10px; opacity: 0.7">
+          Collect coins • Avoid obstacles • Run as far as you can!
+        </p>
+        <button class="btn" id="startBtn">START RUN</button>
+      </div>
+
+      <div id="gameOverScreen">
+        <h1>💥 GAME OVER</h1>
+        <p id="finalScore">Score: 0</p>
+        <p id="finalCoins">Coins: 0</p>
+        <button class="btn" id="restartBtn">RUN AGAIN</button>
+        <button
+          class="btn"
+          id="submitBtn"
+          style="
+            background: linear-gradient(135deg, #00c9ff, #92fe9d);
+            margin-top: 10px;
+          "
+        >
+          ✅ SUBMIT SCORE
+        </button>
+      </div>
+
+      <div class="controls-hint" id="controlsHint">
+        ← → to move • ↑ Jump • ↓ Slide
+      </div>
+    </div>
+
+    <script>
+      // ===========================
+      // 🔐 CONFIG & SECURITY
+      // ===========================
+      const CONFIG = {
+        // In production, get this from URL param: ?session=abc123
+        sessionId:
+          new URLSearchParams(window.location.search).get("session") ||
+          "demo_session_" + Date.now(),
+        gameId: "temple_rush_v1",
+        // Simple anti-tamper: client-side hash (server must re-validate)
+        secretSalt: "playza_salt_2026", // 🔒 In prod: inject from backend, never hardcode
+      };
+
+      // ===========================
+      // 🎮 GAME ENGINE
+      // ===========================
+      const canvas = document.getElementById("gameCanvas");
+      const ctx = canvas.getContext("2d");
+
+      // Resize canvas to device pixel ratio
+      function resizeCanvas() {
+        const dpr = window.devicePixelRatio || 1;
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        ctx.scale(dpr, dpr);
+      }
+      window.addEventListener("resize", resizeCanvas);
+      resizeCanvas();
+
+      // Game state
+      const STATE = {
+        START: "start",
+        PLAYING: "playing",
+        GAME_OVER: "gameover",
+      };
+      let gameState = STATE.START;
+      let animationId = null;
+
+      // Player
+      const player = {
+        lane: 1, // 0=left, 1=center, 2=right
+        x: 0,
+        y: 0,
+        width: 40,
+        height: 60,
+        jumping: false,
+        sliding: false,
+        jumpVelocity: 0,
+        jumpHeight: 120,
+        jumpDuration: 500,
+        slideDuration: 400,
+        slideEndTime: 0,
+        color: "#FF6B6B",
+      };
+
+      // Game world
+      const lanes = [0.25, 0.5, 0.75]; // % of canvas width
+      let obstacles = [];
+      let coins = [];
+      let particles = [];
+      let score = 0;
+      let coinCount = 0;
+      let speed = 5;
+      let distance = 0;
+      let lastObstacleTime = 0;
+      let lastCoinTime = 0;
+      const obstacleInterval = 1800; // ms
+      const coinInterval = 800; // ms
+
+      // Controls
+      const keys = {};
+      let touchStartX = 0,
+        touchStartY = 0;
+
+      // ===========================
+      // 🎨 RENDERING HELPERS
+      // ===========================
+      function getLaneX(laneIndex) {
+        return (
+          canvas.getBoundingClientRect().width * lanes[laneIndex] -
+          player.width / 2
+        );
+      }
+
+      function drawPlayer() {
+        ctx.save();
+        const x = getLaneX(player.lane);
+        let y = canvas.getBoundingClientRect().height - player.height - 20;
+
+        // Jump physics
+        if (player.jumping) {
+          const progress =
+            (Date.now() - player.jumpStart) / player.jumpDuration;
+          if (progress < 1) {
+            y -= Math.sin(progress * Math.PI) * player.jumpHeight;
+          } else {
+            player.jumping = false;
+          }
+        }
+
+        // Slide: reduce height
+        if (player.sliding && Date.now() < player.slideEndTime) {
+          ctx.fillStyle = "#EE5A24";
+          ctx.fillRect(x, y + 30, player.width, player.height - 30);
+        } else {
+          player.sliding = false;
+          ctx.fillStyle = player.color;
+          ctx.fillRect(x, y, player.width, player.height);
+          // Simple face
+          ctx.fillStyle = "#fff";
+          ctx.fillRect(x + 8, y + 15, 8, 8);
+          ctx.fillRect(x + 24, y + 15, 8, 8);
+          ctx.fillStyle = "#000";
+          ctx.fillRect(x + 10, y + 17, 4, 4);
+          ctx.fillRect(x + 26, y + 17, 4, 4);
+        }
+        ctx.restore();
+      }
+
+      function drawObstacle(obs) {
+        ctx.fillStyle = obs.color || "#4ECDC4";
+        ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+        // Spike detail
+        if (obs.type === "spike") {
+          ctx.fillStyle = "#FF6B6B";
+          ctx.beginPath();
+          ctx.moveTo(obs.x, obs.y + obs.height);
+          ctx.lineTo(obs.x + obs.width / 2, obs.y);
+          ctx.lineTo(obs.x + obs.width, obs.y + obs.height);
+          ctx.fill();
+        }
+      }
+
+      function drawCoin(coin) {
+        ctx.fillStyle = "#FFD700";
+        ctx.beginPath();
+        ctx.arc(
+          coin.x + coin.width / 2,
+          coin.y + coin.height / 2,
+          coin.width / 2 - 2,
+          0,
+          Math.PI * 2,
+        );
+        ctx.fill();
+        ctx.strokeStyle = "#FFA500";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        // Shine
+        ctx.fillStyle = "rgba(255,255,255,0.7)";
+        ctx.beginPath();
+        ctx.arc(
+          coin.x + coin.width / 2 - 5,
+          coin.y + coin.height / 2 - 5,
+          3,
+          0,
+          Math.PI * 2,
+        );
+        ctx.fill();
+      }
+
+      function drawParticles() {
+        particles.forEach((p, i) => {
+          ctx.globalAlpha = p.life;
+          ctx.fillStyle = p.color;
+          ctx.fillRect(p.x, p.y, p.size, p.size);
+          p.y += p.vy;
+          p.x += p.vx;
+          p.life -= 0.02;
+          if (p.life <= 0) particles.splice(i, 1);
+        });
+        ctx.globalAlpha = 1;
+      }
+
+      function drawBackground() {
+        // Ground
+        ctx.fillStyle = "#8B4513";
+        ctx.fillRect(
+          0,
+          canvas.getBoundingClientRect().height - 20,
+          canvas.getBoundingClientRect().width,
+          20,
+        );
+
+        // Parallax hills
+        ctx.fillStyle = "#2E8B57";
+        ctx.beginPath();
+        ctx.moveTo(0, canvas.getBoundingClientRect().height - 20);
+        for (let x = 0; x <= canvas.getBoundingClientRect().width; x += 50) {
+          ctx.lineTo(
+            x,
+            canvas.getBoundingClientRect().height -
+              40 -
+              Math.sin((x + distance) / 100) * 15,
+          );
+        }
+        ctx.lineTo(
+          canvas.getBoundingClientRect().width,
+          canvas.getBoundingClientRect().height,
+        );
+        ctx.fill();
+      }
+
+      // ===========================
+      // 🎮 GAME LOGIC
+      // ===========================
+      function spawnObstacle() {
+        const lane = Math.floor(Math.random() * 3);
+        const type = Math.random() > 0.5 ? "block" : "spike";
+        obstacles.push({
+          lane,
+          x: canvas.getBoundingClientRect().width + 20,
+          y:
+            type === "spike"
+              ? canvas.getBoundingClientRect().height - 40
+              : canvas.getBoundingClientRect().height - 70,
+          width: 35,
+          height: type === "spike" ? 20 : 50,
+          type,
+          color: type === "spike" ? "#FF6B6B" : "#4ECDC4",
+          passed: false,
+        });
+      }
+
+      function spawnCoin() {
+        const lane = Math.floor(Math.random() * 3);
+        coins.push({
+          lane,
+          x: canvas.getBoundingClientRect().width + 20,
+          y: canvas.getBoundingClientRect().height - 80 - Math.random() * 40,
+          width: 25,
+          height: 25,
+          collected: false,
+        });
+      }
+
+      function checkCollision(rect1, rect2) {
+        return (
+          rect1.x < rect2.x + rect2.width &&
+          rect1.x + rect1.width > rect2.x &&
+          rect1.y < rect2.y + rect2.height &&
+          rect1.y + rect1.height > rect2.y
+        );
+      }
+
+      function createParticles(x, y, color, count = 8) {
+        for (let i = 0; i < count; i++) {
+          particles.push({
+            x,
+            y,
+            vx: (Math.random() - 0.5) * 4,
+            vy: (Math.random() - 0.5) * 4 - 2,
+            size: Math.random() * 4 + 2,
+            color,
+            life: 1,
+          });
+        }
+      }
+
+      function updateGame(timestamp) {
+        if (gameState !== STATE.PLAYING) return;
+
+        const rect = canvas.getBoundingClientRect();
+        const now = Date.now();
+
+        // Increase speed over time
+        speed = 5 + Math.min(distance / 5000, 8);
+        distance += speed;
+        score = Math.floor(distance / 10) + coinCount * 50;
+
+        // Update UI
+        document.getElementById("score").textContent = `Score: ${score}`;
+        document.getElementById("coins").textContent = `💰 ${coinCount}`;
+
+        // Spawn obstacles/coins
+        if (
+          now - lastObstacleTime >
+          obstacleInterval - Math.min(distance / 200, 1200)
+        ) {
+          spawnObstacle();
+          lastObstacleTime = now;
+        }
+        if (now - lastCoinTime > coinInterval) {
+          spawnCoin();
+          lastCoinTime = now;
+        }
+
+        // Update obstacles
+        for (let i = obstacles.length - 1; i >= 0; i--) {
+          const obs = obstacles[i];
+          obs.x -= speed;
+
+          // Collision with player
+          const playerRect = {
+            x: getLaneX(player.lane),
+            y: player.jumping
+              ? canvas.getBoundingClientRect().height -
+                player.height -
+                20 -
+                player.jumpHeight / 2
+              : canvas.getBoundingClientRect().height - player.height - 20,
+            width: player.width,
+            height: player.sliding ? player.height - 30 : player.height,
+          };
+
+          if (obs.lane === player.lane && checkCollision(playerRect, obs)) {
+            gameOver();
+            return;
+          }
+
+          // Score for passing
+          if (!obs.passed && obs.x + obs.width < getLaneX(player.lane)) {
+            obs.passed = true;
+            score += 10;
+          }
+
+          // Remove off-screen
+          if (obs.x + obs.width < -50) obstacles.splice(i, 1);
+        }
+
+        // Update coins
+        for (let i = coins.length - 1; i >= 0; i--) {
+          const coin = coins[i];
+          coin.x -= speed;
+
+          if (coin.lane === player.lane && !coin.collected) {
+            const playerRect = {
+              x: getLaneX(player.lane),
+              y: canvas.getBoundingClientRect().height - player.height - 20,
+              width: player.width,
+              height: player.height,
+            };
+            if (checkCollision(playerRect, coin)) {
+              coin.collected = true;
+              coinCount++;
+              createParticles(
+                coin.x + coin.width / 2,
+                coin.y + coin.height / 2,
+                "#FFD700",
+              );
+              coins.splice(i, 1);
+              continue;
+            }
+          }
+
+          if (coin.x + coin.width < -30) coins.splice(i, 1);
+        }
+
+        // Auto-update jump state
+        if (player.jumping && now - player.jumpStart > player.jumpDuration) {
+          player.jumping = false;
+        }
+
+        // Draw everything
+        ctx.clearRect(0, 0, rect.width, rect.height);
+        drawBackground();
+        coins.forEach(drawCoin);
+        obstacles.forEach(drawObstacle);
+        drawParticles();
+        drawPlayer();
+
+        animationId = requestAnimationFrame(updateGame);
+      }
+
+      // ===========================
+      // #region CONTROLS
+      // ===========================
+      function movePlayer(direction) {
+        if (gameState !== STATE.PLAYING) return;
+        if (direction === "left" && player.lane > 0) player.lane--;
+        if (direction === "right" && player.lane < 2) player.lane++;
+      }
+
+      function jump() {
+        if (gameState !== STATE.PLAYING || player.jumping || player.sliding)
+          return;
+        player.jumping = true;
+        player.jumpStart = Date.now();
+      }
+
+      function slide() {
+        if (gameState !== STATE.PLAYING || player.jumping || player.sliding)
+          return;
+        player.sliding = true;
+        player.slideEndTime = Date.now() + player.slideDuration;
+      }
+
+      // Keyboard controls
+      window.addEventListener("keydown", (e) => {
+        if (keys[e.key]) return;
+        keys[e.key] = true;
+
+        switch (e.key) {
+          case "ArrowLeft":
+          case "a":
+            movePlayer("left");
+            break;
+          case "ArrowRight":
+          case "d":
+            movePlayer("right");
+            break;
+          case "ArrowUp":
+          case "w":
+          case " ":
+            jump();
+            break;
+          case "ArrowDown":
+          case "s":
+            slide();
+            break;
+        }
+      });
+
+      window.addEventListener("keyup", (e) => (keys[e.key] = false));
+
+      // Touch controls (swipe)
+      canvas.addEventListener(
+        "touchstart",
+        (e) => {
+          touchStartX = e.touches[0].clientX;
+          touchStartY = e.touches[0].clientY;
+          e.preventDefault();
+        },
+        { passive: false },
+      );
+
+      canvas.addEventListener(
+        "touchend",
+        (e) => {
+          const dx = e.changedTouches[0].clientX - touchStartX;
+          const dy = e.changedTouches[0].clientY - touchStartY;
+          const absDx = Math.abs(dx),
+            absDy = Math.abs(dy);
+
+          if (Math.max(absDx, absDy) < 30) return; // ignore tiny swipes
+
+          if (absDx > absDy) {
+            // Horizontal swipe
+            if (dx > 0) movePlayer("right");
+            else movePlayer("left");
+          } else {
+            // Vertical swipe
+            if (dy < 0) jump();
+            else slide();
+          }
+          e.preventDefault();
+        },
+        { passive: false },
+      );
+
+      // ===========================
+      // #region GAME FLOW
+      // ===========================
+      function startGame() {
+        gameState = STATE.PLAYING;
+        document.getElementById("startScreen").style.display = "none";
+        document.getElementById("gameOverScreen").style.display = "none";
+
+        // Reset state
+        player.lane = 1;
+        player.jumping = false;
+        player.sliding = false;
+        obstacles = [];
+        coins = [];
+        particles = [];
+        score = 0;
+        coinCount = 0;
+        distance = 0;
+        speed = 5;
+        lastObstacleTime = lastCoinTime = Date.now();
+
+        // Start loop
+        if (animationId) cancelAnimationFrame(animationId);
+        updateGame();
+      }
+
+      function gameOver() {
+        gameState = STATE.GAME_OVER;
+        if (animationId) cancelAnimationFrame(animationId);
+
+        document.getElementById("finalScore").textContent = `Score: ${score}`;
+        document.getElementById("finalCoins").textContent =
+          `Coins: ${coinCount}`;
+        document.getElementById("gameOverScreen").style.display = "flex";
+
+        // Create explosion particles
+        createParticles(
+          getLaneX(player.lane) + player.width / 2,
+          canvas.getBoundingClientRect().height - player.height / 2,
+          "#FF6B6B",
+          20,
+        );
+        // Draw one last frame for particles
+        drawBackground();
+        drawParticles();
+      }
+
+      // ===========================
+      // #region 🔐 SECURE SCORE SUBMISSION
+      // ===========================
+      function generateChecksum(score, nonce, salt) {
+        // Simple hash: NOT cryptographically secure, but deters casual tampering
+        // 🔒 In production: use HMAC-SHA256 server-side with secret key
+        let hash = 0;
+        const str = `${score}:${nonce}:${salt}`;
+        for (let i = 0; i < str.length; i++) {
+          const char = str.charCodeAt(i);
+          hash = (hash << 5) - hash + char;
+          hash = hash & hash; // Convert to 32-bit int
+        }
+        return hash.toString(16);
+      }
+
+      function submitScoreToParent() {
+        const nonce = Date.now();
+        const checksum = generateChecksum(score, nonce, CONFIG.secretSalt);
+
+        const payload = {
+          type: "PLAYZA_SCORE_SUBMIT",
+          gameId: CONFIG.gameId,
+          sessionId: CONFIG.sessionId,
+          score: score,
+          coins: coinCount,
+          nonce: nonce,
+          checksum: checksum,
+          timestamp: Date.now(),
+          meta: {
+            duration: Math.floor(distance / speed), // approximate play time
+            version: "1.0.0",
+          },
+        };
+
+        // 🔒 In production: replace '*' with exact parent origin
+        window.parent.postMessage(payload, "*");
+
+        // Visual feedback
+        const btn = document.getElementById("submitBtn");
+        const originalText = btn.textContent;
+        btn.textContent = "✅ SUBMITTED!";
+        btn.disabled = true;
+        setTimeout(() => {
+          btn.textContent = originalText;
+          btn.disabled = false;
+        }, 2000);
+      }
+
+      // ===========================
+      // #region EVENT LISTENERS
+      // ===========================
+      document.getElementById("startBtn").addEventListener("click", startGame);
+      document
+        .getElementById("restartBtn")
+        .addEventListener("click", startGame);
+      document
+        .getElementById("submitBtn")
+        .addEventListener("click", submitScoreToParent);
+
+      // Listen for messages from parent (e.g., to end game early)
+      window.addEventListener("message", (event) => {
+        // 🔒 Validate origin in production
+        if (
+          event.data?.type === "PLAYZA_END_GAME" &&
+          gameState === STATE.PLAYING
+        ) {
+          gameOver();
+        }
+      });
+
+      // Auto-start in iframe preview mode (for testing)
+      if (window.self !== window.top) {
+        document.getElementById("controlsHint").style.display = "block";
+      }
+
+      // Initial draw
+      drawBackground();
+      drawPlayer();
+    </script>
+  </body>
+</html>
