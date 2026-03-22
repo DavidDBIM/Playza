@@ -2,102 +2,127 @@ import { useMemo, useState } from "react";
 import Search from "../Search";
 import GamesCard from "@/utils/GamesCard";
 import { games } from "@/data/games";
-import { cn } from "@/lib/utils";
-import Filter, { type FilterOption } from "./Filter";
 import { calculatePrizePool } from "@/utils/calculatedPrizePool";
 import FeatureGameCard from "../FeatureGameCard";
-import { filterGames } from "@/lib/filterGames";
 import { Link } from "react-router";
+import CategoryRow from "./CategoryRow";
+import Filter, { type FilterOption } from "./Filter";
+import { filterGames } from "@/lib/filterGames";
 
 const FullGame = () => {
-  const [filterBy, setFilterBy] = useState<FilterOption | "">("Filter By");
-  const [activeTab, setActiveTab] = useState("All Games");
   const [query, setQuery] = useState("");
+  const [filterBy, setFilterBy] = useState<FilterOption | "">("Filter By");
 
-  const allGames = games.map((g) => ({
-    ...g,
-    pricePool: calculatePrizePool(
-      g.entryFee,
-      g.activePlayers,
-      g.platformFeePercentage,
-    ),
-  }));
+  const allGames = useMemo(() => 
+    games.map((g) => ({
+      ...g,
+      pricePool: calculatePrizePool(
+        g.entryFee,
+        g.activePlayers,
+        g.platformFeePercentage,
+      ),
+    })), []);
+
+  const biggestPoolGame = useMemo(() => 
+    [...allGames].sort((a, b) => b.pricePool - a.pricePool)[0], 
+    [allGames]
+  );
 
   const handleFiltering = (option: FilterOption) => {
     setFilterBy(option);
   };
 
-  const biggestPoolGame = [...allGames].sort(
-    (a, b) => b.pricePool - a.pricePool,
-  )[0];
-
-  // const gameCategories = [...new Set(games.map((game) => game.category))];
-
   const filteredGames = useMemo(() => {
-    return filterGames(allGames, activeTab, filterBy, query);
-  }, [query, allGames, activeTab, filterBy]);
+    // If we have a query or a filter, we show a grid of results
+    if (query || (filterBy && filterBy !== "Filter By")) {
+      return filterGames(allGames, "All Games", filterBy, query);
+    }
+    return null;
+  }, [allGames, query, filterBy]);
 
-  const categories = useMemo(
-    () => ["All Games", ...new Set(games.map((game) => game.category))],
-    [games],
-  );
+  const groupedGames = useMemo(() => {
+    if (filteredGames) return null; // Don't group if we're showing search/filter results
+
+    const groups: Record<string, typeof allGames> = {};
+    // Sort allGames by isActive before grouping, or sort each group after
+    const sortedGames = [...allGames].sort((a, b) => (a.isActive === b.isActive ? 0 : a.isActive ? -1 : 1));
+    
+    sortedGames.forEach((game) => {
+      if (!groups[game.category]) {
+        groups[game.category] = [];
+      }
+      groups[game.category].push(game);
+    });
+    return groups;
+  }, [allGames, filteredGames]);
 
   return (
-    <main>
-      {/* <!-- Header section --> */}
+    <main className="space-y-6 md:space-y-8">
+      {/* <!-- Breadcrumbs --> */}
       <div className="overflow-hidden">
-        <nav className="flex text-xs text-slate-500 gap-2 mb-2">
-          <Link to="/" className="hover:text-primary">
+        <nav className="flex text-[10px] md:text-xs text-slate-500 gap-2 mb-1 px-1">
+          <Link to="/" className="hover:text-primary transition-colors">
             Home
           </Link>
-          <span>/</span>
-
-          <span className="text-slate-700 dark:text-slate-300">Games</span>
+          <span className="opacity-50">/</span>
+          <span className="text-slate-900 dark:text-slate-300 font-medium font-heading">Games</span>
         </nav>
       </div>
 
-      <section className="relative h-72 md:h-72 lg:h-80 rounded-2xl overflow-hidden">
+      {/* <!-- Hero Banner --> */}
+      <section className="relative h-72 md:h-80 flex items-center rounded-xl overflow-hidden shadow-2xl shadow-primary/5">
         <FeatureGameCard
           {...biggestPoolGame}
-          subTitle="Highest prize pool, join and stand a chance to win."
+          subTitle="Featured Challenge"
         />
       </section>
-      {/* <!-- Search & Filters --> */}
-      <div className="glass rounded-lg p-3 mb-8 flex gap-4 items-center mt-4">
+
+      {/* <!-- Search & Filter Box --> */}
+      <div className="glass rounded-2xl p-2 md:p-3 flex gap-4 items-center">
         <Search
-          placeholder="Search by game name, category..."
+          placeholder="Search for your favorite games..."
           value={query}
           onChange={setQuery}
         />
-        {/* <Filter /> */}
-        <Filter fn={handleFiltering} />
+        <div className="hidden md:block">
+          <Filter fn={handleFiltering} />
+        </div>
       </div>
 
-      {/* <!-- All Games Grid --> */}
-      <section className="mb-12">
-        <div className="glass py-3 px-2 rounded-lg flex items-center whitespace-nowrap overflow-x-auto gap-2 scrollbar-hide scroll-smooth mb-4 md:gap-6 lg:w-fit">
-          {categories.map((t) => (
-            <span
-              key={t}
-              onClick={() => setActiveTab(t)}
-              className={cn(
-                activeTab === t
-                  ? "text-slate-900 dark:text-white bg-secondary"
-                  : "text-slate-600",
-                "text-xs md:text-sm uppercase font-bold px-4 py-2 rounded-lg cursor-pointer",
-              )}
-            >
-              {t}
-            </span>
+      {filteredGames ? (
+        /* <!-- Filtered Results Grid --> */
+        <section className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="flex items-center gap-3 mb-6 px-2">
+            <div className="w-1.5 h-6 bg-primary rounded-full"></div>
+            <h2 className="font-heading text-lg md:text-xl font-bold tracking-tight text-slate-900 dark:text-white uppercase">
+              Results ({filteredGames.length})
+            </h2>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
+            {filteredGames.map((g) => (
+              <GamesCard {...g} key={g.id} />
+            ))}
+            {filteredGames.length === 0 && (
+              <div className="col-span-full py-20 text-center">
+                <p className="text-slate-500 dark:text-slate-400 text-lg">No games found matching your criteria.</p>
+              </div>
+            )}
+          </div>
+        </section>
+      ) : (
+        /* <!-- Category Rows --> */
+        <div className="space-y-2 animate-in fade-in duration-700">
+          {groupedGames && Object.entries(groupedGames).map(([category, games]) => (
+            <CategoryRow
+              key={category}
+              title={category}
+              categorySlug={category.toLowerCase()}
+              games={games.slice(0, 8)}
+              totalGames={games.length}
+            />
           ))}
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-5 gap-1">
-          {/* <!-- Game Card Loop (10) --> */}
-          {filteredGames.map((g) => (
-            <GamesCard {...g} key={g.id} />
-          ))}
-        </div>
-      </section>
+      )}
     </main>
   );
 };

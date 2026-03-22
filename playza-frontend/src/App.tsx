@@ -33,6 +33,7 @@ import TermsAndConditions from "./pages/TermsAndConditions";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import ReferralLeaderboard from "./pages/ReferralLeaderboard";
 import Loyalty from "./pages/Loyalty";
+import CategoryPage from "./pages/CategoryPage";
 
 const AppContent = () => {
   const { pathname } = useLocation();
@@ -99,6 +100,7 @@ const AppContent = () => {
               element={<Wallet onWithdrawClick={handleWithdrawClick} />}
             />
             <Route path="/games" element={<Games />} />
+            <Route path="/games/category/:category" element={<CategoryPage />} />
             <Route path="/games/:id" element={<Game />} />
             <Route path="/games/:id/session" element={<MatchSession />} />
             <Route path="/registration" element={<Registration />} />

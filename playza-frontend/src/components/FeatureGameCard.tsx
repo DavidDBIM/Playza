@@ -29,9 +29,9 @@ const FeatureGameCard = ({
       
       {/* Main Content Container */}
       <div 
-        className="relative w-full h-full flex flex-col justify-end overflow-hidden bg-linear-to-t from-[rgba(2,6,23,0.9)] via-[rgba(2,6,23,0.3)_50%] to-transparent"
+        className="relative w-full h-full flex flex-col justify-end overflow-hidden bg-linear-to-t from-[rgba(2,6,23,0.9)] via-[rgba(2,6,23,0.3)_50%] to-transparent "
       >
-        <div className="relative z-10 p-2 md:p-4 flex flex-col gap-2 w-full h-full animate-in fade-in slide-in-from-bottom-8 duration-1000 ">
+        <div className="relative z-10 p-2 md:p-4 flex flex-col justify-center gap-2 w-full h-full animate-in fade-in slide-in-from-bottom-8 duration-1000 ">
           {/* Badge */}
           <div className="w-fit px-4 py-1.5 rounded-full text-[11px] font-black uppercase tracking-widest bg-primary text-primary-foreground shadow-lg shadow-primary/20 mb-2 flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-white animate-pulse shadow-[0_0_8px_rgba(255,255,255,0.8)]"></span>

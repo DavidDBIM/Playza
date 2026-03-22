@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   MdDiamond,
   MdCheckCircle,
@@ -5,10 +6,6 @@ import {
   MdLock,
   MdStar,
   MdMilitaryTech,
-  MdCheck,
-  MdBolt,
-  MdRocketLaunch,
-  MdShield,
   MdLogin,
   MdGroupAdd,
   MdEmojiEvents,
@@ -16,9 +13,13 @@ import {
   MdAccountBalanceWallet,
   MdConfirmationNumber,
   MdLocalMall,
+  MdInfo,
+  MdClose,
 } from "react-icons/md";
 
 const Loyalty = () => {
+  const [isTierModalOpen, setIsTierModalOpen] = useState(false);
+
   return (
     <div className="flex-1 space-y-12">
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -35,21 +36,28 @@ const Loyalty = () => {
             </p>
             <div className="flex flex-wrap items-end gap-8">
               <div>
-                <div className="text-sm uppercase tracking-widest text-secondary-fixed mb-1 font-bold">
+                <div className="text-[10px] uppercase tracking-widest text-secondary-fixed mb-1 font-bold opacity-70">
                   Total Balance
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-5xl font-black font-headline text-on-surface">
+                <div className="flex items-center gap-2">
+                  <span className="text-4xl md:text-5xl font-black font-headline text-on-surface">
                     2,450
                   </span>
-                  <span className="text-2xl font-bold text-primary">PZA</span>
+                  <span className="text-xl md:text-2xl font-bold text-primary">PZA</span>
                 </div>
               </div>
               <div className="flex-1 min-w-60">
                 <div className="flex justify-between text-xs mb-2 text-on-surface-variant">
-                  <span>
+                  <span className="flex items-center gap-1.5">
                     Progress to{" "}
                     <span className="text-primary font-bold">GOLD</span>
+                    <button 
+                      onClick={() => setIsTierModalOpen(true)}
+                      className="text-primary hover:text-primary/80 transition-colors p-0.5"
+                      title="View Tiers"
+                    >
+                      <MdInfo className="text-xs" />
+                    </button>
                   </span>
                   <span>2,450 / 5,000 PZA</span>
                 </div>
@@ -88,174 +96,123 @@ const Loyalty = () => {
         </div>
       </section>
       <section className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h2 className="font-headline text-2xl font-bold tracking-tight">
+        <div className="flex justify-between items-center bg-surface-container/30 p-3 md:p-4 rounded-2xl border border-white/5">
+          <h2 className="font-headline text-base md:text-lg font-bold tracking-tight">
             Daily Rewards
           </h2>
-          <span className="text-sm text-primary">Claim every 24h</span>
+          <span className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-primary bg-primary/10 px-2 md:px-3 py-1 rounded-full">Claim every 24h</span>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-          <div className="glass-card p-4 rounded-xl border border-secondary/30 flex flex-col items-center gap-2 bg-secondary/5">
-            <span className="text-[10px] font-bold text-on-surface-variant uppercase">
-              Day 1
-            </span>
-            <MdCheckCircle className="text-secondary text-2xl" />
-            <div className="font-bold text-secondary">50 PZA</div>
-          </div>
-          <div className="glass-card p-4 rounded-xl border border-secondary/30 flex flex-col items-center gap-2 bg-secondary/5">
-            <span className="text-[10px] font-bold text-on-surface-variant uppercase">
-              Day 2
-            </span>
-            <MdCheckCircle className="text-secondary text-2xl" />
-            <div className="font-bold text-secondary">100 PZA</div>
-          </div>
-          <div className="glass-card p-4 rounded-xl border border-secondary/30 flex flex-col items-center gap-2 bg-secondary/5">
-            <span className="text-[10px] font-bold text-on-surface-variant uppercase">
-              Day 3
-            </span>
-            <MdCheckCircle className="text-secondary text-2xl" />
-            <div className="font-bold text-secondary">150 PZA</div>
-          </div>
+        <div className="grid grid-cols-7 gap-1 md:gap-2">
+          {[
+            { day: 1, amount: 50, icon: <MdCheckCircle />, color: "secondary", status: "claimed" },
+            { day: 2, amount: 100, icon: <MdCheckCircle />, color: "secondary", status: "claimed" },
+            { day: 3, amount: 150, icon: <MdCheckCircle />, color: "secondary", status: "claimed" },
+            { day: 4, amount: 200, icon: <MdToken />, color: "primary", status: "active" },
+            { day: 5, amount: 250, icon: <MdLock />, color: "neutral", status: "locked" },
+            { day: 6, amount: 300, icon: <MdLock />, color: "neutral", status: "locked" },
+            { day: 7, amount: 350, icon: <MdStar />, color: "tertiary", status: "locked" },
+          ].map((item) => (
+            <div 
+              key={item.day}
+              className={`flex-1 glass-card p-1 md:p-2 rounded-lg border flex flex-col items-center gap-0.5 md:gap-1 transition-all ${
+                item.status === "active" 
+                ? "border-primary bg-primary/10 shadow-[0_0_10px_rgba(var(--primary-rgb),0.1)]" 
+                : item.status === "claimed" 
+                ? "border-secondary/30 bg-secondary/5" 
+                : "border-white/5 opacity-50"
+              }`}
+            >
+              <span className={`text-[6px] md:text-[8px] font-bold uppercase ${item.status === "active" ? "text-primary" : "text-on-surface-variant"}`}>
+                Day {item.day}
+              </span>
+              <div className={`text-base md:text-lg ${item.color === "primary" ? "text-primary" : item.color === "secondary" ? "text-secondary" : item.color === "tertiary" ? "text-tertiary" : ""}`}>
+                {item.icon}
+              </div>
+              <div className={`font-black text-[7px] md:text-[10px] ${item.status === "active" ? "text-on-surface" : item.status === "claimed" ? "text-secondary" : item.color === "tertiary" ? "text-tertiary" : ""}`}>
+                {item.amount}
+              </div>
+              {item.status === "active" && (
+                <button className="text-[6px] md:text-[8px] bg-primary text-on-primary-fixed px-1.5 py-0.5 rounded-full font-bold uppercase hover:scale-105 active:scale-95 transition-transform">
+                  CLAIM
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      </section>
 
-          <div className="glass-card p-4 rounded-xl border-2 border-primary flex flex-col items-center gap-2 bg-primary/10 relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-primary"></div>
-            <span className="text-[10px] font-bold text-primary uppercase">
-              Day 4
-            </span>
-            <MdToken className="text-primary text-2xl" />
-            <div className="font-bold text-on-surface">200 PZA</div>
-            <button className="text-[10px] bg-primary text-on-primary-fixed px-3 py-1 rounded-full font-bold mt-1 uppercase">
-              CLAIM
+      {/* Tier Modal */}
+      {isTierModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="relative w-full max-w-lg glass-card rounded-3xl overflow-hidden border border-white/10 shadow-2xl p-6 md:p-8 animate-in zoom-in-95 duration-300">
+            <button 
+              onClick={() => setIsTierModalOpen(false)}
+              className="absolute top-4 right-4 p-2 rounded-full bg-white/5 hover:bg-white/10 text-on-surface-variant transition-colors"
+            >
+              <MdClose className="text-xl" />
+            </button>
+
+            <div className="mb-8">
+              <h2 className="font-headline text-3xl font-black mb-2 flex items-center gap-3">
+                <MdMilitaryTech className="text-primary text-4xl" />
+                Tier System
+              </h2>
+              <p className="text-on-surface-variant text-sm">
+                Unlock higher multipliers and exclusive rewards as you earn more PZA points.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="glass-card p-3 rounded-xl border border-white/5 flex flex-col items-center text-center gap-1 bg-white/5">
+                <div className="w-8 h-8 rounded-lg bg-orange-900/20 border border-orange-500/30 flex items-center justify-center">
+                  <MdMilitaryTech className="text-orange-400 text-lg" />
+                </div>
+                <div>
+                  <div className="font-headline font-black text-sm">Bronze</div>
+                  <div className="text-[10px] text-on-surface-variant font-bold">0-999 PZA</div>
+                </div>
+              </div>
+
+              <div className="glass-card p-3 rounded-xl border-2 border-primary flex flex-col items-center text-center gap-1 bg-primary/10">
+                <div className="w-8 h-8 rounded-lg bg-slate-500/20 border border-slate-400/30 flex items-center justify-center">
+                  <MdMilitaryTech className="text-slate-300 text-lg" />
+                </div>
+                <div>
+                  <div className="font-headline font-black text-sm">Silver</div>
+                  <div className="text-[10px] text-on-surface-variant font-bold">1k-5k PZA</div>
+                </div>
+              </div>
+
+              <div className="glass-card p-3 rounded-xl border border-white/5 flex flex-col items-center text-center gap-1 opacity-60 grayscale bg-white/5">
+                <div className="w-8 h-8 rounded-lg bg-yellow-500/20 border border-yellow-400/30 flex items-center justify-center">
+                  <MdMilitaryTech className="text-yellow-400 text-lg" />
+                </div>
+                <div>
+                  <div className="font-headline font-black text-sm">Gold</div>
+                  <div className="text-[10px] text-on-surface-variant font-bold">5k-10k PZA</div>
+                </div>
+              </div>
+
+              <div className="glass-card p-3 rounded-xl border border-white/5 flex flex-col items-center text-center gap-1 opacity-60 grayscale bg-white/5">
+                <div className="w-8 h-8 rounded-lg bg-cyan-500/20 border border-cyan-400/30 flex items-center justify-center">
+                  <MdMilitaryTech className="text-cyan-400 text-lg" />
+                </div>
+                <div>
+                  <div className="font-headline font-black text-sm">Platinum</div>
+                  <div className="text-[10px] text-on-surface-variant font-bold">10k+ PZA</div>
+                </div>
+              </div>
+            </div>
+
+            <button 
+              onClick={() => setIsTierModalOpen(false)}
+              className="w-full mt-8 bg-surface-container hover:bg-surface-container-high text-on-surface py-3 rounded-xl font-bold uppercase tracking-tight transition-colors border border-white/5"
+            >
+              Got it
             </button>
           </div>
-
-          <div className="glass-card p-4 rounded-xl border border-white/5 flex flex-col items-center gap-2 opacity-50">
-            <span className="text-[10px] font-bold text-on-surface-variant uppercase">
-              Day 5
-            </span>
-            <MdLock className="text-2xl" />
-            <div className="font-bold">250 PZA</div>
-          </div>
-          <div className="glass-card p-4 rounded-xl border border-white/5 flex flex-col items-center gap-2 opacity-50">
-            <span className="text-[10px] font-bold text-on-surface-variant uppercase">
-              Day 6
-            </span>
-            <MdLock className="text-2xl" />
-            <div className="font-bold">300 PZA</div>
-          </div>
-          <div className="glass-card p-4 rounded-xl border border-tertiary/30 flex flex-col items-center gap-2 bg-tertiary/5">
-            <span className="text-[10px] font-bold text-tertiary uppercase">
-              Day 7
-            </span>
-            <MdStar className="text-tertiary text-2xl" />
-            <div className="font-bold text-tertiary">350 PZA</div>
-          </div>
         </div>
-      </section>
-
-      <section className="space-y-6">
-        <h2 className="font-headline text-2xl font-bold tracking-tight">
-          Tier System
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="glass-card p-6 rounded-xl border border-white/5 space-y-4">
-            <div className="flex justify-between items-start">
-              <div className="w-12 h-12 rounded-lg bg-orange-900/20 border border-orange-500/30 flex items-center justify-center">
-                <MdMilitaryTech className="text-orange-400 text-2xl" />
-              </div>
-              <span className="text-[10px] bg-secondary-container/30 text-secondary px-2 py-1 rounded-md font-bold uppercase">
-                UNLOCKED
-              </span>
-            </div>
-            <div>
-              <div className="font-headline font-bold text-xl">Bronze</div>
-              <div className="text-xs text-on-surface-variant">0 - 999 PZA</div>
-            </div>
-            <ul className="text-xs space-y-2 text-on-surface/70">
-              <li className="flex gap-2 items-center">
-                <MdCheck className="text-[14px] text-secondary" /> Basic Support
-              </li>
-              <li className="flex gap-2 items-center">
-                <MdCheck className="text-[14px] text-secondary" /> Standard
-                Multiplier
-              </li>
-            </ul>
-          </div>
-
-          <div className="glass-card p-6 rounded-xl border border-white/5 space-y-4 bg-surface-container-high">
-            <div className="flex justify-between items-start">
-              <div className="w-12 h-12 rounded-lg bg-slate-500/20 border border-slate-400/30 flex items-center justify-center">
-                <MdMilitaryTech className="text-slate-300 text-2xl" />
-              </div>
-              <span className="text-[10px] bg-secondary-container/30 text-secondary px-2 py-1 rounded-md font-bold uppercase">
-                ACTIVE
-              </span>
-            </div>
-            <div>
-              <div className="font-headline font-bold text-xl">Silver</div>
-              <div className="text-xs text-on-surface-variant">
-                1,000 - 4,999 PZA
-              </div>
-            </div>
-            <ul className="text-xs space-y-2 text-on-surface/70">
-              <li className="flex gap-2 items-center">
-                <MdCheck className="text-[14px] text-secondary" /> 1.2x PZA
-                Multiplier
-              </li>
-              <li className="flex gap-2 items-center">
-                <MdCheck className="text-[14px] text-secondary" /> Priority Chat
-              </li>
-            </ul>
-          </div>
-
-          <div className="glass-card p-6 rounded-xl border border-white/5 space-y-4 opacity-70 grayscale">
-            <div className="flex justify-between items-start">
-              <div className="w-12 h-12 rounded-lg bg-yellow-500/20 border border-yellow-400/30 flex items-center justify-center">
-                <MdMilitaryTech className="text-yellow-400 text-2xl" />
-              </div>
-              <MdLock className="text-on-surface-variant" />
-            </div>
-            <div>
-              <div className="font-headline font-bold text-xl">Gold</div>
-              <div className="text-xs text-on-surface-variant">
-                5,000 - 9,999 PZA
-              </div>
-            </div>
-            <ul className="text-xs space-y-2 text-on-surface/70">
-              <li className="flex gap-2 items-center">
-                <MdBolt className="text-[14px] text-primary" /> 1.5x PZA
-                Multiplier
-              </li>
-              <li className="flex gap-2 items-center">
-                <MdStar className="text-[14px] text-primary" /> Weekly Rewards
-              </li>
-            </ul>
-          </div>
-
-          <div className="glass-card p-6 rounded-xl border border-white/5 space-y-4 opacity-70 grayscale">
-            <div className="flex justify-between items-start">
-              <div className="w-12 h-12 rounded-lg bg-cyan-500/20 border border-cyan-400/30 flex items-center justify-center">
-                <MdMilitaryTech className="text-cyan-400 text-2xl" />
-              </div>
-              <MdLock className="text-on-surface-variant" />
-            </div>
-            <div>
-              <div className="font-headline font-bold text-xl">Platinum</div>
-              <div className="text-xs text-on-surface-variant">10,000+ PZA</div>
-            </div>
-            <ul className="text-xs space-y-2 text-on-surface/70">
-              <li className="flex gap-2 items-center">
-                <MdRocketLaunch className="text-[14px] text-primary" /> 2.0x PZA
-                Multiplier
-              </li>
-              <li className="flex gap-2 items-center">
-                <MdShield className="text-[14px] text-primary" /> Dedicated
-                Manager
-              </li>
-            </ul>
-          </div>
-        </div>
-      </section>
+      )}
 
       <section className="space-y-6">
         <div className="flex justify-between items-end">
