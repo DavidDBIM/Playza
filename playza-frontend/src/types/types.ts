@@ -45,7 +45,7 @@ export type Game = {
   slug: string;
   thumbnail: string;
 
-  category: "Trivia" | "Puzzle" | "Memory" | "Strategy" | "Reaction" | "Arcade";
+  category: "Arcade" | "Action" | "Strategy" | "Puzzle" | "Trivia";
   mode: "1v1" | "Tournament" | "Quick Match" | "Multiplayer";
 
   entryFee: number;

@@ -71,7 +71,7 @@ const LeaderBoard = () => {
       </div>
 
       {/* Table Area */}
-      <div className="glass-card rounded-3xl border border-slate-200 dark:border-white/10 overflow-hidden flex-1 flex flex-col relative">
+      <div className="glass-card rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden flex-1 flex flex-col relative">
         <div className="absolute top-0 inset-x-0 h-32 bg-linear-to-b from-primary/10 to-transparent -z-10 pointer-events-none" />
         
         <div className="overflow-auto custom-scrollbar flex-1">
@@ -130,7 +130,7 @@ const LeaderBoard = () => {
                             : "hover:bg-slate-900/5 dark:hover:bg-white/5"
                         }`}
                       >
-                        <TableCell className="px-4 py-3 sm:py-4">
+                        <TableCell className=" py-3 sm:py-4">
                           <div className="flex justify-center">
                             <div className={`size-7 sm:size-8 flex items-center justify-center rounded-xl font-black text-xs sm:text-sm border ${rankStyle} transition-all duration-300 group-hover:scale-110`}>
                               {rank}
@@ -138,7 +138,7 @@ const LeaderBoard = () => {
                           </div>
                         </TableCell>
 
-                        <TableCell className="px-4 py-3 sm:py-4 flex items-center gap-3 sm:gap-4">
+                        <TableCell className=" py-3 sm:py-4 flex items-center gap-3 sm:gap-4">
                           <div className={`relative size-8 sm:size-10 rounded-full overflow-hidden border-2 ${isGold ? 'border-playza-yellow shadow-[0_0_10px_rgba(245,158,11,0.5)]' : isMe ? 'border-primary' : 'border-slate-200 dark:border-white/10'}`}>
                             <img src={avatar} alt={username} className="w-full h-full object-cover" />
                             {isGold && <div className="absolute inset-0 ring-inset ring-2 ring-playza-yellow/20 rounded-full" />}
@@ -154,13 +154,13 @@ const LeaderBoard = () => {
                           </div>
                         </TableCell>
 
-                        <TableCell className="px-4 py-3 sm:py-4 font-black hidden sm:table-cell">
+                        <TableCell className=" py-3 sm:py-4 font-black hidden sm:table-cell">
                           <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
                             {points.toLocaleString()} <span className="text-[9px] text-primary uppercase tracking-widest font-black">PTS</span>
                           </div>
                         </TableCell>
 
-                        <TableCell className="px-4 py-3 sm:py-4 text-right">
+                        <TableCell className=" py-3 sm:py-4 text-right">
                           <div className="inline-block px-3 py-1.5 rounded-xl bg-playza-green/10 border border-playza-green/20">
                             <span className="font-mono text-sm sm:text-base font-black text-playza-green tracking-tighter">
                               {formatNaira(Number(prizeWon) * 100).toLocaleString()}

@@ -11,6 +11,7 @@ const GamesCard = ({
   title,
   activePlayers,
   badge,
+  isActive,
 }: Game) => {
   return (
     <div className="group relative w-full max-w-52 lg:max-w-60 aspect-9/11 rounded-2xl overflow-hidden shadow-xl transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-primary/20 border border-slate-200 dark:border-white/5">
@@ -31,6 +32,16 @@ const GamesCard = ({
         <div className="absolute inset-0 bg-linear-to-t from-black via-black/40 to-transparent opacity-80 group-hover:opacity-95 transition-opacity" />
 
         {/* Badge (HOT/NEW) */}
+        {isActive && (
+          <div className="absolute top-4 right-4 flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-600 text-white text-[10px] font-black uppercase tracking-widest shadow-lg z-20 animate-pulse border border-white/20">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+            </span>
+            LIVE
+          </div>
+        )}
+
         {badge && (badge === "NEW" || badge === "HOT") && (
           <div
             className={`absolute top-4 left-4 flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest backdrop-blur-md shadow-lg z-20 ${
