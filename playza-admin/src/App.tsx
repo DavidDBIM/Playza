@@ -5,6 +5,9 @@ import Dashboard from './pages/Dashboard';
 import Users from './pages/Users';
 import Games from './pages/Games';
 import User from './pages/User';
+import Game from './pages/Game';
+import CreateGame from './pages/CreateGame';
+import Session from './pages/Session';
 import { ThemeProvider } from './components/theme/ThemeProvider';
 
 // Placeholder components for routes
@@ -25,7 +28,9 @@ const App: React.FC = () => {
             <Route path="users" element={<Users />} />
             <Route path="users/:id" element={<User />} />
             <Route path="games" element={<Games />} />
-            <Route path="sessions" element={<Placeholder name="Sessions" />} />
+            <Route path="games/create" element={<CreateGame />} />
+            <Route path="games/:slug" element={<Game />} />
+            <Route path="sessions/:id" element={<Session />} />
             <Route path="leaderboards" element={<Placeholder name="Leaderboards" />} />
             <Route path="transactions" element={<Placeholder name="Transactions" />} />
             <Route path="withdrawals" element={<Placeholder name="Withdrawals" />} />
