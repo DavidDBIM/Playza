@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router';
 import { 
   MdEdit, 
   MdDeleteForever, 
@@ -31,6 +32,7 @@ interface GamesTableProps {
 }
 
 export const GamesTable: React.FC<GamesTableProps> = ({ games, clearFilters }) => {
+  const navigate = useNavigate();
   return (
     <div className="overflow-x-auto relative">
       <Table className="border-collapse w-full">
@@ -50,7 +52,8 @@ export const GamesTable: React.FC<GamesTableProps> = ({ games, clearFilters }) =
             games.map((game) => (
               <TableRow 
                 key={game.id} 
-                className="group border-b border-border/20 hover:bg-muted/10 transition-colors duration-200"
+                className="group border-b border-border/20 hover:bg-muted/10 transition-colors duration-200 cursor-pointer"
+                onClick={() => navigate(`/games/${game.slug}`)}
               >
                 <TableCell className="py-5 px-4 md:px-8">
                   <div className="flex items-center gap-4">
@@ -114,12 +117,26 @@ export const GamesTable: React.FC<GamesTableProps> = ({ games, clearFilters }) =
                 <TableCell className="py-5 px-4 md:px-8 text-right">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl hover:bg-primary/5 hover:text-primary transition-all group">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-10 w-10 rounded-xl hover:bg-primary/5 hover:text-primary transition-all group"
+                        onClick={(e) => {
+                          e.stopPropagation(); // prevent row click from triggering twice
+                          navigate(`/games/${game.slug}`);
+                        }}
+                      >
                         <MdEdit className="text-lg group-hover:rotate-12 transition-transform" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-48 rounded-2xl p-2 bg-popover/95 backdrop-blur-xl border-border/50">
-                      <DropdownMenuItem className="rounded-xl px-4 py-3 font-bold text-sm cursor-pointer gap-3">
+                      <DropdownMenuItem 
+                        className="rounded-xl px-4 py-3 font-bold text-sm cursor-pointer gap-3"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/games/${game.slug}`);
+                        }}
+                      >
                         <MdRemoveRedEye className="text-lg text-primary" /> View Details
                       </DropdownMenuItem>
                       <DropdownMenuItem className="rounded-xl px-4 py-3 font-bold text-sm cursor-pointer gap-3">

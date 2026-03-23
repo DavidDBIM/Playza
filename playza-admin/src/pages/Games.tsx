@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router';
 import { 
   MdAddCircleOutline,
   MdGamepad
@@ -10,6 +11,7 @@ import { GamesToolbar } from '../components/games/GamesToolbar';
 import { GamesTable } from '../components/games/GamesTable';
 
 const Games: React.FC = () => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All Categories');
   const [statusFilter, setStatusFilter] = useState('All Status');
@@ -44,7 +46,10 @@ const Games: React.FC = () => {
           <h1 className="text-2xl md:text-4xl font-headline font-black text-primary tracking-tight">Game Matrix</h1>
           <p className="text-muted-foreground font-body text-sm md:text-base">Managing the virtual battlefields of the Playza Empire.</p>
         </div>
-        <Button className="w-full sm:w-auto bg-primary text-primary-foreground hover:bg-primary/90 font-black px-8 h-12 rounded-xl flex items-center justify-center gap-2 shadow-[0_8px_30px_rgb(var(--primary-rgb),0.3)] hover:scale-105 active:scale-95 transition-all text-sm uppercase tracking-widest">
+        <Button 
+          onClick={() => navigate('/games/create')}
+          className="w-full sm:w-auto bg-primary text-primary-foreground hover:bg-primary/90 font-black px-8 h-12 rounded-xl flex items-center justify-center gap-2 shadow-[0_8px_30px_rgb(var(--primary-rgb),0.3)] hover:scale-105 active:scale-95 transition-all text-sm uppercase tracking-widest"
+        >
           <MdAddCircleOutline className="text-xl" />
           Deploy New Game
         </Button>
