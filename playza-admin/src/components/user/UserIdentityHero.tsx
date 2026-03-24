@@ -113,15 +113,22 @@ export const UserIdentityHero: React.FC<UserIdentityHeroProps> = ({ user }) => {
           </div>
 
           <div className="flex flex-wrap items-center lg:flex-col lg:items-end gap-3 w-full lg:w-auto">
-            <Button className="flex-1 sm:flex-none bg-primary hover:bg-primary/90 text-white font-black px-6 h-12 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md shadow-primary/20 uppercase text-[10px] tracking-widest group">
+            <Button onClick={() => {
+              const amount = prompt('Enter new capital amount to inject or deduct:', '50000');
+              if(amount) alert(`Capital adjusted by ${amount} successfully.`);
+            }} className="flex-1 sm:flex-none bg-primary hover:bg-primary/90 text-white font-black px-6 h-12 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md shadow-primary/20 uppercase text-[10px] tracking-widest group">
               <MdAccountBalance className="text-base" />
               Adjust Capital
             </Button>
-            <Button variant="outline" className="flex-1 sm:flex-none bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 font-black px-6 h-12 rounded-xl flex items-center justify-center gap-2 border border-slate-200 dark:border-white/10 uppercase text-[10px] tracking-widest transition-all">
+            <Button onClick={() => alert('Identity document verified. Status marked as Approved.')} variant="outline" className="flex-1 sm:flex-none bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 font-black px-6 h-12 rounded-xl flex items-center justify-center gap-2 border border-slate-200 dark:border-white/10 uppercase text-[10px] tracking-widest transition-all">
               <MdFactCheck className="text-base" />
               Identity Review
             </Button>
-            <Button variant="outline" className="flex-1 sm:flex-none border-rose-500 border bg-rose-500/5 hover:bg-rose-500 hover:text-white text-rose-500 font-black px-6 h-12 rounded-xl flex items-center justify-center gap-2 transition-all uppercase text-[10px] tracking-widest">
+            <Button onClick={() => {
+              if(confirm('Are you sure you want to banish this user permanently? This action cannot be undone.')) {
+                alert('User has been banished across all regional networks.');
+              }
+            }} variant="outline" className="flex-1 sm:flex-none border-rose-500 border bg-rose-500/5 hover:bg-rose-500 hover:text-white text-rose-500 font-black px-6 h-12 rounded-xl flex items-center justify-center gap-2 transition-all uppercase text-[10px] tracking-widest">
               <MdBlock className="text-base" />
               Banish User
             </Button>

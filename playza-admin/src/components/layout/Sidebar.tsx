@@ -25,7 +25,7 @@ const Sidebar: React.FC = () => {
           { to: '/', icon: MdDashboard, label: 'Dashboard' },
           { to: '/users', icon: MdGroup, label: 'Users' },
           { to: '/games', icon: MdSportsEsports, label: 'Games' },
-          { to: '/sessions', icon: MdTimer, label: 'Sessions' },
+          { to: '/games', icon: MdTimer, label: 'Sessions' },
           { to: '/leaderboards', icon: MdLeaderboard, label: 'Leaderboards' },
           { to: '/transactions', icon: MdPayments, label: 'Transactions' },
           { to: '/withdrawals', icon: MdAccountBalanceWallet, label: 'Withdrawals' },
