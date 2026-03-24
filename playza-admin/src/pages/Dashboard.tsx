@@ -20,7 +20,7 @@ const Dashboard: React.FC = () => {
       {/* Header Section */}
       <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-12">
         <div className="space-y-2">
-          <h2 className="text-3xl md:text-5xl font-black font-headline text-primary tracking-tighter shadow-sm uppercase italic tracking-widest">Empire Command</h2>
+          <h2 className="text-3xl md:text-5xl font-black font-headline text-primary shadow-sm uppercase italic tracking-widest">Empire Command</h2>
           <p className="text-muted-foreground/60 font-black uppercase text-[10px] tracking-[0.4em]">Strategic Overview • Skill-Gaming Performance • Nigeria Region</p>
         </div>
         <div className="flex gap-4 w-full md:w-auto">
@@ -29,19 +29,10 @@ const Dashboard: React.FC = () => {
         </div>
       </header>
 
-      {/* 1. Key Metrics - Factored */}
       <EmpireMetrics metrics={metricsData} />
-
-      {/* Analytics & Live Activity - Factored */}
       <RevenuePulse liveActivity={livePulseData} />
-
-      {/* Referral & Loyalty Stats - Factored */}
       <GrowthInsights referralStats={referralStats} loyaltyPulse={loyaltyPulse} />
-
-      {/* Gaming Arenas & Popular games - Factored */}
       <GamingArenas sessions={activeSessions} popularGames={popularGames} />
-
-      {/* Daily Liquidity Snapshot - Factored */}
       <LiquidityOverview data={liquidityData} />
     </main>
   );

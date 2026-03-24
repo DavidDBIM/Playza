@@ -5,10 +5,10 @@ export const RevenuePulse: React.FC<{ liveActivity: LivePulseData[] }> = ({ live
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
       {/* Revenue Performance */}
-      <div className="lg:col-span-2 glass-card rounded-2xl p-8 relative overflow-hidden border border-white/5 bg-white/[0.02]">
+      <div className="lg:col-span-2 glass-card rounded-2xl p-8 relative overflow-hidden border border-white/5 bg-white/2">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h3 className="text-xl font-black font-headline text-[#E5E2E3] tracking-tight uppercase tracking-[0.2em] text-xs">Revenue Performance</h3>
+            <h3 className="text-xs font-black font-headline text-[#E5E2E3] uppercase tracking-[0.2em]">Revenue Performance</h3>
             <p className="text-sm text-[#E5E2E3]/40 font-bold">30-day transactional flow analysis</p>
           </div>
           <div className="flex gap-4">
@@ -37,8 +37,8 @@ export const RevenuePulse: React.FC<{ liveActivity: LivePulseData[] }> = ({ live
       </div>
 
       {/* Live Activity Monitor */}
-      <div className="glass-card rounded-2xl p-6 flex flex-col h-112.5 border border-white/5 bg-white/[0.02] shadow-2xl">
-        <h3 className="text-xl font-black font-headline text-[#E5E2E3] mb-6 flex items-center justify-between uppercase tracking-widest text-xs">
+      <div className="glass-card rounded-2xl p-6 flex flex-col h-112.5 border border-white/5 bg-white/2 shadow-2xl">
+        <h3 className=" font-black font-headline text-[#E5E2E3] mb-6 flex items-center justify-between uppercase tracking-widest text-xs">
           Live Pulse
           <span className="flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase tracking-widest shadow-sm border border-emerald-500/10">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -47,7 +47,7 @@ export const RevenuePulse: React.FC<{ liveActivity: LivePulseData[] }> = ({ live
         </h3>
         <div className="flex-1 overflow-y-auto pr-2 space-y-4 no-scrollbar">
           {liveActivity.map((item) => (
-            <div key={item.id} className="flex items-start gap-4 p-4 rounded-xl hover:bg-white/[0.05] transition-all border border-white/5 group">
+            <div key={item.id} className="flex items-start gap-4 p-4 rounded-xl hover:bg-white/5 transition-all border border-white/5 group">
               <div className={`w-3 h-3 rounded-full mt-1.5 shrink-0 shadow-lg ${
                 item.status === 'online' ? 'bg-emerald-500 shadow-emerald-500/10' : 
                 item.status === 'win' ? 'bg-[#ffd700] shadow-[#ffd700]/10' : 

@@ -27,7 +27,7 @@ export const UsersTable: React.FC<UsersTableProps> = ({ users, clearFilters }) =
   const navigate = useNavigate();
 
   return (
-    <div className="overflow-x-auto no-scrollbar min-h-[400px]">
+    <div className="overflow-x-auto no-scrollbar min-h-100">
       <Table>
         <TableHeader className="bg-muted/30">
           <TableRow className="hover:bg-transparent border-none">

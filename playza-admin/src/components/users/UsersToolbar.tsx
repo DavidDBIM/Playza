@@ -53,12 +53,12 @@ export const UsersToolbar: React.FC<UsersToolbarProps> = ({
         <div className="flex gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="flex-1 md:flex-none bg-background border-border/50 rounded-2xl text-xs font-black py-3.5 pl-4 pr-3 h-12 focus:ring-2 focus:ring-primary/20 text-foreground outline-none cursor-pointer hover:bg-accent/10 transition-all flex items-center gap-4 uppercase tracking-widest min-w-[140px] justify-between shadow-sm">
+              <Button variant="outline" className="flex-1 md:flex-none bg-background border-border/50 rounded-2xl text-xs font-black py-3.5 pl-4 pr-3 h-12 focus:ring-2 focus:ring-primary/20 text-foreground outline-none cursor-pointer hover:bg-accent/10 transition-all flex items-center gap-4 uppercase tracking-widest min-w-35 justify-between shadow-sm">
                 {statusFilter}
                 <MdKeyboardArrowDown className="text-lg text-primary" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="bg-card/95 backdrop-blur-xl border-border/50 shadow-2xl rounded-2xl min-w-[180px] p-2 z-50">
+            <DropdownMenuContent className="bg-card/95 backdrop-blur-xl border-border/50 shadow-2xl rounded-2xl min-w-45 p-2 z-50">
               <DropdownMenuItem onClick={() => setStatusFilter('All Status')} className="text-[10px] font-black uppercase tracking-widest py-3 px-4 rounded-xl cursor-pointer hover:bg-primary/5 transition-colors">All Status</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setStatusFilter('Active')} className="text-[10px] font-black uppercase tracking-widest py-3 px-4 rounded-xl cursor-pointer text-emerald-500 hover:bg-emerald-500/5 transition-colors">Active Citizens</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setStatusFilter('Banned')} className="text-[10px] font-black uppercase tracking-widest py-3 px-4 rounded-xl cursor-pointer text-destructive hover:bg-destructive/5 transition-colors">Banned Users</DropdownMenuItem>

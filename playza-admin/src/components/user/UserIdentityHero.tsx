@@ -34,13 +34,13 @@ export const UserIdentityHero: React.FC<UserIdentityHeroProps> = ({ user }) => {
       </Button>
 
       <section className="glass-card bg-card p-6 md:p-12 rounded-[2.5rem] relative overflow-hidden border border-border/40 shadow-[0_24px_80px_rgba(0,0,0,0.15)] dark:shadow-[0_24px_80px_rgba(0,0,0,0.4)]">
-        <div className="absolute top-0 right-0 w-[40rem] h-[40rem] bg-primary/5 blur-[120px] rounded-full -mr-64 -mt-64 pointer-events-none"></div>
+        <div className="absolute top-0 right-0 w-160 h-160 bg-primary/5 blur-[120px] rounded-full -mr-64 -mt-64 pointer-events-none"></div>
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-secondary/5 blur-[100px] rounded-full -ml-32 -mb-32 pointer-events-none"></div>
         
         <div className="flex flex-col lg:flex-row items-center lg:items-start justify-between gap-12 relative z-10 text-center lg:text-left">
           <div className="flex flex-col md:flex-row items-center gap-10">
             <div className="relative group">
-              <div className="w-40 h-40 md:w-56 md:h-56 rounded-[3.5rem] p-1 bg-gradient-to-br from-primary via-primary/40 to-transparent shadow-2xl group-hover:rotate-3 transition-all duration-700">
+              <div className="w-40 h-40 md:w-56 md:h-56 rounded-[3.5rem] p-1 bg-linear-to-br from-primary via-primary/40 to-transparent shadow-2xl group-hover:rotate-3 transition-all duration-700">
                 <div className="w-full h-full rounded-[3.3rem] overflow-hidden bg-muted border-4 border-card">
                   <img alt={user.fullName} className="w-full h-full object-cover scale-110 group-hover:scale-100 transition-all duration-700 font-bold" src={user.avatar} />
                 </div>

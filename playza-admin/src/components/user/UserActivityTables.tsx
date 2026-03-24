@@ -41,7 +41,7 @@ export const CombatLog = ({ data }: { data: MatchRecord[] }) => (
                    <MdVideogameAsset className="text-2xl" />}
                 </div>
                 <div>
-                  <span className="font-black text-sm text-foreground uppercase tracking-[0.1em] group-hover:text-primary transition-colors">{match.game}</span>
+                  <span className="font-black text-sm text-foreground uppercase tracking-widest group-hover:text-primary transition-colors">{match.game}</span>
                   <div className="flex items-center gap-2 mt-1 opacity-40">
                     <MdShield className="text-xs" />
                     <span className="text-[9px] font-black uppercase tracking-widest">Global Server</span>

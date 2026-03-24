@@ -62,7 +62,7 @@ export const GamingArenas: React.FC<{
             {popularGames.map((game) => {
               const Icon = getGameIcon(game.icon);
               return (
-                <div key={game.id} className="p-4 rounded-2xl bg-white/[0.03] border border-white/5 hover:bg-white/[0.06] transition-all group border-l-2 border-l-transparent hover:border-l-primary cursor-pointer">
+                <div key={game.id} className="p-4 rounded-2xl bg-white/3 border border-white/5 hover:bg-white/6 transition-all group border-l-2 border-l-transparent hover:border-l-primary cursor-pointer">
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary group-hover:scale-110 transition-transform shadow-inner">
                       <Icon className="text-2xl" />
@@ -92,7 +92,7 @@ export const GamingArenas: React.FC<{
           <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40 mt-2">Target Node: <Link to="/users" className="text-destructive hover:underline">Olanrewaju_77</Link></p>
           <div className="mt-6 flex gap-3">
             <button className="flex-1 py-3 text-[10px] font-black uppercase tracking-widest bg-destructive/20 text-destructive border border-destructive/20 rounded-xl hover:bg-destructive shadow-lg hover:text-white transition-all">Freeze</button>
-            <button className="flex-1 py-3 text-[10px] font-black uppercase tracking-widest bg-white/[0.05] text-muted-foreground/60 border border-white/5 rounded-xl hover:bg-white/10 transition-all">Ignore</button>
+            <button className="flex-1 py-3 text-[10px] font-black uppercase tracking-widest bg-white/5 text-muted-foreground/60 border border-white/5 rounded-xl hover:bg-white/10 transition-all">Ignore</button>
           </div>
         </div>
       </div>

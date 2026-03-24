@@ -68,7 +68,7 @@ const User: React.FC = () => {
           </div>
         </div>
 
-        <div className="min-h-[500px] bg-white/50 dark:bg-transparent">
+        <div className="min-h-125 bg-white/50 dark:bg-transparent">
           {activeTab === 'matches' && <CombatLog data={matchHistory} />}
           {activeTab === 'transactions' && <FinancialFlow data={transactionHistory} />}
           {activeTab === 'referrals' && <DownlineNetwork data={referralHistory} />}
