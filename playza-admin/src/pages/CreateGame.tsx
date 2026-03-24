@@ -228,7 +228,7 @@ const CreateGame: React.FC = () => {
               <Button type="button" variant="outline" className="flex-1 lg:flex-none h-14 px-8 rounded-xl font-black uppercase tracking-widest text-[10px] border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5 text-slate-900 dark:text-white transition-all shadow-sm">
                 Save Draft
               </Button>
-              <Button className="flex-1 lg:flex-none h-14 px-10 bg-linear-to-r from-primary via-emerald-500 to-sky-500 text-white hover:from-primary hover:to-emerald-400 rounded-xl font-black shadow-xl shadow-primary/30 uppercase tracking-widest text-[10px] flex items-center justify-center gap-3 transition-all hover:scale-[1.02] active:scale-95 group">
+              <Button onClick={() => navigate('/games')} className="flex-1 lg:flex-none h-14 px-10 bg-linear-to-r from-primary via-emerald-500 to-sky-500 text-white hover:from-primary hover:to-emerald-400 rounded-xl font-black shadow-xl shadow-primary/30 uppercase tracking-widest text-[10px] flex items-center justify-center gap-3 transition-all hover:scale-[1.02] active:scale-95 group">
                 <MdRocketLaunch className="text-lg animate-pulse" />
                 Publish Game
               </Button>

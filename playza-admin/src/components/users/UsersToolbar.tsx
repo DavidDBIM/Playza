@@ -1,9 +1,8 @@
 import React from 'react';
 import { 
-  MdSearch, 
-  MdClose, 
+  MdSearch,
+  MdClose,
   MdKeyboardArrowDown, 
-  MdFilterList, 
   MdFileDownload 
 } from 'react-icons/md';
 import { Button } from '../ui/button';
@@ -80,10 +79,6 @@ export const UsersToolbar: React.FC<UsersToolbarProps> = ({
             Clear
           </Button>
         )}
-        <Button variant="outline" className="flex-1 md:flex-none bg-background hover:bg-accent/10 border-border/50 text-foreground h-11 px-5 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-sm">
-          <MdFilterList className="text-primary text-base" />
-          Advanced
-        </Button>
         <Button variant="outline" className="flex-1 md:flex-none bg-background hover:bg-accent/10 border-border/50 text-foreground h-11 px-5 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-sm">
           <MdFileDownload className="text-primary text-base" />
           Export

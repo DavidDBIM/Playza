@@ -3,10 +3,16 @@ import { useNavigate } from 'react-router';
 import { 
   MdSearch, 
   MdReceiptLong, 
-  MdCalendarToday,
-  MdVisibility
+  MdVisibility,
+  MdKeyboardArrowDown
 } from 'react-icons/md';
 import { Button } from '../components/ui/button';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from '../components/ui/dropdown-menu';
 import { transactionHistory } from '../data/usersData';
 
 const Transactions: React.FC = () => {
@@ -65,32 +71,35 @@ const Transactions: React.FC = () => {
           />
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <select 
-            title="Filter by Type"
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            className="h-12 px-4 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-xs font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 focus:ring-0 appearance-none shadow-sm cursor-pointer"
-          >
-            <option>All Types</option>
-            <option>Deposit</option>
-            <option>Withdrawal</option>
-            <option>Game Entry</option>
-            <option>Winnings</option>
-          </select>
-          <select 
-            title="Filter by Status"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="h-12 px-4 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-xs font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 focus:ring-0 appearance-none shadow-sm cursor-pointer"
-          >
-            <option>All Status</option>
-            <option>Successful</option>
-            <option>Pending</option>
-            <option>Failed</option>
-          </select>
-          <Button variant="outline" className="h-12 px-4 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 gap-2 font-black uppercase text-[10px] tracking-widest rounded-xl">
-            <MdCalendarToday className="text-lg" /> Last 30 Days
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="h-12 px-4 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-xs font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 gap-2 shadow-sm cursor-pointer select-none">
+                {typeFilter} <MdKeyboardArrowDown className="text-lg" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="p-2 min-w-40 rounded-xl border border-slate-200 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl shadow-xl z-50">
+              {['All Types', 'Deposit', 'Withdrawal', 'Game Entry', 'Winnings'].map(t => (
+                <DropdownMenuItem key={t} onClick={() => setTypeFilter(t)} className="text-[10px] font-black uppercase tracking-widest py-3 px-4 rounded-lg cursor-pointer hover:bg-primary/5 hover:text-primary transition-colors">
+                  {t}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="h-12 px-4 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-xs font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 gap-2 shadow-sm cursor-pointer select-none">
+                {statusFilter} <MdKeyboardArrowDown className="text-lg" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="p-2 min-w-40 rounded-xl border border-slate-200 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl shadow-xl z-50">
+              {['All Status', 'Successful', 'Pending', 'Failed'].map(t => (
+                <DropdownMenuItem key={t} onClick={() => setStatusFilter(t)} className={`text-[10px] font-black uppercase tracking-widest py-3 px-4 rounded-lg cursor-pointer hover:bg-primary/5 transition-colors ${t === 'Successful' ? 'text-emerald-500' : t === 'Failed' ? 'text-rose-500' : t === 'Pending' ? 'text-amber-500' : 'text-slate-700 dark:text-slate-300'}`}>
+                  {t}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -111,7 +120,7 @@ const Transactions: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-white/10">
               {filteredTransactions.map((txn) => (
-                <tr key={txn.id} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-all duration-200 group">
+                <tr key={txn.id} onClick={() => navigate(`/transactions/${txn.id}`)} className="cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 transition-all duration-200 group">
                   <td className="px-6 py-5 font-mono text-sm font-bold text-primary">{txn.id}</td>
                   <td className="px-6 py-5">
                     <span className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">{txn.method}</span>

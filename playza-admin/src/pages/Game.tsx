@@ -72,10 +72,10 @@ const Game: React.FC = () => {
           </div>
         </div>
         <div className="flex flex-wrap items-center justify-center lg:justify-end gap-3 w-full lg:w-auto mt-4 lg:mt-0 relative z-10">
-          <Button variant="outline" className="flex-1 lg:flex-none h-12 rounded-xl font-black uppercase tracking-widest text-[10px] border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5 text-slate-700 dark:text-slate-300">
+          <Button onClick={() => navigate('/games/create')} variant="outline" className="flex-1 lg:flex-none h-12 rounded-xl font-black uppercase tracking-widest text-[10px] border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5 text-slate-700 dark:text-slate-300">
             <MdEdit className="text-lg" /> Quick Edit
           </Button>
-          <Button className="flex-1 lg:flex-none h-12 bg-linear-to-r from-primary via-emerald-500 to-sky-500 text-white hover:from-primary hover:to-emerald-400 rounded-xl font-black shadow-xl shadow-primary/30 uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-95 group">
+          <Button onClick={() => navigate(`/sessions/PX-992-ALPHA`)} className="flex-1 lg:flex-none h-12 bg-linear-to-r from-primary via-emerald-500 to-sky-500 text-white hover:from-primary hover:to-emerald-400 rounded-xl font-black shadow-xl shadow-primary/30 uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-95 group">
             <MdRocketLaunch className="text-lg group-hover:-translate-y-1 transition-transform" /> Launch Game
           </Button>
         </div>
