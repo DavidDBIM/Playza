@@ -5,6 +5,7 @@ export interface UserRecord {
   username: string;
   fullName: string;
   email: string;
+  phoneNumber?: string;
   avatar: string;
   status: 'Active' | 'Banned' | 'Suspended' | 'Pending';
   kycStatus: 'Verified' | 'Pending' | 'Rejected';
@@ -15,6 +16,7 @@ export interface UserRecord {
   joinedDate: string;
   level: number;
   referrals: number;
+  referralCode?: string;
   lastActive: string;
 }
 

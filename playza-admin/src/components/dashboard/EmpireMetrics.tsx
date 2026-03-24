@@ -27,7 +27,7 @@ export const EmpireMetrics: React.FC<{ metrics: MetricData[] }> = ({ metrics }) 
         const Icon = getIcon(metric.icon);
         
         return (
-          <div key={metric.id} className="glass-card p-6 rounded-xl relative overflow-hidden group hover:scale-[1.02] transition-all cursor-default border border-white/5 bg-white/[0.02]">
+          <div key={metric.id} className="glass-card p-6 rounded-xl relative overflow-hidden group hover:scale-[1.02] transition-all cursor-default border border-white/5 bg-white/2">
             <div className="flex justify-between items-start mb-4">
               <Icon className="text-2xl" style={{ color: metric.color }} />
               <span className={`text-[10px] font-black flex items-center gap-1 uppercase tracking-widest ${metric.trend === 'up' ? 'text-emerald-400' : 'text-red-400'}`}>
