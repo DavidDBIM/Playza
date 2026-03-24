@@ -28,7 +28,7 @@ export const GrowthInsights: React.FC<{
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
       {/* Referral Performance */}
-      <div className="glass-card p-8 rounded-2xl border border-white/5 bg-white/[0.02]">
+      <div className="glass-card p-8 rounded-2xl border border-white/5 bg-white/2">
         <h3 className="text-xl font-black font-headline text-[#E5E2E3] mb-8 flex items-center gap-3 uppercase tracking-widest text-[10px]">
           <div className="p-2 rounded-xl bg-[#ffd700]/10 border border-[#ffd700]/10">
             <MdLink className="text-[#ffd700] text-xl" />
@@ -39,7 +39,7 @@ export const GrowthInsights: React.FC<{
           {referralStats.map((stat) => {
             const Icon = getRefIcon(stat.icon);
             return (
-              <div key={stat.id} className="bg-white/[0.03] p-5 rounded-2xl border border-white/5 shadow-inner hover:bg-white/[0.05] transition-all group">
+              <div key={stat.id} className="bg-white/3 p-5 rounded-2xl border border-white/5 shadow-inner hover:bg-white/5 transition-all group">
                 <div className="flex items-center gap-3 mb-3">
                   <Icon className="text-xl group-hover:scale-110 transition-transform" style={{ color: stat.color }} />
                   <span className="text-[10px] font-black text-[#E5E2E3]/20 uppercase tracking-[0.2em] leading-none">{stat.label}</span>
@@ -52,7 +52,7 @@ export const GrowthInsights: React.FC<{
       </div>
 
       {/* Loyalty Pulse */}
-      <div className="glass-card p-8 rounded-2xl border border-white/5 bg-white/[0.02]">
+      <div className="glass-card p-8 rounded-2xl border border-white/5 bg-white/2">
         <h3 className="text-xl font-black font-headline text-[#E5E2E3] mb-8 flex items-center gap-3 uppercase tracking-widest text-[10px]">
           <div className="p-2 rounded-xl bg-primary/10 border border-primary/10">
             <MdStar className="text-primary text-xl" />
@@ -63,7 +63,7 @@ export const GrowthInsights: React.FC<{
           {loyaltyPulse.map((stat) => {
             const Icon = getLoyaltyIcon(stat.icon);
             return (
-              <div key={stat.id} className="bg-white/[0.03] p-5 rounded-2xl border border-white/5 shadow-inner hover:bg-white/[0.05] transition-all group">
+              <div key={stat.id} className="bg-white/3 p-5 rounded-2xl border border-white/5 shadow-inner hover:bg-white/5 transition-all group">
                 <div className="flex items-center gap-3 mb-3">
                   <Icon className="text-xl group-hover:rotate-12 transition-transform" style={{ color: stat.color }} />
                   <span className="text-[10px] font-black text-[#E5E2E3]/20 uppercase tracking-[0.2em] leading-none">{stat.tier} Users</span>

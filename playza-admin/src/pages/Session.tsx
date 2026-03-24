@@ -222,7 +222,7 @@ const Session: React.FC = () => {
             </div>
 
             {/* Activity Log */}
-            <div className="glass-card rounded-[2rem] p-8 border border-slate-200 dark:border-white/10 shadow-sm flex flex-col h-[400px] bg-white/50 dark:bg-transparent">
+            <div className="glass-card rounded-[2rem] p-8 border border-slate-200 dark:border-white/10 shadow-sm flex flex-col h-100 bg-white/50 dark:bg-transparent">
               <h2 className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.3em] mb-8 flex items-center justify-between">
                 Live Feed
                 <MdBolt className="text-xl text-amber-500" />
@@ -250,7 +250,6 @@ const Session: React.FC = () => {
           </div>
         </section>
 
-        {/* Bottom Contextual Action Bar */}
         <section className="bg-slate-50 dark:bg-[#1a1c22] p-6 md:p-8 rounded-[2rem] flex flex-col xl:flex-row items-center justify-between gap-8 border border-slate-200 dark:border-white/10 shadow-lg relative overflow-hidden group mb-10">
           <div className="absolute inset-0 bg-linear-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
           <div className="flex flex-wrap items-center justify-center xl:justify-start gap-x-12 gap-y-6 text-center xl:text-left">
