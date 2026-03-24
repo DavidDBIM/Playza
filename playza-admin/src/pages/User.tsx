@@ -23,13 +23,13 @@ const User: React.FC = () => {
   const user = usersData.find(u => u.id === id || u.username === id) || usersData[0];
 
   const tabs = [
-    { id: 'matches', icon: MdHistory, label: 'Combat Log' },
-    { id: 'transactions', icon: MdReceiptLong, label: 'Capital Flow' },
-    { id: 'referrals', icon: MdAccountTree, label: 'Downline Network' }
+    { id: 'matches', icon: MdHistory, label: 'Game History' },
+    { id: 'transactions', icon: MdReceiptLong, label: 'Transactions' },
+    { id: 'referrals', icon: MdAccountTree, label: 'Referrals' }
   ] as const;
 
   return (
-    <main className="p-4 md:p-8 space-y-6 md:space-y-10 max-w-400 mx-auto w-full min-h-screen bg-background text-foreground transition-all duration-500">
+    <main className="flex-1 mx-auto w-full pb-10 p-4 md:p-8 space-y-6 md:space-y-10 max-w-350">
       
       {/* Identity Hero - Redesigned & Factored */}
       <UserIdentityHero user={user} />
@@ -37,31 +37,38 @@ const User: React.FC = () => {
       {/* Stats - Factored */}
       <UserAdvancedMetrics user={user} />
 
-      {/* Activity Console - Factored */}
-      <section className="glass-card bg-card rounded-[2.5rem] overflow-hidden border border-border/40 shadow-[0_32px_100px_rgba(0,0,0,0.1)] dark:shadow-[0_32px_100px_rgba(0,0,0,0.3)] transition-all">
+      {/* Activity Console */}
+      <section className="glass-card rounded-[2.5rem] overflow-hidden border border-slate-200 dark:border-white/10 shadow-lg transition-all duration-300">
+        
         {/* Navigation Tabs */}
-        <div className="px-6 md:px-12 pt-8 border-b border-border/20 flex flex-wrap gap-10 bg-muted/30 backdrop-blur-xl">
-          {tabs.map(tab => (
-            <button 
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`pb-6 text-xs font-black transition-all flex items-center gap-3 outline-none relative group uppercase tracking-[0.3em] ${
-                activeTab === tab.id ? 'text-primary' : 'text-muted-foreground/30 hover:text-foreground/60'
-              }`}
-            >
-              <tab.icon className={`text-xl transition-transform group-hover:scale-110 ${activeTab === tab.id ? 'text-primary' : ''}`} />
-              {tab.label}
-              {activeTab === tab.id && (
-                <div className="absolute bottom-0 left-0 w-full h-1 bg-primary rounded-t-full shadow-[0_-5px_15px_rgba(var(--primary-rgb),0.5)] transition-all duration-500"></div>
-              )}
-              {tab.id === 'referrals' && (
-                <span className="bg-primary text-primary-foreground text-[8px] font-black px-2 py-0.5 rounded-full ring-2 ring-card shadow-lg ml-1">{user.referrals}</span>
-              )}
-            </button>
-          ))}
+        <div className="px-4 md:px-8 border-b border-slate-200 dark:border-white/10 flex overflow-x-auto scrollbar-hide bg-slate-50/50 dark:bg-white/5 backdrop-blur-xl">
+          <div className="flex flex-nowrap w-max">
+            {tabs.map(tab => (
+              <button 
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`py-5 px-6 whitespace-nowrap text-xs md:text-sm font-bold transition-all flex items-center gap-3 outline-none relative group ${
+                  activeTab === tab.id 
+                    ? 'text-primary bg-primary/5' 
+                    : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                <tab.icon className={`text-xl transition-transform group-hover:scale-110 ${activeTab === tab.id ? 'text-primary' : ''}`} />
+                {tab.label}
+                {activeTab === tab.id && (
+                  <div className="absolute bottom-0 left-0 w-full h-1 bg-primary rounded-t-full shadow-[0_-2px_10px_rgba(var(--primary-rgb),0.5)] transition-all duration-500"></div>
+                )}
+                {tab.id === 'referrals' && (
+                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm ml-1 ${
+                    activeTab === tab.id ? 'bg-primary text-white' : 'bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-300'
+                  }`}>{user.referrals}</span>
+                )}
+              </button>
+            ))}
+          </div>
         </div>
 
-        <div className="min-h-[500px]">
+        <div className="min-h-[500px] bg-white/50 dark:bg-transparent">
           {activeTab === 'matches' && <CombatLog data={matchHistory} />}
           {activeTab === 'transactions' && <FinancialFlow data={transactionHistory} />}
           {activeTab === 'referrals' && <DownlineNetwork data={referralHistory} />}

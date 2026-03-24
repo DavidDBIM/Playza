@@ -39,50 +39,64 @@ const Games: React.FC = () => {
   };
 
   return (
-    <main className="p-4 md:p-8 space-y-6 md:space-y-8 max-w-400 mx-auto w-full min-h-screen bg-background text-foreground transition-colors duration-300">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl md:text-4xl font-headline font-black text-primary tracking-tight">Game Matrix</h1>
-          <p className="text-muted-foreground font-body text-sm md:text-base">Managing the virtual battlefields of the Playza Empire.</p>
+    <main className="flex-1 mx-auto w-full pb-10 p-4 md:p-8 space-y-6 md:space-y-8 max-w-350">
+      {/* Header Container */}
+      <div className="glass-card rounded-3xl p-6 md:p-10 relative overflow-hidden group">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-primary/20 blur-[120px] rounded-full -mr-40 -mt-40 transition-all duration-700 group-hover:bg-primary/30"></div>
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-secondary/10 blur-[100px] rounded-full -ml-32 -mb-32"></div>
+        
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+          <div className="space-y-2">
+            <h1 className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
+              <MdGamepad className="text-primary hidden md:inline-block" />
+              Games
+            </h1>
+            <p className="text-slate-500 dark:text-slate-400 font-bold text-sm md:text-base">
+              Manage platform games, tournaments, and configure match configurations.
+            </p>
+          </div>
+          <Button 
+            onClick={() => navigate('/games/create')}
+            className="w-full sm:w-auto bg-linear-to-r from-primary via-emerald-500 to-sky-500 hover:from-primary hover:to-emerald-400 text-white px-8 h-12 rounded-2xl flex items-center justify-center gap-2 shadow-xl shadow-primary/30 hover:scale-[1.02] transition-all text-sm uppercase tracking-widest font-black"
+          >
+            <MdAddCircleOutline className="text-xl" />
+            Deploy Game
+          </Button>
         </div>
-        <Button 
-          onClick={() => navigate('/games/create')}
-          className="w-full sm:w-auto bg-primary text-primary-foreground hover:bg-primary/90 font-black px-8 h-12 rounded-xl flex items-center justify-center gap-2 shadow-[0_8px_30px_rgb(var(--primary-rgb),0.3)] hover:scale-105 active:scale-95 transition-all text-sm uppercase tracking-widest"
-        >
-          <MdAddCircleOutline className="text-xl" />
-          Deploy New Game
-        </Button>
       </div>
 
       {/* Stats Cards */}
       <GamesStats stats={gamesStats} />
 
       {/* Table Section */}
-      <div className="glass-card bg-card text-card-foreground rounded-3xl overflow-hidden border border-border/50 shadow-2xl transition-all duration-300">
+      <div className="glass-card rounded-3xl overflow-hidden relative">
+        <div className="absolute -right-20 -bottom-20 w-64 h-64 bg-primary/10 blur-[100px] rounded-full pointer-events-none"></div>
         
         {/* Toolbar */}
-        <GamesToolbar 
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          categoryFilter={categoryFilter}
-          setCategoryFilter={setCategoryFilter}
-          statusFilter={statusFilter}
-          setStatusFilter={setStatusFilter}
-          clearFilters={clearFilters}
-        />
+        <div className="relative z-10">
+          <GamesToolbar 
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            categoryFilter={categoryFilter}
+            setCategoryFilter={setCategoryFilter}
+            statusFilter={statusFilter}
+            setStatusFilter={setStatusFilter}
+            clearFilters={clearFilters}
+          />
+        </div>
 
         {/* Table */}
-        <GamesTable games={filteredGames} clearFilters={clearFilters} />
+        <div className="relative z-10">
+          <GamesTable games={filteredGames} clearFilters={clearFilters} />
+        </div>
 
         {/* Info Footer */}
-        <div className="px-8 py-6 bg-muted/30 border-t border-border/30 flex items-center justify-between text-muted-foreground/50">
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-2">
-            <MdGamepad className="text-primary text-sm animate-pulse" />
-            Core Simulation: <span className="text-emerald-500">Stable</span>
+        <div className="relative z-10 px-8 py-6 bg-slate-50/50 dark:bg-white/5 border-t border-slate-200 dark:border-white/10 flex items-center justify-between text-slate-500 dark:text-slate-400">
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2">
+            Database Sync: <span className="text-emerald-500">Connected</span>
           </p>
           <p className="text-[10px] font-black uppercase tracking-[0.2em]">
-            Syncing <span className="text-primary">{filteredGames.length}</span> Active Projections
+            Displaying <span className="text-primary">{filteredGames.length}</span> Records
           </p>
         </div>
       </div>

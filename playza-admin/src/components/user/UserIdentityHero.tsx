@@ -7,7 +7,9 @@ import {
   MdWarning, 
   MdAccountBalance, 
   MdFactCheck, 
-  MdBlock 
+  MdBlock,
+  MdPhone,
+  MdContentCopy
 } from 'react-icons/md';
 import { useNavigate } from 'react-router';
 import { Button } from '../ui/button';
@@ -78,12 +80,27 @@ export const UserIdentityHero: React.FC<UserIdentityHeroProps> = ({ user }) => {
                   {user.email}
                 </p>
                 <div className="hidden sm:block w-px h-6 bg-border/50"></div>
+                <p className="flex items-center gap-2 hover:text-primary transition-colors cursor-pointer group/phone">
+                  <div className="p-2 rounded-lg bg-muted group-hover/phone:bg-primary/10 transition-colors">
+                    <MdPhone className="text-primary text-xl" />
+                  </div>
+                  {user.phoneNumber || '+234 800 000 0000'}
+                </p>
+                <div className="hidden sm:block w-px h-6 bg-border/50"></div>
                 <p className="flex items-center gap-2">
                   <div className="p-2 rounded-lg bg-muted">
                     <MdTimeline className="text-muted-foreground/30 text-xl" />
                   </div>
                   Joined {user.joinedDate}
                 </p>
+                <div className="hidden sm:block w-px h-6 bg-border/50"></div>
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-500 font-bold">Referral Code:</span>
+                  <span className="text-primary font-black uppercase tracking-widest">{user.referralCode || 'REF-N/A'}</span>
+                  <button className="text-slate-400 hover:text-primary transition-colors">
+                    <MdContentCopy className="text-lg" />
+                  </button>
+                </div>
               </div>
 
               <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 mt-4">
@@ -95,18 +112,17 @@ export const UserIdentityHero: React.FC<UserIdentityHeroProps> = ({ user }) => {
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row lg:flex-col items-stretch lg:items-end gap-5 w-full lg:w-auto">
-            <Button className="flex-1 bg-linear-to-br from-primary via-primary/80 to-primary text-primary-foreground hover:shadow-[0_0_30px_rgb(var(--primary-rgb),0.3)] font-black px-10 h-16 rounded-2xl flex items-center justify-center gap-4 transition-all hover:scale-105 active:scale-95 shadow-xl uppercase text-xs tracking-widest border border-white/20 group relative overflow-hidden">
-               <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-              <MdAccountBalance className="text-2xl group-hover:rotate-12 transition-transform" />
+          <div className="flex flex-wrap items-center lg:flex-col lg:items-end gap-3 w-full lg:w-auto">
+            <Button className="flex-1 sm:flex-none bg-primary hover:bg-primary/90 text-white font-black px-6 h-12 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md shadow-primary/20 uppercase text-[10px] tracking-widest group">
+              <MdAccountBalance className="text-base" />
               Adjust Capital
             </Button>
-            <Button variant="outline" className="flex-1 bg-card/40 backdrop-blur-xl hover:bg-primary/10 hover:text-primary hover:border-primary/30 text-foreground font-black px-10 h-16 rounded-2xl flex items-center justify-center gap-4 border border-border shadow-xl uppercase text-xs tracking-widest transition-all group">
-              <MdFactCheck className="text-2xl group-hover:scale-110 transition-transform" />
+            <Button variant="outline" className="flex-1 sm:flex-none bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 font-black px-6 h-12 rounded-xl flex items-center justify-center gap-2 border border-slate-200 dark:border-white/10 uppercase text-[10px] tracking-widest transition-all">
+              <MdFactCheck className="text-base" />
               Identity Review
             </Button>
-            <Button variant="outline" className="flex-1 border-destructive/20 bg-destructive/5 text-destructive hover:bg-destructive hover:text-white font-black px-10 h-16 rounded-2xl flex items-center justify-center gap-4 transition-all uppercase text-xs tracking-widest shadow-xl group">
-              <MdBlock className="text-2xl group-hover:scale-125 transition-transform" />
+            <Button variant="outline" className="flex-1 sm:flex-none border-rose-500 border bg-rose-500/5 hover:bg-rose-500 hover:text-white text-rose-500 font-black px-6 h-12 rounded-xl flex items-center justify-center gap-2 transition-all uppercase text-[10px] tracking-widest">
+              <MdBlock className="text-base" />
               Banish User
             </Button>
           </div>

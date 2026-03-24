@@ -26,7 +26,7 @@ export const GamingArenas: React.FC<{
     <div className="grid grid-cols-1 xl:grid-cols-4 gap-8 mb-8">
       <div className="xl:col-span-3">
         <div className="flex justify-between items-center mb-8">
-          <h3 className="text-3xl font-black font-headline text-[#E5E2E3] tracking-tighter uppercase text-sm tracking-widest">Active Gaming Arenas</h3>
+          <h3 className="font-black font-headline text-[#E5E2E3] uppercase text-sm tracking-widest">Active Gaming Arenas</h3>
           <Link className="text-primary text-[10px] uppercase font-black tracking-widest hover:underline shadow-sm" to="/sessions">View All Systems</Link>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
