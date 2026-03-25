@@ -129,7 +129,6 @@ const OTP = ({ onClick }: OtpProps) => {
     );
   };
 
-  // Mask the email for display  e.g.  an***@playza.gg
   const maskedEmail = pendingEmail
     ? pendingEmail.replace(/^(.{2})(.*)(@.*)$/, (_, a, _b, c) => `${a}***${c}`)
     : "your email";
