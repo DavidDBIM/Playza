@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { navItems } from "@/constants/constants";
 import { NavLink, useLocation } from "react-router";
 import { MoreHorizontal, X } from "lucide-react";
@@ -16,6 +16,26 @@ interface NavItem {
 const NavFooter = () => {
   const { pathname } = useLocation();
   const [isMoreOpen, setIsMoreOpen] = useState(false);
+  const moreMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (moreMenuRef.current && !moreMenuRef.current.contains(event.target as Node)) {
+        setIsMoreOpen(false);
+      }
+    };
+
+    if (isMoreOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isMoreOpen]);
+
 
   const getItem = (label: string): NavItem | undefined => {
     const item = navItems.find((i) => i.label === label);
@@ -135,7 +155,7 @@ const NavFooter = () => {
       
       {/* More Menu Pop-up */}
       {isMoreOpen && (
-        <div className="absolute bottom-20 left-0 right-0 z-50 animate-in slide-in-from-bottom-10 fade-in duration-300">
+        <div ref={moreMenuRef} className="absolute bottom-20 left-0 right-0 z-50 animate-in slide-in-from-bottom-10 fade-in duration-300">
            <div className="bg-playza-dark/95 backdrop-blur-3xl rounded-3xl border border-white/10 p-4 shadow-[0_-20px_50px_rgba(0,0,0,0.5)] overflow-hidden relative">
               <div className="flex justify-between items-center mb-4 px-2">
                 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Other Links</span>
