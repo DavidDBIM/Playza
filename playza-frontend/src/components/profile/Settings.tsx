@@ -1,4 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useForm, useWatch } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { profileSchema, type ProfileFormValues } from "@/schemas/user.schema";
 import {
   MdAdd,
   MdPhotoCamera,
@@ -8,19 +11,86 @@ import {
   MdDelete,
 } from "react-icons/md";
 import { AddPaymentMethodModal } from "./AddPaymentMethodModal";
-import { useAuth } from "@/context/auth";
+import { useMe } from "../../hooks/users/useMe";
+import { useUpdateMe } from "../../hooks/users/useUpdateMe";
+// import { useDeactivateUser } from "../../hooks/users/useDeactivateUser";
 
 const Settings = () => {
-  const { user, updateProfile } = useAuth();
+  const { data: user, isLoading } = useMe();
+  const { mutate: updateProfile, isPending } = useUpdateMe();
+  // const { mutate: deactivateUser, isPending: isDeactivating } = useDeactivateUser();
+
   const [showAddMethod, setShowAddMethod] = useState(false);
   const [hasKudaAccount, setHasKudaAccount] = useState(true);
 
-  const [firstName, setFirstName] = useState(user?.firstName || "");
-  const [lastName, setLastName] = useState(user?.lastName || "");
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setValue,
+    control,
+    formState: { errors, isDirty },
+  } = useForm<ProfileFormValues>({
+    resolver: zodResolver(profileSchema),
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      phone: "",
+      avatarUrl: "",
+    },
+  });
 
-  const handleSave = () => {
-    updateProfile({ firstName, lastName });
+  const avatarUrl = useWatch({ control, name: "avatarUrl" });
+
+  const initialized = useRef(false);
+
+  useEffect(() => {
+    if (user && !initialized.current) {
+      reset({
+        firstName: user.first_name || "",
+        lastName: user.last_name || "",
+        phone: user.phone || "",
+        avatarUrl: user.avatar_url || "",
+      });
+      initialized.current = true;
+    }
+  }, [user, reset]);
+
+  const onProfileSubmit = (data: ProfileFormValues) => {
+    updateProfile({
+      first_name: data.firstName,
+      last_name: data.lastName,
+      phone: data.phone,
+      avatar_url: data.avatarUrl,
+    });
   };
+
+  // const handleDeactivate = () => {
+  //   if (
+  //     user &&
+  //     confirm(
+  //       "Are you sure you want to deactivate your account? This action cannot be undone.",
+  //     )
+  //   ) {
+  //     deactivateUser(user.id, {
+  //       onSuccess: () => {
+  //         localStorage.removeItem("playza_token");
+  //         window.location.href = "/";
+  //       },
+  //     });
+  //   }
+  // };
+
+  if (isLoading) {
+    return (
+      <div className="flex-1 mx-auto w-full pb-10 flex flex-col items-center justify-center min-h-[50vh]">
+        <div className="size-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+        <p className="mt-4 text-slate-500 font-bold animate-pulse">
+          Loading Settings...
+        </p>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -53,9 +123,20 @@ const Settings = () => {
                   <img
                     alt="Avatar"
                     className="w-full h-full object-cover opacity-90 group-hover/avatar:opacity-100 transition-opacity"
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuCTRp1_sbmUx0yY6FodbHtszGAcUBPop6CRljUKN9pUxBkh4QHv-j685IODQ9vs9HTN0BZhw_NhegqeZv5dRJRx_V0vXTrGmVZmPyJ8GIzbMHUVrBHxQcU1HPJYoUvxVdCQ6jBm2f_W0OMiT5NcGnBFfRFy_bozuXEBKxGyvd7xP1scI_l-IGyIHTN11tGegmAWt1MOY3Fk1CeIzxFO2PoJoMR8123ld7RXejdmncOF9YCpxbEkYkYeMFo_kqt483h_cTSi6BG-clgw"
+                    src={
+                      avatarUrl ||
+                      user?.avatar_url ||
+                      "https://lh3.googleusercontent.com/aida-public/AB6AXuCTRp1_sbmUx0yY6FodbHtszGAcUBPop6CRljUKN9pUxBkh4QHv-j685IODQ9vs9HTN0BZhw_NhegqeZv5dRJRx_V0vXTrGmVZmPyJ8GIzbMHUVrBHxQcU1HPJYoUvxVdCQ6jBm2f_W0OMiT5NcGnBFfRFy_bozuXEBKxGyvd7xP1scI_l-IGyIHTN11tGegmAWt1MOY3Fk1CeIzxFO2PoJoMR8123ld7RXejdmncOF9YCpxbEkYkYeMFo_kqt483h_cTSi6BG-clgw"
+                    }
                   />
-                  <div className="absolute inset-0 bg-primary/60 opacity-0 group-hover/avatar:opacity-100 flex items-center justify-center transition-all cursor-pointer backdrop-blur-sm">
+                  <div
+                    onClick={() => {
+                      const url = prompt("Enter Image URL for new avatar:");
+                      if (url)
+                        setValue("avatarUrl", url, { shouldDirty: true });
+                    }}
+                    className="absolute inset-0 bg-primary/60 opacity-0 group-hover/avatar:opacity-100 flex items-center justify-center transition-all cursor-pointer backdrop-blur-sm"
+                  >
                     <MdPhotoCamera className="text-3xl text-white" />
                   </div>
                 </div>
@@ -69,7 +150,10 @@ const Settings = () => {
             </div>
 
             {/* Form Fields */}
-            <div className="space-y-6">
+            <form
+              className="space-y-6"
+              onSubmit={handleSubmit(onProfileSubmit)}
+            >
               {/* Real Name row */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="space-y-2">
@@ -77,24 +161,40 @@ const Settings = () => {
                     First Name
                   </label>
                   <input
-                    className="w-full h-12 px-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold focus:ring-1 focus:ring-primary focus:border-primary transition-all text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700"
+                    {...register("firstName")}
+                    className={`w-full h-12 px-5 bg-slate-50 dark:bg-white/5 border rounded-2xl text-sm font-bold focus:ring-1 focus:ring-primary focus:border-primary transition-all text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700 ${
+                      errors.firstName
+                        ? "border-red-500 focus:ring-red-500"
+                        : "border-slate-200 dark:border-white/5"
+                    }`}
                     type="text"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
                     placeholder="Anthony"
                   />
+                  {errors.firstName && (
+                    <p className="text-[10px] text-red-500 font-bold ml-1 italic">
+                      {errors.firstName.message}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
                     Last Name
                   </label>
                   <input
-                    className="w-full h-12 px-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold focus:ring-1 focus:ring-primary focus:border-primary transition-all text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700"
+                    {...register("lastName")}
+                    className={`w-full h-12 px-5 bg-slate-50 dark:bg-white/5 border rounded-2xl text-sm font-bold focus:ring-1 focus:ring-primary focus:border-primary transition-all text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700 ${
+                      errors.lastName
+                        ? "border-red-500 focus:ring-red-500"
+                        : "border-slate-200 dark:border-white/5"
+                    }`}
                     type="text"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
                     placeholder="Guseltony"
                   />
+                  {errors.lastName && (
+                    <p className="text-[10px] text-red-500 font-bold ml-1 italic">
+                      {errors.lastName.message}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -108,18 +208,44 @@ const Settings = () => {
                 </p>
               </div>
 
-              {/* Nickname & Tagline */}
+              {/* Nickname & Phone */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
                     Gaming Nickname
                   </label>
                   <input
-                    className="w-full h-12 px-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold focus:ring-1 focus:ring-primary focus:border-primary transition-all text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700"
+                    className="w-full h-12 px-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold focus:ring-1 focus:ring-primary focus:border-primary transition-all text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700 disabled:opacity-50"
                     type="text"
+                    value={user?.username || ""}
+                    disabled
                     placeholder="AnthonyGamer"
                   />
                 </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
+                    Phone Number
+                  </label>
+                  <input
+                    {...register("phone")}
+                    className={`w-full h-12 px-5 bg-slate-50 dark:bg-white/5 border rounded-2xl text-sm font-bold focus:ring-1 focus:ring-primary focus:border-primary transition-all text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700 ${
+                      errors.phone
+                        ? "border-red-500 focus:ring-red-500"
+                        : "border-slate-200 dark:border-white/5"
+                    }`}
+                    type="tel"
+                    placeholder="080 000 0000"
+                  />
+                  {errors.phone && (
+                    <p className="text-[10px] text-red-500 font-bold ml-1 italic">
+                      {errors.phone.message}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Tagline */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
                     Tagline / Title
@@ -129,6 +255,26 @@ const Settings = () => {
                     type="text"
                     placeholder="The Subway Legend"
                   />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
+                    Avatar URL
+                  </label>
+                  <input
+                    {...register("avatarUrl")}
+                    className={`w-full h-12 px-5 bg-slate-50 dark:bg-white/5 border rounded-2xl text-sm font-bold focus:ring-1 focus:ring-primary focus:border-primary transition-all text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700 ${
+                      errors.avatarUrl
+                        ? "border-red-500 focus:ring-red-500"
+                        : "border-slate-200 dark:border-white/5"
+                    }`}
+                    type="url"
+                    placeholder="https://example.com/avatar.jpg"
+                  />
+                  {errors.avatarUrl && (
+                    <p className="text-[10px] text-red-500 font-bold ml-1 italic">
+                      {errors.avatarUrl.message}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -143,7 +289,7 @@ const Settings = () => {
                   rows={4}
                 ></textarea>
               </div>
-            </div>
+            </form>
           </div>
         </section>
 
@@ -273,7 +419,7 @@ const Settings = () => {
                       Legal Name
                     </p>
                     <p className="text-slate-900 dark:text-white font-black uppercase italic">
-                      Anthony Guseltony
+                      {user?.first_name} {user?.last_name}
                     </p>
                   </div>
                 </div>
@@ -300,25 +446,44 @@ const Settings = () => {
 
         {/* ── Final Actions ── */}
         <div className="pt-10 border-t border-slate-200 dark:border-white/5 flex flex-col sm:flex-row items-center justify-between gap-6">
-          <button className="text-xs font-black text-red-500/60 uppercase tracking-widest hover:text-red-500 transition-all group flex items-center gap-2">
-            <span className="size-2 bg-red-500/60 rounded-full group-hover:animate-pulse"></span>
-            Deactivate Gaming Account
-          </button>
+          {/* <button
+            onClick={handleDeactivate}
+            disabled={isDeactivating}
+            className="text-xs font-black text-red-500/60 uppercase tracking-widest hover:text-red-500 transition-all group flex items-center gap-2 disabled:opacity-50"
+          >
+            {isDeactivating ? (
+              <div className="size-3 border-2 border-red-500/20 border-t-red-500 rounded-full animate-spin"></div>
+            ) : (
+              <span className="size-2 bg-red-500/60 rounded-full group-hover:animate-pulse"></span>
+            )}
+            {isDeactivating ? "Deactivating..." : "Deactivate Gaming Account"}
+          </button> */}
           <div className="flex gap-4 w-full sm:w-auto">
-            <button className="flex-1 sm:flex-none h-12 px-8 rounded-2xl text-xs font-black text-slate-500 uppercase tracking-widest hover:text-slate-900 dark:hover:text-white transition-all bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 shadow-sm">
+            <button
+              onClick={() => reset()}
+              className="flex-1 sm:flex-none h-12 px-8 rounded-2xl text-xs font-black text-slate-500 uppercase tracking-widest hover:text-slate-900 dark:hover:text-white transition-all bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 shadow-sm"
+            >
               Reset
             </button>
             <button
-              onClick={handleSave}
-              className="flex-1 sm:flex-none h-12 px-10 rounded-2xl bg-primary text-white text-xs font-black uppercase tracking-[0.1em] hover:scale-105 hover:brightness-110 shadow-2xl glow-accent transition-all"
+              onClick={handleSubmit(onProfileSubmit)}
+              disabled={isPending || !isDirty}
+              className="flex-1 sm:flex-none min-w-40 h-12 px-10 rounded-2xl bg-primary text-white text-xs font-black uppercase tracking-[0.1em] hover:scale-105 hover:brightness-110 shadow-2xl glow-accent transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              Save Everything
+              {isPending ? (
+                <>
+                  <div className="size-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                  <span>Saving...</span>
+                </>
+              ) : (
+                "Save Everything"
+              )}
             </button>
           </div>
         </div>
       </div>
     </>
   );
-};
+};;
 
 export default Settings;

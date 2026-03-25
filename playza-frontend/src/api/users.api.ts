@@ -1,0 +1,35 @@
+import axiosInstance from "./axiosInstance";
+
+export interface User {
+  id: string;
+  username: string;
+  email: string;
+  phone: string;
+  first_name?: string;
+  last_name?: string;
+  avatar_url?: string;
+  role: string;
+  is_active: boolean;
+  is_verified: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UpdateUserPayload {
+  first_name?: string;
+  last_name?: string;
+  phone?: string;
+  avatar_url?: string;
+}
+
+export const getMeApi = async (): Promise<User> => {
+  const { data } = await axiosInstance.get(`/users/me`);
+  return data.data;
+};
+
+export const updateMeApi = async (
+  payload: UpdateUserPayload,
+): Promise<User> => {
+  const { data } = await axiosInstance.patch(`/users/me`, payload);
+  return data.data;
+};

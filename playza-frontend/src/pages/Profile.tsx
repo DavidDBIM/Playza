@@ -1,11 +1,15 @@
 import { useState } from "react";
 import { MdEdit, MdShare, MdPerson, MdHistory, MdEmojiEvents, MdSettings, MdSecurity, MdLogout } from "react-icons/md";
-import { NavLink, Outlet, useLocation } from "react-router";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router";
 import BadgeModal from "../components/profile/BadgeModal";
+
+import { useMe } from "../hooks/users/useMe";
 
 const Profile = () => {
   const [isBadgeModalOpen, setIsBadgeModalOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { data: user, isLoading } = useMe();
 
   const menuItems = [
     { label: "Overview", icon: <MdPerson />, to: "overview" },
@@ -18,10 +22,22 @@ const Profile = () => {
   const isMobileSubRoute = location.pathname.includes("/profile/");
   const showMobileContent = isMobileSubRoute;
 
-  // Overview should only be active on mobile if we're actually on the subroute
-  const isOverviewActive = window.innerWidth >= 768 
-    ? (location.pathname === "/profile" || location.pathname === "/profile/overview")
-    : location.pathname === "/profile/overview";
+  const isOverviewActive =
+    window.innerWidth >= 768
+      ? location.pathname === "/profile" ||
+        location.pathname === "/profile/overview"
+      : location.pathname === "/profile/overview";
+
+  if (isLoading) {
+    return (
+      <div className="flex-1 mx-auto w-full pb-10 flex flex-col items-center justify-center min-h-[50vh]">
+        <div className="size-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+        <p className="mt-4 text-slate-500 font-bold animate-pulse">
+          Loading Profile...
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 mx-auto w-full pb-10">
@@ -35,10 +51,9 @@ const Profile = () => {
           <div className="relative group/avatar">
             <div
               className="bg-center bg-no-repeat aspect-square bg-cover rounded-[2.5rem] size-32 md:size-40 border-4 border-white/10 shadow-2xl transition-transform duration-500 group-hover/avatar:scale-105"
-              data-alt="Main profile picture of AnthonyGamer"
+              data-alt={`Main profile picture of ${user?.username}`}
               style={{
-                backgroundImage:
-                  "url('https://lh3.googleusercontent.com/aida-public/AB6AXuBj713r4_AP0JQgmPFYnmzRh1SV79sZbpL4MICPWQs9hBCqUTk2PisA4wbOCgB8ALSP4IpFKuovZHLcdzP0gflxdAbwM9sZsKHOr08E8cwmztSU6P6BZEyEYl0aXjHFaxd5iCMr_ZeatpKGFtUNw7KNe6Zi1ImYA2nVtjSqbcdJTYzpKvs2JvwjRpFcr2mmGQ5pNvu5r_u6Q145YXSiIY98EfLGAnrC_QfzbgQrD0xEjGGKPyEgXb9e1uvQJ66VKtSbQWGMjjWR-Wv-')",
+                backgroundImage: `url('${user?.avatar_url || "https://lh3.googleusercontent.com/o/AL1-2u-0b0c0d0e0f0g0h0i0j0k0l0m0n0o0p0q0r0s0t0u0v0w0x0y0z0"}')`,
               }}
             ></div>
             <button
@@ -53,7 +68,7 @@ const Profile = () => {
           <div className="flex flex-col flex-1 text-center md:text-left pt-2">
             <div className="flex flex-col md:flex-row items-center justify-center lg:justify-normal gap-2 md:gap-4 mb-1 md:mb-3">
               <h1 className="text-slate-900 dark:text-white text-3xl lg:text-5xl font-black tracking-tight">
-                AnthonyGamer
+                {user?.username}
               </h1>
               <div className="flex items-center px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 backdrop-blur-md">
                 <span className="text-primary text-xs font-black uppercase tracking-widest">
@@ -63,15 +78,26 @@ const Profile = () => {
             </div>
 
             <div className="flex items-center justify-center lg:justify-start gap-2 text-slate-500 dark:text-slate-400 text-sm font-bold mb-2 lg:mb-6">
-              <span>ID: #A92011</span>
+              <span>ID: #{user?.id.slice(-6).toUpperCase()}</span>
               <span className="size-1 bg-slate-500 rounded-full"></span>
-              <span>Joined Jan 2024</span>
+              <span>
+                Joined{" "}
+                {user?.created_at
+                  ? new Date(user.created_at).toLocaleDateString("en-US", {
+                      month: "short",
+                      year: "numeric",
+                    })
+                  : "N/A"}
+              </span>
             </div>
           </div>
 
           {/* Action Buttons */}
           <div className="flex flex-row lg:flex-col gap-3 w-full md:w-auto pt-2">
-            <button className="flex-1 md:w-44 py-3 bg-white/5 border border-white/10 rounded-2xl text-slate-900 dark:text-white text-xs font-black uppercase tracking-widest hover:bg-white/10 transition-all flex items-center justify-center gap-2">
+            <button
+              onClick={() => navigate("settings")}
+              className="flex-1 md:w-44 py-3 bg-white/5 border border-white/10 rounded-2xl text-slate-900 dark:text-white text-xs font-black uppercase tracking-widest hover:bg-white/10 transition-all flex items-center justify-center gap-2"
+            >
               <MdEdit /> Edit Profile
             </button>
             <button
@@ -118,7 +144,8 @@ const Profile = () => {
                 to={item.to}
                 key={item.label}
                 className={({ isActive }) => {
-                  const active = item.label === "Overview" ? isOverviewActive : isActive;
+                  const active =
+                    item.label === "Overview" ? isOverviewActive : isActive;
                   return `flex items-center gap-4 px-5 py-4 rounded-xl transition-all duration-300 font-bold text-sm ${
                     active
                       ? "bg-primary text-white shadow-lg glow-accent scale-[1.02]"
@@ -167,7 +194,10 @@ const Profile = () => {
         <div className="flex-1 md:block hidden">
           <Outlet />
         </div>
-        <div className="flex-1 md:hidden scroll-mt-24" id="profile-content-mobile">
+        <div
+          className="flex-1 md:hidden scroll-mt-24"
+          id="profile-content-mobile"
+        >
           {showMobileContent && <Outlet />}
 
           {/* Sidebar Action Cards (Mobile Only - appears under content) */}

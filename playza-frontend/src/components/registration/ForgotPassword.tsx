@@ -1,12 +1,17 @@
 import { useState } from "react";
 import { ArrowBigLeft, Loader2, MailCheck } from "lucide-react";
-import { MdAlternateEmail, MdVerifiedUser } from "react-icons/md";
+import { MdAlternateEmail } from "react-icons/md";
 import { RxReset } from "react-icons/rx";
 import { useForgotPassword } from "@/hooks/auth/useForgotPassword";
 
 const ForgotPassword = ({ onClick }: { onClick: (value: string) => void }) => {
   const [email, setEmail] = useState("");
-  const { mutate: sendReset, isPending, error, isSuccess } = useForgotPassword();
+  const {
+    mutate: sendReset,
+    isPending,
+    error,
+    isSuccess,
+  } = useForgotPassword();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,13 +122,6 @@ const ForgotPassword = ({ onClick }: { onClick: (value: string) => void }) => {
             </button>
           </div>
         )}
-
-        <div className="mt-10 pt-6 border-t border-slate-200 dark:border-primary/10 text-center">
-          <p className="text-xs text-slate-500 dark:text-slate-500 flex items-center justify-center gap-1 uppercase tracking-widest font-bold">
-            <MdVerifiedUser className="material-symbols-outlined text-xs" />
-            Bank-Grade Security
-          </p>
-        </div>
       </div>
     </main>
   );
