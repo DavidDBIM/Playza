@@ -107,7 +107,7 @@ const CategoryRow = ({ games, title, categorySlug, totalGames }: CategoryRowProp
           {games.map((game) => (
             <div
               key={game.id}
-              className="shrink-0 snap-start w-40 md:w-48 xl:w-52"
+              className="shrink-0 snap-start "
             >
               <GamesCard {...game} />
             </div>

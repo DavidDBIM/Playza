@@ -14,6 +14,14 @@ import {
   MdCheck
 } from 'react-icons/md';
 import { Button } from '../components/ui/button';
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from '../components/ui/table';
 
 const Session: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -124,18 +132,18 @@ const Session: React.FC = () => {
                   <MdFilterList className="text-lg" /> Filter Roster
                 </Button>
               </div>
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr className="text-left bg-slate-50/50 dark:bg-white/5 border-b border-slate-200 dark:border-white/10">
-                      <th className="px-6 py-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Player</th>
-                      <th className="px-6 py-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest text-center">Score</th>
-                      <th className="px-6 py-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest text-center">Rank</th>
-                      <th className="px-6 py-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Status</th>
-                      <th className="px-6 py-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-200 dark:divide-white/10">
+              <div className="overflow-x-auto no-scrollbar min-h-120">
+                <Table>
+                  <TableHeader className="bg-slate-50/50 dark:bg-white/5 border-b border-slate-200 dark:border-white/10">
+                    <TableRow className="hover:bg-transparent border-none">
+                      <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest h-auto font-black shadow-none border-none text-slate-500 dark:text-slate-400">Player</TableHead>
+                      <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-center h-auto font-black shadow-none border-none text-slate-500 dark:text-slate-400">Score</TableHead>
+                      <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-center h-auto font-black shadow-none border-none text-slate-500 dark:text-slate-400">Rank</TableHead>
+                      <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest h-auto font-black shadow-none border-none text-slate-500 dark:text-slate-400">Status</TableHead>
+                      <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-right h-auto font-black shadow-none border-none text-slate-500 dark:text-slate-400">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody className="divide-y divide-slate-200 dark:divide-white/10">
                     {[
                       { name: 'NeoKnight_99', region: 'EUW', score: '14,290', rank: '#01', color: 'text-primary' },
                       { name: 'Z-Void_Runner', region: 'USE', score: '13,842', rank: '#02', color: 'text-slate-600 dark:text-slate-400' },
@@ -148,10 +156,10 @@ const Session: React.FC = () => {
                       { name: 'Viper_Strike', region: 'USE', score: '10,200', rank: '#09', color: 'text-slate-600 dark:text-slate-400' },
                       { name: 'Nova_Burst', region: 'EUW', score: '9,980', rank: '#10', color: 'text-slate-600 dark:text-slate-400' }
                     ].map((player, i) => (
-                      <tr key={i} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group">
-                        <td className="px-6 py-5 border-b border-transparent">
+                      <TableRow key={i} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group border-border/10">
+                        <TableCell className="px-6 py-5">
                           <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/10 border border-slate-200 dark:border-white/10 flex items-center justify-center font-black text-primary shadow-sm">
+                            <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/10 border border-slate-200 dark:border-white/10 flex items-center justify-center text-primary shadow-sm font-black">
                               {player.name.substring(0, 2)}
                             </div>
                             <div>
@@ -159,27 +167,27 @@ const Session: React.FC = () => {
                               <p className="text-[9px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-[0.2em] mt-0.5">Region: {player.region}</p>
                             </div>
                           </div>
-                        </td>
-                        <td className="px-6 py-5 text-center border-b border-transparent">
-                          <span className="font-black text-slate-900 dark:text-white text-lg">{player.score}</span>
-                        </td>
-                        <td className="px-6 py-5 text-center border-b border-transparent">
+                        </TableCell>
+                        <TableCell className="px-6 py-5 text-center font-black text-slate-900 dark:text-white text-lg">
+                          {player.score}
+                        </TableCell>
+                        <TableCell className="px-6 py-5 text-center">
                           <span className={`font-black italic text-sm ${player.color} ${player.rank === '#01' ? 'drop-shadow-sm' : ''}`}>{player.rank}</span>
-                        </td>
-                        <td className="px-6 py-5 border-b border-transparent">
+                        </TableCell>
+                        <TableCell className="px-6 py-5">
                           <span className="flex items-center gap-2 text-[10px] font-black text-emerald-500 uppercase tracking-widest">
                             <MdCircle className="text-[8px] animate-pulse" /> Live
                           </span>
-                        </td>
-                        <td className="px-6 py-5 text-right border-b border-transparent">
+                        </TableCell>
+                        <TableCell className="px-6 py-5 text-right">
                           <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-white/10">
                             <MdMoreVert className="text-xl" />
                           </Button>
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     ))}
-                  </tbody>
-                </table>
+                  </TableBody>
+                </Table>
               </div>
               <div className="p-4 bg-slate-50/50 dark:bg-white/5 text-center border-t border-slate-200 dark:border-white/10">
                 <button 

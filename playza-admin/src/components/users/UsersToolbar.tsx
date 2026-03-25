@@ -18,6 +18,8 @@ interface UsersToolbarProps {
   setSearchQuery: (query: string) => void;
   statusFilter: string;
   setStatusFilter: (status: string) => void;
+  joinedFilter: string;
+  setJoinedFilter: (joined: string) => void;
   clearFilters: () => void;
 }
 
@@ -26,6 +28,8 @@ export const UsersToolbar: React.FC<UsersToolbarProps> = ({
   setSearchQuery,
   statusFilter,
   setStatusFilter,
+  joinedFilter,
+  setJoinedFilter,
   clearFilters
 }) => {
   return (
@@ -63,6 +67,20 @@ export const UsersToolbar: React.FC<UsersToolbarProps> = ({
               <DropdownMenuItem onClick={() => setStatusFilter('Banned')} className="text-[10px] font-black uppercase tracking-widest py-3 px-4 rounded-xl cursor-pointer text-destructive hover:bg-destructive/5 transition-colors">Banned Users</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setStatusFilter('Suspended')} className="text-[10px] font-black uppercase tracking-widest py-3 px-4 rounded-xl cursor-pointer text-amber-500 hover:bg-amber-500/5 transition-colors">Suspended</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setStatusFilter('Pending')} className="text-[10px] font-black uppercase tracking-widest py-3 px-4 rounded-xl cursor-pointer text-blue-500 hover:bg-blue-500/5 transition-colors">Pending Review</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="flex-1 md:flex-none bg-background border-border/50 rounded-2xl text-xs font-black py-3.5 pl-4 pr-3 h-12 focus:ring-2 focus:ring-primary/20 text-foreground outline-none cursor-pointer hover:bg-accent/10 transition-all flex items-center gap-4 uppercase tracking-widest min-w-35 justify-between shadow-sm">
+                {joinedFilter}
+                <MdKeyboardArrowDown className="text-lg text-primary" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="bg-card/95 backdrop-blur-xl border-border/50 shadow-2xl rounded-2xl min-w-45 p-2 z-50">
+              <DropdownMenuItem onClick={() => setJoinedFilter('All Time')} className="text-[10px] font-black uppercase tracking-widest py-3 px-4 rounded-xl cursor-pointer hover:bg-primary/5 transition-colors">All Time</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setJoinedFilter('Last 24h')} className="text-[10px] font-black uppercase tracking-widest py-3 px-4 rounded-xl cursor-pointer text-primary hover:bg-primary/5 transition-colors">Last 24 Hours</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setJoinedFilter('Last 7 Days')} className="text-[10px] font-black uppercase tracking-widest py-3 px-4 rounded-xl cursor-pointer text-primary hover:bg-primary/5 transition-colors">Last 7 Days</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

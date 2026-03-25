@@ -41,5 +41,5 @@ function getNextMilestone(current: number) {
   const milestones = Object.keys(REFERRAL_MILESTONES).map(Number).sort((a, b) => a - b)
   const next = milestones.find(m => m > current)
   if (!next) return null
-  return { target: next, remaining: next - current, psa_reward: REFERRAL_MILESTONES[next] }
+  return { target: next, remaining: next - current, pza_reward: REFERRAL_MILESTONES[next] }
 }

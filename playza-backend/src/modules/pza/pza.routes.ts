@@ -7,13 +7,13 @@ const router = Router()
 router.get('/me', requireAuth, async (req: AuthRequest, res) => {
   try {
     const { data: points } = await supabaseAdmin
-      .from('psa_points')
+      .from('pza_points')
       .select('total_points')
       .eq('user_id', req.user!.id)
       .single()
 
     const { data: events } = await supabaseAdmin
-      .from('psa_events')
+      .from('pza_events')
       .select('event_type, points_awarded, created_at')
       .eq('user_id', req.user!.id)
       .order('created_at', { ascending: false })

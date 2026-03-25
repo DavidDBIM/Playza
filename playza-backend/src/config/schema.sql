@@ -30,8 +30,8 @@ create table if not exists wallets (
   updated_at timestamptz default now()
 );
 
--- PSA POINTS
-create table if not exists psa_points (
+-- PZA POINTS
+create table if not exists pza_points (
   id uuid primary key default uuid_generate_v4(),
   user_id uuid unique not null references users(id) on delete cascade,
   total_points integer default 0 not null,
@@ -39,8 +39,8 @@ create table if not exists psa_points (
   updated_at timestamptz default now()
 );
 
--- PSA EVENT LOG
-create table if not exists psa_events (
+-- PZA EVENT LOG
+create table if not exists pza_events (
   id uuid primary key default uuid_generate_v4(),
   user_id uuid not null references users(id) on delete cascade,
   event_type text not null,
@@ -84,22 +84,34 @@ create trigger users_updated_at before update on users
 create trigger wallets_updated_at before update on wallets
   for each row execute function update_updated_at();
 
-create trigger psa_points_updated_at before update on psa_points
+create trigger pza_points_updated_at before update on pza_points
   for each row execute function update_updated_at();
 
 create trigger referrals_updated_at before update on referrals
   for each row execute function update_updated_at();
 
--- PSA increment function
-create or replace function increment_psa_points(p_user_id uuid, p_points integer)
+-- PZA increment function
+create or replace function increment_pza_points(p_user_id uuid, p_points integer)
 returns void as $$
-  update psa_points set total_points = total_points + p_points where user_id = p_user_id;
+  update pza_points set total_points = total_points + p_points where user_id = p_user_id;
 $$ language sql;
 
 -- RLS (backend uses service role key which bypasses RLS automatically)
 alter table users enable row level security;
 alter table wallets enable row level security;
-alter table psa_points enable row level security;
-alter table psa_events enable row level security;
+alter table pza_points enable row level security;
+alter table pza_events enable row level security;
 alter table referrals enable row level security;
 alter table referral_milestones enable row level security;
+
+-- TRANSACTIONS (run this if not already created)
+create table if not exists transactions (
+  id uuid primary key default uuid_generate_v4(),
+  user_id uuid not null references users(id) on delete cascade,
+  type text not null check (type in ('deposit', 'withdrawal', 'game_entry', 'winnings', 'bonus')),
+  amount numeric(12, 2) not null,
+  status text default 'pending' check (status in ('pending', 'successful', 'failed')),
+  reference text unique,
+  meta jsonb default '{}',
+  created_at timestamptz default now()
+);

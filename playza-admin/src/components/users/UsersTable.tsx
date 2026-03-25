@@ -4,7 +4,8 @@ import {
   MdVerified, 
   MdPending, 
   MdCancel, 
-  MdSearch 
+  MdSearch,
+  MdContentCopy 
 } from 'react-icons/md';
 import { useNavigate } from 'react-router';
 import { 
@@ -32,9 +33,9 @@ export const UsersTable: React.FC<UsersTableProps> = ({ users, clearFilters }) =
         <TableHeader className="bg-muted/30">
           <TableRow className="hover:bg-transparent border-none">
             <TableHead className="px-8 py-6 text-[10px] uppercase tracking-[0.2em] font-black text-muted-foreground/60">Citizen Identity</TableHead>
+            <TableHead className="px-6 py-6 text-[10px] uppercase tracking-[0.2em] font-black text-muted-foreground/60">Marketing Intel</TableHead>
             <TableHead className="px-6 py-6 text-[10px] uppercase tracking-[0.2em] font-black text-muted-foreground/60 text-center">Status</TableHead>
             <TableHead className="px-6 py-6 text-[10px] uppercase tracking-[0.2em] font-black text-muted-foreground/60 text-right">Wallet Capital</TableHead>
-            <TableHead className="px-6 py-6 text-[10px] uppercase tracking-[0.2em] font-black text-muted-foreground/60 text-right">Game Ledger</TableHead>
             <TableHead className="px-6 py-6 text-[10px] uppercase tracking-[0.2em] font-black text-muted-foreground/60 text-center">Citizenship</TableHead>
             <TableHead className="px-6 py-6 text-[10px] uppercase tracking-[0.2em] font-black text-muted-foreground/60">Enlistment</TableHead>
             <TableHead className="px-8 py-6 text-[10px] uppercase tracking-[0.2em] font-black text-muted-foreground/60 text-right">Operation</TableHead>
@@ -56,8 +57,25 @@ export const UsersTable: React.FC<UsersTableProps> = ({ users, clearFilters }) =
                     <div className="space-y-0.5">
                       <p className="font-black text-sm text-foreground group-hover:text-primary transition-colors">{user.fullName}</p>
                       <p className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest">@{user.username}</p>
-                      <p className="text-[9px] text-primary/50 font-mono tracking-tighter opacity-0 group-hover:opacity-100 transition-opacity">ID: {user.id}</p>
                     </div>
+                  </div>
+                </TableCell>
+                <TableCell className="px-6 py-5">
+                  <div className="flex flex-col gap-1 group/email relative">
+                    <div className="flex items-center gap-2">
+                       <span className="text-xs font-bold text-foreground/80">{user.email}</span>
+                       <button 
+                         onClick={(e) => {
+                           e.stopPropagation();
+                           navigator.clipboard.writeText(user.email);
+                         }}
+                         className="opacity-0 group-hover/email:opacity-100 p-1 hover:bg-primary/10 rounded transition-all text-primary"
+                         title="Copy Email"
+                       >
+                         <MdContentCopy className="text-xs" />
+                       </button>
+                    </div>
+                    <span className="text-[9px] font-black text-primary uppercase tracking-widest">{user.phoneNumber || 'NO PHONE'}</span>
                   </div>
                 </TableCell>
                 <TableCell className="px-6 py-5">
@@ -77,12 +95,6 @@ export const UsersTable: React.FC<UsersTableProps> = ({ users, clearFilters }) =
                    <div className="flex flex-col items-end">
                      <span className="font-headline font-black text-primary text-base">₦{user.walletBalance.toLocaleString()}</span>
                      <span className="text-[9px] font-black text-muted-foreground/40 uppercase tracking-widest">Available Credit</span>
-                   </div>
-                </TableCell>
-                <TableCell className="px-6 py-5 text-right">
-                   <div className="flex flex-col items-end">
-                     <span className="font-headline font-black text-foreground text-sm">₦{user.totalWinnings.toLocaleString()}</span>
-                     <span className="text-[9px] font-black text-emerald-500/60 uppercase tracking-widest">{user.totalGames} Battles</span>
                    </div>
                 </TableCell>
                 <TableCell className="px-6 py-5">

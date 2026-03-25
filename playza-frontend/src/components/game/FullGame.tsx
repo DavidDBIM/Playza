@@ -43,9 +43,19 @@ const FullGame = () => {
   const groupedGames = useMemo(() => {
     if (filteredGames) return null; // Don't group if we're showing search/filter results
 
+    const statusOrder: Record<string, number> = {
+      "live": 1,
+      "coming soon": 2,
+      "not starting soon": 3,
+    };
+
     const groups: Record<string, typeof allGames> = {};
-    // Sort allGames by isActive before grouping, or sort each group after
-    const sortedGames = [...allGames].sort((a, b) => (a.isActive === b.isActive ? 0 : a.isActive ? -1 : 1));
+    // Sort allGames by status before grouping
+    const sortedGames = [...allGames].sort((a, b) => {
+      const orderA = statusOrder[a.status] || 99;
+      const orderB = statusOrder[b.status] || 99;
+      return orderA - orderB;
+    });
     
     sortedGames.forEach((game) => {
       if (!groups[game.category]) {

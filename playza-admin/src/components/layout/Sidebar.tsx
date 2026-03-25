@@ -17,7 +17,7 @@ const Sidebar: React.FC = () => {
   const location = useLocation();
 
   return (
-    <aside className="h-screen w-64 fixed left-0 top-0 overflow-y-auto bg-card border-r border-border shadow-2xl flex flex-col gap-2 py-8 z-50 transition-all duration-300 hidden lg:flex">
+    <aside className="h-screen w-64 fixed left-0 top-0 overflow-y-auto bg-card border-r border-border shadow-2xl flex-col gap-2 py-8 z-50 transition-all duration-300 hidden lg:flex">
       <div className="px-8 mb-10">
         <h1 className="text-2xl font-black text-primary tracking-tighter font-headline">PLAYZA</h1>
         <p className="font-headline uppercase tracking-widest text-[10px] font-black text-muted-foreground mt-1">Admin Console</p>

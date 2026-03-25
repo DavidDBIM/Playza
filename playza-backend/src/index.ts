@@ -5,7 +5,9 @@ import dotenv from 'dotenv'
 
 import authRoutes from './modules/auth/auth.routes'
 import referralRoutes from './modules/referral/referral.routes'
-import psaRoutes from './modules/psa/psa.routes'
+import pzaRoutes from './modules/pza/pza.routes'
+import usersRoutes from './modules/users/users.routes'
+import adminRoutes from './modules/admin/admin.routes'
 
 dotenv.config()
 
@@ -13,7 +15,10 @@ const app = express()
 const PORT = process.env.PORT || 5000
 
 app.use(helmet())
-app.use(cors({ origin: process.env.FRONTEND_URL || '*' }))
+app.use(cors({
+  origin: process.env.FRONTEND_URL || '*',
+  credentials: true,
+}))
 app.use(express.json())
 
 app.get('/health', (_, res) => {
@@ -22,7 +27,9 @@ app.get('/health', (_, res) => {
 
 app.use('/api/auth', authRoutes)
 app.use('/api/referral', referralRoutes)
-app.use('/api/psa', psaRoutes)
+app.use('/api/pza', pzaRoutes)
+app.use('/api/users', usersRoutes)
+app.use('/api/admin', adminRoutes)
 
 app.use((req, res) => {
   res.status(404).json({ success: false, message: 'Route not found' })
