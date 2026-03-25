@@ -1,6 +1,6 @@
 import { supabaseAdmin } from '../config/supabase'
 
-export type PSAEvent =
+export type PZAEvent =
   | 'SIGNUP'
   | 'EMAIL_VERIFIED'
   | 'PROFILE_COMPLETED'
@@ -44,7 +44,7 @@ export type PSAEvent =
   | 'FIRST_100_TICKET'
   | 'FIRST_100_EVENT'
 
-const PSA_POINTS: Record<PSAEvent, number> = {
+const PZA_POINTS: Record<PZAEvent, number> = {
   SIGNUP: 5,
   EMAIL_VERIFIED: 10,
   PROFILE_COMPLETED: 30,
@@ -89,28 +89,28 @@ const PSA_POINTS: Record<PSAEvent, number> = {
   FIRST_100_EVENT: 200,
 }
 
-export async function awardPSA(userId: string, event: PSAEvent, multiplier = 1) {
-  const points = PSA_POINTS[event] * multiplier
+export async function awardPZA(userId: string, event: PZAEvent, multiplier = 1) {
+  const points = PZA_POINTS[event] * multiplier
 
-  await supabaseAdmin.from('psa_events').insert({
+  await supabaseAdmin.from('pza_events').insert({
     user_id: userId,
     event_type: event,
     points_awarded: points,
   })
 
   const { data: existing } = await supabaseAdmin
-    .from('psa_points')
+    .from('pza_points')
     .select('id')
     .eq('user_id', userId)
     .single()
 
   if (existing) {
-    await supabaseAdmin.rpc('increment_psa_points', {
+    await supabaseAdmin.rpc('increment_pza_points', {
       p_user_id: userId,
       p_points: points,
     })
   } else {
-    await supabaseAdmin.from('psa_points').insert({
+    await supabaseAdmin.from('pza_points').insert({
       user_id: userId,
       total_points: points,
     })

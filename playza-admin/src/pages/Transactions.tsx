@@ -13,6 +13,14 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from '../components/ui/dropdown-menu';
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from '../components/ui/table';
 import { transactionHistory } from '../data/usersData';
 
 const Transactions: React.FC = () => {
@@ -22,7 +30,11 @@ const Transactions: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState('All Status');
 
   const filteredTransactions = transactionHistory.filter(txn => {
-    const matchesSearch = txn.id.toLowerCase().includes(searchQuery.toLowerCase()) || txn.method.toLowerCase().includes(searchQuery.toLowerCase());
+    const searchLower = searchQuery.toLowerCase();
+    const txnIdLower = txn.id.toLowerCase();
+    const methodLower = txn.method.toLowerCase();
+    
+    const matchesSearch = txnIdLower.includes(searchLower) || methodLower.includes(searchLower);
     const matchesType = typeFilter === 'All Types' || txn.type === typeFilter;
     const matchesStatus = statusFilter === 'All Status' || txn.status.toLowerCase() === statusFilter.toLowerCase();
     return matchesSearch && matchesType && matchesStatus;
@@ -105,28 +117,26 @@ const Transactions: React.FC = () => {
 
       {/* Table Module */}
       <div className="glass-card rounded-[2rem] overflow-hidden border border-slate-200 dark:border-white/10 shadow-lg bg-white/50 dark:bg-transparent">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-50/50 dark:bg-white/5 border-b border-slate-200 dark:border-white/10">
-                <th className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Transaction ID</th>
-                <th className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Method</th>
-                <th className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Type</th>
-                <th className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest text-right">Amount</th>
-                <th className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest text-center">Status</th>
-                <th className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Date</th>
-                <th className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-white/10">
+        <div className="overflow-x-auto no-scrollbar min-h-120">
+          <Table>
+            <TableHeader className="bg-slate-50/50 dark:bg-white/5 border-b border-slate-200 dark:border-white/10">
+              <TableRow className="hover:bg-transparent border-none">
+                <TableHead className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest h-auto">Transaction ID</TableHead>
+                <TableHead className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest h-auto">Method</TableHead>
+                <TableHead className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest h-auto">Type</TableHead>
+                <TableHead className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest text-right h-auto">Amount</TableHead>
+                <TableHead className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest text-center h-auto">Status</TableHead>
+                <TableHead className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest h-auto">Date</TableHead>
+                <TableHead className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest text-right h-auto">Action</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-y divide-slate-200 dark:divide-white/10">
               {filteredTransactions.map((txn) => (
-                <tr key={txn.id} onClick={() => navigate(`/transactions/${txn.id}`)} className="cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 transition-all duration-200 group">
-                  <td className="px-6 py-5 font-mono text-sm font-bold text-primary">{txn.id}</td>
-                  <td className="px-6 py-5">
-                    <span className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">{txn.method}</span>
-                  </td>
-                  <td className="px-6 py-5">
-                    <span className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-full ${
+                <TableRow key={txn.id} className="group hover:bg-slate-50 dark:hover:bg-white/5 transition-all duration-200 border-border/10 cursor-pointer" onClick={() => navigate(`/transactions/${txn.id}`)}>
+                  <TableCell className="px-6 py-5 font-mono text-sm font-bold text-primary">{txn.id}</TableCell>
+                  <TableCell className="px-6 py-5 text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">{txn.method}</TableCell>
+                  <TableCell className="px-6 py-5 text-[10px] font-black uppercase tracking-widest">
+                    <span className={`px-3 py-1 rounded-full ${
                       txn.type === 'Withdrawal' ? 'bg-rose-500/10 text-rose-500' :
                       txn.type === 'Deposit' ? 'bg-emerald-500/10 text-emerald-500' :
                       txn.type === 'Game Entry' ? 'bg-amber-500/10 text-amber-500' :
@@ -134,11 +144,9 @@ const Transactions: React.FC = () => {
                     }`}>
                       {txn.type}
                     </span>
-                  </td>
-                  <td className="px-6 py-5 text-right">
-                    <span className="font-black text-lg text-slate-900 dark:text-white tracking-tight">₦{txn.amount.toLocaleString()}</span>
-                  </td>
-                  <td className="px-6 py-5 text-center">
+                  </TableCell>
+                  <TableCell className="px-6 py-5 text-right font-black text-lg text-slate-900 dark:text-white tracking-tight">₦{txn.amount.toLocaleString()}</TableCell>
+                  <TableCell className="px-6 py-5 text-center">
                     <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border shadow-sm ${
                       txn.status === 'Successful' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' :
                       txn.status === 'Pending' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20' :
@@ -151,23 +159,24 @@ const Transactions: React.FC = () => {
                       }`}></span>
                       {txn.status}
                     </span>
-                  </td>
-                  <td className="px-6 py-5">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">{txn.date}</span>
-                  </td>
-                  <td className="px-6 py-5 text-right">
+                  </TableCell>
+                  <TableCell className="px-6 py-5 text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">{txn.date}</TableCell>
+                  <TableCell className="px-6 py-5 text-right">
                     <Button 
                       variant="ghost" 
-                      onClick={() => navigate(`/transactions/${txn.id}`)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/transactions/${txn.id}`);
+                      }}
                       className="text-slate-400 hover:text-primary transition-colors bg-transparent border-none h-10 px-4 rounded-xl"
                     >
                       <MdVisibility className="text-xl" />
                     </Button>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       </div>
     </main>

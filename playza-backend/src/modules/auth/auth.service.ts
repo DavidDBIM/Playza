@@ -1,6 +1,6 @@
 import { supabase, supabaseAdmin } from '../../config/supabase'
 import { generateUniqueReferralCode } from '../../lib/referralCode'
-import { awardPSA } from '../../lib/psaEngine'
+import { awardPZA } from '../../lib/pzaEngine'
 import { SignupInput, SigninInput } from './auth.schema'
 
 export async function signup(input: SignupInput) {
@@ -12,9 +12,23 @@ export async function signup(input: SignupInput) {
     .eq('username', username)
     .single()
 
-  if (existingUsername) {
-    throw new Error('Username already taken')
-  }
+  if (existingUsername) throw new Error('Username already taken')
+
+  const { data: existingPhone } = await supabaseAdmin
+    .from('users')
+    .select('id')
+    .eq('phone', phone)
+    .single()
+
+  if (existingPhone) throw new Error('Phone number already registered')
+
+  const { data: existingEmail } = await supabaseAdmin
+    .from('users')
+    .select('id')
+    .eq('email', email)
+    .single()
+
+  if (existingEmail) throw new Error('Email already registered')
 
   let referredBy: string | null = null
 
@@ -59,7 +73,7 @@ export async function signup(input: SignupInput) {
     balance: 0,
   })
 
-  await supabaseAdmin.from('psa_points').insert({
+  await supabaseAdmin.from('pza_points').insert({
     user_id: authData.user.id,
     total_points: 0,
   })
@@ -70,16 +84,19 @@ export async function signup(input: SignupInput) {
       referred_id: authData.user.id,
       status: 'pending',
     })
-
-    await awardPSA(referredBy, 'REFERRAL_SIGNED_UP')
+    await awardPZA(referredBy, 'REFERRAL_SIGNED_UP')
   }
 
-  await awardPSA(authData.user.id, 'SIGNUP')
+  await awardPZA(authData.user.id, 'SIGNUP')
 
   return {
-    user: authData.user,
-    referral_code: newReferralCode,
-    message: 'Account created. Check your email to verify.',
+    user: {
+      id: authData.user.id,
+      email,
+      username,
+      referral_code: newReferralCode,
+    },
+    message: 'Account created. Check your email for the verification code.',
   }
 }
 
@@ -105,11 +122,10 @@ export async function verifyOtp(email: string, token: string) {
       .update({ is_email_verified: true })
       .eq('id', data.user.id)
 
-    await awardPSA(data.user.id, 'EMAIL_VERIFIED')
+    await awardPZA(data.user.id, 'EMAIL_VERIFIED')
 
     if (profile?.referred_by) {
-      await awardPSA(profile.referred_by, 'REFERRAL_EMAIL_VERIFIED')
-
+      await awardPZA(profile.referred_by, 'REFERRAL_EMAIL_VERIFIED')
       await supabaseAdmin
         .from('referrals')
         .update({ status: 'email_verified' })
@@ -117,7 +133,13 @@ export async function verifyOtp(email: string, token: string) {
     }
   }
 
-  return { user: data.user, session: data.session }
+  return {
+    session: data.session,
+    user: {
+      id: data.user.id,
+      email: data.user.email,
+    },
+  }
 }
 
 export async function signin(input: SigninInput) {
@@ -126,38 +148,52 @@ export async function signin(input: SigninInput) {
   let email = identifier
 
   if (!identifier.includes('@')) {
-    const { data: profile } = await supabaseAdmin
+    const { data: byUsername } = await supabaseAdmin
       .from('users')
       .select('email')
       .eq('username', identifier)
       .single()
 
-    if (!profile) throw new Error('User not found')
-    email = profile.email
+    if (byUsername) {
+      email = byUsername.email
+    } else {
+      const { data: byPhone } = await supabaseAdmin
+        .from('users')
+        .select('email')
+        .eq('phone', identifier)
+        .single()
+
+      if (!byPhone) throw new Error('User not found')
+      email = byPhone.email
+    }
   }
 
   const { data, error } = await supabase.auth.signInWithPassword({ email, password })
 
   if (error) throw error
 
-  const { data: psaData } = await supabaseAdmin
-    .from('psa_points')
+  const { data: profile } = await supabaseAdmin
+    .from('users')
+    .select('id, username, email, phone, referral_code, is_email_verified, avatar_url, first_name, last_name')
+    .eq('id', data.user.id)
+    .single()
+
+  if (!profile?.is_email_verified) {
+    throw new Error('Please verify your email before signing in')
+  }
+
+  const { data: pzaData } = await supabaseAdmin
+    .from('pza_points')
     .select('total_points')
     .eq('user_id', data.user.id)
     .single()
 
-  const { data: profile } = await supabaseAdmin
-    .from('users')
-    .select('id, username, referral_code, is_email_verified')
-    .eq('id', data.user.id)
-    .single()
-
   return {
-    session: data.session,
+    access_token: data.session.access_token,
+    refresh_token: data.session.refresh_token,
     user: {
-      ...data.user,
       ...profile,
-      psa_points: psaData?.total_points ?? 0,
+      pza_points: pzaData?.total_points ?? 0,
     },
   }
 }
@@ -165,11 +201,13 @@ export async function signin(input: SigninInput) {
 export async function resendOtp(email: string) {
   const { error } = await supabase.auth.resend({ type: 'signup', email })
   if (error) throw error
-  return { message: 'OTP sent' }
+  return { message: 'Verification code sent' }
 }
 
 export async function forgotPassword(email: string) {
-  const { error } = await supabase.auth.resetPasswordForEmail(email)
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${process.env.FRONTEND_URL}/reset-password`,
+  })
   if (error) throw error
-  return { message: 'Password reset email sent' }
+  return { message: 'Password reset link sent to your email' }
 }
