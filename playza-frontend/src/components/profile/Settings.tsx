@@ -13,12 +13,12 @@ import {
 import { AddPaymentMethodModal } from "./AddPaymentMethodModal";
 import { useMe } from "../../hooks/users/useMe";
 import { useUpdateMe } from "../../hooks/users/useUpdateMe";
-// import { useDeactivateUser } from "../../hooks/users/useDeactivateUser";
+import { useDeactivateUser } from "../../hooks/users/useDeactivateUser";
 
 const Settings = () => {
   const { data: user, isLoading } = useMe();
   const { mutate: updateProfile, isPending } = useUpdateMe();
-  // const { mutate: deactivateUser, isPending: isDeactivating } = useDeactivateUser();
+  const { mutate: deactivateUser, isPending: isDeactivating } = useDeactivateUser();
 
   const [showAddMethod, setShowAddMethod] = useState(false);
   const [hasKudaAccount, setHasKudaAccount] = useState(true);
@@ -65,21 +65,21 @@ const Settings = () => {
     });
   };
 
-  // const handleDeactivate = () => {
-  //   if (
-  //     user &&
-  //     confirm(
-  //       "Are you sure you want to deactivate your account? This action cannot be undone.",
-  //     )
-  //   ) {
-  //     deactivateUser(user.id, {
-  //       onSuccess: () => {
-  //         localStorage.removeItem("playza_token");
-  //         window.location.href = "/";
-  //       },
-  //     });
-  //   }
-  // };
+  const handleDeactivate = () => {
+    if (
+      user &&
+      confirm(
+        "Are you sure you want to deactivate your account? This action cannot be undone.",
+      )
+    ) {
+      deactivateUser(user.id, {
+        onSuccess: () => {
+          localStorage.removeItem("playza_token");
+          window.location.href = "/";
+        },
+      });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -446,7 +446,7 @@ const Settings = () => {
 
         {/* ── Final Actions ── */}
         <div className="pt-10 border-t border-slate-200 dark:border-white/5 flex flex-col sm:flex-row items-center justify-between gap-6">
-          {/* <button
+          <button
             onClick={handleDeactivate}
             disabled={isDeactivating}
             className="text-xs font-black text-red-500/60 uppercase tracking-widest hover:text-red-500 transition-all group flex items-center gap-2 disabled:opacity-50"
@@ -457,7 +457,7 @@ const Settings = () => {
               <span className="size-2 bg-red-500/60 rounded-full group-hover:animate-pulse"></span>
             )}
             {isDeactivating ? "Deactivating..." : "Deactivate Gaming Account"}
-          </button> */}
+          </button>
           <div className="flex gap-4 w-full sm:w-auto">
             <button
               onClick={() => reset()}

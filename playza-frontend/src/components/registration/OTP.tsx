@@ -176,7 +176,7 @@ const OTP = ({ onClick }: OtpProps) => {
                   onKeyDown={(e) => handleKeyDown(i, e)}
                   required
                   inputMode="numeric"
-                  className="w-12 h-14 md:w-14 md:h-16 text-center bg-slate-100 dark:bg-slate-900/50 border-2 border-slate-200 dark:border-white/5 rounded-xl focus:border-primary focus:ring-1 focus:ring-primary text-2xl font-black text-primary transition-all outline-none"
+                  className="w-12 h-14 md:w-14 md:h-16 text-center bg-slate-100 dark:bg-slate-900/50 border-2 border-slate-200 dark:border-white/30 rounded-xl focus:border-primary focus:ring-1 focus:ring-primary text-2xl font-black text-primary transition-all outline-none"
                   maxLength={1}
                   type="text"
                 />
@@ -203,7 +203,7 @@ const OTP = ({ onClick }: OtpProps) => {
             <div className="flex flex-col items-center gap-6 pt-4">
               <div className="flex items-center gap-6">
                 <div className="flex flex-col items-center">
-                  <div className="bg-slate-100 dark:bg-slate-900/80 px-4 py-2 rounded-lg border border-slate-200 dark:border-white/5">
+                  <div className="bg-slate-100 dark:bg-slate-900/80 px-4 py-2 rounded-lg border border-slate-200 dark:border-white/10">
                     <p className="text-primary text-sm font-black font-mono">
                       {formattedTime}
                     </p>
@@ -224,7 +224,7 @@ const OTP = ({ onClick }: OtpProps) => {
 
               <button
                 onClick={() => onClick("signup")}
-                className="flex items-center gap-2 text-slate-500 hover:text-slate-900 dark:hover:text-white text-xs font-bold transition-all p-3 border-t border-slate-200 dark:border-white/5 w-full justify-center group"
+                className="flex items-center gap-2 text-slate-500 hover:text-slate-900 dark:hover:text-white text-xs font-bold transition-all p-3 border-t border-slate-200 dark:border-white/10 w-full justify-center group"
               >
                 <Edit
                   size={14}

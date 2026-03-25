@@ -33,3 +33,7 @@ export const updateMeApi = async (
   const { data } = await axiosInstance.patch(`/users/me`, payload);
   return data.data;
 };
+
+export const deactivateUserApi = async (userId: string): Promise<void> => {
+  await axiosInstance.patch(`/users/${userId}/deactivate`);
+};
