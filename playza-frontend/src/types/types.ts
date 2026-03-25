@@ -55,7 +55,7 @@ export type Game = {
 
   activePlayers: number;
 
-  isActive: boolean;
+  status: "live" | "coming soon" | "not starting soon";
   ctaLabel: string;
   badge: GameBadge;
 
