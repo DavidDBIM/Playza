@@ -118,12 +118,6 @@ const NewPassword = ({ onClick }: { onClick: (value: string) => void }) => {
             Reset Password
           </button>
         </form>
-        {/* <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-800 text-center">
-          <p className="text-slate-500 text-sm flex items-center justify-center gap-2">
-            <span className="material-symbols-outlined text-sm">info</span>
-            Minimum 12 characters required
-          </p>
-        </div> */}
       </div>
     </main>
   );

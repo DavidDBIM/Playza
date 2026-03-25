@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { signupSchema, type SignupFormValues } from "@/schemas/auth.schema";
 import { Button } from "../ui/button";
 import {
   User,
@@ -23,14 +26,29 @@ interface RegistrationFormProps {
 
 const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
   const [showPassword, setShowPassword] = useState(false);
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [referralCode, setReferralCode] = useState("");
-  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors, isValid },
+  } = useForm<SignupFormValues>({
+    resolver: zodResolver(signupSchema),
+    mode: "onChange",
+    defaultValues: {
+      username: "",
+      email: "",
+      phone: "",
+      password: "",
+      confirmPassword: "",
+      referralCode: "",
+      acceptedTerms: false,
+    },
+  });
+
+  const password = useWatch({ control, name: "password" });
+  const confirmPassword = useWatch({ control, name: "confirmPassword" });
 
   const { setPendingEmail } = useRegistration();
   const { mutate: signup, isPending } = useSignup();
@@ -63,29 +81,25 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
           ? "Good"
           : "Strong";
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (password !== confirmPassword) return;
+  const onFormSubmit = (data: SignupFormValues) => {
     setFormError(null);
 
     const payload = {
-      username,
-      email,
-      phone,
-      password,
-      ...(referralCode.trim() ? { referral_code: referralCode.trim() } : {}),
+      username: data.username,
+      email: data.email,
+      phone: data.phone,
+      password: data.password,
+      ...(data.referralCode?.trim()
+        ? { referral_code: data.referralCode.trim() }
+        : {}),
     };
 
-    console.log("[Signup] Submitting payload:", payload);
-
     signup(payload, {
-      onSuccess: (data) => {
-        console.log("[Signup] Success response:", data);
-        setPendingEmail(email);
+      onSuccess: () => {
+        setPendingEmail(data.email);
         onClick("otp");
       },
       onError: (err: Error) => {
-        console.error("[Signup] Error:", err.message);
         setFormError(err.message);
       },
     });
@@ -122,7 +136,10 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
             </div>
           )}
 
-          <form className="space-y-5 relative z-10" onSubmit={handleSubmit}>
+          <form
+            className="space-y-5 relative z-10"
+            onSubmit={handleSubmit(onFormSubmit)}
+          >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {/* Gaming Handle */}
               <div className="space-y-1.5">
@@ -135,14 +152,21 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
                     size={18}
                   />
                   <input
-                    required
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    className="w-full bg-slate-900/5 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl py-3.5 pl-12 pr-4 focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 transition-all font-medium text-sm"
+                    {...register("username")}
+                    className={`w-full bg-slate-900/5 dark:bg-white/5 border rounded-xl py-3.5 pl-12 pr-4 focus:ring-2 outline-none text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 transition-all font-medium text-sm ${
+                      errors.username
+                        ? "border-red-500/50 focus:ring-red-500/20"
+                        : "border-slate-200 dark:border-white/10 focus:ring-primary/30 focus:border-primary"
+                    }`}
                     placeholder="AnthonyGamer"
                     type="text"
                   />
                 </div>
+                {errors.username && (
+                  <p className="text-[10px] text-red-500 font-bold ml-1 italic">
+                    {errors.username.message}
+                  </p>
+                )}
               </div>
 
               {/* Email */}
@@ -156,14 +180,21 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
                     size={18}
                   />
                   <input
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full bg-slate-900/5 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl py-3.5 pl-12 pr-4 focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 transition-all font-medium text-sm"
+                    {...register("email")}
+                    className={`w-full bg-slate-900/5 dark:bg-white/5 border rounded-xl py-3.5 pl-12 pr-4 focus:ring-2 outline-none text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 transition-all font-medium text-sm ${
+                      errors.email
+                        ? "border-red-500/50 focus:ring-red-500/20"
+                        : "border-slate-200 dark:border-white/10 focus:ring-primary/30 focus:border-primary"
+                    }`}
                     placeholder="gamer@example.com"
                     type="email"
                   />
                 </div>
+                {errors.email && (
+                  <p className="text-[10px] text-red-500 font-bold ml-1 italic">
+                    {errors.email.message}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -178,14 +209,21 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
                   size={18}
                 />
                 <input
-                  required
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="w-full bg-slate-900/5 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl py-3.5 pl-12 pr-4 focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 transition-all font-medium text-sm"
+                  {...register("phone")}
+                  className={`w-full bg-slate-900/5 dark:bg-white/5 border rounded-xl py-3.5 pl-12 pr-4 focus:ring-2 outline-none text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 transition-all font-medium text-sm ${
+                    errors.phone
+                      ? "border-red-500/50 focus:ring-red-500/20"
+                      : "border-slate-200 dark:border-white/10 focus:ring-primary/30 focus:border-primary"
+                  }`}
                   placeholder="080 000 0000"
                   type="tel"
                 />
               </div>
+              {errors.phone && (
+                <p className="text-[10px] text-red-500 font-bold ml-1 italic">
+                  {errors.phone.message}
+                </p>
+              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -200,10 +238,12 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
                     size={18}
                   />
                   <input
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full bg-slate-900/5 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl py-3.5 pl-12 pr-12 focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 transition-all font-medium text-sm"
+                    {...register("password")}
+                    className={`w-full bg-slate-900/5 dark:bg-white/5 border rounded-xl py-3.5 pl-12 pr-12 focus:ring-2 outline-none text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 transition-all font-medium text-sm ${
+                      errors.password
+                        ? "border-red-500/50 focus:ring-red-500/20"
+                        : "border-slate-200 dark:border-white/10 focus:ring-primary/30 focus:border-primary"
+                    }`}
                     type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
                   />
@@ -229,6 +269,11 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
                     {strengthLabel}
                   </span>
                 </div>
+                {errors.password && (
+                  <p className="text-[10px] text-red-500 font-bold ml-1 italic mt-1">
+                    {errors.password.message}
+                  </p>
+                )}
               </div>
 
               {/* Confirm Password */}
@@ -242,9 +287,7 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
                     size={18}
                   />
                   <input
-                    required
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    {...register("confirmPassword")}
                     className={`w-full bg-slate-900/5 dark:bg-white/5 border rounded-xl py-3.5 pl-12 pr-4 focus:ring-2 outline-none text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 transition-all font-medium text-sm ${
                       confirmPassword && password !== confirmPassword
                         ? "border-red-500/50 focus:ring-red-500/20"
@@ -263,6 +306,11 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
                     </div>
                   )}
                 </div>
+                {errors.confirmPassword && (
+                  <p className="text-[10px] text-red-500 font-bold ml-1 italic">
+                    {errors.confirmPassword.message}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -273,8 +321,7 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
                 <span className="opacity-40 font-normal italic">Optional</span>
               </label>
               <input
-                value={referralCode}
-                onChange={(e) => setReferralCode(e.target.value)}
+                {...register("referralCode")}
                 className="w-full bg-slate-900/5 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl py-3.5 px-4 focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 transition-all font-medium text-sm"
                 type="text"
                 placeholder="PLAYZA-XXXX"
@@ -282,49 +329,48 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
             </div>
 
             {/* Terms and Privacy Agreement */}
-            <div className="flex items-start gap-3 px-1">
-              <input
-                required
-                type="checkbox"
-                id="terms"
-                checked={acceptedTerms}
-                onChange={(e) => setAcceptedTerms(e.target.checked)}
-                className="mt-1 size-4 rounded border-slate-300 dark:border-white/20 bg-slate-900/5 dark:bg-white/5 text-primary focus:ring-primary/30 outline-none transition-all cursor-pointer accent-primary"
-              />
-              <label
-                htmlFor="terms"
-                className="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400 font-medium cursor-pointer select-none"
-              >
-                By creating an account, I agree to Playza's{" "}
-                <Link
-                  to="/terms"
-                  target="_blank"
-                  className="text-primary font-bold hover:underline underline-offset-4"
+            <div className="flex flex-col gap-2">
+              <div className="flex items-start gap-3 px-1">
+                <input
+                  {...register("acceptedTerms")}
+                  type="checkbox"
+                  id="terms"
+                  className="mt-1 size-4 rounded border-slate-300 dark:border-white/20 bg-slate-900/5 dark:bg-white/5 text-primary focus:ring-primary/30 outline-none transition-all cursor-pointer accent-primary"
+                />
+                <label
+                  htmlFor="terms"
+                  className="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400 font-medium cursor-pointer select-none"
                 >
-                  Terms & Conditions
-                </Link>{" "}
-                and{" "}
-                <Link
-                  to="/privacy"
-                  target="_blank"
-                  className="text-primary font-bold hover:underline underline-offset-4"
-                >
-                  Privacy Policy
-                </Link>
-                .
-              </label>
+                  By creating an account, I agree to Playza's{" "}
+                  <Link
+                    to="/terms"
+                    target="_blank"
+                    className="text-primary font-bold hover:underline underline-offset-4"
+                  >
+                    Terms & Conditions
+                  </Link>{" "}
+                  and{" "}
+                  <Link
+                    to="/privacy"
+                    target="_blank"
+                    className="text-primary font-bold hover:underline underline-offset-4"
+                  >
+                    Privacy Policy
+                  </Link>
+                  .
+                </label>
+              </div>
+              {errors.acceptedTerms && (
+                <p className="text-[10px] text-red-500 font-bold ml-1 italic">
+                  {errors.acceptedTerms.message}
+                </p>
+              )}
             </div>
 
             <div className="pt-4">
               <Button
-                disabled={
-                  isPending ||
-                  !password ||
-                  password !== confirmPassword ||
-                  strength < 25 ||
-                  !acceptedTerms
-                }
-                className="w-full h-14 bg-primary text-black font-black uppercase tracking-widest rounded-xl shadow-lg shadow-primary/20 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all group border-none relative overflow-hidden"
+                disabled={isPending || !isValid}
+                className="w-full h-14 bg-primary text-black font-black uppercase tracking-widest rounded-xl shadow-lg shadow-primary/20 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all group border-none relative overflow-hidden disabled:opacity-50 disabled:translate-y-0 disabled:shadow-none"
                 type="submit"
               >
                 {isPending ? (
