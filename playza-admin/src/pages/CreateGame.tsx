@@ -11,10 +11,29 @@ import {
 } from 'react-icons/md';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue,
+  SelectGroup,
+  SelectLabel,
+  SelectSeparator
+} from '../components/ui/select';
 
 const CreateGame: React.FC = () => {
   const navigate = useNavigate();
   const [isActive, setIsActive] = useState(true);
+
+  const categories = [
+    { label: "Competitive", items: ["Battle Royale", "MOBA", "Strategy", "Shooter (FPS/TPS)", "Fighting"] },
+    { label: "Racing & Sports", items: ["Racing", "Sports", "Simulation"] },
+    { label: "Casual & Arcade", items: ["Arcade", "Retro", "Puzzle", "Trivia", "Card Games"] },
+    { label: "Adventure", items: ["Adventure", "Role Playing (RPG)"] }
+  ];
+
+  const difficulties = ["Beginner", "Intermediate", "Advanced", "Pro Circuit", "Legendary"];
 
   return (
     <main className="flex-1 mx-auto w-full pb-10 p-4 md:p-10 max-w-350">
@@ -64,22 +83,37 @@ const CreateGame: React.FC = () => {
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] items-center flex gap-1 font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 pl-1">Category <span className="text-rose-500">*</span></label>
-                  <select title="Category Select" required className="flex h-14 w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-4 py-2 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 appearance-none uppercase tracking-widest text-slate-900 dark:text-white">
-                    <option>Battle Royale</option>
-                    <option>MOBA</option>
-                    <option>Strategy</option>
-                    <option>Racing</option>
-                    <option>Retro</option>
-                  </select>
+                  <Select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((group, i) => (
+                        <React.Fragment key={group.label}>
+                          <SelectGroup>
+                            <SelectLabel>{group.label}</SelectLabel>
+                            {group.items.map(item => (
+                              <SelectItem key={item} value={item.toLowerCase().replace(/\s+/g, '-')}>{item}</SelectItem>
+                            ))}
+                          </SelectGroup>
+                          {i < categories.length - 1 && <SelectSeparator />}
+                        </React.Fragment>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] items-center flex gap-1 font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 pl-1">Difficulty</label>
-                  <select title="Difficulty Select" className="flex h-14 w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-4 py-2 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 appearance-none uppercase tracking-widest text-slate-900 dark:text-white">
-                    <option>Beginner</option>
-                    <option>Intermediate</option>
-                    <option>Advanced</option>
-                    <option>Pro Circuit</option>
-                  </select>
+                  <Select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Difficulty" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {difficulties.map(item => (
+                        <SelectItem key={item} value={item.toLowerCase()}>{item}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2 md:col-span-2">
                   <label className="text-[10px] items-center flex gap-1 font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 pl-1">Tags / Features (Comma separated)</label>

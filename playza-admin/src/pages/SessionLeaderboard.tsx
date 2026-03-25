@@ -2,6 +2,14 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { MdArrowBack, MdFilterList, MdSearch, MdMoreVert, MdCircle } from 'react-icons/md';
 import { Button } from '../components/ui/button';
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from '../components/ui/table';
 
 const SessionLeaderboard: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -86,21 +94,21 @@ const SessionLeaderboard: React.FC = () => {
       </div>
 
       <div className="glass-card rounded-3xl overflow-hidden border border-slate-200 dark:border-white/10 shadow-lg">
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="text-left bg-slate-50/50 dark:bg-white/5 border-b border-slate-200 dark:border-white/10">
-                <th className="px-6 py-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Player</th>
-                <th className="px-6 py-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest text-center">Score</th>
-                <th className="px-6 py-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest text-center">Rank</th>
-                <th className="px-6 py-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Status</th>
-                <th className="px-6 py-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-white/10">
+        <div className="overflow-x-auto no-scrollbar min-h-120">
+          <Table>
+            <TableHeader className="bg-slate-50/50 dark:bg-white/5 border-b border-slate-200 dark:border-white/10">
+              <TableRow className="hover:bg-transparent border-none">
+                <TableHead className="px-6 py-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest h-auto shadow-none border-none">Player</TableHead>
+                <TableHead className="px-6 py-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest text-center h-auto shadow-none border-none">Score</TableHead>
+                <TableHead className="px-6 py-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest text-center h-auto shadow-none border-none">Rank</TableHead>
+                <TableHead className="px-6 py-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest h-auto shadow-none border-none">Status</TableHead>
+                <TableHead className="px-6 py-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest text-right h-auto shadow-none border-none">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-y divide-slate-200 dark:divide-white/10">
               {filteredPlayers.map((player, i) => (
-                <tr key={i} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group">
-                  <td className="px-6 py-5 border-b border-transparent">
+                <TableRow key={i} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group border-border/10">
+                  <TableCell className="px-6 py-5">
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/10 border border-slate-200 dark:border-white/10 flex items-center justify-center font-black text-primary shadow-sm">
                         {player.name.substring(0, 2)}
@@ -110,27 +118,27 @@ const SessionLeaderboard: React.FC = () => {
                         <p className="text-[9px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-[0.2em] mt-0.5">Region: {player.region}</p>
                       </div>
                     </div>
-                  </td>
-                  <td className="px-6 py-5 text-center border-b border-transparent">
-                    <span className="font-black text-slate-900 dark:text-white text-lg">{player.score}</span>
-                  </td>
-                  <td className="px-6 py-5 text-center border-b border-transparent">
+                  </TableCell>
+                  <TableCell className="px-6 py-5 text-center font-black text-slate-900 dark:text-white text-lg">
+                    {player.score}
+                  </TableCell>
+                  <TableCell className="px-6 py-5 text-center">
                     <span className={`font-black italic text-sm ${player.color} ${player.rank === '#01' ? 'drop-shadow-sm' : ''}`}>{player.rank}</span>
-                  </td>
-                  <td className="px-6 py-5 border-b border-transparent">
+                  </TableCell>
+                  <TableCell className="px-6 py-5">
                     <span className="flex items-center gap-2 text-[10px] font-black text-emerald-500 uppercase tracking-widest">
                       <MdCircle className="text-[8px] animate-pulse" /> Live
                     </span>
-                  </td>
-                  <td className="px-6 py-5 text-right border-b border-transparent">
+                  </TableCell>
+                  <TableCell className="px-6 py-5 text-right">
                     <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-white/10">
                       <MdMoreVert className="text-xl" />
                     </Button>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       </div>
     </main>

@@ -9,8 +9,10 @@ import Game from './pages/Game';
 import CreateGame from './pages/CreateGame';
 import Session from './pages/Session';
 import SessionLeaderboard from './pages/SessionLeaderboard';
+import Leaderboards from './pages/Leaderboards';
 import Transactions from './pages/Transactions';
 import TransactionDetails from './pages/TransactionDetails';
+import Withdrawals from './pages/Withdrawals';
 import { ThemeProvider } from './components/theme/ThemeProvider';
 
 // Placeholder components for routes
@@ -35,10 +37,10 @@ const App: React.FC = () => {
             <Route path="games/:slug" element={<Game />} />
             <Route path="sessions/:id" element={<Session />} />
             <Route path="sessions/:id/leaderboard" element={<SessionLeaderboard />} />
-            <Route path="leaderboards" element={<Placeholder name="Leaderboards" />} />
+            <Route path="leaderboards" element={<Leaderboards />} />
             <Route path="transactions" element={<Transactions />} />
             <Route path="transactions/:id" element={<TransactionDetails />} />
-            <Route path="withdrawals" element={<Placeholder name="Withdrawals" />} />
+            <Route path="withdrawals" element={<Withdrawals />} />
             <Route path="rewards" element={<Placeholder name="Rewards" />} />
             <Route path="notifications" element={<Placeholder name="Notifications" />} />
             <Route path="content" element={<Placeholder name="Content" />} />
