@@ -42,6 +42,41 @@ export interface ResendOtpResponse {
   };
 }
 
+export interface SigninPayload {
+  identifier: string;
+  password: string;
+}
+
+export interface SigninResponse {
+  success: boolean;
+  data: {
+    session: {
+      access_token: string;
+      refresh_token: string;
+      expires_in: number;
+    };
+    user: {
+      id: string;
+      email: string;
+      username: string;
+      referral_code: string;
+      is_email_verified: boolean;
+      psa_points: number;
+    };
+  };
+}
+
+export interface ForgotPasswordPayload {
+  email: string;
+}
+
+export interface ForgotPasswordResponse {
+  success: boolean;
+  data: {
+    message: string;
+  };
+}
+
 // API Functions
 
 export const signupApi = async (
@@ -69,6 +104,26 @@ export const resendOtpApi = async (
 ): Promise<ResendOtpResponse> => {
   const { data } = await axiosInstance.post<ResendOtpResponse>(
     "/auth/resend-otp",
+    payload,
+  );
+  return data;
+};
+
+export const signinApi = async (
+  payload: SigninPayload,
+): Promise<SigninResponse> => {
+  const { data } = await axiosInstance.post<SigninResponse>(
+    "/auth/signin",
+    payload,
+  );
+  return data;
+};
+
+export const forgotPasswordApi = async (
+  payload: ForgotPasswordPayload,
+): Promise<ForgotPasswordResponse> => {
+  const { data } = await axiosInstance.post<ForgotPasswordResponse>(
+    "/auth/forgot-password",
     payload,
   );
   return data;

@@ -33,7 +33,18 @@ const CategoryPage = () => {
 
   const filteredGames = useMemo(() => {
     const filtered = filterGames(allCategoryGames, "All Games", filterBy, query);
-    return [...filtered].sort((a, b) => (a.isActive === b.isActive ? 0 : a.isActive ? -1 : 1));
+    
+    const statusOrder: Record<string, number> = {
+      "live": 1,
+      "coming soon": 2,
+      "not starting soon": 3,
+    };
+
+    return [...filtered].sort((a, b) => {
+      const orderA = statusOrder[a.status] || 99;
+      const orderB = statusOrder[b.status] || 99;
+      return orderA - orderB;
+    });
   }, [allCategoryGames, filterBy, query]);
 
   const handleFiltering = (option: FilterOption) => {
