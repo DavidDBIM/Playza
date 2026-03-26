@@ -55,15 +55,6 @@ const Sidebar: React.FC = () => {
           );
         })}
       </nav>
-      <div className="mt-auto px-8 py-6 border-t border-border/50">
-        <div className="flex items-center gap-2 mb-4">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span className="text-[10px] font-headline font-black uppercase tracking-widest text-primary">System Operational</span>
-        </div>
-        <div className="w-10 h-10 rounded-full border-2 border-primary/20 p-0.5 overflow-hidden">
-          <img alt="Admin Profile" className="w-full h-full rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD4xY-PLI5GuwlDUnOY8s2wGMdkVmGIoVZIz3hohZUDNe9vqsdPPrGHGmgbgK7wQ9s1jF2vEtcSoX8EoygqexMw2sFkJUimyMLvHRyMGK6aXwasaFq3iJGHcWxu6Pexgg6ASjsKzc7tEj5-0DcvMnzE3zRI6xFz6yeraTmFFp9E89ketZYcvIvYSUQznD12REsNeYg9Nlt1eRymwqgfIzhOEIGKKLu1UoQVvuQOXH8lKX25sMyjGjAVRNaA-FiOvPI5GY6EMLERmU8" />
-        </div>
-      </div>
     </aside>
   );
 };

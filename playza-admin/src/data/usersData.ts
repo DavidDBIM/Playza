@@ -38,6 +38,7 @@ export interface TransactionRecord {
   method: string;
   date: string;
   status: string;
+  username: string;
 }
 
 export interface ReferralRecord {
@@ -488,12 +489,12 @@ export const matchHistory: MatchRecord[] = [
 ];
 
 export const transactionHistory: TransactionRecord[] = [
-  { id: 'T1', type: 'Deposit', amount: 10000, method: 'Paystack', date: 'Oct 22, 10:30', status: 'Successful' },
-  { id: 'T2', type: 'Withdrawal', amount: 5000, method: 'Bank Transfer', date: 'Oct 21, 15:45', status: 'Successful' },
-  { id: 'T3', type: 'Game Entry', amount: 500, method: 'Wallet', date: 'Oct 20, 12:00', status: 'Successful' },
-  { id: 'T4', type: 'Winnings', amount: 1500, method: 'Wallet', date: 'Oct 19, 16:20', status: 'Successful' },
-  { id: 'T5', type: 'Deposit', amount: 20000, method: 'Flutterwave', date: 'Oct 18, 11:10', status: 'Successful' },
-  { id: 'T6', type: 'Withdrawal', amount: 15000, method: 'Bank Transfer', date: 'Oct 17, 14:30', status: 'Pending' }
+  { id: 'T1', type: 'Deposit', amount: 10000, method: 'Paystack', date: 'Oct 22, 10:30', status: 'Successful', username: 'olanrewaju_77' },
+  { id: 'T2', type: 'Withdrawal', amount: 5000, method: 'Bank Transfer', date: 'Oct 21, 15:45', status: 'Successful', username: 'chidimma_ox' },
+  { id: 'T3', type: 'Game Entry', amount: 500, method: 'Wallet', date: 'Oct 20, 12:00', status: 'Successful', username: 'musa_king' },
+  { id: 'T4', type: 'Winnings', amount: 1500, method: 'Wallet', date: 'Oct 19, 16:20', status: 'Successful', username: 'amaka_p' },
+  { id: 'T5', type: 'Deposit', amount: 20000, method: 'Flutterwave', date: 'Oct 18, 11:10', status: 'Successful', username: 'tunde_dev' },
+  { id: 'T6', type: 'Withdrawal', amount: 15000, method: 'Bank Transfer', date: 'Oct 17, 14:30', status: 'Pending', username: 'zainab_y' }
 ];
 
 export const referralHistory: ReferralRecord[] = [

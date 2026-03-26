@@ -13,6 +13,7 @@ import Leaderboards from "./pages/Leaderboards";
 import Transactions from "./pages/Transactions";
 import TransactionDetails from "./pages/TransactionDetails";
 import Withdrawals from "./pages/Withdrawals";
+import SignIn from "./pages/SignIn";
 import { ThemeProvider } from "./components/theme/ThemeProvider";
 
 // Placeholder components for routes
@@ -30,6 +31,7 @@ const App: React.FC = () => {
     <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
       <Router>
         <Routes>
+          <Route path="/signin" element={<SignIn />} />
           <Route path="/" element={<Layout />}>
             <Route index element={<Dashboard />} />
             <Route path="users" element={<Users />} />
@@ -42,7 +44,7 @@ const App: React.FC = () => {
               path="sessions/:id/leaderboard"
               element={<SessionLeaderboard />}
             />
-            <Route path="leaderboards" element={<Leaderboards />} />
+            <Route path="leaderboards/*" element={<Leaderboards />} />
             <Route path="transactions" element={<Transactions />} />
             <Route path="transactions/:id" element={<TransactionDetails />} />
             <Route path="withdrawals" element={<Withdrawals />} />

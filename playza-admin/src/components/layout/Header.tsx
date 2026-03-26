@@ -1,12 +1,13 @@
 import {
-  MdSearch,
   MdNotifications,
   MdRssFeed,
   MdSettings,
   MdLightMode,
   MdDarkMode,
   MdComputer,
+  MdLogin,
 } from "react-icons/md";
+import { Link } from "react-router";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,17 +20,7 @@ const Header: React.FC = () => {
   const { theme, setTheme } = useTheme();
 
   return (
-    <header className="fixed top-0 right-0 lg:w-[calc(100%-16rem)] w-full h-16 z-40 bg-background/80 backdrop-blur-xl flex justify-between items-center px-4 md:px-8 border-b border-border transition-all duration-300">
-      <div className="flex items-center gap-4 w-1/2">
-        <div className="relative w-full max-w-md">
-          <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-lg" />
-          <input
-            className="w-full bg-muted/50 border border-border rounded-full py-2 pl-10 pr-4 text-sm font-body text-foreground focus:ring-1 focus:ring-primary/30 transition-all outline-none"
-            placeholder="Search platform data..."
-            type="text"
-          />
-        </div>
-      </div>
+    <header className="fixed top-0 right-0 lg:w-[calc(100%-16rem)] w-full h-16 z-40 bg-background/80 backdrop-blur-xl flex justify-end items-center px-4 md:px-8 border-b border-border transition-all duration-300">
       <div className="flex items-center gap-6">
         <div className="flex items-center gap-4">
           <DropdownMenu>
@@ -78,6 +69,13 @@ const Header: React.FC = () => {
           <button className="text-muted-foreground hover:text-primary transition-colors cursor-pointer active:opacity-80 text-xl">
             <MdSettings />
           </button>
+          <Link
+            to="/signin"
+            className="flex items-center gap-2 bg-primary/10 hover:bg-primary/20 text-primary px-3 py-1.5 rounded-lg text-xs font-bold transition-all border border-primary/20 hover:border-primary/40 active:scale-95"
+          >
+            <MdLogin className="text-sm" />
+            <span>SIGN IN</span>
+          </Link>
         </div>
         <div className="h-8 w-px bg-border"></div>
         <div className="flex items-center gap-3">
