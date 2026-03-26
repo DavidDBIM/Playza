@@ -34,7 +34,7 @@ const LogIn = ({ onClick }: LogInProps) => {
               avatarUrl: user.avatar_url,
               firstName: user.first_name,
               lastName: user.last_name,
-              psaPoints: user.psa_points,
+              pzaPoints: user.pza_points,
               isEmailVerified: user.is_email_verified,
             },
             access_token,

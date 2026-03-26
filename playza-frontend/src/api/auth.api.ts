@@ -69,7 +69,7 @@ export interface SigninResponse {
       phone: string;
       referral_code: string;
       is_email_verified: boolean;
-      psa_points: number;
+      pza_points: number;
       avatar_url?: string;
       first_name?: string;
       last_name?: string;
