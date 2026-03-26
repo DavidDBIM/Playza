@@ -9,9 +9,10 @@ import SessionLeaderboardCard from './SessionLeaderboardCard';
 
 interface GameLeaderboardCardProps {
   game: GameLeaderboard;
+  activeSessionId?: string;
 }
 
-const GameLeaderboardCard: React.FC<GameLeaderboardCardProps> = ({ game }) => {
+const GameLeaderboardCard: React.FC<GameLeaderboardCardProps> = ({ game, activeSessionId }) => {
   const [isExpanded, setIsExpanded] = useState(true);
 
   const liveSessions = game.sessions.filter(s => s.status === 'Live').length;
@@ -53,7 +54,11 @@ const GameLeaderboardCard: React.FC<GameLeaderboardCardProps> = ({ game }) => {
           <div className="h-px bg-slate-200 dark:bg-white/10 mb-8 w-full opacity-50"></div>
           <div className="grid grid-cols-1 gap-4">
             {game.sessions.map(session => (
-              <SessionLeaderboardCard key={session.id} session={session} />
+              <SessionLeaderboardCard 
+                key={session.id} 
+                session={session} 
+                activeSessionId={activeSessionId} 
+              />
             ))}
           </div>
         </div>

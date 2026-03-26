@@ -7,7 +7,8 @@ import {
   MdCheckCircle, 
   MdCancel, 
   MdErrorOutline,
-  MdGamepad
+  MdGamepad,
+  MdShield
 } from 'react-icons/md';
 import { 
   Table, 
@@ -80,7 +81,8 @@ export const GamesTable: React.FC<GamesTableProps> = ({ games, clearFilters }) =
                   </div>
                 </TableCell>
                 <TableCell className="py-5 px-4 font-body font-bold text-sm">
-                  <span className="px-3 py-1 rounded-full bg-accent/10 text-accent font-black text-[10px] uppercase border border-accent/10 tracking-widest">
+                  <span className="px-4 py-2 rounded-2xl bg-primary/10 text-primary font-black text-[11px] uppercase border border-primary/20 tracking-widest shadow-[0_0_15px_rgba(var(--primary-rgb),0.1)] group-hover:bg-primary group-hover:text-white transition-all duration-300 flex items-center gap-2 w-max">
+                    <MdShield className="text-xs opacity-60" />
                     {game.category}
                   </span>
                 </TableCell>

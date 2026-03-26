@@ -4,10 +4,10 @@ import type { LiquidityData } from '../../data/adminData';
 export const LiquidityOverview: React.FC<{ data: LiquidityData[] }> = ({ data }) => {
   return (
     <section>
-      <h3 className="text-sm font-black font-headline text-[#E5E2E3] uppercase tracking-widest mb-8">Daily Liquidity Snapshot</h3>
+      <h3 className="text-sm font-black font-headline text-slate-900 dark:text-[#E5E2E3] uppercase tracking-widest mb-8">Daily Liquidity Snapshot</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
         {data.map((item) => (
-          <div key={item.id} className="glass-card bg-white/2 p-8 rounded-[2rem] flex items-center justify-between group overflow-hidden relative border border-white/5 shadow-2xl transition-all hover:bg-white/4">
+          <div key={item.id} className="glass-card bg-white/50 dark:bg-white/2 p-8 rounded-[2rem] flex items-center justify-between group overflow-hidden relative border border-slate-200 dark:border-white/5 shadow-2xl transition-all hover:bg-white/4">
             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
             <div className="z-10">
               <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/40 mb-2 truncate">{item.category}</p>

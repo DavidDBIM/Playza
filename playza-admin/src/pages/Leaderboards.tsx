@@ -11,11 +11,36 @@ import { gamesLeaderboardData, referralLeaderboard, loyaltyLeaderboard } from '.
 import GameLeaderboardCard from '../components/leaderboards/GameLeaderboardCard';
 import ReferralLeaderboardTable from '../components/leaderboards/ReferralLeaderboardTable';
 import LoyaltyLeaderboardTable from '../components/leaderboards/LoyaltyLeaderboardTable';
+import { useNavigate, useLocation, useMatch } from "react-router";
+import { useEffect } from 'react';
 
 
 const Leaderboards: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'Games' | 'Referrals' | 'Loyalty'>('Games');
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
   const [dateFilter, setDateFilter] = useState('Today');
+
+  // Logic to determine active tab based on path
+  let activeTab: 'Games' | 'Referrals' | 'Loyalty' = 'Games';
+  if (pathname.includes('/leaderboards/loyalty')) activeTab = 'Loyalty';
+  else if (pathname.includes('/leaderboards/reward')) activeTab = 'Referrals';
+
+  // Extract session if present (e.g. /leaderboards/game/S101)
+  const sessionMatch = useMatch('/leaderboards/game/:sessionId');
+  const activeSessionId = sessionMatch?.params.sessionId;
+
+  // Auto-redirect to /leaderboards/game if on /leaderboards
+  useEffect(() => {
+    if (pathname === '/leaderboards' || pathname === '/leaderboards/') {
+      navigate('/leaderboards/game', { replace: true });
+    }
+  }, [pathname, navigate]);
+
+  const handleTabClick = (tabId: 'Games' | 'Referrals' | 'Loyalty') => {
+    if (tabId === 'Games') navigate('/leaderboards/game');
+    else if (tabId === 'Loyalty') navigate('/leaderboards/loyalty');
+    else if (tabId === 'Referrals') navigate('/leaderboards/reward');
+  };
 
   return (
     <main className="flex-1 mx-auto w-full pb-10 p-4 md:p-8 space-y-6 md:space-y-8 max-w-350">
@@ -60,19 +85,19 @@ const Leaderboards: React.FC = () => {
       {/* Tab Navigation */}
       <div className="flex items-center gap-6 border-b border-slate-200 dark:border-white/10 px-2 pb-px overflow-x-auto no-scrollbar">
         {[
-          { id: 'Games' as const, icon: MdGamepad },
-          { id: 'Referrals' as const, icon: MdGroupAdd },
-          { id: 'Loyalty' as const, icon: MdMilitaryTech }
+          { id: 'Games' as const, icon: MdGamepad, label: 'Game' },
+          { id: 'Referrals' as const, icon: MdGroupAdd, label: 'Reward' },
+          { id: 'Loyalty' as const, icon: MdMilitaryTech, label: 'Loyalty' }
         ].map(tab => (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
+            onClick={() => handleTabClick(tab.id)}
             className={`flex items-center gap-2 py-4 px-2 relative transition-all duration-300 group ${
               activeTab === tab.id ? 'text-primary' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
             }`}
           >
             <tab.icon className={`text-xl transition-transform ${activeTab === tab.id ? 'scale-110' : 'group-hover:scale-110'}`} />
-            <span className="text-xs font-black uppercase tracking-[0.2em]">{tab.id}</span>
+            <span className="text-xs font-black uppercase tracking-[0.2em]">{tab.label}</span>
             {activeTab === tab.id && (
               <div className="absolute bottom-0 left-0 w-full h-1 bg-primary rounded-full shadow-[0_-4px_12px_rgba(var(--primary),0.5)]"></div>
             )}
@@ -85,7 +110,7 @@ const Leaderboards: React.FC = () => {
         {activeTab === 'Games' && (
           <div className="grid grid-cols-1 gap-8">
             {gamesLeaderboardData.map(game => (
-              <GameLeaderboardCard key={game.id} game={game} />
+              <GameLeaderboardCard key={game.id} game={game} activeSessionId={activeSessionId} />
             ))}
           </div>
         )}

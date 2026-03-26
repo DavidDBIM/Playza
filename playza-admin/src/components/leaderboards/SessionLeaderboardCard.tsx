@@ -15,10 +15,25 @@ import { Button } from '../ui/button';
 
 interface SessionLeaderboardCardProps {
   session: SessionRecord;
+  activeSessionId?: string;
 }
 
-const SessionLeaderboardCard: React.FC<SessionLeaderboardCardProps> = ({ session }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+const SessionLeaderboardCard: React.FC<SessionLeaderboardCardProps> = ({ session, activeSessionId }) => {
+  const [isExpanded, setIsExpanded] = useState(session.id === activeSessionId);
+
+  // Sync isExpanded when activeSessionId changes from URL and scroll into view
+  React.useEffect(() => {
+    if (session.id === activeSessionId) {
+      setIsExpanded(true);
+      // Small timeout to allow expand animation
+      setTimeout(() => {
+        const element = document.getElementById(`session-${session.id}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 300);
+    }
+  }, [activeSessionId, session.id]);
 
   const statusColors = {
     Live: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 shadow-emerald-500/20',
@@ -27,9 +42,9 @@ const SessionLeaderboardCard: React.FC<SessionLeaderboardCardProps> = ({ session
   };
 
   return (
-    <div className={`glass-card rounded-[1.5rem] overflow-hidden border border-slate-200 dark:border-white/10 shadow-sm bg-white/30 dark:bg-black/10 transition-all hover:bg-white/50 dark:hover:bg-white/5 ${
+    <div id={`session-${session.id}`} className={`glass-card rounded-[1.5rem] overflow-hidden border border-slate-200 dark:border-white/10 shadow-sm bg-white/30 dark:bg-black/10 transition-all hover:bg-white/50 dark:hover:bg-white/5 ${
       isExpanded ? 'border-primary/50 bg-primary/5' : ''
-    }`}>
+    } ${session.id === activeSessionId ? 'ring-2 ring-primary ring-offset-4 dark:ring-offset-slate-900 border-primary transition-all duration-500 scale-[1.01] shadow-xl shadow-primary/20 z-10' : ''}`}>
       <div 
         onClick={() => setIsExpanded(!isExpanded)}
         className="p-4 md:p-6 cursor-pointer flex flex-col md:flex-row md:items-center justify-between gap-6 group"

@@ -97,7 +97,7 @@ const Withdrawals: React.FC = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by ID, Name or Method..." 
-              className="w-full h-12 bg-background border border-border/50 rounded-2xl pl-12 pr-4 text-sm focus:ring-2 focus:ring-primary/20 text-foreground outline-none transition-all shadow-inner placeholder:text-muted-foreground/30 font-medium"
+              className="w-full h-12 bg-background border border-border/50 rounded-2xl pl-12 pr-4 text-sm focus:ring-2 focus:ring-primary/20 text-foreground outline-none transition-all shadow-inner placeholder:text-muted-foreground/60 font-medium"
             />
           </div>
           
@@ -120,7 +120,7 @@ const Withdrawals: React.FC = () => {
 
         <div className="overflow-x-auto no-scrollbar min-h-120">
           <Table>
-            <TableHeader className="bg-slate-50/50 dark:bg-white/10 border-b border-slate-200 dark:border-white/10">
+            <TableHeader className="bg-slate-100/80 dark:bg-white/10 border-b border-slate-200 dark:border-white/10">
               <TableRow className="hover:bg-transparent border-none">
                 <TableHead className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest h-auto">Withdrawal ID</TableHead>
                 <TableHead className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest h-auto">Requester</TableHead>

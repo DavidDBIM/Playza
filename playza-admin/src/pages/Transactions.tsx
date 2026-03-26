@@ -34,7 +34,7 @@ const Transactions: React.FC = () => {
     const txnIdLower = txn.id.toLowerCase();
     const methodLower = txn.method.toLowerCase();
     
-    const matchesSearch = txnIdLower.includes(searchLower) || methodLower.includes(searchLower);
+    const matchesSearch = txnIdLower.includes(searchLower) || methodLower.includes(searchLower) || txn.username.toLowerCase().includes(searchLower);
     const matchesType = typeFilter === 'All Types' || txn.type === typeFilter;
     const matchesStatus = statusFilter === 'All Status' || txn.status.toLowerCase() === statusFilter.toLowerCase();
     return matchesSearch && matchesType && matchesStatus;
@@ -123,6 +123,7 @@ const Transactions: React.FC = () => {
               <TableRow className="hover:bg-transparent border-none">
                 <TableHead className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest h-auto">Transaction ID</TableHead>
                 <TableHead className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest h-auto">Method</TableHead>
+                <TableHead className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest h-auto">User/Account</TableHead>
                 <TableHead className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest h-auto">Type</TableHead>
                 <TableHead className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest text-right h-auto">Amount</TableHead>
                 <TableHead className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest text-center h-auto">Status</TableHead>
@@ -135,6 +136,7 @@ const Transactions: React.FC = () => {
                 <TableRow key={txn.id} className="group hover:bg-slate-50 dark:hover:bg-white/5 transition-all duration-200 border-border/10 cursor-pointer" onClick={() => navigate(`/transactions/${txn.id}`)}>
                   <TableCell className="px-6 py-5 font-mono text-sm font-bold text-primary">{txn.id}</TableCell>
                   <TableCell className="px-6 py-5 text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">{txn.method}</TableCell>
+                  <TableCell className="px-6 py-5 text-sm font-bold text-slate-700 dark:text-slate-300">@{txn.username}</TableCell>
                   <TableCell className="px-6 py-5 text-[10px] font-black uppercase tracking-widest">
                     <span className={`px-3 py-1 rounded-full ${
                       txn.type === 'Withdrawal' ? 'bg-rose-500/10 text-rose-500' :
