@@ -4,6 +4,8 @@ import { Button } from "../ui/button";
 import { useVerifyOtp } from "@/hooks/auth/useVerifyOtp";
 import { useResendOtp } from "@/hooks/auth/useResendOtp";
 import { useRegistration } from "@/hooks/auth/useRegistration";
+import { useAuth } from "@/context/auth";
+import { useNavigate } from "react-router";
 
 interface OtpProps {
   onClick: (value: string) => void;
@@ -15,7 +17,6 @@ const RESEND_COOLDOWN = 120; // seconds
 const OTP = ({ onClick }: OtpProps) => {
   const { pendingEmail } = useRegistration();
 
-  // OTP digit state
   const [digits, setDigits] = useState<string[]>(Array(OTP_LENGTH).fill(""));
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -28,6 +29,8 @@ const OTP = ({ onClick }: OtpProps) => {
 
   const { mutate: verifyOtp, isPending: isVerifying } = useVerifyOtp();
   const { mutate: resendOtp, isPending: isResending } = useResendOtp();
+  const { setAuth } = useAuth();
+  const navigate = useNavigate();
 
   // Start countdown — uses a ref so the effect never needs to re-run
   const startCountdown = useCallback(() => {
@@ -55,9 +58,9 @@ const OTP = ({ onClick }: OtpProps) => {
 
   // Handle individual input change
   const handleChange = (index: number, value: string) => {
-    if (!/^\d*$/.test(value)) return; // digits only
+    if (!/^\d*$/.test(value)) return;
     const updated = [...digits];
-    updated[index] = value.slice(-1); // keep last char
+    updated[index] = value.slice(-1); 
     setDigits(updated);
     console.log(`[OTP] Digit[${index}] changed →`, updated.join(""));
     if (value && index < OTP_LENGTH - 1) {
@@ -95,11 +98,23 @@ const OTP = ({ onClick }: OtpProps) => {
       {
         onSuccess: (data) => {
           console.log("[OTP] Verify success:", data);
-          window.location.href = "/";
+          const { session, user } = data.data;
+          setAuth(
+            {
+              id: user.id,
+              username: user.username,
+              email: user.email,
+              phone: user.phone,
+              referralCode: user.referral_code,
+            },
+            session.access_token,
+          );
+          navigate("/");
         },
-        onError: (err: Error) => {
-          console.error("[OTP] Verify error:", err.message);
-          setError(err.message);
+        onError: (err: unknown) => {
+          const error = err as { response?: { data?: { message?: string } }; message?: string };
+          console.error("[OTP] Verify error:", error.response?.data?.message || error.message);
+          setError(error.response?.data?.message || error.message || "An unknown error occurred");
           setDigits(Array(OTP_LENGTH).fill(""));
           inputRefs.current[0]?.focus();
         },
@@ -121,9 +136,20 @@ const OTP = ({ onClick }: OtpProps) => {
           startCountdown();
           inputRefs.current[0]?.focus();
         },
-        onError: (err: Error) => {
-          console.error("[OTP] Resend error:", err.message);
-          setError(err.message);
+        onError: (err: unknown) => {
+          const error = err as {
+            response?: { data?: { message?: string } };
+            message?: string;
+          };
+          console.error(
+            "[OTP] Resend error:",
+            error.response?.data?.message || error.message,
+          );
+          setError(
+            error.response?.data?.message ||
+              error.message ||
+              "An unknown error occurred",
+          );
         },
       },
     );

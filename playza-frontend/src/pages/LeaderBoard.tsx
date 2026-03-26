@@ -10,10 +10,14 @@ import { leaderboard } from "@/data/fullLeaderboard";
 import { formatNaira } from "@/lib/formatNaira";
 import type { GameName, LeaderboardPlayer } from "@/types/types";
 import { useState } from "react";
-import { MdLeaderboard, MdTrendingUp } from "react-icons/md";
+import { MdLeaderboard, MdTrendingUp, MdLogin } from "react-icons/md";
 import Search from "@/components/Search";
+import { useAuth } from "@/context/auth";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router";
 
 const LeaderBoard = () => {
+  const { user } = useAuth();
   const gameNames = Object.keys(leaderboard);
 
   const [activeGame, setActiveGame] = useState<GameName>("Mystic Quest");
@@ -74,8 +78,8 @@ const LeaderBoard = () => {
       <div className="glass-card rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden flex-1 flex flex-col relative">
         <div className="absolute top-0 inset-x-0 h-32 bg-linear-to-b from-primary/10 to-transparent -z-10 pointer-events-none" />
         
-        <div className="overflow-auto custom-scrollbar flex-1">
-          <Table className="w-full text-left">
+        <div className="overflow-auto custom-scrollbar flex-1 relative">
+          <Table className={`w-full text-left transition-all duration-700 ${!user ? "blur-sm grayscale select-none pointer-events-none" : ""}`}>
             <TableHeader>
               <TableRow className="border-b-slate-200 dark:border-b-white/10 hover:bg-transparent">
                 <TableHead className="px-4 py-4 text-[10px] uppercase font-black tracking-widest text-slate-500 w-16 text-center">
@@ -174,6 +178,43 @@ const LeaderBoard = () => {
               )}
             </TableBody>
           </Table>
+
+          {!user && (
+            <div className="absolute inset-0 z-20 flex items-center justify-center p-6 text-center animate-in fade-in zoom-in duration-700">
+              <div className="max-w-md w-full glass-card p-10 rounded-[2.5rem] border-primary/20 shadow-2xl relative overflow-hidden group">
+                <div className="absolute inset-0 bg-primary/5 group-hover:bg-primary/10 transition-colors" />
+                <div className="absolute -top-12 -right-12 size-40 bg-primary/20 blur-[60px] rounded-full" />
+                
+                <div className="relative z-10 space-y-6">
+                  <div className="size-20 bg-primary/20 rounded-4xl flex items-center justify-center mx-auto mb-2 border border-primary/30 shadow-inner">
+                    <MdLogin className="text-4xl text-primary" />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight italic">
+                      Locked Content
+                    </h3>
+                    <p className="text-sm text-slate-500 font-bold leading-relaxed">
+                      Login to see all live ongoing leaderboards and track your ranking against the best players.
+                    </p>
+                  </div>
+                  
+                  <div className="flex flex-col gap-3 pt-2">
+                    <Link to="/registration?view=login" className="w-full">
+                      <Button className="w-full h-12 bg-primary text-white rounded-2xl font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg glow-accent">
+                        Log In Now
+                      </Button>
+                    </Link>
+                    <Link to="/registration?view=signup" className="w-full">
+                      <Button variant="outline" className="w-full h-12 border-primary/30 text-primary rounded-2xl font-black uppercase tracking-widest hover:bg-primary/10 transition-all">
+                        Create Account
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </section>

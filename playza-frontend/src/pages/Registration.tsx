@@ -5,8 +5,12 @@ import OTP from "@/components/registration/OTP";
 import RegistrationForm from "@/components/registration/RegistrationForm";
 import { useState } from "react";
 
+import { useSearchParams } from "react-router";
+
 const Registration = () => {
-  const [page, setPage] = useState("signup");
+  const [searchParams] = useSearchParams();
+  const initialView = searchParams.get("view") || "signup";
+  const [page, setPage] = useState(initialView);
 
   const renderComponent = () => {
     switch (page) {

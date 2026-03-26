@@ -2,6 +2,7 @@ import { useState } from "react";
 import { User, Lock, Loader2 } from "lucide-react";
 import { useLogin } from "@/hooks/auth/useLogin";
 import { useNavigate } from "react-router";
+import { useAuth } from "@/context/auth";
 
 interface LogInProps {
   onClick: (value: string) => void;
@@ -12,15 +13,43 @@ const LogIn = ({ onClick }: LogInProps) => {
   const [password, setPassword] = useState("");
   const { mutate: login, isPending, error } = useLogin();
   const navigate = useNavigate();
+  const { setAuth } = useAuth();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("[LogIn] Submitting login request for identifier:", identifier);
     login(
       { identifier, password },
       {
         onSuccess: (data) => {
-          console.log("Login success:", data);
+          console.log("[LogIn] Success! Token and user data received:", data);
+          const { access_token, user } = data.data;
+          setAuth(
+            {
+              id: user.id,
+              username: user.username,
+              email: user.email,
+              phone: user.phone,
+              referralCode: user.referral_code,
+              avatarUrl: user.avatar_url,
+              firstName: user.first_name,
+              lastName: user.last_name,
+              psaPoints: user.psa_points,
+              isEmailVerified: user.is_email_verified,
+            },
+            access_token,
+          );
           navigate("/");
+        },
+        onError: (err: unknown) => {
+          const error = err as {
+            response?: { data?: { message?: string } };
+            message?: string;
+          };
+          console.error(
+            "[LogIn] Error during login:",
+            error.response?.data?.message || error.message,
+          );
         },
       },
     );

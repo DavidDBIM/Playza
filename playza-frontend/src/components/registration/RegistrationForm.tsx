@@ -16,9 +16,9 @@ import {
   AlertCircle,
   ArrowLeft,
 } from "lucide-react";
-import { Link } from "react-router";
 import { useSignup } from "@/hooks/auth/useSignup";
 import { useRegistration } from "@/hooks/auth/useRegistration";
+import { Link, useLocation } from "react-router";
 
 interface RegistrationFormProps {
   onClick: (value: string) => void;
@@ -27,6 +27,10 @@ interface RegistrationFormProps {
 const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const urlReferralCode = queryParams.get("ref") || "";
 
   const {
     register,
@@ -42,7 +46,7 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
       phone: "",
       password: "",
       confirmPassword: "",
-      referralCode: "",
+      referralCode: urlReferralCode,
       acceptedTerms: false,
     },
   });
@@ -82,6 +86,7 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
           : "Strong";
 
   const onFormSubmit = (data: SignupFormValues) => {
+    console.log("[RegistrationForm] Form submitted with data:", data);
     setFormError(null);
 
     const payload = {
@@ -94,13 +99,31 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
         : {}),
     };
 
+    console.log(
+      "[RegistrationForm] Sending signup payload to backend:",
+      payload,
+    );
+
     signup(payload, {
-      onSuccess: () => {
+      onSuccess: (response) => {
+        console.log(
+          "[RegistrationForm] Signup successful! Backend response:",
+          response,
+        );
         setPendingEmail(data.email);
         onClick("otp");
       },
-      onError: (err: Error) => {
-        setFormError(err.message);
+      onError: (err: unknown) => {
+        const error = err as {
+          response?: { data?: { message?: string } };
+          message?: string;
+        };
+        console.error("[RegistrationForm] Signup failed. Error:", error);
+        const errorMessage =
+          error.response?.data?.message ||
+          error.message ||
+          "An error occurred during signup";
+        setFormError(errorMessage);
       },
     });
   };
@@ -322,7 +345,10 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
               </label>
               <input
                 {...register("referralCode")}
-                className="w-full bg-slate-900/5 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl py-3.5 px-4 focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 transition-all font-medium text-sm"
+                readOnly={!!urlReferralCode}
+                className={`w-full bg-slate-900/5 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl py-3.5 px-4 focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 transition-all font-medium text-sm ${
+                  urlReferralCode ? "opacity-60 cursor-not-allowed bg-slate-100 dark:bg-white/10" : ""
+                }`}
                 type="text"
                 placeholder="PLAYZA-XXXX"
               />

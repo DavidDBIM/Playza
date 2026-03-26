@@ -1,20 +1,26 @@
 import { createContext, useContext } from "react";
 
 export interface UserProfile {
+  id: string;
   username: string;
   email: string;
-  phoneNumber: string;
+  phone: string;
+  referralCode: string;
   firstName?: string;
   lastName?: string;
-  bankName?: string;
-  accountNumber?: string;
-  accountName?: string;
+  avatarUrl?: string;
+  pzaPoints?: number;
+  isEmailVerified?: boolean;
+  createdAt?: string;
 }
 
 export interface AuthContextType {
   user: UserProfile | null;
+  setAuth: (user: UserProfile, token: string) => void;
+  logout: () => void;
   updateProfile: (data: Partial<UserProfile>) => void;
   isProfileComplete: boolean;
+  isLoading: boolean;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);

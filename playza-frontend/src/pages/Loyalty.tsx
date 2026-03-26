@@ -7,469 +7,446 @@ import {
   MdStar,
   MdMilitaryTech,
   MdLogin,
-  MdGroupAdd,
-  MdEmojiEvents,
-  MdArrowForward,
+  // MdGroupAdd,
+  // MdEmojiEvents,
+  // MdArrowForward,
   MdAccountBalanceWallet,
   MdConfirmationNumber,
   MdLocalMall,
   MdInfo,
   MdClose,
+  MdStars,
 } from "react-icons/md";
+import { useAuth } from "@/context/auth";
+import { Link } from "react-router";
+import { Button } from "@/components/ui/button";
 
 const Loyalty = () => {
+  const { user } = useAuth();
   const [isTierModalOpen, setIsTierModalOpen] = useState(false);
 
   return (
     <div className="flex-1 space-y-12 pb-20">
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 glass-card rounded-xl p-8 relative overflow-hidden border border-white/5 neon-glow">
-          <div className="absolute top-0 right-0 p-8 opacity-10">
-            <MdDiamond className="text-9xl" />
-          </div>
-          <div className="relative z-10">
-            <h1 className="font-headline text-4xl md:text-5xl font-bold tracking-tight mb-2">
-              Loyalty & Rewards
+      {!user ? (
+        <div className="mt-6 mb-12 glass-card p-10 rounded-[2.5rem] border-primary/20 relative overflow-hidden flex flex-col items-center text-center gap-8 shadow-2xl">
+          <div className="absolute -top-24 -left-24 size-96 bg-primary/20 blur-[120px] rounded-full" />
+          <div className="absolute -bottom-24 -right-24 size-96 bg-secondary/20 blur-[120px] rounded-full" />
+
+          <div className="relative z-10 space-y-4 max-w-2xl">
+            <div className="size-24 bg-primary/20 rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 border border-primary/30 shadow-inner group">
+              <MdStars className="text-5xl text-primary animate-pulse" />
+            </div>
+            <h1 className="text-4xl md:text-7xl font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-none italic">
+              PZA <span className="text-primary">Rewards</span> Center
             </h1>
-            <p className="text-on-surface-variant mb-8 max-w-md">
-              Earn PZA Points. Complete tasks. Unlock rewards.
-            </p>
-            <div className="flex flex-wrap items-end gap-8">
-              <div>
-                <div className="text-[10px] uppercase tracking-widest text-secondary-fixed mb-1 font-bold opacity-70">
-                  Total Balance
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-4xl md:text-5xl font-black font-headline text-on-surface">
-                    2,450
-                  </span>
-                  <span className="text-xl md:text-2xl font-bold text-primary">PZA</span>
-                </div>
-              </div>
-              <div className="flex-1 min-w-60">
-                <div className="flex justify-between text-xs mb-2 text-on-surface-variant">
-                  <span className="flex items-center gap-1.5">
-                    Progress to{" "}
-                    <span className="text-primary font-bold">GOLD</span>
-                    <button 
-                      onClick={() => setIsTierModalOpen(true)}
-                      className="text-primary hover:text-primary/80 transition-colors p-0.5"
-                      title="View Tiers"
-                    >
-                      <MdInfo className="text-xs" />
-                    </button>
-                  </span>
-                  <span>2,450 / 5,000 PZA</span>
-                </div>
-                <div className="h-3 bg-surface-variant rounded-full overflow-hidden">
-                  <div className="h-full bg-linear-to-r from-primary to-secondary w-[49%] relative">
-                    <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="glass-card rounded-xl p-8 flex flex-col justify-between border border-white/5">
-          <div className="flex justify-between items-start">
-            <div className="text-sm uppercase tracking-widest text-tertiary font-bold">
-              Current Streak
-            </div>
-            <div className="bg-error-container/20 text-error px-3 py-1 rounded-full text-xs font-bold border border-error/20">
-              3 days 🔥
-            </div>
-          </div>
-          <div className="mt-6 flex justify-between items-end">
-            <div className="space-y-1">
-              <div className="text-4xl font-black font-headline text-on-surface">
-                12
-              </div>
-              <div className="text-xs text-on-surface-variant uppercase">
-                Tasks Today
-              </div>
-            </div>
-            <div className="w-16 h-16 rounded-full border-4 border-surface-variant flex items-center justify-center">
-              <span className="text-primary font-bold">65%</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Daily Rewards */}
-      <section className="space-y-6">
-        <div className="flex justify-between items-center bg-surface-container/30 p-3 md:p-4 rounded-2xl border border-white/5">
-          <h2 className="font-headline text-base md:text-lg font-bold tracking-tight">
-            Daily Rewards
-          </h2>
-          <span className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-primary bg-primary/10 px-2 md:px-3 py-1 rounded-full">Claim every 24h</span>
-        </div>
-        <div className="grid grid-cols-7 gap-1 md:gap-2">
-          {[
-            { day: 1, amount: 50, icon: <MdCheckCircle />, color: "secondary", status: "claimed" },
-            { day: 2, amount: 100, icon: <MdCheckCircle />, color: "secondary", status: "claimed" },
-            { day: 3, amount: 150, icon: <MdCheckCircle />, color: "secondary", status: "claimed" },
-            { day: 4, amount: 200, icon: <MdToken />, color: "primary", status: "active" },
-            { day: 5, amount: 250, icon: <MdLock />, color: "neutral", status: "locked" },
-            { day: 6, amount: 300, icon: <MdLock />, color: "neutral", status: "locked" },
-            { day: 7, amount: 350, icon: <MdStar />, color: "tertiary", status: "locked" },
-          ].map((item) => (
-            <div 
-              key={item.day}
-              className={`flex-1 glass-card p-1 md:p-2 rounded-lg border flex flex-col items-center gap-0.5 md:gap-1 transition-all ${
-                item.status === "active" 
-                ? "border-primary bg-primary/10 shadow-[0_0_10px_rgba(var(--primary-rgb),0.1)]" 
-                : item.status === "claimed" 
-                ? "border-secondary/30 bg-secondary/5" 
-                : "border-white/5 opacity-50"
-              }`}
-            >
-              <span className={`text-[6px] md:text-[8px] font-bold uppercase ${item.status === "active" ? "text-primary" : "text-on-surface-variant"}`}>
-                Day {item.day}
-              </span>
-              <div className={`text-base md:text-lg ${item.color === "primary" ? "text-primary" : item.color === "secondary" ? "text-secondary" : item.color === "tertiary" ? "text-tertiary" : ""}`}>
-                {item.icon}
-              </div>
-              <div className={`font-black text-[7px] md:text-[10px] ${item.status === "active" ? "text-on-surface" : item.status === "claimed" ? "text-secondary" : item.color === "tertiary" ? "text-tertiary" : ""}`}>
-                {item.amount}
-              </div>
-              {item.status === "active" && (
-                <button className="text-[6px] md:text-[8px] bg-primary text-on-primary-fixed px-1.5 py-0.5 rounded-full font-bold uppercase hover:scale-105 active:scale-95 transition-transform">
-                  CLAIM
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Starter Quests Section */}
-      <section className="space-y-6">
-        <div className="flex justify-between items-end">
-          <div>
-            <h2 className="font-headline text-2xl font-bold tracking-tight bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent">
-              Starter Quests
-            </h2>
-            <p className="text-sm text-on-surface-variant">
-              Complete these one-time missions to kickstart your journey
+            <p className="text-base md:text-xl text-slate-500 font-bold max-w-lg mx-auto leading-relaxed">
+              Earn PZA points for every move you make. Unlock exclusive
+              tournaments, redeem wallet credits, and rank up your legacy.
             </p>
           </div>
-          <div className="text-[10px] font-black uppercase tracking-widest text-secondary-fixed opacity-70">
-            Phase 1 / 1
+
+          <div className="relative z-10 flex flex-col sm:flex-row gap-4 w-full max-w-md">
+            <Link to="/registration?view=signup" className="flex-1">
+              <Button className="w-full h-16 bg-primary text-white rounded-2xl font-black uppercase tracking-widest text-lg hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary/20 glow-accent">
+                Join Rewards
+              </Button>
+            </Link>
+            <Link to="/registration?view=login" className="flex-1">
+              <Button
+                variant="outline"
+                className="w-full h-16 border-primary/30 text-primary rounded-2xl font-black uppercase tracking-widest text-lg hover:bg-primary/10 transition-all"
+              >
+                Member Login
+              </Button>
+            </Link>
           </div>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[
-            { name: "First Signup", points: 5, status: "completed", icon: <MdCheckCircle /> },
-            { name: "Verify Email", points: 10, status: "completed", icon: <MdCheckCircle /> },
-            { name: "Verify Phone", points: 10, status: "active", icon: <MdLogin /> },
-            { name: "Complete Profile", points: 30, status: "locked", icon: <MdLock /> },
-            { name: "Upload Avatar", points: 20, status: "locked", icon: <MdLock /> },
-            { name: "Play First Game", points: 200, status: "locked", icon: <MdLock /> },
-          ].map((quest, idx) => (
-            <div 
-              key={idx}
-              className={`glass-card p-4 rounded-2xl border transition-all duration-300 flex flex-col justify-between h-32 hover:border-primary/50 group ${
-                quest.status === "completed" 
-                ? "border-secondary/20 bg-secondary/5 opacity-80" 
-                : quest.status === "active"
-                ? "border-primary bg-primary/5 shadow-2xl shadow-primary/10 scale-[1.02]"
-                : "border-white/5 opacity-50 bg-white/5"
-              }`}
-            >
-              <div className="flex justify-between items-start">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-500 ${
-                  quest.status === "completed" ? "bg-secondary/20 text-secondary" :
-                  quest.status === "active" ? "bg-primary/20 text-primary group-hover:rotate-12" : "bg-white/5 text-on-surface-variant"
-                }`}>
-                  {quest.icon}
-                </div>
-                <div className="text-right">
-                  <div className={`text-base font-black ${quest.status === "completed" ? "text-secondary" : "text-primary"}`}>
-                    +{quest.points}
-                  </div>
-                  <div className="text-[9px] font-black uppercase opacity-60 tracking-tighter">PZA Points</div>
-                </div>
-              </div>
-              <div className="mt-2">
-                <div className="font-headline font-black text-sm mb-1 uppercase tracking-tight">{quest.name}</div>
-                {quest.status === "active" ? (
-                  <div className="h-1.5 w-full bg-surface-variant rounded-full overflow-hidden">
-                    <div className="h-full bg-primary w-[30%] animate-pulse"></div>
-                  </div>
-                ) : quest.status === "completed" ? (
-                  <div className="flex items-center gap-1.5">
-                    <MdCheckCircle className="text-secondary text-xs" />
-                    <span className="text-[10px] font-black text-secondary uppercase tracking-widest">Authenticated</span>
-                  </div>
-                ) : (
-                  <div className="text-[10px] font-black text-on-surface-variant/40 uppercase tracking-widest flex items-center gap-1.5">
-                    <MdLock className="text-[10px]" /> Encrypted
-                  </div>
-                )}
-              </div>
+      ) : (
+        <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 glass-card rounded-xl p-8 relative overflow-hidden border border-white/5 neon-glow">
+            <div className="absolute top-0 right-0 p-8 opacity-10">
+              <MdDiamond className="text-9xl" />
             </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Tier Modal */}
-      {isTierModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
-          <div className="relative w-full max-w-lg glass-card rounded-3xl overflow-hidden border border-white/10 shadow-2xl p-6 md:p-8 animate-in zoom-in-95 duration-300">
-            <button 
-              onClick={() => setIsTierModalOpen(false)}
-              className="absolute top-4 right-4 p-2 rounded-full bg-white/5 hover:bg-white/10 text-on-surface-variant transition-colors"
-            >
-              <MdClose className="text-xl" />
-            </button>
-
-            <div className="mb-8">
-              <h2 className="font-headline text-3xl font-black mb-2 flex items-center gap-3">
-                <MdMilitaryTech className="text-primary text-4xl" />
-                Tier System
-              </h2>
-              <p className="text-on-surface-variant text-sm">
-                Unlock higher multipliers and exclusive rewards as you earn more PZA points.
+            <div className="relative z-10">
+              <h1 className="font-headline text-4xl md:text-5xl font-bold tracking-tight mb-2 text-slate-900 dark:text-white">
+                Loyalty & Rewards
+              </h1>
+              <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-md font-bold uppercase tracking-widest opacity-60 text-xs">
+                Earn PZA Points. Complete tasks. Unlock rewards.
               </p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="glass-card p-3 rounded-xl border border-white/5 flex flex-col items-center text-center gap-1 bg-white/5">
-                <div className="w-8 h-8 rounded-lg bg-orange-900/20 border border-orange-500/30 flex items-center justify-center">
-                  <MdMilitaryTech className="text-orange-400 text-lg" />
-                </div>
+              <div className="flex flex-wrap items-end gap-8">
                 <div>
-                  <div className="font-headline font-black text-sm">Bronze</div>
-                  <div className="text-[10px] text-on-surface-variant font-bold">0-999 PZA</div>
+                  <div className="text-[10px] uppercase tracking-widest text-primary mb-1 font-bold opacity-70">
+                    Total Balance
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-4xl md:text-5xl font-black font-headline text-slate-900 dark:text-white">
+                      2,450
+                    </span>
+                    <span className="text-xl md:text-2xl font-bold text-primary">
+                      PZA
+                    </span>
+                  </div>
                 </div>
-              </div>
-
-              <div className="glass-card p-3 rounded-xl border-2 border-primary flex flex-col items-center text-center gap-1 bg-primary/10">
-                <div className="w-8 h-8 rounded-lg bg-slate-500/20 border border-slate-400/30 flex items-center justify-center">
-                  <MdMilitaryTech className="text-slate-300 text-lg" />
-                </div>
-                <div>
-                  <div className="font-headline font-black text-sm">Silver</div>
-                  <div className="text-[10px] text-on-surface-variant font-bold">1k-5k PZA</div>
-                </div>
-              </div>
-
-              <div className="glass-card p-3 rounded-xl border border-white/5 flex flex-col items-center text-center gap-1 opacity-60 grayscale bg-white/5">
-                <div className="w-8 h-8 rounded-lg bg-yellow-500/20 border border-yellow-400/30 flex items-center justify-center">
-                  <MdMilitaryTech className="text-yellow-400 text-lg" />
-                </div>
-                <div>
-                  <div className="font-headline font-black text-sm">Gold</div>
-                  <div className="text-[10px] text-on-surface-variant font-bold">5k-10k PZA</div>
-                </div>
-              </div>
-
-              <div className="glass-card p-3 rounded-xl border border-white/5 flex flex-col items-center text-center gap-1 opacity-60 grayscale bg-white/5">
-                <div className="w-8 h-8 rounded-lg bg-cyan-500/20 border border-cyan-400/30 flex items-center justify-center">
-                  <MdMilitaryTech className="text-cyan-400 text-lg" />
-                </div>
-                <div>
-                  <div className="font-headline font-black text-sm">Platinum</div>
-                  <div className="text-[10px] text-on-surface-variant font-bold">10k+ PZA</div>
+                <div className="flex-1 min-w-60">
+                  <div className="flex justify-between text-xs mb-2 text-slate-500">
+                    <span className="flex items-center gap-1.5 font-bold uppercase tracking-widest">
+                      Progress to{" "}
+                      <span className="text-primary font-black">GOLD</span>
+                      <button
+                        onClick={() => setIsTierModalOpen(true)}
+                        className="text-primary hover:text-primary/80 transition-colors p-0.5"
+                        title="View Tiers"
+                      >
+                        <MdInfo className="text-xs" />
+                      </button>
+                    </span>
+                    <span className="font-black text-slate-900 dark:text-white">
+                      2,450 / 5,000 PZA
+                    </span>
+                  </div>
+                  <div className="h-3 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden border border-white/5 shadow-inner">
+                    <div className="h-full bg-linear-to-r from-primary to-secondary w-[49%] relative">
+                      <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-
-            <button 
-              onClick={() => setIsTierModalOpen(false)}
-              className="w-full mt-8 bg-surface-container hover:bg-surface-container-high text-on-surface py-3 rounded-xl font-bold uppercase tracking-tight transition-colors border border-white/5"
-            >
-              Got it
-            </button>
           </div>
-        </div>
+
+          <div className="glass-card rounded-xl p-8 flex flex-col justify-between border border-white/5">
+            <div className="flex justify-between items-start">
+              <div className="text-sm uppercase tracking-widest text-slate-500 font-bold">
+                Current Streak
+              </div>
+              <div className="bg-red-500/10 text-red-500 px-3 py-1 rounded-full text-xs font-bold border border-red-500/20">
+                3 days 🔥
+              </div>
+            </div>
+            <div className="mt-6 flex justify-between items-end">
+              <div className="space-y-1">
+                <div className="text-4xl font-black font-headline text-slate-900 dark:text-white">
+                  12
+                </div>
+                <div className="text-xs text-slate-500 uppercase font-bold tracking-widest opacity-60">
+                  Tasks Today
+                </div>
+              </div>
+              <div className="w-16 h-16 rounded-full border-4 border-primary/20 flex items-center justify-center bg-primary/5">
+                <span className="text-primary font-black">65%</span>
+              </div>
+            </div>
+          </div>
+        </section>
       )}
 
-      <section className="space-y-6">
-        <div className="flex justify-between items-end">
-          <div>
-            <h2 className="font-headline text-2xl font-bold tracking-tight">
-              Earn More PZA Points
-            </h2>
-            <p className="text-sm text-on-surface-variant">
-              Complete missions to boost your balance
-            </p>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="glass-card p-5 rounded-xl border border-white/5 flex items-center justify-between group hover:bg-surface-container transition-colors cursor-pointer">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-                <MdLogin className="text-xl" />
-              </div>
-              <div>
-                <div className="font-bold">Daily Login</div>
-                <div className="text-xs text-on-surface-variant">
-                  Check in today for a bonus
+      {/* Access Protected Sections */}
+      {user && (
+        <>
+          {/* Daily Rewards */}
+          <section className="space-y-6">
+            <div className="flex justify-between items-center bg-slate-900/5 dark:bg-white/5 p-3 md:p-4 rounded-2xl border border-white/5">
+              <h2 className="font-headline text-base md:text-lg font-bold tracking-tight text-slate-900 dark:text-white">
+                Daily Rewards
+              </h2>
+              <span className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-primary bg-primary/10 px-2 md:px-3 py-1 rounded-full">
+                Claim every 24h
+              </span>
+            </div>
+            <div className="grid grid-cols-4 sm:grid-cols-7 gap-1 md:gap-2 text-slate-900 dark:text-white">
+              {[
+                {
+                  day: 1,
+                  amount: 50,
+                  icon: <MdCheckCircle />,
+                  color: "secondary",
+                  status: "claimed",
+                },
+                {
+                  day: 2,
+                  amount: 100,
+                  icon: <MdCheckCircle />,
+                  color: "secondary",
+                  status: "claimed",
+                },
+                {
+                  day: 3,
+                  amount: 150,
+                  icon: <MdCheckCircle />,
+                  color: "secondary",
+                  status: "claimed",
+                },
+                {
+                  day: 4,
+                  amount: 200,
+                  icon: <MdToken />,
+                  color: "primary",
+                  status: "active",
+                },
+                {
+                  day: 5,
+                  amount: 250,
+                  icon: <MdLock />,
+                  color: "neutral",
+                  status: "locked",
+                },
+                {
+                  day: 6,
+                  amount: 300,
+                  icon: <MdLock />,
+                  color: "neutral",
+                  status: "locked",
+                },
+                {
+                  day: 7,
+                  amount: 350,
+                  icon: <MdStar />,
+                  color: "tertiary",
+                  status: "locked",
+                },
+              ].map((item) => (
+                <div
+                  key={item.day}
+                  className={`flex-1 glass-card p-1 md:p-2 rounded-lg border flex flex-col items-center gap-0.5 md:gap-1 transition-all ${
+                    item.status === "active"
+                      ? "border-primary bg-primary/10 shadow-[0_0_10px_rgba(var(--primary-rgb),0.1)]"
+                      : item.status === "claimed"
+                        ? "border-green-500/30 bg-green-500/5"
+                        : "border-white/5 opacity-50"
+                  }`}
+                >
+                  <span
+                    className={`text-[6px] md:text-[8px] font-bold uppercase ${item.status === "active" ? "text-primary" : "text-slate-500"}`}
+                  >
+                    Day {item.day}
+                  </span>
+                  <div
+                    className={`text-base md:text-lg ${item.color === "primary" ? "text-primary" : item.color === "secondary" ? "text-green-500" : item.color === "tertiary" ? "text-amber-500" : ""}`}
+                  >
+                    {item.icon}
+                  </div>
+                  <div
+                    className={`font-black text-[7px] md:text-[10px] ${item.status === "active" ? "text-slate-900 dark:text-white" : item.status === "claimed" ? "text-green-500" : ""}`}
+                  >
+                    {item.amount}
+                  </div>
                 </div>
-              </div>
+              ))}
             </div>
-            <div className="text-right">
-              <div className="text-primary font-black">+50 PZA</div>
-              <div className="text-[10px] text-secondary font-bold">
-                COMPLETED
-              </div>
-            </div>
-          </div>
+          </section>
 
-          <div className="glass-card p-5 rounded-xl border border-white/5 flex items-center justify-between group hover:bg-surface-container transition-colors cursor-pointer">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-tertiary/10 flex items-center justify-center text-tertiary group-hover:scale-110 transition-transform">
-                <MdMilitaryTech className="text-xl" />
-              </div>
+          {/* Starter Quests Section */}
+          <section className="space-y-6">
+            <div className="flex justify-between items-end">
               <div>
-                <div className="font-bold">Weekly Challenge</div>
-                <div className="text-xs text-on-surface-variant">
-                  Complete 10 games this week
+                <h2 className="font-headline text-2xl font-bold tracking-tight bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent italic">
+                  Starter Quests
+                </h2>
+                <p className="text-sm text-slate-500 font-bold uppercase tracking-widest opacity-70">
+                  Complete missions to kickstart your journey
+                </p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[
+                {
+                  name: "First Signup",
+                  points: 5,
+                  status: "completed",
+                  icon: <MdCheckCircle />,
+                },
+                {
+                  name: "Verify Email",
+                  points: 10,
+                  status: "completed",
+                  icon: <MdCheckCircle />,
+                },
+                {
+                  name: "Verify Phone",
+                  points: 10,
+                  status: "active",
+                  icon: <MdLogin />,
+                },
+                {
+                  name: "Complete Profile",
+                  points: 30,
+                  status: "locked",
+                  icon: <MdLock />,
+                },
+                {
+                  name: "Upload Avatar",
+                  points: 20,
+                  status: "locked",
+                  icon: <MdLock />,
+                },
+                {
+                  name: "Play First Game",
+                  points: 200,
+                  status: "locked",
+                  icon: <MdLock />,
+                },
+              ].map((quest, idx) => (
+                <div
+                  key={idx}
+                  className={`glass-card p-4 rounded-2xl border transition-all duration-300 flex flex-col justify-between h-32 hover:border-primary/50 group ${
+                    quest.status === "completed"
+                      ? "border-green-500/20 bg-green-500/5 opacity-80"
+                      : quest.status === "active"
+                        ? "border-primary bg-primary/5 shadow-2xl shadow-primary/10 scale-[1.02]"
+                        : "border-white/5 opacity-50 bg-white/5"
+                  }`}
+                >
+                  <div className="flex justify-between items-start">
+                    <div
+                      className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-500 ${
+                        quest.status === "completed"
+                          ? "bg-green-500/20 text-green-500"
+                          : quest.status === "active"
+                            ? "bg-primary/20 text-primary"
+                            : "bg-white/5 text-slate-500"
+                      }`}
+                    >
+                      {quest.icon}
+                    </div>
+                    <div className="text-right">
+                      <div
+                        className={`text-base font-black ${quest.status === "completed" ? "text-green-500" : "text-primary"}`}
+                      >
+                        +{quest.points}
+                      </div>
+                      <div className="text-[9px] font-black uppercase opacity-60 tracking-tighter">
+                        PZA Points
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-2">
+                    <div className="font-headline font-black text-sm mb-1 uppercase tracking-tight text-slate-900 dark:text-white">
+                      {quest.name}
+                    </div>
+                    {quest.status === "active" ? (
+                      <div className="h-1.5 w-full bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
+                        <div className="h-full bg-primary w-[30%] animate-pulse"></div>
+                      </div>
+                    ) : quest.status === "completed" ? (
+                      <div className="flex items-center gap-1.5">
+                        <MdCheckCircle className="text-green-500 text-xs" />
+                        <span className="text-[10px] font-black text-green-500 uppercase tracking-widest">
+                          Authenticated
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+                        <MdLock className="text-[10px]" /> Encrypted
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
+              ))}
             </div>
-            <div className="text-right">
-              <div className="text-primary font-black">+1,000 PZA</div>
-              <div className="text-[10px] text-on-surface-variant">
-                4/10 Progress
-              </div>
-            </div>
-          </div>
+          </section>
+        </>
+      )}
 
-          <div className="glass-card p-5 rounded-xl border border-white/5 flex items-center justify-between group hover:bg-surface-container transition-colors cursor-pointer">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-secondary/10 flex items-center justify-center text-secondary group-hover:scale-110 transition-transform">
-                <MdGroupAdd className="text-xl" />
-              </div>
-              <div>
-                <div className="font-bold">Refer a Friend</div>
-                <div className="text-xs text-on-surface-variant">
-                  Share your unique link
-                </div>
-              </div>
-            </div>
-            <div className="text-right">
-              <div className="text-primary font-black">+300 PZA</div>
-              <MdArrowForward className="text-primary text-sm inline" />
-            </div>
-          </div>
-
-          <div className="glass-card p-5 rounded-xl border border-white/5 flex items-center justify-between group hover:bg-surface-container transition-colors cursor-pointer">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-error/10 flex items-center justify-center text-error group-hover:scale-110 transition-transform">
-                <MdEmojiEvents className="text-xl" />
-              </div>
-              <div>
-                <div className="font-bold">Win a Game</div>
-                <div className="text-xs text-on-surface-variant">
-                  Rank #1 in any arena match
-                </div>
-              </div>
-            </div>
-            <div className="text-right">
-              <div className="text-primary font-black">+200 PZA</div>
-              <MdArrowForward className="text-primary text-sm inline" />
-            </div>
-          </div>
-        </div>
-      </section>
-
+      {/* Redemption Store - Visible to all but actions limited */}
       <section className="space-y-6">
         <div className="flex justify-between items-center">
-          <h2 className="font-headline text-2xl font-bold tracking-tight">
+          <h2 className="font-headline text-2xl font-bold tracking-tight text-slate-900 dark:text-white uppercase italic">
             Redemption Store
           </h2>
-          <button className="text-sm font-bold text-primary hover:underline uppercase">
+          <button className="text-xs font-black text-primary hover:underline uppercase tracking-widest">
             View All
           </button>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div className="glass-card rounded-xl overflow-hidden border border-white/5 group">
-            <div className="h-32 bg-linear-to-br from-primary/20 to-tertiary/20 flex items-center justify-center relative">
-              <MdAccountBalanceWallet className="text-5xl text-on-surface/50" />
-              <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur px-2 py-1 rounded text-[10px] font-bold uppercase">
+          <div className="glass-card rounded-xl overflow-hidden border border-white/5 group bg-slate-100/50 dark:bg-white/5">
+            <div className="h-32 bg-linear-to-br from-primary/20 to-secondary/20 flex items-center justify-center relative">
+              <MdAccountBalanceWallet className="text-5xl text-slate-500 opacity-20" />
+              <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur px-2 py-1 rounded text-[10px] font-bold uppercase text-white">
                 WALLET BONUS
               </div>
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <div className="font-headline font-bold text-lg">
+                <div className="font-headline font-black text-lg text-slate-900 dark:text-white uppercase tracking-tight">
                   $10 Wallet Credit
                 </div>
-                <div className="text-xs text-on-surface-variant">
+                <div className="text-xs text-slate-500 font-bold leading-relaxed">
                   Instant credit to your Playza wallet
                 </div>
               </div>
-              <div className="flex items-center justify-between pt-2 border-t border-white/5">
+              <div className="flex items-center justify-between pt-2 border-t border-slate-200 dark:border-white/5">
                 <div className="flex items-center gap-1">
                   <span className="text-primary font-black">1,500</span>
-                  <span className="text-[10px] text-on-surface-variant">
+                  <span className="text-[10px] text-slate-500 font-bold">
                     PZA
                   </span>
                 </div>
-                <button className="bg-surface-variant hover:bg-primary hover:text-on-primary transition-all px-4 py-2 rounded-full text-xs font-bold uppercase">
-                  Redeem
+                <button
+                  className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${user ? "bg-primary text-white hover:scale-105" : "bg-slate-200 dark:bg-white/10 text-slate-400 cursor-not-allowed"}`}
+                >
+                  {user ? "Redeem" : "Locked"}
                 </button>
               </div>
             </div>
           </div>
 
-          <div className="glass-card rounded-xl overflow-hidden border border-white/5 group">
+          <div className="glass-card rounded-xl overflow-hidden border border-white/5 group bg-slate-100/50 dark:bg-white/5">
             <div className="h-32 bg-linear-to-br from-secondary/20 to-primary/20 flex items-center justify-center relative">
-              <MdConfirmationNumber className="text-5xl text-on-surface/50" />
-              <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur px-2 py-1 rounded text-[10px] font-bold uppercase">
+              <MdConfirmationNumber className="text-5xl text-slate-500 opacity-20" />
+              <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur px-2 py-1 rounded text-[10px] font-bold uppercase text-white">
                 ENTRY TICKET
               </div>
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <div className="font-headline font-bold text-lg">
+                <div className="font-headline font-black text-lg text-slate-900 dark:text-white uppercase tracking-tight">
                   Free Arena Entry
                 </div>
-                <div className="text-xs text-on-surface-variant">
+                <div className="text-xs text-slate-500 font-bold leading-relaxed">
                   One-time pass for any Pro Arena
                 </div>
               </div>
-              <div className="flex items-center justify-between pt-2 border-t border-white/5">
+              <div className="flex items-center justify-between pt-2 border-t border-slate-200 dark:border-white/5">
                 <div className="flex items-center gap-1">
                   <span className="text-primary font-black">800</span>
-                  <span className="text-[10px] text-on-surface-variant">
+                  <span className="text-[10px] text-slate-500 font-bold">
                     PZA
                   </span>
                 </div>
-                <button className="bg-surface-variant hover:bg-primary hover:text-on-primary transition-all px-4 py-2 rounded-full text-xs font-bold uppercase">
-                  Redeem
+                <button
+                  className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${user ? "bg-primary text-white hover:scale-105" : "bg-slate-200 dark:bg-white/10 text-slate-400 cursor-not-allowed"}`}
+                >
+                  {user ? "Redeem" : "Locked"}
                 </button>
               </div>
             </div>
           </div>
 
-          <div className="glass-card rounded-xl overflow-hidden border border-white/5 group">
-            <div className="h-32 bg-linear-to-br from-tertiary/20 to-error/20 flex items-center justify-center relative">
-              <MdLocalMall className="text-5xl text-on-surface/50" />
-              <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur px-2 py-1 rounded text-[10px] font-bold uppercase">
+          <div className="glass-card rounded-xl overflow-hidden border border-white/5 group bg-slate-100/50 dark:bg-white/5">
+            <div className="h-32 bg-linear-to-br from-secondary/20 to-red-500/20 flex items-center justify-center relative">
+              <MdLocalMall className="text-5xl text-slate-500 opacity-20" />
+              <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur px-2 py-1 rounded text-[10px] font-bold uppercase text-white">
                 MERCH SHOP
               </div>
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <div className="font-headline font-bold text-lg">
+                <div className="font-headline font-black text-lg text-slate-900 dark:text-white uppercase tracking-tight">
                   25% Store Discount
                 </div>
-                <div className="text-xs text-on-surface-variant">
+                <div className="text-xs text-slate-500 font-bold leading-relaxed">
                   Apply to any physical merchandise
                 </div>
               </div>
-              <div className="flex items-center justify-between pt-2 border-t border-white/5">
-                <div className="flex items-center gap-1">
+              <div className="flex items-center justify-between pt-2 border-t border-slate-200 dark:border-white/5">
+                <div className="flex items-center gap-1 text-slate-900 dark:text-white">
                   <span className="text-primary font-black">2,500</span>
-                  <span className="text-[10px] text-on-surface-variant">
+                  <span className="text-[10px] text-slate-500 font-bold">
                     PZA
                   </span>
                 </div>
-                <button className="bg-surface-variant px-4 py-2 rounded-full text-xs font-bold opacity-50 cursor-not-allowed uppercase">
+                <button className="bg-slate-200 dark:bg-white/10 text-slate-400 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest cursor-not-allowed">
                   Insufficient
                 </button>
               </div>
@@ -477,6 +454,81 @@ const Loyalty = () => {
           </div>
         </div>
       </section>
+
+      {/* Tier Modal */}
+      {isTierModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-in fade-in duration-300">
+          <div className="relative w-full max-w-lg glass-card rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl p-6 md:p-10 animate-in zoom-in-95 duration-300">
+            <button
+              onClick={() => setIsTierModalOpen(false)}
+              className="absolute top-6 right-6 p-2 rounded-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+            >
+              <MdClose className="text-xl" />
+            </button>
+
+            <div className="mb-8">
+              <h2 className="font-headline text-3xl font-black mb-2 flex items-center gap-3 text-slate-900 dark:text-white uppercase italic tracking-tight">
+                <MdMilitaryTech className="text-primary text-4xl" />
+                Tier System
+              </h2>
+              <p className="text-slate-500 font-bold text-sm leading-relaxed">
+                Unlock higher multipliers and exclusive rewards as you earn more
+                PZA points.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { name: "Bronze", range: "0-999 PZA", color: "orange" },
+                {
+                  name: "Silver",
+                  range: "1k-5k PZA",
+                  color: "slate",
+                  active: true,
+                },
+                { name: "Gold", range: "5k-10k PZA", color: "yellow" },
+                { name: "Platinum", range: "10k+ PZA", color: "cyan" },
+              ].map((tier) => (
+                <div
+                  key={tier.name}
+                  className={`glass-card p-4 rounded-2xl border flex flex-col items-center text-center gap-2 transition-all ${
+                    tier.active
+                      ? "border-primary bg-primary/10 shadow-lg scale-105"
+                      : "border-white/5 opacity-60 bg-white/5"
+                  }`}
+                >
+                  <MdMilitaryTech
+                    className={`text-2xl ${
+                      tier.name === "Bronze"
+                        ? "text-orange-400"
+                        : tier.name === "Silver"
+                          ? "text-slate-300"
+                          : tier.name === "Gold"
+                            ? "text-yellow-400"
+                            : "text-cyan-400"
+                    }`}
+                  />
+                  <div>
+                    <div className="font-headline font-black text-sm uppercase text-slate-900 dark:text-white">
+                      {tier.name}
+                    </div>
+                    <div className="text-[10px] text-slate-500 font-bold">
+                      {tier.range}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={() => setIsTierModalOpen(false)}
+              className="w-full mt-10 bg-primary hover:bg-primary/90 text-white py-4 rounded-2xl font-black uppercase tracking-widest transition-all shadow-xl shadow-primary/20"
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

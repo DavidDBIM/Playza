@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, type ChangeEvent } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { profileSchema, type ProfileFormValues } from "@/schemas/user.schema";
@@ -9,16 +9,27 @@ import {
   MdPayments,
   MdWarning,
   MdDelete,
+  MdLock,
 } from "react-icons/md";
+import { User } from "lucide-react";
 import { AddPaymentMethodModal } from "./AddPaymentMethodModal";
 import { useMe } from "../../hooks/users/useMe";
 import { useUpdateMe } from "../../hooks/users/useUpdateMe";
 import { useDeactivateUser } from "../../hooks/users/useDeactivateUser";
+import { useAuth } from "../../context/auth";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Settings = () => {
   const { data: user, isLoading } = useMe();
   const { mutate: updateProfile, isPending } = useUpdateMe();
-  const { mutate: deactivateUser, isPending: isDeactivating } = useDeactivateUser();
+  const { mutate: deactivateUser, isPending: isDeactivating } =
+    useDeactivateUser();
+  const { updateProfile: updateAuthState } = useAuth();
 
   const [showAddMethod, setShowAddMethod] = useState(false);
   const [hasKudaAccount, setHasKudaAccount] = useState(true);
@@ -41,6 +52,7 @@ const Settings = () => {
   });
 
   const avatarUrl = useWatch({ control, name: "avatarUrl" });
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const initialized = useRef(false);
 
@@ -57,14 +69,43 @@ const Settings = () => {
   }, [user, reset]);
 
   const onProfileSubmit = (data: ProfileFormValues) => {
-    updateProfile({
-      first_name: data.firstName,
-      last_name: data.lastName,
-      phone: data.phone,
-      avatar_url: data.avatarUrl,
-    });
+    updateProfile(
+      {
+        first_name: data.firstName,
+        last_name: data.lastName,
+        phone: data.phone,
+        avatar_url: data.avatarUrl,
+      },
+      {
+        onSuccess: (result) => {
+          console.log("[Settings] Profile updated successfully:", result);
+          // Preserve disabled fields in the Auth state update
+          updateAuthState({
+            firstName: user?.first_name || data.firstName,
+            lastName: user?.last_name || data.lastName,
+            phone: user?.phone || data.phone,
+            avatarUrl: data.avatarUrl,
+          });
+        },
+        onError: (error) => {
+          console.error("[Settings] Profile update failed:", error);
+        },
+      },
+    );
   };
 
+  const deleteAvatar = () => {
+    setValue("avatarUrl", "", { shouldDirty: true });
+    updateProfile(
+      { avatar_url: "" },
+      {
+        onSuccess: (result) => {
+          console.log("[Settings] Avatar deleted successfully:", result);
+          updateAuthState({ avatarUrl: "" });
+        },
+      },
+    );
+  };
   const handleDeactivate = () => {
     if (
       user &&
@@ -78,6 +119,18 @@ const Settings = () => {
           window.location.href = "/";
         },
       });
+    }
+  };
+
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setValue("avatarUrl", base64String, { shouldDirty: true });
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -107,7 +160,7 @@ const Settings = () => {
         {/* ── Public Identity ── */}
         <section className="space-y-3">
           <div className="flex items-center gap-3 mb-3">
-            <div className="size-10 rounded-2xl bg-primary/20 flex items-center justify-center text-primary text-xl">
+            <div className="size-10 rounded-xl bg-primary/20 flex items-center justify-center text-primary text-xl">
               <MdPhotoCamera />
             </div>
             <h2 className="text-lg md:text-2xl font-black text-slate-900 dark:text-white italic tracking-tight">
@@ -115,38 +168,58 @@ const Settings = () => {
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-[160px_1fr] gap-12 items-start glass-card p-8 rounded-[2.5rem] border-white/5">
+          <div className="grid grid-cols-1 md:grid-cols-[160px_1fr] gap-12 items-start glass-card px-2 py-4 md:p-8 rounded-xl border-white/5">
             {/* Avatar */}
             <div className="flex flex-col items-center gap-4">
               <div className="relative group/avatar">
-                <div className="size-32 rounded-[2.5rem] bg-slate-100 dark:bg-white/5 border-2 border-slate-200 dark:border-white/10 overflow-hidden shadow-2xl transition-transform duration-500 group-hover/avatar:scale-105">
-                  <img
-                    alt="Avatar"
-                    className="w-full h-full object-cover opacity-90 group-hover/avatar:opacity-100 transition-opacity"
-                    src={
-                      avatarUrl ||
-                      user?.avatar_url ||
-                      "https://lh3.googleusercontent.com/aida-public/AB6AXuCTRp1_sbmUx0yY6FodbHtszGAcUBPop6CRljUKN9pUxBkh4QHv-j685IODQ9vs9HTN0BZhw_NhegqeZv5dRJRx_V0vXTrGmVZmPyJ8GIzbMHUVrBHxQcU1HPJYoUvxVdCQ6jBm2f_W0OMiT5NcGnBFfRFy_bozuXEBKxGyvd7xP1scI_l-IGyIHTN11tGegmAWt1MOY3Fk1CeIzxFO2PoJoMR8123ld7RXejdmncOF9YCpxbEkYkYeMFo_kqt483h_cTSi6BG-clgw"
-                    }
-                  />
-                  <div
-                    onClick={() => {
-                      const url = prompt("Enter Image URL for new avatar:");
-                      if (url)
-                        setValue("avatarUrl", url, { shouldDirty: true });
-                    }}
-                    className="absolute inset-0 bg-primary/60 opacity-0 group-hover/avatar:opacity-100 flex items-center justify-center transition-all cursor-pointer backdrop-blur-sm"
-                  >
-                    <MdPhotoCamera className="text-3xl text-white" />
-                  </div>
-                </div>
-                <div className="absolute -bottom-2 -right-2 bg-primary text-white size-8 flex items-center justify-center rounded-full border-4 border-white dark:border-slate-900 shadow-xl glow-accent">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <div className="size-32 rounded-[2.5rem] bg-slate-100 dark:bg-white/5 border-2 border-slate-200 dark:border-white/10 overflow-hidden shadow-2xl transition-transform duration-500 group-hover/avatar:scale-105 cursor-pointer relative">
+                      {avatarUrl || user?.avatar_url ? (
+                        <img
+                          alt="Avatar"
+                          className="w-full h-full object-cover opacity-90 group-hover/avatar:opacity-100 transition-opacity"
+                          src={avatarUrl || user?.avatar_url}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <User className="size-12 text-primary/50" />
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-primary/60 opacity-0 group-hover/avatar:opacity-100 flex items-center justify-center transition-all backdrop-blur-sm">
+                        <MdPhotoCamera className="text-3xl text-white" />
+                      </div>
+                    </div>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="center" className="w-48 glass bg-white/90 dark:bg-slate-900/90 border-primary/20 p-2">
+                    <DropdownMenuItem
+                      onClick={() => fileInputRef.current?.click()}
+                      className="cursor-pointer gap-2 py-2.5 px-3 rounded-xl focus:bg-primary/10 data-highlighted:bg-primary/10 transition-colors"
+                    >
+                      <MdPhotoCamera className="text-lg" />
+                      <span className="font-medium text-sm">Change Image</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={deleteAvatar}
+                      className="cursor-pointer gap-2 py-2.5 px-3 rounded-xl text-red-500 focus:bg-red-50/50 dark:focus:bg-red-900/20 transition-colors"
+                    >
+                      <MdDelete className="text-lg" />
+                      <span className="font-medium text-sm">Delete Image</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  accept="image/*"
+                  className="hidden"
+                />
+                <div className="absolute -bottom-2 -right-2 bg-primary text-white size-8 flex items-center justify-center rounded-full border-4 border-white dark:border-slate-900 shadow-xl glow-accent pointer-events-none">
                   <MdAdd className="text-xl" />
                 </div>
               </div>
-              <p className="text-[10px] items-center font-black text-slate-500 uppercase tracking-widest text-center">
-                Recommended: <br /> 500x500px JPG
-              </p>
             </div>
 
             {/* Form Fields */}
@@ -157,47 +230,30 @@ const Settings = () => {
               {/* Real Name row */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
-                    First Name
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-1.5">
+                    First Name <MdLock className="text-[10px] opacity-50" />
                   </label>
                   <input
-                    {...register("firstName")}
-                    className={`w-full h-12 px-5 bg-slate-50 dark:bg-white/5 border rounded-2xl text-sm font-bold focus:ring-1 focus:ring-primary focus:border-primary transition-all text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700 ${
-                      errors.firstName
-                        ? "border-red-500 focus:ring-red-500"
-                        : "border-slate-200 dark:border-white/5"
-                    }`}
+                    defaultValue={user?.first_name || ""}
+                    disabled
+                    className={`w-full h-12 px-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold opacity-40 cursor-not-allowed text-slate-900 dark:text-white`}
                     type="text"
                     placeholder="Anthony"
                   />
-                  {errors.firstName && (
-                    <p className="text-[10px] text-red-500 font-bold ml-1 italic">
-                      {errors.firstName.message}
-                    </p>
-                  )}
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
-                    Last Name
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-1.5">
+                    Last Name <MdLock className="text-[10px] opacity-50" />
                   </label>
                   <input
-                    {...register("lastName")}
-                    className={`w-full h-12 px-5 bg-slate-50 dark:bg-white/5 border rounded-2xl text-sm font-bold focus:ring-1 focus:ring-primary focus:border-primary transition-all text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700 ${
-                      errors.lastName
-                        ? "border-red-500 focus:ring-red-500"
-                        : "border-slate-200 dark:border-white/5"
-                    }`}
+                    defaultValue={user?.last_name || ""}
+                    disabled
+                    className={`w-full h-12 px-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold opacity-40 cursor-not-allowed text-slate-900 dark:text-white`}
                     type="text"
                     placeholder="Guseltony"
                   />
-                  {errors.lastName && (
-                    <p className="text-[10px] text-red-500 font-bold ml-1 italic">
-                      {errors.lastName.message}
-                    </p>
-                  )}
                 </div>
               </div>
-
               {/* Legal name warning */}
               <div className="flex items-start gap-3 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20">
                 <MdWarning className="text-amber-500 dark:text-amber-400 text-lg shrink-0 mt-0.5" />
@@ -211,11 +267,11 @@ const Settings = () => {
               {/* Nickname & Phone */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
-                    Gaming Nickname
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-1.5">
+                    Gaming Nickname <MdLock className="text-[10px] opacity-50" />
                   </label>
                   <input
-                    className="w-full h-12 px-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold focus:ring-1 focus:ring-primary focus:border-primary transition-all text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700 disabled:opacity-50"
+                    className="w-full h-12 px-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold opacity-40 cursor-not-allowed text-slate-900 dark:text-white"
                     type="text"
                     value={user?.username || ""}
                     disabled
@@ -223,16 +279,13 @@ const Settings = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
-                    Phone Number
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-1.5">
+                    Phone Number <MdLock className="text-[10px] opacity-50" />
                   </label>
                   <input
-                    {...register("phone")}
-                    className={`w-full h-12 px-5 bg-slate-50 dark:bg-white/5 border rounded-2xl text-sm font-bold focus:ring-1 focus:ring-primary focus:border-primary transition-all text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700 ${
-                      errors.phone
-                        ? "border-red-500 focus:ring-red-500"
-                        : "border-slate-200 dark:border-white/5"
-                    }`}
+                    defaultValue={user?.phone || ""}
+                    disabled
+                    className={`w-full h-12 px-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold opacity-40 cursor-not-allowed text-slate-900 dark:text-white`}
                     type="tel"
                     placeholder="080 000 0000"
                   />
@@ -288,6 +341,25 @@ const Settings = () => {
                   placeholder="Hooked on mobile gaming since 2012. Ready for any challenge!"
                   rows={4}
                 ></textarea>
+              </div>
+
+              {/* Sub-section Action Button */}
+              <div className="flex justify-start">
+                <button
+                  type="button"
+                  onClick={handleSubmit(onProfileSubmit)}
+                  disabled={isPending || !isDirty}
+                  className="h-12 px-10 rounded-2xl bg-primary text-white text-xs font-black uppercase tracking-[0.1em] hover:scale-105 hover:brightness-110 shadow-lg glow-accent transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {isPending ? (
+                    <>
+                      <div className="size-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                      <span>Updating...</span>
+                    </>
+                  ) : (
+                    "Update Profile"
+                  )}
+                </button>
               </div>
             </form>
           </div>
@@ -484,6 +556,6 @@ const Settings = () => {
       </div>
     </>
   );
-};;
+};
 
 export default Settings;

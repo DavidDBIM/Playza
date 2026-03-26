@@ -26,8 +26,18 @@ export interface VerifyOtpPayload {
 export interface VerifyOtpResponse {
   success: boolean;
   data: {
-    message: string;
-    token?: string;
+    session: {
+      access_token: string;
+      refresh_token: string;
+      expires_in: number;
+    };
+    user: {
+      id: string;
+      email: string;
+      username: string;
+      phone: string;
+      referral_code: string;
+    };
   };
 }
 
@@ -50,18 +60,19 @@ export interface SigninPayload {
 export interface SigninResponse {
   success: boolean;
   data: {
-    session: {
-      access_token: string;
-      refresh_token: string;
-      expires_in: number;
-    };
+    access_token: string;
+    refresh_token: string;
     user: {
       id: string;
       email: string;
       username: string;
+      phone: string;
       referral_code: string;
       is_email_verified: boolean;
       psa_points: number;
+      avatar_url?: string;
+      first_name?: string;
+      last_name?: string;
     };
   };
 }

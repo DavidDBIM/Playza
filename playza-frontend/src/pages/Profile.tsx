@@ -1,15 +1,32 @@
-import { useState } from "react";
-import { MdEdit, MdShare, MdPerson, MdHistory, MdEmojiEvents, MdSettings, MdSecurity, MdLogout } from "react-icons/md";
+import { useState, useEffect } from "react";
+import {
+  MdEdit,
+  MdShare,
+  MdPerson,
+  MdHistory,
+  MdEmojiEvents,
+  MdSettings,
+  MdSecurity,
+  MdLogout,
+} from "react-icons/md";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router";
 import BadgeModal from "../components/profile/BadgeModal";
 
 import { useMe } from "../hooks/users/useMe";
+import { useAuth, type UserProfile } from "@/context/auth";
 
 const Profile = () => {
+  const { user, logout } = useAuth();
   const [isBadgeModalOpen, setIsBadgeModalOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { data: user, isLoading } = useMe();
+  const { data: userData, isLoading } = useMe();
+
+  useEffect(() => {
+    if (!isLoading && !user) {
+      navigate("/registration?view=login");
+    }
+  }, [user, isLoading, navigate]);
 
   const menuItems = [
     { label: "Overview", icon: <MdPerson />, to: "overview" },
@@ -19,14 +36,28 @@ const Profile = () => {
     { label: "Security", icon: <MdSecurity />, to: "security" },
   ];
 
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
+
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   const isMobileSubRoute = location.pathname.includes("/profile/");
   const showMobileContent = isMobileSubRoute;
 
-  const isOverviewActive =
-    window.innerWidth >= 768
-      ? location.pathname === "/profile" ||
-        location.pathname === "/profile/overview"
-      : location.pathname === "/profile/overview";
+  const isOverviewActive = isMobile
+    ? location.pathname === "/profile/overview"
+    : location.pathname === "/profile" ||
+      location.pathname === "/profile/overview";
 
   if (isLoading) {
     return (
@@ -39,67 +70,86 @@ const Profile = () => {
     );
   }
 
+  const profile: UserProfile | null = userData
+    ? {
+        id: userData.id,
+        username: userData.username,
+        email: userData.email,
+        phone: userData.phone,
+        referralCode: userData.referral_code,
+        firstName: userData.first_name,
+        lastName: userData.last_name,
+        avatarUrl: userData.avatar_url,
+        createdAt: userData.created_at,
+        isEmailVerified: userData.is_email_verified,
+        pzaPoints: userData.pza_points,
+      }
+    : user;
+
   return (
     <div className="flex-1 mx-auto w-full pb-10">
       {/* <!-- Profile Header --> */}
-      <div className="glass-card rounded-3xl p-2 md:p-6 lg:p-10 mb-4 lg:mb-8 relative overflow-hidden group">
+      <div className="glass-card rounded-xl p-4 md:p-6 mb-4 lg:mb-8 relative overflow-hidden group">
         <div className="absolute top-0 right-0 w-80 h-80 bg-primary/20 blur-[120px] rounded-full -mr-40 -mt-40 transition-all duration-700 group-hover:bg-primary/30"></div>
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-secondary/10 blur-[100px] rounded-full -ml-32 -mb-32"></div>
 
-        <div className="flex flex-col lg:flex-row gap-2 md:gap-4 lg:gap-12 items-center lg:items-start relative z-10">
+        <div className="flex flex-col lg:flex-row gap-4 md:gap-6 lg:gap-10 items-center lg:items-center relative z-10">
           {/* Profile Picture Section */}
-          <div className="relative group/avatar">
-            <div
-              className="bg-center bg-no-repeat aspect-square bg-cover rounded-[2.5rem] size-32 md:size-40 border-4 border-white/10 shadow-2xl transition-transform duration-500 group-hover/avatar:scale-105"
-              data-alt={`Main profile picture of ${user?.username}`}
-              style={{
-                backgroundImage: `url('${user?.avatar_url || "https://lh3.googleusercontent.com/o/AL1-2u-0b0c0d0e0f0g0h0i0j0k0l0m0n0o0p0q0r0s0t0u0v0w0x0y0z0"}')`,
-              }}
-            ></div>
+          <div className="relative group/avatar shrink-0">
+            <div className="size-28 md:size-32 rounded-4xl border-4 border-white/10 shadow-2xl overflow-hidden transition-transform duration-500 group-hover/avatar:scale-105 bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-900 dark:text-white">
+              {profile?.avatarUrl ? (
+                <img
+                  src={profile.avatarUrl}
+                  alt={profile.username}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <MdPerson className="size-20 text-primary/50" />
+              )}
+            </div>
             <button
               onClick={() => setIsBadgeModalOpen(true)}
-              className="absolute -bottom-2 -right-2 bg-primary text-white text-[10px] md:text-xs font-black px-4 py-1.5 rounded-full uppercase tracking-widest shadow-lg hover:scale-110 hover:brightness-110 transition-all cursor-pointer border border-white/20 glow-accent"
+              className="absolute -bottom-2 -right-2 bg-primary text-slate-900 font-black px-4 py-1.5 rounded-full uppercase tracking-widest shadow-lg hover:scale-110 hover:brightness-110 transition-all cursor-pointer border border-white/20 glow-accent text-[10px]"
             >
               PRO
             </button>
           </div>
 
           {/* Profile Info Section */}
-          <div className="flex flex-col flex-1 text-center md:text-left pt-2">
-            <div className="flex flex-col md:flex-row items-center justify-center lg:justify-normal gap-2 md:gap-4 mb-1 md:mb-3">
-              <h1 className="text-slate-900 dark:text-white text-3xl lg:text-5xl font-black tracking-tight">
-                {user?.username}
+          <div className="flex flex-col flex-1 text-center lg:text-left">
+            <div className="flex flex-col md:flex-row items-center justify-center lg:justify-normal gap-2 md:gap-4 mb-2">
+              <h1 className="text-slate-900 dark:text-white text-3xl lg:text-5xl font-black tracking-tighter uppercase leading-none italic">
+                {profile?.username}
               </h1>
-              <div className="flex items-center px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 backdrop-blur-md">
-                <span className="text-primary text-xs font-black uppercase tracking-widest">
+              <div className="flex items-center px-3 py-1 rounded-full bg-primary/10 border border-primary/20 backdrop-blur-md">
+                <span className="text-primary text-[10px] font-black uppercase tracking-widest">
                   Gold III Rank
                 </span>
               </div>
             </div>
 
-            <div className="flex items-center justify-center lg:justify-start gap-2 text-slate-500 dark:text-slate-400 text-sm font-bold mb-2 lg:mb-6">
-              <span>ID: #{user?.id.slice(-6).toUpperCase()}</span>
-              <span className="size-1 bg-slate-500 rounded-full"></span>
-              <span>
-                Joined{" "}
-                {user?.created_at
-                  ? new Date(user.created_at).toLocaleDateString("en-US", {
-                      month: "short",
-                      year: "numeric",
-                    })
-                  : "N/A"}
-              </span>
+            <div className="flex flex-col gap-0.5">
+              {(profile?.firstName || profile?.lastName) && (
+                <p className="text-slate-900 dark:text-white text-xs md:text-sm font-black tracking-widest uppercase mb-1">
+                  {profile?.firstName} {profile?.lastName}
+                </p>
+              )}
+              <p className="text-slate-500 dark:text-slate-400 text-[10px] md:text-xs font-bold tracking-wider opacity-80 flex items-center justify-center lg:justify-start gap-1.5 underline decoration-primary/30 decoration-2 underline-offset-4">
+                {profile?.email}
+              </p>
             </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-row lg:flex-col gap-3 w-full md:w-auto pt-2">
-            <button
-              onClick={() => navigate("settings")}
-              className="flex-1 md:w-44 py-3 bg-white/5 border border-white/10 rounded-2xl text-slate-900 dark:text-white text-xs font-black uppercase tracking-widest hover:bg-white/10 transition-all flex items-center justify-center gap-2"
-            >
-              <MdEdit /> Edit Profile
-            </button>
+          <div className="flex flex-row lg:flex-col gap-3 w-full lg:w-44 pt-2">
+            {!location.pathname.includes("/profile/settings") && (
+              <button
+                onClick={() => navigate("settings")}
+                className="flex-1 md:w-44 py-3 bg-white/5 border border-white/10 rounded-2xl text-slate-900 dark:text-white text-xs font-black uppercase tracking-widest hover:bg-white/10 transition-all flex items-center justify-center gap-2"
+              >
+                <MdEdit /> Edit Profile
+              </button>
+            )}
             <button
               onClick={() => {
                 if (navigator.share) {
@@ -162,7 +212,10 @@ const Profile = () => {
           {/* Sidebar Action Cards (Desktop Only) */}
           <div className="hidden md:flex flex-col gap-2">
             <div className="glass-card rounded-2xl p-3">
-              <button className="w-full flex items-center gap-4 px-5 py-4 rounded-xl text-red-500 hover:bg-red-500/10 transition-all duration-300 font-bold text-sm group text-left">
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center gap-4 px-5 py-4 rounded-xl text-red-500 hover:bg-red-500/10 transition-all duration-300 font-bold text-sm group text-left"
+              >
                 <span className="text-xl group-hover:rotate-12 transition-transform">
                   <MdLogout />
                 </span>
@@ -203,7 +256,10 @@ const Profile = () => {
           {/* Sidebar Action Cards (Mobile Only - appears under content) */}
           <div className="flex md:hidden flex-col gap-4 mt-8">
             <div className="glass-card rounded-2xl p-3">
-              <button className="w-full flex items-center justify-center gap-4 px-5 py-4 rounded-xl text-red-500 hover:bg-red-500/10 transition-all duration-300 font-bold text-sm group">
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center justify-center gap-4 px-5 py-4 rounded-xl text-red-500 hover:bg-red-500/10 transition-all duration-300 font-bold text-sm group"
+              >
                 <span className="text-xl group-hover:rotate-12 transition-transform">
                   <MdLogout />
                 </span>
