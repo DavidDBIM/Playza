@@ -21,7 +21,7 @@ const Loyalty = () => {
   const [isTierModalOpen, setIsTierModalOpen] = useState(false);
 
   return (
-    <div className="flex-1 space-y-12">
+    <div className="flex-1 space-y-12 pb-20">
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 glass-card rounded-xl p-8 relative overflow-hidden border border-white/5 neon-glow">
           <div className="absolute top-0 right-0 p-8 opacity-10">
@@ -95,6 +95,8 @@ const Loyalty = () => {
           </div>
         </div>
       </section>
+
+      {/* Daily Rewards */}
       <section className="space-y-6">
         <div className="flex justify-between items-center bg-surface-container/30 p-3 md:p-4 rounded-2xl border border-white/5">
           <h2 className="font-headline text-base md:text-lg font-bold tracking-tight">
@@ -136,6 +138,76 @@ const Loyalty = () => {
                   CLAIM
                 </button>
               )}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Starter Quests Section */}
+      <section className="space-y-6">
+        <div className="flex justify-between items-end">
+          <div>
+            <h2 className="font-headline text-2xl font-bold tracking-tight bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent">
+              Starter Quests
+            </h2>
+            <p className="text-sm text-on-surface-variant">
+              Complete these one-time missions to kickstart your journey
+            </p>
+          </div>
+          <div className="text-[10px] font-black uppercase tracking-widest text-secondary-fixed opacity-70">
+            Phase 1 / 1
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[
+            { name: "First Signup", points: 5, status: "completed", icon: <MdCheckCircle /> },
+            { name: "Verify Email", points: 10, status: "completed", icon: <MdCheckCircle /> },
+            { name: "Verify Phone", points: 10, status: "active", icon: <MdLogin /> },
+            { name: "Complete Profile", points: 30, status: "locked", icon: <MdLock /> },
+            { name: "Upload Avatar", points: 20, status: "locked", icon: <MdLock /> },
+            { name: "Play First Game", points: 200, status: "locked", icon: <MdLock /> },
+          ].map((quest, idx) => (
+            <div 
+              key={idx}
+              className={`glass-card p-4 rounded-2xl border transition-all duration-300 flex flex-col justify-between h-32 hover:border-primary/50 group ${
+                quest.status === "completed" 
+                ? "border-secondary/20 bg-secondary/5 opacity-80" 
+                : quest.status === "active"
+                ? "border-primary bg-primary/5 shadow-2xl shadow-primary/10 scale-[1.02]"
+                : "border-white/5 opacity-50 bg-white/5"
+              }`}
+            >
+              <div className="flex justify-between items-start">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-500 ${
+                  quest.status === "completed" ? "bg-secondary/20 text-secondary" :
+                  quest.status === "active" ? "bg-primary/20 text-primary group-hover:rotate-12" : "bg-white/5 text-on-surface-variant"
+                }`}>
+                  {quest.icon}
+                </div>
+                <div className="text-right">
+                  <div className={`text-base font-black ${quest.status === "completed" ? "text-secondary" : "text-primary"}`}>
+                    +{quest.points}
+                  </div>
+                  <div className="text-[9px] font-black uppercase opacity-60 tracking-tighter">PZA Points</div>
+                </div>
+              </div>
+              <div className="mt-2">
+                <div className="font-headline font-black text-sm mb-1 uppercase tracking-tight">{quest.name}</div>
+                {quest.status === "active" ? (
+                  <div className="h-1.5 w-full bg-surface-variant rounded-full overflow-hidden">
+                    <div className="h-full bg-primary w-[30%] animate-pulse"></div>
+                  </div>
+                ) : quest.status === "completed" ? (
+                  <div className="flex items-center gap-1.5">
+                    <MdCheckCircle className="text-secondary text-xs" />
+                    <span className="text-[10px] font-black text-secondary uppercase tracking-widest">Authenticated</span>
+                  </div>
+                ) : (
+                  <div className="text-[10px] font-black text-on-surface-variant/40 uppercase tracking-widest flex items-center gap-1.5">
+                    <MdLock className="text-[10px]" /> Encrypted
+                  </div>
+                )}
+              </div>
             </div>
           ))}
         </div>
