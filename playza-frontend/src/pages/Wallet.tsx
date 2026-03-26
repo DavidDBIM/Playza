@@ -3,14 +3,22 @@ import BankInfo from "@/components/wallet/BankInfo";
 import RecentTransactions from "@/components/wallet/RecentTransactions";
 import { useAuth } from "@/context/auth";
 import { AlertCircle, ArrowRight, Gift } from "lucide-react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
+import { useEffect } from "react";
 
 interface WalletProps {
   onWithdrawClick: () => void;
 }
 
 const Wallet = ({ onWithdrawClick }: WalletProps) => {
-  const { isProfileComplete } = useAuth();
+  const { user, isProfileComplete } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!user) {
+      navigate("/");
+    }
+  }, [user, navigate]);
 
   return (
     <main className="flex-1 min-w-0 flex flex-col gap-4 md:gap-10 pb-10 animate-in fade-in duration-500">

@@ -15,7 +15,22 @@ const ForgotPassword = ({ onClick }: { onClick: (value: string) => void }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    sendReset({ email });
+    console.log("[ForgotPassword] Submitting reset request for email:", email);
+    sendReset(
+      { email },
+      {
+        onSuccess: (data) => {
+          console.log("[ForgotPassword] Reset link sent successfully:", data);
+        },
+        onError: (err: unknown) => {
+          const error = err as { response?: { data?: { message?: string } }; message?: string };
+          console.error(
+            "[ForgotPassword] Error sending reset link:",
+            error.response?.data?.message || error.message,
+          );
+        },
+      },
+    );
   };
 
   return (

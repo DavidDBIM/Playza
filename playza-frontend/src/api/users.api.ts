@@ -11,6 +11,9 @@ export interface User {
   role: string;
   is_active: boolean;
   is_verified: boolean;
+  is_email_verified: boolean;
+  pza_points: number;
+  referral_code: string;
   created_at: string;
   updated_at: string;
 }

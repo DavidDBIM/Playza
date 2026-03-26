@@ -24,10 +24,26 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
-    const message =
-      error.response?.data?.message ||
-      error.message ||
-      "An unexpected error occurred.";
+    console.error("[AxiosResponseInterceptor] Error response:", error.response?.data);
+
+    let message = error.message || "An unexpected error occurred.";
+
+    if (error.response?.data) {
+      const data = error.response.data;
+
+      // 1. Handle explicit message field
+      if (data.message) {
+        message = data.message;
+      }
+      // 2. Handle Zod validation errors object
+      else if (data.errors) {
+        const errorDetails = Object.entries(data.errors)
+          .map(([field, msgs]) => `${field}: ${(msgs as string[]).join(", ")}`)
+          .join(" | ");
+        message = `Validation Error: ${errorDetails}`;
+      }
+    }
+
     return Promise.reject(new Error(message));
   }
 );

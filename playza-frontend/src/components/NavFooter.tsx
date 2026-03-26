@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { navItems } from "@/constants/constants";
 import { NavLink, useLocation } from "react-router";
 import { MoreHorizontal, X } from "lucide-react";
+import { useAuth } from "@/context/auth";
 
 interface NavItem {
   label: string;
@@ -15,6 +16,7 @@ interface NavItem {
  */
 const NavFooter = () => {
   const { pathname } = useLocation();
+  const { user } = useAuth();
   const [isMoreOpen, setIsMoreOpen] = useState(false);
   const moreMenuRef = useRef<HTMLDivElement>(null);
 
@@ -49,20 +51,20 @@ const NavFooter = () => {
 
   const mobileItems: NavItem[] = [
     getItem("PlayZa"),
-    getItem("Wallet"),
+    user && getItem("Wallet"),
     getItem("Games"),
-    getItem("Profile"),
+    user && getItem("Profile"),
     { label: "More", icon: MoreHorizontal, path: "#", onClick: () => setIsMoreOpen(true) },
   ].filter((item): item is NavItem => !!item);
 
   const tabletItems: NavItem[] = [
     getItem("PlayZa"),
-    getItem("Wallet"),
+    user && getItem("Wallet"),
     getItem("Loyalty"),
     getItem("Games"),
     getItem("Referral"),
     getItem("Leaderboard"),
-    getItem("Profile"),
+    user && getItem("Profile"),
   ].filter((item): item is NavItem => !!item);
 
   const moreMenuItems: NavItem[] = [
@@ -188,15 +190,28 @@ const NavFooter = () => {
         {/* Glow behind the nav */}
         <div className="absolute inset-x-0 -bottom-2 h-2/3 bg-primary/20 blur-3xl rounded-full -z-10" />
 
-        {/* Dynamic Grid: 5 columns for small, 7 for medium */}
-        <div className="grid grid-cols-5 md:grid-cols-7 w-full items-center relative z-10 transition-all duration-500">
-          
+        {/* Dynamic Grid: Columns match item count */}
+        <div 
+          className="grid w-full items-center relative z-10 transition-all duration-500"
+          style={{ 
+            gridTemplateColumns: `repeat(${mobileItems.length}, minmax(0, 1fr))` 
+          }}
+        >
           {/* Mobile Items Display (hidden on md) */}
           {mobileItems.map((item) => renderNavItem(item, "md:hidden"))}
 
-          {/* Tablet Items Display (hidden on sm) */}
-          {tabletItems.map((item) => renderNavItem(item, "hidden md:flex"))}
-
+          {/* Tablet Items Display (hidden on sm) - Handle tablet grid separately or via media query */}
+          <div className="hidden md:contents">
+             <div 
+               className="grid w-full items-center relative z-10"
+               style={{ 
+                 gridTemplateColumns: `repeat(${tabletItems.length}, minmax(0, 1fr))`,
+                 gridColumn: `span ${mobileItems.length}` 
+               }}
+             >
+                {tabletItems.map((item) => renderNavItem(item, ""))}
+             </div>
+          </div>
         </div>
       </nav>
     </div>

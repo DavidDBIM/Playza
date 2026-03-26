@@ -1,12 +1,22 @@
 import { navItems } from "@/constants/constants";
 import { Users } from "lucide-react";
 import { NavLink } from "react-router";
+import { useAuth } from "@/context/auth";
 
 const SideBar = () => {
+  const { user } = useAuth();
+  
+  const filteredNavItems = navItems.filter(item => {
+    if (item.label === "Wallet" || item.label === "Profile") {
+      return !!user;
+    }
+    return true;
+  });
+
   return (
     <div>
       <nav className="space-y-1 mb-8">
-        {navItems.map(({ icon: Icon, label, path }) => (
+        {filteredNavItems.map(({ icon: Icon, label, path }) => (
           <NavLink
             to={path}
             key={label}
