@@ -45,8 +45,8 @@ export type Game = {
   slug: string;
   thumbnail: string;
 
-  category: "Arcade" | "Action" | "Strategy" | "Puzzle" | "Trivia";
-  mode: "1v1" | "Tournament" | "Quick Match" | "Multiplayer";
+  category: "Arcade" | "Action" | "Strategy" | "Puzzle" | "Trivia" | "Adventure";
+  mode: "1v1" | "Tournament" | "Quick Match" | "Multiplayer" | "Arcade" | "Adventure";
 
   entryFee: number;
   platformFeePercentage: number;
@@ -59,6 +59,7 @@ export type Game = {
   ctaLabel: string;
   badge: GameBadge;
 
+  iframeUrl?: string; // Optional URL for the game iframe
   createdAt: string;
   updatedAt: string;
 };

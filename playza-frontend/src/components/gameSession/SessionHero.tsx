@@ -8,7 +8,8 @@ type SessionHeroProps = {
   activePlayers: number;
   entryFee: number;
   prizePool?: number;
-  onClick: (value: boolean) => void;
+  onLiveClick: () => void;
+  onDemoClick: () => void;
 };
 
 const SessionHero = ({
@@ -18,11 +19,11 @@ const SessionHero = ({
   prizePool,
   activePlayers,
   entryFee,
-  onClick,
+  onLiveClick,
+  onDemoClick,
 }: SessionHeroProps) => {
   const splitTitle = title?.split(" ") ?? "";
 
-  // const playDemoGame = () => <TempleRunFrame />;
   return (
     <section className="glass-card rounded-2xl md:rounded-3xl pr-1 py-4 overflow-hidden relative border border-slate-200 dark:border-white/10 shadow-xl transition-all duration-300">
       <div className="absolute top-0 right-0 w-1/3 h-full bg-linear-to-l from-primary/10 to-transparent pointer-events-none"></div>
@@ -41,7 +42,7 @@ const SessionHero = ({
             {title}
           </h2>
           <p className="text-xs md:text-md dark:text-slate-400">
-            Join 1,240 players competing for glory
+            Join {activePlayers.toLocaleString()} players competing for glory
           </p>
         </div>
         <div className="text-right">
@@ -60,7 +61,6 @@ const SessionHero = ({
         <img
           alt={slug}
           className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
-          data-alt="High energy gaming illustration with futuristic lights"
           src={thumbnail}
           loading="lazy"
         />
@@ -94,13 +94,16 @@ const SessionHero = ({
 
           <div className="flex items-center justify-center gap-3 w-full sm:w-auto">
             <button
-              onClick={() => onClick(true)}
+              onClick={onLiveClick}
               className="sm:flex-none bg-primary hover:bg-primary/90 text-background-dark font-bold px-2 md:px-4 lg:px-8 py-3 rounded-lg transition-all active:scale-95 flex items-center text-xs sm:text-base justify-center gap-2 cursor-pointer"
             >
               <PlayCircle className="md:text-xl" />
               Enter Live Game
             </button>
-            <button className="sm:flex-none bg-accent hover:bg-accent/80 dark:text-white font-bold px-2 md:px-4 lg:px-8 py-3 rounded-lg border border-slate-900/10 dark:border-white/10 transition-all flex items-center text-xs sm:text-base justify-center gap-2 cursor-pointer">
+            <button 
+              onClick={onDemoClick}
+              className="sm:flex-none bg-accent hover:bg-accent/80 dark:text-white font-bold px-2 md:px-4 lg:px-8 py-3 rounded-lg border border-slate-900/10 dark:border-white/10 transition-all flex items-center text-xs sm:text-base justify-center gap-2 cursor-pointer"
+            >
               <Gamepad2 className="md:text-xl" />
               Play Demo
             </button>

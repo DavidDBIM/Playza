@@ -1,7 +1,7 @@
 import { games } from "@/data/games";
 import { calculatePrizePool } from "@/utils/calculatedPrizePool";
 import { Link, useParams } from "react-router";
-import { ArrowBigLeft, Info, Laptop, Smartphone } from "lucide-react";
+import { ArrowBigLeft, Info, Laptop, Smartphone, Lock, X } from "lucide-react";
 import { BiTrendingUp, BiTrophy } from "react-icons/bi";
 import { MdArrowForward, MdSupportAgent } from "react-icons/md";
 import { useState } from "react";
@@ -12,13 +12,30 @@ import SessionHero from "@/components/gameSession/SessionHero";
 import LiveEntryModal from "@/components/gameSession/LiveEntryModal";
 import ActivityToasts from "@/components/gameSession/ActivityToasts";
 import { ZASymbol } from "@/components/currency/ZASymbol";
+import { useAuth } from "@/context/auth";
+
+const AuthRequiredModal = ({ onClose }: { onClose: () => void }) => (
+  <div className="fixed inset-0 z-100 flex items-center justify-center p-4 backdrop-blur-md bg-black/60 animate-in fade-in duration-300">
+    <div className="relative w-full max-w-sm glass-card p-8 rounded-3xl border border-white/10 text-center shadow-2xl animate-in zoom-in-95 duration-300">
+      <button onClick={onClose} className="absolute top-4 right-4 text-slate-400 hover:text-white"><X size={20}/></button>
+      <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-6">
+        <Lock className="text-primary" size={32} />
+      </div>
+      <h3 className="text-xl font-black text-white uppercase italic mb-2 tracking-widest">Login Required</h3>
+      <p className="text-slate-400 text-xs font-bold uppercase tracking-tighter mb-8 italic">You must be signed in to join live entry matches and win real prizes.</p>
+      <Link to="/login" className="block w-full bg-primary text-slate-950 font-black py-4 rounded-xl uppercase tracking-widest text-xs hover:scale-[1.02] transition-transform">Sign In Now</Link>
+    </div>
+  </div>
+);
 
 const MatchSession = () => {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("Live Leaderboard");
   const [liveEntry, setLiveEntry] = useState(false);
+  const [playMode, setPlayMode] = useState<"demo" | "live" | null>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   const param = useParams();
-
   const slug = param.id;
 
   const allGames = games.map((g) => ({
@@ -30,19 +47,27 @@ const MatchSession = () => {
     ),
   }));
 
+  const game = allGames.find((game) => game.slug === slug);
+
+  if (!game) {
+    return <div className="p-20 text-center font-black uppercase text-slate-500">Game not found</div>;
+  }
+
+  const handleLiveClick = () => {
+    if (!user) {
+      setShowAuthModal(true);
+    } else {
+      setLiveEntry(true);
+    }
+  };
+
+  const isUpcoming = game.status === "upcoming" || game.status === "coming soon";
+  const isEnded = game.status === "ended" || game.status === "not starting soon";
+
   type TabItem = {
     tab: string;
     render: () => React.ReactElement;
   };
-
-  const game = allGames.find((game) => game.slug === slug);
-
-  if (!game) {
-    return <div>Game not found</div>; // or loader
-  }
-
-  const isUpcoming = game.status === "upcoming" || game.status === "coming soon";
-  const isEnded = game.status === "ended" || game.status === "not starting soon";
 
   const tabContent: TabItem[] = [
     { tab: "Live Leaderboard", render: () => <SessionLeaderboard /> },
@@ -69,28 +94,63 @@ const MatchSession = () => {
   const activeTabContent = tabContent.find((item) => item.tab === currentTab);
 
   return (
-    <main className="relative flex-1 max-w-400 mx-auto overflow-x-hidden ">
-      {liveEntry && <LiveEntryModal onClick={setLiveEntry} />}
+    <main className="relative flex-1 max-w-400 mx-auto overflow-x-hidden p-1 md:p-4">
+      {liveEntry && (
+        <LiveEntryModal 
+          game={game} 
+          onClick={setLiveEntry} 
+          onConfirm={() => {
+            setLiveEntry(false);
+            setPlayMode("live");
+          }} 
+        />
+      )}
+      {showAuthModal && <AuthRequiredModal onClose={() => setShowAuthModal(false)} />}
       {!isEnded && <ActivityToasts />}
+      
       <div className="flex flex-col lg:flex-row gap-8">
         <div className="w-full lg:w-[70%] flex flex-col gap-4">
           <Link
-            to={`/games/${slug}`}
-            className="mb-2 flex items-center gap-2 text-slate-500 hover:text-primary transition-colors font-bold uppercase tracking-widest text-[10px]"
+            to={playMode ? "#" : `/games/${slug}`}
+            onClick={(e) => { 
+                if(playMode) { 
+                    e.preventDefault(); 
+                    setPlayMode(null); 
+                } 
+            }}
+            className="mb-2 w-fit flex items-center gap-2 text-slate-500 hover:text-primary transition-colors font-bold uppercase tracking-widest text-[10px]"
           >
             <ArrowBigLeft size={16} />
-            Back to Tournament
+            {playMode ? "Back to Session" : "Back to Tournament"}
           </Link>
 
-          <SessionHero
-            title={game?.title}
-            slug={game?.slug}
-            thumbnail={game?.thumbnail}
-            activePlayers={game?.activePlayers}
-            entryFee={game?.entryFee}
-            prizePool={game?.prizePool}
-            onClick={setLiveEntry}
-          />
+          {playMode ? (
+            <div className="relative aspect-video w-full glass-card rounded-3xl border border-white/10 overflow-hidden bg-black shadow-2xl">
+                <iframe 
+                    src={game.iframeUrl} 
+                    className="w-full h-full border-none" 
+                    title={game.title}
+                    allow="autoplay; fullscreen; keyboard; gamepad"
+                />
+                <button 
+                    onClick={() => setPlayMode(null)}
+                    className="absolute top-4 right-4 bg-black/60 backdrop-blur-md p-2 rounded-full text-white/50 hover:text-white transition-colors border border-white/10"
+                >
+                    <X size={20} />
+                </button>
+            </div>
+          ) : (
+            <SessionHero
+                title={game?.title}
+                slug={game?.slug}
+                thumbnail={game?.thumbnail}
+                activePlayers={game?.activePlayers}
+                entryFee={game?.entryFee}
+                prizePool={game?.prizePool}
+                onLiveClick={handleLiveClick}
+                onDemoClick={() => setPlayMode("demo")}
+            />
+          )}
 
           <section className="glass-card rounded-2xl overflow-hidden border border-slate-200 dark:border-white/10 shadow-sm transition-colors duration-300">
             <div className="flex border-b border-slate-200 dark:border-white/10 mb-4 overflow-x-auto scrollbar-hide">
@@ -201,12 +261,12 @@ const MatchSession = () => {
               <div className="flex justify-between text-sm py-2 border-b border-white/5">
                 <span className="dark:text-slate-400">Game Type</span>
                 <span className=" font-medium">
-                  Single Player FPS
+                  {game.category} 
                 </span>
               </div>
               <div className="flex justify-between text-sm py-2 border-b border-white/5">
                 <span className="dark:text-slate-400">Difficulty</span>
-                <span className="text-yellow-500 font-medium">Competitive</span>
+                <span className="text-yellow-500 font-medium">{game.difficulty}</span>
               </div>
               <div className="flex justify-between text-sm py-2 border-b border-white/5">
                 <span className="dark:text-slate-400">Region</span>
