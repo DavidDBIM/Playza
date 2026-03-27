@@ -41,26 +41,37 @@ const MatchSession = () => {
     return <div>Game not found</div>; // or loader
   }
 
+  const isUpcoming = game.status === "upcoming" || game.status === "coming soon";
+  const isEnded = game.status === "ended" || game.status === "not starting soon";
+
   const tabContent: TabItem[] = [
     { tab: "Live Leaderboard", render: () => <SessionLeaderboard /> },
     { tab: "My Performance", render: () => <SessionPerformance /> },
     { tab: "Live Feeds", render: () => <SessionActivities /> },
-    // {
-    //   tab: "Info",
-    //   render: () => (
-    //     <SessionInfo title={game?.title} pricePool={game?.pricePool} />
-    //   ),
-    // },
-    // { tab: "Rules", render: () => <SessionRules /> },
+    { tab: "Final Leaderboard", render: () => <SessionLeaderboard /> },
+    { tab: "My Results", render: () => <SessionPerformance /> },
+    { tab: "Pre-Game Lobby", render: () => (
+      <div className="flex flex-col items-center justify-center py-20 text-center glass-card rounded-2xl border border-white/5 mx-px">
+        <h3 className="text-xl md:text-2xl font-black uppercase text-slate-800 dark:text-slate-100 tracking-widest mb-2 neon-text">Match Starting Soon</h3>
+        <p className="text-xs md:text-sm font-bold tracking-widest uppercase opacity-60 text-slate-500 max-w-sm mt-2">Players are currently joining the lobby. Hang tight and wait for the match to begin!</p>
+      </div>
+    ) },
   ];
 
-  const activeTabContent = tabContent.find((item) => item.tab === activeTab);
-  // console.log(splitTitle);
+  let displayTabsNames = ["Live Leaderboard", "My Performance", "Live Feeds"];
+  if (isUpcoming) {
+    displayTabsNames = ["Pre-Game Lobby"];
+  } else if (isEnded) {
+    displayTabsNames = ["Final Leaderboard", "My Results"];
+  }
+
+  const currentTab = displayTabsNames.includes(activeTab) ? activeTab : displayTabsNames[0];
+  const activeTabContent = tabContent.find((item) => item.tab === currentTab);
 
   return (
     <main className="relative flex-1 max-w-400 mx-auto overflow-x-hidden ">
       {liveEntry && <LiveEntryModal onClick={setLiveEntry} />}
-      <ActivityToasts />
+      {!isEnded && <ActivityToasts />}
       <div className="flex flex-col lg:flex-row gap-8">
         <div className="w-full lg:w-[70%] flex flex-col gap-4">
           <Link
@@ -83,17 +94,11 @@ const MatchSession = () => {
 
           <section className="glass-card rounded-2xl overflow-hidden border border-slate-200 dark:border-white/10 shadow-sm transition-colors duration-300">
             <div className="flex border-b border-slate-200 dark:border-white/10 mb-4 overflow-x-auto scrollbar-hide">
-              {[
-                "Live Leaderboard",
-                "My Performance",
-                "Live Feeds",
-                // "Info",
-                // "Rules",
-              ].map((tab, i) => (
+              {displayTabsNames.map((tab, i) => (
                 <button
                   onClick={() => setActiveTab(tab)}
                   key={i}
-                  className={` ${activeTab === tab 
+                  className={` ${currentTab === tab 
                       ? "text-primary border-b-2 border-primary bg-primary/5" 
                       : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                     } px-3.5 md:px-6 py-4 whitespace-nowrap text-xs md:text-sm font-bold transition-all duration-300`}

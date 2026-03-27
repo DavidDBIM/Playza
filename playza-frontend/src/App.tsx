@@ -18,10 +18,13 @@ import Deposit from "./pages/Deposit";
 import Withdrawal from "./pages/Withdrawal";
 import Overview from "./components/profile/Overview";
 import History from "./components/profile/History";
+import MyGames from "./pages/MyGames";
 import Settings from "./components/profile/Settings";
 import Achievements from "./components/profile/Achievements";
 import Security from "./components/profile/Security";
 import { ThemeProvider } from "./components/theme/ThemeProvider";
+import Tournaments from "./pages/Tournaments";
+import TournamentDetail from "./pages/TournamentDetail";
 import Referral from "./pages/Referral";
 import DepositModal from "./components/wallet/DepositModal";
 import WithdrawModal from "./components/wallet/WithdrawModal";
@@ -94,11 +97,14 @@ const AppContent = () => {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/leaderboard" element={<LeaderBoard />} />
+            <Route path="/tournaments" element={<Tournaments />} />
+            <Route path="/tournaments/:id" element={<TournamentDetail />} />
             <Route
               path="/wallet"
               element={<Wallet onWithdrawClick={handleWithdrawClick} />}
             />
             <Route path="/games" element={<Games />} />
+            <Route path="/my-games" element={<MyGames />} />
             <Route path="/games/category/:category" element={<CategoryPage />} />
             <Route path="/games/:id" element={<Game />} />
             <Route path="/games/:id/session" element={<MatchSession />} />
