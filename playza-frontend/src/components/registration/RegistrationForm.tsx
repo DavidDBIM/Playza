@@ -30,7 +30,7 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
 
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
-  const urlReferralCode = queryParams.get("ref") || "";
+  const urlReferralCode = queryParams.get("referral_code") || queryParams.get("ref") || "";
 
   const {
     register,
@@ -355,23 +355,33 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
             </div>
 
             {/* Terms and Privacy Agreement */}
-            <div className="flex flex-col gap-2">
-              <div className="flex items-start gap-3 px-1">
-                <input
-                  {...register("acceptedTerms")}
-                  type="checkbox"
-                  id="terms"
-                  className="mt-1 size-4 rounded border-slate-300 dark:border-white/20 bg-slate-900/5 dark:bg-white/5 text-primary focus:ring-primary/30 outline-none transition-all cursor-pointer accent-primary"
-                />
-                <label
-                  htmlFor="terms"
-                  className="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400 font-medium cursor-pointer select-none"
-                >
-                  By creating an account, I agree to Playza's{" "}
+            <div className="flex flex-col gap-2 pt-2">
+              <label 
+                htmlFor="terms" 
+                className={`flex items-start gap-4 p-4 rounded-xl border transition-all cursor-pointer group/terms shadow-sm ${
+                  useWatch({ control, name: "acceptedTerms" }) 
+                    ? "bg-primary/5 border-primary/30" 
+                    : "bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10"
+                }`}
+              >
+                <div className="relative mt-0.5 shrink-0">
+                  <input
+                    {...register("acceptedTerms")}
+                    type="checkbox"
+                    id="terms"
+                    className="peer absolute inset-0 opacity-0 cursor-pointer z-10"
+                  />
+                  <div className="size-5 rounded-md border-2 border-slate-300 dark:border-white/20 peer-checked:bg-primary peer-checked:border-primary transition-all flex items-center justify-center bg-white dark:bg-slate-900 group-hover/terms:border-primary/50">
+                    <CheckCircle2 className="size-3.5 text-black font-black hidden peer-checked:block" />
+                  </div>
+                </div>
+                <span className="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400 font-bold select-none">
+                  I have read and agree to Playza's{" "}
                   <Link
                     to="/terms"
                     target="_blank"
-                    className="text-primary font-bold hover:underline underline-offset-4"
+                    className="text-primary hover:underline underline-offset-4 decoration-2"
+                    onClick={(e) => e.stopPropagation()}
                   >
                     Terms & Conditions
                   </Link>{" "}
@@ -379,13 +389,14 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
                   <Link
                     to="/privacy"
                     target="_blank"
-                    className="text-primary font-bold hover:underline underline-offset-4"
+                    className="text-primary hover:underline underline-offset-4 decoration-2"
+                    onClick={(e) => e.stopPropagation()}
                   >
                     Privacy Policy
                   </Link>
                   .
-                </label>
-              </div>
+                </span>
+              </label>
               {errors.acceptedTerms && (
                 <p className="text-[10px] text-red-500 font-bold ml-1 italic">
                   {errors.acceptedTerms.message}

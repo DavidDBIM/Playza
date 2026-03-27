@@ -50,7 +50,7 @@ const achievements: Achievement[] = [
   {
     id: "4",
     title: "Tycoon",
-    description: "Earn a total of ₦50,000 from games.",
+    description: "Earn a total of 50,000 ZA from games.",
     progress: 18300,
     total: 50000,
     rarity: "Epic",

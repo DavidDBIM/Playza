@@ -4,7 +4,7 @@ export const transactionsData: TransactionUI[] = [
   {
     id: "#TXN-90821",
     type: "Prize Win",
-    amount: "+₦50,000.00",
+    amount: "+ZA50,000.00",
     status: "Completed",
     reference: "VAL-TOURN-X-FINALS",
     date: "Oct 24, 2023 · 14:32",
@@ -13,7 +13,7 @@ export const transactionsData: TransactionUI[] = [
   {
     id: "#TXN-90744",
     type: "Deposit",
-    amount: "+₦10,000.00",
+    amount: "+ZA10,000.00",
     status: "Completed",
     reference: "PAYSTACK-REF-889",
     date: "Oct 23, 2023 · 09:15",
@@ -22,7 +22,7 @@ export const transactionsData: TransactionUI[] = [
   {
     id: "#TXN-90612",
     type: "Game Entry",
-    amount: "-₦2,500.00",
+    amount: "-ZA2,500.00",
     status: "Completed",
     reference: "ENTRY-FEE-VAL-44",
     date: "Oct 22, 2023 · 18:00",
@@ -31,7 +31,7 @@ export const transactionsData: TransactionUI[] = [
   {
     id: "#TXN-90501",
     type: "Withdrawal",
-    amount: "-₦15,000.00",
+    amount: "-ZA15,000.00",
     status: "Pending",
     reference: "BANK-X-442291",
     date: "Oct 21, 2023 · 11:45",
@@ -40,7 +40,7 @@ export const transactionsData: TransactionUI[] = [
   {
     id: "#TXN-90488",
     type: "Prize Win",
-    amount: "+₦5,000.00",
+    amount: "+ZA5,000.00",
     status: "Completed",
     reference: "MATCH-WIN-8821",
     date: "Oct 20, 2023 · 22:10",
@@ -49,7 +49,7 @@ export const transactionsData: TransactionUI[] = [
   {
     id: "#TXN-90412",
     type: "Game Entry",
-    amount: "-₦1,000.00",
+    amount: "-ZA1,000.00",
     status: "Completed",
     reference: "ENTRY-PUBG-M-1",
     date: "Oct 19, 2023 · 15:20",
@@ -58,7 +58,7 @@ export const transactionsData: TransactionUI[] = [
   {
     id: "#TXN-90399",
     type: "Deposit",
-    amount: "+₦5,000.00",
+    amount: "+ZA5,000.00",
     status: "Completed",
     reference: "KREDA-REF-112",
     date: "Oct 18, 2023 · 10:00",
@@ -67,7 +67,7 @@ export const transactionsData: TransactionUI[] = [
   {
     id: "#TXN-90355",
     type: "Withdrawal",
-    amount: "-₦2,000.00",
+    amount: "-ZA2,000.00",
     status: "Completed",
     reference: "ATM-WITHDRAWAL-XP",
     date: "Oct 17, 2023 · 16:45",
@@ -76,7 +76,7 @@ export const transactionsData: TransactionUI[] = [
   {
     id: "#TXN-90312",
     type: "Prize Win",
-    amount: "+₦15,000.00",
+    amount: "+ZA15,000.00",
     status: "Completed",
     reference: "COD-M-TOURN-3",
     date: "Oct 16, 2023 · 20:30",
@@ -85,7 +85,7 @@ export const transactionsData: TransactionUI[] = [
   {
     id: "#TXN-90299",
     type: "Game Entry",
-    amount: "-₦500.00",
+    amount: "-ZA500.00",
     status: "Completed",
     reference: "QUICK-MATCH-FF",
     date: "Oct 15, 2023 · 13:15",
@@ -94,7 +94,7 @@ export const transactionsData: TransactionUI[] = [
   {
     id: "#TXN-90250",
     type: "Deposit",
-    amount: "+₦2,500.00",
+    amount: "+ZA2,500.00",
     status: "Completed",
     reference: "PAYSTACK-REF-901",
     date: "Oct 14, 2023 · 08:30",
@@ -103,7 +103,7 @@ export const transactionsData: TransactionUI[] = [
   {
     id: "#TXN-90211",
     type: "Withdrawal",
-    amount: "-₦10,000.00",
+    amount: "-ZA10,000.00",
     status: "Completed",
     reference: "BANK-TRANSFER-99",
     date: "Oct 13, 2023 · 11:20",
@@ -112,7 +112,7 @@ export const transactionsData: TransactionUI[] = [
   {
     id: "#TXN-90188",
     type: "Prize Win",
-    amount: "+₦25,000.00",
+    amount: "+ZA25,000.00",
     status: "Completed",
     reference: "VAL-SURGE-WEEKLY",
     date: "Oct 12, 2023 · 23:55",
@@ -121,7 +121,7 @@ export const transactionsData: TransactionUI[] = [
   {
     id: "#TXN-90155",
     type: "Game Entry",
-    amount: "-₦3,000.00",
+    amount: "-ZA3,000.00",
     status: "Completed",
     reference: "PREMIUM-TOURN-1",
     date: "Oct 11, 2023 · 15:10",
@@ -130,7 +130,7 @@ export const transactionsData: TransactionUI[] = [
   {
     id: "#TXN-90112",
     type: "Deposit",
-    amount: "+₦7,000.00",
+    amount: "+ZA7,000.00",
     status: "Completed",
     reference: "FLUTTERWAVE-TX-7",
     date: "Oct 10, 2023 · 17:40",
@@ -139,7 +139,7 @@ export const transactionsData: TransactionUI[] = [
   {
     id: "#TXN-90099",
     type: "Withdrawal",
-    amount: "-₦5,000.00",
+    amount: "-ZA5,000.00",
     status: "Pending",
     reference: "CRYPTO-WITHDRAWAL",
     date: "Oct 09, 2023 · 12:15",
@@ -148,7 +148,7 @@ export const transactionsData: TransactionUI[] = [
   {
     id: "#TXN-90055",
     type: "Prize Win",
-    amount: "+₦1,000.00",
+    amount: "+ZA1,000.00",
     status: "Completed",
     reference: "DAILY-CHALLENGE-2",
     date: "Oct 08, 2023 · 09:30",
@@ -157,7 +157,7 @@ export const transactionsData: TransactionUI[] = [
   {
     id: "#TXN-90012",
     type: "Game Entry",
-    amount: "-₦200.00",
+    amount: "-ZA200.00",
     status: "Completed",
     reference: "FREE-MATCH-ENTRY",
     date: "Oct 07, 2023 · 14:00",
@@ -166,7 +166,7 @@ export const transactionsData: TransactionUI[] = [
   {
     id: "#TXN-89999",
     type: "Deposit",
-    amount: "+₦15,000.00",
+    amount: "+ZA15,000.00",
     status: "Completed",
     reference: "KREDA-REF-201",
     date: "Oct 06, 2023 · 11:30",
@@ -175,7 +175,7 @@ export const transactionsData: TransactionUI[] = [
   {
     id: "#TXN-89955",
     type: "Withdrawal",
-    amount: "-₦8,000.00",
+    amount: "-ZA8,000.00",
     status: "Completed",
     reference: "BANK-X-PAYOUT",
     date: "Oct 05, 2023 · 10:15",
@@ -184,7 +184,7 @@ export const transactionsData: TransactionUI[] = [
   {
     id: "#TXN-89912",
     type: "Prize Win",
-    amount: "+₦12,500.00",
+    amount: "+ZA12,500.00",
     status: "Completed",
     reference: "PUBG-GLOBAL-S3",
     date: "Oct 04, 2023 · 21:45",
@@ -193,7 +193,7 @@ export const transactionsData: TransactionUI[] = [
   {
     id: "#TXN-89899",
     type: "Game Entry",
-    amount: "-₦4,000.00",
+    amount: "-ZA4,000.00",
     status: "Completed",
     reference: "PRO-LEAGUE-DIV-1",
     date: "Oct 03, 2023 · 15:30",
@@ -202,7 +202,7 @@ export const transactionsData: TransactionUI[] = [
   {
     id: "#TXN-89855",
     type: "Deposit",
-    amount: "+₦20,000.00",
+    amount: "+ZA20,000.00",
     status: "Completed",
     reference: "OFFICE-TRANSFER",
     date: "Oct 02, 2023 · 13:20",
@@ -211,7 +211,7 @@ export const transactionsData: TransactionUI[] = [
   {
     id: "#TXN-89812",
     type: "Withdrawal",
-    amount: "-₦12,000.00",
+    amount: "-ZA12,000.00",
     status: "Pending",
     reference: "REFFERAL-BONUS-OUT",
     date: "Oct 01, 2023 · 08:55",
@@ -220,7 +220,7 @@ export const transactionsData: TransactionUI[] = [
   {
     id: "#TXN-89799",
     type: "Prize Win",
-    amount: "+₦30,000.00",
+    amount: "+ZA30,000.00",
     status: "Completed",
     reference: "CHAMPIONS-CUP-23",
     date: "Sep 30, 2023 · 23:10",
@@ -229,7 +229,7 @@ export const transactionsData: TransactionUI[] = [
   {
     id: "#TXN-89755",
     type: "Game Entry",
-    amount: "-₦1,500.00",
+    amount: "-ZA1,500.00",
     status: "Completed",
     reference: "DUO-BATTLE-PRO",
     date: "Sep 29, 2023 · 19:40",
@@ -238,7 +238,7 @@ export const transactionsData: TransactionUI[] = [
   {
     id: "#TXN-89712",
     type: "Deposit",
-    amount: "+₦1,000.00",
+    amount: "+ZA1,000.00",
     status: "Completed",
     reference: "QUICK-TOPUP-99",
     date: "Sep 28, 2023 · 12:30",
@@ -247,7 +247,7 @@ export const transactionsData: TransactionUI[] = [
   {
     id: "#TXN-89699",
     type: "Withdrawal",
-    amount: "-₦3,500.00",
+    amount: "-ZA3,500.00",
     status: "Completed",
     reference: "LUNCH-XP-TRANSFER",
     date: "Sep 27, 2023 · 14:15",
@@ -256,7 +256,7 @@ export const transactionsData: TransactionUI[] = [
   {
     id: "#TXN-89655",
     type: "Prize Win",
-    amount: "+₦4,500.00",
+    amount: "+ZA4,500.00",
     status: "Completed",
     reference: "LUCKY-WHEEL-BONUS",
     date: "Sep 26, 2023 · 10:45",
@@ -265,7 +265,7 @@ export const transactionsData: TransactionUI[] = [
   {
     id: "#TXN-89612",
     type: "Game Entry",
-    amount: "-₦800.00",
+    amount: "-ZA800.00",
     status: "Completed",
     reference: "SOLO-SPRINT-RACE",
     date: "Sep 25, 2023 · 17:20",

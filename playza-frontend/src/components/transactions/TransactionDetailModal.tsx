@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Trophy, ArrowDownCircle, Gamepad2, ArrowUpCircle, X, Check, Copy, Share2 } from "lucide-react";
 import type { TransactionUI } from "@/types/types";
+import { ZASymbol } from "@/components/currency/ZASymbol";
 
 interface TransactionDetailModalProps {
   isOpen: boolean;
@@ -36,6 +37,7 @@ const TransactionDetailModal = ({ isOpen, onClose, transaction }: TransactionDet
 
   const { icon: Icon, color, bg } = getIcon(transaction.type);
   const isPositive = transaction.amount.startsWith("+") || transaction.type === "Deposit" || transaction.type === "Reward Payout" || transaction.type === "Prize Win";
+  const displayAmount = transaction.amount.replace("+ZA", "").replace("-ZA", "").replace("ZA", "");
 
   const handleCopy = () => {
     navigator.clipboard.writeText(transaction.id);
@@ -44,7 +46,7 @@ const TransactionDetailModal = ({ isOpen, onClose, transaction }: TransactionDet
   };
 
   return (
-    <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity overflow-y-auto">
+    <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity overflow-y-auto" onClick={onClose}>
       <div 
         className="relative w-full max-w-md glass-card rounded-3xl overflow-hidden shadow-2xl border border-white/10 animate-in fade-in zoom-in duration-300"
         onClick={(e) => e.stopPropagation()}
@@ -65,18 +67,20 @@ const TransactionDetailModal = ({ isOpen, onClose, transaction }: TransactionDet
             <div className={`size-20 rounded-2xl ${bg} flex items-center justify-center mb-4 shadow-inner border border-white/5`}>
               <Icon className={`${color} text-4xl`} />
             </div>
-            <h3 className="text-xl sm:text-2xl font-black text-white mb-1">{transaction.type}</h3>
-            <span className={`px-4 py-1 rounded-full ${transaction.status === 'Completed' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'} text-xs font-black uppercase tracking-[0.2em] border border-white/5`}>
+            <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mb-1 uppercase italic tracking-tight">{transaction.type}</h3>
+            <span className={`px-4 py-1 rounded-full ${transaction.status === 'Completed' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'} text-[10px] font-black uppercase tracking-[0.2em] border border-white/5`}>
               {transaction.status}
             </span>
           </div>
 
           {/* Amount */}
-          <div className="bg-white/5 rounded-2xl p-6 text-center mb-8 border border-white/5">
-             <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">Transaction Amount</p>
-             <h4 className={`text-3xl sm:text-4xl font-black ${isPositive ? 'text-primary' : 'text-white'}`}>
-               {transaction.amount}
-             </h4>
+          <div className="bg-slate-900/5 dark:bg-white/5 rounded-2xl p-6 text-center mb-8 border border-slate-200 dark:border-white/5 shadow-inner">
+             <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] mb-3">Transaction Amount</p>
+             <div className={`text-4xl sm:text-5xl font-black flex items-center justify-center gap-2 italic ${isPositive ? 'text-primary' : 'text-slate-900 dark:text-white'}`}>
+               {isPositive ? '+' : '-'}
+               <ZASymbol className="scale-110" />
+               <span>{displayAmount}</span>
+             </div>
           </div>
 
           {/* Details Grid */}

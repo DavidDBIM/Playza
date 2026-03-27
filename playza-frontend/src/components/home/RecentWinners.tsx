@@ -1,5 +1,6 @@
 import { winners } from "@/constants/constants";
 import { Trophy, Clock } from "lucide-react";
+import { ZASymbol } from "../currency/ZASymbol";
 
 // Generate random times once per module load to ensure the component remains pure
 // and avoids both hydration mismatches and cascading render effects.
@@ -47,12 +48,15 @@ const RecentWinners = () => {
 
                 {/* Content */}
                 <div className="flex justify-center gap-1">
-                  <div className="flex items-center gap-2 text-sm">
+                  <div className="flex items-center gap-2 text-sm leading-none pt-1">
                     <span className="font-bold truncate max-w-30">{username}</span>
                     <span className=" text-xs italic">won</span>
-                    <span className="font-extrabold text-xl text-emerald-400  font-mono tracking-tight drop-shadow-[0_0_8px_rgba(52,211,153,0.4)]">
-                      ₦{amountWon.toLocaleString()}
-                    </span>{" "}
+                    <div className="flex items-center gap-1">
+                      <ZASymbol className="text-sm scale-75" />
+                      <span className="font-extrabold text-xl text-emerald-400  font-mono tracking-tight drop-shadow-[0_0_8px_rgba(52,211,153,0.4)] leading-none">
+                        {amountWon.toLocaleString()}
+                      </span>
+                    </div>
                   </div>
                   
                   <div className="flex items-center justify-between gap-6 mt-0.5">

@@ -1,4 +1,4 @@
-import { formatNaira } from "@/lib/formatNaira";
+import { formatZA } from "@/lib/formatCurrency";
 import { Gamepad2, PlayCircle, Users } from "lucide-react";
 
 type SessionHeroProps = {
@@ -7,7 +7,7 @@ type SessionHeroProps = {
   thumbnail: string;
   activePlayers: number;
   entryFee: number;
-  pricePool?: number;
+  prizePool?: number;
   onClick: (value: boolean) => void;
 };
 
@@ -15,7 +15,7 @@ const SessionHero = ({
   title,
   slug,
   thumbnail,
-  pricePool,
+  prizePool,
   activePlayers,
   entryFee,
   onClick,
@@ -49,7 +49,7 @@ const SessionHero = ({
             Prize Pool
           </p>
           <p className="flex items-baseline md:text-4xl font-black text-transparent bg-clip-text bg-linear-to-r from-yellow-400 via-amber-200 to-yellow-600 glow-primary">
-            {formatNaira(pricePool)}
+            {formatZA(prizePool)}
             <span className="text-playza-green text-xs font-black ml-1">
               ↑ 1.2%
             </span>
@@ -68,7 +68,7 @@ const SessionHero = ({
 
         <div className="absolute right-0 top-0 flex gap-2 p-2 text-white bg-slate-900/80 border-b border-l border-white/10 font-black text-xs md:text-base backdrop-blur-md rounded-bl-xl shadow-2xl">
           <p className="text-slate-400">Entry Fee:</p>
-          <span className="text-primary">{formatNaira(entryFee)}</span>
+          <span className="text-primary">{formatZA(entryFee)}</span>
         </div>
 
         <div className="absolute left-0 top-0 flex items-center gap-2 p-2 text-white bg-playza-blue border-b border-r border-white/10 font-black text-xs md:text-base backdrop-blur-md rounded-br-xl shadow-2xl">

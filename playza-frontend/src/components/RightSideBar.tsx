@@ -6,10 +6,11 @@ import {
 } from "lucide-react";
 import { BiInfoCircle, BiUserPlus } from "react-icons/bi";
 import { MdWarning } from "react-icons/md";
+import { ZASymbol } from "./currency/ZASymbol";
 
 const RightSideBar = () => {
   return (
-    <aside className="hidden lg:block col-span-3 space-y-6">
+    <aside className="hidden lg:block space-y-6">
       {/* <!-- Payout Countdown --> */}
       <div className="glass rounded-lg border border-red-500/30 p-5 text-center">
         <p className="text-[10px] font-bold text-red-400 uppercase tracking-widest mb-3">
@@ -69,11 +70,11 @@ const RightSideBar = () => {
             <div className="shrink-0 w-8 h-8 bg-green-500/10 rounded flex items-center justify-center">
               <CheckCircle className=" text-chart-3 text-sm" />
             </div>
-            <div>
-              <p className="text-xs ">
-                Stake of <span className="font-bold">₦50</span> confirmed for
-                next match.
-              </p>
+            <div className="flex-1 min-w-0">
+              <div className="text-xs flex flex-wrap items-center gap-1">
+                Stake of <ZASymbol className="scale-75 origin-left" />{" "}
+                <span className="font-bold">50</span> confirmed for next match.
+              </div>
               <p className="text-[10px] mt-1">28m ago</p>
             </div>
           </div>
@@ -97,16 +98,25 @@ const RightSideBar = () => {
         </h3>
         <div className="space-y-4">
           <div className="flex justify-between items-center">
-            <span className="text-xs text-slate-600 dark:text-slate-400">Total Players</span>
+            <span className="text-xs text-slate-600 dark:text-slate-400">
+              Total Players
+            </span>
             <span className="text-sm font-bold ">4,102</span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-xs text-slate-600 dark:text-slate-400">Matches (24h)</span>
+            <span className="text-xs text-slate-600 dark:text-slate-400">
+              Matches (24h)
+            </span>
             <span className="text-sm font-bold ">12,854</span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-xs text-slate-600 dark:text-slate-400">Paid Out Today</span>
-            <span className="text-sm font-bold text-green-400">₦1.2M</span>
+            <span className="text-xs text-slate-600 dark:text-slate-400 font-bold uppercase tracking-widest text-[10px]">
+              Paid Out Today
+            </span>
+            <div className="flex items-center gap-1 text-sm font-bold text-emerald-400">
+              <ZASymbol className="text-xs" />
+              <span>1.2M</span>
+            </div>
           </div>
         </div>
         <div className="mt-6 pt-4 border-t border-white/5">
@@ -119,9 +129,7 @@ const RightSideBar = () => {
             </div>
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span className="text-[10px] ">
-                Operational - 12ms ping
-              </span>
+              <span className="text-[10px] ">Operational - 12ms ping</span>
             </div>
           </div>
         </div>

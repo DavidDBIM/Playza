@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router";
 import { CheckCircle2, Loader2, ArrowLeft, XCircle, CreditCard, Building2 } from "lucide-react";
+import { ZASymbol } from "@/components/currency/ZASymbol";
 
 export default function Deposit() {
   const [searchParams] = useSearchParams();
@@ -54,7 +55,7 @@ export default function Deposit() {
         <div className="absolute -top-32 -right-32 w-64 h-64 bg-primary/20 blur-[100px] rounded-full"></div>
         
         <h1 className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white mb-2 relative z-10 tracking-tight">
-          Complete <span className="text-primary">Deposit</span>
+          Complete <span className="text-primary tracking-tighter italic">Top Up</span>
         </h1>
         <p className="text-slate-500 font-medium mb-12 relative z-10">Review your top up details and finalize payment securely.</p>
 
@@ -64,40 +65,50 @@ export default function Deposit() {
               <CheckCircle2 className="text-emerald-500 w-12 h-12" />
             </div>
             <h2 className="text-2xl font-black text-emerald-500 mb-2">Payment Successful!</h2>
-            <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-sm">
-              ₦{amount.toLocaleString()} has been added to your Playza wallet.
-            </p>
+            <div className="flex items-center justify-center gap-2 text-slate-500 dark:text-slate-400 mb-8 max-w-sm">
+              <ZASymbol className="text-sm" />
+              <span className="font-bold text-slate-900 dark:text-white">{amount.toLocaleString()}</span> has been added to your Playza wallet.
+            </div>
             <Loader2 className="animate-spin text-slate-300 w-5 h-5 mb-2" />
             <span className="text-xs uppercase font-bold tracking-widest text-slate-400">Redirecting to Wallet...</span>
           </div>
         ) : (
           <div className="space-y-8 relative z-10">
             <div className="bg-slate-50 dark:bg-white/5 rounded-2xl px-2 py-6 md:p-6 border border-slate-200 dark:border-white/5">
-              <h3 className="text-xs font-black uppercase tracking-widest text-slate-500 mb-4">Summary</h3>
+              <h3 className="text-xs font-black uppercase tracking-widest text-slate-500 mb-4 px-1">Summary</h3>
               
-              <div className="flex items-center justify-between mb-4">
-                <span className="font-bold text-slate-700 dark:text-slate-300">Method</span>
+              <div className="flex items-center justify-between mb-4 px-1">
+                <span className="font-bold text-slate-700 dark:text-slate-300 text-sm tracking-widest uppercase">Method</span>
                 <div className="flex items-center gap-2 font-bold text-slate-900 dark:text-white">
                   {method === "card" ? <CreditCard size={18} className="text-primary" /> : <Building2 size={18} className="text-primary"/>}
                   <span className="capitalize">{method}</span>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between mb-4">
-                <span className="font-bold text-slate-700 dark:text-slate-300">Amount</span>
-                <span className="font-black text-slate-900 dark:text-white">₦{amount.toLocaleString()}</span>
+              <div className="flex items-center justify-between mb-4 px-1">
+                <span className="font-bold text-slate-700 dark:text-slate-300 text-sm tracking-widest uppercase">Amount</span>
+                <div className="flex items-center gap-1.5">
+                  <ZASymbol className="text-sm scale-90" />
+                  <span className="font-black text-slate-900 dark:text-white">{amount.toLocaleString()}</span>
+                </div>
               </div>
 
-              <div className="flex items-center justify-between mb-4">
-                <span className="font-bold text-slate-700 dark:text-slate-300">Processing Fee</span>
-                <span className="font-bold text-slate-500">₦{fee.toLocaleString()}</span>
+              <div className="flex items-center justify-between mb-4 px-1">
+                <span className="font-bold text-slate-700 dark:text-slate-300 text-sm tracking-widest uppercase">Processing Fee</span>
+                <div className="flex items-center gap-1.5">
+                  <ZASymbol className="text-xs scale-90" />
+                  <span className="font-bold text-slate-500">{fee.toLocaleString()}</span>
+                </div>
               </div>
 
               <div className="h-px bg-slate-200 dark:bg-slate-700 my-4"></div>
 
-              <div className="flex items-center justify-between">
-                <span className="font-black text-slate-900 dark:text-white uppercase tracking-widest">Total Payable</span>
-                <span className="text-2xl font-black text-primary">₦{total.toLocaleString()}</span>
+              <div className="flex items-center justify-between px-1">
+                <span className="font-black text-slate-900 dark:text-white uppercase tracking-widest text-xs">Total Payable</span>
+                <div className="flex items-center gap-2 text-primary">
+                  <ZASymbol className="text-xl md:text-2xl" />
+                  <span className="text-2xl font-black">{total.toLocaleString()}</span>
+                </div>
               </div>
             </div>
 
@@ -124,9 +135,13 @@ export default function Deposit() {
               ) : status === "failed" ? (
                 <span>Retry Payment</span>
               ) : (
-                <>
-                  <span>Pay Now (₦{total.toLocaleString()})</span>
-                </>
+                <div className="flex items-center gap-3">
+                  <span>Pay Now</span>
+                  <div className="flex items-center gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity">
+                    <ZASymbol className="text-sm scale-90" />
+                    <span>{total.toLocaleString()}</span>
+                  </div>
+                </div>
               )}
             </button>
           </div>

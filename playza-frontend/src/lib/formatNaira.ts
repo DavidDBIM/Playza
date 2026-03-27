@@ -1,5 +1,1 @@
-export const formatNaira = (fee: number | undefined) => {
-  const currency = "₦";
-
-  return `${currency}${fee?.toLocaleString()}`;
-};
+export { formatZA as formatNaira } from "./formatCurrency";

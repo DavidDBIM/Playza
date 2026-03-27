@@ -2,6 +2,7 @@ import type { Game } from "@/types/types";
 import { FaUsers } from "react-icons/fa";
 import { GiFlame } from "react-icons/gi";
 import { Link } from "react-router";
+import { ZASymbol } from "@/components/currency/ZASymbol";
 
 const GamesCard = ({
   id,
@@ -73,8 +74,9 @@ const GamesCard = ({
               <FaUsers className="text-xs" />
               <span>{activePlayers.toLocaleString()}</span>
             </div>
-            <div className="px-3 py-1.5 bg-secondary/50 backdrop-blur-md rounded-xl text-slate-900 dark:text-white text-xs font-black italic tracking-tighter shadow-xl border border-white/10">
-              ₦{entryFee.toLocaleString()}
+            <div className="px-3 py-1.5 bg-secondary/50 backdrop-blur-md rounded-xl text-slate-900 dark:text-white text-xs font-black italic tracking-tighter shadow-xl border border-white/10 flex items-center gap-1">
+              <ZASymbol className="text-[10px] scale-75" />
+              <span>{entryFee.toLocaleString()}</span>
             </div>
           </div>
 

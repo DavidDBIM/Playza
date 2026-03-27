@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router";
 import { CheckCircle2, Loader2, Landmark } from "lucide-react";
+import { ZASymbol } from "@/components/currency/ZASymbol";
 
 export default function WithdrawSuccess() {
   const [searchParams] = useSearchParams();
@@ -31,8 +32,8 @@ export default function WithdrawSuccess() {
           Request <span className="text-emerald-500">Successful!</span>
         </h2>
         
-        <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-md font-medium relative z-10 leading-relaxed">
-          Your payout of <span className="font-bold text-slate-900 dark:text-white">₦{amount.toLocaleString()}</span> is being processed to your <span className="uppercase text-slate-900 dark:text-white">{bank}</span> account. We'll notify you once it hits.
+        <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-md font-medium relative z-10 leading-relaxed font-sans">
+          Your payout of <span className="font-bold text-slate-900 dark:text-white inline-flex items-center gap-1.5"><ZASymbol className="text-[10px] scale-90" />{amount.toLocaleString()}</span> is being processed to your <span className="uppercase text-slate-900 dark:text-white">{bank}</span> account. We'll notify you once it hits.
         </p>
 
         <div className="w-full max-w-xs bg-slate-50 dark:bg-white/5 rounded-2xl p-4 border border-slate-200 dark:border-white/5 mb-10 flex items-center justify-between text-left">
@@ -44,10 +45,13 @@ export default function WithdrawSuccess() {
              </span>
            </div>
            <div className="text-right">
-             <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 block">Amount</span>
-             <span className="font-bold text-sm text-emerald-500 mt-1 block">
-               ₦{amount.toLocaleString()}
-             </span>
+             <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 block text-right">Amount</span>
+             <div className="flex items-center gap-1.5 justify-end mt-1">
+               <ZASymbol className="text-xs scale-75" />
+               <span className="font-bold text-sm text-emerald-500 block">
+                 {amount.toLocaleString()}
+               </span>
+             </div>
            </div>
         </div>
         

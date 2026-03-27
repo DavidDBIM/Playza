@@ -31,7 +31,6 @@ import { useAuth } from "./context/auth";
 import { CompleteProfileModal } from "./components/profile/CompleteProfileModal";
 import TermsAndConditions from "./pages/TermsAndConditions";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
-import ReferralLeaderboard from "./pages/ReferralLeaderboard";
 import Loyalty from "./pages/Loyalty";
 import CategoryPage from "./pages/CategoryPage";
 
@@ -86,7 +85,7 @@ const AppContent = () => {
       {/* {pathname === "/" && <AppNotification />} */}
       <div className="max-w-400 mx-auto flex gap-6 p-2 md:p-6">
         {!isGameSessionPage && !isRegistrationPage && (
-          <aside className="w-72 hidden xl:block sticky self-start h-[calc(100vh-8rem)]">
+          <aside className="w-72 hidden xl:block sticky self-start top-24 h-[calc(100vh-8rem)]">
             <SideBar />
           </aside>
         )}
@@ -114,10 +113,6 @@ const AppContent = () => {
             />
             <Route path="/terms" element={<TermsAndConditions />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
-            <Route
-              path="/referral-leaderboard"
-              element={<ReferralLeaderboard />}
-            />
             <Route path="/loyalty" element={<Loyalty />} />
             <Route path="/profile" element={<Profile />}>
               <Route index element={<Overview />} />
@@ -131,7 +126,11 @@ const AppContent = () => {
           </Routes>
         </>
 
-        {pathname === "/" && <RightSideBar />}
+        {pathname === "/" && (
+          <aside className="hidden xl:flex w-72 flex-col gap-6 sticky self-start top-24 h-[calc(100vh-8rem)]">
+            <RightSideBar />
+          </aside>
+        )}
       </div>
 
       {!isRegistrationPage && <Footer showAbout={pathname === "/"} />}

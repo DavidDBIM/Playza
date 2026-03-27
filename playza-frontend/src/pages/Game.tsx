@@ -28,7 +28,7 @@ const Game = () => {
     );
   }
 
-  const pricePool = calculatePrizePool(
+  const prizePool = calculatePrizePool(
     game.entryFee,
     game.activePlayers,
     game.platformFeePercentage,
@@ -52,7 +52,7 @@ const Game = () => {
   return (
     <div className="flex-1 min-h-screen pb-10 overflow-hidden">
       {/* Hero Header Area */}
-      <GameHero game={game} pricePool={pricePool} />
+      <GameHero game={game} prizePool={prizePool} />
 
       <div className="mx-auto container ">
         {/* Tabs Navigation - Modern Segmented Control */}

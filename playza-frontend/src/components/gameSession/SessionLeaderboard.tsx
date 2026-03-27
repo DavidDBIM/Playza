@@ -4,6 +4,7 @@ import Search from "../Search";
 import { useMemo, useState } from "react";
 import { LEADERBOARD_DATA, type LeaderboardItem } from "@/data/sessionLeaderBoard";
 import { Link } from "react-router";
+import { ZASymbol } from "../currency/ZASymbol";
 
 const SessionLeaderboard = () => {
   const [query, setQuery] = useState("");
@@ -89,9 +90,14 @@ const SessionLeaderboard = () => {
           </div>
 
           <div className="text-right">
-            <p className={`font-black text-lg md:text-2xl ${isTop3 || isMatch ? "text-playza-green" : "text-slate-900 dark:text-white/80"}`}>
-              {item.prize > 0 ? `₦${(item.prize * 1000).toLocaleString()}` : "-"}
-            </p>
+            <div className={`flex items-center gap-1.5 justify-end font-black text-lg md:text-2xl ${isTop3 || isMatch ? "text-playza-green" : "text-slate-900 dark:text-white/80"}`}>
+              {item.prize > 0 ? (
+                <>
+                  <ZASymbol className="text-sm scale-90" />
+                  <span>{(item.prize * 1000).toLocaleString()}</span>
+                </>
+              ) : "-"}
+            </div>
             <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-tighter">Current Prize</p>
           </div>
         </div>

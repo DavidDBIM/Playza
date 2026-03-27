@@ -11,6 +11,7 @@ import SessionActivities from "@/components/gameSession/SessionActivities";
 import SessionHero from "@/components/gameSession/SessionHero";
 import LiveEntryModal from "@/components/gameSession/LiveEntryModal";
 import ActivityToasts from "@/components/gameSession/ActivityToasts";
+import { ZASymbol } from "@/components/currency/ZASymbol";
 
 const MatchSession = () => {
   const [activeTab, setActiveTab] = useState("Live Leaderboard");
@@ -22,7 +23,7 @@ const MatchSession = () => {
 
   const allGames = games.map((g) => ({
     ...g,
-    pricePool: calculatePrizePool(
+    prizePool: calculatePrizePool(
       g.entryFee,
       g.activePlayers,
       g.platformFeePercentage,
@@ -76,7 +77,7 @@ const MatchSession = () => {
             thumbnail={game?.thumbnail}
             activePlayers={game?.activePlayers}
             entryFee={game?.entryFee}
-            pricePool={game?.pricePool}
+            prizePool={game?.prizePool}
             onClick={setLiveEntry}
           />
 
@@ -122,24 +123,33 @@ const MatchSession = () => {
                   <span className="text-yellow-500 font-black italic text-lg drop-shadow-sm">1st</span>
                   <span className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Grand Prize</span>
                 </div>
-                <span className="font-black text-slate-900 dark:text-transparent dark:bg-clip-text dark:bg-linear-to-r dark:from-yellow-400 dark:via-amber-200 dark:to-yellow-600">₦75,000</span>
+                <div className="flex items-center gap-1.5 transition-all">
+                  <ZASymbol className="text-sm scale-90" />
+                  <span className="font-black text-slate-900 dark:text-transparent dark:bg-clip-text dark:bg-linear-to-r dark:from-yellow-400 dark:via-amber-200 dark:to-yellow-600 uppercase">75,000</span>
+                </div>
               </div>
               <div className="flex items-center justify-between p-3 rounded-lg bg-slate-900/5 dark:bg-white/5 border border-slate-200 dark:border-white/10">
                 <div className="flex items-center gap-3">
                   <span className="text-slate-400 font-black italic text-lg drop-shadow-sm">2nd</span>
                   <span className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Runner Up</span>
                 </div>
-                <span className="font-black text-slate-900 dark:text-slate-300">₦45,000</span>
+                <div className="flex items-center gap-1.5 transition-all">
+                  <ZASymbol className="text-sm scale-90" />
+                  <span className="font-black text-slate-900 dark:text-slate-300 uppercase">45,000</span>
+                </div>
               </div>
               <div className="flex items-center justify-between p-3 rounded-lg bg-slate-900/5 dark:bg-white/5 border border-slate-200 dark:border-white/10">
                 <div className="flex items-center gap-3">
                   <span className="text-orange-500 font-black italic text-lg drop-shadow-sm">3rd</span>
                   <span className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Finalist</span>
                 </div>
-                <span className="font-black text-slate-900 dark:text-orange-400">₦30,000</span>
+                <div className="flex items-center gap-1.5 transition-all">
+                  <ZASymbol className="text-sm scale-90" />
+                  <span className="font-black text-slate-900 dark:text-orange-400 uppercase">30,000</span>
+                </div>
               </div>
               <div className="text-center pt-2">
-                <p className="text-[10px] text-slate-500 italic">
+                <p className="text-[10px] text-slate-500 italic uppercase">
                   4th - 100th place earn Arena Credits
                 </p>
               </div>

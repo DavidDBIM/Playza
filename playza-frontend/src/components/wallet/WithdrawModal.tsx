@@ -59,20 +59,20 @@ const WithdrawModal = ({ onClose }: WithdrawModalProps) => {
           <div className="space-y-6">
             <div className="space-y-3">
               <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 flex justify-between px-1">
-                <span>Amount (₦)</span>
-                <span className="text-yellow-600 dark:text-yellow-500">Bal: ₦10,250</span>
+                <span>Amount (ZA)</span>
+                <span className="text-yellow-600 dark:text-yellow-500 font-bold">Bal: ZA10,250</span>
               </label>
               
               <div className="relative group">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-yellow-600 dark:text-yellow-500 font-black text-xl md:text-2xl opacity-60 dark:opacity-50 group-focus-within:opacity-100 transition-opacity">
-                  ₦
+                  ZA
                 </span>
                 <input
                   type="text"
                   inputMode="numeric"
                   value={amount}
                   onChange={(e) => handleAmountChange(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-white/5 border-2 border-slate-200 dark:border-white/5 rounded-xl py-4 pl-10 pr-4 text-xl md:text-2xl font-black text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-700 outline-none focus:border-yellow-500/50 transition-all shadow-sm focus:shadow-md"
+                  className="w-full bg-slate-50 dark:bg-white/5 border-2 border-slate-200 dark:border-white/5 rounded-xl py-4 pl-12 pr-4 text-xl md:text-2xl font-black text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-700 outline-none focus:border-yellow-500/50 transition-all shadow-sm focus:shadow-md"
                   placeholder="0"
                 />
               </div>

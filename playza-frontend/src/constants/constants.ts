@@ -17,7 +17,7 @@ export const navItems = [
   { icon: Medal, label: "Tournaments", path: "/tournaments" },
   {
     icon: ChartBarIncreasing,
-    label: "Leaderboard",
+    label: "Leaderboards",
     path: "/leaderboard",
     mobile: true,
   },
@@ -466,7 +466,7 @@ export const statsCards = [
   {
     id: "spent",
     title: "Total Spent",
-    value: "$25.00",
+    value: "ZA25.00",
     valueColor: "text-foreground",
   },
   {
@@ -485,13 +485,13 @@ export const leaderboardTop = [
 ];
 
 export const currencies: Currency[] = [
-  { code: "NGN", symbol: "₦", rate: 100, flag: "🇳🇬" },
-  { code: "USD", symbol: "$", rate: 0.067, flag: "🇺🇸" },
-  { code: "EUR", symbol: "€", rate: 0.061, flag: "🇪🇺" },
-  { code: "GBP", symbol: "£", rate: 0.052, flag: "🇬🇧" },
-  { code: "GHS", symbol: "₵", rate: 1.13, flag: "🇬🇭" },
-  { code: "KES", symbol: "KSh", rate: 8.66, flag: "🇰🇪" },
-  { code: "ZAR", symbol: "R", rate: 1.22, flag: "🇿🇦" },
+  { code: "USD", symbol: "$", rate: 0.00063, flag: "🇺🇸" },
+  { code: "NGN", symbol: "₦", rate: 1.0, flag: "🇳🇬" },
+  { code: "EUR", symbol: "€", rate: 0.00058, flag: "🇪🇺" },
+  { code: "GBP", symbol: "£", rate: 0.0005, flag: "🇬🇧" },
+  { code: "GHS", symbol: "₵", rate: 0.012, flag: "🇬🇭" },
+  { code: "KES", symbol: "KSh", rate: 0.082, flag: "🇰🇪" },
+  { code: "ZAR", symbol: "R", rate: 0.011, flag: "🇿🇦" },
 ];
 
 // Stats

@@ -9,6 +9,7 @@ import {
   Gamepad,
   ShieldCheck,
 } from "lucide-react";
+import { ZASymbol } from "../currency/ZASymbol";
 
 const LiveEntryModal = ({ onClick }: { onClick: (value: boolean) => void }) => {
   useEffect(() => {
@@ -41,7 +42,7 @@ const LiveEntryModal = ({ onClick }: { onClick: (value: boolean) => void }) => {
 
           <div className="relative z-10 p-2 md:p-4">
           <div className="text-center mb-8">
-            <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tighter mb-2">
+            <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tighter mb-2 uppercase italic leading-tight">
               Confirm{" "}
               <span className="bg-clip-text text-transparent bg-linear-to-r from-primary via-blue-400 to-secondary transition-all">
                 Entry
@@ -65,7 +66,7 @@ const LiveEntryModal = ({ onClick }: { onClick: (value: boolean) => void }) => {
               >
                 <div className="absolute inset-0 bg-linear-to-t from-slate-900 via-slate-900/40 to-transparent"></div>
                 <div className="absolute top-3 left-3 flex gap-2">
-                  <span className="bg-primary/20 backdrop-blur-md text-primary text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md border border-primary/30 flex items-center gap-1.5">
+                  <span className="bg-primary/20 backdrop-blur-md text-primary text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md border border-primary/30 flex items-center gap-1.5 shadow-lg">
                     <span className="flex size-1.5 rounded-full bg-primary animate-pulse"></span>
                     Live Now
                   </span>
@@ -75,7 +76,7 @@ const LiveEntryModal = ({ onClick }: { onClick: (value: boolean) => void }) => {
               <div className="p-5">
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">
+                    <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight italic">
                       Speed Rush
                     </h3>
                     <div className="flex items-center gap-2 mt-1">
@@ -86,8 +87,9 @@ const LiveEntryModal = ({ onClick }: { onClick: (value: boolean) => void }) => {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-2xl font-black text-primary tracking-tighter leading-none">
-                      ₦100
+                    <div className="flex items-center gap-1 leading-none justify-end">
+                      <ZASymbol className="text-sm scale-90" />
+                      <span className="text-2xl font-black text-primary tracking-tighter">100</span>
                     </div>
                     <div className="text-[9px] font-black text-slate-500 uppercase tracking-widest mt-1">
                       Entry Fee
@@ -97,7 +99,7 @@ const LiveEntryModal = ({ onClick }: { onClick: (value: boolean) => void }) => {
                 <div className="flex items-center gap-3 pt-3 border-t border-white/5 text-[11px] font-bold">
                   <div className="flex items-center gap-1.5 text-secondary">
                     <Trophy size={14} />
-                    <span>Pool: ₦250,000</span>
+                    <span className="flex items-center gap-1">Pool: <ZASymbol className="text-[10px] scale-75" /> 250,000</span>
                   </div>
                   <div className="h-4 w-px bg-slate-700"></div>
                   <div className="flex items-center gap-1.5 text-primary">
@@ -110,42 +112,51 @@ const LiveEntryModal = ({ onClick }: { onClick: (value: boolean) => void }) => {
           </div>
 
           {/* Balance Breakdown */}
-          <div className="space-y-4 mb-8">
+          <div className="space-y-4 mb-8 px-1">
             <div className="flex items-center gap-2 px-1">
               <Wallet size={16} className="text-slate-400" />
-              <h4 className="text-xs font-black text-slate-500 uppercase tracking-widest">
+              <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
                 Payment Breakdown
               </h4>
             </div>
 
-            <div className="bg-slate-50/50 dark:bg-black/20 rounded-2xl p-6 space-y-4 border border-slate-200 dark:border-white/5">
+            <div className="bg-slate-50/50 dark:bg-black/20 rounded-2xl p-6 space-y-4 border border-slate-200 dark:border-white/5 shadow-inner">
               <div className="flex justify-between items-center text-sm">
-                <span className="font-bold text-slate-500">
+                <span className="font-bold text-slate-500 uppercase text-[10px] tracking-widest">
                   Available Funds
                 </span>
-                <span className="font-black text-slate-900 dark:text-slate-200 tracking-tight">
-                  ₦1,250.00
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <ZASymbol className="text-xs scale-90" />
+                  <span className="font-black text-slate-900 dark:text-slate-200 tracking-tight">
+                    1,250.00
+                  </span>
+                </div>
               </div>
               <div className="flex justify-between items-center text-sm">
-                <div className="flex items-center gap-2 text-primary font-bold">
+                <div className="flex items-center gap-2 text-primary font-bold uppercase text-[10px] tracking-widest">
                   <div className="bg-primary/10 p-1 rounded-md">
                     <ChevronDown size={14} />
                   </div>
                   <span>Tournament Entry</span>
                 </div>
-                <span className="font-black text-primary tracking-tight">
-                  -₦100.00
-                </span>
+                <div className="flex items-center gap-1.5 text-primary">
+                  <ZASymbol className="text-xs scale-90" />
+                  <span className="font-black tracking-tight">
+                    -100.00
+                  </span>
+                </div>
               </div>
-              <div className="h-px bg-slate-200 dark:bg-slate-800 my-2"></div>
+              <div className="h-px bg-slate-200 dark:bg-slate-800 my-2 shadow-inner"></div>
               <div className="flex justify-between items-center">
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
                   New Balance
                 </span>
-                <span className="text-xl font-black text-slate-900 dark:text-white tracking-tight">
-                  ₦1,150.00
-                </span>
+                <div className="flex items-center gap-2">
+                  <ZASymbol className="text-sm scale-90" />
+                  <span className="text-xl font-black text-slate-900 dark:text-white tracking-tight italic">
+                    1,150.00
+                  </span>
+                </div>
               </div>
             </div>
           </div>
