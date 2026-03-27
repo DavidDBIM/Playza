@@ -5,10 +5,9 @@ const axiosInstance = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  // withCredentials: true,
+  withCredentials: true,
 });
 
-// Request interceptor — attach auth token if present
 axiosInstance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("playza_token");
@@ -17,26 +16,25 @@ axiosInstance.interceptors.request.use(
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
-// Response interceptor — normalise errors
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
-    console.error("[AxiosResponseInterceptor] Error response:", error.response?.data);
+    console.error(
+      "[AxiosResponseInterceptor] Error response:",
+      error.response?.data,
+    );
 
     let message = error.message || "An unexpected error occurred.";
 
     if (error.response?.data) {
       const data = error.response.data;
 
-      // 1. Handle explicit message field
       if (data.message) {
         message = data.message;
-      }
-      // 2. Handle Zod validation errors object
-      else if (data.errors) {
+      } else if (data.errors) {
         const errorDetails = Object.entries(data.errors)
           .map(([field, msgs]) => `${field}: ${(msgs as string[]).join(", ")}`)
           .join(" | ");
@@ -45,7 +43,7 @@ axiosInstance.interceptors.response.use(
     }
 
     return Promise.reject(new Error(message));
-  }
+  },
 );
 
 export default axiosInstance;
