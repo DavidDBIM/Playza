@@ -525,7 +525,7 @@ export const games: Game[] = [
     updatedAt: "2026-03-01T00:00:00Z",
   },
   {
-    id: "35",
+    id: "30",
     title: "2048 Premium",
     slug: "2048-premium",
     thumbnail: "/games/2048-premium.png",
@@ -544,7 +544,7 @@ export const games: Game[] = [
     updatedAt: "2026-03-27T00:00:00Z",
   },
   {
-    id: "47",
+    id: "31",
     title: "Zelda Maze Shooter",
     slug: "zelda-shooter",
     thumbnail: "/games/zelda-shooter.png",
@@ -563,7 +563,7 @@ export const games: Game[] = [
     updatedAt: "2026-03-27T00:00:00Z",
   },
   {
-    id: "30",
+    id: "32",
     title: "Trivia Master",
     slug: "trivia-master",
     thumbnail: "/games/trivia-master.png",
@@ -581,7 +581,7 @@ export const games: Game[] = [
     updatedAt: "2026-03-01T00:00:00Z",
   },
   {
-    id: "31",
+    id: "33",
     title: "Dungeon Explorer",
     slug: "dungeon-explorer",
     thumbnail: "/games/dominion-arena.jpeg",
@@ -599,7 +599,7 @@ export const games: Game[] = [
     updatedAt: "2026-03-01T00:00:00Z",
   },
   {
-    id: "32",
+    id: "34",
     title: "Cyber Racer",
     slug: "cyber-racer",
     thumbnail: "/games/reaction-rush.jpeg",
@@ -617,7 +617,7 @@ export const games: Game[] = [
     updatedAt: "2026-03-01T00:00:00Z",
   },
   {
-    id: "33",
+    id: "35",
     title: "Sky Fighter",
     slug: "sky-fighter",
     thumbnail: "/games/elite-reflex-arena.jpeg",
@@ -635,7 +635,7 @@ export const games: Game[] = [
     updatedAt: "2026-03-01T00:00:00Z",
   },
   {
-    id: "34",
+    id: "36",
     title: "Ancient Mystery",
     slug: "ancient-mystery",
     thumbnail: "/games/battle-iq.jpeg",
@@ -653,7 +653,7 @@ export const games: Game[] = [
     updatedAt: "2026-03-01T00:00:00Z",
   },
   {
-    id: "36",
+    id: "37",
     title: "Bubble Pop Blitz",
     slug: "bubble-pop-blitz",
     thumbnail: "/games/crystal-match.png",
@@ -671,7 +671,7 @@ export const games: Game[] = [
     updatedAt: "2026-03-05T00:00:00Z",
   },
   {
-    id: "37",
+    id: "38",
     title: "Urban Fighter",
     slug: "urban-fighter",
     thumbnail: "/games/shadow-blade.png",
@@ -689,7 +689,7 @@ export const games: Game[] = [
     updatedAt: "2026-03-05T00:00:00Z",
   },
   {
-    id: "38",
+    id: "39",
     title: "Space Invaders X",
     slug: "space-invaders-x",
     thumbnail: "/games/neon-runner.png",
@@ -707,7 +707,7 @@ export const games: Game[] = [
     updatedAt: "2026-03-05T00:00:00Z",
   },
   {
-    id: "39",
+    id: "40",
     title: "Chess Masters",
     slug: "chess-masters",
     thumbnail: "/games/galactic-commander.png",
@@ -725,7 +725,7 @@ export const games: Game[] = [
     updatedAt: "2026-03-05T00:00:00Z",
   },
   {
-    id: "40",
+    id: "41",
     title: "History Buff Quiz",
     slug: "history-buff-quiz",
     thumbnail: "/games/trivia-master.png",
@@ -743,7 +743,7 @@ export const games: Game[] = [
     updatedAt: "2026-03-05T00:00:00Z",
   },
   {
-    id: "41",
+    id: "42",
     title: "Fruit Ninja Classic",
     slug: "fruit-ninja-classic",
     thumbnail: "/games/reaction-rush.jpeg",
@@ -761,7 +761,7 @@ export const games: Game[] = [
     updatedAt: "2026-03-05T00:00:00Z",
   },
   {
-    id: "42",
+    id: "43",
     title: "Cyborg Assassin",
     slug: "cyborg-assassin",
     thumbnail: "/games/elite-reflex-arena.jpeg",
@@ -779,7 +779,7 @@ export const games: Game[] = [
     updatedAt: "2026-03-05T00:00:00Z",
   },
   {
-    id: "43",
+    id: "44",
     title: "Empire Builder",
     slug: "empire-builder",
     thumbnail: "/games/dominion-arena.jpeg",
@@ -797,7 +797,7 @@ export const games: Game[] = [
     updatedAt: "2026-03-05T00:00:00Z",
   },
   {
-    id: "44",
+    id: "45",
     title: "Logo Quiz Royale",
     slug: "logo-quiz-royale",
     thumbnail: "/games/ultimate-quiz-arena.jpeg",
@@ -815,7 +815,7 @@ export const games: Game[] = [
     updatedAt: "2026-03-05T00:00:00Z",
   },
   {
-    id: "45",
+    id: "46",
     title: "Sudoku Pro",
     slug: "sudoku-pro",
     thumbnail: "/games/word-arena.jpeg",
@@ -833,7 +833,7 @@ export const games: Game[] = [
     updatedAt: "2026-03-05T00:00:00Z",
   },
   {
-    id: "46",
+    id: "47",
     title: "Street Racer",
     slug: "street-racer",
     thumbnail: "/games/reaction-royale.jpeg",
@@ -851,7 +851,7 @@ export const games: Game[] = [
     updatedAt: "2026-03-05T00:00:00Z",
   },
   {
-    id: "47",
+    id: "48",
     title: "War Zone",
     slug: "war-zone",
     thumbnail: "/games/the-war-room.jpeg",
@@ -869,7 +869,7 @@ export const games: Game[] = [
     updatedAt: "2026-03-05T00:00:00Z",
   },
   {
-    id: "48",
+    id: "49",
     title: "Super Mario Bros Retro",
     slug: "super-mario-bros-retro",
     thumbnail: "/games/neon-runner.png",
@@ -887,7 +887,7 @@ export const games: Game[] = [
     updatedAt: "2026-03-05T00:00:00Z",
   },
   {
-    id: "49",
+    id: "50",
     title: "Mortal Combat Lite",
     slug: "mortal-combat-lite",
     thumbnail: "/games/shadow-blade.png",
