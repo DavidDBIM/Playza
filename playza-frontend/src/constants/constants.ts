@@ -14,6 +14,7 @@ import {
 export const navItems = [
   { icon: Home, label: "PlayZa", path: "/", mobile: true },
   { icon: Gamepad2, label: "Games", path: "/games", mobile: true },
+  { icon: History, label: "My Games", path: "/my-games", mobile: true },
   { icon: Medal, label: "Tournaments", path: "/tournaments" },
   {
     icon: ChartBarIncreasing,
@@ -24,8 +25,8 @@ export const navItems = [
   { icon: Gift, label: "Loyalty", path: "/loyalty" },
   { icon: UserPlus, label: "Referral", path: "/referral" },
   { icon: Wallet, label: "Wallet", path: "/wallet", mobile: true },
-  { icon: History, label: "History", path: "/history" },
   { icon: ImProfile, label: "Profile", path: "/profile", mobile: true },
+
 ];
 
 export const winners = [
