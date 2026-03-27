@@ -2,12 +2,13 @@ import { useState } from "react";
 import { MdContentCopy, MdShare, MdQrCodeScanner } from "react-icons/md";
 import InviteFriendModal from "./InviteFriendModal";
 import { useAuth } from "@/context/auth";
+import { ZASymbol } from "@/components/currency/ZASymbol";
 
 const ReferralStats = () => {
   const { user } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [copied, setCopied] = useState(false);
-  const referralLink = `https://playza.vercel.app/registration?ref=${user?.referralCode || ""}`;
+  const referralLink = `${window.location.origin}/registration?referral_code=${user?.referralCode || ""}`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(referralLink);
@@ -26,7 +27,7 @@ const ReferralStats = () => {
           <h2 className="text-2xl md:text-4xl font-black text-slate-900 dark:text-slate-100 mb-2">
             Invite your squad to the arena
           </h2>
-          <p className="text-slate-400 text-sm md:text-base mb-6 max-w-lg">
+          <p className="text-slate-400 text-sm md:text-base mb-6 max-w-lg font-bold">
             Earn exclusive items, in-game currency, and 20% of their tournament
             winnings for the first 3 months.
           </p>
@@ -81,10 +82,11 @@ const ReferralStats = () => {
           },
           {
             label: "TOTAL EARNED",
-            value: "$840",
-            trend: "+$120",
+            value: "840",
+            trend: "+120",
             trendUp: true,
-            glow: "border-primary/50 text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent",
+            glow: "border-primary/50 text-transparent bg-clip-text bg-linear-to-r from-primary to-accent",
+            isCurrency: true,
           },
         ].map((stat, i) => (
           <div
@@ -95,17 +97,20 @@ const ReferralStats = () => {
               {stat.label}
             </p>
             <div className="flex items-end gap-2">
-              <span
-                className={`text-2xl md:text-3xl font-black ${stat.label === "TOTAL EARNED" ? stat.glow : "text-slate-900 dark:text-slate-100"}`}
+              <div
+                className={`flex items-center gap-1.5 text-2xl md:text-3xl font-black ${stat.label === "TOTAL EARNED" ? stat.glow : "text-slate-900 dark:text-slate-100"}`}
               >
+                {stat.isCurrency && <ZASymbol className="text-xl md:text-2xl" />}
                 {stat.value}
-              </span>
+              </div>
               {stat.trend && (
-                <span
-                  className={`text-xs font-bold mb-1 ${stat.trendUp ? "text-green-500" : "text-red-500"}`}
+                <div
+                  className={`flex items-center gap-0.5 text-xs font-bold mb-1 ${stat.trendUp ? "text-green-500" : "text-red-500"}`}
                 >
-                  {stat.trend}
-                </span>
+                  {stat.trend.startsWith("+") ? "+ " : "- "}
+                  {stat.isCurrency && <ZASymbol className="text-[10px] scale-90" />}
+                  {stat.trend.replace("+", "").replace("-", "")}
+                </div>
               )}
             </div>
           </div>
@@ -119,17 +124,18 @@ const ReferralStats = () => {
             <p className="text-primary text-xs font-bold uppercase tracking-widest mb-1">
               NEXT MILESTONE: LEGENDARY RECRUITER
             </p>
-            <h3 className="text-slate-900 dark:text-slate-100 text-lg md:text-xl font-bold italic tracking-tight">
+            <h3 className="text-slate-900 dark:text-slate-100 text-lg md:text-xl font-bold italic tracking-tight uppercase">
               Earn "Apex Predator" Skin
             </h3>
           </div>
           <div className="text-right">
-            <p className="text-slate-500 dark:text-slate-400 text-xs mb-1">
+            <p className="text-slate-500 dark:text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1">
               Rewards Value
             </p>
-            <p className="text-slate-900 dark:text-slate-100 font-black">
-              $50.00
-            </p>
+            <div className="flex items-center gap-1.5 text-slate-900 dark:text-slate-100 font-black justify-end">
+              <ZASymbol className="text-xs scale-90" />
+              <span>50.00</span>
+            </div>
           </div>
         </div>
 
@@ -141,9 +147,9 @@ const ReferralStats = () => {
             <div className="absolute top-0 right-0 bottom-0 left-0 bg-white/20 animate-pulse"></div>
           </div>
         </div>
-        <div className="flex justify-between text-xs font-medium text-slate-400 relative z-10">
+        <div className="flex justify-between text-xs font-black uppercase tracking-widest text-slate-400 relative z-10">
           <span>15/20 Referrals Completed</span>
-          <span>5 More Needed</span>
+          <span className="text-primary">5 More Needed</span>
         </div>
       </div>
 

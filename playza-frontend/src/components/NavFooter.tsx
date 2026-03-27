@@ -63,12 +63,12 @@ const NavFooter = () => {
     getItem("Loyalty"),
     getItem("Games"),
     getItem("Referral"),
-    getItem("Leaderboard"),
+    getItem("Leaderboards"),
     user && getItem("Profile"),
   ].filter((item): item is NavItem => !!item);
 
   const moreMenuItems: NavItem[] = [
-    getItem("Leaderboard"),
+    getItem("Leaderboards"),
     getItem("Loyalty"),
     getItem("Referral"),
     getItem("Tournaments"),

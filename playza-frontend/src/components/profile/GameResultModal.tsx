@@ -1,5 +1,6 @@
 import { MdClose, MdEmojiEvents, MdPeople, MdShowChart, MdFormatListNumbered, MdOpenInNew } from "react-icons/md";
 import type { MatchHistory } from "@/data/matchHistory";
+import { ZASymbol } from "../currency/ZASymbol";
 
 type GameResultModalProps = {
   match: MatchHistory;
@@ -96,8 +97,9 @@ export const GameResultModal = ({ match, onClose }: GameResultModalProps) => {
                 <MdEmojiEvents className="text-lg" />
                 <span className="text-[10px] font-black uppercase tracking-widest">Entry Fee</span>
               </div>
-              <p className="text-2xl font-black text-slate-900 dark:text-white italic tracking-tighter">
-                ₦{match.entryFee.toLocaleString()}
+              <p className="text-2xl font-black text-slate-900 dark:text-white italic tracking-tighter flex items-center gap-1.5 transition-all">
+                <ZASymbol className="text-lg" />
+                <span>{match.entryFee.toLocaleString()}</span>
               </p>
             </div>
 
@@ -106,9 +108,19 @@ export const GameResultModal = ({ match, onClose }: GameResultModalProps) => {
                 <MdEmojiEvents className="text-lg" />
                 <span className="text-[10px] font-black uppercase tracking-widest">Earnings</span>
               </div>
-              <p className={`text-2xl font-black italic tracking-tighter ${isWin ? 'text-primary' : 'text-slate-400 dark:text-slate-600'}`}>
-                {isWin ? "₦2,500" : "₦0"}
-              </p>
+              <div className={`text-3xl font-black italic tracking-tighter flex items-center gap-2 ${isWin ? 'text-primary' : 'text-slate-400 dark:text-slate-600'}`}>
+                {isWin ? (
+                  <>
+                    <ZASymbol className="text-xl" />
+                    <span>2,500</span>
+                  </>
+                ) : (
+                   <>
+                    <ZASymbol className="text-xl grayscale opacity-50" />
+                    <span>0</span>
+                   </>
+                )}
+              </div>
             </div>
           </div>
 

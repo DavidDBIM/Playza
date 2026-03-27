@@ -1,14 +1,14 @@
 import type { Game } from "@/types/types";
 import { Users, Trophy, SwatchBook, MousePointer2 } from "lucide-react";
-import { formatNaira } from "@/lib/formatNaira";
+import { formatZA } from "@/lib/formatCurrency";
 import { Link } from "react-router";
 
 interface GameHeroProps {
   game: Game;
-  pricePool: number;
+  prizePool: number;
 }
 
-export const GameHero = ({ game, pricePool }: GameHeroProps) => {
+export const GameHero = ({ game, prizePool }: GameHeroProps) => {
   return (
     <section className="relative w-full min-h-95 md:min-h-120 lg:min-h-137.5 flex items-center overflow-hidden rounded-2xl md:rounded-3xl mb-6 md:mb-8 group border border-slate-200 dark:border-white/5 shadow-xl transition-colors duration-300">
       {/* Background Image with theme-aware overlay */}
@@ -103,8 +103,8 @@ export const GameHero = ({ game, pricePool }: GameHeroProps) => {
                   <span className="text-[7px] md:text-[9px] text-playza-green/70 font-black uppercase tracking-tight">
                     Pot
                   </span>
-                  <span className="text-xs md:text-base font-black text-playza-green font-mono tracking-tighter leading-none">
-                    {formatNaira(pricePool)}
+                  <span className="text-xl md:text-3xl font-black text-slate-900 dark:text-white italic tracking-tighter">
+                    {formatZA(prizePool)}
                   </span>
                 </div>
               </div>

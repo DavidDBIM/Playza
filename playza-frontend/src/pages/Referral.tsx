@@ -29,7 +29,7 @@ const Referral = () => {
             </h1>
             <p className="text-base md:text-xl text-slate-500 font-bold max-w-lg mx-auto leading-relaxed">
               Don't play alone. Invite your friends to Playza and earn legendary
-              PZA rewards for every active referral.
+              ZA rewards for every active referral.
             </p>
           </div>
 
@@ -61,7 +61,7 @@ const Referral = () => {
               </p>
             </div>
             <Link
-              to="/referral-leaderboard"
+              to="/leaderboard?tab=Referral"
               className="flex items-center gap-2 bg-primary/10 hover:bg-primary/20 text-primary px-6 py-3 rounded-xl border border-primary/20 transition-all font-black uppercase tracking-widest text-xs group self-start md:self-auto shadow-sm"
             >
               <MdEmojiEvents className="text-lg" />

@@ -14,6 +14,7 @@ import BadgeModal from "../components/profile/BadgeModal";
 
 import { useMe } from "../hooks/users/useMe";
 import { useAuth, type UserProfile } from "@/context/auth";
+import { ZASymbol } from "@/components/currency/ZASymbol";
 
 const Profile = () => {
   const { user, logout } = useAuth();
@@ -177,9 +178,9 @@ const Profile = () => {
             <h3 className="text-slate-900 dark:text-white font-black text-lg mb-2 relative z-10">
               Refer & Earn
             </h3>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 mb-4 relative z-10 font-bold uppercase tracking-wider">
-              Get ₦500 for every friend who joins.
-            </p>
+            <div className="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-slate-400 mb-4 relative z-10 font-bold uppercase tracking-wider">
+              Get <ZASymbol className="text-[10px] scale-90" /> 500 ZA for every friend who joins.
+            </div>
             <NavLink
               to="/referral"
               className="flex items-center gap-2 text-primary font-black uppercase tracking-widest text-xs hover:scale-105 transition-all"
@@ -230,9 +231,9 @@ const Profile = () => {
               <h3 className="text-slate-900 dark:text-white font-black text-lg mb-2 relative z-10">
                 Refer & Earn
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mb-4 relative z-10">
-                Get ₦500 for every friend who joins.
-              </p>
+              <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 mb-4 relative z-10 font-bold uppercase">
+                Get <ZASymbol className="text-[10px] scale-90" /> 500 ZA for every friend who joins.
+              </div>
               <NavLink
                 to="/referral"
                 className="inline-block px-4 py-2 bg-primary text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:brightness-110 transition-all relative z-10 shadow-lg"

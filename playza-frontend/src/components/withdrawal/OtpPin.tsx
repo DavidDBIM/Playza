@@ -1,4 +1,5 @@
 import { ShieldCheck, Receipt, Timer, Lock, ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
+import { ZASymbol } from "../currency/ZASymbol";
 
 interface OtpPinProps {
   onBack: () => void;
@@ -50,8 +51,11 @@ const OtpPin = ({ onBack, onConfirm, amount, bank, isProcessing }: OtpPinProps) 
             </div>
             <div className="space-y-3">
               <div className="flex justify-between items-center pb-2 border-b border-slate-200 dark:border-white/5">
-                <span className="text-slate-500 text-xs font-bold font-sans">Amount</span>
-                <span className="text-slate-900 dark:text-white text-lg font-black tracking-tight">₦{amount.toLocaleString()}</span>
+                <span className="text-slate-500 text-xs font-bold font-sans tracking-widest uppercase">Amount</span>
+                <div className="flex items-center gap-1.5">
+                  <ZASymbol className="text-sm scale-90" />
+                  <span className="text-slate-900 dark:text-white text-lg font-black tracking-tight">{amount.toLocaleString()}</span>
+                </div>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-slate-500 text-xs font-bold font-sans">To <span className="uppercase">{bank}</span></span>

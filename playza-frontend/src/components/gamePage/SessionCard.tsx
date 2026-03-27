@@ -1,6 +1,6 @@
 import type { Session } from "@/types/types";
 import { Play, Trophy, Users, Clock, CreditCard } from "lucide-react";
-
+import { ZASymbol } from "../currency/ZASymbol";
 
 interface SessionCardProps {
   session: Session;
@@ -57,18 +57,24 @@ export const SessionCard = ({ session, gameTitle, onJoin }: SessionCardProps) =>
               <CreditCard className="w-3 h-3 opacity-60" />
               Entry
             </p>
-            <p className="text-slate-900 dark:text-white font-black text-lg md:text-xl tracking-tighter">
-              ₦{session.entryFee}
-            </p>
+            <div className="flex items-center gap-1.5">
+              <ZASymbol className="text-sm scale-90" />
+              <p className="text-slate-900 dark:text-white font-black text-lg md:text-xl tracking-tighter leading-none">
+                {session.entryFee}
+              </p>
+            </div>
           </div>
           <div className="space-y-1">
             <p className="text-[9px] text-slate-500 uppercase font-black tracking-widest flex items-center gap-1.5">
               <Trophy className="w-3 h-3 text-playza-blue/60 fill-playza-blue/10" />
               {session.status === 'ended' ? 'Prize' : 'Pool'}
             </p>
-            <p className="text-playza-green font-black text-lg md:text-xl tracking-tighter">
-              ₦{session.prizePool}
-            </p>
+            <div className="flex items-center gap-1.5">
+              <ZASymbol className="text-sm scale-90" />
+              <p className="text-playza-green font-black text-lg md:text-xl tracking-tighter leading-none">
+                {session.prizePool}
+              </p>
+            </div>
           </div>
         </div>
 

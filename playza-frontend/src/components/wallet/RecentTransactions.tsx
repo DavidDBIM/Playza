@@ -9,7 +9,7 @@ const transactions: TransactionUI[] = [
   {
     id: "#TRX-90821",
     type: "Prize Win",
-    amount: "+₦50,000.00",
+    amount: "+ZA50,000.00",
     status: "Completed",
     reference: "VAL-TOURN-X-FINALS",
     date: "Oct 24, 2023 · 14:32",
@@ -17,7 +17,7 @@ const transactions: TransactionUI[] = [
   {
     id: "#TRX-90744",
     type: "Deposit",
-    amount: "+₦10,000.00",
+    amount: "+ZA10,000.00",
     status: "Completed",
     reference: "PAYSTACK-REF-889",
     date: "Oct 23, 2023 · 09:15",
@@ -25,7 +25,7 @@ const transactions: TransactionUI[] = [
   {
     id: "#TRX-90612",
     type: "Game Entry",
-    amount: "-₦2,500.00",
+    amount: "-ZA2,500.00",
     status: "Completed",
     reference: "ENTRY-FEE-VAL-44",
     date: "Oct 22, 2023 · 18:00",
@@ -33,7 +33,7 @@ const transactions: TransactionUI[] = [
   {
     id: "#TRX-90501",
     type: "Withdrawal",
-    amount: "-₦15,000.00",
+    amount: "-ZA15,000.00",
     status: "Pending",
     reference: "BANK-X-442291",
     date: "Oct 21, 2023 · 11:45",

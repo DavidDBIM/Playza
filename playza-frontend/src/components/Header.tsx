@@ -11,11 +11,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { useAuth } from "@/context/auth";
+import { ZASymbol } from "./currency/ZASymbol";
 
 const Header = () => {
   const { user, logout } = useAuth();
   const [open, setOpen] = useState(false);
-  const walletBalance = user?.pzaPoints ? `PZA ${user.pzaPoints}` : "PZA 0";
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
 
@@ -57,16 +57,19 @@ const Header = () => {
           ) : (
             <div className="flex items-center gap-2 md:gap-4">
               <div className="flex items-center gap-3 md:gap-4 pl-0 md:pl-4 md:border-l border-slate-300 dark:border-slate-700">
-                <div className="flex items-center gap-2 md:gap-3 bg-slate-900/5 dark:bg-white/5 px-2 py-1 md:px-4 md:py-1.5 rounded-full border border-slate-900/10 dark:border-white/10">
-                  <span className="text-xs md:text-sm font-bold text-slate-900 dark:text-white">
-                    {walletBalance}
-                  </span>
+                <div className="flex items-center gap-2 md:gap-3 bg-slate-900/10 dark:bg-white/5 px-2 py-1 md:px-4 md:py-1.5 rounded-full border border-primary/20 shadow-inner">
+                  <div className="flex items-center gap-1.5">
+                    <ZASymbol className="text-sm md:text-base hidden xs:inline" />
+                    <span className="text-xs md:text-sm font-black text-slate-900 dark:text-white">
+                      {user?.pzaPoints?.toLocaleString() || 0}
+                    </span>
+                  </div>
                   <button
                     onClick={() => navigate("?modal=deposit")}
-                    className="font-bold uppercase bg-primary hover:bg-primary/90 rounded-full flex items-center justify-center w-6 h-6 md:w-auto md:h-auto md:px-3 md:py-1"
+                    className="font-bold uppercase bg-primary hover:bg-primary/90 rounded-full flex items-center justify-center w-6 h-6 md:w-auto md:h-auto md:px-3 md:py-1 shadow-lg"
                   >
                     <Plus className="text-slate-900 dark:text-white w-4 h-4 md:hidden font-bold" />
-                    <span className="hidden md:inline text-slate-900 dark:text-white text-xs font-bold">
+                    <span className="hidden md:inline text-slate-900 dark:text-white text-[10px] font-black tracking-widest uppercase">
                       Top Up
                     </span>
                   </button>
@@ -147,7 +150,7 @@ const Header = () => {
                             Rewards Center
                           </span>
                           <span className="text-[10px] text-primary/70 font-medium">
-                            Earn PZA & Rank Up
+                            Earn ZA & Rank Up
                           </span>
                         </div>
                       </DropdownMenuItem>

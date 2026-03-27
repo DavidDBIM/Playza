@@ -44,7 +44,7 @@ const Wallet = ({ onWithdrawClick }: WalletProps) => {
       )}
 
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8">
-        <WalletBalance balance="42,500" onWithdrawClick={onWithdrawClick} />
+        <WalletBalance balance={user?.pzaPoints || 0} onWithdrawClick={onWithdrawClick} />
         <BankInfo />
       </section>
 
@@ -56,7 +56,7 @@ const Wallet = ({ onWithdrawClick }: WalletProps) => {
               <Gift size={28} />
             </div>
             <div>
-              <h3 className="font-black text-lg uppercase tracking-tight leading-none mb-1 text-on-surface">PZA Rewards Center</h3>
+              <h3 className="font-black text-lg uppercase tracking-tight leading-none mb-1 text-on-surface">ZA Rewards Center</h3>
               <p className="text-sm text-on-surface-variant font-medium">Check your points, streaks, and unlock exclusive tournament bonuses.</p>
             </div>
           </div>

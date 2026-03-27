@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Wallet, X, ArrowRight, CreditCard, Building2, CheckCircle2 } from "lucide-react";
 import { useNavigate } from "react-router";
+import { ZASymbol } from "../currency/ZASymbol";
 
 interface DepositModalProps {
   onClose: () => void;
@@ -63,19 +64,19 @@ const DepositModal = ({ onClose }: DepositModalProps) => {
           <div className="space-y-6">
             <div className="space-y-3">
               <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
-                Amount (₦)
+                Amount (ZA)
               </label>
               
               <div className="relative group">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-primary font-black text-xl md:text-2xl opacity-50 group-focus-within:opacity-100 transition-opacity">
-                  ₦
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 opacity-50 group-focus-within:opacity-100 transition-opacity scale-90">
+                  <ZASymbol className="text-xl md:text-2xl" />
                 </span>
                 <input
                   type="text"
                   inputMode="numeric"
                   value={amount}
                   onChange={(e) => handleAmountChange(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-white/5 border-2 border-slate-200 dark:border-white/5 rounded-xl py-4 pl-10 pr-4 text-xl md:text-2xl font-black text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700 outline-none focus:border-primary/50 transition-all shadow-inner"
+                  className="w-full bg-slate-50 dark:bg-white/5 border-2 border-slate-200 dark:border-white/5 rounded-xl py-4 pl-12 pr-4 text-xl md:text-2xl font-black text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700 outline-none focus:border-primary/50 transition-all shadow-inner"
                   placeholder="0"
                 />
               </div>
@@ -94,7 +95,7 @@ const DepositModal = ({ onClose }: DepositModalProps) => {
                     }`}
                   >
                     <div className={`absolute inset-0 bg-primary/10 transition-transform duration-300 -translate-x-full ${isHovering === idx ? 'translate-x-0' : ''}`}></div>
-                    <span className="relative z-10">₦{val.toLocaleString()}</span>
+                    <span className="relative z-10">ZA{val.toLocaleString()}</span>
                   </button>
                 ))}
               </div>

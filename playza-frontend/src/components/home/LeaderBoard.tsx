@@ -11,7 +11,7 @@ import { leaderboard } from "@/data/leaderboard";
 import type { GameName, LeaderboardPlayer } from "@/types/types";
 import { useState } from "react";
 import { MdLeaderboard } from "react-icons/md";
-import { formatNaira } from "../../lib/formatNaira";
+import { formatZA } from "../../lib/formatCurrency";
 
 const LeaderBoard = () => {
   const gameNames = Object.keys(leaderboard);
@@ -120,7 +120,7 @@ const LeaderBoard = () => {
                   </TableCell>
 
                   <TableCell className="px-2 sm:px-6 py-4 text-right text-sm">
-                    {formatNaira(Number(prizeWon) * 100).toLocaleString()}
+                    {formatZA(Number(prizeWon) * 100)}
                   </TableCell>
                 </TableRow>
               );

@@ -40,7 +40,7 @@ const Loyalty = () => {
               PZA <span className="text-primary">Rewards</span> Center
             </h1>
             <p className="text-base md:text-xl text-slate-500 font-bold max-w-lg mx-auto leading-relaxed">
-              Earn PZA points for every move you make. Unlock exclusive
+              Earn PZA for every move you make. Unlock exclusive
               tournaments, redeem wallet credits, and rank up your legacy.
             </p>
           </div>
@@ -62,83 +62,93 @@ const Loyalty = () => {
           </div>
         </div>
       ) : (
-        <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 glass-card rounded-xl p-8 relative overflow-hidden border border-white/5 neon-glow">
-            <div className="absolute top-0 right-0 p-8 opacity-10">
-              <MdDiamond className="text-9xl" />
-            </div>
-            <div className="relative z-10">
-              <h1 className="font-headline text-4xl md:text-5xl font-bold tracking-tight mb-2 text-slate-900 dark:text-white">
-                Loyalty & Rewards
-              </h1>
-              <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-md font-bold uppercase tracking-widest opacity-60 text-xs">
-                Earn PZA Points. Complete tasks. Unlock rewards.
-              </p>
-              <div className="flex flex-wrap items-end gap-8">
-                <div>
-                  <div className="text-[10px] uppercase tracking-widest text-primary mb-1 font-bold opacity-70">
-                    Total Balance
+        <div className="flex flex-col gap-6">
+          <div className="flex justify-end pt-4">
+            <Link
+              to="/leaderboard?tab=Loyalty"
+              className="px-4 py-2 bg-primary/10 text-primary rounded-lg font-bold uppercase text-xs hover:bg-primary/20 transition-colors"
+            >
+              Reward Leaderboard
+            </Link>
+          </div>
+          <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 glass-card rounded-xl p-8 relative overflow-hidden border border-white/5 neon-glow">
+              <div className="absolute top-0 right-0 p-8 opacity-10">
+                <MdDiamond className="text-9xl" />
+              </div>
+              <div className="relative z-10">
+                <h1 className="font-headline text-4xl md:text-5xl font-bold tracking-tight mb-2 text-slate-900 dark:text-white">
+                  Loyalty & Rewards
+                </h1>
+                <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-md font-bold uppercase tracking-widest opacity-60 text-xs">
+                  Earn PZA. Complete tasks. Unlock rewards.
+                </p>
+                <div className="flex flex-wrap items-end gap-8">
+                  <div>
+                    <div className="text-[10px] uppercase tracking-widest text-primary mb-1 font-bold opacity-70">
+                      Total Balance
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-4xl md:text-5xl font-black font-headline text-slate-900 dark:text-white">
+                        2,450
+                      </span>
+                      <span className="text-xl md:text-2xl font-bold text-primary">
+                        PZA
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-4xl md:text-5xl font-black font-headline text-slate-900 dark:text-white">
-                      2,450
-                    </span>
-                    <span className="text-xl md:text-2xl font-bold text-primary">
-                      PZA
-                    </span>
-                  </div>
-                </div>
-                <div className="flex-1 min-w-60">
-                  <div className="flex justify-between text-xs mb-2 text-slate-500">
-                    <span className="flex items-center gap-1.5 font-bold uppercase tracking-widest">
-                      Progress to{" "}
-                      <span className="text-primary font-black">GOLD</span>
-                      <button
-                        onClick={() => setIsTierModalOpen(true)}
-                        className="text-primary hover:text-primary/80 transition-colors p-0.5"
-                        title="View Tiers"
-                      >
-                        <MdInfo className="text-xs" />
-                      </button>
-                    </span>
-                    <span className="font-black text-slate-900 dark:text-white">
-                      2,450 / 5,000 PZA
-                    </span>
-                  </div>
-                  <div className="h-3 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden border border-white/5 shadow-inner">
-                    <div className="h-full bg-linear-to-r from-primary to-secondary w-[49%] relative">
-                      <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
+                  <div className="flex-1 min-w-60">
+                    <div className="flex justify-between text-xs mb-2 text-slate-500">
+                      <span className="flex items-center gap-1.5 font-bold uppercase tracking-widest">
+                        Progress to{" "}
+                        <span className="text-primary font-black">GOLD</span>
+                        <button
+                          onClick={() => setIsTierModalOpen(true)}
+                          className="text-primary hover:text-primary/80 transition-colors p-0.5"
+                          title="View Tiers"
+                        >
+                          <MdInfo className="text-xs" />
+                        </button>
+                      </span>
+                      <span className="font-black text-slate-900 dark:text-white">
+                        2,450 / 5,000 PZA
+                      </span>
+                    </div>
+                    <div className="h-3 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden border border-white/5 shadow-inner">
+                      <div className="h-full bg-linear-to-r from-primary to-secondary w-[49%] relative">
+                        <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <div className="glass-card rounded-xl p-8 flex flex-col justify-between border border-white/5">
-            <div className="flex justify-between items-start">
-              <div className="text-sm uppercase tracking-widest text-slate-500 font-bold">
-                Current Streak
-              </div>
-              <div className="bg-red-500/10 text-red-500 px-3 py-1 rounded-full text-xs font-bold border border-red-500/20">
-                3 days 🔥
-              </div>
-            </div>
-            <div className="mt-6 flex justify-between items-end">
-              <div className="space-y-1">
-                <div className="text-4xl font-black font-headline text-slate-900 dark:text-white">
-                  12
+            <div className="glass-card rounded-xl p-8 flex flex-col justify-between border border-white/5">
+              <div className="flex justify-between items-start">
+                <div className="text-sm uppercase tracking-widest text-slate-500 font-bold">
+                  Current Streak
                 </div>
-                <div className="text-xs text-slate-500 uppercase font-bold tracking-widest opacity-60">
-                  Tasks Today
+                <div className="bg-red-500/10 text-red-500 px-3 py-1 rounded-full text-xs font-bold border border-red-500/20">
+                  3 days 🔥
                 </div>
               </div>
-              <div className="w-16 h-16 rounded-full border-4 border-primary/20 flex items-center justify-center bg-primary/5">
-                <span className="text-primary font-black">65%</span>
+              <div className="mt-6 flex justify-between items-end">
+                <div className="space-y-1">
+                  <div className="text-4xl font-black font-headline text-slate-900 dark:text-white">
+                    12
+                  </div>
+                  <div className="text-xs text-slate-500 uppercase font-bold tracking-widest opacity-60">
+                    Tasks Today
+                  </div>
+                </div>
+                <div className="w-16 h-16 rounded-full border-4 border-primary/20 flex items-center justify-center bg-primary/5">
+                  <span className="text-primary font-black">65%</span>
+                </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+        </div>
       )}
 
       {/* Access Protected Sections */}
@@ -316,7 +326,7 @@ const Loyalty = () => {
                         +{quest.points}
                       </div>
                       <div className="text-[9px] font-black uppercase opacity-60 tracking-tighter">
-                        PZA Points
+                        PZA
                       </div>
                     </div>
                   </div>
@@ -368,8 +378,9 @@ const Loyalty = () => {
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <div className="font-headline font-black text-lg text-slate-900 dark:text-white uppercase tracking-tight">
-                  $10 Wallet Credit
+                <div className="font-headline font-black text-lg text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-2">
+                  <span className="text-primary">PZA</span>
+                  <span>10 Wallet Credit</span>
                 </div>
                 <div className="text-xs text-slate-500 font-bold leading-relaxed">
                   Instant credit to your Playza wallet
@@ -473,7 +484,7 @@ const Loyalty = () => {
               </h2>
               <p className="text-slate-500 font-bold text-sm leading-relaxed">
                 Unlock higher multipliers and exclusive rewards as you earn more
-                PZA points.
+                PZA.
               </p>
             </div>
 

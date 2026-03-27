@@ -1,6 +1,6 @@
 import type { Session } from "@/types/types";
 import { X, Wallet, AlertCircle } from "lucide-react";
-
+import { ZASymbol } from "../currency/ZASymbol";
 
 interface EntryConfirmationModalProps {
   session: Session | null;
@@ -53,18 +53,27 @@ export const EntryConfirmationModal = ({ session, onClose, onConfirm, userBalanc
             <div className="bg-slate-50 dark:bg-white/5 rounded-3xl p-8 border border-slate-100 dark:border-white/5 space-y-5 shadow-inner">
               <div className="flex justify-between items-center px-2">
                 <span className="text-slate-500 font-black uppercase tracking-widest text-[10px]">Entry Fee</span>
-                <span className="text-2xl font-black text-slate-900 dark:text-white italic">₦{session.entryFee}</span>
+                <div className="flex items-center gap-1.5">
+                  <ZASymbol className="text-sm scale-90" />
+                  <span className="text-2xl font-black text-slate-900 dark:text-white italic">{session.entryFee}</span>
+                </div>
               </div>
               <div className="h-px bg-slate-200 dark:bg-white/5 mx-2" />
               <div className="flex justify-between items-center px-2">
                 <span className="text-slate-500 font-black uppercase tracking-widest text-[10px]">Your Balance</span>
-                <span className="text-2xl font-black text-playza-green italic">₦{userBalance.toLocaleString()}</span>
+                <div className="flex items-center gap-1.5">
+                  <ZASymbol className="text-sm scale-90" />
+                  <span className="text-2xl font-black text-playza-green italic">{userBalance.toLocaleString()}</span>
+                </div>
               </div>
               <div className="pt-2 px-2 flex justify-between items-center border-t border-slate-200 dark:border-white/10">
                 <span className="text-primary font-black uppercase tracking-widest text-[10px]">Remaining</span>
-                <span className={`text-2xl font-black ${canAfford ? 'text-slate-900 dark:text-white' : 'text-red-500'} italic`}>
-                  ₦{remainingBalance.toLocaleString()}
-                </span>
+                <div className="flex items-center gap-1.5 transition-all">
+                  <ZASymbol className={`text-sm scale-90 ${canAfford ? '' : 'opacity-50'}`} />
+                  <span className={`text-2xl font-black ${canAfford ? 'text-slate-900 dark:text-white' : 'text-red-500'} italic`}>
+                    {remainingBalance.toLocaleString()}
+                  </span>
+                </div>
               </div>
             </div>
 

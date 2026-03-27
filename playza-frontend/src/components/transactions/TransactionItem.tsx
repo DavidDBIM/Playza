@@ -5,6 +5,7 @@ import {
   MdAccountBalance,
 } from "react-icons/md";
 import type { TransactionUI } from "@/types/types";
+import { ZASymbol } from "../currency/ZASymbol";
 
 interface TransactionItemProps extends TransactionUI {
   onClick?: () => void;
@@ -56,6 +57,7 @@ const TransactionItem = ({
 }: TransactionItemProps) => {
   const { icon: Icon, color, bg } = getIcon(type);
   const isPositive = amount.startsWith("+");
+  const displayAmount = amount.replace("+ZA", "").replace("-ZA", "").replace("ZA", "");
 
   return (
     <div
@@ -77,10 +79,10 @@ const TransactionItem = ({
           <h4 className="font-bold text-slate-900 dark:text-white text-sm truncate mb-0.5">
             {type}
           </h4>
-          <div className="flex items-center gap-2 text-[10px] text-slate-500 font-medium">
+          <div className="flex items-center gap-2 text-[10px] text-slate-500 font-bold uppercase tracking-widest opacity-70">
             <span>{date}</span>
             <span className="size-0.5 rounded-full bg-slate-700 hidden md:block"></span>
-            <span className="truncate hidden md:block">
+            <span className="truncate hidden md:block mt-0.5">
               {reference}/{id}
             </span>
           </div>
@@ -88,11 +90,13 @@ const TransactionItem = ({
       </div>
 
       <div className="flex flex-col items-end gap-1 ml-4">
-        <p
-          className={`text-sm md:text-base font-black ${isPositive ? "text-primary" : "text-slate-900 dark:text-slate-100"}`}
+        <div
+          className={`text-sm md:text-base font-black flex items-center gap-1 ${isPositive ? "text-primary italic" : "text-slate-900 dark:text-slate-100 italic"}`}
         >
-          {amount}
-        </p>
+          {isPositive ? "+" : "-"}
+          <ZASymbol className="text-xs scale-90" />
+          {displayAmount}
+        </div>
         <span
           className={`px-2 py-0.5 rounded-full ${status === "Completed" ? "bg-emerald-500/10 text-emerald-400" : "bg-amber-500/10 text-amber-400"} text-[9px] font-black uppercase tracking-widest border border-white/5`}
         >

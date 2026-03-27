@@ -1,6 +1,7 @@
 import { History, PlusCircle, TrendingUp, Target, Zap, Clock, Trophy } from "lucide-react";
 import { IoArrowForward } from "react-icons/io5";
 import { MdReplay } from "react-icons/md";
+import { ZASymbol } from "../currency/ZASymbol";
 
 const SessionPerformance = () => {
   return (
@@ -36,9 +37,12 @@ const SessionPerformance = () => {
             <div className="flex items-center gap-4">
                <div className="hidden lg:flex flex-col items-end">
                   <p className="text-[10px] text-slate-400 dark:text-slate-500 font-black uppercase tracking-widest">Estimated Prize</p>
-                  <p className="text-2xl font-black text-slate-900 dark:text-white transition-colors">₦0.00</p>
+                  <div className="flex items-center gap-1.5 transition-all">
+                    <ZASymbol className="text-sm scale-90" />
+                    <p className="text-2xl font-black text-slate-900 dark:text-white transition-colors">0.00</p>
+                  </div>
                </div>
-               <button className="group relative flex min-w-40 cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-2xl h-14 px-8 bg-primary text-slate-900 text-base font-black uppercase tracking-widest transition-all hover:scale-[1.03] active:scale-95">
+               <button className="group relative flex min-w-40 cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-2xl h-14 px-8 bg-primary text-slate-900 text-base font-black uppercase tracking-widest transition-all hover:scale-[1.03] active:scale-95 shadow-xl shadow-primary/20 glow-accent">
                   <MdReplay className="text-xl group-hover:rotate-180 transition-transform duration-500" />
                  <span className="truncate">Enter Match</span>
                </button>

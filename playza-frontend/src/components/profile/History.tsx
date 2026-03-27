@@ -12,6 +12,7 @@ import { useState } from "react";
 import { pagination } from "@/lib/pagination";
 import { GameResultModal } from "./GameResultModal";
 import type { MatchHistory } from "@/data/matchHistory";
+import { ZASymbol } from "../currency/ZASymbol";
 
 const History = () => {
   const [page, setPage] = useState(1);
@@ -136,11 +137,17 @@ const History = () => {
                 </div>
               </div>
               <div className="text-right">
-                <p
-                  className={`font-black text-sm italic ${match.result === "WIN" ? "text-primary" : "text-slate-500 dark:text-slate-400"}`}
+                <div
+                  className={`font-black text-sm italic flex items-center justify-end gap-1 ${match.result === "WIN" ? "text-primary" : "text-slate-500 dark:text-slate-400"}`}
                 >
-                  {match.result === "WIN" ? "+₦2,500" : "—"}
-                </p>
+                  {match.result === "WIN" ? (
+                    <>
+                      <span>+</span>
+                      <ZASymbol className="text-[10px]" />
+                      <span>2,500</span>
+                    </>
+                  ) : "—"}
+                </div>
                 <p className="text-slate-500 dark:text-slate-600 text-[8px] font-black uppercase tracking-[0.2em] mt-0.5">
                   #{match.leaderboardRank} Rank
                 </p>
@@ -215,11 +222,17 @@ const History = () => {
                     onClick={() => setSelectedMatch(match)}
                   >
                     <div className="flex flex-col items-end gap-1">
-                      <span
-                        className={`text-lg font-black tracking-tighter ${match.result === "WIN" ? "text-primary font-black scale-105" : "text-slate-400 dark:text-slate-600 font-bold"}`}
+                      <div
+                        className={`text-lg font-black tracking-tighter flex items-center gap-1.5 ${match.result === "WIN" ? "text-primary italic scale-105" : "text-slate-400 dark:text-slate-600 font-bold"}`}
                       >
-                        {match.result === "WIN" ? "+₦2,500" : "—"}
-                      </span>
+                        {match.result === "WIN" ? (
+                          <>
+                            <span>+</span>
+                            <ZASymbol className="text-xs" />
+                            <span>2,500</span>
+                          </>
+                        ) : "—"}
+                      </div>
                       <span
                         className={`px-3 py-1 text-[9px] font-black rounded-lg border uppercase tracking-widest ${
                           match.result === "WIN"

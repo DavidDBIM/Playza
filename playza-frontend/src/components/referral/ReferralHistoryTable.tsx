@@ -8,6 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "../../components/ui/table";
+import { ZASymbol } from "@/components/currency/ZASymbol";
 
 const MOCK_REFERRALS = [
   {
@@ -16,7 +17,7 @@ const MOCK_REFERRALS = [
     avatar: "N",
     date: "Oct 12, 2023",
     status: "Completed",
-    reward: "₦5,000",
+    reward: "5,000",
   },
   {
     id: 2,
@@ -32,7 +33,7 @@ const MOCK_REFERRALS = [
     avatar: "P",
     date: "Oct 08, 2023",
     status: "Completed",
-    reward: "₦5,000",
+    reward: "5,000",
   },
   {
     id: 4,
@@ -40,7 +41,7 @@ const MOCK_REFERRALS = [
     avatar: "D",
     date: "Oct 05, 2023",
     status: "Completed",
-    reward: "₦5,000",
+    reward: "5,000",
   },
   {
     id: 5,
@@ -71,7 +72,7 @@ const ReferralHistoryTable = () => {
           <h2 className="text-xl font-display font-black text-slate-900 dark:text-slate-100 uppercase italic tracking-tight">
             Referral History
           </h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm">
+          <p className="text-slate-500 dark:text-slate-400 text-sm font-bold uppercase tracking-widest opacity-70">
             Track and manage your squad's activity.
           </p>
         </div>
@@ -112,17 +113,17 @@ const ReferralHistoryTable = () => {
       <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 overflow-hidden shadow-sm">
         <Table className="w-full">
           <TableHeader>
-            <TableRow className="bg-slate-50/50 dark:bg-slate-800/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 border-slate-200 dark:border-slate-800">
-              <TableHead className="font-bold text-xs uppercase tracking-widest text-slate-500 p-4">
+            <TableRow className="bg-slate-50/50 dark:bg-slate-800/50 hover:bg-transparent border-slate-200 dark:border-slate-800">
+              <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500 p-4">
                 Player
               </TableHead>
-              <TableHead className="font-bold text-xs uppercase tracking-widest text-slate-500 hidden sm:table-cell">
+              <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500 hidden sm:table-cell">
                 Date
               </TableHead>
-              <TableHead className="font-bold text-xs uppercase tracking-widest text-slate-500">
+              <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500">
                 Status
               </TableHead>
-              <TableHead className="font-bold text-xs uppercase tracking-widest text-slate-500 text-right p-4">
+              <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500 text-right p-4">
                 Reward
               </TableHead>
             </TableRow>
@@ -143,7 +144,7 @@ const ReferralHistoryTable = () => {
                     </span>
                   </div>
                 </TableCell>
-                <TableCell className="text-xs text-slate-500 hidden sm:table-cell">
+                <TableCell className="text-xs text-slate-500 hidden sm:table-cell font-bold uppercase">
                   {referral.date}
                 </TableCell>
                 <TableCell>
@@ -172,11 +173,14 @@ const ReferralHistoryTable = () => {
                   </div>
                 </TableCell>
                 <TableCell className="text-right p-4">
-                  <span
-                    className={`font-black text-sm tracking-tighter ${referral.reward !== "--" ? "text-primary" : "text-slate-400"}`}
-                  >
-                    {referral.reward}
-                  </span>
+                  <div className="flex items-center gap-1 justify-end">
+                    {referral.reward !== "--" && <ZASymbol className="text-xs scale-90" />}
+                    <span
+                      className={`font-black text-sm tracking-tighter italic ${referral.reward !== "--" ? "text-primary" : "text-slate-400"}`}
+                    >
+                      {referral.reward}
+                    </span>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}

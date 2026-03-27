@@ -6,12 +6,13 @@ import TransactionDetailModal from "@/components/transactions/TransactionDetailM
 import type { TransactionUI } from "@/types/types";
 import { transactionsData } from "@/data/transactions";
 
-const ITEMS_PER_PAGE = 8;
+const ITEMS_PER_PAGE = 15;
 
 const Transactions = () => {
   const [selectedTxn, setSelectedTxn] = useState<TransactionUI | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("All");
+  const [searchQuery, setSearchQuery] = useState("");
   const [itemsToShow, setItemsToShow] = useState(ITEMS_PER_PAGE);
   const [isLoading, setIsLoading] = useState(false);
   
@@ -24,9 +25,15 @@ const Transactions = () => {
   };
 
   const filteredTransactions = useMemo(() => {
-    if (activeTab === "All") return transactionsData;
-    return transactionsData.filter(txn => txn.typeKey === activeTab);
-  }, [activeTab]);
+    let filtered = transactionsData;
+    if (activeTab !== "All") {
+      filtered = filtered.filter(txn => txn.typeKey === activeTab);
+    }
+    if (searchQuery) {
+      filtered = filtered.filter(txn => txn.id.toLowerCase().includes(searchQuery.toLowerCase()));
+    }
+    return filtered;
+  }, [activeTab, searchQuery]);
 
   const currentItems = useMemo(() => {
     return filteredTransactions.slice(0, itemsToShow);
@@ -87,9 +94,9 @@ const Transactions = () => {
   }, [itemsToShow]);
 
   return (
-    <main className="flex-1 max-w-7xl mx-auto w-full overflow-hidden ">
+    <main className="flex-1 mx-auto w-full overflow-x-hidden relative">
       {/* Top Observer Target */}
-      <div ref={observerTop} className="h-1 w-full absolute top-0" />
+      <div ref={observerTop} className="h-1 w-full absolute top-0 bg-transparent" />
 
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10 mt-4">
         <div className="space-y-2">
@@ -107,57 +114,71 @@ const Transactions = () => {
       </div>
 
       <div className="flex flex-col lg:flex-row gap-4 mb-8 ">
-         <div className="flex-1 flex gap-2 overflow-x-auto pb-2 lg:pb-0 scrollbar-hide">
-            {["All", "Deposits", "Withdrawals", "Entries", "Wins"].map((filter) => (
-              <button 
+        <div className="flex-1 flex gap-2 overflow-x-auto pb-2 lg:pb-0 scrollbar-hide">
+          {["All", "Deposits", "Withdrawals", "Entries", "Wins"].map(
+            (filter) => (
+              <button
                 key={filter}
                 onClick={() => {
                   setActiveTab(filter);
                   setItemsToShow(ITEMS_PER_PAGE);
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                  window.scrollTo({ top: 0, behavior: "smooth" });
                 }}
                 className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all border shrink-0 ${
-                  activeTab === filter 
-                  ? "bg-primary text-background-dark border-primary shadow-lg shadow-primary/20" 
-                  : "bg-white/5 text-slate-500 border-white/5 hover:border-primary/30 hover:text-primary"
+                  activeTab === filter
+                    ? "bg-primary text-background-dark border-primary shadow-lg shadow-primary/20"
+                    : "bg-white/5 text-slate-500 border-white/5 hover:border-primary/30 hover:text-primary"
                 }`}
               >
                 {filter}
               </button>
-            ))}
-         </div>
-         <div className="flex gap-2">
-            <div className="relative flex-1 lg:w-64">
-                <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-lg" />
-                <input 
-                  type="text" 
-                  placeholder="Search transactions..." 
-                  className="w-full bg-white/5 border border-white/5 rounded-xl py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:border-primary/50 transition-all text-white"
-                />
-            </div>
-            <button className="p-2.5 bg-white/5 border border-white/5 rounded-xl text-slate-500 hover:text-primary transition-all">
-                <MdFilterList className="text-xl" />
-            </button>
-         </div>
+            ),
+          )}
+        </div>
+        <div className="flex gap-2">
+          <div className="relative flex-1 lg:w-64">
+            <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-lg" />
+            <input
+              type="text"
+              placeholder="Search by ID..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-white/5 border border-white/5 rounded-xl py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:border-primary/50 transition-all text-white"
+            />
+          </div>
+          <button className="p-2.5 bg-white/5 border border-white/5 rounded-xl text-slate-500 hover:text-primary transition-all">
+            <MdFilterList className="text-xl" />
+          </button>
+        </div>
       </div>
 
       <div className="glass-card rounded-2xl overflow-hidden mb-10 border border-white/5 shadow-2xl">
         <div className="bg-white/5 px-2 py-4 border-b border-white/5 flex items-center justify-between">
-           <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Transaction Details</span>
-           <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Amount & Status</span>
+          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+            Transaction Details
+          </span>
+          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+            Amount & Status
+          </span>
         </div>
         <div className="flex flex-col">
           {currentItems.map((txn) => (
-            <TransactionItem key={txn.id} {...txn} onClick={() => handleOpen(txn)} />
+            <TransactionItem
+              key={txn.id}
+              {...txn}
+              onClick={() => handleOpen(txn)}
+            />
           ))}
-          
+
           {/* Bottom Observer Target */}
           <div ref={observerBottom} className="h-20 w-full" />
-          
+
           {isLoading && (
             <div className="flex flex-col items-center justify-center p-8 text-slate-500 gap-3">
               <Loader2 className="animate-spin text-primary" size={32} />
-              <p className="text-xs font-bold uppercase tracking-widest animate-pulse">Loading more transactions...</p>
+              <p className="text-xs font-bold uppercase tracking-widest animate-pulse">
+                Loading more transactions...
+              </p>
             </div>
           )}
 
@@ -171,16 +192,18 @@ const Transactions = () => {
 
           {currentItems.length === 0 && (
             <div className="p-20 text-center">
-              <p className="text-slate-500 font-bold">No transactions found for this category.</p>
+              <p className="text-slate-500 font-bold">
+                No transactions found for this category.
+              </p>
             </div>
           )}
         </div>
       </div>
 
-      <TransactionDetailModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        transaction={selectedTxn} 
+      <TransactionDetailModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        transaction={selectedTxn}
       />
     </main>
   );

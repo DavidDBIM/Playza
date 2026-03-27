@@ -12,6 +12,7 @@ import {
   MdTrendingUp,
   MdVerified,
 } from "react-icons/md";
+import { ZASymbol } from "@/components/currency/ZASymbol";
 
 const Overview = () => {
   return (
@@ -180,7 +181,7 @@ const Overview = () => {
                 game: "Temple Run",
                 type: "Tournament #203",
                 time: "12 Minutes Ago",
-                amount: "+₦2,500",
+                amount: "2,500",
                 result: "Win",
                 color: "playza-green",
               },
@@ -188,7 +189,7 @@ const Overview = () => {
                 game: "Candy Crush",
                 type: "Challenge Match",
                 time: "2 Hours Ago",
-                amount: "-₦500",
+                amount: "-500",
                 result: "Loss",
                 color: "playza-red",
               },
@@ -196,7 +197,7 @@ const Overview = () => {
                 game: "Subway Surfers",
                 type: "Sprint Mode",
                 time: "Yesterday",
-                amount: "+₦1,200",
+                amount: "1,200",
                 result: "Win",
                 color: "playza-green",
               },
@@ -228,11 +229,13 @@ const Overview = () => {
                   </div>
                 </div>
                 <div className="text-right">
-                  <p
-                    className={`text-${match.result === "Win" ? "playza-green" : "slate-500"} font-black text-base group-hover:scale-105 transition-transform`}
+                  <div
+                    className={`flex items-center gap-1 justify-end text-${match.result === "Win" ? "playza-green" : "slate-500"} font-black text-base group-hover:scale-105 transition-transform`}
                   >
-                    {match.amount}
-                  </p>
+                    {match.amount.startsWith("-") ? "- " : "+ "}
+                    <ZASymbol className="text-sm scale-90" />
+                    {match.amount.replace("-", "").replace("+", "")}
+                  </div>
                   <p className="text-slate-500 text-[9px] font-bold uppercase tracking-widest opacity-60">
                     {match.result}
                   </p>
