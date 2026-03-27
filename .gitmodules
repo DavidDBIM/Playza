@@ -1,0 +1,3 @@
+[submodule "playza-frontend/public/gameLib"]
+	path = playza-frontend/public/gameLib
+	url = https://github.com/Guseltony/playza-games.git
