@@ -58,7 +58,7 @@ const H2HLobby = ({ onCreate, onJoin, loading }: H2HLobbyProps) => {
       {/* Bento Layout Grid */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6 pb-20">
         {/* Quick Match Card */}
-        <section className="md:col-span-8 bg-card/40 backdrop-blur-xl rounded-[2.5rem] p-8 md:p-10 border border-white/5 relative overflow-hidden flex flex-col justify-between shadow-2xl group">
+        <section className="md:col-span-8 bg-card/40 backdrop-blur-xl rounded-xl p-8 md:p-10 border border-white/5 relative overflow-hidden flex flex-col justify-between shadow-2xl group">
           <div className="absolute top-0 right-0 w-96 h-96 bg-primary/10 rounded-full blur-[120px] -mr-48 -mt-48 transition-all group-hover:bg-primary/20 duration-1000"></div>
           
           <div className="relative z-10">
