@@ -27,7 +27,7 @@ const ReferralStats = () => {
           <h2 className="text-2xl md:text-4xl font-black text-slate-900 dark:text-slate-100 mb-2">
             Invite your squad to the arena
           </h2>
-          <p className="text-slate-400 text-sm md:text-xs md:text-base mb-6 max-w-lg font-bold">
+          <p className="text-slate-400 text-sm md:text-xs mb-6 max-w-lg font-bold">
             Earn exclusive items, in-game currency, and 20% of their tournament
             winnings for the first 3 months.
           </p>
