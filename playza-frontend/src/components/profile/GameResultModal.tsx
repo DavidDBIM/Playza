@@ -53,6 +53,7 @@ export const GameResultModal = ({ match, onClose }: GameResultModalProps) => {
             <img 
               src={match.banner} 
               className="size-20 rounded-xl object-cover border-2 border-slate-100 dark:border-white/10 shadow-xl"
+              alt={match.game}
             />
             <div>
               <h3 className="text-lg md:text-2xl font-black text-slate-900 dark:text-white italic leading-tight">{match.game}</h3>
@@ -67,7 +68,7 @@ export const GameResultModal = ({ match, onClose }: GameResultModalProps) => {
                 <MdShowChart className="text-sm md:text-lg" />
                 <span className="text-[10px] font-black uppercase tracking-widest">Score</span>
               </div>
-              <p className="text-xs md:text-base text-lg md:text-2xl font-black text-slate-900 dark:text-white italic tracking-tighter">
+              <p className="text-xs md:text-base font-black text-slate-900 dark:text-white italic tracking-tighter">
                 {match.score.toLocaleString()} <span className="text-[10px] text-slate-500 not-italic">PTS</span>
               </p>
             </div>
@@ -77,7 +78,7 @@ export const GameResultModal = ({ match, onClose }: GameResultModalProps) => {
                 <MdFormatListNumbered className="text-sm md:text-lg" />
                 <span className="text-[10px] font-black uppercase tracking-widest">Final Rank</span>
               </div>
-              <p className="text-xs md:text-base text-lg md:text-2xl font-black text-slate-900 dark:text-white italic tracking-tighter">
+              <p className="text-xs md:text-base font-black text-slate-900 dark:text-white italic tracking-tighter">
                 #{match.leaderboardRank}
               </p>
             </div>
@@ -87,7 +88,7 @@ export const GameResultModal = ({ match, onClose }: GameResultModalProps) => {
                 <MdPeople className="text-sm md:text-lg" />
                 <span className="text-[10px] font-black uppercase tracking-widest">Participants</span>
               </div>
-              <p className="text-xs md:text-base text-lg md:text-2xl font-black text-slate-900 dark:text-white italic tracking-tighter">
+              <p className="text-xs md:text-base font-black text-slate-900 dark:text-white italic tracking-tighter">
                 {match.participants || 12}
               </p>
             </div>
@@ -97,7 +98,7 @@ export const GameResultModal = ({ match, onClose }: GameResultModalProps) => {
                 <MdEmojiEvents className="text-sm md:text-lg" />
                 <span className="text-[10px] font-black uppercase tracking-widest">Entry Fee</span>
               </div>
-              <p className="text-xs md:text-base text-lg md:text-2xl font-black text-slate-900 dark:text-white italic tracking-tighter flex items-center gap-1.5 transition-all">
+              <p className="text-xs md:text-base font-black text-slate-900 dark:text-white italic tracking-tighter flex items-center gap-1.5 transition-all">
                 <ZASymbol className="text-sm md:text-lg" />
                 <span>{match.entryFee.toLocaleString()}</span>
               </p>

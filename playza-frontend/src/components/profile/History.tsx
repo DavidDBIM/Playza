@@ -192,6 +192,7 @@ const History = () => {
                         <img
                           src={match.banner}
                           className="size-12 rounded-2xl object-cover border border-slate-200 dark:border-white/10 group-hover:scale-110 transition-transform duration-500"
+                          alt={match.game}
                         />
                         <div
                           className={`absolute -bottom-1 -right-1 size-5 rounded-lg flex items-center justify-center border border-background-dark text-[10px] shadow-lg ${

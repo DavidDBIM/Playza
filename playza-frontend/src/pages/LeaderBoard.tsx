@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { MdLeaderboard, MdLogin, MdSportsEsports, MdGroupAdd, MdMilitaryTech } from "react-icons/md";
-// import Search from "@/components/Search";
 import { useAuth } from "@/context/auth";
 import { Button } from "@/components/ui/button";
 import { Link, useSearchParams } from "react-router";

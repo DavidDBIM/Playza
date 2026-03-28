@@ -29,7 +29,7 @@ export const CompleteProfileModal = ({ onClose, onSuccess }: CompleteProfileModa
 
   return (
     <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/80 backdrop-blur-md p-2 md:p-4 animate-in fade-in duration-300">
-      <div className="relative w-full max-w-md glass-card rounded-xl shadow-2xl border border-white/10 bg-slate-900 overflow-hidden animate-in zoom-in-95 duration-300">
+      <div className="relative w-full max-w-md glass-card rounded-xl shadow-2xl border border-white/10 overflow-hidden animate-in zoom-in-95 duration-300">
         <div className="absolute -top-20 -right-20 w-48 h-48 bg-primary/10 blur-[80px] rounded-full"></div>
 
         <button
@@ -44,10 +44,10 @@ export const CompleteProfileModal = ({ onClose, onSuccess }: CompleteProfileModa
             <ShieldCheck className="text-primary" size={32} />
           </div>
 
-          <h2 className="text-lg md:text-2xl font-black text-white italic tracking-tight mb-2 uppercase">
+          <h2 className="text-lg md:text-2xl font-black italic tracking-tight mb-2 uppercase">
             Complete Profile
           </h2>
-          <p className="text-slate-400 text-xs md:text-sm mb-8">
+          <p className="text-slate-600 text-xs md:text-sm mb-8">
             To withdraw funds, you need to provide your real name for
             verification. This must match your bank account.
           </p>

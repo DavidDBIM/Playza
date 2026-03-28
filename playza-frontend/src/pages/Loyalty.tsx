@@ -7,9 +7,6 @@ import {
   MdStar,
   MdMilitaryTech,
   MdLogin,
-  // MdGroupAdd,
-  // MdEmojiEvents,
-  // MdArrowForward,
   MdAccountBalanceWallet,
   MdConfirmationNumber,
   MdLocalMall,
@@ -36,10 +33,10 @@ const Loyalty = () => {
             <div className="size-24 bg-primary/20 rounded-xl flex items-center justify-center mx-auto mb-8 border border-primary/30 shadow-inner group">
               <MdStars className="text-3xl md:text-5xl text-primary animate-pulse" />
             </div>
-            <h1 className="text-2xl md:text-4xl md:text-7xl font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-none italic">
+            <h1 className="text-2xl md:text-4xl font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-none italic">
               PZA <span className="text-primary">Rewards</span> Center
             </h1>
-            <p className="text-xs md:text-base md:text-xl text-slate-500 font-bold max-w-lg mx-auto leading-relaxed">
+            <p className="text-xs md:text-base text-slate-500 font-bold max-w-lg mx-auto leading-relaxed">
               Earn PZA for every move you make. Unlock exclusive
               tournaments, redeem wallet credits, and rank up your legacy.
             </p>

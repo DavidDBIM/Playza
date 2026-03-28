@@ -139,7 +139,7 @@ export const AddPaymentMethodModal = ({
             <div className="size-16 rounded-full bg-playza-green/20 flex items-center justify-center text-playza-green text-2xl md:text-4xl animate-in zoom-in duration-300 shadow-lg shadow-playza-green/20">
               <MdCheckCircle />
             </div>
-            <p className="text-slate-900 dark:text-white font-black uppercase tracking-tight text-xs md:text-base md:text-xl italic">
+            <p className="text-slate-900 dark:text-white font-black uppercase tracking-tight text-xs md:text-base italic">
               Account Linked!
             </p>
             <p className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-widest">

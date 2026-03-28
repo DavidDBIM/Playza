@@ -30,7 +30,6 @@ const DepositModal = ({ onClose }: DepositModalProps) => {
 
   const handleContinue = () => {
     onClose();
-    // Use setTimeout to ensure closing animation/state works smoothly before full redirect
     setTimeout(() => {
       navigate(`/wallet/deposit?amount=${amount}&method=${paymentMethod}`);
     }, 50);
@@ -76,7 +75,7 @@ const DepositModal = ({ onClose }: DepositModalProps) => {
                   inputMode="numeric"
                   value={amount}
                   onChange={(e) => handleAmountChange(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-white/5 border-2 border-slate-200 dark:border-white/5 rounded-xl py-2 md:py-4 pl-2 md:pl-12 pr-2 md:pr-4 text-xl md:text-2xl font-black text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700 outline-none focus:border-primary/50 transition-all shadow-inner"
+                  className="w-full bg-slate-50 dark:bg-white/5 border-2 border-slate-200 dark:border-white/5 rounded-xl py-2 md:py-4 pl-12 pr-2 md:pr-4 text-xl md:text-2xl font-black text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700 outline-none focus:border-primary/50 transition-all shadow-inner"
                   placeholder="0"
                 />
               </div>

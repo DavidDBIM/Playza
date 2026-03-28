@@ -22,15 +22,12 @@ const Registration = () => {
       
       case "login":
         return <LogIn onClick={setPage} />;
-      // break;
 
       case "forgot":
         return <ForgotPassword onClick={setPage} />;
-      // break;
 
       case "newpw":
         return <NewPassword onClick={setPage} />;
-      // break;
 
       default:
         break;

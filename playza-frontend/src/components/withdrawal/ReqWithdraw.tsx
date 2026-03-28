@@ -19,7 +19,7 @@ const ReqWithdraw = ({ onClick, status, amount, bank }: ReqWithdrawProps) => {
       <h1 className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white mb-2 relative z-10 tracking-tight text-center md:text-left">
         Wallet <span className="bg-clip-text text-transparent bg-linear-to-r from-yellow-400 via-amber-200 to-yellow-600">Withdrawal</span>
       </h1>
-      <p className="text-slate-500 font-medium mb-12 relative z-10 text-center md:text-left text-sm md:text-xs md:text-base">Confirm destination and process your payout.</p>
+      <p className="text-slate-500 font-medium mb-12 relative z-10 text-center md:text-left text-xs md:text-sm">Confirm destination and process your payout.</p>
 
       <div className="space-y-8 relative z-10">
         <div className="bg-slate-50 dark:bg-white/5 rounded-2xl px-2 py-2 md:py-6 md:p-6 border border-slate-200 dark:border-white/5">

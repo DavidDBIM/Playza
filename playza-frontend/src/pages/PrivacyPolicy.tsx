@@ -23,10 +23,10 @@ const PrivacyPolicy = () => {
                 <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent/10 blur-[100px] rounded-full -ml-32 -mb-32 pointer-events-none" />
 
             <section className="relative z-10">
-                <p className="text-sm md:text-xs md:text-base leading-relaxed mb-4 md:mb-6">
+                <p className="text-xs md:text-sm leading-relaxed mb-4 md:mb-6">
                     At <span className="text-primary font-bold">PLAYZA</span>, we value your privacy and are committed to protecting your personal data. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our platform or participate in our gaming services.
                 </p>
-                <p className="text-sm md:text-xs md:text-base leading-relaxed">
+                <p className="text-xs md:text-sm leading-relaxed">
                     By using PLAYZA, you consent to the data practices described in this policy.
                 </p>
             </section>

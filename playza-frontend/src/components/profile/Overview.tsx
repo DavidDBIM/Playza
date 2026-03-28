@@ -29,7 +29,7 @@ const Overview = () => {
             <p className="text-slate-500 dark:text-slate-400 text-[10px] font-black uppercase tracking-widest group-hover:text-primary transition-colors">
               Total Games
             </p>
-            <p className="text-xs md:text-base text-slate-900 dark:text-white text-lg md:text-xl xl:text-3xl font-black">
+            <p className="text-xs md:text-base text-slate-900 dark:text-white  xl:text-3xl font-black">
               124
             </p>
             <div className="mt-2 text-playza-green text-[10px] flex items-center gap-1 font-black">
@@ -40,7 +40,7 @@ const Overview = () => {
             <p className="text-slate-500 dark:text-slate-400 text-[10px] font-black uppercase tracking-widest group-hover:text-primary transition-colors">
               Wins
             </p>
-            <p className="text-xs md:text-base text-slate-900 dark:text-white text-lg md:text-xl xl:text-3xl font-black">
+            <p className="text-xs md:text-base text-slate-900 dark:text-white  xl:text-3xl font-black">
               52
             </p>
             <div className="mt-2 text-playza-green text-[10px] flex items-center gap-1 font-black">
@@ -51,7 +51,7 @@ const Overview = () => {
             <p className="text-slate-500 dark:text-slate-400 text-[10px] font-black uppercase tracking-widest group-hover:text-primary transition-colors">
               Win Rate
             </p>
-            <p className="text-xs md:text-base text-slate-900 dark:text-white text-lg md:text-xl xl:text-3xl font-black">
+            <p className="text-xs md:text-base text-slate-900 dark:text-white  xl:text-3xl font-black">
               41%
             </p>
             <div className="mt-2 text-playza-green text-[10px] flex items-center gap-1 font-black">
@@ -62,7 +62,7 @@ const Overview = () => {
             <p className="text-slate-500 dark:text-slate-400 text-[10px] font-black uppercase tracking-widest group-hover:text-primary transition-colors">
               Highest Score
             </p>
-            <p className="text-xs md:text-base text-slate-900 dark:text-white text-lg md:text-xl xl:text-3xl font-black">
+            <p className="text-xs md:text-base text-slate-900 dark:text-white  xl:text-3xl font-black">
               14,250
             </p>
             <div className="mt-2 text-playza-green text-[10px] flex items-center gap-1 font-black">
@@ -78,7 +78,7 @@ const Overview = () => {
               <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">
                 Gaming Hours
               </p>
-              <p className="text-xs md:text-base text-slate-900 dark:text-white text-lg md:text-2xl font-black">
+              <p className="text-xs md:text-base text-slate-900 dark:text-white font-black">
                 342h
               </p>
             </div>
@@ -91,7 +91,7 @@ const Overview = () => {
               <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">
                 Tickets Won
               </p>
-              <p className="text-xs md:text-base text-slate-900 dark:text-white text-lg md:text-2xl font-black">
+              <p className="text-xs md:text-base text-slate-900 dark:text-white font-black">
                 12,450
               </p>
             </div>
@@ -258,7 +258,7 @@ const Overview = () => {
             <h3 className="text-slate-500 dark:text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mb-2">
               Active Win Streak
             </h3>
-            <p className="text-xs md:text-base text-slate-900 dark:text-white text-3xl md:text-5xl font-black mb-1 animate-in slide-in-from-bottom duration-500">
+            <p className="text-xs md:text-base text-slate-900 dark:text-white font-black mb-1 animate-in slide-in-from-bottom duration-500">
               5
             </p>
             <p className="text-primary text-[10px] font-black uppercase tracking-widest mt-4">
