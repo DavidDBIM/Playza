@@ -104,7 +104,7 @@ const SendNoti: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
           {/* Audience Targeting */}
           <div className="glass-card rounded-[2rem] p-8 border border-slate-200 dark:border-white/5 bg-white/30 dark:bg-white/5 shadow-xl">
-            <h3 className="text-slate-900 dark:text-white font-black text-xl mb-8 uppercase tracking-widest text-xs">Audience Targeting</h3>
+            <h3 className="text-slate-900 dark:text-white font-black  mb-8 uppercase tracking-widest text-xs">Audience Targeting</h3>
             <div className="grid grid-cols-2 gap-4">
               {[
                 { label: 'Active Players', sub: '12,450 Users', icon: MdStars, color: 'text-emerald-500' },
@@ -128,7 +128,7 @@ const SendNoti: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
           {/* Delivery Timing */}
           <div className="glass-card rounded-[2rem] p-8 border border-slate-200 dark:border-white/5 bg-white/30 dark:bg-white/5 shadow-xl">
-            <h3 className="text-slate-900 dark:text-white font-black text-xl mb-8 uppercase tracking-widest text-xs">Delivery Schedule</h3>
+            <h3 className="text-slate-900 dark:text-white font-black  mb-8 uppercase tracking-widest text-xs">Delivery Schedule</h3>
             <div className="grid grid-cols-2 gap-4">
               <label className="flex items-center gap-4 p-5 rounded-2xl border-2 border-primary bg-primary/5 cursor-pointer shadow-lg shadow-primary/5 group">
                 <div className="w-5 h-5 rounded-full border-4 border-primary bg-white"></div>

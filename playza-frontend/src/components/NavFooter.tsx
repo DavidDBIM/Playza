@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from "react";
 import { navItems } from "@/constants/constants";
 import { NavLink, useLocation } from "react-router";
 import { MoreHorizontal, X } from "lucide-react";
-import { useAuth } from "@/context/auth";
 
 interface NavItem {
   label: string;
@@ -13,7 +12,6 @@ interface NavItem {
 
 const NavFooter = () => {
   const { pathname } = useLocation();
-  const { user } = useAuth();
   const [isMoreOpen, setIsMoreOpen] = useState(false);
   const moreMenuRef = useRef<HTMLDivElement>(null);
 
@@ -76,7 +74,7 @@ const NavFooter = () => {
 
   // Profile and other secondary links go here
   const moreMenuItems: NavItem[] = [
-      user && getItem("Profile"),
+      getItem("Profile"),
       getItem("Tournaments"),
       getItem("H2H Battles"), // Moved here
       getItem("Loyalty"),
