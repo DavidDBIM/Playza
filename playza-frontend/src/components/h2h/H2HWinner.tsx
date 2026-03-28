@@ -1,6 +1,8 @@
 import { NavLink } from 'react-router';
 import type { ChessRoom } from '@/types/chess';
 import type { UserProfile } from '@/context/auth';
+import { Medal } from 'lucide-react';
+import { ZASymbol } from '@/components/currency/ZASymbol';
 
 interface H2HWinnerProps {
   room: ChessRoom;
@@ -26,7 +28,7 @@ const H2HWinner = ({ room, user }: H2HWinnerProps) => {
         <div className="relative flex flex-col items-center">
             {isWinner && (
                 <div className="absolute -top-12 animate-bounce">
-                    <span className="material-symbols-outlined text-secondary text-8xl drop-shadow-[0_0_20px_rgba(var(--secondary),0.6)]" style={{ fontVariationSettings: "'FILL' 1" }}>military_tech</span>
+                    <Medal className="text-secondary w-24 h-24 drop-shadow-[0_0_20px_rgba(var(--secondary),0.6)]" />
                 </div>
             )}
             <div className={`w-64 h-64 rounded-full p-2 animate-[spin_10s_linear_infinite] shadow-2xl ${isWinner ? 'bg-linear-to-br from-primary to-accent shadow-primary/40' : 'bg-linear-to-br from-slate-700 to-slate-900 shadow-black/40'}`}>
@@ -48,7 +50,7 @@ const H2HWinner = ({ room, user }: H2HWinnerProps) => {
             
             <p className="text-[10px] font-black uppercase tracking-[0.5em] text-muted-foreground italic mb-6">Match Result</p>
             <div className={`font-headline text-8xl font-black italic tracking-tighter leading-none mb-8 drop-shadow-2xl ${isWinner ? 'text-secondary' : 'text-foreground'}`}>
-              {isWinner ? `+${winningAmount.toFixed(0)}` : `-${room.stake}`} <span className="text-lg md:text-2xl not-italic font-sans opacity-50 uppercase tracking-widest">ZA</span>
+              {isWinner ? `+${winningAmount.toFixed(0)}` : `-${room.stake}`} <span className="text-lg md:text-2xl not-italic font-sans opacity-50 uppercase tracking-widest"><ZASymbol className="inline-block scale-125 ml-2" /></span>
             </div>
             
             <div className="h-px bg-white/10 w-48 mx-auto mb-10"></div>

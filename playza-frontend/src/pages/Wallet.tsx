@@ -5,6 +5,7 @@ import { useAuth } from "@/context/auth";
 import { AlertCircle, ArrowRight, Gift } from "lucide-react";
 import { Link, useNavigate } from "react-router";
 import { useEffect } from "react";
+import { ZASymbol } from "@/components/currency/ZASymbol";
 
 interface WalletProps {
   onWithdrawClick: () => void;
@@ -56,11 +57,11 @@ const Wallet = ({ onWithdrawClick }: WalletProps) => {
               <Gift size={28} />
             </div>
             <div>
-              <h3 className="font-black text-sm md:text-lg uppercase tracking-tight leading-none mb-1 text-on-surface">ZA Rewards Center</h3>
+              <h3 className="font-black text-sm md:text-lg uppercase tracking-tight leading-none mb-1 text-on-surface"><ZASymbol className="scale-110 mr-1" /> Rewards Center</h3>
               <p className="text-xs md:text-sm text-on-surface-variant font-medium">Check your points, streaks, and unlock exclusive tournament bonuses.</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 bg-primary/10 text-primary px-2 md:px-5 py-2 md:py-2.5 rounded-xl font-black text-xs uppercase tracking-widest group-hover:bg-primary/20 transition-colors">
+          <div className="flex items-center gap-2 bg-primary/10 text-primary px-2 md:px-5 py-3 rounded-xl font-black text-xs uppercase tracking-widest group-hover:bg-primary/20 transition-colors">
             Go to Rewards
             <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
           </div>

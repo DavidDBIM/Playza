@@ -33,7 +33,7 @@ const LeaderBoard = () => {
         
         <div className="relative z-10 flex flex-col md:flex-row justify-between items-end md:items-center gap-2 md:gap-8">
           <div className="space-y-4">
-            <h1 className="text-3xl md:text-5xl md:text-7xl font-display font-black text-white uppercase italic tracking-tighter leading-none">
+            <h1 className="text-3xl md:text-5xl font-display font-black text-white uppercase italic tracking-tighter leading-none">
               LEADER<span className="text-primary">BOARDS</span>
             </h1>
             <p className="text-slate-400 font-bold uppercase tracking-[0.2em] text-xs md:text-sm flex items-center gap-2 md:gap-3">

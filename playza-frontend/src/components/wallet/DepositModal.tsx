@@ -63,8 +63,8 @@ const DepositModal = ({ onClose }: DepositModalProps) => {
 
           <div className="space-y-6">
             <div className="space-y-3">
-              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
-                Amount (ZA)
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 flex items-center gap-1">
+                Amount (<ZASymbol className="scale-75" />)
               </label>
               
               <div className="relative group">
@@ -95,7 +95,7 @@ const DepositModal = ({ onClose }: DepositModalProps) => {
                     }`}
                   >
                     <div className={`absolute inset-0 bg-primary/10 transition-transform duration-300 -translate-x-full ${isHovering === idx ? 'translate-x-0' : ''}`}></div>
-                    <span className="relative z-10">ZA{val.toLocaleString()}</span>
+                    <span className="relative z-10 flex items-center justify-center gap-1"><ZASymbol className="scale-75" />{val.toLocaleString()}</span>
                   </button>
                 ))}
               </div>

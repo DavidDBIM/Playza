@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { MdCheckCircle, MdPending, MdCancel, MdSearch, MdFilterList } from "react-icons/md";
+import { MdCheckCircle, MdPending, MdCancel, MdSearch } from "react-icons/md";
 import {
   Table,
   TableBody,
@@ -85,12 +85,9 @@ const ReferralHistoryTable = () => {
               placeholder="Search players..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl pl-2 md:pl-10 pr-2 md:pr-4 py-2 text-sm text-slate-900 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm"
+              className="w-full bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl pl-10 pr-2 md:pr-4 py-2 text-sm text-slate-900 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm"
             />
           </div>
-          <button className="bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 p-2 md:p-2.5 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-slate-500 dark:text-slate-300">
-            <MdFilterList className="text-sm md:text-lg" />
-          </button>
         </div>
       </div>
 

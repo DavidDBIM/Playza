@@ -152,13 +152,13 @@ const Tournaments = () => {
                 )}
               </div>
               <DropdownMenu>
-                <DropdownMenuTrigger className="bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg py-3 px-4 text-xs font-bold text-slate-900 dark:text-white uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-primary/50 hover:border-primary/50 transition-colors hidden sm:flex items-center justify-between gap-2 min-w-[200px]">
+                <DropdownMenuTrigger className="bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg py-3 px-4 text-xs font-bold text-slate-900 dark:text-white uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-primary/50 hover:border-primary/50 transition-colors hidden sm:flex items-center justify-between gap-2 min-w-50">
                   <span>
                     {PRIZE_OPTIONS.find((opt) => opt.value === filterPrize)?.label || "All Prizes"}
                   </span>
                   <ChevronDown size={14} className="opacity-50" />
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-[200px] bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl border border-slate-200 dark:border-white/10 p-2 rounded-xl shadow-xl" align="end">
+                <DropdownMenuContent className="w-50 bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl border border-slate-200 dark:border-white/10 p-2 rounded-xl shadow-xl" align="end">
                   {PRIZE_OPTIONS.map((opt) => (
                     <DropdownMenuItem
                       key={opt.value}
@@ -209,8 +209,8 @@ const Tournaments = () => {
                           <span className="flex items-center gap-1.5">
                             <PlaySquare size={14} /> {g.title}
                           </span>
-                          <span className="text-primary bg-primary/10 px-2 py-0.5 rounded">
-                            Entry: ZA {t.entryFee}
+                          <span className="text-primary bg-primary/10 px-2 py-0.5 rounded flex items-center gap-1">
+                            Entry: <ZASymbol className="scale-75" /> {t.entryFee}
                           </span>
                         </div>
 

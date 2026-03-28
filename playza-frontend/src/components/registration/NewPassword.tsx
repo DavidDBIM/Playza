@@ -9,7 +9,7 @@ const NewPassword = ({ onClick }: { onClick: (value: string) => void }) => {
       <div className="max-w-130 w-full glass-card rounded-xl p-2 lg:p-10 neo-shadow z-10">
         <div className="text-center mb-10">
           <div className="inline-flex items-center justify-center p-2 md:p-3 bg-primary/10 rounded-full mb-4">
-            <MdLockReset className="material-symbols-outlined text-primary text-xl md:text-3xl" />
+            <MdLockReset className="text-primary text-xl md:text-3xl" />
           </div>
           <h1 className="text-slate-900 dark:text-slate-100 text-xl md:text-3xl font-bold leading-tight mb-2">
             Secure Reset
@@ -75,7 +75,7 @@ const NewPassword = ({ onClick }: { onClick: (value: string) => void }) => {
                 New Password
               </label>
               <div className="relative">
-                <Key className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm" />
+                <Key className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm" />
                 <input
                   className="w-full bg-background-dark/50 border border-slate-300 dark:border-slate-700 rounded-lg py-2 md:py-3 pl-2 md:pl-10 pr-2 md:pr-4 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all outline-none"
                   placeholder="••••••••••••"
@@ -93,7 +93,7 @@ const NewPassword = ({ onClick }: { onClick: (value: string) => void }) => {
                 </span>
               </div>
               <div className="relative">
-                <MdVerifiedUser className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm" />
+                <MdVerifiedUser className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm" />
                 <input
                   className="w-full bg-background-dark/50 border border-slate-300 dark:border-slate-700 rounded-lg py-2 md:py-3 pl-2 md:pl-10 pr-2 md:pr-4 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all outline-none"
                   placeholder="••••••••••••"

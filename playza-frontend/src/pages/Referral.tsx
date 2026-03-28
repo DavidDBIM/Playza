@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { MdArrowForward, MdEmojiEvents, MdGroupAdd } from "react-icons/md";
 import { useAuth } from "@/context/auth";
 import { Button } from "@/components/ui/button";
+import { ZASymbol } from "@/components/currency/ZASymbol";
 
 const Referral = () => {
   const { user } = useAuth();
@@ -27,9 +28,8 @@ const Referral = () => {
             <h1 className="text-4xl md:text-6xl font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-none italic">
               Recruit Your <span className="text-primary">Squad</span>
             </h1>
-            <p className="text-xs md:text-base md:text-xl text-slate-500 font-bold max-w-lg mx-auto leading-relaxed">
-              Don't play alone. Invite your friends to Playza and earn legendary
-              ZA rewards for every active referral.
+            <p className="text-xs md:text-base text-slate-500 font-bold max-w-lg mx-auto leading-relaxed">
+              Don't play alone. Invite your friends to Playza and earn legendary <ZASymbol className="inline-block scale-110 ml-1" /> rewards for every active referral.
             </p>
           </div>
 
@@ -56,7 +56,7 @@ const Referral = () => {
               <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-slate-100 uppercase tracking-tight">
                 Referral <span className="text-primary">Program</span>
               </h1>
-              <p className="text-slate-400 text-sm md:text-xs md:text-base font-bold uppercase tracking-widest opacity-70">
+              <p className="text-slate-400 text-xs md:text-sm font-bold uppercase tracking-widest opacity-70">
                 Recruit your squad and earn legendary rewards.
               </p>
             </div>

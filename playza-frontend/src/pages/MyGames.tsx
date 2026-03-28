@@ -4,6 +4,7 @@ import type { Game } from "@/types/types";
 import { games } from "@/data/games";
 import { MdTimer, MdCheckCircle, MdVideogameAsset } from "react-icons/md";
 import { useAuth } from "@/context/auth";
+import { ZASymbol } from "@/components/currency/ZASymbol";
 
 type TabTypes = "live" | "upcoming" | "ended";
 
@@ -125,8 +126,8 @@ const MyGames = () => {
             <MdCheckCircle className="text-slate-400" /> Finished Today
           </p>
         </div>
-        <div className="bg-green-500/10 text-green-500 border border-green-500/20 rounded-full px-2 md:px-3 py-1 font-black text-xs uppercase tracking-widest shadow-inner">
-          + 2,500 ZA
+        <div className="bg-green-500/10 text-green-500 border border-green-500/20 rounded-full px-2 md:px-3 py-1 font-black text-xs uppercase tracking-widest shadow-inner flex items-center gap-1">
+          + 2,500 <ZASymbol className="scale-75" />
         </div>
       </div>
 

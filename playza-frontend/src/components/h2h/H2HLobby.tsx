@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { MdSearch } from 'react-icons/md';
+import { Zap, Swords, PlusCircle } from 'lucide-react';
+import { ZASymbol } from '@/components/currency/ZASymbol';
 
 interface H2HLobbyProps {
   onCreate: (stake: number) => void;
@@ -39,7 +41,7 @@ const H2HLobby = ({ onCreate, onJoin, loading }: H2HLobbyProps) => {
   return (
     <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* Header Section */}
-      <header className="mb-10 text-center lg:text-left">
+      <header className="mb-2.5 text-center lg:text-left">
         <div className="inline-flex items-center gap-2 px-2 md:px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-black uppercase tracking-[0.2em] mb-4">
           <span className="relative flex h-2 w-2">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
@@ -50,21 +52,21 @@ const H2HLobby = ({ onCreate, onJoin, loading }: H2HLobbyProps) => {
         <h1 className="font-headline text-5xl md:text-6xl font-black text-foreground tracking-tighter uppercase italic leading-tight">
           H2H <span className="text-primary">Battles</span>
         </h1>
-        <p className="text-muted-foreground mt-3 max-w-xl font-body text-sm md:text-xs md:text-base">
+        <p className="text-muted-foreground mt-3 max-w-xl font-body text-xs md:text-sm">
           Challenge players in real-time and win instantly. High-stakes digital sport at your fingertips.
         </p>
       </header>
 
       {/* Bento Layout Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-6 pb-2 md:pb-20">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-6 pb-2">
         {/* Quick Match Card */}
-        <section className="md:col-span-8 bg-card/40 backdrop-blur-xl rounded-xl p-8 md:p-10 border border-white/5 relative overflow-hidden flex flex-col justify-between shadow-2xl group">
+        <section className="md:col-span-8 bg-card/40 backdrop-blur-xl rounded-xl p-2 md:p-4 border border-white/5 relative overflow-hidden flex flex-col justify-between shadow-2xl group">
           <div className="absolute top-0 right-0 w-96 h-96 bg-primary/10 rounded-full blur-[120px] -mr-48 -mt-48 transition-all group-hover:bg-primary/20 duration-1000"></div>
           
           <div className="relative z-10">
-            <div className="flex items-center gap-2 md:gap-3 mb-10">
+            <div className="flex items-center gap-2 md:gap-3 mb-4">
               <div className="w-10 h-10 rounded-2xl bg-primary/20 flex items-center justify-center border border-primary/30">
-                <span className="material-symbols-outlined text-primary scale-110" style={{ fontVariationSettings: "'FILL' 1" }}>flash_on</span>
+                <Zap className="text-primary size-6" />
               </div>
               <h2 className="font-headline text-lg md:text-2xl uppercase tracking-widest font-black italic">Quick Match</h2>
             </div>
@@ -75,7 +77,7 @@ const H2HLobby = ({ onCreate, onJoin, loading }: H2HLobbyProps) => {
                 <div className="bg-white/5 dark:bg-black/20 p-2 md:p-5 rounded-xl flex items-center justify-between border border-primary/5 cursor-pointer shadow-inner">
                   <div className="flex items-center gap-2 md:gap-5">
                     <div className="w-14 h-14 bg-linear-to-br from-primary/20 to-accent/20 rounded-2xl flex items-center justify-center border border-white/10">
-                      <span className="material-symbols-outlined text-foreground text-lg md:text-2xl">chess</span>
+                      <Swords className="text-foreground size-7 md:size-8" />
                     </div>
                     <div>
                       <span className="font-headline font-black text-base md:text-xl block">Chess</span>
@@ -86,8 +88,8 @@ const H2HLobby = ({ onCreate, onJoin, loading }: H2HLobbyProps) => {
               </div>
 
               <div className="space-y-5">
-                <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground font-black pl-1">Stake (ZA)</label>
-                <div className="grid grid-cols-3 gap-2 md:gap-3 h-18.5">
+                <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground font-black pl-1 flex items-center gap-1">Stake (<ZASymbol className="scale-75" />)</label>
+                <div className="grid grid-cols-3 gap-2 md:gap-3 h-16 md:h-18.5">
                   {[50, 100, 500].map((val) => (
                     <button 
                       key={val} 
@@ -105,7 +107,7 @@ const H2HLobby = ({ onCreate, onJoin, loading }: H2HLobbyProps) => {
           <button 
             onClick={handleQuickMatch}
             disabled={isBtnLoading}
-            className="relative z-10 w-full mt-12 bg-foreground text-background font-black py-2 md:py-6 rounded-xl font-headline text-base md:text-xl tracking-widest flex items-center justify-center gap-2 md:gap-4 hover:scale-[1.02] active:scale-[0.98] transition-all overflow-hidden group/btn shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed"
+            className="relative z-10 w-full mt-4 bg-foreground text-background font-black py-3 md:py-6 rounded-xl font-headline text-base md:text-xl tracking-widest flex items-center justify-center gap-2 md:gap-4 hover:scale-[1.02] active:scale-[0.98] transition-all overflow-hidden group/btn shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <div className="absolute inset-0 bg-linear-to-r from-primary via-secondary to-accent opacity-0 group-hover/btn:opacity-100 transition-opacity duration-500"></div>
             <span className="relative z-10 flex items-center gap-2 md:gap-3 group-hover/btn:text-white transition-colors">
@@ -128,9 +130,9 @@ const H2HLobby = ({ onCreate, onJoin, loading }: H2HLobbyProps) => {
 
         {/* Create Challenge Card */}
         <section className="md:col-span-4 bg-primary/5 rounded-xl p-2 md:p-8 border border-primary/20 flex flex-col shadow-xl">
-          <div className="flex items-center gap-2 md:gap-3 mb-10">
+          <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-4">
             <div className="w-10 h-10 rounded-2xl bg-secondary/20 flex items-center justify-center border border-secondary/30">
-              <span className="material-symbols-outlined text-secondary scale-110" style={{ fontVariationSettings: "'FILL' 1" }}>add_circle</span>
+              <PlusCircle className="text-secondary size-6" />
             </div>
             <h2 className="font-headline text-lg md:text-2xl uppercase tracking-widest font-black italic">Challenge</h2>
           </div>
@@ -143,11 +145,11 @@ const H2HLobby = ({ onCreate, onJoin, loading }: H2HLobbyProps) => {
                   id="stake-input" 
                   value={customStake}
                   onChange={(e) => setCustomStake(e.target.value)}
-                  className="w-full bg-background border border-white/10 rounded-2xl pl-2 md:pl-6 pr-2 md:pr-14 py-2 md:py-4 font-headline font-black focus:border-primary outline-none group-hover:border-primary/50 transition-colors tracking-widest uppercase text-sm md:text-lg" 
+                  className="w-full bg-background border border-white/10 rounded-xl pl-6 py-4 font-headline font-black focus:border-primary outline-none group-hover:border-primary/50 transition-colors tracking-widest uppercase text-sm md:text-lg" 
                   placeholder="0 (Free)" 
                   type="number" 
                 />
-                <span className="absolute right-5 top-1/2 -translate-y-1/2 text-xs font-black text-primary">ZA</span>
+                <span className="absolute right-5 top-1/2 -translate-y-1/2 text-xs font-black text-primary"><ZASymbol className="scale-110" /></span>
               </div>
             </div>
 
@@ -159,7 +161,7 @@ const H2HLobby = ({ onCreate, onJoin, loading }: H2HLobbyProps) => {
                     onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
                     maxLength={6}
                     placeholder="ENTER CODE"
-                    className="flex-1 bg-background/50 border border-white/10 rounded-xl px-2 md:px-4 py-2 font-mono font-bold text-center tracking-[0.3em] text-sm focus:border-secondary outline-none"
+                    className="flex-1 bg-background/50 border border-white/10 rounded-xl px-2 md:px-4 py-2.5 font-mono font-bold text-center tracking-[0.3em] text-sm focus:border-secondary outline-none"
                   />
                   <button 
                     type="submit"
@@ -175,7 +177,7 @@ const H2HLobby = ({ onCreate, onJoin, loading }: H2HLobbyProps) => {
           <button 
             onClick={handleCreateChallenge}
             disabled={loading}
-            className="w-full mt-10 bg-white dark:bg-black/40 border-[3px] border-primary text-primary hover:bg-primary hover:text-white font-black py-2 md:py-4 rounded-2xl font-headline tracking-widest transition-all shadow-lg text-sm md:text-lg italic uppercase disabled:opacity-50"
+            className="w-full mt-2.5 md:mt-4 bg-white dark:bg-black/40 border-[3px] border-primary text-primary hover:bg-primary hover:text-white font-black py-4 rounded-full font-headline tracking-widest transition-all shadow-lg text-sm md:text-lg italic uppercase disabled:opacity-50"
           >
             {loading ? "CREATING..." : "LAUNCH LOBBY"}
           </button>

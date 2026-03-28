@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { X, ArrowRight, Landmark, CheckCircle2 } from "lucide-react";
 import { useNavigate } from "react-router";
+import { ZASymbol } from "../currency/ZASymbol";
 
 interface WithdrawModalProps {
   onClose: () => void;
@@ -59,13 +60,13 @@ const WithdrawModal = ({ onClose }: WithdrawModalProps) => {
           <div className="space-y-6">
             <div className="space-y-3">
               <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 flex justify-between px-1">
-                <span>Amount (ZA)</span>
-                <span className="text-yellow-600 dark:text-yellow-500 font-bold">Bal: ZA10,250</span>
+                <span className="flex items-center gap-1">Amount (<ZASymbol className="scale-75" />)</span>
+                <span className="text-yellow-600 dark:text-yellow-500 font-bold flex items-center gap-1">Bal: <ZASymbol className="scale-75" />10,250</span>
               </label>
               
               <div className="relative group">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-yellow-600 dark:text-yellow-500 font-black text-xl md:text-2xl opacity-60 dark:opacity-50 group-focus-within:opacity-100 transition-opacity">
-                  ZA
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-yellow-600 dark:text-yellow-500 font-black text-xl md:text-2xl opacity-60 dark:opacity-50 group-focus-within:opacity-100 transition-opacity flex items-center justify-center">
+                  <ZASymbol className="scale-75" />
                 </span>
                 <input
                   type="text"
