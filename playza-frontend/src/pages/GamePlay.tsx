@@ -53,7 +53,7 @@ const GamePlay = () => {
     }
 
     return (
-        <div className="fixed inset-0 z-50 bg-black flex flex-col overflow-hidden">
+        <div className="fixed inset-0 z-200 bg-black flex flex-col overflow-hidden">
             {/* Top Bar / Header Overlay */}
             <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-100 pointer-events-none">
                 <div className="bg-black/60 backdrop-blur-md px-2 md:px-4 py-2 rounded-full border border-white/10 shadow-xl flex items-center gap-2 md:gap-3">
@@ -81,12 +81,13 @@ const GamePlay = () => {
             )}
 
             {/* Iframe Container */}
-            <div className="flex-1 w-full h-full relative">
+            <div className="flex-1 w-full h-full relative" onClick={(e) => (e.currentTarget.querySelector('iframe') as HTMLIFrameElement)?.focus()}>
                 <iframe 
                     src={game.iframeUrl} 
                     className="w-full h-full border-none shadow-2xl" 
                     title={game.title}
                     allow="autoplay; fullscreen; keyboard; gamepad"
+                    allowFullScreen
                     onLoad={() => setIsLoading(false)}
                 />
             </div>
