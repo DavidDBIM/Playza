@@ -59,7 +59,7 @@ export const SessionCard = ({ session, gameTitle, onJoin }: SessionCardProps) =>
             </p>
             <div className="flex items-center gap-1.5">
               <ZASymbol className="text-sm scale-90" />
-              <p className="text-xs md:text-base text-slate-900 dark:text-white font-black text-lg md:text-xl tracking-tighter leading-none">
+              <p className="text-xs md:text-lg text-slate-900 dark:text-white font-black tracking-tighter leading-none">
                 {session.entryFee}
               </p>
             </div>

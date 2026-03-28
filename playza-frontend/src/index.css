@@ -461,3 +461,26 @@ body.modal-open {
   from { width: 100%; }
   to { width: 0%; }
 }
+
+/* ============================= */
+/* GAME HERO ANIMATIONS          */
+/* ============================= */
+
+@keyframes fade-in-up {
+  0%   { transform: translateY(30px); opacity: 0; }
+  100% { transform: translateY(0);    opacity: 1; }
+}
+
+@keyframes click-pulse {
+  0%   { transform: scale(0.5); opacity: 0.8; }
+  100% { transform: scale(1.5); opacity: 0;   }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+.animate-click-pulse {
+  animation: click-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
