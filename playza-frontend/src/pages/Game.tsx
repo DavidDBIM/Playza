@@ -10,12 +10,14 @@ import { RulesTab } from "@/components/gamePage/RulesTab";
 import { EntryConfirmationModal } from "@/components/gamePage/EntryConfirmationModal";
 import { MOCK_SESSIONS } from "@/data/mockSessions";
 import type { Session } from "@/types/types";
+import { useAuth } from "@/context/auth";
 
 type Tab = "sessions" | "about" | "rules";
 
 const Game = () => {
   const { id: slug } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>("sessions");
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
 
@@ -86,16 +88,16 @@ const Game = () => {
         <SessionsTab
           sessions={MOCK_SESSIONS}
           onJoin={handleJoinSession}
-          game={game}
+          gameTitle={game.title }
         />
       )}
-      {activeTab === "about" && <AboutGameTab game={game} />}
-      {activeTab === "rules" && <RulesTab game={game} />}
+      {activeTab === "about" && <AboutGameTab  />}
+      {activeTab === "rules" && <RulesTab  />}
 
       {selectedSession && (
         <EntryConfirmationModal
           session={selectedSession}
-          game={game}
+          userBalance={user?.pzaPoints || 0}
           onConfirm={handleConfirmEntry}
           onClose={() => setSelectedSession(null)}
         />
