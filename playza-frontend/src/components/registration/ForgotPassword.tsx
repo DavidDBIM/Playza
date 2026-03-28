@@ -42,7 +42,7 @@ const ForgotPassword = ({ onClick }: { onClick: (value: string) => void }) => {
             {isSuccess ? (
               <MailCheck className="text-primary" size={36} />
             ) : (
-              <RxReset className="material-symbols-outlined text-primary text-2xl md:text-4xl" />
+              <RxReset className="text-primary text-2xl md:text-4xl" />
             )}
           </div>
           <h1 className="text-slate-900 dark:text-white text-xl md:text-3xl font-bold leading-tight mb-3">
@@ -59,7 +59,7 @@ const ForgotPassword = ({ onClick }: { onClick: (value: string) => void }) => {
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div className="flex flex-col gap-2">
               <label className="text-slate-800 dark:text-slate-200 text-sm font-semibold flex items-center gap-2">
-                <MdAlternateEmail className="material-symbols-outlined text-xs text-primary" />
+                <MdAlternateEmail className="text-xs text-primary" />
                 Email Address
               </label>
               <div className="relative">
@@ -101,7 +101,7 @@ const ForgotPassword = ({ onClick }: { onClick: (value: string) => void }) => {
                 onClick={() => onClick("login")}
                 className="group flex items-center gap-2 text-slate-500 dark:text-slate-400 hover:text-primary transition-colors text-sm font-medium cursor-pointer"
               >
-                <ArrowBigLeft className="material-symbols-outlined text-sm md:text-lg transition-transform group-hover:-translate-x-1" />
+                <ArrowBigLeft className="text-sm md:text-lg transition-transform group-hover:-translate-x-1" />
                 Back to Login
               </div>
             </div>

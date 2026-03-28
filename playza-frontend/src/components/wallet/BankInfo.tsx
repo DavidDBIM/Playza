@@ -25,17 +25,17 @@ const BankInfo = () => {
         </div>
         
         <div className="grid grid-cols-1 gap-2 md:gap-4">
-          <div className="p-2 md:p-3 rounded-lg bg-white/2 dark:bg-black/2 border border-white/5">
+          <div className="p-3 rounded-lg bg-white/2 dark:bg-black/2 border border-white/5">
             <p className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">Account Holder</p>
             <p className="text-xs md:text-sm font-medium text-slate-900 dark:text-white">John Doe</p>
           </div>
-          <div className="p-2 md:p-3 rounded-lg bg-white/2 dark:bg-black/2 border border-white/5">
+          <div className="p-3 rounded-lg bg-white/2 dark:bg-black/2 border border-white/5">
             <p className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">Account Number</p>
             <p className="text-xs md:text-sm font-medium text-slate-900 dark:text-white tracking-[0.2em]">**** 8841</p>
           </div>
         </div>
       </div>
-      <button className="w-full mt-6 py-2 md:py-2.5 text-xs text-primary font-bold hover:bg-primary/10 border border-primary/20 rounded-lg transition-all cursor-pointer">
+      <button className="w-full mt-6 py-3 text-xs text-primary font-bold hover:bg-primary/10 border border-primary/20 rounded-lg transition-all cursor-pointer">
         Update Bank Details
       </button>
     </div>

@@ -174,7 +174,7 @@ const Profile = () => {
               Refer & Earn
             </h3>
             <div className="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-slate-400 mb-4 relative z-10 font-bold uppercase tracking-wider">
-              Get <ZASymbol className="text-[10px] scale-90" /> 500 ZA for every friend who joins.
+              Get <ZASymbol className="text-[10px] scale-90" /> 500 for every friend who joins.
             </div>
             <NavLink
               to="/referral"
@@ -227,7 +227,7 @@ const Profile = () => {
                 Refer & Earn
               </h3>
               <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 mb-4 relative z-10 font-bold uppercase">
-                Get <ZASymbol className="text-[10px] scale-90" /> 500 ZA for every friend who joins.
+                Get <ZASymbol className="text-[10px] scale-90" /> 500 for every friend who joins.
               </div>
               <NavLink
                 to="/referral"

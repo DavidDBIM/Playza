@@ -46,7 +46,7 @@ const TransactionDetailModal = ({ isOpen, onClose, transaction }: TransactionDet
   };
 
   return (
-    <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity overflow-y-auto" onClick={onClose}>
+    <div className="fixed inset-0 z-100 p-2 flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity overflow-y-auto" onClick={onClose}>
       <div 
         className="relative w-full max-w-md glass-card rounded-xl overflow-hidden shadow-2xl border border-white/10 animate-in fade-in zoom-in duration-300"
         onClick={(e) => e.stopPropagation()}

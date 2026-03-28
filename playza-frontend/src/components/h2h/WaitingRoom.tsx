@@ -1,6 +1,8 @@
 import { useNavigate } from 'react-router';
 import { useToast } from '@/context/toast';
 import type { ChessRoom } from '@/types/chess';
+import { Share2, Radar, ShieldCheck, Settings2 } from 'lucide-react';
+import { ZASymbol } from '@/components/currency/ZASymbol';
 
 interface WaitingRoomProps {
   room: ChessRoom;
@@ -48,7 +50,7 @@ const WaitingRoom = ({ room }: WaitingRoomProps) => {
                 onClick={handleShare}
                 className="mt-6 bg-secondary text-black px-2 md:px-12 py-2 md:py-4 rounded-2xl font-headline font-black text-sm tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl uppercase italic flex items-center gap-2 md:gap-3 mx-auto"
             >
-                <span className="material-symbols-outlined">share</span>
+                <Share2 size={20} />
                 SHARE LINK
             </button>
         </div>
@@ -58,7 +60,7 @@ const WaitingRoom = ({ room }: WaitingRoomProps) => {
           <div className="w-48 h-48 rounded-full border-8 border-primary/10 flex items-center justify-center relative shadow-[0_0_60px_rgba(var(--primary),0.1)]">
             <div className="absolute inset-0 rounded-full border-8 border-secondary border-t-transparent animate-spin"></div>
             <div className="w-40 h-40 rounded-full bg-linear-to-br from-primary/10 to-accent/10 backdrop-blur-3xl flex items-center justify-center overflow-hidden border border-white/5">
-                <span className="material-symbols-outlined text-secondary text-3xl md:text-5xl animate-pulse" style={{ fontVariationSettings: "'FILL' 1" }}>radar</span>
+                <Radar className="text-secondary size-10 md:size-14 animate-pulse" />
             </div>
           </div>
           <p className="mt-8 text-muted-foreground font-black text-xs uppercase tracking-[0.4em] max-w-md mx-auto leading-relaxed animate-pulse">
@@ -79,11 +81,11 @@ const WaitingRoom = ({ room }: WaitingRoomProps) => {
                     {room.host?.username || "Commander"}
                     <span className="text-[10px] bg-primary/20 text-primary px-2 py-0.5 rounded italic">HOST</span>
                  </h4>
-                 <p className="text-[10px] text-muted-foreground font-black tracking-[0.2em] uppercase mt-1 italic">Stake: {room.stake} ZA</p>
+                 <p className="text-[10px] text-muted-foreground font-black tracking-[0.2em] uppercase mt-1 italic flex items-center gap-1">Stake: {room.stake} <ZASymbol className="scale-75" /></p>
                </div>
              </div>
              <div className="text-right">
-               <span className="material-symbols-outlined text-green-500 text-lg md:text-2xl animate-pulse">verified_user</span>
+               <ShieldCheck className="text-green-500 size-6 md:size-8 animate-pulse" />
              </div>
            </div>
 
@@ -100,7 +102,7 @@ const WaitingRoom = ({ room }: WaitingRoomProps) => {
                </div>
              </div>
              <div className="animate-[spin_4s_linear_infinite] opacity-20">
-                <span className="material-symbols-outlined text-white text-xl md:text-3xl">settings_input_component</span>
+                <Settings2 className="text-white size-7 md:size-10" />
              </div>
            </div>
         </div>

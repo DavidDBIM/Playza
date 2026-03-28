@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 import { Chess } from 'chess.js';
 import { Chessboard } from 'react-chessboard';
 import type { PieceDropHandlerArgs } from 'react-chessboard';
-import { History as HistoryIcon } from 'lucide-react';
+import { History as HistoryIcon, Star } from 'lucide-react';
 import { makeChessMove, resignChessGame } from '@/api/chess.api';
 import { useToast } from '@/context/toast';
+import { ZASymbol } from '@/components/currency/ZASymbol';
 
 import type { ChessRoom } from '@/types/chess';
 import type { UserProfile } from '@/context/auth';
@@ -132,7 +133,7 @@ const H2HArena = ({ room, user }: H2HArenaProps) => {
           <div className="flex items-center gap-2 md:gap-12 w-full md:w-auto justify-center md:justify-end border-t md:border-t-0 md:border-l border-white/10 pt-8 md:pt-0 md:pl-12 relative z-10">
             <div className="text-center">
               <div className="text-[10px] text-muted-foreground font-black tracking-[0.3em] uppercase italic mb-2">Stake</div>
-              <div className="font-headline text-3xl md:text-5xl font-black text-secondary italic tracking-tighter tabular-nums drop-shadow-[0_0_10px_rgba(var(--secondary),0.3)]">{room.stake} <span className="text-sm font-sans font-black text-muted-foreground uppercase ml-1">ZA</span></div>
+              <div className="font-headline text-3xl md:text-5xl font-black text-secondary italic tracking-tighter tabular-nums drop-shadow-[0_0_10px_rgba(var(--secondary),0.3)]">{room.stake} <span className="text-sm font-sans font-black text-muted-foreground uppercase ml-1"><ZASymbol className="inline-block scale-110" /></span></div>
             </div>
           </div>
         </div>
@@ -167,17 +168,17 @@ const H2HArena = ({ room, user }: H2HArenaProps) => {
           <div className="glass backdrop-blur-3xl rounded-xl p-2 md:p-10 border border-white/10 shadow-2xl relative overflow-hidden group/prize text-center">
             <div className="absolute top-0 inset-x-0 h-1 bg-linear-to-r from-transparent via-primary/50 to-transparent"></div>
             <div className="flex items-center justify-center gap-2 mb-6 uppercase tracking-[0.5em] text-[10px] font-black text-muted-foreground italic">
-                <span className="material-symbols-outlined text-secondary scale-90" style={{ fontVariationSettings: "'FILL' 1" }}>stars</span>
+                <Star className="text-secondary size-5 fill-current" />
                 Loot Pool
-                <span className="material-symbols-outlined text-secondary scale-90" style={{ fontVariationSettings: "'FILL' 1" }}>stars</span>
+                <Star className="text-secondary size-5 fill-current" />
             </div>
             <div className="font-headline text-4xl md:text-6xl font-black italic bg-linear-to-br from-primary via-white to-accent bg-clip-text text-transparent drop-shadow-2xl">
-              {room.stake * 2} <span className="text-base md:text-xl inline-block -translate-y-4">ZA</span>
+              {room.stake * 2} <span className="text-base md:text-xl inline-block -translate-y-4"><ZASymbol className="inline-block scale-125 ml-1" /></span>
             </div>
             <div className="mt-8 pt-2 md:pt-8 border-t border-white/5 flex justify-center">
                <div className="text-center">
                   <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-1">House (10%)</p>
-                  <p className="font-headline font-black text-xs md:text-sm md:text-lg text-muted-foreground italic">{(room.stake * 2 * 0.1).toFixed(0)} ZA</p>
+                  <p className="font-headline font-black text-xs md:text-sm md:text-lg text-muted-foreground italic">{(room.stake * 2 * 0.1).toFixed(0)} <ZASymbol className="inline-block scale-75 ml-1" /></p>
                </div>
             </div>
           </div>

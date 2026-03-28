@@ -173,7 +173,7 @@ const TournamentDetail = () => {
                   </p>
                   <p className="text-xs md:text-base text-slate-400 font-medium leading-relaxed">
                     Entry requires{" "}
-                    <strong>ZA{tournament.entryFee.toLocaleString()}</strong>.
+                    <strong><ZASymbol className="inline-block scale-75" />{tournament.entryFee.toLocaleString()}</strong>.
                     Players must lock in their spots before the final
                     registration wave closes. Ensure your timezone matches the
                     stage deadlines properly to avoid forfeiting matches.
