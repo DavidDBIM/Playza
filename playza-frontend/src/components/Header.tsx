@@ -108,7 +108,7 @@ const Header = () => {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent
                     align="end"
-                    className="w-56 glass bg-white/90 dark:bg-slate-900/90 border-primary/20 p-2 mt-2"
+                    className="w-56 glass bg-white/90 dark:bg-slate-900/90 border-primary/20 p-2 mt-2 z-80"
                   >
                     <div className="flex flex-col gap-2 p-2 mb-1">
                       <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
