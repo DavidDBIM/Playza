@@ -3,6 +3,25 @@ import crypto from 'crypto'
 
 const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET_KEY!
 
+interface PaystackResponse {
+  status: boolean
+  message: string
+  data: any
+}
+
+async function paystackRequest(url: string, options: RequestInit = {}): Promise<PaystackResponse> {
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      Authorization: `Bearer ${PAYSTACK_SECRET}`,
+      'Content-Type': 'application/json',
+      ...(options.headers || {}),
+    },
+  })
+  const result = await response.json() as PaystackResponse
+  return result
+}
+
 export async function getWallet(userId: string) {
   const { data, error } = await supabaseAdmin
     .from('wallets')
@@ -19,12 +38,8 @@ export async function initializeDeposit(userId: string, amount: number, email: s
 
   const reference = `PLZ-DEP-${Date.now()}-${crypto.randomBytes(4).toString('hex').toUpperCase()}`
 
-  const response = await fetch('https://api.paystack.co/transaction/initialize', {
+  const result = await paystackRequest('https://api.paystack.co/transaction/initialize', {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${PAYSTACK_SECRET}`,
-      'Content-Type': 'application/json',
-    },
     body: JSON.stringify({
       email,
       amount: amount * 100,
@@ -35,7 +50,6 @@ export async function initializeDeposit(userId: string, amount: number, email: s
     }),
   })
 
-  const result = await response.json()
   if (!result.status) throw new Error(result.message)
 
   await supabaseAdmin.from('transactions').insert({
@@ -54,12 +68,9 @@ export async function initializeDeposit(userId: string, amount: number, email: s
 }
 
 export async function verifyDeposit(reference: string) {
-  const response = await fetch(`https://api.paystack.co/transaction/verify/${reference}`, {
-    headers: { Authorization: `Bearer ${PAYSTACK_SECRET}` },
-  })
+  const result = await paystackRequest(`https://api.paystack.co/transaction/verify/${reference}`)
 
-  const result = await response.json()
-  if (!result.status || result.data.status !== 'success') {
+  if (!result.status || result.data?.status !== 'success') {
     throw new Error('Payment not successful')
   }
 
@@ -96,14 +107,19 @@ export async function paystackWebhook(payload: any, signature: string) {
   if (hash !== signature) throw new Error('Invalid signature')
 
   if (payload.event === 'charge.success') {
-    const reference = payload.data.reference
-    await verifyDeposit(reference)
+    await verifyDeposit(payload.data.reference)
   }
 
   return { received: true }
 }
 
-export async function requestWithdrawal(userId: string, amount: number, bankCode: string, accountNumber: string, accountName: string) {
+export async function requestWithdrawal(
+  userId: string,
+  amount: number,
+  bankCode: string,
+  accountNumber: string,
+  accountName: string
+) {
   if (amount < 500) throw new Error('Minimum withdrawal is ₦500')
 
   const { data: wallet } = await supabaseAdmin
@@ -156,20 +172,18 @@ export async function getTransactionHistory(userId: string, page = 1, limit = 20
 }
 
 export async function verifyBankAccount(accountNumber: string, bankCode: string) {
-  const response = await fetch(
-    `https://api.paystack.co/bank/resolve?account_number=${accountNumber}&bank_code=${bankCode}`,
-    { headers: { Authorization: `Bearer ${PAYSTACK_SECRET}` } }
+  const result = await paystackRequest(
+    `https://api.paystack.co/bank/resolve?account_number=${accountNumber}&bank_code=${bankCode}`
   )
-  const result = await response.json()
   if (!result.status) throw new Error('Could not verify account')
-  return { account_name: result.data.account_name, account_number: result.data.account_number }
+  return {
+    account_name: result.data.account_name,
+    account_number: result.data.account_number,
+  }
 }
 
 export async function getBankList() {
-  const response = await fetch('https://api.paystack.co/bank?country=nigeria', {
-    headers: { Authorization: `Bearer ${PAYSTACK_SECRET}` },
-  })
-  const result = await response.json()
+  const result = await paystackRequest('https://api.paystack.co/bank?country=nigeria')
   if (!result.status) throw new Error('Could not fetch banks')
-  return result.data.map((b: any) => ({ name: b.name, code: b.code }))
+  return (result.data as any[]).map((b) => ({ name: b.name, code: b.code }))
 }

@@ -104,7 +104,7 @@ export async function getRoom(roomId: string, userId: string) {
   const { data: room, error } = await supabaseAdmin
     .from('chess_rooms')
     .select(`
-      id, code, status, board_state, current_turn, stake, winner_id, created_at, host_id, guest_id,
+      id, code, status, board_state, current_turn, stake, winner_id, created_at,
       host:users!host_id(id, username, avatar_url),
       guest:users!guest_id(id, username, avatar_url)
     `)
