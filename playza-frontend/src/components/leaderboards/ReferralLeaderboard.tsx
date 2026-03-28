@@ -179,7 +179,7 @@ const ReferralLeaderboard = () => {
                           />
                         </div>
                         <div className="min-w-0">
-                          <p className="font-display font-black text-slate-900 dark:text-slate-100 text-[11px] md:text-sm tracking-tight uppercase italic group-hover:text-primary transition-colors truncate max-w-17.5 xs:max-w-[100px] sm:max-w-none">
+                          <p className="font-display font-black text-slate-900 dark:text-slate-100 text-[11px] md:text-xs md:text-sm tracking-tight uppercase italic group-hover:text-primary transition-colors truncate max-w-17.5 xs:max-w-[100px] sm:max-w-none">
                             <HighlightMatch
                               text={entry.name}
                               query={searchQuery}
@@ -215,7 +215,7 @@ const ReferralLeaderboard = () => {
               <TableRow>
                 <TableCell
                   colSpan={4}
-                  className="p-10 text-center text-slate-400 text-xs font-bold uppercase tracking-[0.2em]"
+                  className="p-2 md:p-10 text-center text-slate-400 text-xs font-bold uppercase tracking-[0.2em]"
                 >
                   No Rankings Found
                 </TableCell>
@@ -228,7 +228,7 @@ const ReferralLeaderboard = () => {
         <div ref={observerBottom} className="h-10 w-full" />
 
         {isLoading && (
-          <div className="flex flex-col items-center justify-center p-8 text-slate-500 gap-3">
+          <div className="flex flex-col items-center justify-center p-2 md:p-8 text-slate-500 gap-2 md:gap-3">
             <Loader2 className="animate-spin text-primary" size={24} />
             <p className="text-[10px] font-black uppercase tracking-widest animate-pulse">
               Syncing Rankings...

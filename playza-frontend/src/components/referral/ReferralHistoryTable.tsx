@@ -67,34 +67,34 @@ const ReferralHistoryTable = () => {
 
   return (
     <div className="w-full">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 px-2 md:px-0">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-2 md:gap-4 px-2 md:px-0">
         <div>
-          <h2 className="text-xl font-display font-black text-slate-900 dark:text-slate-100 uppercase italic tracking-tight">
+          <h2 className="text-base md:text-xl font-display font-black text-slate-900 dark:text-slate-100 uppercase italic tracking-tight">
             Referral History
           </h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm font-bold uppercase tracking-widest opacity-70">
+          <p className="text-slate-500 dark:text-slate-400 text-xs md:text-sm font-bold uppercase tracking-widest opacity-70">
             Track and manage your squad's activity.
           </p>
         </div>
 
         <div className="flex gap-2 w-full md:w-auto">
           <div className="relative flex-1 md:w-64">
-            <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg" />
+            <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm md:text-lg" />
             <input
               type="text"
               placeholder="Search players..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl pl-10 pr-4 py-2 text-sm text-slate-900 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm"
+              className="w-full bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl pl-2 md:pl-10 pr-2 md:pr-4 py-2 text-sm text-slate-900 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm"
             />
           </div>
-          <button className="bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 p-2.5 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-slate-500 dark:text-slate-300">
-            <MdFilterList className="text-lg" />
+          <button className="bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 p-2 md:p-2.5 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-slate-500 dark:text-slate-300">
+            <MdFilterList className="text-sm md:text-lg" />
           </button>
         </div>
       </div>
 
-      <div className="flex gap-4 mb-4 overflow-x-auto px-2 md:px-0 scrollbar-hide">
+      <div className="flex gap-2 md:gap-4 mb-4 overflow-x-auto px-2 md:px-0 scrollbar-hide">
         {["All", "Pending", "Completed"].map((tab) => (
           <button
             key={tab}
@@ -114,7 +114,7 @@ const ReferralHistoryTable = () => {
         <Table className="w-full">
           <TableHeader>
             <TableRow className="bg-slate-50/50 dark:bg-slate-800/50 hover:bg-transparent border-slate-200 dark:border-slate-800">
-              <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500 p-4">
+              <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500 p-2 md:p-4">
                 Player
               </TableHead>
               <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500 hidden sm:table-cell">
@@ -123,7 +123,7 @@ const ReferralHistoryTable = () => {
               <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500">
                 Status
               </TableHead>
-              <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500 text-right p-4">
+              <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500 text-right p-2 md:p-4">
                 Reward
               </TableHead>
             </TableRow>
@@ -134,8 +134,8 @@ const ReferralHistoryTable = () => {
                 key={referral.id}
                 className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors border-slate-100 dark:border-slate-800 group"
               >
-                <TableCell className="p-4">
-                  <div className="flex items-center gap-3">
+                <TableCell className="p-2 md:p-4">
+                  <div className="flex items-center gap-2 md:gap-3">
                     <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold text-xs border border-primary/20">
                       {referral.avatar}
                     </div>
@@ -172,7 +172,7 @@ const ReferralHistoryTable = () => {
                     </span>
                   </div>
                 </TableCell>
-                <TableCell className="text-right p-4">
+                <TableCell className="text-right p-2 md:p-4">
                   <div className="flex items-center gap-1 justify-end">
                     {referral.reward !== "--" && <ZASymbol className="text-xs scale-90" />}
                     <span
@@ -188,13 +188,13 @@ const ReferralHistoryTable = () => {
         </Table>
       </div>
 
-      <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4 px-2">
+      <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-2 md:gap-4 px-2">
         <p className="text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-widest">
           Season 1 Activities
         </p>
         <div className="flex items-center gap-1">
           <button
-            className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-30 transition-all border border-slate-200 dark:border-slate-700"
+            className="px-2 md:px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-30 transition-all border border-slate-200 dark:border-slate-700"
             disabled
           >
             Prev
@@ -205,7 +205,7 @@ const ReferralHistoryTable = () => {
           <button className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition-all text-center">
             2
           </button>
-          <button className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition-all">
+          <button className="px-2 md:px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition-all">
             Next
           </button>
         </div>

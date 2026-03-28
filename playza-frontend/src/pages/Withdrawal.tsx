@@ -31,7 +31,7 @@ export default function Withdrawal() {
   };
 
   return (
-    <main className="flex-1 w-full max-w-2xl mx-auto py-4 flex flex-col animate-in slide-in-from-bottom-4 duration-500">
+    <main className="flex-1 w-full max-w-2xl mx-auto py-2 md:py-4 flex flex-col animate-in slide-in-from-bottom-4 duration-500">
       
       {status !== "verify" && (
         <button 

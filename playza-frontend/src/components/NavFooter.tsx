@@ -191,7 +191,7 @@ const NavFooter = () => {
           ref={moreMenuRef}
           className="absolute bottom-20 left-0 right-0 z-50 animate-in slide-in-from-bottom-4 fade-in duration-300 px-1"
         >
-          <div className="bg-white/95 dark:bg-slate-950/90 backdrop-blur-3xl rounded-[2.5rem] border border-slate-200 dark:border-primary/20 p-6 shadow-[0_30px_60px_rgba(0,0,0,0.3),0_0_20px_rgba(168,85,247,0.1)] overflow-hidden relative">
+          <div className="bg-white/95 dark:bg-slate-950/90 backdrop-blur-3xl rounded-xl border border-slate-200 dark:border-primary/20 p-2 md:p-6 shadow-[0_30px_60px_rgba(0,0,0,0.3),0_0_20px_rgba(168,85,247,0.1)] overflow-hidden relative">
             <div className="absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-primary/50 to-transparent" />
             
             <div className="flex justify-between items-center mb-6 pl-1 font-headline">
@@ -207,7 +207,7 @@ const NavFooter = () => {
               </button>
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-2 md:gap-3">
               {moreMenuItems.map((item) => (
                 <NavLink
                   key={item.label}

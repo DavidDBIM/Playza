@@ -131,7 +131,7 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center py-4">
+    <main className="min-h-screen flex items-center justify-center py-2 md:py-4">
       <div className="w-full max-w-xl">
         <Link
           to="/"
@@ -141,21 +141,21 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
           Back to Home
         </Link>
 
-        <div className="glass-card p-2 md:p-10 rounded-3xl shadow-2xl relative overflow-hidden border border-slate-200 dark:border-white/5 bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl">
+        <div className="glass-card p-2 md:p-10 rounded-xl shadow-2xl relative overflow-hidden border border-slate-200 dark:border-white/5 bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl">
           <div className="absolute -top-24 -left-24 w-64 h-64 bg-primary/10 blur-[100px] rounded-full"></div>
 
           <div className="text-center mb-8 relative z-10">
             <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-2 tracking-tight uppercase">
               Join <span className="text-primary italic">Playza</span>
             </h1>
-            <p className="text-slate-500 dark:text-slate-400 text-sm">
+            <p className="text-slate-500 dark:text-slate-400 text-xs md:text-sm">
               Create your gaming profile and start competing.
             </p>
           </div>
 
           {/* API Error Banner */}
           {formError && (
-            <div className="mb-5 flex items-start gap-3 bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 relative z-10">
+            <div className="mb-5 flex items-start gap-2 md:gap-3 bg-red-500/10 border border-red-500/30 rounded-xl px-2 md:px-4 py-2 md:py-3 relative z-10">
               <AlertCircle size={16} className="text-red-500 mt-0.5 shrink-0" />
               <p className="text-red-500 text-xs font-semibold">{formError}</p>
             </div>
@@ -165,7 +165,7 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
             className="space-y-5 relative z-10"
             onSubmit={handleSubmit(onFormSubmit)}
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-5">
               {/* Gaming Handle */}
               <div className="space-y-1.5">
                 <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 ml-1">
@@ -251,7 +251,7 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
               )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-5">
               {/* Password */}
               <div className="space-y-1.5">
                 <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 ml-1">
@@ -413,7 +413,7 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
               )}
             </div>
 
-            <div className="pt-4">
+            <div className="pt-2 md:pt-4">
               <Button
                 disabled={isPending || !isValid}
                 className="w-full h-14 bg-primary text-black font-black uppercase tracking-widest rounded-xl shadow-lg shadow-primary/20 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all group border-none relative overflow-hidden disabled:opacity-50 disabled:translate-y-0 disabled:shadow-none"
@@ -436,7 +436,7 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
               </Button>
             </div>
 
-            <div className="pt-6 text-center border-t border-slate-200 dark:border-white/5">
+            <div className="pt-2 md:pt-6 text-center border-t border-slate-200 dark:border-white/5">
               <p className="text-slate-400 dark:text-slate-500 text-xs">
                 Already part of the elite?
                 <button

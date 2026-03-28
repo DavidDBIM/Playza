@@ -18,7 +18,7 @@ const badges: Badge[] = [
     count: 10,
     total: 10,
     unlocked: true,
-    icon: <MdEmojiEvents className="text-yellow-500 text-3xl" />,
+    icon: <MdEmojiEvents className="text-yellow-500 text-xl md:text-3xl" />,
     description: "Win 10 professional matches.",
   },
   {
@@ -27,7 +27,7 @@ const badges: Badge[] = [
     count: 150,
     total: 500,
     unlocked: false,
-    icon: <MdEmojiEvents className="text-blue-500 text-3xl" />,
+    icon: <MdEmojiEvents className="text-blue-500 text-xl md:text-3xl" />,
     description: "Earn 500 tickets in total.",
   },
   {
@@ -36,7 +36,7 @@ const badges: Badge[] = [
     count: 5,
     total: 10,
     unlocked: false,
-    icon: <MdEmojiEvents className="text-red-500 text-3xl" />,
+    icon: <MdEmojiEvents className="text-red-500 text-xl md:text-3xl" />,
     description: "Get a 10-match win streak.",
   },
   {
@@ -45,7 +45,7 @@ const badges: Badge[] = [
     count: 50,
     total: 50,
     unlocked: true,
-    icon: <MdEmojiEvents className="text-purple-500 text-3xl" />,
+    icon: <MdEmojiEvents className="text-purple-500 text-xl md:text-3xl" />,
     description: "Refer 50 friends to the platform.",
   },
   {
@@ -54,7 +54,7 @@ const badges: Badge[] = [
     count: 10000,
     total: 50000,
     unlocked: false,
-    icon: <MdEmojiEvents className="text-emerald-500 text-3xl" />,
+    icon: <MdEmojiEvents className="text-emerald-500 text-xl md:text-3xl" />,
     description: "Wager a total of 50,000 in games.",
   },
 ];
@@ -82,28 +82,28 @@ const BadgeModal: React.FC<BadgeModalProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 md:p-4">
       <div 
         className="absolute inset-0 bg-black/60 backdrop-blur-sm" 
         onClick={onClose}
       ></div>
-      <div className="glass-card w-full max-w-lg rounded-3xl overflow-hidden relative z-10 animate-in fade-in zoom-in duration-300">
+      <div className="glass-card w-full max-w-lg rounded-xl overflow-hidden relative z-10 animate-in fade-in zoom-in duration-300">
         {/* Header */}
-        <div className="p-6 border-b border-slate-200 dark:border-white/10 flex items-center justify-between bg-primary/5">
+        <div className="p-2 md:p-6 border-b border-slate-200 dark:border-white/10 flex items-center justify-between bg-primary/5">
           <div>
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white">Platform Badges</h2>
+            <h2 className="text-base md:text-xl font-bold text-slate-900 dark:text-white">Platform Badges</h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Unlock these to showcase your achievements</p>
           </div>
           <button 
             onClick={onClose}
             className="p-2 hover:bg-white/10 rounded-full transition-colors"
           >
-            <MdClose className="text-2xl text-slate-500" />
+            <MdClose className="text-lg md:text-2xl text-slate-500" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-6 max-h-[60vh] overflow-y-auto space-y-4 custom-scrollbar scrollbar-hide">
+        <div className="p-2 md:p-6 max-h-[60vh] overflow-y-auto space-y-4 custom-scrollbar scrollbar-hide">
           {badges.map((badge) => (
             <div 
               key={badge.id}
@@ -153,7 +153,7 @@ const BadgeModal: React.FC<BadgeModalProps> = ({ isOpen, onClose }) => {
         </div>
 
         {/* Footer */}
-        <div className="p-6 bg-primary/5 border-t border-slate-200 dark:border-white/10 text-center">
+        <div className="p-2 md:p-6 bg-primary/5 border-t border-slate-200 dark:border-white/10 text-center">
           <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold tracking-widest">
             More badges coming soon!
           </p>

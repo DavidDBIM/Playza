@@ -145,9 +145,9 @@ const HeroBanner = () => {
                 <motion.div 
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="flex items-center gap-3"
+                  className="flex items-center gap-2 md:gap-3"
                 >
-                  <div className="p-2.5 rounded-xl bg-white/10 border border-white/10 backdrop-blur-xl">
+                  <div className="p-2 md:p-2.5 rounded-xl bg-white/10 border border-white/10 backdrop-blur-xl">
                     {activeSlide.icon}
                   </div>
                   <span className="text-[10px] md:text-xs font-black uppercase tracking-[0.2em] text-white/80">
@@ -183,7 +183,7 @@ const HeroBanner = () => {
                 >
                   <Link
                     to={activeSlide.primaryAction.href}
-                    className="inline-flex items-center gap-2 px-8 py-3 text-white font-black text-xs md:text-sm uppercase tracking-widest rounded-xl transition-all duration-300 shadow-xl hover:-translate-y-1 active:scale-95"
+                    className="inline-flex items-center gap-2 px-2 md:px-8 py-2 md:py-3 text-white font-black text-xs md:text-sm uppercase tracking-widest rounded-xl transition-all duration-300 shadow-xl hover:-translate-y-1 active:scale-95"
                     style={{ backgroundColor: activeSlide.accent, boxShadow: `0 10px 20px -5px ${activeSlide.accent}60` }}
                   >
                     {activeSlide.primaryAction.label}
@@ -197,25 +197,25 @@ const HeroBanner = () => {
       </div>
 
       {/* Navigation Controls */}
-      <div className="absolute inset-y-0 left-0 flex items-center pl-4 z-30">
+      <div className="absolute inset-y-0 left-0 flex items-center pl-2 md:pl-4 z-30">
         <button
           onClick={goToPrevious}
-          className="p-3 rounded-2xl bg-black/40 hover:bg-black/60 text-white/50 hover:text-white backdrop-blur-xl border border-white/10 transition-all opacity-0 group-hover:opacity-100"
+          className="p-2 md:p-3 rounded-2xl bg-black/40 hover:bg-black/60 text-white/50 hover:text-white backdrop-blur-xl border border-white/10 transition-all opacity-0 group-hover:opacity-100"
         >
           <ChevronLeft size={24} />
         </button>
       </div>
-      <div className="absolute inset-y-0 right-0 flex items-center pr-4 z-30">
+      <div className="absolute inset-y-0 right-0 flex items-center pr-2 md:pr-4 z-30">
         <button
           onClick={goToNext}
-          className="p-3 rounded-2xl bg-black/40 hover:bg-black/60 text-white/50 hover:text-white backdrop-blur-xl border border-white/10 transition-all opacity-0 group-hover:opacity-100"
+          className="p-2 md:p-3 rounded-2xl bg-black/40 hover:bg-black/60 text-white/50 hover:text-white backdrop-blur-xl border border-white/10 transition-all opacity-0 group-hover:opacity-100"
         >
           <ChevronRight size={24} />
         </button>
       </div>
 
       {/* Modern Slim Indicators */}
-      <div className="absolute bottom-6 right-8 md:right-16 z-30 flex gap-3">
+      <div className="absolute bottom-6 right-8 md:right-16 z-30 flex gap-2 md:gap-3">
         {slides.map((_, index) => (
           <button
             key={index}

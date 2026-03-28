@@ -112,16 +112,16 @@ export const AddPaymentMethodModal = ({
       onClick={(e) => {
         if (e.target === backdropRef.current) onClose();
       }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 dark:bg-black/70 backdrop-blur-sm px-4 animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 dark:bg-black/70 backdrop-blur-sm px-2 md:px-4 animate-in fade-in duration-200"
     >
-      <div className="w-full max-w-md bg-white dark:bg-playza-dark/60 border border-slate-200 dark:border-white/10 rounded-3xl shadow-2xl p-8 animate-in slide-in-from-bottom-4 duration-300 backdrop-blur-3xl">
+      <div className="w-full max-w-md bg-white dark:bg-playza-dark/60 border border-slate-200 dark:border-white/10 rounded-xl shadow-2xl p-2 md:p-8 animate-in slide-in-from-bottom-4 duration-300 backdrop-blur-3xl">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-            <div className="size-10 rounded-2xl bg-secondary/10 flex items-center justify-center text-secondary text-xl shadow-inner">
+          <div className="flex items-center gap-2 md:gap-3">
+            <div className="size-10 rounded-2xl bg-secondary/10 flex items-center justify-center text-secondary text-base md:text-xl shadow-inner">
               <MdPayments />
             </div>
-            <h3 className="text-slate-900 dark:text-white font-black text-lg italic uppercase tracking-tight">
+            <h3 className="text-slate-900 dark:text-white font-black text-sm md:text-lg italic uppercase tracking-tight">
               {step === "success" ? "Method Added" : "Add Payment Method"}
             </h3>
           </div>
@@ -135,11 +135,11 @@ export const AddPaymentMethodModal = ({
 
         {/* ── Step: Success ── */}
         {step === "success" && (
-          <div className="flex flex-col items-center gap-4 py-8 text-center">
-            <div className="size-16 rounded-full bg-playza-green/20 flex items-center justify-center text-playza-green text-4xl animate-in zoom-in duration-300 shadow-lg shadow-playza-green/20">
+          <div className="flex flex-col items-center gap-2 md:gap-4 py-2 md:py-8 text-center">
+            <div className="size-16 rounded-full bg-playza-green/20 flex items-center justify-center text-playza-green text-2xl md:text-4xl animate-in zoom-in duration-300 shadow-lg shadow-playza-green/20">
               <MdCheckCircle />
             </div>
-            <p className="text-slate-900 dark:text-white font-black uppercase tracking-tight text-xl italic">
+            <p className="text-slate-900 dark:text-white font-black uppercase tracking-tight text-xs md:text-base md:text-xl italic">
               Account Linked!
             </p>
             <p className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-widest">
@@ -182,7 +182,7 @@ export const AddPaymentMethodModal = ({
               <select
                 value={bankName}
                 onChange={(e) => setBankName(e.target.value)}
-                className="w-full h-12 px-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold focus:ring-1 focus:ring-primary focus:border-primary transition-all text-slate-900 dark:text-white appearance-none cursor-pointer"
+                className="w-full h-12 px-2 md:px-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold focus:ring-1 focus:ring-primary focus:border-primary transition-all text-slate-900 dark:text-white appearance-none cursor-pointer"
               >
                 <option value="" className="bg-white dark:bg-slate-900 text-slate-500">
                   -- Choose --
@@ -207,7 +207,7 @@ export const AddPaymentMethodModal = ({
                 placeholder="0123456789"
                 value={accountNumber}
                 onChange={(e) => setAccountNumber(onlyDigits(e.target.value))}
-                className="w-full h-12 px-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold tracking-widest focus:ring-1 focus:ring-primary focus:border-primary transition-all text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700"
+                className="w-full h-12 px-2 md:px-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold tracking-widest focus:ring-1 focus:ring-primary focus:border-primary transition-all text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700"
               />
             </div>
 
@@ -235,12 +235,12 @@ export const AddPaymentMethodModal = ({
             )}
 
             {error && (
-              <p className="text-red-400 text-[11px] font-bold tracking-wide animate-in fade-in duration-200">
+              <p className="text-xs md:text-base text-red-400 text-[11px] font-bold tracking-wide animate-in fade-in duration-200">
                 ⚠ {error}
               </p>
             )}
 
-            <div className="flex gap-3 pt-2">
+            <div className="flex gap-2 md:gap-3 pt-2">
               <button
                 onClick={onClose}
                 className="flex-1 h-12 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest hover:text-slate-900 dark:hover:text-white transition-all shadow-sm"
@@ -265,41 +265,41 @@ export const AddPaymentMethodModal = ({
             </p>
 
             <div className="space-y-3">
-              <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/5 flex items-center gap-4 shadow-inner">
-                <div className="size-10 rounded-xl bg-secondary/10 flex items-center justify-center text-secondary text-xl shrink-0">
+              <div className="p-2 md:p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/5 flex items-center gap-2 md:gap-4 shadow-inner">
+                <div className="size-10 rounded-xl bg-secondary/10 flex items-center justify-center text-secondary text-base md:text-xl shrink-0">
                   <MdAccountBalance />
                 </div>
                 <div>
-                  <p className="text-slate-500 text-[9px] font-black uppercase tracking-widest mb-0.5">
+                  <p className="text-xs md:text-base text-slate-500 text-[9px] font-black uppercase tracking-widest mb-0.5">
                     {methodType === "bank" ? "Bank" : "Wallet"}
                   </p>
-                  <p className="text-slate-900 dark:text-white font-black text-sm italic tracking-tight">
+                  <p className="text-slate-900 dark:text-white font-black text-xs md:text-sm italic tracking-tight">
                     {bankName}
                   </p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/5 shadow-inner">
-                  <p className="text-slate-500 text-[9px] font-black uppercase tracking-widest mb-1">
+              <div className="grid grid-cols-2 gap-2 md:gap-3">
+                <div className="p-2 md:p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/5 shadow-inner">
+                  <p className="text-xs md:text-base text-slate-500 text-[9px] font-black uppercase tracking-widest mb-1">
                     Account No.
                   </p>
-                  <p className="text-slate-900 dark:text-white font-black tracking-widest text-sm">
+                  <p className="text-slate-900 dark:text-white font-black tracking-widest text-xs md:text-sm">
                     {accountNumber}
                   </p>
                 </div>
-                <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/5 shadow-inner">
-                  <p className="text-slate-500 text-[9px] font-black uppercase tracking-widest mb-1">
+                <div className="p-2 md:p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/5 shadow-inner">
+                  <p className="text-xs md:text-base text-slate-500 text-[9px] font-black uppercase tracking-widest mb-1">
                     Account Name
                   </p>
-                  <p className="text-slate-900 dark:text-white font-black uppercase italic text-sm">
+                  <p className="text-slate-900 dark:text-white font-black uppercase italic text-xs md:text-sm">
                     {verifiedName}
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="flex gap-3 pt-2">
+            <div className="flex gap-2 md:gap-3 pt-2">
               <button
                 onClick={() => setStep("select")}
                 className="flex-1 h-12 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest hover:text-slate-900 dark:hover:text-white transition-all shadow-sm"

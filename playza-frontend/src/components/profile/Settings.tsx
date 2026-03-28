@@ -136,9 +136,9 @@ const Settings = () => {
 
   if (isLoading) {
     return (
-      <div className="flex-1 mx-auto w-full pb-10 flex flex-col items-center justify-center min-h-[50vh]">
+      <div className="flex-1 mx-auto w-full pb-2 md:pb-10 flex flex-col items-center justify-center min-h-[50vh]">
         <div className="size-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
-        <p className="mt-4 text-slate-500 font-bold animate-pulse">
+        <p className="text-xs md:text-base mt-4 text-slate-500 font-bold animate-pulse">
           Loading Settings...
         </p>
       </div>
@@ -153,14 +153,14 @@ const Settings = () => {
 
       <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-4xl">
         {/* Mobile Page Title */}
-        <h2 className="md:hidden text-xl font-black text-slate-900 dark:text-white tracking-tight">
+        <h2 className="md:hidden text-base md:text-xl font-black text-slate-900 dark:text-white tracking-tight">
           Settings
         </h2>
 
         {/* ── Public Identity ── */}
         <section className="space-y-3">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="size-10 rounded-xl bg-primary/20 flex items-center justify-center text-primary text-xl">
+          <div className="flex items-center gap-2 md:gap-3 mb-3">
+            <div className="size-10 rounded-xl bg-primary/20 flex items-center justify-center text-primary text-base md:text-xl">
               <MdPhotoCamera />
             </div>
             <h2 className="text-lg md:text-2xl font-black text-slate-900 dark:text-white italic tracking-tight">
@@ -168,13 +168,13 @@ const Settings = () => {
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-[160px_1fr] gap-12 items-start glass-card px-2 py-4 md:p-8 rounded-xl border-white/5">
+          <div className="grid grid-cols-1 md:grid-cols-[160px_1fr] gap-2 md:gap-12 items-start glass-card px-2 py-2 md:py-4 md:p-8 rounded-xl border-white/5">
             {/* Avatar */}
-            <div className="flex flex-col items-center gap-4">
+            <div className="flex flex-col items-center gap-2 md:gap-4">
               <div className="relative group/avatar">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <div className="size-32 rounded-[2.5rem] bg-slate-100 dark:bg-white/5 border-2 border-slate-200 dark:border-white/10 overflow-hidden shadow-2xl transition-transform duration-500 group-hover/avatar:scale-105 cursor-pointer relative">
+                    <div className="size-32 rounded-xl bg-slate-100 dark:bg-white/5 border-2 border-slate-200 dark:border-white/10 overflow-hidden shadow-2xl transition-transform duration-500 group-hover/avatar:scale-105 cursor-pointer relative">
                       {avatarUrl || user?.avatar_url ? (
                         <img
                           alt="Avatar"
@@ -187,23 +187,23 @@ const Settings = () => {
                         </div>
                       )}
                       <div className="absolute inset-0 bg-primary/60 opacity-0 group-hover/avatar:opacity-100 flex items-center justify-center transition-all backdrop-blur-sm">
-                        <MdPhotoCamera className="text-3xl text-white" />
+                        <MdPhotoCamera className="text-xl md:text-3xl text-white" />
                       </div>
                     </div>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="center" className="w-48 glass bg-white/90 dark:bg-slate-900/90 border-primary/20 p-2">
                     <DropdownMenuItem
                       onClick={() => fileInputRef.current?.click()}
-                      className="cursor-pointer gap-2 py-2.5 px-3 rounded-xl focus:bg-primary/10 data-highlighted:bg-primary/10 transition-colors"
+                      className="cursor-pointer gap-2 py-2 md:py-2.5 px-2 md:px-3 rounded-xl focus:bg-primary/10 data-highlighted:bg-primary/10 transition-colors"
                     >
-                      <MdPhotoCamera className="text-lg" />
+                      <MdPhotoCamera className="text-sm md:text-lg" />
                       <span className="font-medium text-sm">Change Image</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={deleteAvatar}
-                      className="cursor-pointer gap-2 py-2.5 px-3 rounded-xl text-red-500 focus:bg-red-50/50 dark:focus:bg-red-900/20 transition-colors"
+                      className="cursor-pointer gap-2 py-2 md:py-2.5 px-2 md:px-3 rounded-xl text-red-500 focus:bg-red-50/50 dark:focus:bg-red-900/20 transition-colors"
                     >
-                      <MdDelete className="text-lg" />
+                      <MdDelete className="text-sm md:text-lg" />
                       <span className="font-medium text-sm">Delete Image</span>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -217,7 +217,7 @@ const Settings = () => {
                   className="hidden"
                 />
                 <div className="absolute -bottom-2 -right-2 bg-primary text-white size-8 flex items-center justify-center rounded-full border-4 border-white dark:border-slate-900 shadow-xl glow-accent pointer-events-none">
-                  <MdAdd className="text-xl" />
+                  <MdAdd className="text-base md:text-xl" />
                 </div>
               </div>
             </div>
@@ -228,7 +228,7 @@ const Settings = () => {
               onSubmit={handleSubmit(onProfileSubmit)}
             >
               {/* Real Name row */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-6">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-1.5">
                     First Name <MdLock className="text-[10px] opacity-50" />
@@ -255,9 +255,9 @@ const Settings = () => {
                 </div>
               </div>
               {/* Legal name warning */}
-              <div className="flex items-start gap-3 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20">
-                <MdWarning className="text-amber-500 dark:text-amber-400 text-lg shrink-0 mt-0.5" />
-                <p className="text-amber-700 dark:text-amber-300/80 text-[11px] font-bold leading-relaxed">
+              <div className="flex items-start gap-2 md:gap-3 p-2 md:p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20">
+                <MdWarning className="text-amber-500 dark:text-amber-400 text-sm md:text-lg shrink-0 mt-0.5" />
+                <p className="text-xs md:text-base text-amber-700 dark:text-amber-300/80 text-[11px] font-bold leading-relaxed">
                   Your name must exactly match the name on your registered bank
                   account. A mismatch will prevent you from withdrawing your
                   winnings.
@@ -265,13 +265,13 @@ const Settings = () => {
               </div>
 
               {/* Nickname & Phone */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-6">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-1.5">
                     Gaming Nickname <MdLock className="text-[10px] opacity-50" />
                   </label>
                   <input
-                    className="w-full h-12 px-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold opacity-40 cursor-not-allowed text-slate-900 dark:text-white"
+                    className="w-full h-12 px-2 md:px-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold opacity-40 cursor-not-allowed text-slate-900 dark:text-white"
                     type="text"
                     value={user?.username || ""}
                     disabled
@@ -298,13 +298,13 @@ const Settings = () => {
               </div>
 
               {/* Tagline */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-6">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
                     Tagline / Title
                   </label>
                   <input
-                    className="w-full h-12 px-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold focus:ring-1 focus:ring-primary focus:border-primary transition-all text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700"
+                    className="w-full h-12 px-2 md:px-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold focus:ring-1 focus:ring-primary focus:border-primary transition-all text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700"
                     type="text"
                     placeholder="The Subway Legend"
                   />
@@ -337,7 +337,7 @@ const Settings = () => {
                   Bio / About Me
                 </label>
                 <textarea
-                  className="w-full p-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold focus:ring-1 focus:ring-primary focus:border-primary transition-all text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700 resize-none"
+                  className="w-full p-2 md:p-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold focus:ring-1 focus:ring-primary focus:border-primary transition-all text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700 resize-none"
                   placeholder="Hooked on mobile gaming since 2012. Ready for any challenge!"
                   rows={4}
                 ></textarea>
@@ -349,7 +349,7 @@ const Settings = () => {
                   type="button"
                   onClick={handleSubmit(onProfileSubmit)}
                   disabled={isPending || !isDirty}
-                  className="h-12 px-10 rounded-2xl bg-primary text-white text-xs font-black uppercase tracking-[0.1em] hover:scale-105 hover:brightness-110 shadow-lg glow-accent transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="h-12 px-2 md:px-10 rounded-2xl bg-primary text-white text-xs font-black uppercase tracking-[0.1em] hover:scale-105 hover:brightness-110 shadow-lg glow-accent transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {isPending ? (
                     <>
@@ -367,8 +367,8 @@ const Settings = () => {
 
         {/* ── Preferences ── */}
         <section className="space-y-3">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="size-10 rounded-2xl bg-playza-blue/20 flex items-center justify-center text-playza-blue text-xl shadow-inner">
+          <div className="flex items-center gap-2 md:gap-3 mb-3">
+            <div className="size-10 rounded-2xl bg-playza-blue/20 flex items-center justify-center text-playza-blue text-base md:text-xl shadow-inner">
               <MdNotifications />
             </div>
             <h2 className="text-lg md:text-2xl font-black text-slate-900 dark:text-white italic tracking-tight">
@@ -376,10 +376,10 @@ const Settings = () => {
             </h2>
           </div>
 
-          <div className="bg-white dark:bg-white/5 p-8 rounded-[2.5rem] border border-slate-200 dark:border-white/5 space-y-8 shadow-xl">
+          <div className="bg-white dark:bg-white/5 p-2 md:p-8 rounded-xl border border-slate-200 dark:border-white/5 space-y-8 shadow-xl">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
-                <p className="text-sm font-black text-slate-900 dark:text-white italic uppercase tracking-tighter">
+                <p className="text-xs md:text-sm font-black text-slate-900 dark:text-white italic uppercase tracking-tighter">
                   New Match Alerts
                 </p>
                 <p className="text-xs text-slate-500 dark:text-slate-500 font-bold max-w-sm">
@@ -401,7 +401,7 @@ const Settings = () => {
 
             <div className="flex items-center justify-between">
               <div className="space-y-1">
-                <p className="text-sm font-black text-slate-900 dark:text-white italic uppercase tracking-tighter">
+                <p className="text-xs md:text-sm font-black text-slate-900 dark:text-white italic uppercase tracking-tighter">
                   Marketing Emails
                 </p>
                 <p className="text-xs text-slate-500 dark:text-slate-500 font-bold max-w-sm">
@@ -419,7 +419,7 @@ const Settings = () => {
 
             <div className="flex items-center justify-between">
               <div className="space-y-1">
-                <p className="text-sm font-black text-slate-900 dark:text-white italic uppercase tracking-tighter">
+                <p className="text-xs md:text-sm font-black text-slate-900 dark:text-white italic uppercase tracking-tighter">
                   Show Activity on Profile
                 </p>
                 <p className="text-xs text-slate-500 dark:text-slate-500 font-bold max-w-sm">
@@ -441,8 +441,8 @@ const Settings = () => {
 
         {/* ── Financial Methods ── */}
         <section className="space-y-3">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="size-10 rounded-2xl bg-secondary/10 dark:bg-secondary/20 flex items-center justify-center text-secondary text-xl shadow-inner">
+          <div className="flex items-center gap-2 md:gap-3 mb-3">
+            <div className="size-10 rounded-2xl bg-secondary/10 dark:bg-secondary/20 flex items-center justify-center text-secondary text-base md:text-xl shadow-inner">
               <MdPayments />
             </div>
             <h2 className="text-lg md:text-2xl font-black text-slate-900 dark:text-white italic tracking-tight">
@@ -450,21 +450,21 @@ const Settings = () => {
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-6">
             {/* Existing method */}
             {hasKudaAccount && (
-              <div className="bg-white dark:bg-white/5 p-8 rounded-[2.5rem] border border-slate-200 dark:border-white/5 space-y-6 group hover:border-primary/20 transition-all shadow-xl relative overflow-hidden animate-in zoom-in duration-300">
+              <div className="bg-white dark:bg-white/5 p-2 md:p-8 rounded-xl border border-slate-200 dark:border-white/5 space-y-6 group hover:border-primary/20 transition-all shadow-xl relative overflow-hidden animate-in zoom-in duration-300">
                 <div className="flex justify-between items-start">
                   <div>
                     <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">
                       Primary Settlement
                     </p>
-                    <h3 className="text-slate-900 dark:text-white font-black text-lg italic tracking-tighter">
+                    <h3 className="text-slate-900 dark:text-white font-black text-sm md:text-lg italic tracking-tighter">
                       Kuda Bank
                     </h3>
                   </div>
                   <div className="flex flex-col items-end gap-2">
-                    <div className="bg-secondary/10 px-3 py-1 rounded-full text-[10px] font-black uppercase text-secondary tracking-widest">
+                    <div className="bg-secondary/10 px-2 md:px-3 py-1 rounded-full text-[10px] font-black uppercase text-secondary tracking-widest">
                       Active
                     </div>
                     <button
@@ -472,25 +472,25 @@ const Settings = () => {
                       className="size-8 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500 hover:bg-red-500 hover:text-white transition-all group/del shadow-sm"
                       title="Remove Account"
                     >
-                      <MdDelete className="text-lg group-hover/del:scale-110 transition-transform" />
+                      <MdDelete className="text-sm md:text-lg group-hover/del:scale-110 transition-transform" />
                     </button>
                   </div>
                 </div>
 
                 <div className="space-y-4">
-                  <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/5 shadow-inner">
-                    <p className="text-slate-500 text-[9px] font-black uppercase tracking-widest mb-1">
+                  <div className="p-2 md:p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/5 shadow-inner">
+                    <p className="text-xs md:text-base text-slate-500 text-[9px] font-black uppercase tracking-widest mb-1">
                       Account Number
                     </p>
-                    <p className="text-slate-900 dark:text-white font-black tracking-[0.2em]">
+                    <p className="text-xs md:text-base text-slate-900 dark:text-white font-black tracking-[0.2em]">
                       **** **** 8829
                     </p>
                   </div>
-                  <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/5 shadow-inner">
-                    <p className="text-slate-500 text-[9px] font-black uppercase tracking-widest mb-1">
+                  <div className="p-2 md:p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/5 shadow-inner">
+                    <p className="text-xs md:text-base text-slate-500 text-[9px] font-black uppercase tracking-widest mb-1">
                       Legal Name
                     </p>
-                    <p className="text-slate-900 dark:text-white font-black uppercase italic">
+                    <p className="text-xs md:text-base text-slate-900 dark:text-white font-black uppercase italic">
                       {user?.first_name} {user?.last_name}
                     </p>
                   </div>
@@ -501,12 +501,12 @@ const Settings = () => {
             {/* Add new method card */}
             <div
               onClick={() => setShowAddMethod(true)}
-              className="border-2 border-dashed border-slate-200 dark:border-white/10 rounded-[2.5rem] flex flex-col items-center justify-center p-8 text-center group cursor-pointer hover:border-primary/40 hover:bg-primary/5 transition-all duration-500"
+              className="border-2 border-dashed border-slate-200 dark:border-white/10 rounded-xl flex flex-col items-center justify-center p-2 md:p-8 text-center group cursor-pointer hover:border-primary/40 hover:bg-primary/5 transition-all duration-500"
             >
-              <div className="size-16 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center mb-4 group-hover:scale-110 group-hover:bg-primary/20 group-hover:text-primary transition-all text-2xl text-slate-500 shadow-inner">
+              <div className="size-16 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center mb-4 group-hover:scale-110 group-hover:bg-primary/20 group-hover:text-primary transition-all text-lg md:text-2xl text-slate-500 shadow-inner">
                 <MdAdd />
               </div>
-              <h4 className="text-slate-900 dark:text-white font-black italic text-lg uppercase tracking-tighter mb-1">
+              <h4 className="text-slate-900 dark:text-white font-black italic text-sm md:text-lg uppercase tracking-tighter mb-1">
                 New Method
               </h4>
               <p className="text-xs text-slate-500 dark:text-slate-400 font-bold max-w-45">
@@ -517,7 +517,7 @@ const Settings = () => {
         </section>
 
         {/* ── Final Actions ── */}
-        <div className="pt-10 border-t border-slate-200 dark:border-white/5 flex flex-col sm:flex-row items-center justify-between gap-6">
+        <div className="pt-2 md:pt-10 border-t border-slate-200 dark:border-white/5 flex flex-col sm:flex-row items-center justify-between gap-2 md:gap-6">
           <button
             onClick={handleDeactivate}
             disabled={isDeactivating}
@@ -530,17 +530,17 @@ const Settings = () => {
             )}
             {isDeactivating ? "Deactivating..." : "Deactivate Gaming Account"}
           </button>
-          <div className="flex gap-4 w-full sm:w-auto">
+          <div className="flex gap-2 md:gap-4 w-full sm:w-auto">
             <button
               onClick={() => reset()}
-              className="flex-1 sm:flex-none h-12 px-8 rounded-2xl text-xs font-black text-slate-500 uppercase tracking-widest hover:text-slate-900 dark:hover:text-white transition-all bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 shadow-sm"
+              className="flex-1 sm:flex-none h-12 px-2 md:px-8 rounded-2xl text-xs font-black text-slate-500 uppercase tracking-widest hover:text-slate-900 dark:hover:text-white transition-all bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 shadow-sm"
             >
               Reset
             </button>
             <button
               onClick={handleSubmit(onProfileSubmit)}
               disabled={isPending || !isDirty}
-              className="flex-1 sm:flex-none min-w-40 h-12 px-10 rounded-2xl bg-primary text-white text-xs font-black uppercase tracking-[0.1em] hover:scale-105 hover:brightness-110 shadow-2xl glow-accent transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="flex-1 sm:flex-none min-w-40 h-12 px-2 md:px-10 rounded-2xl bg-primary text-white text-xs font-black uppercase tracking-[0.1em] hover:scale-105 hover:brightness-110 shadow-2xl glow-accent transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {isPending ? (
                 <>

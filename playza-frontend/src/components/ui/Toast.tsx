@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { X, CheckCircle, AlertCircle, Info, Trophy, Users, ArrowUp, Target, Zap, Star, Rocket } from 'lucide-react';
 
 export type ToastType = 'success' | 'error' | 'info' | 'entry' | 'rank' | 'overtake' | 'winning_zone' | 'score' | 'achievement' | 'streak';
@@ -72,7 +72,7 @@ export const Toast = ({ id, type, message, user, onClose, duration = 4000 }: Toa
         {user && (
           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary mb-0.5">{user}</p>
         )}
-        <p className="text-xs font-black text-slate-800 dark:text-white/90 leading-tight pr-4">
+        <p className="text-xs font-black text-slate-800 dark:text-white/90 leading-tight pr-2 md:pr-4">
           {message}
         </p>
       </div>

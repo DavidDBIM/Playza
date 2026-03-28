@@ -68,16 +68,16 @@ export const PinModal = ({ mode, onClose }: PinModalProps) => {
       onClick={(e) => {
         if (e.target === backdropRef.current) onClose();
       }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 dark:bg-black/70 backdrop-blur-sm px-4 animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 dark:bg-black/70 backdrop-blur-sm px-2 md:px-4 animate-in fade-in duration-200"
     >
-      <div className="w-full max-w-md bg-white dark:bg-playza-dark/60 border border-slate-200 dark:border-white/10 rounded-3xl shadow-2xl p-8 animate-in slide-in-from-bottom-4 duration-300 backdrop-blur-3xl">
+      <div className="w-full max-w-md bg-white dark:bg-playza-dark/60 border border-slate-200 dark:border-white/10 rounded-xl shadow-2xl p-2 md:p-8 animate-in slide-in-from-bottom-4 duration-300 backdrop-blur-3xl">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-            <div className="size-10 rounded-2xl bg-primary/10 flex items-center justify-center text-primary text-xl shadow-inner">
+          <div className="flex items-center gap-2 md:gap-3">
+            <div className="size-10 rounded-2xl bg-primary/10 flex items-center justify-center text-primary text-base md:text-xl shadow-inner">
               <MdLock />
             </div>
-            <h3 className="text-slate-900 dark:text-white font-black text-lg italic uppercase tracking-tight">
+            <h3 className="text-slate-900 dark:text-white font-black text-sm md:text-lg italic uppercase tracking-tight">
               {title}
             </h3>
           </div>
@@ -90,11 +90,11 @@ export const PinModal = ({ mode, onClose }: PinModalProps) => {
         </div>
 
         {success ? (
-          <div className="flex flex-col items-center gap-4 py-8 text-center">
-            <div className="size-16 rounded-full bg-playza-green/20 flex items-center justify-center text-playza-green text-4xl animate-in zoom-in duration-300 shadow-lg shadow-playza-green/20">
+          <div className="flex flex-col items-center gap-2 md:gap-4 py-2 md:py-8 text-center">
+            <div className="size-16 rounded-full bg-playza-green/20 flex items-center justify-center text-playza-green text-2xl md:text-4xl animate-in zoom-in duration-300 shadow-lg shadow-playza-green/20">
               <MdCheckCircle />
             </div>
-            <p className="text-slate-900 dark:text-white font-black uppercase tracking-tight text-xl italic">
+            <p className="text-slate-900 dark:text-white font-black uppercase tracking-tight text-xs md:text-base md:text-xl italic">
               PIN Updated!
             </p>
             <p className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-widest">
@@ -115,7 +115,7 @@ export const PinModal = ({ mode, onClose }: PinModalProps) => {
                   placeholder="••••"
                   value={oldPin}
                   onChange={(e) => setOldPin(onlyDigits(e.target.value))}
-                  className="w-full h-12 px-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold tracking-[0.5em] focus:ring-1 focus:ring-primary focus:border-primary transition-all text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700"
+                  className="w-full h-12 px-2 md:px-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold tracking-[0.5em] focus:ring-1 focus:ring-primary focus:border-primary transition-all text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700"
                 />
               </div>
             )}
@@ -131,7 +131,7 @@ export const PinModal = ({ mode, onClose }: PinModalProps) => {
                 placeholder="••••"
                 value={newPin}
                 onChange={(e) => setNewPin(onlyDigits(e.target.value))}
-                className="w-full h-12 px-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold tracking-[0.5em] focus:ring-1 focus:ring-primary focus:border-primary transition-all text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700"
+                className="w-full h-12 px-2 md:px-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold tracking-[0.5em] focus:ring-1 focus:ring-primary focus:border-primary transition-all text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700"
               />
             </div>
 
@@ -155,12 +155,12 @@ export const PinModal = ({ mode, onClose }: PinModalProps) => {
             </div>
 
             {error && (
-              <p className="text-red-400 text-[11px] font-bold tracking-wide animate-in fade-in duration-200">
+              <p className="text-xs md:text-base text-red-400 text-[11px] font-bold tracking-wide animate-in fade-in duration-200">
                 ⚠ {error}
               </p>
             )}
 
-            <div className="flex gap-3 pt-2">
+            <div className="flex gap-2 md:gap-3 pt-2">
               <button
                 onClick={onClose}
                 className="flex-1 h-12 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest hover:text-slate-900 dark:hover:text-white transition-all shadow-sm"

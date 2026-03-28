@@ -17,7 +17,7 @@ export const SessionCard = ({ session, gameTitle, onJoin }: SessionCardProps) =>
   return (
     <div className="group relative">
       {/* Glow Effect on Hover */}
-      <div className="absolute inset-0 bg-playza-blue/10 blur-3xl rounded-4xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+      <div className="absolute inset-0 bg-playza-blue/10 blur-3xl rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
       <div className="relative bg-white dark:bg-[#0a0f1e]/80 backdrop-blur-3xl rounded-2xl p-4 md:p-5 border border-slate-200 dark:border-white/5 space-y-3 md:space-y-4 shadow-2xl overflow-hidden group-hover:border-primary/30 transition-colors">
         {/* Header: Title & Badge */}
@@ -53,25 +53,25 @@ export const SessionCard = ({ session, gameTitle, onJoin }: SessionCardProps) =>
         {/* Stats Row: Entry Fee & Prize Pool */}
         <div className="flex items-center gap-6 md:gap-10 border-t border-slate-100 dark:border-white/5 pt-3 md:pt-4">
           <div className="space-y-1">
-            <p className="text-[9px] text-slate-500 uppercase font-black tracking-widest flex items-center gap-1.5">
+            <p className="text-xs md:text-base text-[9px] text-slate-500 uppercase font-black tracking-widest flex items-center gap-1.5">
               <CreditCard className="w-3 h-3 opacity-60" />
               Entry
             </p>
             <div className="flex items-center gap-1.5">
               <ZASymbol className="text-sm scale-90" />
-              <p className="text-slate-900 dark:text-white font-black text-lg md:text-xl tracking-tighter leading-none">
+              <p className="text-xs md:text-base text-slate-900 dark:text-white font-black text-lg md:text-xl tracking-tighter leading-none">
                 {session.entryFee}
               </p>
             </div>
           </div>
           <div className="space-y-1">
-            <p className="text-[9px] text-slate-500 uppercase font-black tracking-widest flex items-center gap-1.5">
+            <p className="text-xs md:text-base text-[9px] text-slate-500 uppercase font-black tracking-widest flex items-center gap-1.5">
               <Trophy className="w-3 h-3 text-playza-blue/60 fill-playza-blue/10" />
               {session.status === 'ended' ? 'Prize' : 'Pool'}
             </p>
             <div className="flex items-center gap-1.5">
               <ZASymbol className="text-sm scale-90" />
-              <p className="text-playza-green font-black text-lg md:text-xl tracking-tighter leading-none">
+              <p className="text-xs md:text-base text-playza-green font-black text-lg md:text-xl tracking-tighter leading-none">
                 {session.prizePool}
               </p>
             </div>

@@ -48,7 +48,7 @@ const TransactionDetailModal = ({ isOpen, onClose, transaction }: TransactionDet
   return (
     <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity overflow-y-auto" onClick={onClose}>
       <div 
-        className="relative w-full max-w-md glass-card rounded-3xl overflow-hidden shadow-2xl border border-white/10 animate-in fade-in zoom-in duration-300"
+        className="relative w-full max-w-md glass-card rounded-xl overflow-hidden shadow-2xl border border-white/10 animate-in fade-in zoom-in duration-300"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header Decor */}
@@ -61,20 +61,20 @@ const TransactionDetailModal = ({ isOpen, onClose, transaction }: TransactionDet
           <X size={20} />
         </button>
 
-        <div className="p-8">
+        <div className="p-2 md:p-8">
           {/* Icon & Status */}
           <div className="flex flex-col items-center mb-8">
             <div className={`size-20 rounded-2xl ${bg} flex items-center justify-center mb-4 shadow-inner border border-white/5`}>
               <Icon className={`${color} text-4xl`} />
             </div>
-            <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mb-1 uppercase italic tracking-tight">{transaction.type}</h3>
+            <h3 className="text-base md:text-xl sm:text-2xl font-black text-slate-900 dark:text-white mb-1 uppercase italic tracking-tight">{transaction.type}</h3>
             <span className={`px-4 py-1 rounded-full ${transaction.status === 'Completed' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'} text-[10px] font-black uppercase tracking-[0.2em] border border-white/5`}>
               {transaction.status}
             </span>
           </div>
 
           {/* Amount */}
-          <div className="bg-slate-900/5 dark:bg-white/5 rounded-2xl p-6 text-center mb-8 border border-slate-200 dark:border-white/5 shadow-inner">
+          <div className="bg-slate-900/5 dark:bg-white/5 rounded-2xl p-2 md:p-6 text-center mb-8 border border-slate-200 dark:border-white/5 shadow-inner">
              <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] mb-3">Transaction Amount</p>
              <div className={`text-4xl sm:text-5xl font-black flex items-center justify-center gap-2 italic ${isPositive ? 'text-primary' : 'text-slate-900 dark:text-white'}`}>
                {isPositive ? '+' : '-'}
@@ -110,14 +110,14 @@ const TransactionDetailModal = ({ isOpen, onClose, transaction }: TransactionDet
           </div>
 
           {/* Actions */}
-          <div className="grid grid-cols-2 gap-4">
-             <button className="flex items-center justify-center gap-2 py-3 bg-white/5 border border-white/5 rounded-xl text-white font-bold hover:bg-white/10 transition-all">
+          <div className="grid grid-cols-2 gap-2 md:gap-4">
+             <button className="flex items-center justify-center gap-2 py-2 md:py-3 bg-white/5 border border-white/5 rounded-xl text-white font-bold hover:bg-white/10 transition-all">
                <Share2 size={18} />
                Share
              </button>
              <button 
                onClick={onClose}
-               className="flex items-center justify-center gap-2 py-3 bg-primary text-background-dark rounded-xl font-bold hover:scale-[1.02] transition-all shadow-lg shadow-primary/20"
+               className="flex items-center justify-center gap-2 py-2 md:py-3 bg-primary text-background-dark rounded-xl font-bold hover:scale-[1.02] transition-all shadow-lg shadow-primary/20"
              >
                Dismiss
              </button>

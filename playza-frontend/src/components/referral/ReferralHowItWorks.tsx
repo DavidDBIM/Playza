@@ -34,7 +34,7 @@ const ReferralHowItWorks = () => {
           </p>
         </div>
         <div className="h-0.5 flex-1 bg-slate-200 dark:bg-slate-800 hidden md:block mx-8 rounded-full opacity-50"></div>
-        <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border border-primary/20">
+        <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-2 md:px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border border-primary/20">
           Season 1 Active
         </div>
       </div>
@@ -45,7 +45,7 @@ const ReferralHowItWorks = () => {
             key={idx} 
             className="group relative bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-2xl p-2 md:p-6 hover:border-primary/50 transition-all duration-300 shadow-sm hover:shadow-xl hover:shadow-primary/5 cursor-default"
           >
-            <div className="absolute top-4 right-4 text-3xl font-display font-black text-slate-100 dark:text-slate-800/50 z-0 group-hover:text-primary/10 transition-colors">
+            <div className="absolute top-4 right-4 text-xl md:text-3xl font-display font-black text-slate-100 dark:text-slate-800/50 z-0 group-hover:text-primary/10 transition-colors">
               0{step.number}
             </div>
             

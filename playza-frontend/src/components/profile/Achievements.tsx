@@ -23,7 +23,7 @@ const achievements: Achievement[] = [
     rarity: "Common",
     category: "Gaming",
     unlocked: true,
-    icon: <MdStars className="text-slate-400 text-3xl" />,
+    icon: <MdStars className="text-slate-400 text-xl md:text-3xl" />,
   },
   {
     id: "2",
@@ -34,7 +34,7 @@ const achievements: Achievement[] = [
     rarity: "Rare",
     category: "Gaming",
     unlocked: true,
-    icon: <MdEmojiEvents className="text-blue-400 text-3xl" />,
+    icon: <MdEmojiEvents className="text-blue-400 text-xl md:text-3xl" />,
   },
   {
     id: "3",
@@ -45,7 +45,7 @@ const achievements: Achievement[] = [
     rarity: "Rare",
     category: "Gaming",
     unlocked: true,
-    icon: <MdLocalFireDepartment className="text-orange-500 text-3xl" />,
+    icon: <MdLocalFireDepartment className="text-orange-500 text-xl md:text-3xl" />,
   },
   {
     id: "4",
@@ -56,7 +56,7 @@ const achievements: Achievement[] = [
     rarity: "Epic",
     category: "Financial",
     unlocked: false,
-    icon: <MdAccountBalanceWallet className="text-purple-400 text-3xl" />,
+    icon: <MdAccountBalanceWallet className="text-purple-400 text-xl md:text-3xl" />,
   },
   {
     id: "5",
@@ -67,7 +67,7 @@ const achievements: Achievement[] = [
     rarity: "Legendary",
     category: "Social",
     unlocked: false,
-    icon: <MdGroup className="text-yellow-500 text-3xl" />,
+    icon: <MdGroup className="text-yellow-500 text-xl md:text-3xl" />,
   },
   {
     id: "6",
@@ -78,7 +78,7 @@ const achievements: Achievement[] = [
     rarity: "Epic",
     category: "Gaming",
     unlocked: false,
-    icon: <MdGrade className="text-emerald-400 text-3xl" />,
+    icon: <MdGrade className="text-emerald-400 text-xl md:text-3xl" />,
   },
 ];
 
@@ -93,27 +93,27 @@ const Achievements = () => {
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* Mobile Page Title */}
-      <h2 className="md:hidden text-2xl font-black text-slate-900 dark:text-white tracking-tight">Achievements</h2>
+      <h2 className="md:hidden text-lg md:text-2xl font-black text-slate-900 dark:text-white tracking-tight">Achievements</h2>
 
       {/* Stats Summary Area */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="glass-card p-6 rounded-3xl border-primary/20 bg-linear-to-br from-primary/10 to-transparent">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-6">
+        <div className="glass-card p-2 md:p-6 rounded-xl border-primary/20 bg-linear-to-br from-primary/10 to-transparent">
           <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Total Unlocked</p>
-          <p className="text-slate-900 dark:text-white text-3xl font-black">12 / 48</p>
+          <p className="text-xs md:text-base text-slate-900 dark:text-white text-xl md:text-3xl font-black">12 / 48</p>
           <div className="mt-4 h-1.5 w-full bg-slate-500/10 rounded-full overflow-hidden">
             <div className="h-full bg-primary rounded-full" style={{ width: '25%' }}></div>
           </div>
         </div>
-        <div className="bg-white dark:bg-white/5 p-6 rounded-3xl border border-slate-200 dark:border-white/5 shadow-xl">
+        <div className="bg-white dark:bg-white/5 p-2 md:p-6 rounded-xl border border-slate-200 dark:border-white/5 shadow-xl">
           <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Achievement Points</p>
-          <p className="text-slate-900 dark:text-white text-3xl font-black italic tracking-tighter">2,450</p>
+          <p className="text-xs md:text-base text-slate-900 dark:text-white text-xl md:text-3xl font-black italic tracking-tighter">2,450</p>
           <p className="text-primary text-[10px] font-black uppercase tracking-widest mt-2 flex items-center gap-1">
             <MdGrade className="text-sm" /> Global Rank #432
           </p>
         </div>
-        <div className="bg-white dark:bg-white/5 p-6 rounded-3xl border border-slate-200 dark:border-white/5 shadow-xl">
+        <div className="bg-white dark:bg-white/5 p-2 md:p-6 rounded-xl border border-slate-200 dark:border-white/5 shadow-xl">
           <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Next Badge</p>
-          <p className="text-slate-900 dark:text-white text-xl font-black italic tracking-tight">ELITE WARRIOR</p>
+          <p className="text-slate-900 dark:text-white text-xs md:text-base md:text-xl font-black italic tracking-tight">ELITE WARRIOR</p>
           <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mt-2 flex items-center gap-1">
              <span className="size-1.5 bg-primary rounded-full animate-pulse"></span>
              2 missions remaining
@@ -139,7 +139,7 @@ const Achievements = () => {
       </div>
 
       {/* Achievements Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 md:gap-6">
         {filteredAchievements.map((achievement) => (
           <div 
             key={achievement.id}
@@ -154,7 +154,7 @@ const Achievements = () => {
                 <div className="absolute -top-12 -right-12 size-32 bg-primary/10 blur-3xl rounded-full transition-transform group-hover:scale-150"></div>
             )}
 
-            <div className="flex items-start gap-6 relative z-10">
+            <div className="flex items-start gap-2 md:gap-6 relative z-10">
               <div className={`size-20 rounded-2xl flex items-center justify-center relative shrink-0 transition-transform duration-500 group-hover:scale-110 shadow-inner ${
                 achievement.unlocked ? "bg-primary/10" : "bg-slate-100 dark:bg-white/5"
               }`}>
@@ -173,7 +173,7 @@ const Achievements = () => {
               <div className="flex-1 space-y-2">
                 <div className="flex justify-between items-start">
                   <div>
-                    <h4 className="text-slate-900 dark:text-white font-black text-lg italic tracking-tighter group-hover:text-primary transition-colors">{achievement.title}</h4>
+                    <h4 className="text-slate-900 dark:text-white font-black text-sm md:text-lg italic tracking-tighter group-hover:text-primary transition-colors">{achievement.title}</h4>
                     <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">{achievement.rarity} • {achievement.category}</p>
                   </div>
                   {!achievement.unlocked && (

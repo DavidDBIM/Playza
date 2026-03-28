@@ -33,7 +33,7 @@ const FeatureGameCard = ({
       >
         <div className="relative z-10 p-2 md:p-4 flex flex-col justify-center gap-2 w-full h-full animate-in fade-in slide-in-from-bottom-8 duration-1000 ">
           {/* Badge */}
-          <div className="w-fit px-4 py-1.5 rounded-full text-[11px] font-black uppercase tracking-widest bg-primary text-primary-foreground shadow-lg shadow-primary/20 mb-2 flex items-center gap-2">
+          <div className="w-fit px-2 md:px-4 py-1.5 rounded-full text-[11px] font-black uppercase tracking-widest bg-primary text-primary-foreground shadow-lg shadow-primary/20 mb-2 flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-white animate-pulse shadow-[0_0_8px_rgba(255,255,255,0.8)]"></span>
             Featured Tournament
           </div>
@@ -72,7 +72,7 @@ const FeatureGameCard = ({
           </div>
 
           {/* CTA Button */}
-          <Button className="w-fit px-6 py-6 rounded-2xl font-black uppercase tracking-[0.15em] transition-all duration-300 transform hover:scale-105 active:scale-95 mt-4 text-xs md:text-sm bg-secondary text-secondary-foreground  hover:-translate-y-1">
+          <Button className="w-fit px-2 md:px-6 py-2 md:py-6 rounded-2xl font-black uppercase tracking-[0.15em] transition-all duration-300 transform hover:scale-105 active:scale-95 mt-4 text-xs md:text-sm bg-secondary text-secondary-foreground  hover:-translate-y-1">
             <Play className="mr-2 fill-current" size={16} />
             {ctaLabel}
           </Button>

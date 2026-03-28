@@ -10,7 +10,7 @@ interface GameHeroProps {
 
 export const GameHero = ({ game, prizePool }: GameHeroProps) => {
   return (
-    <section className="relative w-full min-h-95 md:min-h-120 lg:min-h-137.5 flex items-center overflow-hidden rounded-2xl md:rounded-3xl mb-6 md:mb-8 group border border-slate-200 dark:border-white/5 shadow-xl transition-colors duration-300">
+    <section className="relative w-full min-h-95 md:min-h-120 lg:min-h-137.5 flex items-center overflow-hidden rounded-2xl md:rounded-xl mb-6 md:mb-8 group border border-slate-200 dark:border-white/5 shadow-xl transition-colors duration-300">
       {/* Background Image with theme-aware overlay */}
       <div className="absolute inset-0 z-0">
         <img
@@ -67,7 +67,7 @@ export const GameHero = ({ game, prizePool }: GameHeroProps) => {
 
             {/* Stats Flex-Row */}
             <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 md:gap-4 pt-2 md:pt-4">
-              <div className="glass-card px-3 md:px-5 py-2 md:py-3 rounded-xl border border-slate-200 dark:border-white/5 flex items-center gap-3 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors shadow-sm">
+              <div className="glass-card px-3 md:px-5 py-2 md:py-3 rounded-xl border border-slate-200 dark:border-white/5 flex items-center gap-2 md:gap-3 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors shadow-sm">
                 <div className="p-1.5 bg-playza-blue/10 rounded-lg">
                   <Users className="w-3 md:w-4 h-3 md:h-4 text-playza-blue opacity-70" />
                 </div>
@@ -81,7 +81,7 @@ export const GameHero = ({ game, prizePool }: GameHeroProps) => {
                 </div>
               </div>
 
-              <div className="glass-card px-3 md:px-5 py-2 md:py-3 rounded-xl border border-slate-200 dark:border-white/5 flex items-center gap-3 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors shadow-sm">
+              <div className="glass-card px-3 md:px-5 py-2 md:py-3 rounded-xl border border-slate-200 dark:border-white/5 flex items-center gap-2 md:gap-3 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors shadow-sm">
                 <div className="p-1.5 bg-playza-yellow/10 rounded-lg">
                   <SwatchBook className="w-3 md:w-4 h-3 md:h-4 text-playza-yellow opacity-70" />
                 </div>
@@ -95,7 +95,7 @@ export const GameHero = ({ game, prizePool }: GameHeroProps) => {
                 </div>
               </div>
 
-              <div className="glass-card px-3 md:px-5 py-2 md:py-3 rounded-xl border-l-2 md:border-l-4 border-l-playza-green bg-playza-green/5 flex items-center gap-3 hover:bg-playza-green/10 transition-colors shadow-sm border-y border-r border-slate-200 dark:border-white/5">
+              <div className="glass-card px-3 md:px-5 py-2 md:py-3 rounded-xl border-l-2 md:border-l-4 border-l-playza-green bg-playza-green/5 flex items-center gap-2 md:gap-3 hover:bg-playza-green/10 transition-colors shadow-sm border-y border-r border-slate-200 dark:border-white/5">
                 <div className="p-1.5 bg-playza-green/10 rounded-lg">
                   <Trophy className="w-3 md:w-4 h-3 md:h-4 text-playza-green opacity-70" />
                 </div>
@@ -116,7 +116,7 @@ export const GameHero = ({ game, prizePool }: GameHeroProps) => {
                 to={`/games/${game.slug}/session`}
                 className="inline-block w-full md:w-auto"
               >
-                <button className="group relative w-full md:w-auto bg-primary text-slate-900 font-black px-8 md:px-12 py-3 md:py-4 rounded-xl md:rounded-2xl hover:scale-[1.03] transition-all uppercase tracking-[0.2em] text-[10px] md:text-sm shadow-xl dark:shadow-[0_0_30px_rgba(244,192,37,0.3)] active:scale-95 flex items-center justify-center gap-3 overflow-hidden border border-primary/20">
+                <button className="group relative w-full md:w-auto bg-primary text-slate-900 font-black px-8 md:px-12 py-3 md:py-4 rounded-xl md:rounded-2xl hover:scale-[1.03] transition-all uppercase tracking-[0.2em] text-[10px] md:text-sm shadow-xl dark:shadow-[0_0_30px_rgba(244,192,37,0.3)] active:scale-95 flex items-center justify-center gap-2 md:gap-3 overflow-hidden border border-primary/20">
                   <span>Enter Live Match Arena</span>
                   <div className="relative flex items-center justify-center ml-2">
                     <MousePointer2 className="w-4 h-4 text-slate-900 relative z-10" />

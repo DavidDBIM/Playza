@@ -178,7 +178,7 @@ const OTP = ({ onClick }: OtpProps) => {
             <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-3 tracking-tighter uppercase font-display">
               Verify Account
             </h1>
-            <p className="text-slate-500 dark:text-slate-400 text-sm md:text-base leading-relaxed">
+            <p className="text-slate-500 dark:text-slate-400 text-sm md:text-xs md:text-base leading-relaxed">
               We've sent a 6-digit verification code to
               <br />
               <span className="text-primary font-black tracking-wider">
@@ -189,7 +189,7 @@ const OTP = ({ onClick }: OtpProps) => {
 
           {/* Error banner */}
           {error && (
-            <div className="mb-6 bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3">
+            <div className="mb-6 bg-red-500/10 border border-red-500/30 rounded-xl px-2 md:px-4 py-2 md:py-3">
               <p className="text-red-500 text-xs font-semibold">{error}</p>
             </div>
           )}
@@ -206,7 +206,7 @@ const OTP = ({ onClick }: OtpProps) => {
                   onKeyDown={(e) => handleKeyDown(i, e)}
                   required
                   inputMode="numeric"
-                  className="w-12 h-14 md:w-14 md:h-16 text-center bg-slate-100 dark:bg-slate-900/50 border-2 border-slate-200 dark:border-white/30 rounded-xl focus:border-primary focus:ring-1 focus:ring-primary text-2xl font-black text-primary transition-all outline-none"
+                  className="w-12 h-14 md:w-14 md:h-16 text-center bg-slate-100 dark:bg-slate-900/50 border-2 border-slate-200 dark:border-white/30 rounded-xl focus:border-primary focus:ring-1 focus:ring-primary text-lg md:text-2xl font-black text-primary transition-all outline-none"
                   aria-label={`Digit ${i + 1}`}
                   placeholder="0"
                   maxLength={1}
@@ -221,7 +221,7 @@ const OTP = ({ onClick }: OtpProps) => {
             <Button
               onClick={handleVerify}
               disabled={!isComplete || isVerifying}
-              className="w-full h-15 bg-primary text-background-dark text-lg font-black uppercase tracking-widest rounded-xl shadow-lg shadow-primary/20 hover:shadow-primary/40 hover:-translate-y-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full h-15 bg-primary text-background-dark text-sm md:text-lg font-black uppercase tracking-widest rounded-xl shadow-lg shadow-primary/20 hover:shadow-primary/40 hover:-translate-y-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isVerifying ? (
                 <div className="flex items-center gap-2">
@@ -233,15 +233,15 @@ const OTP = ({ onClick }: OtpProps) => {
               )}
             </Button>
 
-            <div className="flex flex-col items-center gap-6 pt-4">
-              <div className="flex items-center gap-6">
+            <div className="flex flex-col items-center gap-2 md:gap-6 pt-2 md:pt-4">
+              <div className="flex items-center gap-2 md:gap-6">
                 <div className="flex flex-col items-center">
-                  <div className="bg-slate-100 dark:bg-slate-900/80 px-4 py-2 rounded-lg border border-slate-200 dark:border-white/10">
-                    <p className="text-primary text-sm font-black font-mono">
+                  <div className="bg-slate-100 dark:bg-slate-900/80 px-2 md:px-4 py-2 rounded-lg border border-slate-200 dark:border-white/10">
+                    <p className="text-primary text-xs md:text-sm font-black font-mono">
                       {formattedTime}
                     </p>
                   </div>
-                  <p className="text-slate-500 text-[9px] uppercase font-black tracking-widest mt-2 opacity-50">
+                  <p className="text-xs md:text-base text-slate-500 text-[9px] uppercase font-black tracking-widest mt-2 opacity-50">
                     Code Expires
                   </p>
                 </div>
@@ -257,7 +257,7 @@ const OTP = ({ onClick }: OtpProps) => {
 
               <button
                 onClick={() => onClick("signup")}
-                className="flex items-center gap-2 text-slate-500 hover:text-slate-900 dark:hover:text-white text-xs font-bold transition-all p-3 border-t border-slate-200 dark:border-white/10 w-full justify-center group"
+                className="flex items-center gap-2 text-slate-500 hover:text-slate-900 dark:hover:text-white text-xs font-bold transition-all p-2 md:p-3 border-t border-slate-200 dark:border-white/10 w-full justify-center group"
               >
                 <Edit
                   size={14}

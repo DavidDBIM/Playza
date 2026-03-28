@@ -32,8 +32,8 @@ const LiveEntryModal = ({ game, onClick, onConfirm, userBalance = 1250 }: LiveEn
 
   return (
     <main className="fixed inset-0 z-100 overflow-y-auto backdrop-blur-xl bg-slate-950/80 animate-in fade-in duration-300">
-      <div className="min-h-full flex items-center justify-center p-4">
-        <div className="relative w-full max-w-md glass-card rounded-3xl border border-white/10 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+      <div className="min-h-full flex items-center justify-center p-2 md:p-4">
+        <div className="relative w-full max-w-md glass-card rounded-xl border border-white/10 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
           
           <button
             onClick={() => onClick(false)}
@@ -42,9 +42,9 @@ const LiveEntryModal = ({ game, onClick, onConfirm, userBalance = 1250 }: LiveEn
             <X size={18} />
           </button>
 
-          <div className="p-6">
+          <div className="p-2 md:p-6">
             <div className="text-center mb-6">
-              <h2 className="text-2xl font-black text-white tracking-widest uppercase italic">
+              <h2 className="text-lg md:text-2xl font-black text-white tracking-widest uppercase italic">
                 BATTLE <span className="text-primary">ENTRY</span>
               </h2>
               <p className="text-slate-500 font-bold text-xs uppercase tracking-tighter">
@@ -61,14 +61,14 @@ const LiveEntryModal = ({ game, onClick, onConfirm, userBalance = 1250 }: LiveEn
                 />
                 <div className="absolute inset-0 bg-linear-to-t from-slate-900 to-transparent"></div>
                 <div className="absolute bottom-2 left-4">
-                  <h3 className="text-lg font-black text-white italic uppercase tracking-tight">{game.title}</h3>
+                  <h3 className="text-sm md:text-lg font-black text-white italic uppercase tracking-tight">{game.title}</h3>
                 </div>
               </div>
-              <div className="p-4 flex justify-between items-center bg-white/5">
+              <div className="p-2 md:p-4 flex justify-between items-center bg-white/5">
                 <div className="flex items-center gap-2">
                    <div className="flex items-center gap-1 text-primary">
                     <ZASymbol className="text-sm scale-90" />
-                    <span className="text-xl font-black">{formatZA(game.entryFee)}</span>
+                    <span className="text-base md:text-xl font-black">{formatZA(game.entryFee)}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">
@@ -87,7 +87,7 @@ const LiveEntryModal = ({ game, onClick, onConfirm, userBalance = 1250 }: LiveEn
                 </div>
               </div>
               
-              <div className="bg-black/40 rounded-xl p-4 border border-white/5">
+              <div className="bg-black/40 rounded-xl p-2 md:p-4 border border-white/5">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-[10px] font-bold text-slate-400 uppercase">Entry Deduction</span>
                   <span className="text-xs font-black text-rose-500">-{formatZA(game.entryFee)}</span>
@@ -103,14 +103,14 @@ const LiveEntryModal = ({ game, onClick, onConfirm, userBalance = 1250 }: LiveEn
             </div>
 
             {isInsufficient ? (
-              <div className="flex gap-3 p-3 bg-rose-500/10 rounded-xl border border-rose-500/20 mb-6 items-center">
+              <div className="flex gap-2 md:gap-3 p-2 md:p-3 bg-rose-500/10 rounded-xl border border-rose-500/20 mb-6 items-center">
                 <AlertCircle size={16} className="text-rose-500 shrink-0" />
                 <p className="text-[10px] font-bold text-rose-500/80">
                   Insufficient funds. Please top up your wallet.
                 </p>
               </div>
             ) : (
-              <div className="flex gap-3 p-3 bg-amber-500/5 rounded-xl border border-amber-500/20 mb-6 items-center">
+              <div className="flex gap-2 md:gap-3 p-2 md:p-3 bg-amber-500/5 rounded-xl border border-amber-500/20 mb-6 items-center">
                 <ShieldCheck size={16} className="text-amber-500 shrink-0" />
                 <p className="text-[10px] font-bold text-amber-500/70 uppercase tracking-tighter italic">
                   Instant payouts guaranteed on win
