@@ -1,4 +1,5 @@
 import { NavLink } from "react-router";
+import { ZASymbol } from "../currency/ZASymbol";
 
 const CTAReferral = () => {
   return (
@@ -20,9 +21,9 @@ const CTAReferral = () => {
                     Earn Rewards together.
                   </span>
                 </h2>
-                <p className="text-slate-600 dark:text-slate-400 text-xs md:text-base md:text-xl leading-relaxed">
+                <p className="text-slate-600 dark:text-slate-400 text-xs md:text-base leading-relaxed">
                   Join the Playza community and get rewarded for every friend who joins. 
-                  Earn up to <span className="text-accent font-black">1,000 Za</span> instantly.
+                  Earn up to <span className="text-accent font-black"><ZASymbol /> 1,000</span> instantly.
                 </p>
               </div>
 
