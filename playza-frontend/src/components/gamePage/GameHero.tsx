@@ -1,6 +1,7 @@
 import type { Game } from "@/types/types";
 import { Users, Trophy, SwatchBook, MousePointer2 } from "lucide-react";
-import { formatZA } from "@/lib/formatCurrency";
+import { formatZAAmount } from "@/lib/formatCurrency";
+import { ZASymbol } from "@/components/currency/ZASymbol";
 import { Link } from "react-router";
 
 interface GameHeroProps {
@@ -103,8 +104,8 @@ export const GameHero = ({ game, prizePool }: GameHeroProps) => {
                   <span className="text-[7px] md:text-[9px] text-playza-green/70 font-black uppercase tracking-tight">
                     Pot
                   </span>
-                  <span className="text-xl md:text-3xl font-black text-slate-900 dark:text-white italic tracking-tighter">
-                    {formatZA(prizePool)}
+                  <span className="text-xl md:text-3xl font-black text-slate-900 dark:text-white italic tracking-tighter flex items-center gap-1">
+                    <ZASymbol className="text-lg md:text-2xl" />{formatZAAmount(prizePool)}
                   </span>
                 </div>
               </div>
@@ -130,22 +131,6 @@ export const GameHero = ({ game, prizePool }: GameHeroProps) => {
         </div>
       </div>
 
-      <style>{`
-        @keyframes fade-in-up {
-          0% { transform: translateY(30px); opacity: 0; }
-          100% { transform: translateY(0); opacity: 1; }
-        }
-        @keyframes click-pulse {
-          0% { transform: scale(0.5); opacity: 0.8; }
-          100% { transform: scale(1.5); opacity: 0; }
-        }
-        .animate-fade-in-up {
-          animation: fade-in-up 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
-        }
-        .animate-click-pulse {
-          animation: click-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-      `}</style>
     </section>
   );
 };

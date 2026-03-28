@@ -110,7 +110,7 @@ const FullGame = () => {
             ))}
             {filteredGames.length === 0 && (
               <div className="col-span-full py-2 md:py-20 text-center">
-                <p className="text-slate-500 dark:text-slate-400 text-xs md:text-sm md:text-lg">No games found matching your criteria.</p>
+                <p className="text-slate-500 dark:text-slate-400 text-xs md:text-sm">No games found matching your criteria.</p>
               </div>
             )}
           </div>
