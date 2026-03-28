@@ -1,6 +1,5 @@
 import HeroBanner from "@/components/home/HeroBanner";
 import HowItWorks from "@/components/home/HowItWorks";
-// import LeaderBoard from "@/components/home/LeaderBoard";
 import RecentWinners from "@/components/home/RecentWinners";
 import { games } from "@/data/games";
 import HomeGames from "@/components/home/HomeGames";

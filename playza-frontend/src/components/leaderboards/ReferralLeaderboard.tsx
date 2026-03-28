@@ -179,7 +179,7 @@ const ReferralLeaderboard = () => {
                           />
                         </div>
                         <div className="min-w-0">
-                          <p className="font-display font-black text-slate-900 dark:text-slate-100 text-[11px] md:text-xs md:text-sm tracking-tight uppercase italic group-hover:text-primary transition-colors truncate max-w-17.5 xs:max-w-[100px] sm:max-w-none">
+                          <p className="font-display font-black text-slate-900 dark:text-slate-100 text-[11px] md:text-sm tracking-tight uppercase italic group-hover:text-primary transition-colors truncate max-w-17.5 xs:max-w-[100px] sm:max-w-none">
                             <HighlightMatch
                               text={entry.name}
                               query={searchQuery}

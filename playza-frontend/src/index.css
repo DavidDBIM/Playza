@@ -292,14 +292,13 @@ h1,h2,h3 {
       font-family: 'Space Grotesk', sans-serif;
   }
 
-/* hide scrollbar */
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
 
 .scrollbar-hide {
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; 
+  scrollbar-width: none; 
 }
 
 html.modal-open,
@@ -406,10 +405,6 @@ body.modal-open {
             box-shadow: 0 0 15px var(--primary);
         }
 
-/* ============================= */
-/* DARK NAVY STAR BACKGROUND */
-/* ============================= */
-
 @keyframes starsDrift {
   from {
     transform: translateY(0);
@@ -427,7 +422,6 @@ body.modal-open {
   overflow: hidden;
 }
 
-/* Fine grain */
 .stars-bg::before {
   content: "";
   position: absolute;
@@ -439,7 +433,6 @@ body.modal-open {
   animation: starsDrift 180s linear infinite;
 }
 
-/* Brighter stars */
 .stars-bg::after {
   content: "";
   position: absolute;

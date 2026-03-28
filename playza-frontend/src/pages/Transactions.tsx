@@ -77,12 +77,7 @@ const Transactions = () => {
 
     const observer = new IntersectionObserver(
       entries => {
-        // If we are back at the top and have more than initial page, we can "reduce"
-        // But we only want to do this if we actually scrolled down significantly
         if (entries[0].isIntersecting && itemsToShow > ITEMS_PER_PAGE) {
-          // We don't want to snap back instantly usually, 
-          // but the user asked for "reduces" when scrolling up.
-          // To make it less jarring, we'll only do it if the user is at the very top.
           setItemsToShow(ITEMS_PER_PAGE);
         }
       },
@@ -103,7 +98,7 @@ const Transactions = () => {
           <h1 className="text-4xl md:text-5xl font-black tracking-tighter text-slate-900 dark:text-slate-100">
             Ledger <span className="text-primary">&</span> History
           </h1>
-          <p className="text-slate-600 dark:text-slate-400 text-sm md:text-xs md:text-base font-medium">
+          <p className="text-slate-600 dark:text-slate-400 text-xs md:text-sm font-medium">
             Your detailed financial activity and gaming rewards statement.
           </p>
         </div>

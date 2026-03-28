@@ -214,13 +214,13 @@ const MatchSession = () => {
                   <p className="text-[10px] text-slate-500 uppercase font-bold">
                     Best Score
                   </p>
-                  <p className="text-xs md:text-sm md:text-lg font-bold ">89,420</p>
+                  <p className="text-xs md:text-sm font-bold ">89,420</p>
                 </div>
                 <div className="bg-muted/80 p-2 md:p-3 rounded-lg">
                   <p className="text-[10px] text-slate-500 uppercase font-bold">
                     Game Time
                   </p>
-                  <p className="text-xs md:text-sm md:text-lg font-bold ">45m</p>
+                  <p className="text-xs md:text-sm font-bold ">45m</p>
                 </div>
               </div>
             </div>

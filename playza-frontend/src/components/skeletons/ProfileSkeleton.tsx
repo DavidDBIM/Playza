@@ -35,7 +35,7 @@ export const ProfileSkeleton = () => {
       <div className="flex flex-col md:flex-row gap-2 md:gap-10">
         {/* Nav Skeleton */}
         <div className="w-full md:w-80 flex flex-col gap-2 md:gap-3">
-          <div className="glass-card rounded-[2rem] p-2 md:p-4 space-y-2">
+          <div className="glass-card rounded-xl p-2 md:p-4 space-y-2">
             {[...Array(5)].map((_, i) => (
               <div key={i} className="flex items-center gap-2 md:gap-4 px-2 md:px-6 py-2 md:py-5 rounded-2xl border border-transparent">
                 <Skeleton className="h-6 w-6 rounded-lg opacity-40 shrink-0" />
@@ -43,13 +43,13 @@ export const ProfileSkeleton = () => {
               </div>
             ))}
           </div>
-          <Skeleton className="h-24 w-full rounded-[2rem] hidden md:block" />
-          <Skeleton className="h-48 w-full rounded-[2rem] hidden md:block" />
+          <Skeleton className="h-24 w-full rounded-xl hidden md:block" />
+          <Skeleton className="h-48 w-full rounded-xl hidden md:block" />
         </div>
 
         {/* Content Skeleton */}
         <div className="flex-1 space-y-6">
-          <div className="glass-card rounded-xl p-2 md:p-8 min-h-[500px] border border-white/5">
+          <div className="glass-card rounded-xl p-2 md:p-8 min-h-125 border border-white/5">
             <div className="space-y-6">
               <div className="flex justify-between items-center border-b border-white/5 pb-2 md:pb-6">
                 <Skeleton className="h-8 w-48" />

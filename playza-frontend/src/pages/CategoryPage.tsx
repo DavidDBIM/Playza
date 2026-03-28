@@ -111,7 +111,7 @@ const CategoryPage = () => {
           ))
         ) : (
           <div className="col-span-full py-2 md:py-20 text-center glass rounded-xl">
-            <p className="text-slate-500 dark:text-slate-400 text-xs md:text-sm md:text-lg">
+            <p className="text-slate-500 dark:text-slate-400 text-xs md:text-sm">
               No games found matching your criteria.
             </p>
           </div>

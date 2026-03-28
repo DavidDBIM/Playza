@@ -18,17 +18,17 @@ const RightSideBar = () => {
         </p>
         <div className="flex justify-center gap-2 md:gap-3">
           <div className="text-center">
-            <p className="text-xs md:text-base text-lg md:text-2xl font-bold ">04</p>
+            <p className="text-xs md:text-base  font-bold ">04</p>
             <p className="text-[8px] uppercase">HRS</p>
           </div>
           <span className="text-lg md:text-2xl font-bold ">:</span>
           <div className="text-center">
-            <p className="text-xs md:text-base text-lg md:text-2xl font-bold ">18</p>
+            <p className="text-xs md:text-base  font-bold ">18</p>
             <p className="text-[8px] uppercase">MIN</p>
           </div>
           <span className="text-lg md:text-2xl font-bold ">:</span>
           <div className="text-center">
-            <p className="text-xs md:text-base text-lg md:text-2xl font-bold ">32</p>
+            <p className="text-xs md:text-base  font-bold ">32</p>
             <p className="text-[8px] uppercase">SEC</p>
           </div>
         </div>

@@ -1,6 +1,5 @@
 import type { Currency, Player } from "@/types/types";
 import {
-  // refactory
   ChartBarIncreasing,
   Gamepad2,
   Gift,

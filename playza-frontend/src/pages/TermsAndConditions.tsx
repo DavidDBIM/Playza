@@ -23,10 +23,10 @@ const TermsAndConditions = () => {
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent/10 blur-[100px] rounded-full -ml-32 -mb-32 pointer-events-none" />
 
         <section className="relative z-10">
-          <p className="text-sm md:text-xs md:text-base leading-relaxed mb-4 md:mb-6">
+          <p className="text-xs md:text-sm leading-relaxed mb-4 md:mb-6">
             Welcome to <span className="text-primary font-bold">PLAYZA</span>. These Terms and Conditions (“Terms”) govern your access to and use of the PLAYZA platform, including our website, mobile applications, and any related services (collectively, the “Platform”).
           </p>
-          <p className="text-sm md:text-xs md:text-base leading-relaxed">
+          <p className="text-xs md:text-sm leading-relaxed">
             By creating an account or participating in any game on the Platform, you agree to be bound by these Terms. If you do not agree to these Terms, you must not use the Platform.
           </p>
         </section>
