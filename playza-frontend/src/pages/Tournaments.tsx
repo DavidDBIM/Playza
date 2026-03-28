@@ -11,8 +11,21 @@ import {
   Clock,
   Users,
   PlaySquare,
+  ChevronDown,
 } from "lucide-react";
 import { ZASymbol } from "@/components/currency/ZASymbol";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+const PRIZE_OPTIONS = [
+  { value: "all", label: "All Prizes" },
+  { value: "high", label: "High Stakes (100k+)" },
+  { value: "low", label: "Standard" },
+];
 
 const Tournaments = () => {
   const [activeTab, setActiveTab] = useState<"live" | "upcoming" | "completed">(
@@ -125,7 +138,7 @@ const Tournaments = () => {
                 <input
                   type="text"
                   placeholder="Search tournaments..."
-                  className="w-full bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg py-2 pl-2 md:pl-9 pr-2 md:pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 text-slate-900 dark:text-white font-bold placeholder:opacity-50"
+                  className="w-full bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg py-3 pl-9 pr-2 md:pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 text-slate-900 dark:text-white font-bold placeholder:opacity-50"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -138,15 +151,25 @@ const Tournaments = () => {
                   </button>
                 )}
               </div>
-              <select
-                className="bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg py-2 px-2 md:px-4 text-sm font-bold text-slate-900 dark:text-white uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-primary/50 hidden sm:block"
-                value={filterPrize}
-                onChange={(e) => setFilterPrize(e.target.value)}
-              >
-                <option value="all">All Prizes</option>
-                <option value="high">High Stakes (100k+)</option>
-                <option value="low">Standard</option>
-              </select>
+              <DropdownMenu>
+                <DropdownMenuTrigger className="bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg py-3 px-4 text-xs font-bold text-slate-900 dark:text-white uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-primary/50 hover:border-primary/50 transition-colors hidden sm:flex items-center justify-between gap-2 min-w-[200px]">
+                  <span>
+                    {PRIZE_OPTIONS.find((opt) => opt.value === filterPrize)?.label || "All Prizes"}
+                  </span>
+                  <ChevronDown size={14} className="opacity-50" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-[200px] bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl border border-slate-200 dark:border-white/10 p-2 rounded-xl shadow-xl" align="end">
+                  {PRIZE_OPTIONS.map((opt) => (
+                    <DropdownMenuItem
+                      key={opt.value}
+                      onClick={() => setFilterPrize(opt.value)}
+                      className={`text-xs font-bold uppercase tracking-widest cursor-pointer py-2 px-3 rounded-lg outline-none transition-colors ${filterPrize === opt.value ? 'bg-primary/10 text-primary' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'}`}
+                    >
+                      {opt.label}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
 
