@@ -20,11 +20,9 @@ const H2HWinner = ({ room, user }: H2HWinnerProps) => {
   return (
     <div className="w-full min-h-[80vh] flex items-center justify-center animate-in fade-in zoom-in-95 duration-1000 relative overflow-visible">
       
-      {/* Dynamic Celebration Elements */}
       <div className={`absolute top-0 inset-x-0 h-150 w-full ${isWinner ? 'bg-primary/10' : 'bg-red-500/5'} rounded-full blur-[150px] -z-1 animate-pulse`}></div>
       
       <div className="relative z-10 w-full max-w-3xl text-center space-y-12">
-        {/* Victory/Defeat Emblem */}
         <div className="relative flex flex-col items-center">
             {isWinner && (
                 <div className="absolute -top-12 animate-bounce">
@@ -58,13 +56,13 @@ const H2HWinner = ({ room, user }: H2HWinnerProps) => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-8">
                 <div className="space-y-2 p-2 md:p-4 rounded-xl bg-white/5 border border-white/5 hover:border-primary/30 transition-all">
                     <p className="text-xs md:text-base text-[9px] font-black uppercase text-muted-foreground tracking-widest italic">Rival</p>
-                    <p className="text-xs md:text-base font-headline font-black text-lg md:text-2xl text-foreground italic">
+                    <p className="text-xs md:text-base font-headline font-black text-foreground italic">
                         {isWinner ? (room.guest?.id === user?.id ? room.host?.username : room.guest?.username) : "Tough opponent"}
                     </p>
                 </div>
                 <div className="space-y-2 p-2 md:p-4 rounded-xl bg-white/5 border border-white/5 hover:border-primary/30 transition-all">
                     <p className="text-xs md:text-base text-[9px] font-black uppercase text-muted-foreground tracking-widest italic">Experience</p>
-                    <p className="text-xs md:text-base font-headline font-black text-lg md:text-2xl text-foreground italic">
+                    <p className="text-xs md:text-base font-headline font-black text-foreground italic">
                         {isWinner ? "+2.4K XP" : "+500 XP"}
                     </p>
                 </div>

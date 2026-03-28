@@ -42,7 +42,7 @@ const WaitingRoom = ({ room }: WaitingRoomProps) => {
             </h2>
             <div className="bg-white/5 dark:bg-black/30 border-2 border-primary/40 rounded-xl p-2 md:p-8 backdrop-blur-3xl shadow-2xl relative group hover:border-primary/60 transition-all">
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-white text-[10px] font-black px-2 md:px-4 py-1.5 rounded-full tracking-[0.2em] uppercase">SHARE WITH FRIEND</div>
-                <p className="text-xs md:text-base font-headline text-4xl md:text-6xl md:text-7xl font-black text-foreground tracking-[0.3em] uppercase italic drop-shadow-2xl">
+                <p className="text-xs md:text-base font-headline font-black text-foreground tracking-[0.3em] uppercase italic drop-shadow-2xl">
                     {room.code}
                 </p>
             </div>
