@@ -33,7 +33,7 @@ const FullGame = () => {
   };
 
   const filteredGames = useMemo(() => {
-    // If we have a query or a filter, we show a grid of results
+
     if (query || (filterBy && filterBy !== "Filter By")) {
       return filterGames(allGames, "All Games", filterBy, query);
     }
@@ -41,7 +41,7 @@ const FullGame = () => {
   }, [allGames, query, filterBy]);
 
   const groupedGames = useMemo(() => {
-    if (filteredGames) return null; // Don't group if we're showing search/filter results
+    if (filteredGames) return null;
 
     const statusOrder: Record<string, number> = {
       "live": 1,
@@ -50,7 +50,7 @@ const FullGame = () => {
     };
 
     const groups: Record<string, typeof allGames> = {};
-    // Sort allGames by status before grouping
+  
     const sortedGames = [...allGames].sort((a, b) => {
       const orderA = statusOrder[a.status] || 99;
       const orderB = statusOrder[b.status] || 99;
@@ -68,7 +68,6 @@ const FullGame = () => {
 
   return (
     <main className="space-y-6 md:space-y-8">
-      {/* <!-- Breadcrumbs --> */}
       <div className="overflow-hidden">
         <nav className="flex text-[10px] md:text-xs text-slate-500 gap-2 mb-1 px-1">
           <Link to="/" className="hover:text-primary transition-colors">
@@ -79,7 +78,6 @@ const FullGame = () => {
         </nav>
       </div>
 
-      {/* <!-- Hero Banner --> */}
       <section className="relative h-72 md:h-80 flex items-center rounded-xl overflow-hidden shadow-2xl shadow-primary/5">
         <FeatureGameCard
           {...biggestPoolGame}
@@ -87,7 +85,6 @@ const FullGame = () => {
         />
       </section>
 
-      {/* <!-- Search & Filter Box --> */}
       <div className="glass rounded-2xl p-2 md:p-3 flex gap-4 items-center">
         <Search
           placeholder="Search for your favorite games..."
@@ -100,7 +97,6 @@ const FullGame = () => {
       </div>
 
       {filteredGames ? (
-        /* <!-- Filtered Results Grid --> */
         <section className="animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="flex items-center gap-3 mb-6 px-2">
             <div className="w-1.5 h-6 bg-primary rounded-full"></div>
@@ -120,7 +116,7 @@ const FullGame = () => {
           </div>
         </section>
       ) : (
-        /* <!-- Category Rows --> */
+
         <div className="space-y-2 animate-in fade-in duration-700">
           {groupedGames && Object.entries(groupedGames).map(([category, games]) => (
             <CategoryRow

@@ -13,9 +13,11 @@ import {
   Eye,
   EyeOff,
   CheckCircle2,
+  Check,
   AlertCircle,
   ArrowLeft,
 } from "lucide-react";
+
 import { useSignup } from "@/hooks/auth/useSignup";
 import { useRegistration } from "@/hooks/auth/useRegistration";
 import { Link, useLocation } from "react-router";
@@ -358,10 +360,10 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
             <div className="flex flex-col gap-2 pt-2">
               <label 
                 htmlFor="terms" 
-                className={`flex items-start gap-4 p-4 rounded-xl border transition-all cursor-pointer group/terms shadow-sm ${
+                className={`flex items-start gap-4 p-5 rounded-2xl border transition-all cursor-pointer group/terms shadow-sm relative overflow-hidden ${
                   useWatch({ control, name: "acceptedTerms" }) 
-                    ? "bg-primary/5 border-primary/30" 
-                    : "bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10"
+                    ? "bg-primary/10 border-primary/50 ring-1 ring-primary/20" 
+                    : "bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 hover:border-primary/30"
                 }`}
               >
                 <div className="relative mt-0.5 shrink-0">
@@ -371,32 +373,39 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
                     id="terms"
                     className="peer absolute inset-0 opacity-0 cursor-pointer z-10"
                   />
-                  <div className="size-5 rounded-md border-2 border-slate-300 dark:border-white/20 peer-checked:bg-primary peer-checked:border-primary transition-all flex items-center justify-center bg-white dark:bg-slate-900 group-hover/terms:border-primary/50">
-                    <CheckCircle2 className="size-3.5 text-black font-black hidden peer-checked:block" />
+                  <div className="size-6 rounded-lg border-2 border-slate-300 dark:border-white/10 peer-checked:bg-primary peer-checked:border-primary transition-all duration-300 flex items-center justify-center bg-white dark:bg-slate-900 group-hover/terms:border-primary/40 shadow-inner overflow-hidden">
+                    <Check 
+                      className="size-4 text-slate-950 stroke-[3px] scale-0 peer-checked:scale-100 transition-transform duration-300 ease-out" 
+                    />
                   </div>
                 </div>
-                <span className="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400 font-bold select-none">
-                  I have read and agree to Playza's{" "}
-                  <Link
-                    to="/terms"
-                    target="_blank"
-                    className="text-primary hover:underline underline-offset-4 decoration-2"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    Terms & Conditions
-                  </Link>{" "}
-                  and{" "}
-                  <Link
-                    to="/privacy"
-                    target="_blank"
-                    className="text-primary hover:underline underline-offset-4 decoration-2"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    Privacy Policy
-                  </Link>
-                  .
-                </span>
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs leading-relaxed text-slate-700 dark:text-slate-300 font-bold select-none group-hover/terms:text-slate-900 dark:group-hover/terms:text-white transition-colors">
+                    Legal Agreement
+                  </span>
+                  <span className="text-[10px] leading-relaxed text-slate-500 dark:text-slate-400 font-medium select-none uppercase tracking-tighter">
+                    I have read and agree to Playza's{" "}
+                    <Link
+                      to="/terms"
+                      target="_blank"
+                      className="text-primary hover:underline underline-offset-4 decoration-2 font-black"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      Terms & Conditions
+                    </Link>{" "}
+                    and{" "}
+                    <Link
+                      to="/privacy"
+                      target="_blank"
+                      className="text-primary hover:underline underline-offset-4 decoration-2 font-black"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      Privacy Policy
+                    </Link>
+                  </span>
+                </div>
               </label>
+
               {errors.acceptedTerms && (
                 <p className="text-[10px] text-red-500 font-bold ml-1 italic">
                   {errors.acceptedTerms.message}

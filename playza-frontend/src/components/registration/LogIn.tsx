@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { User, Lock, Loader2 } from "lucide-react";
 import { useLogin } from "@/hooks/auth/useLogin";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
+
 import { useAuth } from "@/context/auth";
 
 interface LogInProps {
@@ -11,7 +12,9 @@ interface LogInProps {
 const LogIn = ({ onClick }: LogInProps) => {
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
+  const [searchParams] = useSearchParams();
   const { mutate: login, isPending, error } = useLogin();
+
   const navigate = useNavigate();
   const { setAuth } = useAuth();
 
@@ -39,8 +42,10 @@ const LogIn = ({ onClick }: LogInProps) => {
             },
             access_token,
           );
-          navigate("/");
+          const redirectTo = searchParams.get("redirect") || "/";
+          navigate(redirectTo);
         },
+
         onError: (err: unknown) => {
           const error = err as {
             response?: { data?: { message?: string } };

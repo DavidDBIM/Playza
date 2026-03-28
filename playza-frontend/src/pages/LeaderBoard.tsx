@@ -25,7 +25,7 @@ const LeaderBoard = () => {
   return (
     <section className="flex-1 flex flex-col gap-6 overflow-hidden pb-10">
       {/* Premium Header */}
-      <div className="relative overflow-hidden bg-slate-900 dark:bg-slate-950 p-8 md:p-12 rounded-[2.5rem] border border-white/5 shadow-2xl">
+      <div className="relative overflow-hidden bg-slate-900 dark:bg-slate-950 p-8 md:p-12 rounded-xl border border-white/5 shadow-2xl">
         <div className="absolute top-0 right-0 p-12 opacity-10 rotate-12">
           <MdLeaderboard size={120} className="text-primary" />
         </div>
@@ -75,7 +75,7 @@ const LeaderBoard = () => {
       </div>
 
       {/* Content Area */}
-      <div className="glass-card rounded-4xl border border-slate-200 dark:border-white/10 overflow-hidden flex-1 flex flex-col relative shadow-inner">
+      <div className="glass-card rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden flex-1 flex flex-col relative shadow-inner">
         <div className="absolute top-0 inset-x-0 h-64 bg-linear-to-b from-primary/5 to-transparent -z-10 pointer-events-none" />
         
         <div className="flex-1 flex flex-col overflow-hidden relative p-2 md:p-6 min-h-125">
