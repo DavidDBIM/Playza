@@ -25,11 +25,12 @@ const H2HArena = ({ room, user }: H2HArenaProps) => {
     }
   }, [room.board_state?.fen, game]);
 
-  const onPieceDrop = (sourceSquare: string, targetSquare: string): boolean => {
+  const onPieceDrop = ({ sourceSquare, targetSquare }: { sourceSquare: string; targetSquare: string | null }): boolean => {
     if (room.current_turn !== user?.id) {
       toast.error("It's not your turn!");
       return false;
     }
+    if (!targetSquare) return false;
 
     try {
       const gameCopy = new Chess(game.fen());
@@ -130,13 +131,15 @@ const H2HArena = ({ room, user }: H2HArenaProps) => {
           <div className="relative p-2 md:p-6 rounded-[3rem] bg-card/60 border border-white/10 shadow-3xl w-full max-w-xl aspect-square overflow-visible">
             <div className="w-full h-full rounded-2xl overflow-hidden border-8 border-slate-900 shadow-inner relative z-10 bg-slate-900">
               <Chessboard
-                position={game.fen()}
-                onPieceDrop={onPieceDrop}
-                boardOrientation={boardOrientation}
-                arePiecesDraggable={isYourTurn}
-                customDarkSquareStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.8)' }}
-                customLightSquareStyle={{ backgroundColor: 'rgba(51, 65, 85, 0.4)' }}
-                customBoardStyle={{ borderRadius: '8px' }}
+                options={{
+                  position: game.fen(),
+                  onPieceDrop,
+                  boardOrientation,
+                  allowDragging: isYourTurn,
+                  darkSquareStyle: { backgroundColor: 'rgba(15, 23, 42, 0.8)' },
+                  lightSquareStyle: { backgroundColor: 'rgba(51, 65, 85, 0.4)' },
+                  boardStyle: { borderRadius: '8px' }
+                }}
               />
             </div>
           </div>
