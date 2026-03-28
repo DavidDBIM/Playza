@@ -16,6 +16,8 @@ import { useMe } from "../hooks/users/useMe";
 import { useAuth, type UserProfile } from "@/context/auth";
 import { ZASymbol } from "@/components/currency/ZASymbol";
 
+import { ProfileSkeleton } from "@/components/skeletons/ProfileSkeleton";
+
 const Profile = () => {
   const { user, logout } = useAuth();
   const [isBadgeModalOpen, setIsBadgeModalOpen] = useState(false);
@@ -61,14 +63,7 @@ const Profile = () => {
       location.pathname === "/profile/overview";
 
   if (isLoading) {
-    return (
-      <div className="flex-1 mx-auto w-full pb-10 flex flex-col items-center justify-center min-h-[50vh]">
-        <div className="size-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
-        <p className="mt-4 text-slate-500 font-bold animate-pulse">
-          Loading Profile...
-        </p>
-      </div>
-    );
+    return <ProfileSkeleton />;
   }
 
   const profile: UserProfile | null = userData

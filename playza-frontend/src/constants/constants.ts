@@ -9,11 +9,15 @@ import {
   UserPlus,
   Wallet,
   Home,
+  Swords,
 } from "lucide-react";
+
 
 export const navItems = [
   { icon: Home, label: "PlayZa", path: "/", mobile: true },
+  { icon: Swords, label: "H2H Battles", path: "/h2h", mobile: true },
   { icon: Gamepad2, label: "Games", path: "/games", mobile: true },
+
   { icon: History, label: "My Games", path: "/my-games", mobile: true },
   { icon: Medal, label: "Tournaments", path: "/tournaments" },
   {

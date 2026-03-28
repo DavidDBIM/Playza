@@ -5,14 +5,15 @@ import { useVerifyOtp } from "@/hooks/auth/useVerifyOtp";
 import { useResendOtp } from "@/hooks/auth/useResendOtp";
 import { useRegistration } from "@/hooks/auth/useRegistration";
 import { useAuth } from "@/context/auth";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
+
 
 interface OtpProps {
   onClick: (value: string) => void;
 }
 
 const OTP_LENGTH = 6;
-const RESEND_COOLDOWN = 120; // seconds
+const RESEND_COOLDOWN = 120; 
 
 const OTP = ({ onClick }: OtpProps) => {
   const { pendingEmail } = useRegistration();
@@ -30,9 +31,10 @@ const OTP = ({ onClick }: OtpProps) => {
   const { mutate: verifyOtp, isPending: isVerifying } = useVerifyOtp();
   const { mutate: resendOtp, isPending: isResending } = useResendOtp();
   const { setAuth } = useAuth();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  // Start countdown — uses a ref so the effect never needs to re-run
+
   const startCountdown = useCallback(() => {
     const id = setInterval(() => {
       setSecondsLeft((s) => {
@@ -109,8 +111,10 @@ const OTP = ({ onClick }: OtpProps) => {
             },
             session.access_token,
           );
-          navigate("/");
+          const redirectTo = searchParams.get("redirect") || "/";
+          navigate(redirectTo);
         },
+
         onError: (err: unknown) => {
           const error = err as { response?: { data?: { message?: string } }; message?: string };
           console.error("[OTP] Verify error:", error.response?.data?.message || error.message);
@@ -203,9 +207,12 @@ const OTP = ({ onClick }: OtpProps) => {
                   required
                   inputMode="numeric"
                   className="w-12 h-14 md:w-14 md:h-16 text-center bg-slate-100 dark:bg-slate-900/50 border-2 border-slate-200 dark:border-white/30 rounded-xl focus:border-primary focus:ring-1 focus:ring-primary text-2xl font-black text-primary transition-all outline-none"
+                  aria-label={`Digit ${i + 1}`}
+                  placeholder="0"
                   maxLength={1}
                   type="text"
                 />
+
               ))}
             </fieldset>
           </div>

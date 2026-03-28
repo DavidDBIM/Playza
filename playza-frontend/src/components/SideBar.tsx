@@ -2,10 +2,15 @@ import { navItems } from "@/constants/constants";
 import { Users } from "lucide-react";
 import { NavLink } from "react-router";
 import { useAuth } from "@/context/auth";
+import { SidebarSkeleton } from "./skeletons/SidebarSkeleton";
 
 const SideBar = () => {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
   
+  if (isLoading) {
+    return <SidebarSkeleton />;
+  }
+
   const filteredNavItems = navItems.filter(item => {
     if (item.label === "Wallet" || item.label === "Profile") {
       return !!user;
@@ -23,9 +28,6 @@ const SideBar = () => {
             className={({ isActive }) =>
               `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive ? "bg-primary/30 text-primary border-l-4 border-primary font-medium" : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"}`
             }
-            // className={({ isActive }) =>
-            //   `flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${isActive ? "bg-primary/50 border-l-4 border-primary font-medium  text-slate-900 dark:text-white" : "text-slate-600 hover:bg-slate-900/5 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white"}`
-            // }
           >
             {({ isActive }) => (
               <>

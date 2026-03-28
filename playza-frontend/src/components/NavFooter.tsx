@@ -11,9 +11,6 @@ interface NavItem {
   onClick?: () => void;
 }
 
-/**
- * NavFooter component for mobile and tablet navigation
- */
 const NavFooter = () => {
   const { pathname } = useLocation();
   const { user } = useAuth();
@@ -48,11 +45,12 @@ const NavFooter = () => {
     };
   };
 
+  // Primary mobile navigation - Profile moved to More, Leaderboards brought out, H2H Battles added
   const mobileItems: NavItem[] = [
     getItem("PlayZa"),
-    user && getItem("Wallet"),
+    getItem("Wallet"), // Swapped from H2H Battles
     getItem("Games"),
-    user && getItem("Profile"),
+    getItem("Leaderboards"),
     {
       label: "More",
       icon: MoreHorizontal,
@@ -61,14 +59,13 @@ const NavFooter = () => {
     },
   ].filter((item): item is NavItem => !!item);
 
+  // Tablet navigation (larger screens)
   const tabletItems: NavItem[] = [
     getItem("PlayZa"),
-    user && getItem("Wallet"),
+    getItem("Wallet"), // Swapped from H2H Battles
     getItem("My Games"),
     getItem("Games"),
-    getItem("Tournaments"),
     getItem("Leaderboards"),
-    user && getItem("Profile"),
     {
       label: "More",
       icon: MoreHorizontal,
@@ -77,38 +74,38 @@ const NavFooter = () => {
     },
   ].filter((item): item is NavItem => !!item);
 
+  // Profile and other secondary links go here
   const moreMenuItems: NavItem[] = [
-    getItem("Leaderboards"),
-    getItem("Loyalty"),
-    getItem("Referral"),
-    getItem("Tournaments"),
-    getItem("My Games"),
+      user && getItem("Profile"),
+      getItem("Tournaments"),
+      getItem("H2H Battles"), // Moved here
+      getItem("Loyalty"),
+      getItem("Referral"),
+      getItem("My Games"),
   ].filter((item): item is NavItem => !!item);
 
-  // Helper function to render individual nav items
   const renderNavItem = (item: NavItem, visibilityClass: string) => {
     const isGames = item.label === "Games";
-    const isWallet = item.label === "Wallet";
     const isMore = item.label === "More";
-    const isActive = isWallet ? pathname.startsWith("/wallet") : pathname === item.path;
+    const isActive = pathname === item.path;
     const isMoreActive = isMore && isMoreOpen;
 
     const content = (
       <>
         <item.icon
-          className={`transition-transform duration-500 z-10 ${isActive || isMoreActive ? "scale-110 drop-shadow-[0_0_10px_rgba(168,85,247,0.8)]" : "scale-100"} ${isMore ? "size-6" : "size-5 md:size-6"}`}
+          className={`transition-all duration-500 z-10 ${isActive || isMoreActive ? "scale-110 drop-shadow-[0_0_8px_rgba(168,85,247,0.6)]" : "scale-100"} ${isMore ? "size-6" : "size-5 md:size-6"}`}
         />
         <span
-          className={`absolute -bottom-2 md:-bottom-3 text-[8px] md:text-[9px] font-black uppercase tracking-widest whitespace-nowrap transition-all duration-500 z-10 ${
+          className={`absolute -bottom-2.5 md:-bottom-3.5 text-[8px] md:text-[9px] font-black uppercase tracking-widest whitespace-nowrap transition-all duration-500 z-10 ${
             isActive || isMoreActive
-              ? "opacity-100 text-white drop-shadow-md translate-y-0"
+              ? "opacity-100 translate-y-0 text-primary dark:text-white"
               : "opacity-0 translate-y-2 pointer-events-none text-slate-400"
           }`}
         >
-          {item.label === "PlayZa" ? "Home" : item.label}
+          {item.label === "PlayZa" ? "Home" : item.label === "H2H Battles" ? "H2H" : item.label}
         </span>
         {(isActive || isMoreActive) && (
-          <span className="absolute -inset-2 bg-primary/20 rounded-full blur-md z-0" />
+          <span className="absolute -inset-1.5 bg-primary/10 dark:bg-primary/20 rounded-full blur-md z-0" />
         )}
       </>
     );
@@ -123,10 +120,10 @@ const NavFooter = () => {
             <NavLink
               to={item.path}
               className={({ isActive }) =>
-                `relative flex items-center justify-center w-14 h-14 md:w-16 md:h-16 rounded-full shadow-2xl transition-all duration-500 group border-[3px] md:border-4 border-slate-950 ${
+                `relative flex items-center justify-center w-14 h-14 md:w-16 md:h-16 rounded-full shadow-2xl transition-all duration-500 group border-[3px] md:border-4 border-slate-200 dark:border-slate-950 ${
                   isActive
-                    ? "bg-linear-to-tr from-primary to-purple-400 text-white scale-[1.15] shadow-[0_0_30px_rgba(168,85,247,0.6)]"
-                    : "bg-slate-900 text-slate-400 border-white/5 hover:scale-105 hover:bg-slate-800"
+                    ? "bg-linear-to-tr from-primary to-purple-400 text-white scale-[1.15] shadow-[0_0_25px_rgba(168,85,247,0.5)]"
+                    : "bg-white dark:bg-slate-900 text-slate-400 border-slate-100 dark:border-white/5 hover:scale-105"
                 }`
               }
             >
@@ -134,11 +131,8 @@ const NavFooter = () => {
                 <>
                   <div className="absolute inset-0 rounded-full bg-primary opacity-0 blur-xl -z-10 group-hover:opacity-40 transition-opacity duration-500"></div>
                   <item.icon
-                    className={`size-6 md:size-7 transition-all duration-300 ${isActive ? "text-white drop-shadow-lg" : "text-slate-400 group-hover:text-white"}`}
+                    className={`size-6 md:size-7 transition-all duration-300 ${isActive ? "text-white" : "text-slate-400 group-hover:text-primary"}`}
                   />
-                  {isActive && (
-                    <div className="absolute -inset-1.5 rounded-full border-2 border-primary/50 animate-ping opacity-20" />
-                  )}
                 </>
               )}
             </NavLink>
@@ -148,28 +142,21 @@ const NavFooter = () => {
             onClick={item.onClick}
             className={`flex flex-col items-center justify-center transition-all duration-500 relative py-2 ${
               isMoreOpen
-                ? "text-primary -translate-y-1.5"
-                : "text-slate-500 hover:text-white hover:-translate-y-0.5"
+                ? "text-primary -translate-y-1"
+                : "text-slate-500 hover:text-primary hover:-translate-y-0.5"
             }`}
           >
-            {/* The More Button special styling */}
             <div
-              className={`absolute inset-0 rounded-full blur-xl transition-all duration-700 ${isMoreOpen ? "bg-primary/50 scale-150" : "bg-primary/20 scale-100 animate-pulse hover:bg-primary/40"}`}
+              className={`absolute inset-0 rounded-full blur-xl transition-all duration-700 ${isMoreOpen ? "bg-primary/40 scale-150 animate-pulse" : "bg-primary/10 scale-100 hover:bg-primary/20"}`}
             />
-            <div className="relative z-10 p-1.5 rounded-full bg-slate-800/50 border border-white/10 shadow-[0_0_15px_rgba(168,85,247,0.3)] backdrop-blur-md flex items-center justify-center group">
+            <div className={`relative z-10 p-2 rounded-2xl transition-all duration-500 border shadow-lg backdrop-blur-md flex items-center justify-center group uppercase ${isMoreOpen ? 'bg-primary border-primary rotate-90 scale-110 shadow-primary/40' : 'bg-white/90 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-primary/50'}`}>
               <item.icon
-                className={`size-5 md:size-6 transition-transform duration-500 ${isMoreOpen ? "text-white scale-110" : "text-primary group-hover:text-white"}`}
+                className={`size-5 md:size-6 transition-transform duration-500 ${isMoreOpen ? "text-white" : "text-slate-500 group-hover:text-primary group-hover:rotate-12"}`}
               />
             </div>
-            <span
-              className={`absolute -bottom-2 md:-bottom-3 text-[8px] md:text-[9px] font-black uppercase tracking-widest transition-all duration-500 z-10 ${
-                isMoreOpen
-                  ? "opacity-100 text-white translate-y-0"
-                  : "opacity-0 translate-y-2 pointer-events-none"
-              }`}
-            >
-              More
-            </span>
+            {!isMoreOpen && (
+              <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-primary rounded-full border-2 border-white dark:border-slate-950 animate-bounce" />
+            )}
           </button>
         ) : (
           <NavLink
@@ -177,8 +164,8 @@ const NavFooter = () => {
             className={({ isActive }) =>
               `flex flex-col items-center justify-center transition-all duration-500 relative py-2 ${
                 isActive
-                  ? "text-primary -translate-y-1.5"
-                  : "text-slate-500 hover:text-white hover:-translate-y-0.5"
+                  ? "text-primary -translate-y-1"
+                  : "text-slate-400 hover:text-primary hover:-translate-y-0.5"
               }`
             }
           >
@@ -192,7 +179,7 @@ const NavFooter = () => {
   return (
     <div
       id="nav-footer"
-      className="lg:hidden fixed bottom-4 left-1/2 -translate-x-1/2 w-[95%] max-w-150 z-50"
+      className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-150 z-50 invite-font"
     >
       <style>{`
         body.modal-open #nav-footer {
@@ -200,46 +187,44 @@ const NavFooter = () => {
         }
       `}</style>
 
-      {/* More Menu Pop-up - Redesigned */}
+      {/* More Menu Pop-up */}
       {isMoreOpen && (
         <div
           ref={moreMenuRef}
-          className="absolute bottom-24 left-0 right-0 z-50 animate-in slide-in-from-bottom-6 fade-in duration-300 px-2"
+          className="absolute bottom-20 left-0 right-0 z-50 animate-in slide-in-from-bottom-4 fade-in duration-300 px-1"
         >
-          <div className="bg-slate-950/90 backdrop-blur-3xl rounded-3xl border border-primary/20 p-5 shadow-[0_0_50px_rgba(0,0,0,0.8),0_0_20px_rgba(168,85,247,0.2)] overflow-hidden relative">
-            <div className="absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-primary to-transparent opacity-50" />
-            <div className="absolute -top-10 -right-10 w-40 h-40 bg-primary/20 rounded-full blur-3xl pointer-events-none" />
-
-            <div className="flex justify-between items-center mb-6 pl-2">
-              <span className="text-xs font-black uppercase tracking-[0.3em] text-white/70 flex items-center gap-2">
+          <div className="bg-white/95 dark:bg-slate-950/90 backdrop-blur-3xl rounded-[2.5rem] border border-slate-200 dark:border-primary/20 p-6 shadow-[0_30px_60px_rgba(0,0,0,0.3),0_0_20px_rgba(168,85,247,0.1)] overflow-hidden relative">
+            <div className="absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-primary/50 to-transparent" />
+            
+            <div className="flex justify-between items-center mb-6 pl-1 font-headline">
+              <span className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-500 dark:text-white/60 flex items-center gap-2 italic">
                 <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />{" "}
-                Platform Hub
+                Navigation
               </span>
               <button
                 onClick={() => setIsMoreOpen(false)}
-                className="p-2 bg-white/5 hover:bg-white/10 rounded-full transition-colors border border-white/5 text-slate-400 hover:text-white shadow-xl"
+                className="p-1.5 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 rounded-full transition-all border border-slate-200 dark:border-white/5 text-slate-400 hover:text-primary"
               >
                 <X className="size-4" />
               </button>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-3 gap-3">
               {moreMenuItems.map((item) => (
                 <NavLink
                   key={item.label}
                   to={item.path}
                   onClick={() => setIsMoreOpen(false)}
                   className={({ isActive }) =>
-                    `flex flex-col items-center justify-center gap-3 p-4 rounded-2xl transition-all border relative overflow-hidden group ${
+                    `flex flex-col items-center justify-center gap-2.5 p-4 rounded-3xl transition-all border relative overflow-hidden group ${
                       isActive
-                        ? "bg-primary/20 border-primary/40 text-white shadow-[0_0_15px_rgba(168,85,247,0.2)]"
-                        : "bg-black/50 border-white/5 text-slate-400 hover:bg-slate-900 hover:border-primary/20 hover:text-white hover:shadow-[0_0_15px_rgba(168,85,247,0.1)]"
+                        ? "bg-primary/10 border-primary/30 text-primary shadow-sm"
+                        : "bg-slate-50 dark:bg-black/40 border-slate-100 dark:border-white/5 text-slate-500 hover:border-primary/20 hover:text-primary"
                     }`
                   }
                 >
-                  <div className="absolute inset-0 bg-linear-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                  <item.icon className="size-6 relative z-10 transition-transform group-hover:scale-110" />
-                  <span className="text-[10px] font-black uppercase tracking-wider relative z-10 text-center">
+                  <item.icon className="size-5 relative z-10 transition-transform group-hover:scale-110" />
+                  <span className="text-[9px] font-black uppercase tracking-wider relative z-10 text-center font-headline">
                     {item.label}
                   </span>
                 </NavLink>
@@ -249,17 +234,15 @@ const NavFooter = () => {
         </div>
       )}
 
-      {/* Main Nav Container - Redesigned */}
-      <nav className="relative bg-slate-950/80 backdrop-blur-2xl rounded-full px-2 py-2 md:py-3 shadow-[0_20px_50px_rgba(0,0,0,0.9)] border border-white/10 overflow-visible transition-all duration-500">
-        {/* Glow behind the nav */}
-        <div className="absolute inset-x-0 -bottom-4 h-full bg-primary/10 blur-2xl rounded-full pointer-events-none" />
-        <div className="absolute top-0 inset-x-12 h-px bg-linear-to-r from-transparent via-primary/30 to-transparent" />
+      {/* Main Nav Container */}
+      <nav className="relative bg-white/90 dark:bg-slate-950/80 backdrop-blur-2xl rounded-full px-2 py-1.5 md:py-2.5 shadow-[0_15px_35px_rgba(0,0,0,0.2),0_5px_15px_rgba(0,0,0,0.1)] border border-slate-200 dark:border-white/10 overflow-visible transition-all duration-500">
+        <div className="absolute inset-x-0 -bottom-2 h-full bg-primary/5 dark:bg-primary/10 blur-xl rounded-full pointer-events-none" />
+        <div className="absolute top-0 inset-x-12 h-px bg-linear-to-r from-transparent via-primary/20 to-transparent" />
 
-        {/* Dynamic Grid */}
-        <div className="w-full relative z-10 transition-all duration-500">
-          {/* Mobile Grid */}
+        <div className="w-full relative z-10">
+          {/* Mobile view - shown on smallest screens */}
           <div
-            className="grid md:hidden w-full items-center"
+            className="grid w-full items-center md:hidden"
             style={{
               gridTemplateColumns: `repeat(${mobileItems.length}, minmax(0, 1fr))`,
             }}
@@ -267,7 +250,7 @@ const NavFooter = () => {
             {mobileItems.map((item) => renderNavItem(item, ""))}
           </div>
 
-          {/* Tablet Grid */}
+          {/* Tablet view - shown on md and up (until lg where NavFooter is hidden) */}
           <div
             className="hidden md:grid w-full items-center"
             style={{

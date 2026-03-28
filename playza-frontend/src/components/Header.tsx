@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { Plus, Moon, Sun, Monitor, User, CreditCard, Settings, LogOut, Gift } from "lucide-react";
 import { Button } from "./ui/button";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useLocation } from "react-router";
+
+import { HeaderSkeleton } from "./skeletons/HeaderSkeleton";
 import { useTheme } from "@/hooks/useTheme";
 import {
   DropdownMenu,
@@ -14,10 +16,11 @@ import { useAuth } from "@/context/auth";
 import { ZASymbol } from "./currency/ZASymbol";
 
 const Header = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, isLoading } = useAuth();
   const [open, setOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
     logout();
@@ -40,9 +43,11 @@ const Header = () => {
           </div>
         </div>
         <div className="flex gap-4 items-center">
-          {!user ? (
+          {isLoading ? (
+            <HeaderSkeleton />
+          ) : !user ? (
             <div className="flex gap-2">
-              <Link to="/registration?view=login">
+              <Link to={`/registration?view=login&redirect=${encodeURIComponent(location.pathname)}`}>
                 <Button
                   variant={"outline"}
                   className="border-primary/50 text-primary hover:bg-primary/10"
@@ -50,7 +55,7 @@ const Header = () => {
                   Log In
                 </Button>
               </Link>
-              <Link to="/registration?view=signup">
+              <Link to={`/registration?view=signup&redirect=${encodeURIComponent(location.pathname)}`}>
                 <Button variant={"secondary"}>Sign Up</Button>
               </Link>
             </div>

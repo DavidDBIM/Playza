@@ -1,4 +1,5 @@
-import { Route, Routes, useLocation, useMatch, useNavigate } from "react-router";
+import { Route, Routes, useLocation, useNavigate } from "react-router";
+
 import { useState } from "react";
 import Home from "./pages/Home";
 import Header from "./components/Header";
@@ -11,7 +12,10 @@ import Footer from "./components/Footer";
 import RightSideBar from "./components/RightSideBar";
 import Game from "./pages/Game";
 import MatchSession from "./pages/MatchSession";
+import GamePlay from "./pages/GamePlay";
+import H2HZone from "./pages/H2HZone";
 import Registration from "./pages/Registration";
+
 import Wallet from "./pages/Wallet";
 import Transactions from "./pages/Transactions";
 import Deposit from "./pages/Deposit";
@@ -30,6 +34,7 @@ import DepositModal from "./components/wallet/DepositModal";
 import WithdrawModal from "./components/wallet/WithdrawModal";
 import WithdrawSuccess from "./pages/WithdrawSuccess";
 import { AuthProvider } from "./context/AuthContext";
+import { ToastProvider } from "./context/ToastContext";
 import { useAuth } from "./context/auth";
 import { CompleteProfileModal } from "./components/profile/CompleteProfileModal";
 import TermsAndConditions from "./pages/TermsAndConditions";
@@ -49,8 +54,14 @@ const AppContent = () => {
   const [showVerificationModal, setShowVerificationModal] = useState(false);
 
   // const isGameDetailPage = !!useMatch("/games/:id");
-  const isGameSessionPage = !!useMatch("/games/:id/session");
-  const isRegistrationPage = !!useMatch("/registration");
+  const isGameSessionPage = pathname.includes("/session");
+  const isGamePlayPage = pathname.includes("/play") || (pathname.startsWith("/h2h") && pathname !== "/h2h");
+
+
+  const isRegistrationPage = pathname.includes("/registration");
+
+
+
   // const { id } = useParams();
   // const isGameDetailPage = pathname.startsWith(`/games/${id}`);
 
@@ -69,7 +80,9 @@ const AppContent = () => {
 
   return (
     <div className="relative min-h-screen bg-background">
-      {!isRegistrationPage && <Header />}
+      {!isRegistrationPage && !isGamePlayPage && <Header />}
+
+
 
       {activeModal === "deposit" && (
         <DepositModal onClose={() => navigate(location.pathname)} />
@@ -86,12 +99,16 @@ const AppContent = () => {
       )}
 
       {/* {pathname === "/" && <AppNotification />} */}
-      <div className="max-w-400 mx-auto flex gap-6 p-2 md:p-6">
-        {!isGameSessionPage && !isRegistrationPage && (
+      <div className={isGamePlayPage ? "" : "max-w-400 mx-auto flex gap-6 p-2 md:p-6"}>
+
+        {!isGameSessionPage && !isRegistrationPage && !isGamePlayPage && (
+
           <aside className="w-72 hidden xl:block sticky self-start top-24 h-[calc(100vh-8rem)]">
             <SideBar />
           </aside>
         )}
+
+
 
         <>
           <Routes>
@@ -108,7 +125,12 @@ const AppContent = () => {
             <Route path="/games/category/:category" element={<CategoryPage />} />
             <Route path="/games/:id" element={<Game />} />
             <Route path="/games/:id/session" element={<MatchSession />} />
+            <Route path="/games/:id/play" element={<GamePlay />} />
+            <Route path="/h2h" element={<H2HZone />} />
+            <Route path="/h2h/:roomId" element={<H2HZone />} />
             <Route path="/registration" element={<Registration />} />
+
+
             <Route path="/wallet/transactions" element={<Transactions />} />
             <Route path="/referral" element={<Referral />} />
             <Route path="/wallet/deposit" element={<Deposit />} />
@@ -139,9 +161,11 @@ const AppContent = () => {
         )}
       </div>
 
-      {!isRegistrationPage && <Footer showAbout={pathname === "/"} />}
+      {!isRegistrationPage && !isGamePlayPage && <Footer showAbout={pathname === "/"} />}
 
-      {!isRegistrationPage && <NavFooter />}
+      {!isRegistrationPage && !isGamePlayPage && <NavFooter />}
+
+
     </div>
   );
 };
@@ -150,7 +174,9 @@ const App = () => {
   return (
     <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
       <AuthProvider>
-        <AppContent />
+        <ToastProvider>
+          <AppContent />
+        </ToastProvider>
       </AuthProvider>
     </ThemeProvider>
   );

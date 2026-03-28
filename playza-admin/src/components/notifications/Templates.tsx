@@ -87,9 +87,6 @@ const Templates: React.FC = () => {
           <span className="font-headline font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest text-xs group-hover:text-slate-900 dark:group-hover:text-white transition-colors">New Template</span>
         </div>
       </div>
-
-      {/* Simplified Modal Structure - Usually would be a separate component */}
-      {/* (Modal is hidden in this component as requested to focus on main content) */}
     </div>
   );
 };
