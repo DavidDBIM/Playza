@@ -43,7 +43,7 @@ const SessionActivities = () => {
         <div className="hidden sm:flex items-center gap-2 md:gap-4">
            <div className="text-right">
               <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest leading-none mb-1">Online</p>
-              <p className="text-xs md:text-sm md:text-lg font-black text-slate-900 dark:text-white leading-none transition-colors">1,240</p>
+              <p className="text-xs md:text-sm font-black text-slate-900 dark:text-white leading-none transition-colors">1,240</p>
            </div>
            <div className="p-2 md:p-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl shadow-sm">
               <Users size={18} className="text-primary" />

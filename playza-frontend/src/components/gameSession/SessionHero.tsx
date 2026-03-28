@@ -1,4 +1,5 @@
-import { formatZA } from "@/lib/formatCurrency";
+import { formatZA, formatZAAmount } from "@/lib/formatCurrency";
+import { ZASymbol } from "@/components/currency/ZASymbol";
 import { Gamepad2, PlayCircle, Users } from "lucide-react";
 
 type SessionHeroProps = {
@@ -49,7 +50,7 @@ const SessionHero = ({
           <p className="text-[10px] text-slate-500 dark:text-slate-400 font-black uppercase tracking-widest mb-1">
             Prize Pool
           </p>
-          <p className="text-xs md:text-base flex items-baseline md:text-4xl font-black text-transparent bg-clip-text bg-linear-to-r from-yellow-400 via-amber-200 to-yellow-600 glow-primary">
+          <p className="text-sm md:text-2xl flex items-baseline  font-black text-transparent bg-clip-text bg-linear-to-r from-yellow-400 via-amber-200 to-yellow-600 glow-primary">
             {formatZA(prizePool)}
             <span className="text-playza-green text-xs font-black ml-1">
               ↑ 1.2%
@@ -68,7 +69,9 @@ const SessionHero = ({
 
         <div className="absolute right-0 top-0 flex gap-2 p-2 text-white bg-slate-900/80 border-b border-l border-white/10 font-black text-xs md:text-base backdrop-blur-md rounded-bl-xl shadow-2xl">
           <p className="text-xs md:text-base text-slate-400">Entry Fee:</p>
-          <span className="text-primary">{formatZA(entryFee)}</span>
+          <span className="text-primary flex items-center gap-1 font-black">
+            <ZASymbol className="scale-90" />{formatZAAmount(entryFee)}
+          </span>
         </div>
 
         <div className="absolute left-0 top-0 flex items-center gap-2 p-2 text-white bg-playza-blue border-b border-r border-white/10 font-black text-xs md:text-base backdrop-blur-md rounded-br-xl shadow-2xl">

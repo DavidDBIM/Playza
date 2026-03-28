@@ -38,7 +38,7 @@ const ActivityToasts = () => {
     };
   }, [triggerRandomToast]);
 
-  return null; // The ToastProvider handles rendering
+  return null;
 };
 
 export default ActivityToasts;

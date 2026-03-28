@@ -178,7 +178,7 @@ const H2HArena = ({ room, user }: H2HArenaProps) => {
             <div className="mt-8 pt-2 md:pt-8 border-t border-white/5 flex justify-center">
                <div className="text-center">
                   <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-1">House (10%)</p>
-                  <p className="font-headline font-black text-xs md:text-sm md:text-lg text-muted-foreground italic">{(room.stake * 2 * 0.1).toFixed(0)} <ZASymbol className="inline-block scale-75 ml-1" /></p>
+                  <p className="font-headline font-black text-xs md:text-lg text-muted-foreground italic">{(room.stake * 2 * 0.1).toFixed(0)} <ZASymbol className="inline-block scale-75 ml-1" /></p>
                </div>
             </div>
           </div>

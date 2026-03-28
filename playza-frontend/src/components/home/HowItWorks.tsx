@@ -16,7 +16,7 @@ const HowItWorks = () => {
           <h2 className="text-3xl md:text-4xl font-black tracking-tighter ">
             How It <span className="text-transparent bg-clip-text bg-linear-to-r from-primary to-accent">Works</span>
           </h2>
-          <p className="text-slate-400 text-sm md:text-xs md:text-base max-w-xl">
+          <p className="text-slate-400 text-xs md:text-sm max-w-xl">
             Playza is where skill meets reward. Follow these simple steps to start winning today.
           </p>
         </div>

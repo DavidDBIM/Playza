@@ -71,7 +71,7 @@ export const SessionCard = ({ session, gameTitle, onJoin }: SessionCardProps) =>
             </p>
             <div className="flex items-center gap-1.5">
               <ZASymbol className="text-sm scale-90" />
-              <p className="text-xs md:text-base text-playza-green font-black text-lg md:text-xl tracking-tighter leading-none">
+              <p className="text-xs md:text-lg text-playza-green font-black tracking-tighter leading-none">
                 {session.prizePool}
               </p>
             </div>

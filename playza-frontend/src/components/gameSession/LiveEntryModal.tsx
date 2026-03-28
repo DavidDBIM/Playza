@@ -31,28 +31,28 @@ const LiveEntryModal = ({ game, onClick, onConfirm, userBalance = 1250 }: LiveEn
   const isInsufficient = newBalance < 0;
 
   return (
-    <main className="fixed inset-0 z-100 overflow-y-auto backdrop-blur-xl bg-slate-950/80 animate-in fade-in duration-300">
+    <main className="fixed inset-0 z-100 overflow-y-auto backdrop-blur-xl bg-slate-100/80 dark:bg-slate-950/80 animate-in fade-in duration-300">
       <div className="min-h-full flex items-center justify-center p-2 md:p-4">
-        <div className="relative w-full max-w-md glass-card rounded-xl border border-white/10 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+        <div className="relative w-full max-w-md bg-white dark:bg-slate-900 glass-card rounded-xl border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
           
           <button
             onClick={() => onClick(false)}
-            className="absolute top-4 right-4 p-2 rounded-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all z-20"
+            className="absolute top-4 right-4 p-2 rounded-full bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all z-20"
           >
             <X size={18} />
           </button>
 
           <div className="p-2 md:p-6">
             <div className="text-center mb-6">
-              <h2 className="text-lg md:text-2xl font-black text-white tracking-widest uppercase italic">
+              <h2 className="text-lg md:text-2xl font-black text-slate-900 dark:text-white tracking-widest uppercase italic">
                 BATTLE <span className="text-primary">ENTRY</span>
               </h2>
-              <p className="text-slate-500 font-bold text-xs uppercase tracking-tighter">
+              <p className="text-slate-400 dark:text-slate-500 font-bold text-xs uppercase tracking-tighter">
                 Secure your spot in the arena
               </p>
             </div>
 
-            <div className="relative rounded-2xl border border-white/5 bg-slate-900/40 overflow-hidden mb-6">
+            <div className="relative rounded-2xl border border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-slate-900/40 overflow-hidden mb-6">
               <div className="h-20 w-full relative">
                 <img 
                   src={game.thumbnail} 
@@ -64,7 +64,7 @@ const LiveEntryModal = ({ game, onClick, onConfirm, userBalance = 1250 }: LiveEn
                   <h3 className="text-sm md:text-lg font-black text-white italic uppercase tracking-tight">{game.title}</h3>
                 </div>
               </div>
-              <div className="p-2 md:p-4 flex justify-between items-center bg-white/5">
+              <div className="p-2 md:p-4 flex justify-between items-center bg-slate-100 dark:bg-white/5">
                 <div className="flex items-center gap-2">
                    <div className="flex items-center gap-1 text-primary">
                     <ZASymbol className="text-sm scale-90" />
@@ -79,22 +79,22 @@ const LiveEntryModal = ({ game, onClick, onConfirm, userBalance = 1250 }: LiveEn
             </div>
 
             <div className="space-y-3 mb-6">
-              <div className="flex justify-between items-center text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">
+              <div className="flex justify-between items-center text-[10px] font-black text-slate-500 dark:text-slate-500 uppercase tracking-widest px-1">
                 <span>Wallet Balance</span>
-                <div className="flex items-center gap-1 text-white">
+                <div className="flex items-center gap-1 text-slate-900 dark:text-white">
                   <ZASymbol className="text-[10px] scale-75" />
                   <span>{formatZA(userBalance)}</span>
                 </div>
               </div>
               
-              <div className="bg-black/40 rounded-xl p-2 md:p-4 border border-white/5">
+              <div className="bg-slate-100 dark:bg-black/40 rounded-xl p-2 md:p-4 border border-slate-200 dark:border-white/5">
                 <div className="flex justify-between items-center mb-2">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase">Entry Deduction</span>
+                  <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Entry Deduction</span>
                   <span className="text-xs font-black text-rose-500">-{formatZA(game.entryFee)}</span>
                 </div>
-                <div className="h-px bg-white/5 my-2"></div>
+                <div className="h-px bg-slate-200 dark:bg-white/5 my-2"></div>
                 <div className="flex justify-between items-center">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase">Final Balance</span>
+                  <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Final Balance</span>
                   <span className={`text-sm font-black ${isInsufficient ? 'text-rose-500' : 'text-primary'}`}>
                     {formatZA(newBalance)}
                   </span>
