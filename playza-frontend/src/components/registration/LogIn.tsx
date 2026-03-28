@@ -70,7 +70,7 @@ const LogIn = ({ onClick }: LogInProps) => {
             <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-3 tracking-tighter uppercase font-display">
               Welcome Back
             </h1>
-            <p className="text-slate-500 dark:text-slate-400 text-sm">
+            <p className="text-slate-500 dark:text-slate-400 text-xs md:text-sm">
               Log in to access your dashboard and active tournaments.
             </p>
           </div>
@@ -89,7 +89,7 @@ const LogIn = ({ onClick }: LogInProps) => {
                   required
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
-                  className="w-full bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-white/10 rounded-xl py-4 pl-12 pr-4 focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 transition-all font-medium"
+                  className="w-full bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-white/10 rounded-xl py-2 md:py-4 pl-2 md:pl-12 pr-2 md:pr-4 focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 transition-all font-medium"
                   placeholder="AnthonyGamer"
                   type="text"
                   autoComplete="username"
@@ -119,7 +119,7 @@ const LogIn = ({ onClick }: LogInProps) => {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-white/10 rounded-xl py-4 pl-12 pr-4 focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 transition-all font-medium"
+                  className="w-full bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-white/10 rounded-xl py-2 md:py-4 pl-2 md:pl-12 pr-2 md:pr-4 focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 transition-all font-medium"
                   type="password"
                   placeholder="••••••••"
                   autoComplete="current-password"
@@ -128,7 +128,7 @@ const LogIn = ({ onClick }: LogInProps) => {
             </div>
 
             {error && (
-              <p className="text-red-500 text-sm text-center font-medium">
+              <p className="text-red-500 text-xs md:text-sm text-center font-medium">
                 {error.message}
               </p>
             )}
@@ -137,7 +137,7 @@ const LogIn = ({ onClick }: LogInProps) => {
               <button
                 type="submit"
                 disabled={isPending}
-                className="w-full bg-primary hover:bg-primary/90 text-slate-950 font-bold py-4 rounded-xl transition-all shadow-lg shadow-primary/20 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full bg-primary hover:bg-primary/90 text-slate-950 font-bold py-2 md:py-4 rounded-xl transition-all shadow-lg shadow-primary/20 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {isPending ? (
                   <>
@@ -151,8 +151,8 @@ const LogIn = ({ onClick }: LogInProps) => {
             </div>
           </form>
 
-          <div className="pt-6 mt-6 border-t border-slate-200 dark:border-white/5 text-center">
-            <p className="text-slate-500 dark:text-slate-400 text-sm">
+          <div className="pt-2 md:pt-6 mt-6 border-t border-slate-200 dark:border-white/5 text-center">
+            <p className="text-slate-500 dark:text-slate-400 text-xs md:text-sm">
               New to the platform?
               <button
                 onClick={() => onClick("signup")}

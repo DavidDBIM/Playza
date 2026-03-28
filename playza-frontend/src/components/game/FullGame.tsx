@@ -85,7 +85,7 @@ const FullGame = () => {
         />
       </section>
 
-      <div className="glass rounded-2xl p-2 md:p-3 flex gap-4 items-center">
+      <div className="glass rounded-2xl p-2 md:p-3 flex gap-2 md:gap-4 items-center">
         <Search
           placeholder="Search for your favorite games..."
           value={query}
@@ -98,7 +98,7 @@ const FullGame = () => {
 
       {filteredGames ? (
         <section className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="flex items-center gap-3 mb-6 px-2">
+          <div className="flex items-center gap-2 md:gap-3 mb-6 px-2">
             <div className="w-1.5 h-6 bg-primary rounded-full"></div>
             <h2 className="font-heading text-lg md:text-xl font-bold tracking-tight text-slate-900 dark:text-white uppercase">
               Results ({filteredGames.length})
@@ -109,8 +109,8 @@ const FullGame = () => {
               <GamesCard {...g} key={g.id} />
             ))}
             {filteredGames.length === 0 && (
-              <div className="col-span-full py-20 text-center">
-                <p className="text-slate-500 dark:text-slate-400 text-lg">No games found matching your criteria.</p>
+              <div className="col-span-full py-2 md:py-20 text-center">
+                <p className="text-slate-500 dark:text-slate-400 text-xs md:text-sm md:text-lg">No games found matching your criteria.</p>
               </div>
             )}
           </div>

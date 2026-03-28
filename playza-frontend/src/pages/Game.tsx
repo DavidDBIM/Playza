@@ -50,7 +50,7 @@ const Game = () => {
   ];
 
   return (
-    <div className="flex-1 min-h-screen pb-10 overflow-hidden">
+    <div className="flex-1 min-h-screen pb-2 md:pb-10 overflow-hidden">
       {/* Hero Header Area */}
       <GameHero game={game} prizePool={prizePool} />
 

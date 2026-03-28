@@ -98,22 +98,22 @@ const Transactions = () => {
       {/* Top Observer Target */}
       <div ref={observerTop} className="h-1 w-full absolute top-0 bg-transparent" />
 
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10 mt-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-6 mb-10 mt-4">
         <div className="space-y-2">
           <h1 className="text-4xl md:text-5xl font-black tracking-tighter text-slate-900 dark:text-slate-100">
             Ledger <span className="text-primary">&</span> History
           </h1>
-          <p className="text-slate-600 dark:text-slate-400 text-sm md:text-base font-medium">
+          <p className="text-slate-600 dark:text-slate-400 text-sm md:text-xs md:text-base font-medium">
             Your detailed financial activity and gaming rewards statement.
           </p>
         </div>
-        <button className="flex items-center gap-2 px-6 py-3 bg-primary text-background-dark font-black rounded-xl hover:scale-[1.05] transition-all neon-glow group shadow-xl">
-          <MdFileDownload className="text-xl group-hover:animate-bounce" />
+        <button className="flex items-center gap-2 px-2 md:px-6 py-2 md:py-3 bg-primary text-background-dark font-black rounded-xl hover:scale-[1.05] transition-all neon-glow group shadow-xl">
+          <MdFileDownload className="text-base md:text-xl group-hover:animate-bounce" />
           <span>Download PDF</span>
         </button>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-4 mb-8 ">
+      <div className="flex flex-col lg:flex-row gap-2 md:gap-4 mb-8 ">
         <div className="flex-1 flex gap-2 overflow-x-auto pb-2 lg:pb-0 scrollbar-hide">
           {["All", "Deposits", "Withdrawals", "Entries", "Wins"].map(
             (filter) => (
@@ -137,23 +137,23 @@ const Transactions = () => {
         </div>
         <div className="flex gap-2">
           <div className="relative flex-1 lg:w-64">
-            <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-lg" />
+            <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm md:text-lg" />
             <input
               type="text"
               placeholder="Search by ID..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-white/5 border border-white/5 rounded-xl py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:border-primary/50 transition-all text-white"
+              className="w-full bg-white/5 border border-white/5 rounded-xl py-2 md:py-2.5 pl-2 md:pl-10 pr-2 md:pr-4 text-sm focus:outline-none focus:border-primary/50 transition-all text-white"
             />
           </div>
-          <button className="p-2.5 bg-white/5 border border-white/5 rounded-xl text-slate-500 hover:text-primary transition-all">
-            <MdFilterList className="text-xl" />
+          <button className="p-2 md:p-2.5 bg-white/5 border border-white/5 rounded-xl text-slate-500 hover:text-primary transition-all">
+            <MdFilterList className="text-base md:text-xl" />
           </button>
         </div>
       </div>
 
       <div className="glass-card rounded-2xl overflow-hidden mb-10 border border-white/5 shadow-2xl">
-        <div className="bg-white/5 px-2 py-4 border-b border-white/5 flex items-center justify-between">
+        <div className="bg-white/5 px-2 py-2 md:py-4 border-b border-white/5 flex items-center justify-between">
           <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
             Transaction Details
           </span>
@@ -174,7 +174,7 @@ const Transactions = () => {
           <div ref={observerBottom} className="h-20 w-full" />
 
           {isLoading && (
-            <div className="flex flex-col items-center justify-center p-8 text-slate-500 gap-3">
+            <div className="flex flex-col items-center justify-center p-2 md:p-8 text-slate-500 gap-2 md:gap-3">
               <Loader2 className="animate-spin text-primary" size={32} />
               <p className="text-xs font-bold uppercase tracking-widest animate-pulse">
                 Loading more transactions...
@@ -183,7 +183,7 @@ const Transactions = () => {
           )}
 
           {!hasMore && currentItems.length > 0 && (
-            <div className="p-8 text-center border-t border-white/5 bg-white/5">
+            <div className="p-2 md:p-8 text-center border-t border-white/5 bg-white/5">
               <p className="text-xs font-bold text-slate-500 uppercase tracking-[0.2em]">
                 ✨ No more transactions to show
               </p>
@@ -191,8 +191,8 @@ const Transactions = () => {
           )}
 
           {currentItems.length === 0 && (
-            <div className="p-20 text-center">
-              <p className="text-slate-500 font-bold">
+            <div className="p-2 md:p-20 text-center">
+              <p className="text-xs md:text-base text-slate-500 font-bold">
                 No transactions found for this category.
               </p>
             </div>

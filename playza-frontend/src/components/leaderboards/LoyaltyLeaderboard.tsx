@@ -166,7 +166,7 @@ const LoyaltyLeaderboard = () => {
                         />
                       </div>
                       <div className="min-w-0">
-                        <p className="font-display font-black text-slate-900 dark:text-slate-100 text-[11px] md:text-sm tracking-tight uppercase italic group-hover:text-primary transition-colors truncate">
+                        <p className="font-display font-black text-slate-900 dark:text-slate-100 text-[11px] md:text-xs md:text-sm tracking-tight uppercase italic group-hover:text-primary transition-colors truncate">
                           {entry.name}
                         </p>
                       </div>
@@ -190,7 +190,7 @@ const LoyaltyLeaderboard = () => {
               <TableRow>
                 <TableCell
                   colSpan={5}
-                  className="p-10 text-center text-slate-400 text-xs font-bold uppercase tracking-[0.2em]"
+                  className="p-2 md:p-10 text-center text-slate-400 text-xs font-bold uppercase tracking-[0.2em]"
                 >
                   No Rankings Found
                 </TableCell>
@@ -203,7 +203,7 @@ const LoyaltyLeaderboard = () => {
         <div ref={observerBottom} className="h-10 w-full" />
 
         {isLoading && (
-          <div className="flex flex-col items-center justify-center p-8 text-slate-500 gap-3">
+          <div className="flex flex-col items-center justify-center p-2 md:p-8 text-slate-500 gap-2 md:gap-3">
             <Loader2 className="animate-spin text-primary" size={24} />
             <p className="text-[10px] font-black uppercase tracking-widest animate-pulse">
               Syncing Rankings...

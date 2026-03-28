@@ -26,35 +26,35 @@ const Loyalty = () => {
   const [isTierModalOpen, setIsTierModalOpen] = useState(false);
 
   return (
-    <div className="flex-1 space-y-12 pb-20">
+    <div className="flex-1 space-y-12 pb-2 md:pb-20">
       {!user ? (
-        <div className="mt-6 mb-12 glass-card p-10 rounded-[2.5rem] border-primary/20 relative overflow-hidden flex flex-col items-center text-center gap-8 shadow-2xl">
+        <div className="mt-6 mb-12 glass-card p-2 md:p-10 rounded-xl border-primary/20 relative overflow-hidden flex flex-col items-center text-center gap-2 md:gap-8 shadow-2xl">
           <div className="absolute -top-24 -left-24 size-96 bg-primary/20 blur-[120px] rounded-full" />
           <div className="absolute -bottom-24 -right-24 size-96 bg-secondary/20 blur-[120px] rounded-full" />
 
           <div className="relative z-10 space-y-4 max-w-2xl">
-            <div className="size-24 bg-primary/20 rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 border border-primary/30 shadow-inner group">
-              <MdStars className="text-5xl text-primary animate-pulse" />
+            <div className="size-24 bg-primary/20 rounded-xl flex items-center justify-center mx-auto mb-8 border border-primary/30 shadow-inner group">
+              <MdStars className="text-3xl md:text-5xl text-primary animate-pulse" />
             </div>
-            <h1 className="text-4xl md:text-7xl font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-none italic">
+            <h1 className="text-2xl md:text-4xl md:text-7xl font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-none italic">
               PZA <span className="text-primary">Rewards</span> Center
             </h1>
-            <p className="text-base md:text-xl text-slate-500 font-bold max-w-lg mx-auto leading-relaxed">
+            <p className="text-xs md:text-base md:text-xl text-slate-500 font-bold max-w-lg mx-auto leading-relaxed">
               Earn PZA for every move you make. Unlock exclusive
               tournaments, redeem wallet credits, and rank up your legacy.
             </p>
           </div>
 
-          <div className="relative z-10 flex flex-col sm:flex-row gap-4 w-full max-w-md">
+          <div className="relative z-10 flex flex-col sm:flex-row gap-2 md:gap-4 w-full max-w-md">
             <Link to="/registration?view=signup" className="flex-1">
-              <Button className="w-full h-16 bg-primary text-white rounded-2xl font-black uppercase tracking-widest text-lg hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary/20 glow-accent">
+              <Button className="w-full h-16 bg-primary text-white rounded-2xl font-black uppercase tracking-widest text-sm md:text-lg hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary/20 glow-accent">
                 Join Rewards
               </Button>
             </Link>
             <Link to="/registration?view=login" className="flex-1">
               <Button
                 variant="outline"
-                className="w-full h-16 border-primary/30 text-primary rounded-2xl font-black uppercase tracking-widest text-lg hover:bg-primary/10 transition-all"
+                className="w-full h-16 border-primary/30 text-primary rounded-2xl font-black uppercase tracking-widest text-sm md:text-lg hover:bg-primary/10 transition-all"
               >
                 Member Login
               </Button>
@@ -62,18 +62,18 @@ const Loyalty = () => {
           </div>
         </div>
       ) : (
-        <div className="flex flex-col gap-6">
-          <div className="flex justify-end pt-4">
+        <div className="flex flex-col gap-2 md:gap-6">
+          <div className="flex justify-end pt-2 md:pt-4">
             <Link
               to="/leaderboard?tab=Loyalty"
-              className="px-4 py-2 bg-primary/10 text-primary rounded-lg font-bold uppercase text-xs hover:bg-primary/20 transition-colors"
+              className="px-2 md:px-4 py-2 bg-primary/10 text-primary rounded-lg font-bold uppercase text-xs hover:bg-primary/20 transition-colors"
             >
               Reward Leaderboard
             </Link>
           </div>
-          <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 glass-card rounded-xl p-8 relative overflow-hidden border border-white/5 neon-glow">
-              <div className="absolute top-0 right-0 p-8 opacity-10">
+          <section className="grid grid-cols-1 lg:grid-cols-3 gap-2 md:gap-6">
+            <div className="lg:col-span-2 glass-card rounded-xl p-2 md:p-8 relative overflow-hidden border border-white/5 neon-glow">
+              <div className="absolute top-0 right-0 p-2 md:p-8 opacity-10">
                 <MdDiamond className="text-9xl" />
               </div>
               <div className="relative z-10">
@@ -83,7 +83,7 @@ const Loyalty = () => {
                 <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-md font-bold uppercase tracking-widest opacity-60 text-xs">
                   Earn PZA. Complete tasks. Unlock rewards.
                 </p>
-                <div className="flex flex-wrap items-end gap-8">
+                <div className="flex flex-wrap items-end gap-2 md:gap-8">
                   <div>
                     <div className="text-[10px] uppercase tracking-widest text-primary mb-1 font-bold opacity-70">
                       Total Balance
@@ -124,18 +124,18 @@ const Loyalty = () => {
               </div>
             </div>
 
-            <div className="glass-card rounded-xl p-8 flex flex-col justify-between border border-white/5">
+            <div className="glass-card rounded-xl p-2 md:p-8 flex flex-col justify-between border border-white/5">
               <div className="flex justify-between items-start">
                 <div className="text-sm uppercase tracking-widest text-slate-500 font-bold">
                   Current Streak
                 </div>
-                <div className="bg-red-500/10 text-red-500 px-3 py-1 rounded-full text-xs font-bold border border-red-500/20">
+                <div className="bg-red-500/10 text-red-500 px-2 md:px-3 py-1 rounded-full text-xs font-bold border border-red-500/20">
                   3 days 🔥
                 </div>
               </div>
               <div className="mt-6 flex justify-between items-end">
                 <div className="space-y-1">
-                  <div className="text-4xl font-black font-headline text-slate-900 dark:text-white">
+                  <div className="text-2xl md:text-4xl font-black font-headline text-slate-900 dark:text-white">
                     12
                   </div>
                   <div className="text-xs text-slate-500 uppercase font-bold tracking-widest opacity-60">
@@ -250,15 +250,15 @@ const Loyalty = () => {
           <section className="space-y-6">
             <div className="flex justify-between items-end">
               <div>
-                <h2 className="font-headline text-2xl font-bold tracking-tight bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent italic">
+                <h2 className="font-headline text-lg md:text-2xl font-bold tracking-tight bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent italic">
                   Starter Quests
                 </h2>
-                <p className="text-sm text-slate-500 font-bold uppercase tracking-widest opacity-70">
+                <p className="text-xs md:text-sm text-slate-500 font-bold uppercase tracking-widest opacity-70">
                   Complete missions to kickstart your journey
                 </p>
               </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-4">
               {[
                 {
                   name: "First Signup",
@@ -361,24 +361,24 @@ const Loyalty = () => {
       {/* Redemption Store - Visible to all but actions limited */}
       <section className="space-y-6">
         <div className="flex justify-between items-center">
-          <h2 className="font-headline text-2xl font-bold tracking-tight text-slate-900 dark:text-white uppercase italic">
+          <h2 className="font-headline text-lg md:text-2xl font-bold tracking-tight text-slate-900 dark:text-white uppercase italic">
             Redemption Store
           </h2>
           <button className="text-xs font-black text-primary hover:underline uppercase tracking-widest">
             View All
           </button>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-6">
           <div className="glass-card rounded-xl overflow-hidden border border-white/5 group bg-slate-100/50 dark:bg-white/5">
             <div className="h-32 bg-linear-to-br from-primary/20 to-secondary/20 flex items-center justify-center relative">
-              <MdAccountBalanceWallet className="text-5xl text-slate-500 opacity-20" />
+              <MdAccountBalanceWallet className="text-3xl md:text-5xl text-slate-500 opacity-20" />
               <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur px-2 py-1 rounded text-[10px] font-bold uppercase text-white">
                 WALLET BONUS
               </div>
             </div>
-            <div className="p-6 space-y-4">
+            <div className="p-2 md:p-6 space-y-4">
               <div>
-                <div className="font-headline font-black text-lg text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-2">
+                <div className="font-headline font-black text-sm md:text-lg text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-2">
                   <span className="text-primary">PZA</span>
                   <span>10 Wallet Credit</span>
                 </div>
@@ -404,14 +404,14 @@ const Loyalty = () => {
 
           <div className="glass-card rounded-xl overflow-hidden border border-white/5 group bg-slate-100/50 dark:bg-white/5">
             <div className="h-32 bg-linear-to-br from-secondary/20 to-primary/20 flex items-center justify-center relative">
-              <MdConfirmationNumber className="text-5xl text-slate-500 opacity-20" />
+              <MdConfirmationNumber className="text-3xl md:text-5xl text-slate-500 opacity-20" />
               <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur px-2 py-1 rounded text-[10px] font-bold uppercase text-white">
                 ENTRY TICKET
               </div>
             </div>
-            <div className="p-6 space-y-4">
+            <div className="p-2 md:p-6 space-y-4">
               <div>
-                <div className="font-headline font-black text-lg text-slate-900 dark:text-white uppercase tracking-tight">
+                <div className="font-headline font-black text-sm md:text-lg text-slate-900 dark:text-white uppercase tracking-tight">
                   Free Arena Entry
                 </div>
                 <div className="text-xs text-slate-500 font-bold leading-relaxed">
@@ -436,14 +436,14 @@ const Loyalty = () => {
 
           <div className="glass-card rounded-xl overflow-hidden border border-white/5 group bg-slate-100/50 dark:bg-white/5">
             <div className="h-32 bg-linear-to-br from-secondary/20 to-red-500/20 flex items-center justify-center relative">
-              <MdLocalMall className="text-5xl text-slate-500 opacity-20" />
+              <MdLocalMall className="text-3xl md:text-5xl text-slate-500 opacity-20" />
               <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur px-2 py-1 rounded text-[10px] font-bold uppercase text-white">
                 MERCH SHOP
               </div>
             </div>
-            <div className="p-6 space-y-4">
+            <div className="p-2 md:p-6 space-y-4">
               <div>
-                <div className="font-headline font-black text-lg text-slate-900 dark:text-white uppercase tracking-tight">
+                <div className="font-headline font-black text-sm md:text-lg text-slate-900 dark:text-white uppercase tracking-tight">
                   25% Store Discount
                 </div>
                 <div className="text-xs text-slate-500 font-bold leading-relaxed">
@@ -457,7 +457,7 @@ const Loyalty = () => {
                     PZA
                   </span>
                 </div>
-                <button className="bg-slate-200 dark:bg-white/10 text-slate-400 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest cursor-not-allowed">
+                <button className="bg-slate-200 dark:bg-white/10 text-slate-400 px-2 md:px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest cursor-not-allowed">
                   Insufficient
                 </button>
               </div>
@@ -468,27 +468,27 @@ const Loyalty = () => {
 
       {/* Tier Modal */}
       {isTierModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-in fade-in duration-300">
-          <div className="relative w-full max-w-lg glass-card rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl p-6 md:p-10 animate-in zoom-in-95 duration-300">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 md:p-4 bg-black/80 backdrop-blur-xl animate-in fade-in duration-300">
+          <div className="relative w-full max-w-lg glass-card rounded-xl overflow-hidden border border-white/10 shadow-2xl p-6 md:p-10 animate-in zoom-in-95 duration-300">
             <button
               onClick={() => setIsTierModalOpen(false)}
               className="absolute top-6 right-6 p-2 rounded-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
             >
-              <MdClose className="text-xl" />
+              <MdClose className="text-base md:text-xl" />
             </button>
 
             <div className="mb-8">
-              <h2 className="font-headline text-3xl font-black mb-2 flex items-center gap-3 text-slate-900 dark:text-white uppercase italic tracking-tight">
-                <MdMilitaryTech className="text-primary text-4xl" />
+              <h2 className="font-headline text-xl md:text-3xl font-black mb-2 flex items-center gap-2 md:gap-3 text-slate-900 dark:text-white uppercase italic tracking-tight">
+                <MdMilitaryTech className="text-primary text-2xl md:text-4xl" />
                 Tier System
               </h2>
-              <p className="text-slate-500 font-bold text-sm leading-relaxed">
+              <p className="text-slate-500 font-bold text-xs md:text-sm leading-relaxed">
                 Unlock higher multipliers and exclusive rewards as you earn more
                 PZA.
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2 md:gap-3">
               {[
                 { name: "Bronze", range: "0-999 PZA", color: "orange" },
                 {
@@ -533,7 +533,7 @@ const Loyalty = () => {
 
             <button
               onClick={() => setIsTierModalOpen(false)}
-              className="w-full mt-10 bg-primary hover:bg-primary/90 text-white py-4 rounded-2xl font-black uppercase tracking-widest transition-all shadow-xl shadow-primary/20"
+              className="w-full mt-10 bg-primary hover:bg-primary/90 text-white py-2 md:py-4 rounded-2xl font-black uppercase tracking-widest transition-all shadow-xl shadow-primary/20"
             >
               Got it
             </button>

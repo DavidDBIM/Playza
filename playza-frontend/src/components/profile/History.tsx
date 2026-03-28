@@ -42,7 +42,7 @@ const History = () => {
   const { paginatedData, totalPages } = filterHistory();
 
   return (
-    <div className="flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="flex flex-col gap-2 md:gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {selectedMatch && (
         <GameResultModal
           match={selectedMatch}
@@ -50,12 +50,12 @@ const History = () => {
         />
       )}
       {/* Mobile Page Title */}
-      <h2 className="md:hidden text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+      <h2 className="md:hidden text-lg md:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
         Game History
       </h2>
 
       {/* Filters Header */}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+      <div className="flex flex-col md:flex-row items-center justify-between gap-2 md:gap-6">
         <div className="w-full lg:w-auto overflow-x-auto no-scrollbar">
           <div className="flex bg-slate-100 dark:bg-white/5 p-1 rounded-2xl border border-slate-200 dark:border-white/5 backdrop-blur-md w-max lg:w-auto">
             {[
@@ -81,17 +81,17 @@ const History = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-3 w-full md:w-auto">
+        <div className="flex items-center gap-2 md:gap-3 w-full md:w-auto">
           <div className="relative flex-1 lg:w-64 group">
             <MdSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-primary transition-colors" />
             <input
               type="text"
               placeholder="Search matches..."
-              className="w-full h-11 pl-11 pr-4 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold focus:ring-1 focus:ring-primary focus:border-primary transition-all text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600"
+              className="w-full h-11 pl-2 md:pl-11 pr-2 md:pr-4 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold focus:ring-1 focus:ring-primary focus:border-primary transition-all text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600"
             />
           </div>
           <button className="h-11 w-11 flex items-center justify-center bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-slate-500 hover:text-primary transition-all">
-            <MdFilterList className="text-xl" />
+            <MdFilterList className="text-base md:text-xl" />
           </button>
         </div>
       </div>
@@ -99,14 +99,14 @@ const History = () => {
       {/* Table for Desktop, Cards for Mobile */}
       <div className="w-full">
         {/* Mobile View (Cards) */}
-        <div className="grid grid-cols-1 gap-3 md:hidden">
+        <div className="grid grid-cols-1 gap-2 md:gap-3 md:hidden">
           {paginatedData.map((match) => (
             <div
               key={match.id}
               onClick={() => setSelectedMatch(match)}
-              className="glass-card p-4 rounded-xl border-white/5 flex items-center justify-between cursor-pointer hover:border-primary/20 transition-all active:scale-[0.98]"
+              className="glass-card p-2 md:p-4 rounded-xl border-white/5 flex items-center justify-between cursor-pointer hover:border-primary/20 transition-all active:scale-[0.98]"
             >
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 md:gap-4">
                 <div className="relative group/banner">
                   <img
                     src={match.banner}
@@ -161,13 +161,13 @@ const History = () => {
           <Table className="w-full">
             <TableHeader>
               <TableRow className="border-b border-slate-100 dark:border-white/5 hover:bg-transparent">
-                <TableHead className="px-4 py-3 text-slate-500 text-[10px] font-black uppercase tracking-[0.2em]">
+                <TableHead className="px-2 md:px-4 py-2 md:py-3 text-slate-500 text-[10px] font-black uppercase tracking-[0.2em]">
                   Date
                 </TableHead>
-                <TableHead className="px-4 py-3 text-slate-500 text-[10px] font-black uppercase tracking-[0.2em]">
+                <TableHead className="px-2 md:px-4 py-2 md:py-3 text-slate-500 text-[10px] font-black uppercase tracking-[0.2em]">
                   Game
                 </TableHead>
-                <TableHead className="px-4 py-3 text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] text-right">
+                <TableHead className="px-2 md:px-4 py-2 md:py-3 text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] text-right">
                   Outcome
                 </TableHead>
               </TableRow>
@@ -178,14 +178,14 @@ const History = () => {
                   key={match.id}
                   className="border-b border-slate-50 dark:border-white/5 last:border-0 hover:bg-slate-50/50 dark:hover:bg-white/3 transition-colors group"
                 >
-                  <TableCell className="px-4 py-3">
+                  <TableCell className="px-2 md:px-4 py-2 md:py-3">
                     <span className="text-slate-400 font-bold text-xs">
                       {match.date}
                     </span>
                   </TableCell>
-                  <TableCell className="px-4 py-3">
+                  <TableCell className="px-2 md:px-4 py-2 md:py-3">
                     <div
-                      className="flex items-center gap-4 cursor-pointer"
+                      className="flex items-center gap-2 md:gap-4 cursor-pointer"
                       onClick={() => setSelectedMatch(match)}
                     >
                       <div className="relative">
@@ -211,14 +211,14 @@ const History = () => {
                         <span className="text-slate-900 dark:text-white text-base font-black italic tracking-tight group-hover:text-primary transition-colors">
                           {match.game}
                         </span>
-                        <p className="text-primary text-[9px] font-black uppercase tracking-widest mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <p className="text-xs md:text-base text-primary text-[9px] font-black uppercase tracking-widest mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                           Match Rank #{match.leaderboardRank}
                         </p>
                       </div>
                     </div>
                   </TableCell>
                   <TableCell
-                    className="px-4 py-3 text-right cursor-pointer"
+                    className="px-2 md:px-4 py-2 md:py-3 text-right cursor-pointer"
                     onClick={() => setSelectedMatch(match)}
                   >
                     <div className="flex flex-col items-end gap-1">
@@ -251,20 +251,20 @@ const History = () => {
         </div>
 
         {/* Pagination */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6 mt-10">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-2 md:gap-6 mt-10">
           <p className="text-slate-600 dark:text-slate-500 text-xs font-bold order-2 md:order-1">
             Displaying <span className="text-slate-900 dark:text-white">5</span>{" "}
             of <span className="text-slate-900 dark:text-white">142</span>{" "}
             competitive matches
           </p>
 
-          <div className="flex items-center gap-3 order-1 md:order-2">
+          <div className="flex items-center gap-2 md:gap-3 order-1 md:order-2">
             <button
               onClick={() => setPage((p) => Math.max(p - 1, 1))}
               disabled={page === 1}
               className="size-12 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 text-slate-500 flex items-center justify-center hover:text-primary hover:border-primary/20 transition-all disabled:opacity-20 disabled:hover:text-slate-500"
             >
-              <MdChevronLeft className="text-2xl" />
+              <MdChevronLeft className="text-lg md:text-2xl" />
             </button>
 
             <div className="flex gap-2 bg-slate-100 dark:bg-white/5 p-1 rounded-2xl border border-slate-200 dark:border-white/5">
@@ -288,7 +288,7 @@ const History = () => {
               disabled={page === totalPages}
               className="size-12 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 text-slate-500 flex items-center justify-center hover:text-primary hover:border-primary/20 transition-all disabled:opacity-20 disabled:hover:text-slate-500"
             >
-              <MdChevronRight className="text-2xl" />
+              <MdChevronRight className="text-lg md:text-2xl" />
             </button>
           </div>
         </div>

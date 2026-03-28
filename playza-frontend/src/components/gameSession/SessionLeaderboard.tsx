@@ -38,7 +38,7 @@ const SessionLeaderboard = () => {
           ${isMatch ? "bg-primary/10 dark:bg-primary/20 border-primary ring-1 ring-primary/40 -translate-x-1" : ""}`}
       >
         {isTop3 && (
-          <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
+          <div className="absolute top-0 right-0 p-2 md:p-8 opacity-5 group-hover:opacity-10 transition-opacity">
             {item.rank === 1 && <Trophy size={80} className="text-slate-900 dark:text-white" />}
             {item.rank === 2 && <Medal size={80} className="text-slate-900 dark:text-white" />}
             {item.rank === 3 && <Star size={80} className="text-slate-900 dark:text-white" />}
@@ -46,7 +46,7 @@ const SessionLeaderboard = () => {
         )}
 
         <div className="flex items-center justify-between relative z-10">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-4">
             <div className={`w-10 h-10 flex items-center justify-center rounded-full font-black text-sm ${
               item.rank === 1 ? "bg-yellow-400 text-slate-900 shadow-[0_0_15px_rgba(250,204,21,0.5)]" :
               item.rank === 2 ? "bg-slate-300 text-slate-900" :
@@ -65,7 +65,7 @@ const SessionLeaderboard = () => {
                 />
               ) : (
                 <div className="w-12 h-12 rounded-xl bg-slate-200 dark:bg-slate-800 flex items-center justify-center border-2 border-slate-200 dark:border-white/10">
-                  <BsPerson className="text-slate-400 text-xl" />
+                  <BsPerson className="text-slate-400 text-base md:text-xl" />
                 </div>
               )}
               {isTop3 && (
@@ -180,8 +180,8 @@ const SessionLeaderboard = () => {
             </div>
           </>
         ) : (
-          <div className="py-20 text-center flex flex-col items-center gap-4">
-            <div className="p-6 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10">
+          <div className="py-2 md:py-20 text-center flex flex-col items-center gap-2 md:gap-4">
+            <div className="p-2 md:p-6 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10">
                <Users size={32} className="text-slate-300" />
             </div>
             <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">No matching players found in this session</p>
@@ -189,25 +189,25 @@ const SessionLeaderboard = () => {
         )}
       </div>
 
-      <div className="pt-6 mt-8 border-t border-slate-200 dark:border-white/5">
+      <div className="pt-2 md:pt-6 mt-8 border-t border-slate-200 dark:border-white/5">
         {!query && (
-          <div className="mb-8 p-6 rounded-3xl bg-primary/5 dark:bg-primary/10 border border-primary/20 text-center relative overflow-hidden group">
+          <div className="mb-8 p-2 md:p-6 rounded-xl bg-primary/5 dark:bg-primary/10 border border-primary/20 text-center relative overflow-hidden group">
             <div className="absolute inset-0 bg-primary/5 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 skew-x-12" />
             <h4 className="text-slate-900 dark:text-white font-black uppercase tracking-tight mb-1">Want to see your name here?</h4>
             <p className="text-slate-500 dark:text-slate-400 text-xs mb-4">You are only 1,240 pts away from breaking into the Prize Zone!</p>
-            <button className="bg-primary text-black text-[10px] font-black uppercase tracking-widest px-6 py-3 rounded-xl shadow-lg hover:scale-105 hover:shadow-primary/20 active:scale-95 transition-all">
+            <button className="bg-primary text-black text-[10px] font-black uppercase tracking-widest px-2 md:px-6 py-2 md:py-3 rounded-xl shadow-lg hover:scale-105 hover:shadow-primary/20 active:scale-95 transition-all">
               Launch Match Arena
             </button>
           </div>
         )}
 
-        <div className="flex flex-col items-center gap-4 pb-4">
-           <p className="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-center leading-relaxed">
+        <div className="flex flex-col items-center gap-2 md:gap-4 pb-2 md:pb-4">
+           <p className="text-xs md:text-base text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-center leading-relaxed">
              Didn't see your name? <br/>
              <span className="opacity-60">Search in the box above or view the complete list below.</span>
            </p>
            <Link to="/leaderboard">
-             <button className="group px-8 py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 transition-all rounded-2xl flex items-center gap-3 active:scale-95 shadow-xl hover:shadow-slate-400/20">
+             <button className="group px-2 md:px-8 py-2 md:py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 transition-all rounded-2xl flex items-center gap-2 md:gap-3 active:scale-95 shadow-xl hover:shadow-slate-400/20">
                <span className="text-xs font-black uppercase tracking-[0.2em]">View Global Rankings</span>
                <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
              </button>

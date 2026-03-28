@@ -52,8 +52,8 @@ const RecentTransactions = () => {
   return (
     <>
       <section className="glass-card rounded-xl overflow-hidden">
-        <div className="px-8 py-6 border-b border-slate-900/10 dark:border-white/10 flex items-center justify-between">
-          <h3 className="text-lg font-bold text-slate-900 dark:text-white">Recent Activity</h3>
+        <div className="px-2 md:px-8 py-2 md:py-6 border-b border-slate-900/10 dark:border-white/10 flex items-center justify-between">
+          <h3 className="text-sm md:text-lg font-bold text-slate-900 dark:text-white">Recent Activity</h3>
           <Link
             to={"/wallet/transactions"}
             className="text-sm font-bold text-primary hover:text-primary/80 transition-colors flex items-center gap-1 group"

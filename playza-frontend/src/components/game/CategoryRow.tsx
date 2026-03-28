@@ -62,14 +62,14 @@ const CategoryRow = ({ games, title, categorySlug, totalGames }: CategoryRowProp
   return (
     <div className="mb-10">
       <div className="flex items-center justify-between mb-4 px-2">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 md:gap-3">
           <div className="w-1 h-6 bg-primary rounded-full"></div>
           <h2 className="font-heading text-lg md:text-xl font-bold tracking-tight text-slate-900 dark:text-white uppercase">
             {title}
           </h2>
         </div>
         
-        <div className="flex gap-4 items-center">
+        <div className="flex gap-2 md:gap-4 items-center">
           {totalGames > 8 && (
             <Link 
               to={`/games/category/${categorySlug}`} 
@@ -102,7 +102,7 @@ const CategoryRow = ({ games, title, categorySlug, totalGames }: CategoryRowProp
       <div className="relative group">
         <div
           ref={scrollRef}
-          className="flex overflow-x-auto scrollbar-hide scroll-smooth snap-x gap-3 snap-mandatory py-2 px-1"
+          className="flex overflow-x-auto scrollbar-hide scroll-smooth snap-x gap-2 md:gap-3 snap-mandatory py-2 px-1"
         >
           {games.map((game) => (
             <div

@@ -33,9 +33,9 @@ const TournamentDetail = () => {
 
   if (!tournament || !game) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center text-center p-12">
+      <div className="flex-1 flex flex-col items-center justify-center text-center p-2 md:p-12">
         <Skull size={48} className="text-slate-500 opacity-30 mb-4" />
-        <h2 className="text-2xl font-black font-headline text-white uppercase tracking-widest">
+        <h2 className="text-lg md:text-2xl font-black font-headline text-white uppercase tracking-widest">
           Tournament Not Found
         </h2>
         <Link
@@ -59,7 +59,7 @@ const TournamentDetail = () => {
   const isActive = tournament.status === "live";
 
   return (
-    <div className="flex flex-col flex-1 pb-20 w-full animate-in fade-in duration-500 overflow-x-hidden">
+    <div className="flex flex-col flex-1 pb-2 md:pb-20 w-full animate-in fade-in duration-500 overflow-x-hidden">
       <div className="w-full flex-col mt-4">
         <Link
           to="/tournaments"
@@ -78,20 +78,20 @@ const TournamentDetail = () => {
             />
           </div>
 
-          <div className="relative z-20 flex flex-col md:flex-row justify-between items-end gap-6 p-6 md:p-10">
+          <div className="relative z-20 flex flex-col md:flex-row justify-between items-end gap-2 md:gap-6 p-6 md:p-10">
             <div className="w-full">
               <div className="inline-flex items-center gap-2 mb-4">
                 {isActive ? (
-                  <span className="bg-red-500/20 text-red-500 border border-red-500/30 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5">
+                  <span className="bg-red-500/20 text-red-500 border border-red-500/30 px-2 md:px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />{" "}
                     LIVE NOW
                   </span>
                 ) : tournament.status === "upcoming" ? (
-                  <span className="bg-playza-yellow/20 text-playza-yellow border border-playza-yellow/30 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5">
+                  <span className="bg-playza-yellow/20 text-playza-yellow border border-playza-yellow/30 px-2 md:px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5">
                     <Clock size={12} /> UPCOMING
                   </span>
                 ) : (
-                  <span className="bg-slate-500/20 text-slate-400 border border-slate-500/30 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5">
+                  <span className="bg-slate-500/20 text-slate-400 border border-slate-500/30 px-2 md:px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5">
                     COMPLETED
                   </span>
                 )}
@@ -101,17 +101,17 @@ const TournamentDetail = () => {
                 {tournament.name}
               </h1>
 
-              <div className="flex flex-wrap gap-4 mt-4">
-                <div className="flex items-center gap-2 bg-black/40 px-4 py-2 rounded-lg border border-white/10 text-xs font-bold uppercase tracking-widest text-slate-300">
+              <div className="flex flex-wrap gap-2 md:gap-4 mt-4">
+                <div className="flex items-center gap-2 bg-black/40 px-2 md:px-4 py-2 rounded-lg border border-white/10 text-xs font-bold uppercase tracking-widest text-slate-300">
                   <Gamepad2 className="text-primary" size={16} /> {game.title}
                 </div>
-                <div className="flex items-center gap-2 bg-black/40 px-4 py-2 rounded-lg border border-white/10 text-xs font-bold uppercase tracking-widest text-slate-300">
+                <div className="flex items-center gap-2 bg-black/40 px-2 md:px-4 py-2 rounded-lg border border-white/10 text-xs font-bold uppercase tracking-widest text-slate-300">
                   <Clock className="text-slate-400" size={16} />{" "}
                   {hoursRemaining > 0
                     ? `${hoursRemaining}h remaining`
                     : "Ended"}
                 </div>
-                <div className="flex items-center gap-2 bg-black/40 px-4 py-2 rounded-lg border border-white/10 text-xs font-black uppercase tracking-widest text-slate-300 shadow-[0_0_10px_rgba(234,179,8,0.2)]">
+                <div className="flex items-center gap-2 bg-black/40 px-2 md:px-4 py-2 rounded-lg border border-white/10 text-xs font-black uppercase tracking-widest text-slate-300 shadow-[0_0_10px_rgba(234,179,8,0.2)]">
                   <Trophy className="text-yellow-500" size={16} />{" "}
                   <ZASymbol className="text-yellow-500 scale-90" />{" "}
                   {tournament.prizePool.toLocaleString()}
@@ -121,7 +121,7 @@ const TournamentDetail = () => {
 
             <div className="w-full md:w-auto shrink-0 flex flex-col md:items-end">
               <button
-                className="w-full bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-widest px-10 py-4 rounded-xl shadow-[0_0_20px_rgba(168,85,247,0.4)] disabled:opacity-50 transition-all text-xs"
+                className="w-full bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-widest px-2 md:px-10 py-2 md:py-4 rounded-xl shadow-[0_0_20px_rgba(168,85,247,0.4)] disabled:opacity-50 transition-all text-xs"
                 disabled={!isActive}
               >
                 {isActive
@@ -136,7 +136,7 @@ const TournamentDetail = () => {
 
         {/* Tab Navigation */}
         <div className="mt-8 border-b border-white/10 px-4 md:px-0">
-          <div className="flex gap-6 overflow-x-auto custom-scrollbar pb-px">
+          <div className="flex gap-2 md:gap-6 overflow-x-auto custom-scrollbar pb-px">
             {[
               { id: "overview", label: "Overview" },
               { id: "stages", label: "Stages" },
@@ -156,22 +156,22 @@ const TournamentDetail = () => {
         </div>
 
         {/* Dynamic Tab Content */}
-        <div className="py-8 px-2 md:px-0 min-h-100">
+        <div className="py-2 md:py-8 px-2 md:px-0 min-h-100">
           {activeTab === "overview" && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in w-full">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-6 animate-in fade-in w-full">
               <div className="col-span-1 md:col-span-2 space-y-6">
                 <div className="glass-card rounded-2xl p-6 md:p-8 border border-white/5">
-                  <h3 className="font-headline font-black text-2xl uppercase mb-4 text-white">
+                  <h3 className="font-headline font-black text-lg md:text-2xl uppercase mb-4 text-white">
                     About the {game.title} Series
                   </h3>
-                  <p className="text-slate-400 font-medium leading-relaxed mb-4">
+                  <p className="text-xs md:text-base text-slate-400 font-medium leading-relaxed mb-4">
                     The {tournament.name} is the premier competitive event for{" "}
                     {game.title}. Prove your skills against{" "}
                     {game.activePlayers.toLocaleString()} other elite players in
                     an intense knockout structure pushing your tactical
                     awareness to its absolute limits.
                   </p>
-                  <p className="text-slate-400 font-medium leading-relaxed">
+                  <p className="text-xs md:text-base text-slate-400 font-medium leading-relaxed">
                     Entry requires{" "}
                     <strong>ZA{tournament.entryFee.toLocaleString()}</strong>.
                     Players must lock in their spots before the final
@@ -181,7 +181,7 @@ const TournamentDetail = () => {
                 </div>
 
                 <div className="glass-card rounded-2xl p-6 md:p-8 border border-white/5">
-                  <h3 className="font-headline font-black text-xl uppercase mb-4 text-white">
+                  <h3 className="font-headline font-black text-base md:text-xl uppercase mb-4 text-white">
                     Official Ruleset
                   </h3>
                   <ul className="space-y-3 text-slate-400 font-bold text-sm">
@@ -203,15 +203,15 @@ const TournamentDetail = () => {
               </div>
 
               <div className="space-y-6">
-                <div className="glass-card rounded-2xl p-6 border border-white/5 bg-slate-900/50 relative overflow-hidden">
+                <div className="glass-card rounded-2xl p-2 md:p-6 border border-white/5 bg-slate-900/50 relative overflow-hidden">
                   <div className="absolute inset-0 bg-primary/5 mix-blend-color-burn" />
-                  <h3 className="font-headline font-black text-xl uppercase mb-6 text-white text-center flex justify-center items-center gap-2">
+                  <h3 className="font-headline font-black text-base md:text-xl uppercase mb-6 text-white text-center flex justify-center items-center gap-2">
                     <Trophy className="text-yellow-500" /> Prize Distribution
                   </h3>
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10">
-                      <div className="flex items-center gap-3">
-                        <span className="text-yellow-500 font-black italic text-lg drop-shadow-sm">
+                    <div className="flex items-center justify-between p-2 md:p-3 rounded-xl bg-white/5 border border-white/10">
+                      <div className="flex items-center gap-2 md:gap-3">
+                        <span className="text-yellow-500 font-black italic text-sm md:text-lg drop-shadow-sm">
                           1st
                         </span>
                         <span className="text-xs font-black uppercase tracking-widest text-slate-400">
@@ -225,9 +225,9 @@ const TournamentDetail = () => {
                         </span>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10">
-                      <div className="flex items-center gap-3">
-                        <span className="text-slate-300 font-black italic text-lg drop-shadow-sm">
+                    <div className="flex items-center justify-between p-2 md:p-3 rounded-xl bg-white/5 border border-white/10">
+                      <div className="flex items-center gap-2 md:gap-3">
+                        <span className="text-slate-300 font-black italic text-sm md:text-lg drop-shadow-sm">
                           2nd
                         </span>
                         <span className="text-xs font-black uppercase tracking-widest text-slate-400">
@@ -241,9 +241,9 @@ const TournamentDetail = () => {
                         </span>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10">
-                      <div className="flex items-center gap-3">
-                        <span className="text-orange-500 font-black italic text-lg drop-shadow-sm">
+                    <div className="flex items-center justify-between p-2 md:p-3 rounded-xl bg-white/5 border border-white/10">
+                      <div className="flex items-center gap-2 md:gap-3">
+                        <span className="text-orange-500 font-black italic text-sm md:text-lg drop-shadow-sm">
                           3rd
                         </span>
                         <span className="text-xs font-black uppercase tracking-widest text-slate-400">
@@ -270,7 +270,7 @@ const TournamentDetail = () => {
 
           {activeTab === "stages" && (
             <div className="animate-in fade-in space-y-8 w-full">
-              <div className="flex flex-col md:flex-row items-center gap-4 relative py-6">
+              <div className="flex flex-col md:flex-row items-center gap-2 md:gap-4 relative py-2 md:py-6">
                 {/* Decorative connecting line */}
                 <div className="hidden md:block absolute top-[50%] left-0 w-full h-1 bg-white/5 -z-10 rounded-full" />
 
@@ -295,7 +295,7 @@ const TournamentDetail = () => {
                         )}
                       </div>
 
-                      <h4 className="font-headline font-black text-xl text-white uppercase tracking-widest mb-2">
+                      <h4 className="font-headline font-black text-base md:text-xl text-white uppercase tracking-widest mb-2">
                         {stage.name}
                       </h4>
 
@@ -330,16 +330,16 @@ const TournamentDetail = () => {
           )}
 
           {activeTab === "leaderboard" && (
-            <div className="animate-in fade-in w-full glass-card rounded-2xl border border-white/5 p-6 h-125 overflow-hidden">
+            <div className="animate-in fade-in w-full glass-card rounded-2xl border border-white/5 p-2 md:p-6 h-125 overflow-hidden">
               <SessionLeaderboard />
             </div>
           )}
 
           {activeTab === "progress" && (
-            <div className="animate-in fade-in grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+            <div className="animate-in fade-in grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-6 w-full">
               {myParticipant ? (
                 <>
-                  <div className="glass-card rounded-2xl p-8 border border-white/5 relative overflow-hidden bg-slate-900 border-x-primary/30">
+                  <div className="glass-card rounded-2xl p-2 md:p-8 border border-white/5 relative overflow-hidden bg-slate-900 border-x-primary/30">
                     <div className="absolute inset-0 bg-linear-to-b from-primary/5 to-transparent pointer-events-none" />
 
                     <h3 className="text-xs uppercase font-black text-slate-400 tracking-widest mb-6">
@@ -347,14 +347,14 @@ const TournamentDetail = () => {
                     </h3>
 
                     <div className="flex justify-between items-center mb-8">
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2 md:gap-4">
                         <img
                           src={`https://i.pravatar.cc/150?img=11`}
                           alt="avatar"
                           className="w-16 h-16 rounded-full border-2 border-primary shadow-[0_0_15px_rgba(168,85,247,0.5)]"
                         />
                         <div>
-                          <h2 className="text-2xl font-black font-headline text-white uppercase tracking-tighter">
+                          <h2 className="text-lg md:text-2xl font-black font-headline text-white uppercase tracking-tighter">
                             My Rank
                           </h2>
                           <p className="text-xs text-primary font-bold uppercase tracking-widest mt-1">
@@ -366,7 +366,7 @@ const TournamentDetail = () => {
                       </div>
 
                       <div className="text-right">
-                        <div className="text-4xl text-white font-black font-headline italic">
+                        <div className="text-2xl md:text-4xl text-white font-black font-headline italic">
                           #14
                         </div>
                         <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
@@ -375,34 +375,34 @@ const TournamentDetail = () => {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-black/40 rounded-xl p-4 border border-white/5">
+                    <div className="grid grid-cols-2 gap-2 md:gap-4">
+                      <div className="bg-black/40 rounded-xl p-2 md:p-4 border border-white/5">
                         <div className="text-[10px] uppercase font-bold text-slate-500 tracking-widest mb-1">
                           Total Score
                         </div>
-                        <div className="text-xl font-black text-white">
+                        <div className="text-base md:text-xl font-black text-white">
                           {myParticipant.totalScore.toLocaleString()}
                         </div>
                       </div>
-                      <div className="bg-black/40 rounded-xl p-4 border border-white/5">
+                      <div className="bg-black/40 rounded-xl p-2 md:p-4 border border-white/5">
                         <div className="text-[10px] uppercase font-bold text-slate-500 tracking-widest mb-1">
                           Current Stage
                         </div>
-                        <div className="text-xl font-black text-white truncate">
+                        <div className="text-base md:text-xl font-black text-white truncate">
                           Semi Finals
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="glass-card rounded-2xl p-8 border border-white/5">
+                  <div className="glass-card rounded-2xl p-2 md:p-8 border border-white/5">
                     <h3 className="text-xs uppercase font-black text-slate-400 tracking-widest mb-6 flex items-center gap-2">
                       <Medal size={14} className="text-primary" /> Qualification
                       Path
                     </h3>
 
                     <div className="space-y-6">
-                      <div className="flex gap-4">
+                      <div className="flex gap-2 md:gap-4">
                         <div className="w-8 h-8 rounded-full bg-green-500/20 text-green-500 border border-green-500/30 flex items-center justify-center shrink-0">
                           ✓
                         </div>
@@ -418,7 +418,7 @@ const TournamentDetail = () => {
 
                       <div className="ml-4 w-0.5 h-6 bg-white/10" />
 
-                      <div className="flex gap-4">
+                      <div className="flex gap-2 md:gap-4">
                         <div className="w-8 h-8 rounded-full bg-primary/20 text-primary border border-primary/30 flex items-center justify-center shrink-0 shadow-[0_0_10px_rgba(168,85,247,0.3)]">
                           <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                         </div>
@@ -437,7 +437,7 @@ const TournamentDetail = () => {
 
                       <div className="ml-4 w-0.5 h-6 bg-white/10" />
 
-                      <div className="flex gap-4 opacity-40">
+                      <div className="flex gap-2 md:gap-4 opacity-40">
                         <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
                           ?
                         </div>
@@ -454,11 +454,11 @@ const TournamentDetail = () => {
                   </div>
                 </>
               ) : (
-                <div className="col-span-full py-20 flex flex-col items-center justify-center text-center glass-card rounded-2xl border border-white/5">
-                  <h3 className="font-headline font-black text-2xl text-slate-900 dark:text-white uppercase mb-2">
+                <div className="col-span-full py-2 md:py-20 flex flex-col items-center justify-center text-center glass-card rounded-2xl border border-white/5">
+                  <h3 className="font-headline font-black text-lg md:text-2xl text-slate-900 dark:text-white uppercase mb-2">
                     Not participating
                   </h3>
-                  <p className="text-sm font-bold tracking-widest text-slate-500 uppercase opacity-60">
+                  <p className="text-xs md:text-sm font-bold tracking-widest text-slate-500 uppercase opacity-60">
                     You haven't joined this tournament yet.
                   </p>
                 </div>
@@ -468,9 +468,9 @@ const TournamentDetail = () => {
 
           {activeTab === "sessions" && (
             <div className="animate-in fade-in space-y-4 w-full">
-              <div className="glass-card rounded-2xl p-6 border border-white/5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-900/50">
+              <div className="glass-card rounded-2xl p-2 md:p-6 border border-white/5 flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-4 bg-slate-900/50">
                 <div>
-                  <h4 className="font-headline font-black text-xl text-white uppercase tracking-widest mb-1 flex items-center gap-2">
+                  <h4 className="font-headline font-black text-base md:text-xl text-white uppercase tracking-widest mb-1 flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />{" "}
                     Official Server #081
                   </h4>
@@ -480,15 +480,15 @@ const TournamentDetail = () => {
                 </div>
                 <Link
                   to={`/games/${game.slug}/session`}
-                  className="bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-widest text-xs px-6 py-3 rounded-lg flex items-center gap-2 shadow-lg w-full md:w-auto text-center shrink-0"
+                  className="bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-widest text-xs px-2 md:px-6 py-2 md:py-3 rounded-lg flex items-center gap-2 shadow-lg w-full md:w-auto text-center shrink-0"
                 >
                   Join Session <ExternalLink size={14} />
                 </Link>
               </div>
 
-              <div className="glass-card rounded-2xl p-6 border border-white/5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-black/40 opacity-70">
+              <div className="glass-card rounded-2xl p-2 md:p-6 border border-white/5 flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-4 bg-black/40 opacity-70">
                 <div>
-                  <h4 className="font-headline font-black text-xl text-white uppercase tracking-widest mb-1 flex items-center gap-2">
+                  <h4 className="font-headline font-black text-base md:text-xl text-white uppercase tracking-widest mb-1 flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-red-500" />{" "}
                     Official Server #014
                   </h4>
@@ -498,7 +498,7 @@ const TournamentDetail = () => {
                 </div>
                 <button
                   disabled
-                  className="bg-slate-800 text-slate-500 font-black uppercase tracking-widest text-xs px-6 py-3 rounded-lg w-full md:w-auto text-center shrink-0 cursor-not-allowed border border-white/5"
+                  className="bg-slate-800 text-slate-500 font-black uppercase tracking-widest text-xs px-2 md:px-6 py-2 md:py-3 rounded-lg w-full md:w-auto text-center shrink-0 cursor-not-allowed border border-white/5"
                 >
                   SERVER FULL
                 </button>

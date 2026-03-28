@@ -44,18 +44,18 @@ const SideBar = () => {
         ))}
       </nav>
 
-      <div className="glass rounded-lg p-5">
+      <div className="glass rounded-lg p-2 md:p-5">
         <h3 className="text-xs font-bold uppercase tracking-widest mb-4">
           Live Network
         </h3>
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex items-center gap-2 md:gap-3 mb-4">
           <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-          <p className="text-sm ">
+          <p className="text-xs md:text-sm ">
             <span className=" font-bold">1.2k</span> Players Online
           </p>
         </div>
         <div className="space-y-3">
-          <div className="flex items-center gap-3 p-2 rounded-lg border border-white/5 bg-accent/30">
+          <div className="flex items-center gap-2 md:gap-3 p-2 rounded-lg border border-white/5 bg-accent/30">
             <div className="w-8 h-8 rounded bg-accent/20 flex items-center justify-center">
               <span className="material-icons text-accent text-sm">
                 <Users />

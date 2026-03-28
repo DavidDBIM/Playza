@@ -16,20 +16,20 @@ import { ZASymbol } from "@/components/currency/ZASymbol";
 
 const Overview = () => {
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700 overflow-hidden">
+    <div className="grid grid-cols-1 xl:grid-cols-3 gap-2 md:gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700 overflow-hidden">
       {/* Mobile Page Title */}
-      <h2 className="md:hidden text-2xl font-black text-slate-900 dark:text-white tracking-tight col-span-full">
+      <h2 className="md:hidden text-lg md:text-2xl font-black text-slate-900 dark:text-white tracking-tight col-span-full">
         Overview
       </h2>
       {/* <!-- Left Stats Content --> */}
       <div className="xl:col-span-2 space-y-8">
         {/* <!-- Stat Cards --> */}
-        <div className="grid grid-cols-2 2xl:grid-cols-4 gap-4 overflow-hidden">
+        <div className="grid grid-cols-2 2xl:grid-cols-4 gap-2 md:gap-4 overflow-hidden">
           <div className="glass-card p-2 md:p-4 rounded-xl flex flex-col gap-1 hover:border-primary/40 transition-all group">
             <p className="text-slate-500 dark:text-slate-400 text-[10px] font-black uppercase tracking-widest group-hover:text-primary transition-colors">
               Total Games
             </p>
-            <p className="text-slate-900 dark:text-white text-lg md:text-xl xl:text-3xl font-black">
+            <p className="text-xs md:text-base text-slate-900 dark:text-white text-lg md:text-xl xl:text-3xl font-black">
               124
             </p>
             <div className="mt-2 text-playza-green text-[10px] flex items-center gap-1 font-black">
@@ -40,7 +40,7 @@ const Overview = () => {
             <p className="text-slate-500 dark:text-slate-400 text-[10px] font-black uppercase tracking-widest group-hover:text-primary transition-colors">
               Wins
             </p>
-            <p className="text-slate-900 dark:text-white text-lg md:text-xl xl:text-3xl font-black">
+            <p className="text-xs md:text-base text-slate-900 dark:text-white text-lg md:text-xl xl:text-3xl font-black">
               52
             </p>
             <div className="mt-2 text-playza-green text-[10px] flex items-center gap-1 font-black">
@@ -51,7 +51,7 @@ const Overview = () => {
             <p className="text-slate-500 dark:text-slate-400 text-[10px] font-black uppercase tracking-widest group-hover:text-primary transition-colors">
               Win Rate
             </p>
-            <p className="text-slate-900 dark:text-white text-lg md:text-xl xl:text-3xl font-black">
+            <p className="text-xs md:text-base text-slate-900 dark:text-white text-lg md:text-xl xl:text-3xl font-black">
               41%
             </p>
             <div className="mt-2 text-playza-green text-[10px] flex items-center gap-1 font-black">
@@ -62,7 +62,7 @@ const Overview = () => {
             <p className="text-slate-500 dark:text-slate-400 text-[10px] font-black uppercase tracking-widest group-hover:text-primary transition-colors">
               Highest Score
             </p>
-            <p className="text-slate-900 dark:text-white text-lg md:text-xl xl:text-3xl font-black">
+            <p className="text-xs md:text-base text-slate-900 dark:text-white text-lg md:text-xl xl:text-3xl font-black">
               14,250
             </p>
             <div className="mt-2 text-playza-green text-[10px] flex items-center gap-1 font-black">
@@ -72,17 +72,17 @@ const Overview = () => {
         </div>
 
         {/* Additional Stats Row */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-2 md:gap-4">
           <div className="glass-card p-2 md:p-4 rounded-xl flex items-center justify-between group hover:bg-primary/5 transition-all">
             <div className="space-y-1">
               <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">
                 Gaming Hours
               </p>
-              <p className="text-slate-900 dark:text-white text-2xl font-black">
+              <p className="text-xs md:text-base text-slate-900 dark:text-white text-lg md:text-2xl font-black">
                 342h
               </p>
             </div>
-            <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary text-xl">
+            <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary text-base md:text-xl">
               <MdHistory />
             </div>
           </div>
@@ -91,11 +91,11 @@ const Overview = () => {
               <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">
                 Tickets Won
               </p>
-              <p className="text-slate-900 dark:text-white text-2xl font-black">
+              <p className="text-xs md:text-base text-slate-900 dark:text-white text-lg md:text-2xl font-black">
                 12,450
               </p>
             </div>
-            <div className="size-10 rounded-xl bg-playza-green/10 flex items-center justify-center text-playza-green text-xl">
+            <div className="size-10 rounded-xl bg-playza-green/10 flex items-center justify-center text-playza-green text-base md:text-xl">
               <MdMilitaryTech />
             </div>
           </div>
@@ -103,14 +103,14 @@ const Overview = () => {
 
         {/* <!-- Favorite Games --> */}
         <section>
-          <h3 className="text-slate-900 dark:text-white text-xl font-black mb-3 md:mb-0 md:p-4 flex items-center gap-3">
+          <h3 className="text-slate-900 dark:text-white text-base md:text-xl font-black mb-3 md:mb-0 md:p-4 flex items-center gap-2 md:gap-3">
             <div className="size-8 rounded-lg bg-primary/20 flex items-center justify-center">
               <MdFavorite className="text-primary" />
             </div>
             Favorite Games
           </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:p-2">
-            <div className="glass-card p-2 md:p-4 rounded-xl flex items-center gap-5 hover:border-primary/40 transition-all cursor-pointer group shadow-lg">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-4 md:p-2">
+            <div className="glass-card p-2 md:p-4 rounded-xl flex items-center gap-2 md:gap-5 hover:border-primary/40 transition-all cursor-pointer group shadow-lg">
               <div
                 className="size-16 rounded-xl bg-cover bg-center overflow-hidden border-2 border-white/10 group-hover:scale-105 transition-transform"
                 data-alt="Temple Run game cover image thumbnail"
@@ -133,7 +133,7 @@ const Overview = () => {
                 </p>
               </div>
             </div>
-            <div className="glass-card p-2 md:p-4 rounded-xl flex items-center gap-5 hover:border-primary/40 transition-all cursor-pointer group shadow-lg">
+            <div className="glass-card p-2 md:p-4 rounded-xl flex items-center gap-2 md:gap-5 hover:border-primary/40 transition-all cursor-pointer group shadow-lg">
               <div
                 className="size-16 rounded-xl bg-cover bg-center overflow-hidden border-2 border-white/10 group-hover:scale-105 transition-transform"
                 data-alt="Candy Crush game cover art thumbnail"
@@ -162,14 +162,14 @@ const Overview = () => {
         {/* <!-- Recent Matches --> */}
         <section>
           <div className="flex items-center justify-between mb-3 md:mb-0 md:p-4">
-            <h3 className="text-slate-900 dark:text-white text-xl font-black flex items-center gap-3">
+            <h3 className="text-slate-900 dark:text-white text-base md:text-xl font-black flex items-center gap-2 md:gap-3">
               <div className="size-8 rounded-lg bg-playza-blue/20 flex items-center justify-center">
                 <MdHistory className="text-playza-blue" />
               </div>
               Recent Activity
             </h3>
             <a
-              className="px-4 py-1.5 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-full text-slate-500 text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-white/10 transition-all shadow-sm"
+              className="px-2 md:px-4 py-1.5 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-full text-slate-500 text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-white/10 transition-all shadow-sm"
               href="#"
             >
               View All
@@ -206,7 +206,7 @@ const Overview = () => {
                 key={i}
                 className="glass-card p-2 md:p-4 rounded-xl flex items-center justify-between group hover:border-slate-300 dark:hover:border-white/10 transition-all shadow-md"
               >
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 md:gap-4">
                   <div
                     className={`size-10 rounded-xl bg-${match.result === "Win" ? "playza-green" : "playza-red"}/10 flex items-center justify-center text-xl`}
                   >
@@ -217,7 +217,7 @@ const Overview = () => {
                     )}
                   </div>
                   <div>
-                    <p className="text-slate-900 dark:text-white text-sm font-black italic">
+                    <p className="text-slate-900 dark:text-white text-xs md:text-sm font-black italic">
                       {match.game}{" "}
                       <span className="hidden sm:inline text-slate-500 not-italic font-bold text-xs">
                         — {match.type}
@@ -236,7 +236,7 @@ const Overview = () => {
                     <ZASymbol className="text-sm scale-90" />
                     {match.amount.replace("-", "").replace("+", "")}
                   </div>
-                  <p className="text-slate-500 text-[9px] font-bold uppercase tracking-widest opacity-60">
+                  <p className="text-xs md:text-base text-slate-500 text-[9px] font-bold uppercase tracking-widest opacity-60">
                     {match.result}
                   </p>
                 </div>
@@ -253,12 +253,12 @@ const Overview = () => {
           <div className="absolute inset-0 bg-linear-to-br from-primary/5 to-transparent opacity-50 group-hover:scale-110 transition-transform duration-1000"></div>
           <div className="relative z-10">
             <div className="inline-flex size-14 rounded-xl bg-primary/20 items-center justify-center mb-3 md:mb-0 md:p-4 shadow-inner animate-pulse">
-              <MdLocalFireDepartment className="text-primary text-3xl" />
+              <MdLocalFireDepartment className="text-primary text-xl md:text-3xl" />
             </div>
             <h3 className="text-slate-500 dark:text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mb-2">
               Active Win Streak
             </h3>
-            <p className="text-slate-900 dark:text-white text-5xl font-black mb-1 animate-in slide-in-from-bottom duration-500">
+            <p className="text-xs md:text-base text-slate-900 dark:text-white text-3xl md:text-5xl font-black mb-1 animate-in slide-in-from-bottom duration-500">
               5
             </p>
             <p className="text-primary text-[10px] font-black uppercase tracking-widest mt-4">
@@ -281,26 +281,26 @@ const Overview = () => {
         </div>
 
         {/* <!-- Progress Section (Rank Bar Redesign) --> */}
-        <div className="glass-card p-6 rounded-4xl shadow-xl border-primary/10 bg-linear-to-b from-primary/5 to-transparent relative overflow-hidden mb-3">
+        <div className="glass-card p-2 md:p-6 rounded-xl shadow-xl border-primary/10 bg-linear-to-b from-primary/5 to-transparent relative overflow-hidden mb-3">
           <div className="absolute top-0 right-0 size-32 bg-primary/10 blur-[60px] rounded-full -mr-16 -mt-16"></div>
 
           <div className="relative z-10">
             <div className="flex justify-between items-center mb-6">
-              <div className="flex items-center gap-3">
-                <div className="size-12 rounded-2xl bg-primary/20 flex items-center justify-center text-primary text-2xl shadow-inner border border-primary/20 rotate-3 group-hover:rotate-0 transition-transform">
+              <div className="flex items-center gap-2 md:gap-3">
+                <div className="size-12 rounded-2xl bg-primary/20 flex items-center justify-center text-primary text-lg md:text-2xl shadow-inner border border-primary/20 rotate-3 group-hover:rotate-0 transition-transform">
                   <MdMilitaryTech />
                 </div>
                 <div>
-                  <p className="text-slate-500 text-[9px] font-bold uppercase tracking-[0.2em]">
+                  <p className="text-xs md:text-base text-slate-500 text-[9px] font-bold uppercase tracking-[0.2em]">
                     Current Rank
                   </p>
-                  <h3 className="text-slate-900 dark:text-white font-black text-xl tracking-tighter italic leading-none">
+                  <h3 className="text-slate-900 dark:text-white font-black text-base md:text-xl tracking-tighter italic leading-none">
                     PLATINUM IV
                   </h3>
                 </div>
               </div>
               <div className="text-right">
-                <span className="text-primary text-xs font-black bg-primary/10 px-3 py-1 rounded-full border border-primary/20">
+                <span className="text-primary text-xs font-black bg-primary/10 px-2 md:px-3 py-1 rounded-full border border-primary/20">
                   75%
                 </span>
               </div>
@@ -330,7 +330,7 @@ const Overview = () => {
               </div>
             </div>
 
-            <div className="mt-6 p-4 rounded-2xl bg-white/40 dark:bg-white/5 border border-slate-200 dark:border-white/5 backdrop-blur-sm">
+            <div className="mt-6 p-2 md:p-4 rounded-2xl bg-white/40 dark:bg-white/5 border border-slate-200 dark:border-white/5 backdrop-blur-sm">
               <p className="text-slate-600 dark:text-slate-400 text-[10px] leading-relaxed font-bold">
                 Win{" "}
                 <span className="text-primary font-black uppercase tracking-tighter">
@@ -345,14 +345,14 @@ const Overview = () => {
         {/* <!-- Top Achievements Preview --> */}
         <div className="glass-card p-4 md:p-8 rounded-xl shadow-xl border-slate-200 dark:border-white/5 mb-3">
           <div className="flex items-center justify-between mb-3 md:mb-0 md:p-4">
-            <h3 className="text-slate-900 dark:text-white font-black text-lg">
+            <h3 className="text-slate-900 dark:text-white font-black text-sm md:text-lg">
               Milestones
             </h3>
             <span className="text-[10px] font-black text-primary uppercase tracking-widest">
               3 / 12
             </span>
           </div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 gap-2 md:gap-3">
             {[
               {
                 icon: <MdVerified className="text-primary" />,
@@ -375,7 +375,7 @@ const Overview = () => {
                 className={`size-12 bg-${item.bg.split("-")[0]}/10 rounded-xl flex items-center justify-center border border-${item.bg.split("-")[0]}/20 hover:scale-110 transition-all cursor-help group relative shadow-lg`}
                 title={item.title}
               >
-                <span className="text-2xl transition-transform group-hover:rotate-12">
+                <span className="text-lg md:text-2xl transition-transform group-hover:rotate-12">
                   {item.icon}
                 </span>
                 <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 size-1 bg-primary rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>

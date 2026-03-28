@@ -22,7 +22,7 @@ const WalletBalance = ({ balance, onWithdrawClick }: WalletBalanceProps) => {
   };
 
   return (
-    <div className="lg:col-span-2 glass-card rounded-xl p-8 flex flex-col justify-between relative overflow-hidden group">
+    <div className="lg:col-span-2 glass-card rounded-xl p-2 md:p-8 flex flex-col justify-between relative overflow-hidden group">
       <div className="absolute -top-24 -right-24 size-64 bg-primary/10 rounded-full blur-[100px] group-hover:bg-primary/20 transition-all"></div>
       <div>
         <div className="flex items-center justify-between mb-2">
@@ -38,14 +38,14 @@ const WalletBalance = ({ balance, onWithdrawClick }: WalletBalanceProps) => {
           <h2 className="text-4xl md:text-6xl font-black text-slate-900 dark:text-white tracking-tighter flex items-center gap-2">
             <ZASymbol className="scale-90 md:scale-100" />
             <span>{numericBalance?.toLocaleString()}</span>
-            <span className="text-lg font-bold text-slate-400 opacity-50">.00</span>
+            <span className="text-sm md:text-lg font-bold text-slate-400 opacity-50">.00</span>
           </h2>
           
           <CurrencyConverter amount={numericBalance || 0} />
         </div>
       </div>
       
-      <div className="flex flex-col sm:flex-row gap-4 mt-8">
+      <div className="flex flex-col sm:flex-row gap-2 md:gap-4 mt-8">
         <button
           onClick={() => navigate("?modal=deposit")}
           className="flex-1 bg-primary hover:bg-primary/90 text-background dark:text-background-dark font-black py-3 md:py-4 rounded-xl transition-all neon-glow flex items-center justify-center gap-2 text-xs md:text-base group/btn uppercase tracking-widest"

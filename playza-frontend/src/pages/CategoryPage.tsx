@@ -54,7 +54,7 @@ const CategoryPage = () => {
   return (
     <main className="space-y-6 md:space-y-8 min-h-screen">
       {/* <!-- Breadcrumbs & Back Button --> */}
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-2 md:gap-4">
         <nav className="flex text-[10px] md:text-xs text-slate-500 gap-2 px-1">
           <Link to="/" className="hover:text-primary transition-colors">
             Home
@@ -69,8 +69,8 @@ const CategoryPage = () => {
           </span>
         </nav>
 
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 md:gap-6">
+          <div className="flex items-center gap-2 md:gap-4">
             <Link
               to="/games"
               className="p-2 rounded-xl bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-white/60 hover:text-primary hover:bg-primary/10 transition-all border border-black/5 dark:border-white/5"
@@ -84,13 +84,13 @@ const CategoryPage = () => {
                   {categoryTitle} Games
                 </h1>
               </div>
-              <p className="text-offset text-sm font-medium">
+              <p className="text-offset text-xs md:text-sm font-medium">
                 Explore our best {categoryTitle} collection
               </p>
             </div>
           </div>
 
-          <div className="glass rounded-2xl p-2 md:p-3 flex gap-4 items-center flex-1 max-w-xl self-end md:self-auto">
+          <div className="glass rounded-2xl p-2 md:p-3 flex gap-2 md:gap-4 items-center flex-1 max-w-xl self-end md:self-auto">
             <Search
               placeholder={`Search ${categoryTitle} games...`}
               value={query}
@@ -110,8 +110,8 @@ const CategoryPage = () => {
             <GamesCard key={game.id} {...game} />
           ))
         ) : (
-          <div className="col-span-full py-20 text-center glass rounded-3xl">
-            <p className="text-slate-500 dark:text-slate-400 text-lg">
+          <div className="col-span-full py-2 md:py-20 text-center glass rounded-xl">
+            <p className="text-slate-500 dark:text-slate-400 text-xs md:text-sm md:text-lg">
               No games found matching your criteria.
             </p>
           </div>

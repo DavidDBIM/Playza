@@ -15,7 +15,7 @@ const FEED_DATA = [
 
 const SessionActivities = () => {
   return (
-    <main className="flex-1 mx-auto w-full py-2 md:py-4 bg-transparent rounded-3xl overflow-hidden min-h-150 flex flex-col relative transition-colors duration-300">
+    <main className="flex-1 mx-auto w-full py-2 md:py-4 bg-transparent rounded-xl overflow-hidden min-h-150 flex flex-col relative transition-colors duration-300">
       {/* Visual Accents */}
       <div className="absolute top-0 right-0 p-2 opacity-5 pointer-events-none">
          <Users size={200} className="text-primary rotate-12" />
@@ -23,11 +23,11 @@ const SessionActivities = () => {
 
       <div className="px-3 md:px-8 pt-4 md:pt-8 pb-3 md:pb-6 flex items-center justify-between border-b border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-slate-900/20 relative z-10 transition-colors">
         <div className="space-y-1">
-          <div className="flex items-center gap-3">
-             <h1 className="tracking-tighter text-2xl lg:text-3xl font-black uppercase text-slate-900 dark:text-white italic transition-colors">
+          <div className="flex items-center gap-2 md:gap-3">
+             <h1 className="tracking-tighter text-lg md:text-2xl lg:text-3xl font-black uppercase text-slate-900 dark:text-white italic transition-colors">
                Live <span className="text-primary font-black italic">Feed</span>
              </h1>
-             <div className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-red-500/10 border border-red-500/20 shadow-[0_0_15px_rgba(239,68,68,0.2)]">
+             <div className="flex items-center gap-2 px-2 md:px-2.5 py-1 rounded-full bg-red-500/10 border border-red-500/20 shadow-[0_0_15px_rgba(239,68,68,0.2)]">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
@@ -40,19 +40,19 @@ const SessionActivities = () => {
             Global Channel #402 • Real-time Monitoring
           </p>
         </div>
-        <div className="hidden sm:flex items-center gap-4">
+        <div className="hidden sm:flex items-center gap-2 md:gap-4">
            <div className="text-right">
               <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest leading-none mb-1">Online</p>
-              <p className="text-lg font-black text-slate-900 dark:text-white leading-none transition-colors">1,240</p>
+              <p className="text-xs md:text-sm md:text-lg font-black text-slate-900 dark:text-white leading-none transition-colors">1,240</p>
            </div>
-           <div className="p-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl shadow-sm">
+           <div className="p-2 md:p-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl shadow-sm">
               <Users size={18} className="text-primary" />
            </div>
         </div>
       </div>
 
       {/* <!-- Feed Stats Bar --> */}
-      <div className="hidden md:flex items-center gap-6 px-8 py-3 bg-slate-50 dark:bg-white/5 border-b border-slate-200 dark:border-white/5 relative z-10 transition-colors">
+      <div className="hidden md:flex items-center gap-2 md:gap-6 px-2 md:px-8 py-2 md:py-3 bg-slate-50 dark:bg-white/5 border-b border-slate-200 dark:border-white/5 relative z-10 transition-colors">
          <div className="flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
             <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Entries: 42</span>
@@ -85,7 +85,7 @@ const SessionActivities = () => {
                 <span className="text-slate-400 dark:text-slate-500 text-[10px] font-black uppercase tracking-widest opacity-60 transition-colors">{item.action}</span>
               </div>
               {item.highlight && (
-                <p className={`text-sm font-black italic tracking-tighter ${item.color}`}>
+                <p className={`text-xs md:text-sm font-black italic tracking-tighter ${item.color}`}>
                    {item.highlight}
                 </p>
               )}
@@ -112,7 +112,7 @@ const SessionActivities = () => {
               <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.3em]">Monitoring Stream...</span>
            </div>
            
-           <button className="flex items-center gap-3 px-8 py-3.5 rounded-2xl bg-white dark:bg-white/5 hover:bg-primary hover:text-slate-900 border border-slate-200 dark:border-white/10 hover:border-primary transition-all duration-300 text-xs font-black uppercase tracking-widest shadow-lg group text-slate-700 dark:text-white">
+           <button className="flex items-center gap-2 md:gap-3 px-2 md:px-8 py-2 md:py-3.5 rounded-2xl bg-white dark:bg-white/5 hover:bg-primary hover:text-slate-900 border border-slate-200 dark:border-white/10 hover:border-primary transition-all duration-300 text-xs font-black uppercase tracking-widest shadow-lg group text-slate-700 dark:text-white">
              <ArrowUp className="size-4 group-hover:-translate-y-1 transition-transform" />
              Show Older Activity
            </button>
@@ -120,8 +120,8 @@ const SessionActivities = () => {
       </div>
 
       {/* Bottom Status Bar */}
-      <div className="p-4 bg-slate-50 dark:bg-slate-950 border-t border-slate-200 dark:border-white/5 flex items-center justify-between transition-colors">
-         <div className="flex items-center gap-4">
+      <div className="p-2 md:p-4 bg-slate-50 dark:bg-slate-950 border-t border-slate-200 dark:border-white/5 flex items-center justify-between transition-colors">
+         <div className="flex items-center gap-2 md:gap-4">
             <button className="p-2 text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors">
                <MessageSquare size={16} />
             </button>

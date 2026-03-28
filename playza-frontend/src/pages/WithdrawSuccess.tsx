@@ -19,8 +19,8 @@ export default function WithdrawSuccess() {
   }, [navigate]);
 
   return (
-    <main className="flex-1 w-full max-w-2xl mx-auto py-8 md:py-16 px-4 flex flex-col items-center justify-center min-h-[60vh] animate-in slide-in-from-bottom-4 duration-500">
-      <div className="w-full glass-card rounded-3xl py-12 px-6 md:p-16 relative overflow-hidden border border-emerald-500/20 shadow-2xl flex flex-col items-center text-center">
+    <main className="flex-1 w-full max-w-2xl mx-auto py-8 md:py-16 px-2 md:px-4 flex flex-col items-center justify-center min-h-[60vh] animate-in slide-in-from-bottom-4 duration-500">
+      <div className="w-full glass-card rounded-xl py-2 md:py-12 px-2 md:px-6 md:p-16 relative overflow-hidden border border-emerald-500/20 shadow-2xl flex flex-col items-center text-center">
         <div className="absolute -top-32 -left-32 w-64 h-64 bg-emerald-500/10 blur-[100px] rounded-full"></div>
         <div className="absolute -bottom-32 -right-32 w-64 h-64 bg-emerald-500/10 blur-[100px] rounded-full"></div>
 
@@ -32,11 +32,11 @@ export default function WithdrawSuccess() {
           Request <span className="text-emerald-500">Successful!</span>
         </h2>
         
-        <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-md font-medium relative z-10 leading-relaxed font-sans">
+        <p className="text-xs md:text-base text-slate-500 dark:text-slate-400 mb-8 max-w-md font-medium relative z-10 leading-relaxed font-sans">
           Your payout of <span className="font-bold text-slate-900 dark:text-white inline-flex items-center gap-1.5"><ZASymbol className="text-[10px] scale-90" />{amount.toLocaleString()}</span> is being processed to your <span className="uppercase text-slate-900 dark:text-white">{bank}</span> account. We'll notify you once it hits.
         </p>
 
-        <div className="w-full max-w-xs bg-slate-50 dark:bg-white/5 rounded-2xl p-4 border border-slate-200 dark:border-white/5 mb-10 flex items-center justify-between text-left">
+        <div className="w-full max-w-xs bg-slate-50 dark:bg-white/5 rounded-2xl p-2 md:p-4 border border-slate-200 dark:border-white/5 mb-10 flex items-center justify-between text-left">
            <div>
              <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 block">Destination</span>
              <span className="font-bold text-sm text-slate-900 dark:text-white uppercase flex items-center gap-1.5 mt-1">

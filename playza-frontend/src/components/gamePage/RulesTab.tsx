@@ -44,7 +44,7 @@ export const RulesTab = () => {
       {/* Timeline Steps */}
       <div className="relative space-y-4  md:space-y-12 before:absolute before:inset-0 before:ml-10 before:-translate-x-2 md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-linear-to-b before:from-primary/50 before:via-slate-200 dark:before:via-white/5 before:to-transparent">
         {steps.map((step, idx) => (
-          <div key={idx} className="relative flex items-center gap-6 md:justify-normal md:odd:flex-row-reverse group">
+          <div key={idx} className="relative flex items-center gap-2 md:gap-6 md:justify-normal md:odd:flex-row-reverse group">
             {/* Icon Circle */}
             <div className="flex items-center justify-center w-16 h-16 md:w-20 md:h-20 rounded-full bg-white dark:bg-playza-dark border border-slate-200 dark:border-white/10 shadow-xl z-20 shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 group-hover:border-primary/50 transition-colors duration-500">
               <div className={`p-4 ${step.bg} rounded-full`}>
@@ -61,7 +61,7 @@ export const RulesTab = () => {
               <h3 className="text-lg md:text-xl font-black text-slate-900 dark:text-white mb-2 tracking-tight group-hover:text-primary transition-colors italic uppercase">
                 {step.title}
               </h3>
-              <p className="text-slate-500 dark:text-slate-400 leading-relaxed font-medium text-sm">
+              <p className="text-slate-500 dark:text-slate-400 leading-relaxed font-medium text-xs md:text-sm">
                 {step.desc}
               </p>
             </div>
@@ -70,13 +70,13 @@ export const RulesTab = () => {
       </div>
 
       {/* Fair Play Notice */}
-      <div className="mt-8 md:mt-16 bg-playza-green/10 border border-playza-green/30 rounded-3xl p-6 md:p-8 flex items-center gap-6 shadow-xl">
-        <div className="p-4 bg-playza-green/20 rounded-2xl">
+      <div className="mt-8 md:mt-16 bg-playza-green/10 border border-playza-green/30 rounded-xl p-6 md:p-8 flex items-center gap-2 md:gap-6 shadow-xl">
+        <div className="p-2 md:p-4 bg-playza-green/20 rounded-2xl">
           <ShieldCheck className="w-8 h-8 text-playza-green" />
         </div>
         <div className="space-y-1">
-          <h4 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight italic">Fair Play Notice</h4>
-          <p className="text-slate-600 dark:text-slate-400 font-medium text-sm">
+          <h4 className="text-sm md:text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight italic">Fair Play Notice</h4>
+          <p className="text-slate-600 dark:text-slate-400 font-medium text-xs md:text-sm">
             Playza employs advanced anti-cheat mechanisms. Any player found using external scripts, modified game files, or exploits will be permanently banned and forfeited of all winnings. Play fair, win fair.
           </p>
         </div>

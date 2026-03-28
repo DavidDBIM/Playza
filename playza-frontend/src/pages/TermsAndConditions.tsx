@@ -7,7 +7,7 @@ const TermsAndConditions = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background text-foreground py-12 px-4 md:px-8 max-w-4xl mx-auto">
+    <div className="min-h-screen bg-background text-foreground py-2 md:py-12 px-4 md:px-8 max-w-4xl mx-auto">
       <div className="mb-6 md:mb-12 text-center animate-fade-in px-2">
         <h1 className="text-2xl md:text-5xl font-black tracking-tighter uppercase italic bg-clip-text text-transparent bg-linear-to-r from-primary to-accent mb-2 md:mb-4">
           Terms & Conditions
@@ -17,16 +17,16 @@ const TermsAndConditions = () => {
         </p>
       </div>
 
-      <div className="glass-card rounded-2xl md:rounded-3xl p-5 md:p-10 space-y-8 md:space-y-12 shadow-2xl border border-white/5 relative overflow-hidden">
+      <div className="glass-card rounded-2xl md:rounded-xl p-5 md:p-10 space-y-8 md:space-y-12 shadow-2xl border border-white/5 relative overflow-hidden">
         {/* Subtle Decorative Glows */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 blur-[100px] rounded-full -mr-32 -mt-32 pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent/10 blur-[100px] rounded-full -ml-32 -mb-32 pointer-events-none" />
 
         <section className="relative z-10">
-          <p className="text-sm md:text-base leading-relaxed mb-4 md:mb-6">
+          <p className="text-sm md:text-xs md:text-base leading-relaxed mb-4 md:mb-6">
             Welcome to <span className="text-primary font-bold">PLAYZA</span>. These Terms and Conditions (“Terms”) govern your access to and use of the PLAYZA platform, including our website, mobile applications, and any related services (collectively, the “Platform”).
           </p>
-          <p className="text-sm md:text-base leading-relaxed">
+          <p className="text-sm md:text-xs md:text-base leading-relaxed">
             By creating an account or participating in any game on the Platform, you agree to be bound by these Terms. If you do not agree to these Terms, you must not use the Platform.
           </p>
         </section>
@@ -37,10 +37,10 @@ const TermsAndConditions = () => {
             Introduction
           </h2>
           <div className="space-y-4 text-muted-foreground leading-relaxed">
-            <p>
+            <p className="text-xs md:text-base">
               PLAYZA is an online competitive gaming platform built for skill-based challenges.
             </p>
-            <ul className="list-disc pl-6 space-y-2">
+            <ul className="list-disc pl-2 md:pl-6 space-y-2">
               <li><span className="text-foreground font-bold">Skill-Based Nature:</span> All games on PLAYZA are time-sensitive and performance-based. Players compete using their knowledge, speed, and accuracy to secure positions on a leaderboard.</li>
               <li><span className="text-foreground font-bold">Competition Mechanics:</span> Players purchase digital tickets to gain entry into specific game rounds.</li>
               <li><span className="text-foreground font-bold">Leaderboard & Rewards:</span> A player’s score determines their ranking on the live leaderboard. The total ticket pool collected from participants (less applicable platform fees) is awarded as a prize to the highest-ranking player(s) at the conclusion of the game period.</li>
@@ -64,7 +64,7 @@ const TermsAndConditions = () => {
             ].map((item, i) => (
               <div key={i} className="bg-muted/30 p-3 md:p-4 rounded-xl md:rounded-2xl border border-white/5">
                 <p className="font-black text-foreground uppercase text-xs tracking-widest mb-1">{item.term}</p>
-                <p className="text-sm text-muted-foreground">{item.def}</p>
+                <p className="text-xs md:text-sm text-muted-foreground">{item.def}</p>
               </div>
             ))}
           </div>
@@ -76,8 +76,8 @@ const TermsAndConditions = () => {
             Eligibility
           </h2>
           <div className="space-y-4 text-muted-foreground leading-relaxed">
-            <p>To use PLAYZA, you represent and warrant that:</p>
-            <ol className="list-decimal pl-6 space-y-2 font-medium">
+            <p className="text-xs md:text-base">To use PLAYZA, you represent and warrant that:</p>
+            <ol className="list-decimal pl-2 md:pl-6 space-y-2 font-medium">
               <li>You are at least 13 years of age. Users under 18 must have parental or guardian consent.</li>
               <li>You are a resident of Nigeria or a jurisdiction where skill-based gaming is not prohibited by law.</li>
               <li>You have the legal capacity to enter into a binding contract.</li>
@@ -103,9 +103,9 @@ const TermsAndConditions = () => {
             <span className="w-6 md:w-8 h-1 bg-primary rounded-full" />
             Acceptable Use Policy
           </h2>
-          <div className="bg-red-500/5 border border-red-500/10 p-5 md:p-6 rounded-2xl md:rounded-3xl">
-            <p className="font-bold text-red-500 mb-3 md:mb-4 tracking-tighter uppercase italic text-sm">You agree NOT to engage in any of the following prohibited activities:</p>
-            <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-4 md:gap-x-8 gap-y-2 md:gap-y-4 text-[10px] md:text-sm text-muted-foreground pl-4 border-l-2 border-red-500/20">
+          <div className="bg-red-500/5 border border-red-500/10 p-5 md:p-6 rounded-2xl md:rounded-xl">
+            <p className="font-bold text-red-500 mb-3 md:mb-4 tracking-tighter uppercase italic text-xs md:text-sm">You agree NOT to engage in any of the following prohibited activities:</p>
+            <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-4 md:gap-x-8 gap-y-2 md:gap-y-4 text-[10px] md:text-sm text-muted-foreground pl-2 md:pl-4 border-l-2 border-red-500/20">
               <li><span className="text-foreground font-bold mr-1">Cheating:</span> Bots, scripts, or automated software.</li>
               <li><span className="text-foreground font-bold mr-1">Abuse:</span> Harassing or bullying other users.</li>
               <li><span className="text-foreground font-bold mr-1">Collusion:</span> Coordinating to manipulate outcomes.</li>
@@ -119,7 +119,7 @@ const TermsAndConditions = () => {
             <span className="w-6 md:w-8 h-1 bg-primary rounded-full" />
             Gameplay Rules
           </h2>
-          <ul className="list-disc pl-6 space-y-4 text-muted-foreground">
+          <ul className="list-disc pl-2 md:pl-6 space-y-4 text-muted-foreground">
             <li><span className="text-foreground font-bold italic tracking-tight uppercase text-xs">Entry Requirements:</span> Access to any game round requires the purchase of a Ticket using ZA.</li>
             <li><span className="text-foreground font-bold italic tracking-tight uppercase text-xs">Variable Pricing:</span> Ticket prices vary depending on the game, category, and Prize Pool.</li>
             <li><span className="text-foreground font-bold italic tracking-tight uppercase text-xs">Non-Refundable Policy:</span> Once a Ticket is purchased, the transaction is final. Tickets are committed to the live Prize Pool immediately.</li>
@@ -135,15 +135,15 @@ const TermsAndConditions = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             <div className="space-y-2">
               <p className="text-foreground font-bold italic tracking-tight uppercase text-xs">Currency Conversion</p>
-              <p className="text-sm text-muted-foreground">Fiat currency is converted to ZA at rates displayed during purchase.</p>
+              <p className="text-xs md:text-sm text-muted-foreground">Fiat currency is converted to ZA at rates displayed during purchase.</p>
             </div>
             <div className="space-y-2">
               <p className="text-foreground font-bold italic tracking-tight uppercase text-xs">Withdrawals</p>
-              <p className="text-sm text-muted-foreground">Users can convert ZA back to Fiat, subject to verification processing.</p>
+              <p className="text-xs md:text-sm text-muted-foreground">Users can convert ZA back to Fiat, subject to verification processing.</p>
             </div>
             <div className="space-y-2">
               <p className="text-foreground font-bold italic tracking-tight uppercase text-xs">Fees</p>
-              <p className="text-sm text-muted-foreground">0.5% withdrawal fee and 30% ticket prize fee apply for administrative costs.</p>
+              <p className="text-xs md:text-sm text-muted-foreground">0.5% withdrawal fee and 30% ticket prize fee apply for administrative costs.</p>
             </div>
           </div>
         </section>
@@ -163,24 +163,24 @@ const TermsAndConditions = () => {
             <span className="w-6 md:w-8 h-1 bg-primary rounded-full" />
             Contact & Legal
           </h2>
-          <div className="bg-muted/50 p-4 md:p-6 rounded-2xl md:rounded-3xl space-y-3 md:space-y-4">
-            <p className="text-sm text-muted-foreground italic">
+          <div className="bg-muted/50 p-4 md:p-6 rounded-2xl md:rounded-xl space-y-3 md:space-y-4">
+            <p className="text-xs md:text-sm text-muted-foreground italic">
               Governing Law: Fed. Republic of Nigeria. For full details or questions, reach out to our team.
             </p>
             <div className="flex flex-col md:flex-row gap-3 md:gap-4">
               <div className="bg-background/80 p-3 md:p-4 rounded-xl md:rounded-2xl flex-1 border border-white/5">
                 <p className="text-[10px] uppercase font-black text-primary mb-1">Support Email</p>
-                <p className="text-sm font-bold">Support@Playza.com</p>
+                <p className="text-xs md:text-sm font-bold">Support@Playza.com</p>
               </div>
-              <div className="bg-background/80 p-4 rounded-2xl flex-1 border border-white/5">
+              <div className="bg-background/80 p-2 md:p-4 rounded-2xl flex-1 border border-white/5">
                 <p className="text-[10px] uppercase font-black text-primary mb-1">Office</p>
-                <p className="text-sm font-bold">Lagos, Nigeria</p>
+                <p className="text-xs md:text-sm font-bold">Lagos, Nigeria</p>
               </div>
             </div>
           </div>
         </section>
 
-        <div className="pt-8 border-t border-white/5 text-center relative z-10">
+        <div className="pt-2 md:pt-8 border-t border-white/5 text-center relative z-10">
           <Link to="/" className="text-primary hover:text-primary/80 font-bold transition-colors">
             ← Back to Home
           </Link>

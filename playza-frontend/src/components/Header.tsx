@@ -31,18 +31,18 @@ const Header = () => {
   return (
     <div className="sticky top-0 z-50 glass border-b border-primary/20 overflow-hidden">
       <div className="max-w-400 mx-auto px-2 md:px-6 h-16 flex items-center justify-between">
-        <div className="flex items-center gap-12">
+        <div className="flex items-center gap-2 md:gap-12">
           <div className="flex items-center gap-2">
             <Link to="/">
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <span className="material-icons text-slate-900 dark:text-white text-xl font-bold">
+                <span className="material-icons text-slate-900 dark:text-white text-base md:text-xl font-bold">
                   PZ
                 </span>
               </div>
             </Link>
           </div>
         </div>
-        <div className="flex gap-4 items-center">
+        <div className="flex gap-2 md:gap-4 items-center">
           {isLoading ? (
             <HeaderSkeleton />
           ) : !user ? (
@@ -146,7 +146,7 @@ const Header = () => {
                     </div>
                     <div className="h-px bg-slate-200 dark:bg-slate-700 my-1 mx-2" />
                     <Link to="/loyalty">
-                      <DropdownMenuItem className="cursor-pointer gap-3 py-3 px-4 rounded-xl bg-linear-to-r from-primary/10 to-secondary/10 hover:from-primary/20 hover:to-secondary/20 text-primary border border-primary/20 transition-all shadow-xs my-1 group">
+                      <DropdownMenuItem className="cursor-pointer gap-2 md:gap-3 py-2 md:py-3 px-2 md:px-4 rounded-xl bg-linear-to-r from-primary/10 to-secondary/10 hover:from-primary/20 hover:to-secondary/20 text-primary border border-primary/20 transition-all shadow-xs my-1 group">
                         <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center group-hover:scale-110 transition-transform">
                           <Gift className="w-4 h-4" />
                         </div>
@@ -162,20 +162,20 @@ const Header = () => {
                     </Link>
                     <div className="h-px bg-slate-200 dark:bg-slate-700 my-1 mx-2" />
                     <Link to="/profile">
-                      <DropdownMenuItem className="cursor-pointer gap-3 py-2.5 px-3 rounded-xl focus:bg-primary/10 data-highlighted:bg-primary/10 focus:text-primary data-highlighted:text-primary dark:focus:bg-white/5 dark:data-highlighted:bg-white/5 transition-colors">
+                      <DropdownMenuItem className="cursor-pointer gap-2 md:gap-3 py-2 md:py-2.5 px-2 md:px-3 rounded-xl focus:bg-primary/10 data-highlighted:bg-primary/10 focus:text-primary data-highlighted:text-primary dark:focus:bg-white/5 dark:data-highlighted:bg-white/5 transition-colors">
                         <User className="w-4 h-4" />
                         <span className="font-medium text-sm">Profile</span>
                       </DropdownMenuItem>
                     </Link>
                     <DropdownMenuItem
                       onClick={() => navigate("?modal=withdraw")}
-                      className="cursor-pointer gap-3 py-2.5 px-3 rounded-xl focus:bg-primary/10 data-highlighted:bg-primary/10 focus:text-primary data-highlighted:text-primary dark:focus:bg-white/5 dark:data-highlighted:bg-white/5 transition-colors"
+                      className="cursor-pointer gap-2 md:gap-3 py-2 md:py-2.5 px-2 md:px-3 rounded-xl focus:bg-primary/10 data-highlighted:bg-primary/10 focus:text-primary data-highlighted:text-primary dark:focus:bg-white/5 dark:data-highlighted:bg-white/5 transition-colors"
                     >
                       <CreditCard className="w-4 h-4" />
                       <span className="font-medium text-sm">Withdrawal</span>
                     </DropdownMenuItem>
                     <Link to="/profile/settings">
-                      <DropdownMenuItem className="cursor-pointer gap-3 py-2.5 px-3 rounded-xl focus:bg-primary/10 data-highlighted:bg-primary/10 focus:text-primary data-highlighted:text-primary dark:focus:bg-white/5 dark:data-highlighted:bg-white/5 transition-colors">
+                      <DropdownMenuItem className="cursor-pointer gap-2 md:gap-3 py-2 md:py-2.5 px-2 md:px-3 rounded-xl focus:bg-primary/10 data-highlighted:bg-primary/10 focus:text-primary data-highlighted:text-primary dark:focus:bg-white/5 dark:data-highlighted:bg-white/5 transition-colors">
                         <Settings className="w-4 h-4" />
                         <span className="font-medium text-sm">Settings</span>
                       </DropdownMenuItem>
@@ -183,7 +183,7 @@ const Header = () => {
                     <div className="h-px bg-slate-200 dark:bg-slate-700 my-1 mx-2" />
                     <DropdownMenuItem
                       onClick={handleLogout}
-                      className="cursor-pointer gap-3 py-2.5 px-3 rounded-xl text-red-500 focus:bg-red-50/50 dark:focus:bg-red-900/20 data-highlighted:bg-red-50/50 dark:data-highlighted:bg-red-900/20 focus:text-red-500 data-highlighted:text-red-500 transition-colors"
+                      className="cursor-pointer gap-2 md:gap-3 py-2 md:py-2.5 px-2 md:px-3 rounded-xl text-red-500 focus:bg-red-50/50 dark:focus:bg-red-900/20 data-highlighted:bg-red-50/50 dark:data-highlighted:bg-red-900/20 focus:text-red-500 data-highlighted:text-red-500 transition-colors"
                     >
                       <LogOut className="w-4 h-4" />
                       <span className="font-medium text-sm">Log out</span>

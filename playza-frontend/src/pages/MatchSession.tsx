@@ -42,7 +42,7 @@ const MatchSession = () => {
   const game = allGames.find((game) => game.slug === slug);
 
   if (!game) {
-    return <div className="p-20 text-center font-black uppercase text-slate-500">Game not found</div>;
+    return <div className="p-2 md:p-20 text-center font-black uppercase text-slate-500">Game not found</div>;
   }
 
   const handleLiveClick = () => {
@@ -70,7 +70,7 @@ const MatchSession = () => {
     { tab: "Final Leaderboard", render: () => <SessionLeaderboard /> },
     { tab: "My Results", render: () => <SessionPerformance /> },
     { tab: "Pre-Game Lobby", render: () => (
-      <div className="flex flex-col items-center justify-center py-20 text-center glass-card rounded-2xl border border-white/5 mx-px">
+      <div className="flex flex-col items-center justify-center py-2 md:py-20 text-center glass-card rounded-2xl border border-white/5 mx-px">
         <h3 className="text-xl md:text-2xl font-black uppercase text-slate-800 dark:text-slate-100 tracking-widest mb-2 neon-text">Match Starting Soon</h3>
         <p className="text-xs md:text-sm font-bold tracking-widest uppercase opacity-60 text-slate-500 max-w-sm mt-2">Players are currently joining the lobby. Hang tight and wait for the match to begin!</p>
       </div>
@@ -102,8 +102,8 @@ const MatchSession = () => {
       {!isEnded && <ActivityToasts />}
 
       
-      <div className="flex flex-col lg:flex-row gap-8">
-        <div className="w-full lg:w-[70%] flex flex-col gap-4">
+      <div className="flex flex-col lg:flex-row gap-2 md:gap-8">
+        <div className="w-full lg:w-[70%] flex flex-col gap-2 md:gap-4">
           <Link
             to={`/games/${slug}`}
             className="mb-2 w-fit flex items-center gap-2 text-slate-500 hover:text-primary transition-colors font-bold uppercase tracking-widest text-[10px]"
@@ -143,23 +143,23 @@ const MatchSession = () => {
             </div>
 
             <div className="p-0">
-              <div className="flex-1 px-px overflow-y-auto pb-4">
+              <div className="flex-1 px-px overflow-y-auto pb-2 md:pb-4">
                 {activeTabContent?.render()}
               </div>
             </div>
           </section>
         </div>
 
-        <div className="hidden lg:w-[30%] md:flex flex-col gap-6">
-          <div className="glass-card rounded-2xl border border-slate-200 dark:border-white/10 p-5 shadow-sm transition-colors duration-300">
-            <h3 className="text-lg font-black italic mb-4 flex items-center gap-2 text-slate-900 dark:text-white uppercase tracking-tighter">
-              <BiTrophy className="text-primary text-xl" />
+        <div className="hidden lg:w-[30%] md:flex flex-col gap-2 md:gap-6">
+          <div className="glass-card rounded-2xl border border-slate-200 dark:border-white/10 p-2 md:p-5 shadow-sm transition-colors duration-300">
+            <h3 className="text-sm md:text-lg font-black italic mb-4 flex items-center gap-2 text-slate-900 dark:text-white uppercase tracking-tighter">
+              <BiTrophy className="text-primary text-base md:text-xl" />
               Prize Distribution
             </h3>
             <div className="space-y-3">
-              <div className="flex items-center justify-between p-3 rounded-lg bg-slate-900/5 dark:bg-white/5 border border-slate-200 dark:border-white/10">
-                <div className="flex items-center gap-3">
-                  <span className="text-yellow-500 font-black italic text-lg drop-shadow-sm">1st</span>
+              <div className="flex items-center justify-between p-2 md:p-3 rounded-lg bg-slate-900/5 dark:bg-white/5 border border-slate-200 dark:border-white/10">
+                <div className="flex items-center gap-2 md:gap-3">
+                  <span className="text-yellow-500 font-black italic text-sm md:text-lg drop-shadow-sm">1st</span>
                   <span className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Grand Prize</span>
                 </div>
                 <div className="flex items-center gap-1.5 transition-all">
@@ -167,9 +167,9 @@ const MatchSession = () => {
                   <span className="font-black text-slate-900 dark:text-transparent dark:bg-clip-text dark:bg-linear-to-r dark:from-yellow-400 dark:via-amber-200 dark:to-yellow-600 uppercase">75,000</span>
                 </div>
               </div>
-              <div className="flex items-center justify-between p-3 rounded-lg bg-slate-900/5 dark:bg-white/5 border border-slate-200 dark:border-white/10">
-                <div className="flex items-center gap-3">
-                  <span className="text-slate-400 font-black italic text-lg drop-shadow-sm">2nd</span>
+              <div className="flex items-center justify-between p-2 md:p-3 rounded-lg bg-slate-900/5 dark:bg-white/5 border border-slate-200 dark:border-white/10">
+                <div className="flex items-center gap-2 md:gap-3">
+                  <span className="text-slate-400 font-black italic text-sm md:text-lg drop-shadow-sm">2nd</span>
                   <span className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Runner Up</span>
                 </div>
                 <div className="flex items-center gap-1.5 transition-all">
@@ -177,9 +177,9 @@ const MatchSession = () => {
                   <span className="font-black text-slate-900 dark:text-slate-300 uppercase">45,000</span>
                 </div>
               </div>
-              <div className="flex items-center justify-between p-3 rounded-lg bg-slate-900/5 dark:bg-white/5 border border-slate-200 dark:border-white/10">
-                <div className="flex items-center gap-3">
-                  <span className="text-orange-500 font-black italic text-lg drop-shadow-sm">3rd</span>
+              <div className="flex items-center justify-between p-2 md:p-3 rounded-lg bg-slate-900/5 dark:bg-white/5 border border-slate-200 dark:border-white/10">
+                <div className="flex items-center gap-2 md:gap-3">
+                  <span className="text-orange-500 font-black italic text-sm md:text-lg drop-shadow-sm">3rd</span>
                   <span className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Finalist</span>
                 </div>
                 <div className="flex items-center gap-1.5 transition-all">
@@ -194,8 +194,8 @@ const MatchSession = () => {
               </div>
             </div>
           </div>
-          <div className="glass-card rounded-2xl border border-slate-200 dark:border-white/10 p-5 shadow-sm transition-colors duration-300">
-            <h3 className="text-lg font-bold  mb-4 flex items-center gap-2">
+          <div className="glass-card rounded-2xl border border-slate-200 dark:border-white/10 p-2 md:p-5 shadow-sm transition-colors duration-300">
+            <h3 className="text-sm md:text-lg font-bold  mb-4 flex items-center gap-2">
               <BiTrendingUp className="text-playza-green" />
               Your Session Stats
             </h3>
@@ -209,25 +209,25 @@ const MatchSession = () => {
                   <div className="h-full bg-primary w-[82%]"></div>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-muted/80 p-3 rounded-lg">
+              <div className="grid grid-cols-2 gap-2 md:gap-4">
+                <div className="bg-muted/80 p-2 md:p-3 rounded-lg">
                   <p className="text-[10px] text-slate-500 uppercase font-bold">
                     Best Score
                   </p>
-                  <p className="text-lg font-bold ">89,420</p>
+                  <p className="text-xs md:text-sm md:text-lg font-bold ">89,420</p>
                 </div>
-                <div className="bg-muted/80 p-3 rounded-lg">
+                <div className="bg-muted/80 p-2 md:p-3 rounded-lg">
                   <p className="text-[10px] text-slate-500 uppercase font-bold">
                     Game Time
                   </p>
-                  <p className="text-lg font-bold ">45m</p>
+                  <p className="text-xs md:text-sm md:text-lg font-bold ">45m</p>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="glass-card rounded-2xl border border-slate-200 dark:border-white/10 p-5 shadow-sm transition-colors duration-300">
-            <h3 className="text-lg font-bold  mb-4 flex items-center gap-2">
+          <div className="glass-card rounded-2xl border border-slate-200 dark:border-white/10 p-2 md:p-5 shadow-sm transition-colors duration-300">
+            <h3 className="text-sm md:text-lg font-bold  mb-4 flex items-center gap-2">
               <Info className="text-primary" />
               Session Meta
             </h3>
@@ -255,8 +255,8 @@ const MatchSession = () => {
               </div>
             </div>
           </div>
-          <div className="bg-primary/5 dark:bg-primary/10 rounded-2xl border border-primary/20 p-5 shadow-sm transition-colors duration-300">
-            <div className="flex items-start gap-4">
+          <div className="bg-primary/5 dark:bg-primary/10 rounded-2xl border border-primary/20 p-2 md:p-5 shadow-sm transition-colors duration-300">
+            <div className="flex items-start gap-2 md:gap-4">
               <div className="p-2 bg-primary rounded-lg text-background-dark">
                 <MdSupportAgent />
               </div>

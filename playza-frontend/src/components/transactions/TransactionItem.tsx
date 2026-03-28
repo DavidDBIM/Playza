@@ -69,7 +69,7 @@ const TransactionItem = ({
         className={`absolute left-0 top-0 bottom-0 w-1 ${bg} opacity-0 group-hover:opacity-100 transition-opacity`}
       ></div>
 
-      <div className="flex items-center gap-4 flex-1 min-w-0">
+      <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
         <div
           className={`size-10 rounded-xl ${bg} flex items-center justify-center shrink-0 border border-white/5 shadow-inner transition-transform group-hover:scale-105`}
         >

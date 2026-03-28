@@ -37,8 +37,8 @@ const DepositModal = ({ onClose }: DepositModalProps) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-md px-2 py-4 md:p-4 animate-in fade-in duration-300">
-      <div className="relative w-full max-w-md glass-card rounded-3xl shadow-2xl border border-primary/20 overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-md px-2 py-2 md:py-4 md:p-4 animate-in fade-in duration-300">
+      <div className="relative w-full max-w-md glass-card rounded-xl shadow-2xl border border-primary/20 overflow-hidden">
         {/* Glows */}
         <div className="absolute -top-20 -left-20 w-48 h-48 bg-primary/20 blur-[100px] rounded-full pointer-events-none"></div>
 
@@ -49,8 +49,8 @@ const DepositModal = ({ onClose }: DepositModalProps) => {
           <X size={18} />
         </button>
 
-        <div className="px-2 py-6 md:p-8 relative z-10">
-          <div className="flex items-center gap-4 mb-6">
+        <div className="px-2 py-2 md:py-6 md:p-8 relative z-10">
+          <div className="flex items-center gap-2 md:gap-4 mb-6">
             <div className="size-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shadow-inner shrink-0">
               <Wallet className="text-primary size-6" />
             </div>
@@ -76,7 +76,7 @@ const DepositModal = ({ onClose }: DepositModalProps) => {
                   inputMode="numeric"
                   value={amount}
                   onChange={(e) => handleAmountChange(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-white/5 border-2 border-slate-200 dark:border-white/5 rounded-xl py-4 pl-12 pr-4 text-xl md:text-2xl font-black text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700 outline-none focus:border-primary/50 transition-all shadow-inner"
+                  className="w-full bg-slate-50 dark:bg-white/5 border-2 border-slate-200 dark:border-white/5 rounded-xl py-2 md:py-4 pl-2 md:pl-12 pr-2 md:pr-4 text-xl md:text-2xl font-black text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700 outline-none focus:border-primary/50 transition-all shadow-inner"
                   placeholder="0"
                 />
               </div>
@@ -105,7 +105,7 @@ const DepositModal = ({ onClose }: DepositModalProps) => {
               <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
                 Pay With
               </label>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2 md:gap-3">
                 <button 
                   onClick={() => setPaymentMethod("card")}
                   className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all group text-left relative ${
@@ -136,7 +136,7 @@ const DepositModal = ({ onClose }: DepositModalProps) => {
             <button 
               onClick={handleContinue}
               disabled={!amount || Number(amount) < 100}
-              className="w-full bg-primary text-background dark:text-background-dark py-4 rounded-xl font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:shadow-primary/40 active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:pointer-events-none group relative overflow-hidden text-sm"
+              className="w-full bg-primary text-background dark:text-background-dark py-2 md:py-4 rounded-xl font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:shadow-primary/40 active:scale-[0.98] transition-all flex items-center justify-center gap-2 md:gap-3 disabled:opacity-50 disabled:pointer-events-none group relative overflow-hidden text-sm"
             >
               <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
               <span>Continue</span>

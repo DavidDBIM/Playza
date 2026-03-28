@@ -4,19 +4,19 @@ import { MdStadium } from "react-icons/md";
 
 const HowItWorks = () => {
   return (
-    <section className="relative py-4 px-2 md:px-0">
+    <section className="relative py-2 md:py-4 px-2 md:px-0">
       {/* Background decoration */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl h-full bg-primary/5 blur-[120px] pointer-events-none" />
 
       <div className="relative z-10 max-w-6xl mx-auto">
         <div className="flex flex-col items-center text-center mb-10 space-y-3">
-          <div className="inline-flex items-center px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-bold uppercase tracking-widest">
+          <div className="inline-flex items-center px-2 md:px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-bold uppercase tracking-widest">
             Process
           </div>
           <h2 className="text-3xl md:text-4xl font-black tracking-tighter ">
             How It <span className="text-transparent bg-clip-text bg-linear-to-r from-primary to-accent">Works</span>
           </h2>
-          <p className="text-slate-400 text-sm md:text-base max-w-xl">
+          <p className="text-slate-400 text-sm md:text-xs md:text-base max-w-xl">
             Playza is where skill meets reward. Follow these simple steps to start winning today.
           </p>
         </div>

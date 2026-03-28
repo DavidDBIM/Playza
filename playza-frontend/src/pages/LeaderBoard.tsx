@@ -23,20 +23,20 @@ const LeaderBoard = () => {
   ];
 
   return (
-    <section className="flex-1 flex flex-col gap-6 overflow-hidden pb-10">
+    <section className="flex-1 flex flex-col gap-2 md:gap-6 overflow-hidden pb-2 md:pb-10">
       {/* Premium Header */}
       <div className="relative overflow-hidden bg-slate-900 dark:bg-slate-950 p-8 md:p-12 rounded-xl border border-white/5 shadow-2xl">
-        <div className="absolute top-0 right-0 p-12 opacity-10 rotate-12">
+        <div className="absolute top-0 right-0 p-2 md:p-12 opacity-10 rotate-12">
           <MdLeaderboard size={120} className="text-primary" />
         </div>
         <div className="absolute -bottom-16 -left-16 size-64 bg-primary/20 blur-[100px] rounded-full" />
         
-        <div className="relative z-10 flex flex-col md:flex-row justify-between items-end md:items-center gap-8">
+        <div className="relative z-10 flex flex-col md:flex-row justify-between items-end md:items-center gap-2 md:gap-8">
           <div className="space-y-4">
-            <h1 className="text-5xl md:text-7xl font-display font-black text-white uppercase italic tracking-tighter leading-none">
+            <h1 className="text-3xl md:text-5xl md:text-7xl font-display font-black text-white uppercase italic tracking-tighter leading-none">
               LEADER<span className="text-primary">BOARDS</span>
             </h1>
-            <p className="text-slate-400 font-bold uppercase tracking-[0.2em] text-xs md:text-sm flex items-center gap-3">
+            <p className="text-slate-400 font-bold uppercase tracking-[0.2em] text-xs md:text-sm flex items-center gap-2 md:gap-3">
               <span className="w-12 h-px bg-primary"></span>
               Check your ranking against the global elite
               <span className="w-12 h-px bg-primary"></span>
@@ -47,7 +47,7 @@ const LeaderBoard = () => {
       </div>
 
       {/* Modern Tabs */}
-      <div className="flex gap-2 p-1.5 bg-slate-900/5 dark:bg-white/5 rounded-3xl border border-slate-200 dark:border-white/10 w-fit mx-auto md:mx-0 overflow-x-auto no-scrollbar max-w-full">
+      <div className="flex gap-2 p-1.5 bg-slate-900/5 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 w-fit mx-auto md:mx-0 overflow-x-auto no-scrollbar max-w-full">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -84,26 +84,26 @@ const LeaderBoard = () => {
           {activeTab === "Loyalty" && <LoyaltyLeaderboard />}
 
           {!user && (
-            <div className="absolute inset-0 z-20 flex items-center justify-center p-6 text-center animate-in fade-in zoom-in duration-700 bg-background/40 backdrop-blur-sm">
-              <div className="max-w-md w-full glass-card p-10 rounded-[2.5rem] border-primary/20 shadow-2xl relative overflow-hidden group bg-white dark:bg-slate-900">
+            <div className="absolute inset-0 z-20 flex items-center justify-center p-2 md:p-6 text-center animate-in fade-in zoom-in duration-700 bg-background/40 backdrop-blur-sm">
+              <div className="max-w-md w-full glass-card p-2 md:p-10 rounded-xl border-primary/20 shadow-2xl relative overflow-hidden group bg-white dark:bg-slate-900">
                 <div className="absolute inset-0 bg-primary/5 group-hover:bg-primary/10 transition-colors" />
                 <div className="absolute -top-12 -right-12 size-40 bg-primary/20 blur-[60px] rounded-full" />
                 
                 <div className="relative z-10 space-y-6">
-                  <div className="size-20 bg-primary/20 rounded-4xl flex items-center justify-center mx-auto mb-2 border border-primary/30 shadow-inner">
-                    <MdLogin className="text-4xl text-primary" />
+                  <div className="size-20 bg-primary/20 rounded-xl flex items-center justify-center mx-auto mb-2 border border-primary/30 shadow-inner">
+                    <MdLogin className="text-2xl md:text-4xl text-primary" />
                   </div>
                   
                   <div className="space-y-2">
-                    <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight italic">
+                    <h3 className="text-lg md:text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight italic">
                       Locked Content
                     </h3>
-                    <p className="text-sm text-slate-500 font-bold leading-relaxed">
+                    <p className="text-xs md:text-sm text-slate-500 font-bold leading-relaxed">
                       Login to see all live ongoing leaderboards and track your ranking against the best players.
                     </p>
                   </div>
                   
-                  <div className="flex flex-col gap-3 pt-2">
+                  <div className="flex flex-col gap-2 md:gap-3 pt-2">
                     <Link to="/registration?view=login" className="w-full">
                       <Button className="w-full h-12 bg-primary text-white rounded-2xl font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg glow-accent">
                         Log In Now

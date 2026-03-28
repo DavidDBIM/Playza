@@ -23,14 +23,14 @@ const LeaderBoard = () => {
   return (
     <section>
       <div className="mb-2">
-        <h2 className="font-heading text-xl font-bold flex gap-2 items-center mb-4">
+        <h2 className="font-heading text-base md:text-xl font-bold flex gap-2 items-center mb-4">
           <MdLeaderboard className="text-chart-4" /> Games LeaderBoard
         </h2>
         <div className="flex gap-2 text-xs overflow-x-auto whitespace-nowrap mt-2 scroll-hidden scroll-smooth pb-2">
           {gameNames.map((game) => (
             <p
               key={game}
-              className={` p-2 font-semibold rounded-full cursor-pointer ${activeGame === game ? "bg-primary" : "bg-border"}`}
+              className={`text-xs md:text-base  p-2 font-semibold rounded-full cursor-pointer ${activeGame === game ? "bg-primary" : "bg-border"}`}
               title={game}
               onClick={() => setActiveGame(game as GameName)}
             >
@@ -43,16 +43,16 @@ const LeaderBoard = () => {
       <Table className="w-full text-left">
         <TableHeader className="bg-accent/20 text-[10px] uppercase font-bold">
           <TableRow>
-            <TableHead className="px-2 sm:px-6 py-3 text-[10px] uppercase font-bold">
+            <TableHead className="px-2 sm:px-6 py-2 md:py-3 text-[10px] uppercase font-bold">
               Rank
             </TableHead>
-            <TableHead className="px-2 sm:px-6 py-3 text-[10px] uppercase font-bold">
+            <TableHead className="px-2 sm:px-6 py-2 md:py-3 text-[10px] uppercase font-bold">
               Username
             </TableHead>
-            <TableHead className="px-2 sm:px-6 py-3 text-[10px] uppercase font-bold">
+            <TableHead className="px-2 sm:px-6 py-2 md:py-3 text-[10px] uppercase font-bold">
               Score
             </TableHead>
-            <TableHead className="px-2 sm:px-6 py-3 text-[10px] uppercase font-bold text-right">
+            <TableHead className="px-2 sm:px-6 py-2 md:py-3 text-[10px] uppercase font-bold text-right">
               Time
             </TableHead>
           </TableRow>
@@ -80,7 +80,7 @@ const LeaderBoard = () => {
                       : "hover:bg-accent-dark/20 transition-colors"
                   }
                 >
-                  <TableCell className="px-2 sm:px-6 py-4">
+                  <TableCell className="px-2 sm:px-6 py-2 md:py-4">
                     <div
                       className={`flex items-center justify-center w-6 h-6 rounded font-bold text-xs ${
                         isGold
@@ -96,7 +96,7 @@ const LeaderBoard = () => {
                     </div>
                   </TableCell>
 
-                  <TableCell className="px-2 sm:px-6 py-4 flex items-center gap-3">
+                  <TableCell className="px-2 sm:px-6 py-2 md:py-4 flex items-center gap-2 md:gap-3">
                     <div className="h-8 w-8 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
                       <img src={avatar} alt={username} />
                     </div>
@@ -119,7 +119,7 @@ const LeaderBoard = () => {
                     {points.toLocaleString()}
                   </TableCell>
 
-                  <TableCell className="px-2 sm:px-6 py-4 text-right text-sm">
+                  <TableCell className="px-2 sm:px-6 py-2 md:py-4 text-right text-sm">
                     {formatZA(Number(prizeWon) * 100)}
                   </TableCell>
                 </TableRow>

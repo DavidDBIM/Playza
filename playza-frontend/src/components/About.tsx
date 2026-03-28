@@ -2,11 +2,11 @@ import { BsDiscord, BsFacebook, BsTwitterX } from "react-icons/bs";
 
 const About = () => {
   return (
-    <div className="glass p-6 rounded-xl">
-      <h3 className="font-heading text-xl font-bold text-slate-900 dark:text-white mb-4">
+    <div className="glass p-2 md:p-6 rounded-xl">
+      <h3 className="font-heading text-base md:text-xl font-bold text-slate-900 dark:text-white mb-4">
         About PlayPeak
       </h3>
-      <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed mb-6">
+      <p className="text-slate-600 dark:text-slate-400 text-xs md:text-sm leading-relaxed mb-6">
         PlayPeak is Nigeria's leading competitive skill gaming platform. We
         believe that gaming should be rewarding. Our mission is to provide a
         secure, fair, and high-energy environment where talented players can
@@ -18,7 +18,7 @@ const About = () => {
         <h5 className="font-bold text-slate-900 dark:text-white mb-6 text-sm uppercase tracking-wide">
           Follow Us
         </h5>
-        <div className="flex gap-4">
+        <div className="flex gap-2 md:gap-4">
           {[BsDiscord, BsFacebook, BsTwitterX].map((Icon, i) => (
             <a
               key={i}
@@ -27,7 +27,7 @@ const About = () => {
                         hover:bg-primary transition-all duration-300 text-slate-900 dark:text-white
                         hover:scale-110"
             >
-              <Icon className="text-xl" />
+              <Icon className="text-base md:text-xl" />
             </a>
           ))}
         </div>
