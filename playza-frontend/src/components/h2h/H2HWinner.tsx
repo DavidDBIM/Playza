@@ -43,7 +43,7 @@ const H2HWinner = ({ room, user }: H2HWinnerProps) => {
         </div>
 
         {/* Reward Stats */}
-        <div className="glass backdrop-blur-3xl p-2 md:p-10 rounded-[3rem] border border-white/20 shadow-3xl text-center relative overflow-hidden group">
+        <div className="glass backdrop-blur-3xl p-2 md:p-10 rounded-xl border border-white/20 shadow-3xl text-center relative overflow-hidden group">
             <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
             
             <p className="text-[10px] font-black uppercase tracking-[0.5em] text-muted-foreground italic mb-6">Match Result</p>

@@ -15,6 +15,7 @@ export interface ChessRoom {
   current_turn?: string | null;
   board_state?: {
     fen: string;
+    last_move?: { from: string; to: string; promotion?: string } | null;
   };
   host: ChessPlayer;
   guest?: ChessPlayer | null;

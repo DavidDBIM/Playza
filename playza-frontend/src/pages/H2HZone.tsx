@@ -40,15 +40,14 @@ const H2HZone = () => {
         }
     }, [roomId, fetchRoom]);
 
+    const roomStatus = room?.status;
+    const hasRoom = !!room;
+
     useEffect(() => {
-        if (!roomId || !room || room.status === 'finished') return;
-
-        const interval = setInterval(() => {
-            fetchRoom(true); 
-        }, 2000);
-
+        if (!roomId || !hasRoom || roomStatus === 'finished') return;
+        const interval = setInterval(() => fetchRoom(true), 2000);
         return () => clearInterval(interval);
-    }, [roomId, room?.status, fetchRoom, room]);
+    }, [roomId, hasRoom, roomStatus, fetchRoom]);
 
     const handleCreateRoom = async (stake: number) => {
         setLoading(true);
@@ -76,36 +75,53 @@ const H2HZone = () => {
         }
     };
 
-    if (!roomId) {
-        return (
-            <div className="relative min-h-[50vh]">
-                <H2HLobby 
-                    onCreate={handleCreateRoom} 
-                    onJoin={handleJoinRoom} 
-                    loading={loading}
-                />
+    return (
+        <div className="relative min-h-screen bg-black text-white overflow-x-hidden">
+            {/* Ambient Background Effects */}
+            <div className="fixed inset-0 pointer-events-none">
+                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-500/10 rounded-full blur-[120px] animate-pulse"></div>
+                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-500/10 rounded-full blur-[120px] animate-pulse [animation-delay:2s]"></div>
+                <div className="absolute top-[20%] right-[-5%] w-[30%] h-[30%] bg-blue-500/5 rounded-full blur-[100px] animate-pulse [animation-delay:4s]"></div>
+                <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] mix-blend-overlay"></div>
             </div>
-        );
-    }
 
-    if (!room) {
-        return (
-            <div className="flex items-center justify-center min-h-[50vh]">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </div>
-        );
-    }
-
-    switch (room.status) {
-        case 'waiting':
-            return <WaitingRoom room={room} />;
-        case 'active':
-            return <H2HArena room={room} user={user} />;
-        case 'finished':
-            return <H2HWinner room={room} user={user} />;
-        default:
-            return <H2HLobby onCreate={handleCreateRoom} onJoin={handleJoinRoom} loading={loading} />;
-    }
+            <main className="relative z-10 p-4 md:p-8 transition-all duration-500">
+                {!roomId ? (
+                    <H2HLobby
+                        onCreate={handleCreateRoom}
+                        onJoin={handleJoinRoom}
+                        loading={loading}
+                    />
+                ) : !room ? (
+                    <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6 animate-in fade-in zoom-in duration-500">
+                        <div className="relative">
+                            <div className="absolute inset-0 bg-indigo-500/20 blur-xl rounded-full animate-ping"></div>
+                            <div className="relative animate-spin rounded-[2rem] h-12 w-12 border-b-2 border-indigo-500" />
+                        </div>
+                        <div className="text-center">
+                            <h3 className="text-xl font-black uppercase tracking-widest italic text-indigo-400">Loading Warzone</h3>
+                            <p className="text-slate-500 text-xs mt-1 uppercase font-bold tracking-widest">Preparing your battle room...</p>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="animate-in fade-in duration-500">
+                        {(() => {
+                            switch (room.status) {
+                                case 'waiting':
+                                    return <WaitingRoom room={room} />;
+                                case 'active':
+                                    return <H2HArena key={room.id} room={room} user={user} />;
+                                case 'finished':
+                                    return <H2HWinner room={room} user={user} />;
+                                default:
+                                    return <H2HLobby onCreate={handleCreateRoom} onJoin={handleJoinRoom} loading={loading} />;
+                            }
+                        })()}
+                    </div>
+                )}
+            </main>
+        </div>
+    );
 };
 
 export default H2HZone;
