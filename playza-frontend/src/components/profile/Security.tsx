@@ -8,15 +8,25 @@ import {
   MdInfo,
   MdSmartphone,
   MdDesktopWindows,
+  MdLogout,
 } from "react-icons/md";
 import { PinModal } from "./PinModal";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { ArrowRight } from "lucide-react";
+import { useAuth } from "@/context/auth";
 
 const Security = () => {
   const [isFingerprintEnabled, setIsFingerprintEnabled] = useState(true);
   const [isFaceIDEnabled] = useState(false);
   const [pinModal, setPinModal] = useState<"change" | "create" | null>(null);
+
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
 
   const activeSessions = [
     {
@@ -296,9 +306,17 @@ const Security = () => {
                 </div>
               ))}
             </div>
-            <div className="p-2 md:p-6 bg-red-500/5 text-center">
+            <div className="p-2 md:p-6 bg-red-500/5 flex flex-col items-center gap-3">
               <button className="text-[10px] font-black text-red-500 uppercase tracking-[0.2em] hover:brightness-125 transition-all">
                 Logout from all other devices
+              </button>
+              <div className="h-px w-full bg-red-500/10 dark:bg-red-500/20 my-2"></div>
+              <button 
+                onClick={handleLogout}
+                className="flex items-center gap-2 text-xs font-black text-rose-500 uppercase tracking-widest hover:text-white hover:bg-rose-500 px-4 py-2 rounded-xl transition-all"
+              >
+                <MdLogout className="text-base md:text-xl" />
+                Sign Out Current Session
               </button>
             </div>
           </div>
