@@ -227,33 +227,40 @@ const Settings = () => {
               className="space-y-6"
               onSubmit={handleSubmit(onProfileSubmit)}
             >
-              {/* Real Name row */}
+            {/* Real Name row */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-6">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-1.5">
-                    First Name <MdLock className="text-[10px] opacity-50" />
+                    First Name {!!user?.first_name && <MdLock className="text-[10px] opacity-50" />}
                   </label>
                   <input
-                    defaultValue={user?.first_name || ""}
-                    disabled
-                    className={`w-full h-12 px-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold opacity-40 cursor-not-allowed text-slate-900 dark:text-white`}
+                    {...register("firstName")}
+                    readOnly={!!user?.first_name}
+                    className={`w-full h-12 px-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold text-slate-900 dark:text-white ${user?.first_name ? 'opacity-60 cursor-not-allowed' : 'focus:ring-1 focus:ring-primary focus:border-primary transition-all placeholder:text-slate-400 dark:placeholder:text-slate-700'}`}
                     type="text"
-                    placeholder="Anthony"
+                    placeholder="First Name"
                   />
+                  {errors.firstName && (
+                    <p className="text-[10px] text-red-500 font-bold ml-1 italic">{errors.firstName.message}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-1.5">
-                    Last Name <MdLock className="text-[10px] opacity-50" />
+                    Last Name {!!user?.last_name && <MdLock className="text-[10px] opacity-50" />}
                   </label>
                   <input
-                    defaultValue={user?.last_name || ""}
-                    disabled
-                    className={`w-full h-12 px-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold opacity-40 cursor-not-allowed text-slate-900 dark:text-white`}
+                    {...register("lastName")}
+                    readOnly={!!user?.last_name}
+                    className={`w-full h-12 px-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold text-slate-900 dark:text-white ${user?.last_name ? 'opacity-60 cursor-not-allowed' : 'focus:ring-1 focus:ring-primary focus:border-primary transition-all placeholder:text-slate-400 dark:placeholder:text-slate-700'}`}
                     type="text"
-                    placeholder="Guseltony"
+                    placeholder="Last Name"
                   />
+                  {errors.lastName && (
+                    <p className="text-[10px] text-red-500 font-bold ml-1 italic">{errors.lastName.message}</p>
+                  )}
                 </div>
               </div>
+
               {/* Legal name warning */}
               <div className="flex items-start gap-2 md:gap-3 p-2 md:p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20">
                 <MdWarning className="text-amber-500 dark:text-amber-400 text-sm md:text-lg shrink-0 mt-0.5" />
@@ -264,36 +271,49 @@ const Settings = () => {
                 </p>
               </div>
 
-              {/* Nickname & Phone */}
+              {/* Email & Phone */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-1.5">
+                    Email Address <MdLock className="text-[10px] opacity-50" />
+                  </label>
+                  <input
+                    className="w-full h-12 px-2 md:px-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold opacity-60 cursor-not-allowed text-slate-900 dark:text-white"
+                    type="email"
+                    value={user?.email || ""}
+                    readOnly
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-1.5">
+                    Phone Number {!!user?.phone && <MdLock className="text-[10px] opacity-50" />}
+                  </label>
+                  <input
+                    {...register("phone")}
+                    readOnly={!!user?.phone}
+                    className={`w-full h-12 px-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold text-slate-900 dark:text-white ${user?.phone ? 'opacity-60 cursor-not-allowed' : 'focus:ring-1 focus:ring-primary focus:border-primary transition-all placeholder:text-slate-400 dark:placeholder:text-slate-700'}`}
+                    type="tel"
+                    placeholder="080 000 0000"
+                  />
+                  {errors.phone && (
+                    <p className="text-[10px] text-red-500 font-bold ml-1 italic">{errors.phone.message}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Nickname */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-6">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-1.5">
                     Gaming Nickname <MdLock className="text-[10px] opacity-50" />
                   </label>
                   <input
-                    className="w-full h-12 px-2 md:px-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold opacity-40 cursor-not-allowed text-slate-900 dark:text-white"
+                    className="w-full h-12 px-2 md:px-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold opacity-60 cursor-not-allowed text-slate-900 dark:text-white"
                     type="text"
                     value={user?.username || ""}
-                    disabled
-                    placeholder="AnthonyGamer"
+                    readOnly
+                    placeholder="Nickname"
                   />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-1.5">
-                    Phone Number <MdLock className="text-[10px] opacity-50" />
-                  </label>
-                  <input
-                    defaultValue={user?.phone || ""}
-                    disabled
-                    className={`w-full h-12 px-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold opacity-40 cursor-not-allowed text-slate-900 dark:text-white`}
-                    type="tel"
-                    placeholder="080 000 0000"
-                  />
-                  {errors.phone && (
-                    <p className="text-[10px] text-red-500 font-bold ml-1 italic">
-                      {errors.phone.message}
-                    </p>
-                  )}
                 </div>
               </div>
 
@@ -346,8 +366,7 @@ const Settings = () => {
               {/* Sub-section Action Button */}
               <div className="flex justify-start">
                 <button
-                  type="button"
-                  onClick={handleSubmit(onProfileSubmit)}
+                  type="submit"
                   disabled={isPending || !isDirty}
                   className="h-12 px-2 md:px-10 rounded-2xl bg-primary text-white text-xs font-black uppercase tracking-[0.1em] hover:scale-105 hover:brightness-110 shadow-lg glow-accent transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >

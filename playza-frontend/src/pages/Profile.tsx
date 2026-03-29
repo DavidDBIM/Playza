@@ -7,7 +7,6 @@ import {
   MdEmojiEvents,
   MdSettings,
   MdSecurity,
-  MdLogout,
 } from "react-icons/md";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router";
 import BadgeModal from "../components/profile/BadgeModal";
@@ -19,7 +18,7 @@ import { ZASymbol } from "@/components/currency/ZASymbol";
 import { ProfileSkeleton } from "@/components/skeletons/ProfileSkeleton";
 
 const Profile = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const [isBadgeModalOpen, setIsBadgeModalOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -38,11 +37,6 @@ const Profile = () => {
     { label: "Settings", icon: <MdSettings />, to: "settings" },
     { label: "Security", icon: <MdSecurity />, to: "security" },
   ];
-
-  const handleLogout = () => {
-    logout();
-    navigate("/");
-  };
 
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
@@ -207,20 +201,6 @@ const Profile = () => {
 
           {/* Sidebar Action Cards (Desktop Only) */}
           <div className="hidden md:flex flex-col gap-2">
-            <div className="glass-card rounded-2xl p-2 md:p-3">
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center gap-2 md:gap-4 px-2 md:px-5 py-2 md:py-4 rounded-xl text-red-500 hover:bg-red-500/10 transition-all duration-300 font-bold text-sm group text-left"
-              >
-                <span className="text-base md:text-xl group-hover:rotate-12 transition-transform">
-                  <MdLogout />
-                </span>
-                <span className="tracking-wide text-xs uppercase font-black">
-                  Logout Account
-                </span>
-              </button>
-            </div>
-
             <div className="glass-card rounded-2xl p-2 md:p-6 bg-linear-to-br from-primary/20 to-secondary/10 border-primary/20 relative overflow-hidden group">
               <div className="absolute -right-8 -bottom-8 size-24 bg-primary/20 blur-2xl rounded-full group-hover:size-32 transition-all"></div>
               <h3 className="text-slate-900 dark:text-white font-black text-sm md:text-lg mb-2 relative z-10">
@@ -249,22 +229,7 @@ const Profile = () => {
         >
           {showMobileContent && <Outlet />}
 
-          {/* Sidebar Action Cards (Mobile Only - appears under content) */}
-          <div className="flex md:hidden flex-col gap-2 md:gap-4 mt-8">
-            <div className="glass-card rounded-2xl p-2 md:p-3">
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center justify-center gap-2 md:gap-4 px-2 md:px-5 py-2 md:py-4 rounded-xl text-red-500 hover:bg-red-500/10 transition-all duration-300 font-bold text-sm group"
-              >
-                <span className="text-base md:text-xl group-hover:rotate-12 transition-transform">
-                  <MdLogout />
-                </span>
-                <span className="tracking-wide text-xs uppercase font-black">
-                  Logout Account
-                </span>
-              </button>
-            </div>
-          </div>
+          {/* Mobile Content Area */}
         </div>
       </div>
 

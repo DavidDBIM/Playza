@@ -1,22 +1,71 @@
 import { useParams, useNavigate } from "react-router";
 import { games } from "@/data/games";
-import { X, Loader2 } from "lucide-react";
+import { X, Loader2, Maximize, Minimize } from "lucide-react";
 import { useEffect, useState } from "react";
+import GameOverLeaderboard from "@/components/game/GameOverLeaderboard";
+import LiveEntryModal from "@/components/gameSession/LiveEntryModal";
 
 const GamePlay = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(true);
-    
+    const [gameOverData, setGameOverData] = useState<{ score: number } | null>(null);
+    const [showLiveEntry, setShowLiveEntry] = useState(false);
+    const [isFullscreen, setIsFullscreen] = useState(false);
     const game = games.find((g) => g.slug === id);
 
     useEffect(() => {
-      
         document.body.style.overflow = "hidden";
+
+        const handleFullscreenChange = () => {
+            setIsFullscreen(!!document.fullscreenElement);
+        };
+        document.addEventListener("fullscreenchange", handleFullscreenChange);
+
+        const enterFullscreen = async () => {
+            try {
+                if (document.documentElement.requestFullscreen) {
+                    await document.documentElement.requestFullscreen();
+                }
+            } catch (err) {
+                console.log("Auto-fullscreen requires user gesture", err);
+            }
+        };
+        // Try to auto-enter fullscreen if the browser allows (e.g. recent navigation click)
+        setTimeout(enterFullscreen, 100);
+
+        const handleMessage = (event: MessageEvent) => {
+            if (event.data?.type === "PLAYZA_SCORE_SUBMISSION") {
+                setGameOverData(event.data.payload);
+            }
+        };
+
+        window.addEventListener("message", handleMessage);
+
         return () => {
             document.body.style.overflow = "auto";
+            window.removeEventListener("message", handleMessage);
+            document.removeEventListener("fullscreenchange", handleFullscreenChange);
+            // Optionally exit fullscreen when leaving page
+            if (document.fullscreenElement && document.exitFullscreen) {
+                document.exitFullscreen().catch(err => console.log(err));
+            }
         };
     }, []);
+
+    const toggleFullscreen = async () => {
+        if (!document.fullscreenElement) {
+            try {
+                await document.documentElement.requestFullscreen();
+            } catch (err) {
+                console.error("Error attempting to enable fullscreen:", err);
+            }
+        } else {
+            if (document.exitFullscreen) {
+                await document.exitFullscreen();
+            }
+        }
+    };
 
     if (!game) {
         return (
@@ -61,10 +110,21 @@ const GamePlay = () => {
                     <span className="text-[10px] font-black uppercase tracking-widest text-white/80 italic">{game.title} - LIVE ARENA</span>
                 </div>
 
-                <div className="pointer-events-auto">
+                <div className="pointer-events-auto flex items-center gap-2 md:gap-3">
+                    <button 
+                        onClick={toggleFullscreen}
+                        className="bg-black/40 backdrop-blur-md p-2 md:p-3 rounded-full text-white/50 hover:text-white transition-all border border-white/10 shadow-lg hover:scale-110 active:scale-95 group"
+                        title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+                    >
+                        {isFullscreen ? (
+                            <Minimize size={20} className="group-hover:scale-90 transition-transform duration-300" />
+                        ) : (
+                            <Maximize size={20} className="group-hover:scale-110 transition-transform duration-300" />
+                        )}
+                    </button>
                     <button 
                         onClick={() => navigate(`/games/${game.slug}/session`)}
-                        className="bg-black/40 backdrop-blur-md p-2 md:p-3 rounded-full text-white/50 hover:text-white transition-all border border-white/10 shadow-lg hover:scale-110 active:scale-95 group"
+                        className="bg-black/40 backdrop-blur-md p-2 md:p-3 rounded-full text-rose-500/50 hover:text-rose-500 transition-all border border-white/10 shadow-lg hover:scale-110 active:scale-95 group"
                         title="Exit Game"
                     >
                         <X size={20} className="group-hover:rotate-90 transition-transform duration-300" />
@@ -91,6 +151,42 @@ const GamePlay = () => {
                     onLoad={() => setIsLoading(false)}
                 />
             </div>
+
+            {/* Game Over Overlay */}
+            {gameOverData && (
+                <GameOverLeaderboard 
+                    score={gameOverData.score} 
+                    playAgain={() => {
+                        setGameOverData(null);
+                        setShowLiveEntry(true);
+                    }} 
+                />
+            )}
+
+            {/* Live Entry Modal Overlay for Re-entry */}
+            {showLiveEntry && game && (
+                <LiveEntryModal 
+                    game={game}
+                    onClick={(open) => {
+                        if (!open) {
+                            setShowLiveEntry(false);
+                            navigate(`/games/${game.slug}/session`);
+                        }
+                    }}
+                    onConfirm={() => {
+                        setShowLiveEntry(false);
+                        setIsLoading(true);
+                        const iframe = document.querySelector('iframe');
+                        if (iframe) {
+                            const originalSrc = iframe.src;
+                            iframe.src = "about:blank";
+                            setTimeout(() => {
+                                iframe.src = originalSrc;
+                            }, 10);
+                        }
+                    }}
+                />
+            )}
         </div>
     );
 };
