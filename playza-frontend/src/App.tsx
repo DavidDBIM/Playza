@@ -161,7 +161,7 @@ const AppContent = () => {
         )}
       </div>
 
-      {!isRegistrationPage && !isGamePlayPage && <Footer showAbout={pathname === "/"} />}
+      {pathname === "/" && <Footer showAbout={true} />}
 
       {!isRegistrationPage && !isGamePlayPage && <NavFooter />}
 

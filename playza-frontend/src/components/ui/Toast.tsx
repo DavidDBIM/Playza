@@ -1,7 +1,20 @@
 import { useEffect } from 'react';
 import { X, CheckCircle, AlertCircle, Info, Trophy, Users, ArrowUp, Target, Zap, Star, Rocket } from 'lucide-react';
 
-export type ToastType = 'success' | 'error' | 'info' | 'entry' | 'rank' | 'overtake' | 'winning_zone' | 'score' | 'achievement' | 'streak';
+export type ToastType =
+  | "success"
+  | "error"
+  | "info"
+  | "entry"
+  | "rank"
+  | "overtake"
+  | "winning_zone"
+  | "score"
+  | "achievement"
+  | "streak"
+  | "move"
+  | "checkmate"
+  | "check";
 
 export interface ToastProps {
   id: string;
@@ -14,33 +27,63 @@ export interface ToastProps {
 
 const getIcon = (type: ToastType) => {
   switch (type) {
-    case 'success': return <CheckCircle className="text-emerald-500" size={16} />;
-    case 'error': return <AlertCircle className="text-red-500" size={16} />;
-    case 'info': return <Info className="text-blue-500" size={16} />;
-    case 'entry': return <Users className="text-blue-500 dark:text-blue-400" size={16} />;
-    case 'rank': return <Trophy className="text-primary" size={16} />;
-    case 'overtake': return <ArrowUp className="text-emerald-500 dark:text-emerald-400" size={16} />;
-    case 'winning_zone': return <Target className="text-purple-500 dark:text-purple-400" size={16} />;
-    case 'score': return <Zap className="text-orange-500 dark:text-orange-400" size={16} />;
-    case 'achievement': return <Star className="text-yellow-500" size={16} />;
-    case 'streak': return <Rocket className="text-red-500" size={16} />;
-    default: return <Zap className="text-primary" size={16} />;
+    case "success":
+      return <CheckCircle className="text-emerald-500" size={16} />;
+    case "error":
+      return <AlertCircle className="text-red-500" size={16} />;
+    case "info":
+      return <Info className="text-blue-500" size={16} />;
+    case "entry":
+      return <Users className="text-blue-500 dark:text-blue-400" size={16} />;
+    case "rank":
+      return <Trophy className="text-primary" size={16} />;
+    case "overtake":
+      return (
+        <ArrowUp className="text-emerald-500 dark:text-emerald-400" size={16} />
+      );
+    case "winning_zone":
+      return (
+        <Target className="text-purple-500 dark:text-purple-400" size={16} />
+      );
+    case "score":
+      return <Zap className="text-orange-500 dark:text-orange-400" size={16} />;
+    case "achievement":
+      return <Star className="text-yellow-500" size={16} />;
+    case "streak":
+      return <Rocket className="text-red-500" size={16} />;
+    case "move":
+      return <Target className="text-secondary" size={16} />;
+    default:
+      return <Zap className="text-primary" size={16} />;
   }
 };
 
 const getBg = (type: ToastType) => {
   switch (type) {
-    case 'success': return 'border-emerald-500/20 bg-white/90 dark:bg-emerald-950/20';
-    case 'error': return 'border-red-500/20 bg-white/90 dark:bg-red-950/20';
-    case 'info': return 'border-blue-500/20 bg-white/90 dark:bg-blue-950/20';
-    case 'entry': return 'border-blue-500/20 bg-white/90 dark:bg-blue-950/20';
-    case 'rank': return 'border-primary/20 bg-white/90 dark:bg-primary/5';
-    case 'overtake': return 'border-emerald-500/20 bg-white/90 dark:bg-emerald-950/20';
-    case 'winning_zone': return 'border-purple-500/20 bg-white/90 dark:bg-purple-950/20';
-    case 'score': return 'border-orange-500/20 bg-white/90 dark:bg-orange-950/20';
-    case 'achievement': return 'border-yellow-500/20 bg-white/90 dark:bg-yellow-950/20';
-    case 'streak': return 'border-red-500/20 bg-white/90 dark:bg-red-950/20';
-    default: return 'border-primary/20 bg-white/90 dark:bg-slate-900/90';
+    case "success":
+      return "border-emerald-500/20 bg-white/90 dark:bg-emerald-950/20";
+    case "error":
+      return "border-red-500/20 bg-white/90 dark:bg-red-950/20";
+    case "info":
+      return "border-blue-500/20 bg-white/90 dark:bg-blue-950/20";
+    case "entry":
+      return "border-blue-500/20 bg-white/90 dark:bg-blue-950/20";
+    case "rank":
+      return "border-primary/20 bg-white/90 dark:bg-primary/5";
+    case "overtake":
+      return "border-emerald-500/20 bg-white/90 dark:bg-emerald-950/20";
+    case "winning_zone":
+      return "border-purple-500/20 bg-white/90 dark:bg-purple-950/20";
+    case "score":
+      return "border-orange-500/20 bg-white/90 dark:bg-orange-950/20";
+    case "achievement":
+      return "border-yellow-500/20 bg-white/90 dark:bg-yellow-950/20";
+    case "streak":
+      return "border-red-500/20 bg-white/90 dark:bg-red-950/20";
+    case "move":
+      return "border-secondary/20 bg-white/90 dark:bg-secondary/5";
+    default:
+      return "border-primary/20 bg-white/90 dark:bg-slate-900/90";
   }
 };
 
