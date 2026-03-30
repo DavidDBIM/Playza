@@ -1,4 +1,6 @@
 # Claude
+.claude/
+settings.local.json
 
 # 
 # Logs
