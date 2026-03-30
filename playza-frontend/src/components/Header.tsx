@@ -29,8 +29,8 @@ const Header = () => {
   };
 
   return (
-    <div className="sticky top-0 z-50 glass border-b border-primary/20 overflow-hidden">
-      <div className="max-w-400 mx-auto px-2 md:px-6 h-16 flex items-center justify-between">
+    <header className="sticky top-0 z-50 glass border-b border-primary/20 w-full">
+      <div className="w-full max-w-400 mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
         <div className="flex items-center gap-2 md:gap-12">
           <div className="flex items-center gap-2">
             <Link to="/">
@@ -47,7 +47,9 @@ const Header = () => {
             <HeaderSkeleton />
           ) : !user ? (
             <div className="flex gap-2">
-              <Link to={`/registration?view=login&redirect=${encodeURIComponent(location.pathname)}`}>
+              <Link
+                to={`/registration?view=login&redirect=${encodeURIComponent(location.pathname)}`}
+              >
                 <Button
                   variant={"outline"}
                   className="border-primary/50 text-primary hover:bg-primary/10"
@@ -55,23 +57,25 @@ const Header = () => {
                   Log In
                 </Button>
               </Link>
-              <Link to={`/registration?view=signup&redirect=${encodeURIComponent(location.pathname)}`}>
+              <Link
+                to={`/registration?view=signup&redirect=${encodeURIComponent(location.pathname)}`}
+              >
                 <Button variant={"secondary"}>Sign Up</Button>
               </Link>
             </div>
           ) : (
             <div className="flex items-center gap-2 md:gap-4">
               <div className="flex items-center gap-3 md:gap-4 pl-0 md:pl-4 md:border-l border-slate-300 dark:border-slate-700">
-                <div className="flex items-center gap-2 md:gap-3 bg-slate-900/10 dark:bg-white/5 px-2 py-1 md:px-4 md:py-1.5 rounded-full border border-primary/20 shadow-inner">
+                <div className="flex items-center gap-2 md:gap-3 bg-slate-900/10 dark:bg-white/5 px-2 py-1 md:px-4 md:py-1.5 rounded-full border border-primary/20">
                   <div className="flex items-center gap-1.5">
                     <ZASymbol className="text-sm md:text-base hidden xs:inline" />
                     <span className="text-xs md:text-sm font-black text-slate-900 dark:text-white">
-                      {user?.pzaPoints?.toLocaleString() || 0}
+                      {user?.wallet?.balance?.toLocaleString() || 0}
                     </span>
                   </div>
                   <button
                     onClick={() => navigate("?modal=deposit")}
-                    className="font-bold uppercase bg-primary hover:bg-primary/90 rounded-full flex items-center justify-center w-6 h-6 md:w-auto md:h-auto md:px-3 md:py-1 shadow-lg"
+                    className="font-bold uppercase bg-primary hover:bg-primary/90 rounded-full flex items-center justify-center w-6 h-6 md:w-auto md:h-auto md:px-3 md:py-1"
                   >
                     <Plus className="text-slate-900 dark:text-white w-4 h-4 md:hidden font-bold" />
                     <span className="hidden md:inline text-slate-900 dark:text-white text-[10px] font-black tracking-widest uppercase">
@@ -120,7 +124,7 @@ const Header = () => {
                             setTheme("light");
                             setOpen(false);
                           }}
-                          className={`flex-1 py-1.5 rounded-full transition-all flex items-center justify-center ${theme === "light" ? "bg-white shadow-sm text-primary" : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"}`}
+                          className={`flex-1 py-1.5 rounded-full transition-all flex items-center justify-center ${theme === "light" ? "bg-white text-primary" : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"}`}
                         >
                           <Sun className="w-4 h-4" />
                         </button>
@@ -129,7 +133,7 @@ const Header = () => {
                             setTheme("system");
                             setOpen(false);
                           }}
-                          className={`flex-1 py-1.5 rounded-full transition-all flex items-center justify-center ${theme === "system" ? "bg-white dark:bg-slate-800 shadow-[0_0_10px_rgba(0,0,0,0.1)] dark:shadow-[0_0_10px_rgba(255,255,255,0.05)] text-primary" : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"}`}
+                          className={`flex-1 py-1.5 rounded-full transition-all flex items-center justify-center ${theme === "system" ? "bg-white dark:bg-slate-800 text-primary" : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"}`}
                         >
                           <Monitor className="w-4 h-4" />
                         </button>
@@ -138,7 +142,7 @@ const Header = () => {
                             setTheme("dark");
                             setOpen(false);
                           }}
-                          className={`flex-1 py-1.5 rounded-full transition-all flex items-center justify-center ${theme === "dark" ? "bg-slate-800 shadow-sm text-primary" : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"}`}
+                          className={`flex-1 py-1.5 rounded-full transition-all flex items-center justify-center ${theme === "dark" ? "bg-slate-800 text-primary" : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"}`}
                         >
                           <Moon className="w-4 h-4" />
                         </button>
@@ -146,7 +150,7 @@ const Header = () => {
                     </div>
                     <div className="h-px bg-slate-200 dark:bg-slate-700 my-1 mx-2" />
                     <Link to="/loyalty">
-                      <DropdownMenuItem className="cursor-pointer gap-2 md:gap-3 py-2 md:py-3 px-2 md:px-4 rounded-xl bg-linear-to-r from-primary/10 to-secondary/10 hover:from-primary/20 hover:to-secondary/20 text-primary border border-primary/20 transition-all shadow-xs my-1 group">
+                      <DropdownMenuItem className="cursor-pointer gap-2 md:gap-3 py-2 md:py-3 px-2 md:px-4 rounded-xl bg-linear-to-r from-primary/10 to-secondary/10 hover:from-primary/20 hover:to-secondary/20 text-primary border border-primary/20 transition-all my-1 group">
                         <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center group-hover:scale-110 transition-transform">
                           <Gift className="w-4 h-4" />
                         </div>
@@ -195,7 +199,7 @@ const Header = () => {
           )}
         </div>
       </div>
-    </div>
+    </header>
   );
 };
 

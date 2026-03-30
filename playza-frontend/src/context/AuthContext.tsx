@@ -24,7 +24,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             lastName: profile.last_name,
             avatarUrl: profile.avatar_url,
             createdAt: profile.created_at,
-            pzaPoints: profile.pza_points,
+            pzaPoints: profile.wallet?.balance || 0,
+            wallet: profile.wallet,
             isEmailVerified: profile.is_email_verified,
           });
         } catch (error) {

@@ -15,6 +15,7 @@ import { useToast } from "@/context/toast";
 import { ZASymbol } from "@/components/currency/ZASymbol";
 import type { ChessRoom } from "@/types/chess";
 import type { UserProfile } from "@/context/auth";
+import { Maximize, Minimize } from "lucide-react";
 
 interface H2HArenaProps {
   room: ChessRoom;
@@ -37,6 +38,15 @@ const PIECE_ICON: Record<string, string> = {
   b: "♝",
   n: "♞",
   p: "♟",
+};
+
+const PIECE_NAME: Record<string, string> = {
+  K: "KING",
+  Q: "QUEEN",
+  R: "ROOK",
+  B: "BISHOP",
+  N: "KNIGHT",
+  P: "PAWN",
 };
 
 /**
@@ -98,10 +108,36 @@ const H2HArena = ({ room, user }: H2HArenaProps) => {
   // Track whether we are waiting for the server to confirm our move
   const pendingMoveRef = useRef(false);
 
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
   // ── Auto-scroll battle log ──────────────────────────────────────────────────
   useEffect(() => {
     logEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [game]);
+
+  // ── Fullscreen Support ──────────────────────────────────────────────────────
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () =>
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
+
+  const toggleFullscreen = async () => {
+    if (!document.fullscreenElement) {
+      try {
+        await document.documentElement.requestFullscreen();
+      } catch (err) {
+        console.error("Fullscreen error:", err);
+      }
+    } else {
+      if (document.exitFullscreen) {
+        await document.exitFullscreen();
+      }
+    }
+  };
 
   // ── Detect check / checkmate from local game state ──────────────────────────
   useEffect(() => {
@@ -149,16 +185,27 @@ const H2HArena = ({ room, user }: H2HArenaProps) => {
           pendingMoveRef.current = false;
 
           // Build rich toast message
-          const { isCheck, isCheckmate, isCapture } = parseSAN(result.san);
-          let msg = `Rival played: ${result.san}`;
-          if (isCheckmate) msg = `CHECKMATE — Rival played ${result.san}`;
-          else if (isCheck) msg = `CHECK! Rival played ${result.san}`;
-          else if (isCapture) msg = `Rival captured: ${result.san}`;
+          const { isCheck, isCheckmate, isCapture, pieceChar } = parseSAN(
+            result.san,
+          );
+          const pIcon = PIECE_ICON[pieceChar.toLowerCase()] || "♟";
+          const pName = PIECE_NAME[pieceChar.toLocaleUpperCase()] || "PAWN";
+
+          let msg = `Rival moved ${pIcon} ${pName} to ${result.to}`;
+          if (isCheckmate)
+            msg = `💥 CHECKMATE — Rival played ${pIcon} ${result.san}`;
+          else if (isCheck)
+            msg = `⚠️ CHECK! Rival played ${pIcon} ${result.san}`;
+          else if (isCapture) msg = `⚔️ Rival captured with ${pIcon} ${pName}`;
 
           toast.custom("move", msg, "BATTLE LOG");
 
           if (isCheck && !isCheckmate) {
-            toast.custom("check", "You are in CHECK! ⚠️", "CHECK");
+            toast.custom(
+              "check",
+              "⚠️ YOU ARE IN CHECK — Protect your king!",
+              "CHECK",
+            );
           }
 
           return copy;
@@ -176,6 +223,8 @@ const H2HArena = ({ room, user }: H2HArenaProps) => {
   const serverSaysMyTurn = room.current_turn === user?.id;
   const isYourTurn = serverSaysMyTurn && !pendingMoveRef.current;
   const boardOrientation = room.host_id === user?.id ? "white" : "black";
+  const oppUsername =
+    user?.id === room.host_id ? room.guest?.username : room.host?.username;
 
   const attemptMove = useCallback(
     (sourceSquare: string, targetSquare: string): boolean => {
@@ -197,15 +246,26 @@ const H2HArena = ({ room, user }: H2HArenaProps) => {
         setLegalMoveSquares([]);
         pendingMoveRef.current = true;
 
-        const { isCheck, isCheckmate, isCapture, isCastle } = parseSAN(
-          move.san,
-        );
-        let msg = `You played: ${move.san}`;
-        if (isCheckmate) msg = `CHECKMATE! You played ${move.san}`;
-        else if (isCheck) msg = `CHECK! You played ${move.san}`;
-        else if (isCastle) msg = `You castled: ${move.san}`;
-        else if (isCapture) msg = `You captured: ${move.san}`;
+        const { isCheck, isCheckmate, isCapture, isCastle, pieceChar } =
+          parseSAN(move.san);
+        const pIcon = PIECE_ICON[pieceChar.toUpperCase()] || "♙";
+        const pName = PIECE_NAME[pieceChar.toUpperCase()] || "PAWN";
+
+        let msg = `You moved ${pIcon} ${pName} to ${move.to}`;
+        if (isCheckmate) msg = `🏆 CHECKMATE! You played ${pIcon} ${move.san}`;
+        else if (isCheck)
+          msg = `🎯 CHECK! You placed Rival in check with ${pIcon}`;
+        else if (isCastle) msg = `🏰 You castled: ${move.san}`;
+        else if (isCapture) msg = `⚔️ You captured with ${pIcon} ${pName}`;
         toast.custom("move", msg, "YOU");
+
+        if (isCheck && !isCheckmate) {
+          toast.custom(
+            "check",
+            `You have placed ${oppUsername || "opponent"} in CHECK! 🎯`,
+            "NICE MOVE",
+          );
+        }
 
         const moveKey = `${sourceSquare}${targetSquare}q`;
         lastAppliedMoveRef.current = moveKey;
@@ -225,7 +285,7 @@ const H2HArena = ({ room, user }: H2HArenaProps) => {
         return false;
       }
     },
-    [game, isYourTurn, room.id, toast],
+    [game, isYourTurn, room.id, toast, oppUsername],
   );
 
   // ── Click-to-move
@@ -289,15 +349,21 @@ const H2HArena = ({ room, user }: H2HArenaProps) => {
 
   // ── Derived values
   const hostIsWhite = room.host_id === user?.id;
-  const oppUsername =
-    user?.id === room.host_id ? room.guest?.username : room.host?.username;
   const myTurn = isYourTurn;
   const oppTurn = !myTurn && room.status === "active";
 
-  // Per-player move counts (white = even indices, black = odd indices)
+  // Absolute move counts derived from FEN to stay in sync even if history is partial
+  const fenParts = game.fen().split(" ");
+  const fullMoveNum = parseInt(fenParts[fenParts.length - 1] || "1", 10);
+  const currentTurn = game.turn(); // 'w' or 'b'
+
+  // In FEN, fullMoveNum increments after Black moves.
+  // If it's White's turn, both have made fullMoveNum - 1 moves.
+  // If it's Black's turn, White has made fullMoveNum, Black has fullMoveNum - 1.
+  const whiteMoveCount = currentTurn === "w" ? fullMoveNum - 1 : fullMoveNum;
+  const blackMoveCount = fullMoveNum - 1;
+
   const history = game.history({ verbose: true });
-  const whiteMoveCount = history.filter((_, i) => i % 2 === 0).length;
-  const blackMoveCount = history.filter((_, i) => i % 2 === 1).length;
   const myColor = room.host_id === user?.id ? "w" : "b";
   const myMoveCount = myColor === "w" ? whiteMoveCount : blackMoveCount;
   const oppMoveCount = myColor === "w" ? blackMoveCount : whiteMoveCount;
@@ -315,24 +381,43 @@ const H2HArena = ({ room, user }: H2HArenaProps) => {
 
   // ── Render
   return (
-    <div className="flex flex-col gap-2.5 w-full max-w-[680px] mx-auto p-2 box-border md:max-w-[1100px] md:grid md:grid-cols-[1fr_320px] md:grid-rows-[auto_auto_1fr] md:gap-3 md:p-3 lg:gap-4 lg:p-4">
+    <div className="flex flex-col gap-2.5 w-full max-w-170 mx-auto p-2 box-border md:max-w-275 md:grid md:grid-cols-[1fr_320px] md:grid-rows-[auto_auto_1fr] md:gap-3 md:p-3 lg:gap-4 lg:p-4">
+      {/* ── Arena Controls ── */}
+      <div className="flex justify-end gap-2 mb-1 md:col-span-2">
+        <button
+          onClick={toggleFullscreen}
+          className="bg-white/5 hover:bg-white/10 dark:text-white p-2 rounded-xl border border-white/10 backdrop-blur-md transition-all flex items-center gap-2 text-[10px] font-black uppercase tracking-widest"
+        >
+          {isFullscreen ? <Minimize size={14} /> : <Maximize size={14} />}
+          {isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+        </button>
+      </div>
+
       {/* ── Header Bar ── */}
-      <div className="flex items-center justify-between gap-1.5 bg-white/5 border border-white/[0.07] rounded-2xl px-3 py-2 backdrop-blur-xl md:col-span-2 md:px-4 md:py-2.5">
+      <div className="flex items-center justify-between gap-1.5 bg-slate-200/50 dark:bg-white/5 border border-slate-300 dark:border-white/[0.07] rounded-2xl px-3 py-2 backdrop-blur-xl md:col-span-2 md:px-4 md:py-2.5">
         {/* Host chip */}
         <div className="flex items-center gap-2 relative flex-1 min-w-0">
           <div
-            className={`shrink-0 w-[34px] h-[34px] rounded-xl flex items-center justify-center font-black text-sm text-white border-2 bg-gradient-to-br from-slate-500 to-slate-800 md:w-[42px] md:h-[42px] md:text-base lg:w-[46px] lg:h-[46px] lg:text-lg
+            className={`shrink-0 w-8.5 h-8.5 rounded-xl flex items-center justify-center font-black text-sm text-white border-2 bg-linear-to-br from-slate-500 to-slate-800 md:w-10.5 md:h-10.5 md:text-base lg:w-11.5 lg:h-11.5 lg:text-lg overflow-hidden
             ${(hostIsWhite && myTurn) || (!hostIsWhite && oppTurn) ? "border-indigo-400 shadow-[0_0_12px_rgba(99,102,241,0.4)]" : "border-white/10"}`}
           >
-            {room.host?.username?.[0]?.toUpperCase()}
+            {room.host?.avatar_url ? (
+              <img
+                src={room.host.avatar_url}
+                className="w-full h-full object-cover rounded-md"
+                alt=""
+              />
+            ) : (
+              room.host?.username?.[0]?.toUpperCase()
+            )}
           </div>
           <div className="flex flex-col min-w-0 overflow-hidden">
             <span
-              className={`font-black text-[13px] truncate uppercase tracking-wide leading-tight md:text-[15px] ${(hostIsWhite && myTurn) || (!hostIsWhite && oppTurn) ? "text-indigo-400" : "text-slate-100"}`}
+              className={`font-black text-[13px] truncate uppercase tracking-wide leading-tight md:text-[15px] ${(hostIsWhite && myTurn) || (!hostIsWhite && oppTurn) ? "text-indigo-600 dark:text-indigo-400" : "text-slate-900 dark:text-slate-100"}`}
             >
               {room.host?.username || "Host"}
             </span>
-            <span className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">
+            <span className="text-[9px] text-slate-500 dark:text-slate-500 font-bold uppercase tracking-widest leading-none">
               {room.host_id === user?.id ? "YOU" : "RIVAL"} · ⬜ ·{" "}
               {room.host_id === user?.id ? myMoveCount : oppMoveCount} moves
             </span>
@@ -360,20 +445,28 @@ const H2HArena = ({ room, user }: H2HArenaProps) => {
         <div className="flex items-center justify-end gap-2 relative flex-1 min-w-0">
           <div className="flex flex-col items-end min-w-0 overflow-hidden">
             <span
-              className={`font-black text-[13px] truncate uppercase tracking-wide leading-tight md:text-[15px] ${(!hostIsWhite && myTurn) || (hostIsWhite && oppTurn) ? "text-indigo-400" : "text-slate-100"}`}
+              className={`font-black text-[13px] truncate uppercase tracking-wide leading-tight md:text-[15px] ${(!hostIsWhite && myTurn) || (hostIsWhite && oppTurn) ? "text-indigo-600 dark:text-indigo-400" : "text-slate-900 dark:text-slate-100"}`}
             >
               {room.guest?.username || "Waiting..."}
             </span>
-            <span className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">
+            <span className="text-[9px] text-slate-500 dark:text-slate-500 font-bold uppercase tracking-widest leading-none">
               ⬛ · {room.guest_id === user?.id ? "YOU" : "RIVAL"} ·{" "}
               {room.guest_id === user?.id ? myMoveCount : oppMoveCount} moves
             </span>
           </div>
           <div
-            className={`shrink-0 w-[34px] h-[34px] rounded-xl flex items-center justify-center font-black text-sm text-white border-2 bg-gradient-to-br from-slate-900 to-slate-800 md:w-[42px] md:h-[42px] md:text-base lg:w-[46px] lg:h-[46px] lg:text-lg
+            className={`shrink-0 w-8.5 h-8.5 rounded-xl flex items-center justify-center font-black text-sm text-white border-2 bg-linear-to-br from-slate-900 to-slate-800 md:w-10.5 md:h-10.5 md:text-base lg:w-11.5 lg:h-11.5 lg:text-lg overflow-hidden
             ${(!hostIsWhite && myTurn) || (hostIsWhite && oppTurn) ? "border-indigo-400 shadow-[0_0_12px_rgba(99,102,241,0.4)]" : "border-white/10"}`}
           >
-            {room.guest?.username?.[0]?.toUpperCase() || "?"}
+            {room.guest?.avatar_url ? (
+              <img
+                src={room.guest.avatar_url}
+                className="w-full h-full object-cover rounded-md"
+                alt=""
+              />
+            ) : (
+              room.guest?.username?.[0]?.toUpperCase() || "?"
+            )}
           </div>
           {((!hostIsWhite && myTurn) || (hostIsWhite && oppTurn)) && (
             <span className="absolute top-0 left-0 w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
@@ -383,12 +476,19 @@ const H2HArena = ({ room, user }: H2HArenaProps) => {
 
       {/* ── Turn / Check Banner ── */}
       {inCheck ? (
-        <div className="flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl text-[11px] font-extrabold tracking-widest uppercase bg-red-500/20 border border-red-500/50 text-red-300 animate-pulse md:col-start-1 md:text-xs">
-          <ShieldAlert size={14} className="shrink-0" />
-          <span>⚠️ YOU ARE IN CHECK — Protect your king!</span>
-        </div>
+        myTurn ? (
+          <div className="flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl text-[11px] font-extrabold tracking-widest uppercase bg-red-500/20 border border-red-500/50 text-red-600 dark:text-red-300 animate-pulse md:col-start-1 md:text-xs">
+            <ShieldAlert size={14} className="shrink-0" />
+            <span>⚠️ YOU ARE IN CHECK — Protect your king!</span>
+          </div>
+        ) : (
+          <div className="flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl text-[11px] font-extrabold tracking-widest uppercase bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-300 md:col-start-1 md:text-xs text-center leading-none">
+            <AlertTriangle size={14} className="shrink-0" />
+            <span>🎯 {oppUsername || "Rival"} IS IN CHECK — FINISH THEM!</span>
+          </div>
+        )
       ) : game.isCheckmate() ? (
-        <div className="flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl text-[11px] font-extrabold tracking-widest uppercase bg-amber-500/20 border border-amber-500/50 text-amber-300 md:col-start-1 md:text-xs">
+        <div className="flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl text-[11px] font-extrabold tracking-widest uppercase bg-amber-500/20 border border-amber-500/50 text-amber-600 dark:text-amber-300 md:col-start-1 md:text-xs">
           <Trophy size={14} className="shrink-0" />
           <span>CHECKMATE — Game Over</span>
         </div>
@@ -397,8 +497,8 @@ const H2HArena = ({ room, user }: H2HArenaProps) => {
           className={`flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-xl text-[11px] font-extrabold tracking-widest uppercase md:col-start-1 md:text-xs
           ${
             myTurn
-              ? "bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 animate-pulse"
-              : "bg-white/[0.03] border border-white/[0.06] text-slate-500"
+              ? "bg-indigo-500/15 border border-indigo-500/30 text-indigo-600 dark:text-indigo-300 animate-pulse"
+              : "bg-slate-100 dark:bg-white/3 border border-slate-200 dark:border-white/6 text-slate-400 dark:text-slate-500"
           }`}
         >
           {myTurn ? (
@@ -421,8 +521,8 @@ const H2HArena = ({ room, user }: H2HArenaProps) => {
 
       {/* ── Chess Board ── */}
       <div
-        className={`relative w-full aspect-square rounded-2xl overflow-hidden bg-white/5 border md:col-start-1 md:row-start-3
-        ${inCheck ? "border-red-500/60 shadow-[0_0_30px_rgba(239,68,68,0.25)]" : "border-indigo-500/20"}`}
+        className={`relative w-full aspect-square rounded-2xl overflow-hidden bg-slate-100 dark:bg-white/5 border md:col-start-1 md:row-start-3
+        ${inCheck && myTurn ? "border-red-500/60 shadow-[0_0_30px_rgba(239,68,68,0.1)]" : "border-slate-200 dark:border-indigo-500/20"}`}
       >
         <div className="absolute inset-0 pointer-events-none z-0 bg-[radial-gradient(ellipse_at_center,rgba(99,102,241,0.12),transparent_70%)]" />
 
@@ -433,8 +533,7 @@ const H2HArena = ({ room, user }: H2HArenaProps) => {
             CHECK!
           </div>
         )}
-
-        <div className="relative z-[1] w-full h-full">
+        <div className="relative z-1 w-full h-full">
           <Chessboard
             options={{
               position: game.fen(),
@@ -454,52 +553,81 @@ const H2HArena = ({ room, user }: H2HArenaProps) => {
             }}
           />
         </div>
+
+        {/* Checkmate Overlay */}
+        {game.isCheckmate() && (
+          <div className="absolute inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center animate-in fade-in zoom-in duration-500">
+            <div className="relative mb-6">
+              <div className="absolute inset-0 bg-amber-500/20 blur-3xl rounded-full scale-150 animate-pulse"></div>
+              <Trophy
+                size={80}
+                className="text-amber-400 relative z-10 animate-bounce"
+              />
+            </div>
+            <h2 className="text-3xl font-black font-headline italic uppercase tracking-tighter text-white mb-2">
+              Checkmate!
+            </h2>
+            <p className="text-slate-400 text-sm font-bold uppercase tracking-[0.2em] mb-8">
+              {game.turn() === (room.host_id === user?.id ? "w" : "b")
+                ? "DEFEAT — MISSION FAILED"
+                : "VICTORY — ARENA CLEARED"}
+            </p>
+            <div className="flex flex-col gap-3 w-full max-w-50">
+              <div className="text-[10px] font-black text-amber-500 uppercase tracking-widest animate-pulse">
+                Syncing Results...
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── Side Panel ── */}
       <div className="flex flex-col gap-2 md:col-start-2 md:row-start-2 md:row-end-4 md:h-full">
         {/* Stats grid */}
         <div className="grid grid-cols-2 gap-1.5">
-          <div className="flex flex-col items-center gap-0.5 rounded-xl px-2 py-1.5 border bg-white/5 border-white/[0.06] backdrop-blur-md">
-            <span className="text-[7px] font-black text-slate-100/40 uppercase tracking-[0.12em]">
+          <div className="flex flex-col items-center gap-0.5 rounded-xl px-2 py-1.5 border bg-white dark:bg-white/5 border-slate-200 dark:border-white/6 shadow-sm backdrop-blur-md">
+            <span className="text-[7px] font-black text-slate-400 dark:text-slate-100/40 uppercase tracking-[0.12em]">
               STAKE
             </span>
-            <span className="text-xs font-black text-slate-100 flex items-center gap-0.5">
-              {room.stake} <ZASymbol className="w-[9px] h-[9px]" />
+            <span className="text-xs font-black text-slate-900 dark:text-slate-100 flex items-center gap-0.5">
+              {room.stake} <ZASymbol className="w-2.25 h-2.25" />
             </span>
           </div>
-          <div className="flex flex-col items-center gap-0.5 rounded-xl px-2 py-1.5 border bg-amber-500/5 border-amber-500/25 backdrop-blur-md">
-            <span className="text-[7px] font-black text-amber-100/30 uppercase tracking-[0.12em]">
+          <div className="flex flex-col items-center gap-0.5 rounded-xl px-2 py-1.5 border bg-amber-500 dark:bg-amber-500/5 border-amber-500/25 backdrop-blur-md shadow-sm">
+            <span className="text-[7px] font-black text-white dark:text-amber-100/30 uppercase tracking-[0.12em]">
               PRIZE POOL
             </span>
-            <span className="text-xs font-black text-amber-400 flex items-center gap-1 leading-none">
-              {room.stake * 2} <ZASymbol className="w-[9px] h-[9px]" />
+            <span className="text-xs font-black text-white dark:text-amber-400 flex items-center gap-1 leading-none">
+              {room.stake * 2} <ZASymbol className="w-2.25 h-2.25" />
             </span>
           </div>
-          <div className="flex flex-col items-center gap-0.5 rounded-xl px-2 py-1.5 border bg-white/5 border-white/[0.06] backdrop-blur-md">
-            <span className="text-[7px] font-black text-slate-100/40 uppercase tracking-[0.12em]">
+          <div className="flex flex-col items-center gap-0.5 rounded-xl px-2 py-1.5 border bg-white dark:bg-white/5 border-slate-200 dark:border-white/6 shadow-sm backdrop-blur-md">
+            <span className="text-[7px] font-black text-slate-400 dark:text-slate-100/40 uppercase tracking-[0.12em]">
               MY MOVES
             </span>
-            <span className="text-xs font-black text-indigo-300 flex items-center gap-0.5">
+            <span className="text-xs font-black text-indigo-600 dark:text-indigo-300 flex items-center gap-0.5">
               {myMoveCount}
             </span>
           </div>
-          <div className="flex flex-col items-center gap-0.5 rounded-xl px-2 py-1.5 border bg-white/5 border-white/[0.06] backdrop-blur-md">
-            <span className="text-[7px] font-black text-slate-100/40 uppercase tracking-[0.12em]">
+          <div className="flex flex-col items-center gap-0.5 rounded-xl px-2 py-1.5 border bg-white dark:bg-white/5 border-slate-200 dark:border-white/6 shadow-sm backdrop-blur-md">
+            <span className="text-[7px] font-black text-slate-400 dark:text-slate-100/40 uppercase tracking-[0.12em]">
               OPP MOVES
             </span>
-            <span className="text-xs font-black text-slate-300 flex items-center gap-0.5">
+            <span className="text-xs font-black text-slate-700 dark:text-slate-300 flex items-center gap-0.5">
               {oppMoveCount}
             </span>
           </div>
         </div>
 
         {/* Battle Log */}
-        <div className="bg-white/5 border border-white/[0.06] rounded-xl overflow-hidden backdrop-blur-md flex flex-col flex-1 min-h-0">
+        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/6 rounded-xl overflow-hidden backdrop-blur-md flex flex-col flex-1 min-h-0 shadow-sm">
           {/* Header */}
-          <div className="flex items-center justify-between gap-1.5 px-3 py-2 border-b border-white/5 shrink-0">
-            <div className="flex items-center gap-1.5 text-[10px] font-black text-slate-500 uppercase tracking-[0.12em]">
-              <Swords size={14} className="text-indigo-400" />
+          <div className="flex items-center justify-between gap-1.5 px-3 py-2 border-b border-slate-100 dark:border-white/5 shrink-0">
+            <div className="flex items-center gap-1.5 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.12em]">
+              <Swords
+                size={14}
+                className="text-indigo-600 dark:text-indigo-400"
+              />
               <span>Battle Log</span>
             </div>
             <div className="flex items-center gap-2 text-[9px] font-bold text-slate-600 uppercase tracking-wider">
@@ -537,17 +665,17 @@ const H2HArena = ({ room, user }: H2HArenaProps) => {
                     <div
                       key={index}
                       className={`flex items-stretch gap-1 rounded-lg overflow-hidden text-[10px]
-                        ${latest ? "bg-indigo-500/8 border border-indigo-500/15" : "bg-white/[0.015]"}`}
+                        ${latest ? "bg-indigo-500/8 border border-indigo-500/15" : "bg-slate-50 dark:bg-white/1"}`}
                     >
                       {/* Move number */}
-                      <span className="w-5 flex items-center justify-center text-[9px] text-slate-700 font-bold shrink-0 bg-white/[0.02] border-r border-white/[0.04] py-1">
+                      <span className="w-10 flex flex-col items-center justify-center text-[8px] text-slate-400 dark:text-slate-700 font-black shrink-0 bg-slate-100 dark:bg-white/2 border-r border-slate-200 dark:border-white/4 py-1">
+                        <span className="opacity-40 uppercase">Mv</span>
                         {index + 1}
                       </span>
 
-                      {/* White move */}
                       <div
-                        className={`flex-1 flex items-center gap-1 px-1.5 py-1 border-r border-white/[0.04]
-                        ${latest && !black ? "text-indigo-300" : "text-slate-300"}`}
+                        className={`flex-1 flex items-center gap-1 px-1.5 py-1 border-r border-slate-200 dark:border-white/4
+                        ${latest && !black ? "text-indigo-600 dark:text-indigo-300" : "text-slate-900 dark:text-slate-300"}`}
                       >
                         {wp && (
                           <>
@@ -557,9 +685,14 @@ const H2HArena = ({ room, user }: H2HArenaProps) => {
                             >
                               {PIECE_ICON[wp.pieceChar] ?? "♙"}
                             </span>
-                            <span className="font-black uppercase tracking-wide truncate">
-                              {white?.san}
-                            </span>
+                            <div className="flex flex-col min-w-0">
+                              <span className="font-black uppercase tracking-wide truncate">
+                                {white?.san}
+                              </span>
+                              <span className="text-[7px] text-slate-400 dark:text-slate-500 font-bold uppercase leading-none">
+                                {PIECE_NAME[wp.pieceChar] || "PAWN"}
+                              </span>
+                            </div>
                             <span className="flex items-center gap-0.5 ml-auto shrink-0">
                               {wp.isCapture && (
                                 <span className="text-red-400" title="Capture">
@@ -606,7 +739,7 @@ const H2HArena = ({ room, user }: H2HArenaProps) => {
                       {/* Black move */}
                       <div
                         className={`flex-1 flex items-center gap-1 px-1.5 py-1
-                        ${latest && black ? "text-indigo-300" : "text-slate-500"}`}
+                        ${latest && black ? "text-indigo-600 dark:text-indigo-300" : "text-slate-600 dark:text-slate-500"}`}
                       >
                         {bp ? (
                           <>
@@ -616,9 +749,14 @@ const H2HArena = ({ room, user }: H2HArenaProps) => {
                             >
                               {PIECE_ICON[bp.pieceChar.toLowerCase()] ?? "♟"}
                             </span>
-                            <span className="font-black uppercase tracking-wide truncate">
-                              {black?.san}
-                            </span>
+                            <div className="flex flex-col min-w-0">
+                              <span className="font-black uppercase tracking-wide truncate">
+                                {black?.san}
+                              </span>
+                              <span className="text-[7px] text-slate-400 dark:text-slate-500 font-bold uppercase leading-none">
+                                {PIECE_NAME[bp.pieceChar] || "PAWN"}
+                              </span>
+                            </div>
                             <span className="flex items-center gap-0.5 ml-auto shrink-0">
                               {bp.isCapture && (
                                 <span className="text-red-400" title="Capture">
@@ -708,6 +846,6 @@ const H2HArena = ({ room, user }: H2HArenaProps) => {
       </div>
     </div>
   );
-};
+};;
 
 export default H2HArena;

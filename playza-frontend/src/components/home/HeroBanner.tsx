@@ -102,7 +102,7 @@ const HeroBanner = () => {
 
   return (
     <section 
-      className="relative w-full h-60 md:h-70 lg:h-75 rounded-xl overflow-hidden border border-white/5 bg-slate-950 group select-none shadow-2xl"
+      className="relative w-full h-60 md:h-70 lg:h-75 rounded-xl overflow-hidden border border-white/5 bg-slate-950 group select-none shadow-lg"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -162,14 +162,14 @@ const HeroBanner = () => {
                     className="text-3xl md:text-5xl font-black font-display text-white leading-tight uppercase tracking-tight"
                   >
                     {activeSlide.title}
-                    <span className="block text-2xl md:text-3xl font-medium tracking-tighter italic opacity-90 drop-shadow-lg" style={{ color: activeSlide.accent }}>
+                    <span className="block text-2xl md:text-3xl font-medium tracking-tighter italic opacity-90" style={{ color: activeSlide.accent }}>
                       {activeSlide.subtitle}
                     </span>
                   </motion.h2>
                   <motion.p 
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="text-xs md:text-base text-slate-300 font-medium max-w-md drop-shadow-md"
+                    className="text-xs md:text-base text-slate-300 font-medium max-w-md"
                   >
                     {activeSlide.description}
                   </motion.p>
@@ -183,8 +183,8 @@ const HeroBanner = () => {
                 >
                   <Link
                     to={activeSlide.primaryAction.href}
-                    className="inline-flex items-center gap-2 px-2 md:px-8 py-2 md:py-3 text-white font-black text-xs md:text-sm uppercase tracking-widest rounded-xl transition-all duration-300 shadow-xl hover:-translate-y-1 active:scale-95"
-                    style={{ backgroundColor: activeSlide.accent, boxShadow: `0 10px 20px -5px ${activeSlide.accent}60` }}
+                    className="inline-flex items-center gap-2 px-2 md:px-8 py-2 md:py-3 text-white font-black text-xs md:text-sm uppercase tracking-widest rounded-xl transition-all duration-300 hover:-translate-y-1 active:scale-95"
+                    style={{ backgroundColor: activeSlide.accent }}
                   >
                     {activeSlide.primaryAction.label}
                     <ArrowRight size={18} />

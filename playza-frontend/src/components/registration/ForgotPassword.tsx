@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { ArrowBigLeft, Loader2, MailCheck } from "lucide-react";
-import { MdAlternateEmail } from "react-icons/md";
 import { RxReset } from "react-icons/rx";
 import { useForgotPassword } from "@/hooks/auth/useForgotPassword";
 
@@ -34,111 +33,101 @@ const ForgotPassword = ({ onClick }: { onClick: (value: string) => void }) => {
   };
 
   return (
-    <main className="flex-1 h-full flex items-center justify-center">
-      <div className="glass-card w-full max-w-120 rounded-xl p-2 md:p-12 shadow-2xl relative overflow-hidden">
+    <div className="w-full max-w-lg">
+      <div className="glass-card w-full rounded-2xl p-4 md:p-12 shadow-xl relative overflow-hidden border border-slate-200 dark:border-white/5">
         <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-transparent via-primary to-transparent opacity-50"></div>
         <div className="flex flex-col items-center text-center mb-10">
-          <div className="bg-primary/10 p-2 md:p-4 rounded-full mb-6">
+          <div className="bg-primary/10 p-4 rounded-full mb-6">
             {isSuccess ? (
-              <MailCheck className="text-primary" size={36} />
+              <MailCheck className="text-primary" size={32} />
             ) : (
-              <RxReset className="text-primary text-2xl md:text-4xl" />
+              <RxReset className="text-primary text-3xl" />
             )}
           </div>
-          <h1 className="text-slate-900 dark:text-white text-xl md:text-3xl font-bold leading-tight mb-3">
-            {isSuccess ? "Check Your Email" : "Forgot Password?"}
+          <h1 className="text-slate-900 dark:text-white text-2xl md:text-3xl font-black tracking-tight uppercase mb-3">
+            {isSuccess ? "Check Your Email" : "Reset Portal"}
           </h1>
-          <p className="text-slate-600 dark:text-slate-400 text-xs md:text-base font-normal">
+          <p className="text-slate-500 dark:text-slate-400 text-xs md:text-sm font-medium leading-relaxed">
             {isSuccess
-              ? `We've sent a password reset link to ${email}. Follow the link in the email to create a new password.`
-              : "No worries! Enter your registered email below and we'll send you a secure reset link."}
+              ? `We've sent a password reset link to ${email}. Check your inbox or spam folder.`
+              : "No stress! Enter your email and we'll send you a secure link to get back in the game."}
           </p>
         </div>
 
         {!isSuccess && (
           <form className="space-y-6" onSubmit={handleSubmit}>
-            <div className="flex flex-col gap-2">
-              <label className="text-slate-800 dark:text-slate-200 text-sm font-semibold flex items-center gap-2">
-                <MdAlternateEmail className="text-xs text-primary" />
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 ml-1">
                 Email Address
               </label>
-              <div className="relative">
+              <div className="relative group">
                 <input
                   required
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full rounded-lg text-slate-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-slate-300 dark:border-primary/20 bg-slate-900/5 dark:bg-white/5 dark:bg-background-dark/50 h-14 placeholder:text-slate-400 dark:placeholder:text-slate-500 px-2 md:px-4 transition-all"
-                  placeholder="e.g. gamer@platform.com"
+                  className="w-full bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-white/10 rounded-xl py-4 px-4 focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 transition-all font-medium text-sm"
+                  placeholder="gamer@example.com"
                   autoComplete="email"
                 />
               </div>
             </div>
 
             {error && (
-              <p className="text-red-500 text-xs md:text-sm text-center font-medium">
+              <p className="text-red-500 text-xs text-center font-bold italic">
                 {error.message}
               </p>
             )}
 
             <button
               disabled={isPending}
-              className="w-full flex cursor-pointer items-center justify-center gap-2 rounded-lg h-14 px-2 md:px-5 bg-primary text-background-dark text-base font-bold tracking-wide shadow-[0_0_20px_rgba(19,218,236,0.3)] hover:shadow-[0_0_30px_rgba(19,218,236,0.5)] transition-all transform hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none"
+              className="w-full bg-primary hover:bg-primary/90 text-slate-950 font-black py-4 rounded-xl transition-all shadow-lg shadow-primary/10 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 uppercase tracking-widest text-sm"
               type="submit"
             >
               {isPending ? (
                 <>
                   <Loader2 size={18} className="animate-spin" />
-                  Sending…
+                  Generating...
                 </>
               ) : (
-                "Send Reset Link"
+                "Request Link"
               )}
             </button>
 
-            <div className="flex justify-center pt-2 md:pt-4">
-              <div
+            <div className="flex justify-center pt-4 mt-6 border-t border-slate-200 dark:border-white/5">
+              <button
+                type="button"
                 onClick={() => onClick("login")}
-                className="group flex items-center gap-2 text-slate-500 dark:text-slate-400 hover:text-primary transition-colors text-sm font-medium cursor-pointer"
+                className="group flex items-center gap-2 text-slate-500 dark:text-slate-400 hover:text-primary transition-colors text-[10px] font-black uppercase tracking-widest cursor-pointer"
               >
-                <ArrowBigLeft className="text-sm md:text-lg transition-transform group-hover:-translate-x-1" />
-                Back to Login
-              </div>
+                <ArrowBigLeft className="size-4 transition-transform group-hover:-translate-x-1" />
+                Return to Login
+              </button>
             </div>
           </form>
         )}
 
         {isSuccess && (
-          <div className="flex flex-col gap-2 md:gap-4">
+          <div className="flex flex-col gap-4">
             <button
               onClick={() => onClick("login")}
-              className="w-full flex cursor-pointer items-center justify-center gap-2 rounded-lg h-14 px-2 md:px-5 bg-primary text-background-dark text-base font-bold tracking-wide shadow-[0_0_20px_rgba(19,218,236,0.3)] hover:shadow-[0_0_30px_rgba(19,218,236,0.5)] transition-all"
+              className="w-full bg-primary hover:bg-primary/90 text-slate-950 font-black py-4 rounded-xl transition-all shadow-lg uppercase tracking-widest text-sm"
             >
-              Back to Login
+              Return to Login
             </button>
-            <button
-              type="button"
-              onClick={() => {
-                setEmail("");
-                sendReset({ email: "" });
-              }}
-              className="text-sm text-slate-500 dark:text-slate-400 hover:text-primary transition-colors text-center"
-            >
+            <p className="text-[10px] text-slate-500 text-center font-bold uppercase tracking-widest">
               Didn't receive it?{" "}
               <span
-                onClick={(e) => {
-                  e.stopPropagation();
-                  sendReset({ email });
-                }}
-                className="text-primary font-semibold hover:underline cursor-pointer"
+                onClick={() => sendReset({ email })}
+                className="text-primary hover:underline cursor-pointer ml-1"
               >
-                Resend
+                Resend Now
               </span>
-            </button>
+            </p>
           </div>
         )}
       </div>
-    </main>
+    </div>
   );
 };
 

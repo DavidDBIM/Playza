@@ -160,6 +160,7 @@ const GamePlay = () => {
                         setGameOverData(null);
                         setShowLiveEntry(true);
                     }} 
+                    onBackToSession={() => navigate(`/games/${game.slug}/session`)}
                 />
             )}
 

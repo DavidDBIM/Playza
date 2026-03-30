@@ -30,11 +30,11 @@ const CTAReferral = () => {
               {/* <!-- Features --> */}
               <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 md:gap-8 py-2">
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_var(--primary)]" />
+                  <div className="w-2 h-2 rounded-full bg-primary" />
                   <span className="text-xs font-medium text-slate-700 dark:text-slate-300">Instant Payouts</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-accent shadow-[0_0_8px_var(--accent)]" />
+                  <div className="w-2 h-2 rounded-full bg-accent" />
                   <span className="text-xs font-medium text-slate-700 dark:text-slate-300">Unlimited Referrals</span>
                 </div>
               </div>
@@ -43,7 +43,7 @@ const CTAReferral = () => {
               <div className="pt-2 md:pt-4 w-full md:w-auto">
                 <NavLink 
                   to="/referral" 
-                  className="relative overflow-hidden transition-all duration-300 shadow-[0_0_20px_color-mix(in_oklch,var(--primary),transparent_70%)] hover:shadow-[0_0_30px_color-mix(in_oklch,var(--primary),transparent_50%)] hover:-translate-y-1 inline-flex items-center justify-center w-full md:w-64 h-16 rounded-2xl bg-primary text-slate-900 text-sm md:text-lg font-black hover:bg-primary/90 uppercase tracking-wider"
+                  className="relative overflow-hidden transition-all duration-300 hover:-translate-y-1 inline-flex items-center justify-center w-full md:w-64 h-16 rounded-2xl bg-primary text-slate-900 text-sm md:text-lg font-black hover:bg-primary/90 uppercase tracking-wider"
                 >
                   Start Referring
                 </NavLink>

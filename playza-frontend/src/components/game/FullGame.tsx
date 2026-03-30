@@ -97,7 +97,7 @@ const FullGame = () => {
       </div>
 
       {filteredGames ? (
-        <section className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <section className="animate-in fade-in duration-500">
           <div className="flex items-center gap-2 md:gap-3 mb-6 px-2">
             <div className="w-1.5 h-6 bg-primary rounded-full"></div>
             <h2 className="font-heading text-lg md:text-xl font-bold tracking-tight text-slate-900 dark:text-white uppercase">
@@ -117,7 +117,7 @@ const FullGame = () => {
         </section>
       ) : (
 
-        <div className="space-y-2 animate-in fade-in duration-700">
+        <div className="space-y-2 animate-in fade-in duration-500">
           {groupedGames && Object.entries(groupedGames).map(([category, games]) => (
             <CategoryRow
               key={category}

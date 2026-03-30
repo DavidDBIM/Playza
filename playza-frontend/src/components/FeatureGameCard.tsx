@@ -17,9 +17,9 @@ const FeatureGameCard = ({
   return (
     <div className="relative w-full h-full group overflow-hidden">
       {/* Background Image with Zoom Effect */}
-      <img
+        <img
         alt={title}
-        className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
+        className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-102"
         src={thumbnail}
       />
       
@@ -31,10 +31,10 @@ const FeatureGameCard = ({
       <div 
         className="relative w-full h-full flex flex-col justify-end overflow-hidden bg-linear-to-t from-[rgba(2,6,23,0.9)] via-[rgba(2,6,23,0.3)_50%] to-transparent "
       >
-        <div className="relative z-10 p-2 md:p-4 flex flex-col justify-center gap-2 w-full h-full animate-in fade-in slide-in-from-bottom-8 duration-1000 ">
+        <div className="relative z-10 p-2 md:p-4 flex flex-col justify-center gap-2 w-full h-full animate-in fade-in duration-500 ">
           {/* Badge */}
           <div className="w-fit px-2 md:px-4 py-1.5 rounded-full text-[11px] font-black uppercase tracking-widest bg-primary text-primary-foreground shadow-lg shadow-primary/20 mb-2 flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-white animate-pulse shadow-[0_0_8px_rgba(255,255,255,0.8)]"></span>
+            <span className="w-2 h-2 rounded-full bg-white shadow-[0_0_8px_rgba(255,255,255,0.8)]"></span>
             Featured Tournament
           </div>
 
@@ -54,7 +54,7 @@ const FeatureGameCard = ({
               <span className="text-[10px] md:text-[12px] font-black uppercase tracking-[0.2em] text-white/40">
                 Total Prize Pool
               </span>
-              <div className="text-xl md:text-4xl font-black flex items-center gap-2 text-accent drop-shadow-[0_0_20px_rgba(168,85,247,0.4)]">
+              <div className="text-xl md:text-4xl font-black flex items-center gap-2 text-accent">
                 ${pricePool.toLocaleString()}
                 <TrendingUp className="text-secondary" size={24} />
               </div>
@@ -72,7 +72,7 @@ const FeatureGameCard = ({
           </div>
 
           {/* CTA Button */}
-          <Button className="w-fit px-2 md:px-6 py-2 md:py-6 rounded-2xl font-black uppercase tracking-[0.15em] transition-all duration-300 transform hover:scale-105 active:scale-95 mt-4 text-xs md:text-sm bg-secondary text-secondary-foreground  hover:-translate-y-1">
+          <Button className="w-fit px-2 md:px-6 py-2 md:py-6 rounded-2xl font-black uppercase tracking-[0.15em] transition-all duration-300 mt-4 text-xs md:text-sm bg-secondary text-secondary-foreground">
             <Play className="mr-2 fill-current" size={16} />
             {ctaLabel}
           </Button>

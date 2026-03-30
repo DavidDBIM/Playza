@@ -73,11 +73,12 @@ const Profile = () => {
         createdAt: userData.created_at,
         isEmailVerified: userData.is_email_verified,
         pzaPoints: userData.pza_points,
+        wallet: userData.wallet,
       }
     : user;
 
   return (
-    <div className="flex-1 mx-auto w-full pb-2 md:pb-10">
+    <div className="flex-1 pb-2 md:pb-10 transition-all duration-500">
       {/* <!-- Profile Header --> */}
       <div className="glass-card rounded-xl p-4 md:p-6 mb-4 lg:mb-8 relative overflow-hidden group">
         <div className="absolute top-0 right-0 w-80 h-80 bg-primary/20 blur-[120px] rounded-full -mr-40 -mt-40 transition-all duration-700 group-hover:bg-primary/30"></div>
@@ -168,7 +169,8 @@ const Profile = () => {
               Refer & Earn
             </h3>
             <div className="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-slate-400 mb-4 relative z-10 font-bold uppercase tracking-wider">
-              Get <ZASymbol className="text-[10px] scale-90" /> 500 for every friend who joins.
+              Get <ZASymbol className="text-[10px] scale-90" /> 500 for every
+              friend who joins.
             </div>
             <NavLink
               to="/referral"
@@ -207,7 +209,8 @@ const Profile = () => {
                 Refer & Earn
               </h3>
               <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 mb-4 relative z-10 font-bold uppercase">
-                Get <ZASymbol className="text-[10px] scale-90" /> 500 for every friend who joins.
+                Get <ZASymbol className="text-[10px] scale-90" /> 500 for every
+                friend who joins.
               </div>
               <NavLink
                 to="/referral"

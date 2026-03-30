@@ -9,7 +9,6 @@ import Profile from "./pages/Profile";
 import Games from "./pages/Games";
 import SideBar from "./components/SideBar";
 import Footer from "./components/Footer";
-import RightSideBar from "./components/RightSideBar";
 import Game from "./pages/Game";
 import MatchSession from "./pages/MatchSession";
 import GamePlay from "./pages/GamePlay";
@@ -55,12 +54,11 @@ const AppContent = () => {
 
   // const isGameDetailPage = !!useMatch("/games/:id");
   const isGameSessionPage = pathname.includes("/session");
-  const isGamePlayPage = pathname.includes("/play") || (pathname.startsWith("/h2h") && pathname !== "/h2h");
-
+  const isGamePlayPage =
+    pathname.includes("/play") ||
+    (pathname.startsWith("/h2h") && pathname !== "/h2h");
 
   const isRegistrationPage = pathname.includes("/registration");
-
-
 
   // const { id } = useParams();
   // const isGameDetailPage = pathname.startsWith(`/games/${id}`);
@@ -82,8 +80,6 @@ const AppContent = () => {
     <div className="relative min-h-screen bg-background">
       {!isRegistrationPage && !isGamePlayPage && <Header />}
 
-
-
       {activeModal === "deposit" && (
         <DepositModal onClose={() => navigate(location.pathname)} />
       )}
@@ -99,18 +95,20 @@ const AppContent = () => {
       )}
 
       {/* {pathname === "/" && <AppNotification />} */}
-      <div className={isGamePlayPage ? "" : "max-w-400 mx-auto flex gap-6 p-2 md:p-6"}>
-
+      <div
+        className={
+          isGamePlayPage
+            ? ""
+            : "w-full max-w-400 mx-auto flex gap-4 md:gap-8 px-4 md:px-8 pt-4 md:pt-8 pb-32 md:pb-36"
+        }
+      >
         {!isGameSessionPage && !isRegistrationPage && !isGamePlayPage && (
-
-          <aside className="w-72 hidden xl:block sticky self-start top-24 h-[calc(100vh-8rem)]">
+          <aside className="w-72 hidden lg:block sticky self-start top-24 h-[calc(100vh-8rem)] shrink-0">
             <SideBar />
           </aside>
         )}
 
-
-
-        <>
+        <main className="flex-1 min-w-0 w-full">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/leaderboard" element={<LeaderBoard />} />
@@ -122,14 +120,16 @@ const AppContent = () => {
             />
             <Route path="/games" element={<Games />} />
             <Route path="/my-games" element={<MyGames />} />
-            <Route path="/games/category/:category" element={<CategoryPage />} />
+            <Route
+              path="/games/category/:category"
+              element={<CategoryPage />}
+            />
             <Route path="/games/:id" element={<Game />} />
             <Route path="/games/:id/session" element={<MatchSession />} />
             <Route path="/games/:id/play" element={<GamePlay />} />
             <Route path="/h2h" element={<H2HZone />} />
             <Route path="/h2h/:roomId" element={<H2HZone />} />
             <Route path="/registration" element={<Registration />} />
-
 
             <Route path="/wallet/transactions" element={<Transactions />} />
             <Route path="/referral" element={<Referral />} />
@@ -152,20 +152,12 @@ const AppContent = () => {
               <Route path="security" element={<Security />} />
             </Route>
           </Routes>
-        </>
-
-        {pathname === "/" && (
-          <aside className="hidden xl:flex w-72 flex-col gap-6 sticky self-start top-24 h-[calc(100vh-8rem)]">
-            <RightSideBar />
-          </aside>
-        )}
+        </main>
       </div>
 
       {pathname === "/" && <Footer showAbout={true} />}
 
       {!isRegistrationPage && !isGamePlayPage && <NavFooter />}
-
-
     </div>
   );
 };

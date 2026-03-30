@@ -1,5 +1,11 @@
 import { createContext, useContext } from "react";
 
+export interface Wallet {
+  balance: number;
+  total_deposited: number;
+  total_withdrawn: number;
+}
+
 export interface UserProfile {
   id: string;
   username: string;
@@ -12,6 +18,7 @@ export interface UserProfile {
   pzaPoints?: number;
   isEmailVerified?: boolean;
   createdAt?: string;
+  wallet?: Wallet;
 }
 
 export interface AuthContextType {
