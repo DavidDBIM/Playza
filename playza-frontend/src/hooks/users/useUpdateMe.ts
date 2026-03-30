@@ -20,7 +20,7 @@ export const useUpdateMe = () => {
       
       return { previousUser };
     },
-    onError: (err, newPayload, context) => {
+    onError: (_err, _newPayload, context) => {
       if (context?.previousUser) {
         queryClient.setQueryData(["users", "me"], context.previousUser);
       }
