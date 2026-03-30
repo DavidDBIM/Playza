@@ -15,14 +15,13 @@ const RecentWinners = () => {
       {/* Title Section */}
       <div className="flex items-center gap-2 md:gap-3 px-2">
         <div className="relative flex items-center justify-center">
-          <Trophy className="w-5 h-5 text-yellow-400 absolute animate-ping opacity-50" />
-          <Trophy className="w-5 h-5 text-yellow-500 drop-shadow-[0_0_8px_rgba(234,179,8,0.8)] relative z-10" />
+          <Trophy className="w-5 h-5 text-yellow-500 relative z-10" />
         </div>
         <h3 className="text-sm md:text-base font-bold uppercase tracking-widest bg-clip-text text-transparent bg-linear-to-r from-yellow-400 via-amber-200 to-yellow-600 font-display">
           Live Winners Arena
         </h3>
-        <div className="ml-auto flex items-center gap-2 px-2 md:px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 shadow-[0_0_10px_rgba(239,68,68,0.2)]">
-          <span className="w-2 h-2 rounded-full bg-red-500 live-indicator shadow-[0_0_5px_rgba(239,68,68,1)]"></span>
+        <div className="ml-auto flex items-center gap-2 px-2 md:px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20">
+          <span className="w-2 h-2 rounded-full bg-red-500 live-indicator"></span>
           <span className="text-[10px] sm:text-xs font-bold text-red-500 uppercase tracking-widest">Live Updates</span>
         </div>
       </div>
@@ -36,7 +35,7 @@ const RecentWinners = () => {
             ({ id, username, game, amountWon }, i) => (
               <div
                 key={`${id}-${i}`}
-                className="group relative flex items-center gap-2 md:gap-4 px-2 md:px-4 py-2 rounded-2xl glass-card border border-primary/20 hover:border-primary/50 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(168,85,247,0.3)] bg-slate-900/60 cursor-pointer overflow-hidden"
+                className="group relative flex items-center gap-2 md:gap-4 px-2 md:px-4 py-2 rounded-2xl glass-card border border-primary/20 hover:border-primary/50 transition-all duration-300 hover:-translate-y-1 bg-slate-900/60 cursor-pointer overflow-hidden"
               >
                 {/* Shine effect on hover */}
                 <div className="absolute inset-0 -translate-x-[150%] bg-linear-to-r from-transparent via-white/10 to-transparent group-hover:translate-x-[150%] transition-transform duration-1000 ease-in-out skew-x-12" />
@@ -53,7 +52,7 @@ const RecentWinners = () => {
                     <span className=" text-xs italic">won</span>
                     <div className="flex items-center gap-1">
                       <ZASymbol className="text-sm scale-75" />
-                      <span className="font-extrabold text-base md:text-xl text-emerald-400  font-mono tracking-tight drop-shadow-[0_0_8px_rgba(52,211,153,0.4)] leading-none">
+                      <span className="font-extrabold text-base md:text-xl text-emerald-400  font-mono tracking-tight leading-none">
                         {amountWon.toLocaleString()}
                       </span>
                     </div>

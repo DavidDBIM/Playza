@@ -2,6 +2,10 @@ import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router";
 import { CheckCircle2, Loader2, ArrowLeft, XCircle, CreditCard, Building2 } from "lucide-react";
 import { ZASymbol } from "@/components/currency/ZASymbol";
+import { useWallet } from "@/hooks/wallet/useWallet";
+import { useAuth } from "@/context/auth";
+import { PaystackButton } from "react-paystack";
+import type { PaystackProps } from "react-paystack/dist/types";
 
 export default function Deposit() {
   const [searchParams] = useSearchParams();
@@ -11,22 +15,41 @@ export default function Deposit() {
   const method = searchParams.get("method") || "card";
   
   const [status, setStatus] = useState<"idle" | "processing" | "success" | "failed">("idle");
+  const { initializeDeposit } = useWallet();
+  const { user } = useAuth();
+  const [paystackProps, setPaystackProps] = useState<PaystackProps | null>(null);
   
   const amount = Number(amountStr);
   const fee = Math.max(50, amount * 0.015);
   const total = amount + fee;
 
-  const handlePay = () => {
+  const handlePay = async () => {
+    if (!user) return;
     setStatus("processing");
-    // Simulate payment gateway delay
-    setTimeout(() => {
-      // 90% success rate simulation
-      if (Math.random() > 0.1) {
-        setStatus("success");
-      } else {
-        setStatus("failed");
-      }
-    }, 2500);
+    try {
+      const data = await initializeDeposit(total);
+      console.log("[Deposit] Initialized deposit:", data);
+      
+      const config = {
+        reference: data.reference,
+        email: user.email,
+        amount: Math.round(total * 100), // Amount in kobo, ensure it's an integer
+        publicKey: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY,
+        text: "Pay Now",
+        onSuccess: (response: unknown) => {
+          console.log("[Deposit] Paystack Success:", response);
+          setStatus("success");
+        },
+        onClose: () => {
+          console.log("[Deposit] Paystack Closed");
+          setStatus("idle");
+        },
+      };
+      setPaystackProps(config as unknown as PaystackProps); // Type cast via unknown to satisfy strict linting while handling peer-dep type drift
+    } catch (err) {
+      console.error("[Deposit] Initialization error:", err);
+      setStatus("failed");
+    }
   };
 
   useEffect(() => {
@@ -122,28 +145,35 @@ export default function Deposit() {
               </div>
             )}
 
-            <button
-              onClick={handlePay}
-              disabled={status === "processing"}
-              className="w-full bg-primary hover:bg-primary/90 text-background dark:text-background-dark py-2 md:py-4 rounded-xl font-black uppercase tracking-widest transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-2 group disabled:opacity-70 disabled:pointer-events-none"
-            >
-              {status === "processing" ? (
-                <>
-                  <Loader2 className="animate-spin" size={20} />
-                  <span>Processing Payment...</span>
-                </>
-              ) : status === "failed" ? (
-                <span>Retry Payment</span>
-              ) : (
-                <div className="flex items-center gap-2 md:gap-3">
-                  <span>Pay Now</span>
-                  <div className="flex items-center gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity">
-                    <ZASymbol className="text-sm scale-90" />
-                    <span>{total.toLocaleString()}</span>
+            {paystackProps ? (
+              <PaystackButton
+                {...paystackProps}
+                className="w-full bg-primary hover:bg-primary/90 text-background dark:text-background-dark py-2 md:py-4 rounded-xl font-black uppercase tracking-widest transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-2 group"
+              />
+            ) : (
+              <button
+                onClick={handlePay}
+                disabled={status === "processing"}
+                className="w-full bg-primary hover:bg-primary/90 text-background dark:text-background-dark py-2 md:py-4 rounded-xl font-black uppercase tracking-widest transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-2 group disabled:opacity-70 disabled:pointer-events-none"
+              >
+                {status === "processing" ? (
+                  <>
+                    <Loader2 className="animate-spin" size={20} />
+                    <span>Preparing Secure Gateway...</span>
+                  </>
+                ) : status === "failed" ? (
+                  <span>Retry Payment</span>
+                ) : (
+                  <div className="flex items-center gap-2 md:gap-3">
+                    <span>Confirm Top Up</span>
+                    <div className="flex items-center gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity">
+                      <ZASymbol className="text-sm scale-90" />
+                      <span>{total.toLocaleString()}</span>
+                    </div>
                   </div>
-                </div>
-              )}
-            </button>
+                )}
+              </button>
+            )}
           </div>
         )}
       </div>

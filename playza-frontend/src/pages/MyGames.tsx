@@ -21,9 +21,9 @@ const MyGames = () => {
   const renderActiveCard = (game: Game) => (
     <div
       key={game.id}
-      className="glass-card rounded-2xl p-2 md:p-5 border border-white/5 shadow-xl relative overflow-hidden group"
+      className="glass-card rounded-xl p-2 md:p-5 border border-white/5 shadow-md relative overflow-hidden group"
     >
-      <div className="absolute top-0 right-0 p-2 md:p-4 opacity-10 blur-sm rounded-full bg-primary/20 pointer-events-none group-hover:bg-primary/50 transition-colors"></div>
+      <div className="absolute top-0 right-0 p-2 md:p-4 opacity-10 rounded-full bg-primary/20 pointer-events-none group-hover:bg-primary/40 transition-colors"></div>
 
       <div className="flex justify-between items-start mb-4">
         <div>
@@ -31,11 +31,11 @@ const MyGames = () => {
             {game.title}
           </h3>
           <p className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+            <span className="w-2 h-2 rounded-full bg-green-500"></span>
             Pro Challenge #4
           </p>
         </div>
-        <div className="bg-primary/10 text-primary border border-primary/20 rounded-full px-2 md:px-3 py-1 font-black text-xs uppercase tracking-widest shadow-inner shadow-primary/10">
+        <div className="bg-primary/10 text-primary border border-primary/20 rounded-full px-2 md:px-3 py-1 font-black text-xs uppercase tracking-widest">
           Rank #10 🔥
         </div>
       </div>
@@ -65,7 +65,7 @@ const MyGames = () => {
 
         <Link
           to={`/games/${game.slug}/session`}
-          className="w-full md:w-auto bg-primary hover:bg-primary/90 text-white font-black uppercase text-xs tracking-widest px-8 md:px-10 py-2 md:py-3 rounded-xl transition-all shadow-[0_0_15px_rgba(168,85,247,0.4)] text-center relative z-10"
+          className="w-full md:w-auto bg-primary hover:bg-primary/90 text-white font-black uppercase text-xs tracking-widest px-8 md:px-10 py-2 md:py-3 rounded-xl transition-all text-center relative z-10 shadow-sm"
         >
           View Live
         </Link>
@@ -76,7 +76,7 @@ const MyGames = () => {
   const renderUpcomingCard = (game: Game) => (
     <div
       key={game.id}
-      className="glass-card rounded-2xl p-2 md:p-5 border border-white/5 shadow-lg opacity-90 group"
+      className="glass-card rounded-xl p-2 md:p-5 border border-white/5 shadow-md opacity-90 group"
     >
       <div className="flex justify-between items-start mb-4">
         <div>
@@ -115,7 +115,7 @@ const MyGames = () => {
   const renderEndedCard = (game: Game) => (
     <div
       key={game.id}
-      className="glass-card rounded-2xl p-2 md:p-5 border border-white/5 shadow-md opacity-70 filter transition-all hover:opacity-100 group"
+      className="glass-card rounded-xl p-2 md:p-5 border border-white/5 shadow-sm opacity-70 filter transition-all hover:opacity-100 group"
     >
       <div className="flex justify-between items-start mb-4">
         <div>
@@ -126,7 +126,7 @@ const MyGames = () => {
             <MdCheckCircle className="text-slate-400" /> Finished Today
           </p>
         </div>
-        <div className="bg-green-500/10 text-green-500 border border-green-500/20 rounded-full px-2 md:px-3 py-1 font-black text-xs uppercase tracking-widest shadow-inner flex items-center gap-1">
+        <div className="bg-green-500/10 text-green-500 border border-green-500/20 rounded-full px-2 md:px-3 py-1 font-black text-xs uppercase tracking-widest flex items-center gap-1">
           + 2,500 <ZASymbol className="scale-75" />
         </div>
       </div>
@@ -152,17 +152,17 @@ const MyGames = () => {
   );
 
   return (
-    <div className="flex-1 space-y-8 pb-2 md:pb-20 w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="flex-1 min-w-0 space-y-8 pb-2 md:pb-20 animate-in fade-in duration-500">
       {!user ? (
-        <div className="glass-card rounded-2xl p-2 md:p-12 text-center h-[50vh] flex flex-col items-center justify-center border border-white/5 shadow-2xl relative overflow-hidden">
+        <div className="glass-card rounded-2xl p-2 md:p-12 text-center h-[50vh] flex flex-col items-center justify-center border border-white/5 shadow-lg relative overflow-hidden">
           <div className="absolute inset-0 bg-primary/5 blur-3xl opacity-50 pointer-events-none"></div>
-          <MdVideogameAsset className="text-4xl md:text-6xl text-slate-300 dark:text-slate-700 mb-4 animate-pulse relative z-10" />
+          <MdVideogameAsset className="text-4xl md:text-6xl text-slate-300 dark:text-slate-700 mb-4 relative z-10" />
           <h2 className="text-lg md:text-2xl font-black font-headline uppercase text-slate-900 dark:text-white relative z-10">
             Sign in to view games
           </h2>
           <p className="text-xs md:text-sm font-bold tracking-widest text-slate-500 mt-2 lowercase max-w-sm relative z-10">
-            track your active and recent competitions by creating an account or
-            logging in.
+            track your active and recent competitions by creating an account
+            Overview logging in.
           </p>
         </div>
       ) : (
@@ -182,7 +182,7 @@ const MyGames = () => {
                 id: "live",
                 label: "Active",
                 icon: (
-                  <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                  <span className="w-2 h-2 rounded-full bg-green-500"></span>
                 ),
                 count: liveGames.length,
               },
@@ -208,7 +208,7 @@ const MyGames = () => {
                 onClick={() => setActiveTab(tab.id as TabTypes)}
                 className={`flex flex-col min-w-28 px-4 py-3 rounded-xl border transition-all text-left ${
                   activeTab === tab.id
-                    ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-transparent shadow-lg scale-100"
+                    ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-transparent shadow-md scale-100"
                     : "glass-card border-white/5 text-slate-500 hover:text-slate-900 hover:dark:text-white hover:bg-slate-100 hover:dark:bg-white/5 opacity-80"
                 }`}
               >

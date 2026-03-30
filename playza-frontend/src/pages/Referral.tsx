@@ -15,7 +15,7 @@ const Referral = () => {
   }, []);
 
   return (
-    <div className="flex-1 max-w-7xl mx-auto w-full md:px-10 pb-2 md:pb-20">
+    <div className="flex-1 w-full pb-2 md:pb-20">
       {!user ? (
         <div className="mt-6 mb-12 glass-card p-2 md:p-10 rounded-xl border-primary/20 relative overflow-hidden flex flex-col items-center text-center gap-2 md:gap-8">
           <div className="absolute -top-24 -left-24 size-64 bg-primary/20 blur-[100px] rounded-full" />
@@ -29,7 +29,9 @@ const Referral = () => {
               Recruit Your <span className="text-primary">Squad</span>
             </h1>
             <p className="text-xs md:text-base text-slate-500 font-bold max-w-lg mx-auto leading-relaxed">
-              Don't play alone. Invite your friends to Playza and earn legendary <ZASymbol className="inline-block scale-110 ml-1" /> rewards for every active referral.
+              Don't play alone. Invite your friends to Playza and earn legendary{" "}
+              <ZASymbol className="inline-block scale-110 ml-1" /> rewards for
+              every active referral.
             </p>
           </div>
 

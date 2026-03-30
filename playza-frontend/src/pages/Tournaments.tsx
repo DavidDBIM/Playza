@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Link } from "react-router";
 import { tournaments } from "@/data/tournaments";
 import { games } from "@/data/games";
-import { motion } from "motion/react";
 import {
   Search,
   Trophy,
@@ -52,7 +51,7 @@ const Tournaments = () => {
   });
 
   return (
-    <div className="flex flex-col flex-1 pb-2 md:pb-20 w-full animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-x-hidden">
+    <div className="flex flex-col flex-1 pb-2 md:pb-20 w-full animate-in fade-in duration-500 overflow-x-hidden">
       <div className="flex flex-col gap-2 md:gap-6 md:px-0">
         <div className="flex flex-col gap-2 mt-4 px-2 md:px-0">
           <h1 className="text-3xl md:text-5xl font-black font-headline tracking-tighter text-slate-900 dark:text-white uppercase flex items-center gap-2 md:gap-3">
@@ -65,7 +64,7 @@ const Tournaments = () => {
 
         {/* Featured Tournament Hero */}
         {featuredTournament && featuredGame && (
-          <section className="relative w-full h-87.5 md:h-112.5 rounded-2xl overflow-hidden border border-white/5 bg-slate-950 group select-none shadow-2xl mx-1 md:mx-0">
+          <section className="relative w-full h-87.5 md:h-112.5 rounded-2xl overflow-hidden border border-white/5 bg-slate-950 group select-none shadow-lg mx-1 md:mx-0">
             <div className="absolute inset-0 z-0">
               <div className="absolute inset-0 bg-linear-to-t from-slate-950 via-slate-950/80 to-transparent z-10" />
               <div
@@ -76,12 +75,12 @@ const Tournaments = () => {
             </div>
 
             <div className="relative z-20 h-full flex flex-col justify-end p-6 md:p-10">
-              <div className="inline-flex items-center gap-2 bg-red-500/20 text-red-500 border border-red-500/30 px-2 md:px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-inner shadow-red-500/20 mb-4 w-max">
-                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />{" "}
+              <div className="inline-flex items-center gap-2 bg-red-500/20 text-red-500 border border-red-500/30 px-2 md:px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-4 w-max">
+                <span className="w-2 h-2 rounded-full bg-red-500" />{" "}
                 LIVE EVENT
               </div>
 
-              <h2 className="text-4xl md:text-6xl font-black font-headline text-white uppercase tracking-tighter mb-2 drop-shadow-lg max-w-2xl">
+              <h2 className="text-4xl md:text-6xl font-black font-headline text-white uppercase tracking-tighter mb-2 max-w-2xl">
                 {featuredTournament.name}
               </h2>
 
@@ -99,7 +98,7 @@ const Tournaments = () => {
 
               <Link
                 to={`/tournaments/${featuredTournament.id}`}
-                className="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-widest px-8 md:px-12 py-2 md:py-4 rounded-xl transition-all shadow-[0_0_20px_rgba(168,85,247,0.4)] w-full md:w-auto"
+                className="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-widest px-8 md:px-12 py-2 md:py-4 rounded-xl transition-all shadow-md w-full md:w-auto"
               >
                 Join Tournament <ArrowRight size={18} />
               </Link>
@@ -117,7 +116,7 @@ const Tournaments = () => {
                   onClick={() => setActiveTab(tab)}
                   className={`px-5 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest whitespace-nowrap transition-all ${
                     activeTab === tab
-                      ? "bg-primary text-white shadow-md shadow-primary/20"
+                      ? "bg-primary text-white shadow-sm"
                       : "bg-black/5 dark:bg-black/20 text-slate-500 hover:text-slate-900 dark:hover:text-white"
                   }`}
                 >
@@ -154,16 +153,20 @@ const Tournaments = () => {
               <DropdownMenu>
                 <DropdownMenuTrigger className="bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg py-3 px-4 text-xs font-bold text-slate-900 dark:text-white uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-primary/50 hover:border-primary/50 transition-colors hidden sm:flex items-center justify-between gap-2 min-w-50">
                   <span>
-                    {PRIZE_OPTIONS.find((opt) => opt.value === filterPrize)?.label || "All Prizes"}
+                    {PRIZE_OPTIONS.find((opt) => opt.value === filterPrize)
+                      ?.label || "All Prizes"}
                   </span>
                   <ChevronDown size={14} className="opacity-50" />
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-50 bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl border border-slate-200 dark:border-white/10 p-2 rounded-xl shadow-xl" align="end">
+                <DropdownMenuContent
+                  className="w-50 bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl border border-slate-200 dark:border-white/10 p-2 rounded-xl shadow-lg"
+                  align="end"
+                >
                   {PRIZE_OPTIONS.map((opt) => (
                     <DropdownMenuItem
                       key={opt.value}
                       onClick={() => setFilterPrize(opt.value)}
-                      className={`text-xs font-bold uppercase tracking-widest cursor-pointer py-2 px-3 rounded-lg outline-none transition-colors ${filterPrize === opt.value ? 'bg-primary/10 text-primary' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'}`}
+                      className={`text-xs font-bold uppercase tracking-widest cursor-pointer py-2 px-3 rounded-lg outline-none transition-colors ${filterPrize === opt.value ? "bg-primary/10 text-primary" : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white"}`}
                     >
                       {opt.label}
                     </DropdownMenuItem>
@@ -180,24 +183,22 @@ const Tournaments = () => {
                 if (!g) return null;
 
                 return (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
+                  <div
                     key={t.id}
-                    className="glass-card rounded-2xl border border-slate-200 dark:border-white/5 overflow-hidden group hover:border-primary/50 transition-colors shadow-sm hover:shadow-primary/10 flex flex-col h-full"
+                    className="glass-card rounded-2xl border border-slate-200 dark:border-white/5 overflow-hidden group hover:border-primary/50 transition-colors shadow-sm flex flex-col h-full animate-in fade-in duration-500"
                   >
                     <div className="h-32 bg-slate-900 relative overflow-hidden">
                       <div
                         className="absolute inset-0 bg-cover bg-center opacity-60 mix-blend-overlay group-hover:scale-105 transition-transform duration-500"
                         style={{ backgroundImage: `url(${g.thumbnail})` }}
                       />
-                      <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-md px-2 md:px-3 py-1 rounded border border-white/10 text-[10px] font-black uppercase text-white shadow-xl flex items-center gap-1.5">
+                      <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-md px-2 md:px-3 py-1 rounded border border-white/10 text-[10px] font-black uppercase text-white flex items-center gap-1.5">
                         <ZASymbol className="text-primary scale-75" />{" "}
                         {t.prizePool.toLocaleString()}
                       </div>
                       <div className="absolute inset-0 bg-linear-to-t from-slate-900 to-transparent" />
                       <div className="absolute bottom-3 left-4 right-3">
-                        <h3 className="font-headline font-black text-base md:text-xl text-white uppercase truncate drop-shadow-md">
+                        <h3 className="font-headline font-black text-base md:text-xl text-white uppercase truncate">
                           {t.name}
                         </h3>
                       </div>
@@ -210,7 +211,8 @@ const Tournaments = () => {
                             <PlaySquare size={14} /> {g.title}
                           </span>
                           <span className="text-primary bg-primary/10 px-2 py-0.5 rounded flex items-center gap-1">
-                            Entry: <ZASymbol className="scale-75" /> {t.entryFee}
+                            Entry: <ZASymbol className="scale-75" />{" "}
+                            {t.entryFee}
                           </span>
                         </div>
 
@@ -232,7 +234,7 @@ const Tournaments = () => {
                         to={`/tournaments/${t.id}`}
                         className={`w-full py-3 rounded-xl font-black uppercase tracking-widest text-[10px] text-center transition-all ${
                           t.status === "live"
-                            ? "bg-primary text-white hover:bg-primary/90 shadow-md shadow-primary/20"
+                            ? "bg-primary text-white hover:bg-primary/90 shadow-sm"
                             : t.status === "completed"
                               ? "bg-slate-200 dark:bg-white/5 text-slate-500 hover:bg-slate-300 dark:hover:bg-white/10"
                               : "bg-playza-yellow/10 text-playza-yellow hover:bg-playza-yellow/20"
@@ -245,7 +247,7 @@ const Tournaments = () => {
                             : "VIEW RESULTS"}
                       </Link>
                     </div>
-                  </motion.div>
+                  </div>
                 );
               })
             ) : (

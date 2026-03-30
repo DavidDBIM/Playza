@@ -10,9 +10,9 @@ export interface Transaction {
 
 export interface TransactionUI {
   id: string;
-  type: string;
+  type: "Prize Win" | "Deposit" | "Game Entry" | "Withdrawal" | "Refund" | "Bet" | "Win" | string;
   amount: string;
-  status: string;
+  status: "Completed" | "Pending" | "Failed" | "Cancelled" | "Successful" | string;
   date: string;
   reference: string;
   typeKey?: string;

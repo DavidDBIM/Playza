@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from "react-router";
 import { ArrowLeft } from "lucide-react";
 import OtpPin from "@/components/withdrawal/OtpPin";
 import ReqWithdraw from "@/components/withdrawal/ReqWithdraw";
+import { useWallet } from "@/hooks/wallet/useWallet";
 
 export default function Withdrawal() {
   const [searchParams] = useSearchParams();
@@ -13,21 +14,31 @@ export default function Withdrawal() {
   
   const [status, setStatus] = useState<"idle" | "verify" | "failed">("idle");
   const [isProcessing, setIsProcessing] = useState(false);
+  const { withdraw } = useWallet();
   
   const amount = Number(amountStr);
 
-  const handleWithdraw = () => {
+  const handleWithdraw = async () => {
     setIsProcessing(true);
-    // Simulate banking withdrawal gateway delay
-    setTimeout(() => {
+    try {
+      // For now, these are static as per the UI design
+      const payload = {
+        amount,
+        bank_code: "058", // GTB
+        account_number: "0123456789",
+        account_name: "John Doe"
+      };
+      console.log("[Withdrawal] Requesting withdrawal:", payload);
+      await withdraw(payload);
+      
+      console.log("[Withdrawal] Success");
+      navigate(`/wallet/withdraw/success?amount=${amount}&bank=${bank}`);
+    } catch (err) {
+      console.error("[Withdrawal] Request error:", err);
+      setStatus("failed");
+    } finally {
       setIsProcessing(false);
-      // 95% success rate simulation
-      if (Math.random() > 0.05) {
-        navigate(`/wallet/withdraw/success?amount=${amount}&bank=${bank}`);
-      } else {
-        setStatus("failed");
-      }
-    }, 3000);
+    }
   };
 
   return (

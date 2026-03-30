@@ -4,9 +4,10 @@ interface GameOverLeaderboardProps {
     score: number;
     playAgain: () => void;
     position?: number;
+    onBackToSession?: () => void;
 }
 
-const GameOverLeaderboard = ({ score, playAgain, position = 15 }: GameOverLeaderboardProps) => {
+const GameOverLeaderboard = ({ score, playAgain, position = 15, onBackToSession }: GameOverLeaderboardProps) => {
     // Generate mock leaderboard based on the user's position
     const mockLeaderboard = [
         { rank: position - 2, name: "CryptoKing99", score: score + 1250 },
@@ -68,7 +69,14 @@ const GameOverLeaderboard = ({ score, playAgain, position = 15 }: GameOverLeader
                         <Play className="w-4 h-4" />
                         Play Again & Climb
                     </button>
-                    {/* Add secondary actions later if needed */}
+                    {onBackToSession && (
+                        <button 
+                            onClick={onBackToSession}
+                            className="w-full flex items-center justify-center gap-2 bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700 hover:text-white py-3 rounded-xl font-black uppercase text-xs tracking-widest transition-all hover:scale-[1.02] active:scale-[0.98]"
+                        >
+                            Return to Session
+                        </button>
+                    )}
                 </div>
             </div>
         </div>

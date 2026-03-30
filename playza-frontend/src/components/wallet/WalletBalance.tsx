@@ -23,7 +23,7 @@ const WalletBalance = ({ balance, onWithdrawClick }: WalletBalanceProps) => {
 
   return (
     <div className="lg:col-span-2 glass-card rounded-xl p-2 md:p-8 flex flex-col justify-between relative overflow-hidden group">
-      <div className="absolute -top-24 -right-24 size-64 bg-primary/10 rounded-full blur-[100px] group-hover:bg-primary/20 transition-all"></div>
+      <div className="absolute -top-24 -right-24 size-64 bg-primary/5 rounded-full blur-[60px] group-hover:bg-primary/10 transition-colors"></div>
       <div>
         <div className="flex items-center justify-between mb-2">
           <p className="text-slate-600 dark:text-slate-400 font-medium tracking-wide uppercase text-xs">
@@ -48,14 +48,14 @@ const WalletBalance = ({ balance, onWithdrawClick }: WalletBalanceProps) => {
       <div className="flex flex-col sm:flex-row gap-2 md:gap-4 mt-8">
         <button
           onClick={() => navigate("?modal=deposit")}
-          className="flex-1 bg-primary hover:bg-primary/90 text-background dark:text-background-dark font-black py-3 md:py-4 rounded-xl transition-all neon-glow flex items-center justify-center gap-2 text-xs md:text-base group/btn uppercase tracking-widest"
+          className="flex-1 bg-primary hover:bg-primary/95 text-background dark:text-background-dark font-black py-3 md:py-4 rounded-xl transition-colors flex items-center justify-center gap-2 text-xs md:text-base group/btn uppercase tracking-widest"
         >
           <PlusCircle className="transition-transform group-hover/btn:rotate-90" />
           Deposit Funds
         </button>
         <button
           onClick={handleWithdraw}
-          className="flex-1 bg-transparent border border-slate-200 dark:border-white/10 hover:border-primary/50 text-slate-900 dark:text-white font-black py-3 md:py-4 rounded-xl transition-all flex items-center justify-center gap-2 text-xs md:text-base group/btn uppercase tracking-widest shadow-sm hover:shadow-lg"
+          className="flex-1 bg-transparent border border-slate-200 dark:border-white/10 hover:border-primary/50 text-slate-900 dark:text-white font-black py-3 md:py-4 rounded-xl transition-all flex items-center justify-center gap-2 text-xs md:text-base group/btn uppercase tracking-widest"
         >
           <MdPayments className="transition-transform group-hover/btn:scale-110" />
           Withdraw Earnings

@@ -230,6 +230,7 @@
 }
 
 html {
+  overflow-y: scroll;
   scroll-behavior: smooth;
 }
 
@@ -241,22 +242,22 @@ h1,h2,h3 {
 
 .glass {
   background: rgba(255, 255, 255, 0.65);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
   border: 1px solid rgba(255, 255, 255, 0.5);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
 }
 
 .dark .glass {
   background: rgba(15, 23, 42, 0.65);
   border: 1px solid rgba(255, 255, 255, 0.05);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
   .winner-glass {
     background: rgba(17, 22, 33, 0.7);
-    -webkit-backdrop-filter: blur(12px);
-    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
     border: 1px solid #7C3AED;
   }
 
@@ -325,30 +326,30 @@ body.modal-open {
 
 .glass-panel {
   background: rgba(255, 255, 255, 0.7);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
   border: 1px solid rgba(255, 255, 255, 0.5);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
 }
 
 .dark .glass-panel {
   background: rgba(30, 41, 59, 0.8);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
 .glass-card {
   background: rgba(255, 255, 255, 0.75);
-  -webkit-backdrop-filter: blur(16px);
-  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
   border: 1px solid rgba(255, 255, 255, 0.5);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.03);
 }
 
 .dark .glass-card {
   background: rgba(15, 23, 42, 0.85);
   border: 1px solid rgba(255, 255, 255, 0.05);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
         
         .neon-border {
@@ -405,15 +406,6 @@ body.modal-open {
             box-shadow: 0 0 15px var(--primary);
         }
 
-@keyframes starsDrift {
-  from {
-    transform: translateY(0);
-  }
-  to {
-    transform: translateY(-600px);
-  }
-}
-
 .stars-bg {
   position: absolute;
   inset: 0;
@@ -429,8 +421,7 @@ body.modal-open {
   background-image:
     radial-gradient(1px 1px, rgba(255,255,255,0.3) 1px, transparent 1px);
   background-size: 3px 3px;
-  opacity: 0.25;
-  animation: starsDrift 180s linear infinite;
+  opacity: 0.1;
 }
 
 .stars-bg::after {
@@ -440,8 +431,7 @@ body.modal-open {
   background-image:
     radial-gradient(2px 2px, rgba(255,255,255,0.8) 1px, transparent 1px);
   background-size: 150px 150px;
-  opacity: 0.6;
-  animation: starsDrift 300s linear infinite;
+  opacity: 0.15;
 }
 
 .mask-horizontal-fade {

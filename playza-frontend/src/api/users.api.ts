@@ -1,5 +1,11 @@
 import axiosInstance from "./axiosInstance";
 
+export interface Wallet {
+  balance: number;
+  total_deposited: number;
+  total_withdrawn: number;
+}
+
 export interface User {
   id: string;
   username: string;
@@ -16,6 +22,7 @@ export interface User {
   referral_code: string;
   created_at: string;
   updated_at: string;
+  wallet?: Wallet;
 }
 
 export interface UpdateUserPayload {

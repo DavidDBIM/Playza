@@ -69,6 +69,17 @@ const Settings = () => {
   }, [user, reset]);
 
   const onProfileSubmit = (data: ProfileFormValues) => {
+    // Immediate optimistic update for blazing fast UI
+    updateAuthState({
+      firstName: user?.first_name || data.firstName,
+      lastName: user?.last_name || data.lastName,
+      phone: user?.phone || data.phone,
+      avatarUrl: data.avatarUrl,
+    });
+    
+    // reset form to remove dirty state instantly
+    reset(data);
+
     updateProfile(
       {
         first_name: data.firstName,
@@ -78,14 +89,7 @@ const Settings = () => {
       },
       {
         onSuccess: (result) => {
-          console.log("[Settings] Profile updated successfully:", result);
-          // Preserve disabled fields in the Auth state update
-          updateAuthState({
-            firstName: user?.first_name || data.firstName,
-            lastName: user?.last_name || data.lastName,
-            phone: user?.phone || data.phone,
-            avatarUrl: data.avatarUrl,
-          });
+          console.log("[Settings] Profile updated successfully in background:", result);
         },
         onError: (error) => {
           console.error("[Settings] Profile update failed:", error);
@@ -96,12 +100,12 @@ const Settings = () => {
 
   const deleteAvatar = () => {
     setValue("avatarUrl", "", { shouldDirty: true });
+    updateAuthState({ avatarUrl: "" });
     updateProfile(
       { avatar_url: "" },
       {
         onSuccess: (result) => {
           console.log("[Settings] Avatar deleted successfully:", result);
-          updateAuthState({ avatarUrl: "" });
         },
       },
     );
@@ -318,37 +322,15 @@ const Settings = () => {
               </div>
 
               {/* Tagline */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-6">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
-                    Tagline / Title
-                  </label>
-                  <input
-                    className="w-full h-12 px-2 md:px-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold focus:ring-1 focus:ring-primary focus:border-primary transition-all text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700"
-                    type="text"
-                    placeholder="The Subway Legend"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
-                    Avatar URL
-                  </label>
-                  <input
-                    {...register("avatarUrl")}
-                    className={`w-full h-12 px-5 bg-slate-50 dark:bg-white/5 border rounded-2xl text-sm font-bold focus:ring-1 focus:ring-primary focus:border-primary transition-all text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700 ${
-                      errors.avatarUrl
-                        ? "border-red-500 focus:ring-red-500"
-                        : "border-slate-200 dark:border-white/5"
-                    }`}
-                    type="url"
-                    placeholder="https://example.com/avatar.jpg"
-                  />
-                  {errors.avatarUrl && (
-                    <p className="text-[10px] text-red-500 font-bold ml-1 italic">
-                      {errors.avatarUrl.message}
-                    </p>
-                  )}
-                </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
+                  Tagline / Title
+                </label>
+                <input
+                  className="w-full h-12 px-2 md:px-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold focus:ring-1 focus:ring-primary focus:border-primary transition-all text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700"
+                  type="text"
+                  placeholder="The Subway Legend"
+                />
               </div>
 
               {/* Bio */}

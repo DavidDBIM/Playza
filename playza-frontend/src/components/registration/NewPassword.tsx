@@ -1,125 +1,88 @@
-import { Key, LockOpen } from "lucide-react";
-import { MdLockReset, MdVerifiedUser } from "react-icons/md";
+import { LockOpen } from "lucide-react";
+import { MdLockReset } from "react-icons/md";
 
 const NewPassword = ({ onClick }: { onClick: (value: string) => void }) => {
   return (
-    <main className="flex-1 flex flex-col items-center justify-center relative overflow-hidden">
-      <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-primary/5 rounded-full blur-[120px]"></div>
-      <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-primary/10 rounded-full blur-[150px]"></div>
-      <div className="max-w-130 w-full glass-card rounded-xl p-2 lg:p-10 neo-shadow z-10">
+    <div className="w-full max-w-lg">
+      <div className="glass-card rounded-2xl p-4 md:p-10 shadow-xl relative overflow-hidden border border-slate-200 dark:border-white/5">
+        <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-transparent via-primary to-transparent opacity-50"></div>
         <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center p-2 md:p-3 bg-primary/10 rounded-full mb-4">
-            <MdLockReset className="text-primary text-xl md:text-3xl" />
+          <div className="inline-flex items-center justify-center p-4 bg-primary/10 rounded-full mb-4">
+            <MdLockReset className="text-primary text-3xl" />
           </div>
-          <h1 className="text-slate-900 dark:text-slate-100 text-xl md:text-3xl font-bold leading-tight mb-2">
-            Secure Reset
+          <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-2 tracking-tight uppercase">
+            Finalize Reset
           </h1>
-          <p className="text-slate-600 dark:text-slate-400 text-xs md:text-sm leading-relaxed">
-            Complete the verification to secure your gaming assets and reset
-            your credentials.
+          <p className="text-slate-500 dark:text-slate-400 text-xs md:text-sm leading-relaxed">
+            Protect your account with a high-strength password.
           </p>
         </div>
-        <form className="flex flex-col gap-2 md:gap-6">
-          <div>
-            <label className="block text-slate-700 dark:text-slate-300 text-sm font-semibold mb-3">
-              Verification Code
-            </label>
-            <div className="flex justify-between gap-2 sm:gap-4">
-              <input
-                className="w-12 h-14 text-center bg-background-dark/50 border border-slate-300 dark:border-slate-700 rounded-lg text-primary text-base md:text-xl font-bold focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
-                maxLength={1}
-                type="text"
-                placeholder="•"
-              />
-              <input
-                className="w-12 h-14 text-center bg-background-dark/50 border border-slate-300 dark:border-slate-700 rounded-lg text-primary text-base md:text-xl font-bold focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
-                maxLength={1}
-                type="text"
-                placeholder="•"
-              />
-              <input
-                className="w-12 h-14 text-center bg-background-dark/50 border border-slate-300 dark:border-slate-700 rounded-lg text-primary text-base md:text-xl font-bold focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
-                maxLength={1}
-                placeholder="•"
-                type="text"
-              />
-              <input
-                className="w-12 h-14 text-center bg-background-dark/50 border border-slate-300 dark:border-slate-700 rounded-lg text-primary text-base md:text-xl font-bold focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
-                maxLength={1}
-                placeholder="•"
-                type="text"
-              />
-              <input
-                className="w-12 h-14 text-center bg-background-dark/50 border border-slate-300 dark:border-slate-700 rounded-lg text-primary text-base md:text-xl font-bold focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
-                maxLength={1}
-                placeholder="•"
-                type="text"
-              />
-              <input
-                className="w-12 h-14 text-center bg-background-dark/50 border border-slate-300 dark:border-slate-700 rounded-lg text-primary text-base md:text-xl font-bold focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
-                maxLength={1}
-                placeholder="•"
-                type="text"
-              />
+
+        <form className="space-y-6">
+          <div className="space-y-4">
+            <div className="grid grid-cols-6 gap-2">
+              {[...Array(6)].map((_, i) => (
+                <input
+                  key={i}
+                  className="w-full h-12 md:h-14 text-center bg-slate-100 dark:bg-slate-950/80 border border-slate-300 dark:border-white/10 rounded-xl text-primary text-xl font-black focus:ring-4 focus:ring-primary/20 outline-none transition-all"
+                  maxLength={1}
+                  type="text"
+                  placeholder="•"
+                />
+              ))}
             </div>
-            <p className="text-xs text-slate-500 mt-3 text-right">
-              Didn't receive code?{" "}
+            <p className="text-[10px] text-slate-500 text-right font-black uppercase tracking-widest">
+              No code?{" "}
               <button className="text-primary hover:underline" type="button">
-                Resend
+                Resend link
               </button>
             </p>
           </div>
+
           <div className="space-y-4">
-            <div>
-              <label className="block text-slate-700 dark:text-slate-300 text-sm font-semibold mb-2">
-                New Password
+            <div className="space-y-1.5">
+              <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 ml-1">
+                New Matrix Key
               </label>
-              <div className="relative">
-                <Key className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm" />
+              <div className="relative group">
                 <input
-                  className="w-full bg-background-dark/50 border border-slate-300 dark:border-slate-700 rounded-lg py-2 md:py-3 pl-2 md:pl-10 pr-2 md:pr-4 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all outline-none"
+                  className="w-full bg-slate-100 dark:bg-slate-950/80 border border-slate-200 dark:border-white/10 rounded-xl py-3.5 px-4 text-slate-900 dark:text-white focus:ring-4 focus:ring-primary/20 outline-none transition-all font-medium text-sm"
                   placeholder="••••••••••••"
                   type="password"
                 />
               </div>
             </div>
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <label className="text-slate-700 dark:text-slate-300 text-sm font-semibold">
-                  Confirm Password
+
+            <div className="space-y-1.5">
+              <div className="flex justify-between items-center ml-1">
+                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                  Confirm Key
                 </label>
-                <span className="text-primary text-[10px] font-bold uppercase tracking-widest">
-                  Strength: Strong
+                <span className="text-primary text-[9px] font-black uppercase tracking-tight">
+                  Strength: Optimal
                 </span>
               </div>
-              <div className="relative">
-                <MdVerifiedUser className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm" />
+              <div className="relative group">
                 <input
-                  className="w-full bg-background-dark/50 border border-slate-300 dark:border-slate-700 rounded-lg py-2 md:py-3 pl-2 md:pl-10 pr-2 md:pr-4 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all outline-none"
+                  className="w-full bg-slate-100 dark:bg-slate-950/80 border border-slate-200 dark:border-white/10 rounded-xl py-3.5 px-4 text-slate-900 dark:text-white focus:ring-4 focus:ring-primary/20 outline-none transition-all font-medium text-sm"
                   placeholder="••••••••••••"
                   type="password"
                 />
               </div>
             </div>
-            <div className="flex gap-1 h-1.5 w-full mt-2">
-              <div className="flex-1 bg-primary rounded-full"></div>
-              <div className="flex-1 bg-primary rounded-full"></div>
-              <div className="flex-1 bg-primary rounded-full"></div>
-              <div className="flex-1 bg-primary rounded-full"></div>
-              <div className="flex-1 bg-slate-200 dark:bg-slate-700 rounded-full"></div>
-            </div>
           </div>
+
           <button
             onClick={() => onClick("login")}
-            className="w-full bg-primary text-background-dark font-bold py-2 md:py-4 rounded-lg flex items-center justify-center gap-2 hover:brightness-110 active:scale-[0.98] transition-all mt-4 neo-shadow"
+            className="w-full bg-primary text-slate-950 font-black py-4 rounded-xl flex items-center justify-center gap-2 hover:brightness-110 active:scale-[0.98] transition-all uppercase tracking-widest text-sm shadow-lg shadow-primary/10"
             type="submit"
           >
-            <LockOpen />
-            Reset Password
+            <LockOpen size={18} />
+            Update Credentials
           </button>
         </form>
       </div>
-    </main>
+    </div>
   );
 };
 

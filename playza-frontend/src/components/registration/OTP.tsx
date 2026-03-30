@@ -164,112 +164,109 @@ const OTP = ({ onClick }: OtpProps) => {
     : "your email";
 
   return (
-    <main className="h-full flex items-center justify-center">
-      <div className="w-full max-w-lg">
-        <div className="glass-card p-2 md:p-6 rounded-2xl shadow-2xl relative overflow-hidden border border-slate-200 dark:border-white/10 text-center">
-          {/* Decorative accent line */}
-          <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-transparent via-primary to-transparent opacity-50"></div>
+    <div className="w-full max-w-lg">
+      <div className="glass-card p-4 md:p-10 rounded-2xl shadow-xl relative overflow-hidden border border-slate-200 dark:border-white/10 text-center">
+        {/* Decorative accent line */}
+        <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-transparent via-primary to-transparent opacity-50"></div>
 
-          <div className="bg-primary/10 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-8 border border-primary/20 shadow-[0_0_30px_rgba(var(--primary),0.1)]">
-            <ShieldCheck className="text-primary" size={40} />
+        <div className="bg-primary/10 w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center mx-auto mb-8 border border-primary/20 shadow-inner">
+          <ShieldCheck className="text-primary" size={32} />
+        </div>
+
+        <div className="mb-10">
+          <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-3 tracking-tighter uppercase font-display">
+            Verify Portal
+          </h1>
+          <p className="text-slate-500 dark:text-slate-400 text-xs md:text-sm leading-relaxed">
+            A 6-digit access code was sent to
+            <br />
+            <span className="text-primary font-black tracking-wider text-sm mt-1 inline-block">
+              {maskedEmail}
+            </span>
+          </p>
+        </div>
+
+        {/* Error banner */}
+        {error && (
+          <div className="mb-6 bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3">
+            <p className="text-red-500 text-xs font-bold italic">{error}</p>
           </div>
+        )}
 
-          <div className="mb-10">
-            <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-3 tracking-tighter uppercase font-display">
-              Verify Account
-            </h1>
-            <p className="text-slate-500 dark:text-slate-400 text-sm md:text-xs md:text-base leading-relaxed">
-              We've sent a 6-digit verification code to
-              <br />
-              <span className="text-primary font-black tracking-wider">
-                {maskedEmail}
-              </span>
-            </p>
-          </div>
+        {/* OTP inputs */}
+        <div className="flex justify-center mb-10">
+          <fieldset className="flex gap-2 md:gap-3" onPaste={handlePaste}>
+            {digits.map((digit, i) => (
+              <input
+                key={i}
+                ref={(el) => { inputRefs.current[i] = el; }}
+                value={digit}
+                onChange={(e) => handleChange(i, e.target.value)}
+                onKeyDown={(e) => handleKeyDown(i, e)}
+                required
+                inputMode="numeric"
+                className="w-10 h-14 md:w-14 md:h-16 text-center bg-slate-100 dark:bg-slate-950/80 border-2 border-slate-200 dark:border-white/10 rounded-xl focus:border-primary focus:ring-4 focus:ring-primary/20 text-xl md:text-2xl font-black text-primary transition-all outline-none"
+                aria-label={`Digit ${i + 1}`}
+                placeholder="•"
+                maxLength={1}
+                type="text"
+              />
+            ))}
+          </fieldset>
+        </div>
 
-          {/* Error banner */}
-          {error && (
-            <div className="mb-6 bg-red-500/10 border border-red-500/30 rounded-xl px-2 md:px-4 py-2 md:py-3">
-              <p className="text-red-500 text-xs font-semibold">{error}</p>
-            </div>
-          )}
+        <div className="space-y-6">
+          <Button
+            onClick={handleVerify}
+            disabled={!isComplete || isVerifying}
+            className="w-full h-14 bg-primary text-slate-950 text-sm md:text-base font-black uppercase tracking-widest rounded-xl shadow-lg shadow-primary/10 hover:shadow-primary/30 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:translate-y-0"
+          >
+            {isVerifying ? (
+              <div className="flex items-center gap-2">
+                <div className="size-4 border-2 border-black/20 border-t-black rounded-full animate-spin" />
+                <span>Authenticating...</span>
+              </div>
+            ) : (
+              "Complete Enrollment"
+            )}
+          </Button>
 
-          {/* OTP inputs */}
-          <div className="flex justify-center mb-10">
-            <fieldset className="flex gap-2 md:gap-4" onPaste={handlePaste}>
-              {digits.map((digit, i) => (
-                <input
-                  key={i}
-                  ref={(el) => { inputRefs.current[i] = el; }}
-                  value={digit}
-                  onChange={(e) => handleChange(i, e.target.value)}
-                  onKeyDown={(e) => handleKeyDown(i, e)}
-                  required
-                  inputMode="numeric"
-                  className="w-12 h-14 md:w-14 md:h-16 text-center bg-slate-100 dark:bg-slate-900/50 border-2 border-slate-200 dark:border-white/30 rounded-xl focus:border-primary focus:ring-1 focus:ring-primary text-lg md:text-2xl font-black text-primary transition-all outline-none"
-                  aria-label={`Digit ${i + 1}`}
-                  placeholder="0"
-                  maxLength={1}
-                  type="text"
-                />
-
-              ))}
-            </fieldset>
-          </div>
-
-          <div className="space-y-6">
-            <Button
-              onClick={handleVerify}
-              disabled={!isComplete || isVerifying}
-              className="w-full h-15 bg-primary text-background-dark text-sm md:text-lg font-black uppercase tracking-widest rounded-xl shadow-lg shadow-primary/20 hover:shadow-primary/40 hover:-translate-y-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isVerifying ? (
-                <div className="flex items-center gap-2">
-                  <div className="size-4 border-2 border-black/20 border-t-black rounded-full animate-spin" />
-                  <span>Verifying...</span>
-                </div>
-              ) : (
-                "Verify & Launch"
-              )}
-            </Button>
-
-            <div className="flex flex-col items-center gap-2 md:gap-6 pt-2 md:pt-4">
-              <div className="flex items-center gap-2 md:gap-6">
-                <div className="flex flex-col items-center">
-                  <div className="bg-slate-100 dark:bg-slate-900/80 px-2 md:px-4 py-2 rounded-lg border border-slate-200 dark:border-white/10">
-                    <p className="text-primary text-xs md:text-sm font-black font-mono">
-                      {formattedTime}
-                    </p>
-                  </div>
-                  <p className="text-xs md:text-base text-slate-500 text-[9px] uppercase font-black tracking-widest mt-2 opacity-50">
-                    Code Expires
+          <div className="flex flex-col items-center gap-6 pt-4">
+            <div className="flex items-center gap-6">
+              <div className="flex flex-col items-center">
+                <div className="bg-slate-100 dark:bg-slate-950/50 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/10">
+                  <p className="text-primary text-xs font-black font-mono">
+                    {formattedTime}
                   </p>
                 </div>
-                <div className="h-10 w-px bg-slate-200 dark:bg-white/5"></div>
-                <button
-                  onClick={handleResend}
-                  disabled={!canResend || isResending}
-                  className="text-slate-500 dark:text-slate-400 hover:text-primary text-xs font-black uppercase tracking-widest transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  {isResending ? "Sending..." : "Resend Code"}
-                </button>
+                <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest mt-2 opacity-50">
+                  Code Life
+                </p>
               </div>
-
+              <div className="h-10 w-px bg-slate-200 dark:border-white/5"></div>
               <button
-                onClick={() => onClick("signup")}
-                className="flex items-center gap-2 text-slate-500 hover:text-slate-900 dark:hover:text-white text-xs font-bold transition-all p-2 md:p-3 border-t border-slate-200 dark:border-white/10 w-full justify-center group"
+                onClick={handleResend}
+                disabled={!canResend || isResending}
+                className="text-slate-500 dark:text-slate-400 hover:text-primary text-[10px] font-black uppercase tracking-widest transition-colors disabled:opacity-40"
               >
-                <Edit
-                  size={14}
-                  className="group-hover:text-primary transition-colors"
-                />
-                Change contact information
+                {isResending ? "Retrying..." : "Resend Link"}
               </button>
             </div>
+
+            <button
+              onClick={() => onClick("signup")}
+              className="flex items-center gap-2 text-slate-400 hover:text-slate-900 dark:hover:text-white text-[10px] font-black uppercase tracking-widest transition-all p-4 border-t border-slate-200 dark:border-white/5 w-full justify-center group"
+            >
+              <Edit
+                size={14}
+                className="group-hover:text-primary transition-colors"
+              />
+              Modify Credentials
+            </button>
           </div>
         </div>
       </div>
-    </main>
+    </div>
   );
 };
 

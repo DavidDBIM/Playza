@@ -1,48 +1,49 @@
-import { ArrowBigRight } from "lucide-react";
+import { ArrowBigRight, Loader2 } from "lucide-react";
 import { Link } from "react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import TransactionDetailModal from "@/components/transactions/TransactionDetailModal";
 import TransactionItem from "@/components/transactions/TransactionItem";
 import type { TransactionUI } from "@/types/types";
-
-const transactions: TransactionUI[] = [
-  {
-    id: "#TRX-90821",
-    type: "Prize Win",
-    amount: "+ZA50,000.00",
-    status: "Completed",
-    reference: "VAL-TOURN-X-FINALS",
-    date: "Oct 24, 2023 · 14:32",
-  },
-  {
-    id: "#TRX-90744",
-    type: "Deposit",
-    amount: "+ZA10,000.00",
-    status: "Completed",
-    reference: "PAYSTACK-REF-889",
-    date: "Oct 23, 2023 · 09:15",
-  },
-  {
-    id: "#TRX-90612",
-    type: "Game Entry",
-    amount: "-ZA2,500.00",
-    status: "Completed",
-    reference: "ENTRY-FEE-VAL-44",
-    date: "Oct 22, 2023 · 18:00",
-  },
-  {
-    id: "#TRX-90501",
-    type: "Withdrawal",
-    amount: "-ZA15,000.00",
-    status: "Pending",
-    reference: "BANK-X-442291",
-    date: "Oct 21, 2023 · 11:45",
-  },
-];
+import { useTransactions } from "@/hooks/wallet/useWallet";
+import { format } from "date-fns";
 
 const RecentTransactions = () => {
   const [selectedTxn, setSelectedTxn] = useState<TransactionUI | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { transactions, fetchTransactions, loading } = useTransactions(1, 4);
+
+  useEffect(() => {
+    fetchTransactions();
+  }, [fetchTransactions]);
+
+  const uiTransactions: TransactionUI[] = transactions.map(t => {
+    const isPositive = ['deposit', 'win', 'refund'].includes(t.type);
+    
+    // Map backend types/status to frontend labels for icon/style matching
+    const typeLabelMap: Record<string, string> = {
+      deposit: 'Deposit',
+      withdrawal: 'Withdrawal',
+      bet: 'Game Entry',
+      win: 'Prize Win',
+      refund: 'Refund'
+    };
+
+    const statusLabelMap: Record<string, string> = {
+      successful: 'Completed',
+      pending: 'Pending',
+      failed: 'Failed',
+      cancelled: 'Cancelled'
+    };
+
+    return {
+      id: `#${t.id.slice(-5).toUpperCase()}`,
+      type: typeLabelMap[t.type] || (t.type.charAt(0).toUpperCase() + t.type.slice(1)),
+      amount: `${isPositive ? '+' : '-'}ZA${t.amount.toLocaleString()}`,
+      status: statusLabelMap[t.status] || (t.status.charAt(0).toUpperCase() + t.status.slice(1)),
+      reference: t.reference,
+      date: format(new Date(t.created_at), "MMM dd, yyyy · HH:mm"),
+    };
+  });
 
   const handleOpen = (txn: TransactionUI) => {
     setSelectedTxn(txn);
@@ -64,9 +65,22 @@ const RecentTransactions = () => {
         </div>
         
         <div className="flex flex-col">
-          {transactions.map((txn) => (
-            <TransactionItem key={txn.id} {...txn} onClick={() => handleOpen(txn)} />
-          ))}
+          {loading ? (
+            <div className="flex flex-col items-center justify-center p-12 text-slate-500 gap-3">
+              <Loader2 className="animate-spin text-primary" size={32} />
+              <p className="text-xs font-bold uppercase tracking-widest animate-pulse">
+                Fetching Activity...
+              </p>
+            </div>
+          ) : uiTransactions.length > 0 ? (
+            uiTransactions.map((txn) => (
+              <TransactionItem key={txn.id} {...txn} onClick={() => handleOpen(txn)} />
+            ))
+          ) : (
+            <div className="p-12 text-center text-slate-500 font-medium italic">
+              No recent transactions found.
+            </div>
+          )}
         </div>
       </section>
 
