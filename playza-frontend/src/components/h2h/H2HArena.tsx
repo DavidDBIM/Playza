@@ -80,7 +80,6 @@ function parseSAN(san: string) {
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
-const SYSTEM_BOT_ID = '00000000-0000-0000-0000-000000000000';
 
 const H2HArena = ({ room, user }: H2HArenaProps) => {
   const toast = useToast();
@@ -238,7 +237,7 @@ const H2HArena = ({ room, user }: H2HArenaProps) => {
   const boardOrientation = room.host_id === user?.id ? "white" : "black";
   const oppUsername = 
     user?.id === room.host_id 
-      ? (room.guest_id === SYSTEM_BOT_ID ? "COMPUTER" : (room.guest?.username || "GUEST"))
+      ? (room.guest_id ? (room.guest?.username || "GUEST") : "COMPUTER")
       : (room.host?.username || "HOST");
 
   const attemptMove = useCallback(
@@ -480,7 +479,7 @@ const H2HArena = ({ room, user }: H2HArenaProps) => {
             <span
               className={`font-black text-[13px] truncate uppercase tracking-wide leading-tight md:text-[15px] ${(!hostIsWhite && myTurn) || (hostIsWhite && oppTurn) ? "text-indigo-600 dark:text-indigo-400" : "text-slate-900 dark:text-slate-100"}`}
             >
-              {room.guest?.username || "Waiting..."}
+              {room.guest?.username || (room.guest_id ? "Waiting..." : "COMPUTER")}
             </span>
             <span className="text-[9px] text-slate-500 dark:text-slate-500 font-bold uppercase tracking-widest leading-none">
               ⬛ · {room.guest_id === user?.id ? "YOU" : "RIVAL"} ·{" "}
@@ -498,7 +497,7 @@ const H2HArena = ({ room, user }: H2HArenaProps) => {
                 alt=""
               />
             ) : (
-              room.guest?.username?.[0]?.toUpperCase() || "?"
+              room.guest?.username?.[0]?.toUpperCase() || (room.guest_id ? "?" : "C")
             )}
           </div>
           {((!hostIsWhite && myTurn) || (hostIsWhite && oppTurn)) && (

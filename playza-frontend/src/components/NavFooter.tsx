@@ -396,8 +396,12 @@ const NavFooter = () => {
                 .map(renderBarItem)}
             </div>
 
-            {/* ── Tablet grid (3 + gamepad + 3 = 7 cols) ── */}
-            <div className="hidden md:grid w-full grid-cols-7 items-center">
+            {/* ── Tablet grid (Dynamic Balanced Distribution) ── */}
+            <div className={`hidden md:grid w-full items-center ${
+              tabletBarItems.length === 4 ? "grid-cols-5" : 
+              tabletBarItems.length === 5 ? "grid-cols-6" : 
+              "grid-cols-7"
+            }`}>
               {tabletBarItems
                 .slice(0, Math.floor(tabletBarItems.length / 2))
                 .map(renderBarItem)}
