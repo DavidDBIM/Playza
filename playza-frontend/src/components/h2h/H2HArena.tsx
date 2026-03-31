@@ -110,7 +110,8 @@ const H2HArena = ({ room, user }: H2HArenaProps) => {
   const pendingMoveRef = useRef(false);
 
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [showRules, setShowRules] = useState(true);
+  const [showDeduction, setShowDeduction] = useState(true);
+  const [showRules, setShowRules] = useState(false);
 
   // ── Prevent Accidental Leave ────────────────────────────────────────────────
   useEffect(() => {
@@ -599,6 +600,48 @@ const H2HArena = ({ room, user }: H2HArenaProps) => {
             } 
             isSyncing={room.status !== "finished"} 
           />
+        </div>
+      )}
+
+      {/* ─── DEDUCTION CONFIRMATION (Both Players) ─── */}
+      {showDeduction && !game.isGameOver() && (
+        <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="w-full max-w-md bg-white dark:bg-slate-900 border-2 border-primary/30 rounded-3xl p-8 shadow-2xl space-y-8 animate-in zoom-in-95 duration-300">
+            <div className="flex flex-col items-center text-center space-y-4">
+              <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
+                <ShieldAlert className="text-primary w-12 h-12" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-black uppercase italic tracking-tighter text-slate-900 dark:text-white leading-none">Stake Committed</h2>
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-2">Transaction Authorized</p>
+              </div>
+            </div>
+
+            <div className="bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-2xl p-6 space-y-4">
+              <p className="text-[10px] md:text-xs text-slate-500 font-bold uppercase tracking-widest text-center leading-relaxed italic">
+                A stake of <span className="text-primary">{room.stake} ZA</span> has been successfully deducted from your wallet to secure this battle.
+              </p>
+              
+              <div className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/5">
+                <div className="text-left">
+                  <p className="text-[8px] font-black text-slate-500 uppercase">Your Entry</p>
+                  <p className="font-black text-primary italic">-{room.stake} ZA</p>
+                </div>
+                <div className="h-8 w-px bg-white/10"></div>
+                <div className="text-right">
+                  <p className="text-[8px] font-black text-slate-500 uppercase">Prize Pool</p>
+                  <p className="font-black text-secondary italic">+{room.stake * 2} ZA</p>
+                </div>
+              </div>
+            </div>
+
+            <button 
+              onClick={() => { setShowDeduction(false); setShowRules(true); }}
+              className="w-full py-4 bg-primary text-slate-950 rounded-xl font-black uppercase text-[10px] tracking-[0.2em] hover:scale-105 active:scale-95 shadow-xl shadow-primary/20 transition-all flex items-center justify-center gap-2"
+            >
+              Continue to Battle
+            </button>
+          </div>
         </div>
       )}
 

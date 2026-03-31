@@ -5,6 +5,7 @@ import { ZASymbol } from '@/components/currency/ZASymbol';
 import GameModeModal from "./GameModeModal";
 import { getWaitingRooms } from '@/api/chess.api';
 import { useEffect, useCallback } from 'react';
+import H2HLobbySkeleton from '../skeletons/H2HLobbySkeleton';
 import { timeAgo } from '@/utils/time-ago';
 import { ShieldCheck, AlertCircle } from 'lucide-react';
 
@@ -178,23 +179,7 @@ const H2HLobby = ({ onCreate, onBotCreate, onJoin, onQuickMatch, loading }: H2HL
       )}
 
       {/* ─── SKELETON LOADER ─── */}
-      {view === "quick" && loadingRooms && (
-        <div className="w-full max-w-xl mx-auto animate-pulse space-y-8">
-           <div className="h-6 w-32 bg-white/5 rounded-full mb-8"></div>
-           <div className="bg-slate-900/90 rounded-[2.5rem] p-8 md:p-12 border border-white/10 space-y-10">
-              <div className="space-y-4">
-                 <div className="h-4 w-24 bg-white/5 rounded-full mx-auto"></div>
-                 <div className="h-8 w-48 bg-white/5 rounded-full mx-auto"></div>
-              </div>
-              <div className="space-y-3">
-                 {[1,2,3].map(i => (
-                   <div key={i} className="h-20 w-full bg-white/5 rounded-2xl border border-white/5"></div>
-                 ))}
-              </div>
-              <div className="h-16 w-full bg-white/5 rounded-2xl border border-white/5"></div>
-           </div>
-        </div>
-      )}
+      {view === "quick" && loadingRooms && <H2HLobbySkeleton />}
 
       {/* ─── FIND ONLINE RIVAL VIEW ─── */}
       {view === "quick" && !loadingRooms && (
