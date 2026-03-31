@@ -104,7 +104,7 @@ const Profile = () => {
               onClick={() => setIsBadgeModalOpen(true)}
               className="absolute -bottom-2 -right-2 bg-primary text-slate-900 font-black px-2 md:px-4 py-1.5 rounded-full uppercase tracking-widest shadow-lg hover:scale-110 hover:brightness-110 transition-all cursor-pointer border border-white/20 glow-accent text-[10px]"
             >
-              PRO
+              {(profile?.pzaPoints ?? 0) < 1000 ? "TRAINEE" : (profile?.pzaPoints ?? 0) < 5000 ? "ELITE" : "LEGEND"}
             </button>
           </div>
 
@@ -114,9 +114,9 @@ const Profile = () => {
               <h1 className="text-slate-900 dark:text-white text-xl md:text-3xl lg:text-5xl font-black tracking-tighter uppercase leading-none italic">
                 {profile?.username}
               </h1>
-              <div className="flex items-center px-2 md:px-3 py-1 rounded-full bg-primary/10 border border-primary/20 backdrop-blur-md">
-                <span className="text-primary text-[10px] font-black uppercase tracking-widest">
-                  Gold III Rank
+              <div className="flex items-center px-2 md:px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 backdrop-blur-md shadow-inner">
+                <span className="text-primary text-[10px] font-black uppercase tracking-widest italic">
+                  {(profile?.pzaPoints ?? 0) < 1000 ? "BRONZE VANGUARD" : (profile?.pzaPoints ?? 0) < 5000 ? "SILVER GUARDIAN" : (profile?.pzaPoints ?? 0) < 10000 ? "GOLDEN HERO" : "ASCENDED MASTER"}
                 </span>
               </div>
             </div>

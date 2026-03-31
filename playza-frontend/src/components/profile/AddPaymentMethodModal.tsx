@@ -9,6 +9,7 @@ import {
 
 type AddPaymentMethodModalProps = {
   onClose: () => void;
+  onSuccess?: () => void;
 };
 
 type Step = "select" | "details" | "success";
@@ -37,6 +38,7 @@ const WALLETS = [
 
 export const AddPaymentMethodModal = ({
   onClose,
+  onSuccess,
 }: AddPaymentMethodModalProps) => {
   const [step, setStep] = useState<Step>("select");
   const [methodType, setMethodType] = useState<MethodType>("bank");
@@ -101,6 +103,7 @@ export const AddPaymentMethodModal = ({
     await new Promise((r) => setTimeout(r, 1400));
     setLoading(false);
     setStep("success");
+    if (onSuccess) onSuccess();
     setTimeout(onClose, 2000);
   };
 

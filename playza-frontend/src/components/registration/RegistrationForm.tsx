@@ -20,6 +20,7 @@ import {
 
 import { useSignup } from "@/hooks/auth/useSignup";
 import { useRegistration } from "@/hooks/auth/useRegistration";
+import { useValidateReferral } from "@/hooks/referral/useValidateReferral";
 import { Link, useLocation } from "react-router";
 
 interface RegistrationFormProps {
@@ -38,6 +39,7 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
     register,
     handleSubmit,
     control,
+    setValue,
     formState: { errors, isValid },
   } = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
@@ -63,6 +65,9 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
 
   const password = useWatch({ control, name: "password" });
   const confirmPassword = useWatch({ control, name: "confirmPassword" });
+  const referralCodeValue = useWatch({ control, name: "referralCode" });
+
+  const { data: validationData, isLoading: isValidatingCode } = useValidateReferral(referralCodeValue || "");
 
   // Update session storage whenever email changes so "Modify Credentials" keeps the current draft
   const currentFormValues = useWatch({ control });
@@ -70,6 +75,14 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
   useEffect(() => {
     sessionStorage.setItem("playza_signup_draft", JSON.stringify(currentFormValues));
   }, [currentFormValues]);
+
+  // Handle URL referral code auto-verification
+  useEffect(() => {
+    if (urlReferralCode) {
+      console.log("[RegistrationForm] Auto-filling referral code:", urlReferralCode);
+      setValue("referralCode", urlReferralCode, { shouldValidate: true });
+    }
+  }, [urlReferralCode, setValue]);
 
   const { setPendingEmail } = useRegistration();
   const { mutate: signup, isPending } = useSignup();
@@ -360,15 +373,41 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
               Referral Code{" "}
               <span className="opacity-40 font-normal italic">Optional</span>
             </label>
-            <input
-              {...register("referralCode")}
-              readOnly={!!urlReferralCode}
-              className={`w-full bg-slate-900/5 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl py-3.5 px-4 focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 transition-all font-medium text-sm ${
-                urlReferralCode ? "opacity-60 cursor-not-allowed bg-slate-100 dark:bg-white/10" : ""
-              }`}
-              type="text"
-              placeholder="PLAYZA-XXXX"
-            />
+            <div className="relative group">
+              <input
+                {...register("referralCode")}
+                className={`w-full bg-slate-900/5 dark:bg-white/5 border rounded-xl py-3.5 px-4 focus:ring-2 outline-none text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 transition-all font-medium text-sm ${
+                  referralCodeValue && referralCodeValue.length >= 6
+                    ? validationData?.valid
+                      ? "border-green-500/50 focus:ring-green-500/20"
+                      : "border-red-500/50 focus:ring-red-500/20"
+                    : "border-slate-200 dark:border-white/10 focus:ring-primary/30 focus:border-primary"
+                }`}
+                type="text"
+                placeholder="PLAYZA-XXXX"
+              />
+              {referralCodeValue && referralCodeValue.length >= 6 && (
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                  {isValidatingCode ? (
+                    <div className="size-3.5 border-2 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+                  ) : validationData?.valid ? (
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[9px] font-black text-green-500 uppercase tracking-tighter hidden md:inline">
+                         Referrer: {validationData.referrer}
+                      </span>
+                      <CheckCircle2 size={16} className="text-green-500" />
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[9px] font-black text-red-500 uppercase tracking-tighter hidden md:inline">
+                        Invalid Link
+                      </span>
+                      <AlertCircle size={16} className="text-red-500" />
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Terms and Privacy Agreement */}
@@ -425,7 +464,7 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
 
           <div className="pt-4">
             <Button
-              disabled={isPending || !isValid}
+              disabled={isPending || !isValid || (!!referralCodeValue && referralCodeValue.length >= 6 && validationData?.valid === false)}
               className="w-full h-14 bg-primary text-black font-black uppercase tracking-widest rounded-xl shadow-lg shadow-primary/10 hover:shadow-primary/30 hover:-translate-y-0.5 transition-all group border-none relative overflow-hidden disabled:opacity-50 disabled:translate-y-0 disabled:shadow-none"
               type="submit"
             >

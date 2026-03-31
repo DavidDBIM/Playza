@@ -52,33 +52,61 @@ const NavFooter = () => {
     return { label: item.label, icon: item.icon, path: item.path || "#" };
   };
 
+  const isMoreOpen = openPanel === "more";
+  const isGamesOpen = openPanel === "games";
+
   // Primary bar items (mobile)
   const mobileBarItems: NavItem[] = [
     getItem("PlayZa"),
     user ? getItem("Wallet") : getItem("Loyalty"),
     getItem("Leaderboards"),
-    {
-      label: "More",
-      icon: MoreHorizontal,
-      path: "#",
-      onClick: () => togglePanel("more"),
-    },
   ].filter((item): item is NavItem => !!item);
 
-  // Primary bar items (tablet md+) — 6 items for 3+gamepad+3 symmetry
+  // Tablet md items
   const tabletBarItems: NavItem[] = [
     getItem("PlayZa"),
     user ? getItem("Wallet") : undefined,
     user ? getItem("My Games") : undefined,
     getItem("Leaderboards"),
+    user ? undefined : getItem("Loyalty"),
+  ].filter((item): item is NavItem => !!item);
+
+  // Potential items for More panel
+  const allPotentialMoreItems: NavItem[] = [
+    user ? getItem("Profile") : undefined,
     getItem("Loyalty"),
-    {
+    getItem("Referral"),
+    user ? getItem("My Games") : undefined,
+    user ? getItem("Wallet") : undefined,
+    getItem("Leaderboards"),
+  ].filter((item): item is NavItem => !!item);
+
+  // Unique visible items logic
+  const getMoreItems = (currentBar: NavItem[]) => {
+    return allPotentialMoreItems.filter(item => !currentBar.some(barItem => barItem.label === item.label));
+  };
+
+  const mobileMoreItems = getMoreItems(mobileBarItems);
+  const tabletMoreItems = getMoreItems(tabletBarItems);
+
+  // Add More button only if there are items to show
+  if (mobileMoreItems.length > 0) {
+    mobileBarItems.push({
       label: "More",
       icon: MoreHorizontal,
       path: "#",
       onClick: () => togglePanel("more"),
-    },
-  ].filter((item): item is NavItem => !!item);
+    });
+  }
+
+  if (tabletMoreItems.length > 0) {
+    tabletBarItems.push({
+      label: "More",
+      icon: MoreHorizontal,
+      path: "#",
+      onClick: () => togglePanel("more"),
+    });
+  }
 
   // Games panel items (opened by gamepad button)
   const gamesPanelItems = [
@@ -87,16 +115,7 @@ const NavFooter = () => {
     { label: "H2H Battles", icon: Swords, path: "/h2h", desc: "1v1 head-to-head" },
   ];
 
-  // More panel items (no tournament/H2H)
-  const morePanelItems: NavItem[] = [
-    user ? getItem("Profile") : undefined,
-    user ? getItem("Loyalty") : undefined,
-    getItem("Referral"),
-    user ? getItem("My Games") : undefined,
-  ].filter((item): item is NavItem => !!item);
-
-  const isMoreOpen = openPanel === "more";
-  const isGamesOpen = openPanel === "games";
+  const morePanelItems = isMoreOpen ? (window.innerWidth >= 768 ? tabletMoreItems : mobileMoreItems) : [];
 
   const renderBarItem = (item: NavItem) => {
     const isMore = item.label === "More";

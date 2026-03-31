@@ -1,18 +1,30 @@
-import ReferralStats from "../components/referral/ReferralStats";
-import ReferralHowItWorks from "../components/referral/ReferralHowItWorks";
-import ReferralHistoryTable from "../components/referral/ReferralHistoryTable";
+import { useState, useEffect } from "react";
 import { Link } from "react-router";
-import { useEffect } from "react";
 import { MdArrowForward, MdEmojiEvents, MdGroupAdd } from "react-icons/md";
 import { useAuth } from "@/context/auth";
 import { Button } from "@/components/ui/button";
 import { ZASymbol } from "@/components/currency/ZASymbol";
+import { useReferralStats } from "@/hooks/referral/useReferralStats";
+import { ReferralSkeleton } from "@/components/skeletons/ReferralSkeleton";
+import ReferralStats from "../components/referral/ReferralStats";
+import ReferralHowItWorks from "../components/referral/ReferralHowItWorks";
+import ReferralHistoryTable from "../components/referral/ReferralHistoryTable";
+import InviteFriendModal from "../components/referral/InviteFriendModal";
 
 const Referral = () => {
   const { user } = useAuth();
+  const { data: stats, isLoading } = useReferralStats();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  if (user && isLoading) {
+    return <ReferralSkeleton />;
+  }
+
+  const referralLink = `${window.location.origin}/registration?referral_code=${stats?.referral_code || user?.referralCode || ""}`;
 
   return (
     <div className="flex-1 w-full pb-2 md:pb-20">
@@ -75,12 +87,25 @@ const Referral = () => {
       )}
 
       <div className="flex flex-col gap-2 md:gap-4">
-        {user && <ReferralStats />}
+        {user && (
+          <ReferralStats 
+            stats={stats} 
+            onOpenInvite={() => setIsModalOpen(true)} 
+            referralLink={referralLink} 
+          />
+        )}
 
         <ReferralHowItWorks />
 
-        {user && <ReferralHistoryTable />}
+        {user && <ReferralHistoryTable referrals={stats?.referrals || []} />}
       </div>
+
+      {isModalOpen && (
+        <InviteFriendModal
+          onClose={() => setIsModalOpen(false)}
+          referralLink={referralLink}
+        />
+      )}
     </div>
   );
 };

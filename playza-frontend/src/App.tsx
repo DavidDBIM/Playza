@@ -122,7 +122,7 @@ const AppContent = () => {
         className={
           isGamePlayPage
             ? ""
-            : "w-full max-w-400 mx-auto flex gap-4 md:gap-8 px-4 md:px-8 pt-4 md:pt-8 pb-32 md:pb-36"
+            : `w-full max-w-400 mx-auto flex gap-4 md:gap-8 px-1.5 md:px-4 pt-4 md:pt-8 ${isRegistrationPage ? "pb-0 min-h-screen flex items-center justify-center" : "pb-32 md:pb-24 lg:0"}`
         }
       >
         {!isGameSessionPage && !isRegistrationPage && !isGamePlayPage && (
@@ -131,7 +131,7 @@ const AppContent = () => {
           </aside>
         )}
 
-        <main className="flex-1 min-w-0 w-full">
+        <main className="flex-1 min-w-0 w-full ">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/leaderboard" element={<LeaderBoard />} />
