@@ -44,16 +44,22 @@ axiosInstance.interceptors.response.use(
 
     // Direct fix for token expiration loop
     if (error.response?.status === 401) {
+      const sensitivePages = ["/profile", "/wallet", "/my-games"];
+      const isSensitivePage = sensitivePages.some((page) =>
+        window.location.pathname.startsWith(page)
+      );
+
       if (localStorage.getItem("playza_token")) {
         console.warn("[Auth] Token expired or invalid. Redirecting to home...");
         localStorage.removeItem("playza_token");
-        // Only redirect if we are not already on home
+        
         if (window.location.pathname !== "/") {
           window.location.href = "/";
         } else {
-          // If already on home, just reload to clear React state and show login buttons
           window.location.reload();
         }
+      } else if (isSensitivePage) {
+        window.location.href = "/";
       }
     }
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { navItems } from "@/constants/constants";
 import { NavLink, useLocation } from "react-router";
+import { useAuth } from "@/context/auth";
 import {
   MoreHorizontal,
   X,
@@ -20,6 +21,7 @@ type PanelType = "more" | "games" | null;
 
 const NavFooter = () => {
   const { pathname } = useLocation();
+  const { user } = useAuth();
   const [openPanel, setOpenPanel] = useState<PanelType>(null);
   const [prevPathname, setPrevPathname] = useState(pathname);
 
@@ -53,7 +55,7 @@ const NavFooter = () => {
   // Primary bar items (mobile)
   const mobileBarItems: NavItem[] = [
     getItem("PlayZa"),
-    getItem("Wallet"),
+    user ? getItem("Wallet") : getItem("Loyalty"),
     getItem("Leaderboards"),
     {
       label: "More",
@@ -66,8 +68,8 @@ const NavFooter = () => {
   // Primary bar items (tablet md+) — 6 items for 3+gamepad+3 symmetry
   const tabletBarItems: NavItem[] = [
     getItem("PlayZa"),
-    getItem("Wallet"),
-    getItem("My Games"),
+    user ? getItem("Wallet") : undefined,
+    user ? getItem("My Games") : undefined,
     getItem("Leaderboards"),
     getItem("Loyalty"),
     {
@@ -87,10 +89,10 @@ const NavFooter = () => {
 
   // More panel items (no tournament/H2H)
   const morePanelItems: NavItem[] = [
-    getItem("Profile"),
-    getItem("Loyalty"),
+    user ? getItem("Profile") : undefined,
+    user ? getItem("Loyalty") : undefined,
     getItem("Referral"),
-    getItem("My Games"),
+    user ? getItem("My Games") : undefined,
   ].filter((item): item is NavItem => !!item);
 
   const isMoreOpen = openPanel === "more";
@@ -375,8 +377,8 @@ const NavFooter = () => {
                 .map(renderBarItem)}
             </div>
 
-            {/* ── Tablet grid (3 + gamepad + 3 = 7 cols) ── */}
-            <div className="hidden md:grid md:grid-cols-7 w-full items-center">
+            {/* ── Tablet grid ── */}
+            <div className={`hidden md:grid w-full items-center ${tabletBarItems.length === 4 ? 'md:grid-cols-5' : 'md:grid-cols-7'}`}>
               {tabletBarItems
                 .slice(0, Math.floor(tabletBarItems.length / 2))
                 .map(renderBarItem)}
