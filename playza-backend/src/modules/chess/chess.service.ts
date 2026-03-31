@@ -45,7 +45,7 @@ async function handleGameOver(roomId: string, winnerId: string | null, stake: nu
 
     if (players.data) {
       for (const uid of [players.data.host_id, players.data.guest_id]) {
-        if (uid && uid !== SYSTEM_BOT_ID) {
+        if (uid) {
           await supabaseAdmin.rpc('increment_wallet_balance', {
             p_user_id: uid,
             p_amount: stake,
@@ -175,7 +175,7 @@ export async function createBotRoom(userId: string, stakeValue: number) {
     .insert({
       code,
       host_id: userId,
-      guest_id: SYSTEM_BOT_ID,
+      guest_id: null,
       stake,
       status: 'active',
       board_state: initialBoard,
@@ -250,12 +250,12 @@ export async function makeMove(roomId: string, userId: string, move: { from: str
     return { move, next_turn: null, status: 'finished' }
   }
 
-  // Handle Bot Turn
-  if (nextTurn === SYSTEM_BOT_ID) {
+  // Handle Bot Turn (guest_id is null for bot matches)
+  if (nextTurn === null && room.status === 'active') {
     const botMove = getBotMove(chess.fen())
     if (botMove) {
       await new Promise(resolve => setTimeout(resolve, 800))
-      return makeMove(roomId, SYSTEM_BOT_ID, botMove)
+      return makeMove(roomId, null as any, botMove)
     }
   }
 
