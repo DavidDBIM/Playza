@@ -1,6 +1,6 @@
 import { Router, Response } from 'express'
 import { requireAuth, AuthRequest } from '../../middleware/auth'
-import { createChessRoom, joinChessRoom, getRoom, makeMove, resignGame, createBotRoom, findQuickMatch } from './chess.service'
+import { createChessRoom, joinChessRoom, getRoom, makeMove, resignGame, createBotRoom, findQuickMatch, listWaitingRooms } from './chess.service'
 
 const router = Router()
 
@@ -28,6 +28,15 @@ router.post('/quick', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
     const { stake = 0 } = req.body
     const data = await findQuickMatch(req.user!.id, stake)
+    res.json({ success: true, data })
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message })
+  }
+})
+
+router.get('/waiting', async (req: AuthRequest, res: Response) => {
+  try {
+    const data = await listWaitingRooms()
     res.json({ success: true, data })
   } catch (err: any) {
     res.status(400).json({ success: false, message: err.message })

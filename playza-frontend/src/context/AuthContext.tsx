@@ -1,4 +1,4 @@
-import { useState, useEffect, type ReactNode } from "react";
+import { useState, useEffect, useCallback, useMemo, type ReactNode } from "react";
 import { AuthContext, type UserProfile } from "./auth";
 import { getMeApi } from "@/api/users.api";
 
@@ -40,33 +40,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     fetchUser();
   }, []);
 
-  const setAuth = (newUser: UserProfile, token: string) => {
+  const setAuth = useCallback((newUser: UserProfile, token: string) => {
     localStorage.setItem("playza_token", token);
     setUser(newUser);
-  };
+  }, []);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     localStorage.removeItem("playza_token");
     setUser(null);
-  };
+  }, []);
 
-  const updateProfile = (data: Partial<UserProfile>) => {
+  const updateProfile = useCallback((data: Partial<UserProfile>) => {
     setUser((prev) => (prev ? { ...prev, ...data } : null));
-  };
+  }, []);
 
-  const isProfileComplete = !!(user?.firstName && user?.lastName);
+  const isProfileComplete = useMemo(() => !!(user?.firstName && user?.lastName), [user]);
+
+  const value = useMemo(() => ({
+    user,
+    setAuth,
+    logout,
+    updateProfile,
+    isProfileComplete,
+    isLoading,
+  }), [user, isProfileComplete, isLoading, setAuth, logout, updateProfile]);
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        setAuth,
-        logout,
-        updateProfile,
-        isProfileComplete,
-        isLoading,
-      }}
-    >
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

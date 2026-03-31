@@ -30,20 +30,24 @@ const H2HLobby = ({ onCreate, onBotCreate, onJoin, onQuickMatch, loading }: H2HL
   const [selectedGame, setSelectedGame] = useState<GameType | null>(null);
   const [inviteMobileTab, setInviteMobileTab] = useState<"create" | "join" | null>(null);
 
-  const handleQuickMatch = () => {
+  const handleQuickMatch = async () => {
     setIsFinding(true);
-    const finalStake = customStake ? parseInt(customStake) : stakeValue;
-    onQuickMatch(finalStake);
+    try {
+      const finalStake = customStake ? parseInt(customStake) : stakeValue;
+      await onQuickMatch(finalStake);
+    } finally {
+      setIsFinding(false);
+    }
   };
 
-  const handleBotMatch = () => {
+  const handleBotMatch = async () => {
     const finalStake = customStake ? parseInt(customStake) : stakeValue;
-    onBotCreate(finalStake);
+    await onBotCreate(finalStake);
   };
 
-  const handleCreateChallenge = () => {
+  const handleCreateChallenge = async () => {
     const finalStake = customStake ? parseInt(customStake) : 100;
-    onCreate(finalStake);
+    await onCreate(finalStake);
   };
 
   const handleJoinByCode = (e: React.FormEvent) => {
