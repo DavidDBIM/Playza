@@ -4,7 +4,7 @@ import H2HLobby from '@/components/h2h/H2HLobby';
 import WaitingRoom from '@/components/h2h/WaitingRoom';
 import H2HArena from '@/components/h2h/H2HArena';
 import H2HWinner from '@/components/h2h/H2HWinner';
-import { createChessRoom, joinChessRoom, getChessRoom } from '@/api/chess.api';
+import { createChessRoom, joinChessRoom, getChessRoom, createBotRoom, findQuickMatch } from '@/api/chess.api';
 import { useAuth } from '@/context/auth';
 import type { ChessRoom } from '@/types/chess';
 import type { UserProfile } from '@/context/auth';
@@ -84,6 +84,32 @@ const H2HZone = () => {
         }
     };
 
+    const handleQuickMatch = async (stake: number) => {
+        setLoading(true);
+        try {
+            const data = await findQuickMatch(stake);
+            navigate(`/h2h/${data.room_id}`);
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : "Matchmaking failed";
+            toast.error(errorMessage);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleCreateBotRoom = async (stake: number) => {
+        setLoading(true);
+        try {
+            const data = await createBotRoom(stake);
+            navigate(`/h2h/${data.room_id}`);
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : "Failed to start solo match";
+            toast.error(errorMessage);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
       <div className="relative flex-1 min-w-0 overflow-x-hidden scrollbar-hide">
         {/* Subtle Ambient Background - Optimized for Performance */}
@@ -98,7 +124,9 @@ const H2HZone = () => {
           {!roomId ? (
             <H2HLobby
               onCreate={handleCreateRoom}
+              onBotCreate={handleCreateBotRoom}
               onJoin={handleJoinRoom}
+              onQuickMatch={handleQuickMatch}
               loading={loading}
             />
           ) : !room ? (
@@ -130,7 +158,9 @@ const H2HZone = () => {
                     return (
                       <H2HLobby
                         onCreate={handleCreateRoom}
+                        onBotCreate={handleCreateBotRoom}
                         onJoin={handleJoinRoom}
+                        onQuickMatch={handleQuickMatch}
                         loading={loading}
                       />
                     );
