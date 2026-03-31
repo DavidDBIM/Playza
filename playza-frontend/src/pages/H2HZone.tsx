@@ -88,7 +88,7 @@ const H2HZone = () => {
         setLoading(true);
         try {
             const data = await findQuickMatch(stake);
-            navigate(`/h2h/${data.room_id}`);
+            navigate(`/h2h/${data.room_id}`, { state: { quickMatch: true } });
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : "Matchmaking failed";
             toast.error(errorMessage);

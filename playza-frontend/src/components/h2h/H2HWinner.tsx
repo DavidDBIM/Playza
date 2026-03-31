@@ -51,43 +51,43 @@ const H2HWinner = ({ room, user, localWinnerId, isSyncing }: H2HWinnerProps) => 
         </div>
 
         {/* Reward Stats */}
-        <div className="glass backdrop-blur-3xl p-2 md:p-10 rounded-xl border border-white/20 shadow-3xl text-center relative overflow-hidden group">
+        <div className="glass backdrop-blur-3xl p-6 md:p-10 rounded-2xl md:rounded-3xl border border-white/20 shadow-3xl text-center relative overflow-hidden group mx-4 md:mx-0">
             <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
             
-            <p className="text-[10px] font-black uppercase tracking-[0.5em] text-muted-foreground italic mb-6">Match Result</p>
-            <div className={`font-headline text-8xl font-black italic tracking-tighter leading-none mb-8 drop-shadow-2xl ${isWinner ? 'text-secondary' : 'text-foreground'}`}>
-              {isWinner ? `+${winningAmount.toFixed(0)}` : `-${room.stake}`} <span className="text-lg md:text-2xl not-italic font-sans opacity-50 uppercase tracking-widest"><ZASymbol className="inline-block scale-125 ml-2" /></span>
+            <p className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.5em] text-muted-foreground italic mb-4 md:mb-6">Match Result</p>
+            <div className={`font-headline text-5xl md:text-8xl font-black italic tracking-tighter leading-none mb-6 md:mb-8 drop-shadow-2xl ${isWinner ? 'text-secondary' : 'text-foreground'}`}>
+              {isWinner ? `+${winningAmount.toFixed(0)}` : `-${room.stake}`} <span className="text-sm md:text-2xl not-italic font-sans opacity-50 uppercase tracking-widest"><ZASymbol className="inline-block scale-110 md:scale-125 ml-1 md:ml-2" /></span>
             </div>
             
-            <div className="h-px bg-white/10 w-48 mx-auto mb-8"></div>
+            <div className="h-px bg-white/10 w-32 md:w-48 mx-auto mb-6 md:mb-8"></div>
             
-            <div className="grid grid-cols-2 gap-2 md:gap-8">
-                <div className="space-y-1 md:space-y-2 p-2 md:p-4 rounded-xl bg-white/5 border border-white/5 hover:border-primary/30 transition-all">
-                    <p className="text-[8px] md:text-[9px] font-black uppercase text-muted-foreground tracking-widest italic">Rival</p>
-                    <p className="text-sm md:text-base font-headline font-black text-foreground italic">
-                        {isWinner ? (room.guest?.id === user?.id ? room.host?.username : room.guest?.username) : "Tough opponent"}
+            <div className="grid grid-cols-2 gap-3 md:gap-8">
+                <div className="space-y-1 md:space-y-2 p-3 md:p-4 rounded-xl bg-white/5 border border-white/5 hover:border-primary/30 transition-all min-w-0">
+                    <p className="text-[7px] md:text-[9px] font-black uppercase text-muted-foreground tracking-widest italic">Rival</p>
+                    <p className="text-xs md:text-base font-headline font-black text-foreground italic truncate">
+                        {isWinner ? (room.guest?.id === user?.id ? (room.host?.username || "HOST") : (room.guest?.username || "GUEST")) : (room.host?.id === user?.id ? (room.guest?.username || "OPPONENT") : (room.host?.username || "OPPONENT"))}
                     </p>
                 </div>
-                <div className="space-y-1 md:space-y-2 p-2 md:p-4 rounded-xl bg-white/5 border border-white/5 hover:border-primary/30 transition-all">
-                    <p className="text-[8px] md:text-[9px] font-black uppercase text-muted-foreground tracking-widest italic">Experience</p>
-                    <p className="text-sm md:text-base font-headline font-black text-foreground italic">
-                        {isWinner ? "+2.4K XP" : "+500 XP"}
+                <div className="space-y-1 md:space-y-2 p-3 md:p-4 rounded-xl bg-white/5 border border-white/5 hover:border-primary/30 transition-all">
+                    <p className="text-[7px] md:text-[9px] font-black uppercase text-muted-foreground tracking-widest italic">Experience</p>
+                    <p className="text-xs md:text-base font-headline font-black text-foreground italic">
+                        {isWinner ? "85% BOOST" : "15% GAIN"}
                     </p>
                 </div>
             </div>
         </div>
 
         {/* Action Group */}
-        <div className="flex flex-row gap-2 md:gap-6 justify-center">
+        <div className="flex flex-col md:flex-row gap-3 md:gap-6 justify-center px-6 md:px-0">
           <NavLink 
             to="/h2h"
-            className="px-4 md:px-12 py-3 md:py-6 bg-white dark:bg-black/60 border-[3px] border-primary text-primary font-headline font-black rounded-xl transition-all hover:scale-105 shadow-2xl uppercase tracking-widest text-[10px] md:text-lg italic hover:bg-primary hover:text-white flex-1 md:flex-none"
+            className="px-6 md:px-12 py-4 md:py-6 bg-white dark:bg-black/60 border-2 md:border-[3px] border-primary text-primary font-headline font-black rounded-xl transition-all hover:scale-105 shadow-2xl uppercase tracking-widest text-xs md:text-lg italic hover:bg-primary hover:text-white"
           >
             NEXT BATTLE
           </NavLink>
           <NavLink 
             to="/leaderboard"
-            className="px-4 md:px-12 py-3 md:py-6 bg-foreground text-background font-headline font-black rounded-xl transition-all hover:scale-105 shadow-2xl uppercase tracking-widest text-[10px] md:text-lg italic hover:shadow-primary/30 flex-1 md:flex-none"
+            className="px-6 md:px-12 py-4 md:py-6 bg-foreground text-background font-headline font-black rounded-xl transition-all hover:scale-105 shadow-2xl uppercase tracking-widest text-xs md:text-lg italic hover:shadow-primary/30"
           >
             LEADERBOARD
           </NavLink>
