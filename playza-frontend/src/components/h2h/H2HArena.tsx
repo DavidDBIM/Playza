@@ -16,6 +16,7 @@ import { ZASymbol } from "@/components/currency/ZASymbol";
 import type { ChessRoom } from "@/types/chess";
 import type { UserProfile } from "@/context/auth";
 import { Maximize, Minimize } from "lucide-react";
+import H2HWinner from "./H2HWinner";
 
 interface H2HArenaProps {
   room: ChessRoom;
@@ -368,6 +369,24 @@ const H2HArena = ({ room, user }: H2HArenaProps) => {
   const myMoveCount = myColor === "w" ? whiteMoveCount : blackMoveCount;
   const oppMoveCount = myColor === "w" ? blackMoveCount : whiteMoveCount;
 
+  // Captured pieces logic
+  const fenBoard = fenParts[0];
+  const startingPieces: Record<string, number> = { p: 8, n: 2, b: 2, r: 2, q: 1, P: 8, N: 2, B: 2, R: 2, Q: 1 };
+  const currentPieces: Record<string, number> = { p: 0, n: 0, b: 0, r: 0, q: 0, P: 0, N: 0, B: 0, R: 0, Q: 0 };
+  for (const char of fenBoard) {
+    if (currentPieces[char] !== undefined) currentPieces[char]++;
+  }
+  const whiteCaptured: string[] = [];
+  ['p', 'n', 'b', 'r', 'q'].forEach(p => {
+     const count = startingPieces[p] - currentPieces[p];
+     for(let i=0; i<count; i++) whiteCaptured.push(p); 
+  });
+  const blackCaptured: string[] = [];
+  ['P', 'N', 'B', 'R', 'Q'].forEach(p => {
+     const count = startingPieces[p] - currentPieces[p];
+     for(let i=0; i<count; i++) blackCaptured.push(p);
+  });
+
   // Pair up moves for log display using verbose history
   const movePairs = Array.from({ length: Math.ceil(history.length / 2) }).map(
     (_, i) => ({
@@ -553,33 +572,22 @@ const H2HArena = ({ room, user }: H2HArenaProps) => {
             }}
           />
         </div>
-
-        {/* Checkmate Overlay */}
-        {game.isCheckmate() && (
-          <div className="absolute inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center animate-in fade-in zoom-in duration-500">
-            <div className="relative mb-6">
-              <div className="absolute inset-0 bg-amber-500/20 blur-3xl rounded-full scale-150 animate-pulse"></div>
-              <Trophy
-                size={80}
-                className="text-amber-400 relative z-10 animate-bounce"
-              />
-            </div>
-            <h2 className="text-3xl font-black font-headline italic uppercase tracking-tighter text-white mb-2">
-              Checkmate!
-            </h2>
-            <p className="text-slate-400 text-sm font-bold uppercase tracking-[0.2em] mb-8">
-              {game.turn() === (room.host_id === user?.id ? "w" : "b")
-                ? "DEFEAT — MISSION FAILED"
-                : "VICTORY — ARENA CLEARED"}
-            </p>
-            <div className="flex flex-col gap-3 w-full max-w-50">
-              <div className="text-[10px] font-black text-amber-500 uppercase tracking-widest animate-pulse">
-                Syncing Results...
-              </div>
-            </div>
-          </div>
-        )}
       </div>
+
+      {game.isGameOver() && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-500 scrollbar-hide">
+          <H2HWinner 
+            room={room} 
+            user={user} 
+            localWinnerId={
+              game.isDraw() || game.isStalemate() || game.isThreefoldRepetition() || game.isInsufficientMaterial() 
+              ? null 
+              : (game.turn() === "w" ? room.guest_id : room.host_id)
+            } 
+            isSyncing={room.status !== "finished"} 
+          />
+        </div>
+      )}
 
       {/* ── Side Panel ── */}
       <div className="flex flex-col gap-2 md:col-start-2 md:row-start-2 md:row-end-4 md:h-full">
@@ -587,7 +595,7 @@ const H2HArena = ({ room, user }: H2HArenaProps) => {
         <div className="grid grid-cols-2 gap-1.5">
           <div className="flex flex-col items-center gap-0.5 rounded-xl px-2 py-1.5 border bg-white dark:bg-white/5 border-slate-200 dark:border-white/6 shadow-sm backdrop-blur-md">
             <span className="text-[7px] font-black text-slate-400 dark:text-slate-100/40 uppercase tracking-[0.12em]">
-              STAKE
+              ENTRY FEE
             </span>
             <span className="text-xs font-black text-slate-900 dark:text-slate-100 flex items-center gap-0.5">
               {room.stake} <ZASymbol className="w-2.25 h-2.25" />
@@ -644,6 +652,24 @@ const H2HArena = ({ room, user }: H2HArenaProps) => {
               <span className="text-slate-500">{history.length} total</span>
             </div>
           </div>
+
+          {/* Captured Pieces */}
+          {(whiteCaptured.length > 0 || blackCaptured.length > 0) && (
+            <div className="flex flex-col gap-1 px-3 py-1.5 bg-slate-50/50 dark:bg-black/20 border-b border-slate-100 dark:border-white/5 text-[12px] opacity-80 backdrop-blur-sm shrink-0">
+              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+                <span className="text-[8px] font-black uppercase text-slate-400 tracking-widest leading-none">W Cap</span>
+                <div className="flex gap-0.5">
+                  {whiteCaptured.map((p, i) => <span key={i} title={PIECE_NAME[p.toUpperCase()]}>{PIECE_ICON[p]}</span>)}
+                </div>
+              </div>
+              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+                <span className="text-[8px] font-black uppercase text-slate-400 tracking-widest leading-none">B Cap</span>
+                <div className="flex gap-0.5 text-slate-600 dark:text-slate-300">
+                  {blackCaptured.map((p, i) => <span key={i} title={PIECE_NAME[p.toUpperCase()]}>{PIECE_ICON[p]}</span>)}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Log body */}
           <div

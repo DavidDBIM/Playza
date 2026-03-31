@@ -37,8 +37,8 @@ const Registration = () => {
   const component = renderComponent();
 
   return (
-    <div className="flex-1 w-full min-h-[calc(100vh-12rem)] flex items-center justify-center py-12 px-4 md:px-8">
-      <div className="w-full flex justify-center">
+    <div className="flex-1 w-full flex flex-col items-center justify-center my-auto py-4 md:py-8 px-4">
+      <div className="w-full flex justify-center items-center h-full">
         {component}
       </div>
     </div>

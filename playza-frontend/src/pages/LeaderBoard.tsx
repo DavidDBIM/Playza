@@ -46,7 +46,7 @@ const LeaderBoard = () => {
       </div>
 
       {/* Modern Tabs */}
-      <div className="flex gap-2 p-1.5 bg-slate-900/5 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 w-fit mx-auto md:mx-0 overflow-x-auto no-scrollbar max-w-full">
+      <div className="flex w-full md:w-fit mx-auto md:mx-0 justify-between md:justify-start gap-1 md:gap-2 p-1 md:p-1.5 bg-slate-900/5 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 overflow-x-auto no-scrollbar max-w-full">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -57,14 +57,14 @@ const LeaderBoard = () => {
                 setActiveTab(tab.id);
                 setSearchParams({ tab: tab.id });
               }}
-              className={`flex items-center gap-3 px-6 py-3 rounded-2xl font-black uppercase tracking-widest text-xs transition-all duration-500 relative overflow-hidden group shrink-0 ${
+              className={`flex-1 md:flex-none flex flex-col md:flex-row items-center justify-center gap-1 md:gap-3 px-2 py-2 md:px-6 md:py-3 rounded-xl md:rounded-2xl font-black uppercase tracking-widest text-[9px] md:text-xs transition-all duration-500 relative overflow-hidden group min-w-0 ${
                 isActive 
-                  ? "bg-primary text-white shadow-xl shadow-primary/20 scale-105" 
+                  ? "bg-primary text-white shadow-xl shadow-primary/20 scale-105 z-10" 
                   : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
-              <Icon className={`text-lg ${isActive ? "animate-pulse" : "group-hover:rotate-12 transition-transform"}`} />
-              <span>{tab.label}</span>
+              <Icon className={`text-sm md:text-lg shrink-0 ${isActive ? "animate-pulse" : "group-hover:rotate-12 transition-transform"}`} />
+              <span className="truncate w-full text-center">{tab.label}</span>
               {isActive && (
                 <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/20 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
               )}

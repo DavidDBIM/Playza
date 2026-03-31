@@ -40,6 +40,8 @@ const Profile = () => {
 
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
+  console.log("user:", userData);
+
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);

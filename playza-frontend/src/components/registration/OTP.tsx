@@ -164,7 +164,7 @@ const OTP = ({ onClick }: OtpProps) => {
     : "your email";
 
   return (
-    <div className="w-full max-w-lg">
+    <div className="w-full">
       <div className="glass-card p-4 md:p-10 rounded-2xl shadow-xl relative overflow-hidden border border-slate-200 dark:border-white/10 text-center">
         {/* Decorative accent line */}
         <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-transparent via-primary to-transparent opacity-50"></div>
@@ -194,18 +194,20 @@ const OTP = ({ onClick }: OtpProps) => {
         )}
 
         {/* OTP inputs */}
-        <div className="flex justify-center mb-10">
+        <div className="flex justify-center mb-10 ">
           <fieldset className="flex gap-2 md:gap-3" onPaste={handlePaste}>
             {digits.map((digit, i) => (
               <input
                 key={i}
-                ref={(el) => { inputRefs.current[i] = el; }}
+                ref={(el) => {
+                  inputRefs.current[i] = el;
+                }}
                 value={digit}
                 onChange={(e) => handleChange(i, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(i, e)}
                 required
                 inputMode="numeric"
-                className="w-10 h-14 md:w-14 md:h-16 text-center bg-slate-100 dark:bg-slate-950/80 border-2 border-slate-200 dark:border-white/10 rounded-xl focus:border-primary focus:ring-4 focus:ring-primary/20 text-xl md:text-2xl font-black text-primary transition-all outline-none"
+                className="w-11.5 h-14 md:w-14 md:h-16 text-center bg-slate-100 dark:bg-slate-950/80 border-2 border-slate-200 dark:border-white/10 rounded-xl focus:border-primary focus:ring-4 focus:ring-primary/20 text-xl md:text-2xl font-black text-primary transition-all outline-none"
                 aria-label={`Digit ${i + 1}`}
                 placeholder="•"
                 maxLength={1}
@@ -227,7 +229,7 @@ const OTP = ({ onClick }: OtpProps) => {
                 <span>Authenticating...</span>
               </div>
             ) : (
-              "Complete Enrollment"
+              "VERIFY ACCOUNT"
             )}
           </Button>
 
@@ -239,9 +241,6 @@ const OTP = ({ onClick }: OtpProps) => {
                     {formattedTime}
                   </p>
                 </div>
-                <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest mt-2 opacity-50">
-                  Code Life
-                </p>
               </div>
               <div className="h-10 w-px bg-slate-200 dark:border-white/5"></div>
               <button

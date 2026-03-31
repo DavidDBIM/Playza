@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signupSchema, type SignupFormValues } from "@/schemas/auth.schema";
@@ -42,19 +42,34 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
   } = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
     mode: "onChange",
-    defaultValues: {
-      username: "",
-      email: "",
-      phone: "",
-      password: "",
-      confirmPassword: "",
-      referralCode: urlReferralCode,
-      acceptedTerms: false,
-    },
+    defaultValues: (() => {
+      const saved = sessionStorage.getItem("playza_signup_draft");
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch { /* ignore */ }
+      }
+      return {
+        username: "",
+        email: "",
+        phone: "",
+        password: "",
+        confirmPassword: "",
+        referralCode: urlReferralCode,
+        acceptedTerms: false,
+      };
+    })(),
   });
 
   const password = useWatch({ control, name: "password" });
   const confirmPassword = useWatch({ control, name: "confirmPassword" });
+
+  // Update session storage whenever email changes so "Modify Credentials" keeps the current draft
+  const currentFormValues = useWatch({ control });
+  
+  useEffect(() => {
+    sessionStorage.setItem("playza_signup_draft", JSON.stringify(currentFormValues));
+  }, [currentFormValues]);
 
   const { setPendingEmail } = useRegistration();
   const { mutate: signup, isPending } = useSignup();
@@ -112,6 +127,7 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
           "[RegistrationForm] Signup successful! Backend response:",
           response,
         );
+        sessionStorage.setItem("playza_signup_draft", JSON.stringify(data));
         setPendingEmail(data.email);
         onClick("otp");
       },
@@ -359,50 +375,45 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
           <div className="flex flex-col gap-2 pt-2">
             <label 
               htmlFor="terms" 
-              className={`flex items-start gap-4 p-5 rounded-2xl border transition-all cursor-pointer group/terms shadow-sm relative overflow-hidden ${
-                useWatch({ control, name: "acceptedTerms" }) 
-                  ? "bg-primary/10 border-primary/50 ring-1 ring-primary/20" 
-                  : "bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 hover:border-primary/30"
-              }`}
+              className="group/terms flex items-center gap-3 cursor-pointer p-1 rounded-lg select-none hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
             >
-              <div className="relative mt-0.5 shrink-0">
+              <div className="relative shrink-0 flex items-center justify-center w-5 h-5">
                 <input
                   {...register("acceptedTerms")}
                   type="checkbox"
                   id="terms"
-                  className="peer absolute inset-0 opacity-0 cursor-pointer z-10"
+                  className="peer absolute opacity-0 w-0 h-0"
                 />
-                <div className="size-6 rounded-lg border-2 border-slate-300 dark:border-white/10 peer-checked:bg-primary peer-checked:border-primary transition-all duration-300 flex items-center justify-center bg-white dark:bg-slate-900 group-hover/terms:border-primary/40 shadow-inner overflow-hidden">
-                  <Check 
-                    className="size-4 text-slate-950 stroke-[3px] scale-0 peer-checked:scale-100 transition-transform duration-300 ease-out" 
-                  />
+                <div className="absolute inset-0 rounded-md border-2 border-slate-300 dark:border-slate-600 peer-checked:border-primary peer-checked:bg-primary transition-all duration-300 flex items-center justify-center peer-focus-visible:ring-2 peer-focus-visible:ring-primary/50 group-hover/terms:border-primary/50 group-hover/terms:shadow-[0_0_10px_rgba(var(--primary),0.3)]">
+                  {useWatch({ control, name: "acceptedTerms" }) && (
+                    <Check 
+                      className="size-3.5 text-slate-950 font-black animate-in zoom-in duration-200" 
+                      strokeWidth={4}
+                    />
+                  )}
                 </div>
               </div>
-              <div className="flex flex-col gap-1">
-                <span className="text-xs leading-relaxed text-slate-700 dark:text-slate-300 font-bold select-none group-hover/terms:text-slate-900 dark:group-hover/terms:text-white transition-colors">
-                  Legal Agreement
-                </span>
-                <span className="text-[10px] leading-relaxed text-slate-500 dark:text-slate-400 font-medium select-none uppercase tracking-tighter">
-                  I have read and agree to Playza's{" "}
-                  <Link
-                    to="/terms"
-                    target="_blank"
-                    className="text-primary hover:underline underline-offset-4 decoration-2 font-black"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    Terms & Conditions
-                  </Link>{" "}
-                  and{" "}
-                  <Link
-                    to="/privacy"
-                    target="_blank"
-                    className="text-primary hover:underline underline-offset-4 decoration-2 font-black"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    Privacy Policy
-                  </Link>
-                </span>
-              </div>
+              
+              <span className="text-[10px] md:text-xs font-medium text-slate-500 dark:text-slate-400 leading-normal flex-1">
+                I confirm I am over 18 and agree to the{" "}
+                <Link
+                  to="/terms"
+                  target="_blank"
+                  className="text-slate-700 dark:text-slate-300 font-bold hover:text-primary dark:hover:text-primary transition-colors hover:underline underline-offset-2"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  Terms & Conditions
+                </Link>{" "}
+                and{" "}
+                <Link
+                  to="/privacy"
+                  target="_blank"
+                  className="text-slate-700 dark:text-slate-300 font-bold hover:text-primary dark:hover:text-primary transition-colors hover:underline underline-offset-2"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  Privacy Policy
+                </Link>
+              </span>
             </label>
 
             {errors.acceptedTerms && (
