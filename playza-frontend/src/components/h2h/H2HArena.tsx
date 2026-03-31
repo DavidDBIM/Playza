@@ -80,6 +80,7 @@ function parseSAN(san: string) {
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
+const SYSTEM_BOT_ID = '00000000-0000-0000-0000-000000000000';
 
 const H2HArena = ({ room, user }: H2HArenaProps) => {
   const toast = useToast();
@@ -110,6 +111,17 @@ const H2HArena = ({ room, user }: H2HArenaProps) => {
   const pendingMoveRef = useRef(false);
 
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showRules, setShowRules] = useState(true);
+
+  // ── Prevent Accidental Leave ────────────────────────────────────────────────
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "Leaving will forfeit your stake to the opponent. Are you sure?";
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, []);
 
   // ── Auto-scroll battle log ──────────────────────────────────────────────────
   useEffect(() => {
@@ -224,8 +236,10 @@ const H2HArena = ({ room, user }: H2HArenaProps) => {
   const serverSaysMyTurn = room.current_turn === user?.id;
   const isYourTurn = serverSaysMyTurn && !pendingMoveRef.current;
   const boardOrientation = room.host_id === user?.id ? "white" : "black";
-  const oppUsername =
-    user?.id === room.host_id ? room.guest?.username : room.host?.username;
+  const oppUsername = 
+    user?.id === room.host_id 
+      ? (room.guest_id === SYSTEM_BOT_ID ? "COMPUTER" : (room.guest?.username || "GUEST"))
+      : (room.host?.username || "HOST");
 
   const attemptMove = useCallback(
     (sourceSquare: string, targetSquare: string): boolean => {
@@ -586,6 +600,57 @@ const H2HArena = ({ room, user }: H2HArenaProps) => {
             } 
             isSyncing={room.status !== "finished"} 
           />
+        </div>
+      )}
+
+      {showRules && (
+        <div className="fixed inset-0 z-100 flex items-center justify-center p-4 md:p-8 bg-slate-950/60 backdrop-blur-md animate-in fade-in duration-500">
+          <div className="w-full max-w-xl bg-white dark:bg-slate-950 border-4 border-primary rounded-3xl p-6 md:p-10 shadow-3xl transform animate-in zoom-in-95 duration-500 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
+            
+            <div className="relative z-10 space-y-6">
+              <div className="flex flex-col items-center text-center space-y-2">
+                <Swords className="text-primary w-12 h-12 md:w-16 md:h-16 animate-pulse" />
+                <h2 className="font-headline text-3xl md:text-5xl font-black italic tracking-tighter text-slate-900 dark:text-white uppercase leading-none">
+                  Battle Conditions
+                </h2>
+                <div className="h-1 w-20 bg-primary/30 rounded-full"></div>
+              </div>
+
+              <div className="grid gap-4 md:gap-6">
+                <div className="flex items-start gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 group hover:border-primary/50 transition-colors">
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 font-black text-primary italic">01</div>
+                  <div>
+                    <h3 className="font-bold text-sm uppercase tracking-widest text-slate-900 dark:text-white mb-1">Staked Match</h3>
+                    <p className="text-[10px] md:text-xs text-slate-500 uppercase font-black leading-relaxed italic">Your {room.stake} ZA stake is locked in escrow. Winner takes the total prize pool minus 10% platform fee.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 group hover:border-primary/50 transition-colors">
+                  <div className="w-10 h-10 rounded-lg bg-orange-500/10 flex items-center justify-center shrink-0 font-black text-orange-500 italic">02</div>
+                  <div>
+                    <h3 className="font-bold text-sm uppercase tracking-widest text-slate-900 dark:text-white mb-1">Fair Play Warning</h3>
+                    <p className="text-[10px] md:text-xs text-slate-500 uppercase font-black leading-relaxed italic">DO NOT navigate away. Leaving or closing the tab during an active match will forfeit your balance to your opponent.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 group hover:border-primary/50 transition-colors">
+                  <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0 font-black text-emerald-500 italic">03</div>
+                  <div>
+                    <h3 className="font-bold text-sm uppercase tracking-widest text-slate-900 dark:text-white mb-1">Reconnection</h3>
+                    <p className="text-[10px] md:text-xs text-slate-500 uppercase font-black leading-relaxed italic">If you disconnect accidentally, hurry back! Re-enter the room using the code or link to continue the battle.</p>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowRules(false)}
+                className="w-full bg-primary text-white font-headline font-black py-4 md:py-6 rounded-2xl text-lg md:text-2xl tracking-[0.2em] transition-all hover:scale-[1.02] active:scale-95 shadow-2xl shadow-primary/30 uppercase italic"
+              >
+                READY TO FIGHT
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

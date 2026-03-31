@@ -24,3 +24,13 @@ export const resignChessGame = async (roomId: string) => {
   const { data } = await axiosInstance.post(`/chess/room/${roomId}/resign`);
   return data.data;
 };
+
+export const createBotRoom = async (stake: number) => {
+  const { data } = await axiosInstance.post("/chess/bot", { stake });
+  return data.data;
+};
+
+export const findQuickMatch = async (stake: number) => {
+  const { data } = await axiosInstance.post("/chess/quick", { stake });
+  return data.data;
+};

@@ -1,10 +1,10 @@
-import { Swords } from "lucide-react";
+import { Swords, Trophy } from "lucide-react";
 import { MdLink } from "react-icons/md";
 
 interface GameModeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelectMode: (mode: "quick" | "invite") => void;
+  onSelectMode: (mode: "quick" | "invite" | "bot") => void;
 }
 
 const GameModeModal = ({
@@ -35,7 +35,7 @@ const GameModeModal = ({
           </button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 ">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {/* Find Online Rival */}
           <button
             onClick={() => {
@@ -44,20 +44,13 @@ const GameModeModal = ({
             }}
             className="group relative overflow-hidden rounded-xl p-1 transition-all hover:scale-[1.01] active:scale-[0.99] border border-slate-200 dark:border-white/5 bg-white dark:bg-slate-950 shadow-sm hover:shadow-lg"
           >
-            <div className="relative p-4 flex items-center gap-4 text-left h-full">
-              <div className="w-12 h-12 sm:w-16 sm:h-16 shrink-0 rounded-2xl bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20 text-indigo-500 dark:text-indigo-400 group-hover:bg-indigo-500 group-hover:text-white transition-all duration-300">
-                <Swords className="w-6 h-6 sm:w-8 sm:h-8" />
+            <div className="relative p-4 flex flex-col items-center gap-2 text-center h-full">
+              <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20 text-indigo-500 dark:text-indigo-400 group-hover:bg-indigo-500 group-hover:text-white transition-all duration-300">
+                <Swords className="w-6 h-6" />
               </div>
               <div className="flex-1">
-                <span className="text-indigo-500 text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] mb-1 block">
-                  Global Matchmaking
-                </span>
-                <h2 className="text-lg sm:text-2xl font-black uppercase italic tracking-tighter text-slate-900 dark:text-white">
-                  Find Online Rival
-                </h2>
-                <p className="text-slate-500 text-[10px] sm:text-xs mt-0.5 sm:mt-1">
-                  Battle random tiers across the globe
-                </p>
+                <span className="text-indigo-500 text-[8px] font-black uppercase tracking-[0.2em] mb-1 block">Quick Play</span>
+                <h2 className="text-sm font-black uppercase italic tracking-tighter text-slate-900 dark:text-white">Find Rival</h2>
               </div>
             </div>
           </button>
@@ -70,20 +63,32 @@ const GameModeModal = ({
             }}
             className="group relative overflow-hidden rounded-xl p-1 transition-all hover:scale-[1.01] active:scale-[0.99] border border-slate-200 dark:border-white/5 bg-white dark:bg-slate-950 shadow-sm hover:shadow-lg"
           >
-            <div className="relative p-4 flex items-center gap-4 text-left h-full">
-              <div className="w-12 h-12 sm:w-16 sm:h-16 shrink-0 rounded-2xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 text-emerald-500 dark:text-emerald-400 group-hover:bg-emerald-500 group-hover:text-white transition-all duration-300">
-                <MdLink className="w-6 h-6 sm:w-8 sm:h-8" />
+            <div className="relative p-4 flex flex-col items-center gap-2 text-center h-full">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 text-emerald-500 dark:text-emerald-400 group-hover:bg-emerald-500 group-hover:text-white transition-all duration-300">
+                <MdLink className="w-6 h-6" />
               </div>
               <div className="flex-1">
-                <span className="text-emerald-500 text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] mb-1 block">
-                  Private Challenge
-                </span>
-                <h2 className="text-lg sm:text-2xl font-black uppercase italic tracking-tighter text-slate-900 dark:text-white">
-                  Invite a Friend
-                </h2>
-                <p className="text-slate-500 text-[10px] sm:text-xs mt-0.5 sm:mt-1">
-                  Play with someone you know
-                </p>
+                <span className="text-emerald-500 text-[8px] font-black uppercase tracking-[0.2em] mb-1 block">Private</span>
+                <h2 className="text-sm font-black uppercase italic tracking-tighter text-slate-900 dark:text-white">Invite Friend</h2>
+              </div>
+            </div>
+          </button>
+
+          {/* Solo Practice (Bot) */}
+          <button
+            onClick={() => {
+              onSelectMode("bot");
+              onClose();
+            }}
+            className="group relative overflow-hidden rounded-xl p-1 transition-all hover:scale-[1.01] active:scale-[0.99] border border-slate-200 dark:border-white/5 bg-white dark:bg-slate-950 shadow-sm hover:shadow-lg"
+          >
+            <div className="relative p-4 flex flex-col items-center gap-2 text-center h-full">
+              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20 text-amber-500 dark:text-amber-400 group-hover:bg-amber-500 group-hover:text-white transition-all duration-300">
+                <Trophy className="w-6 h-6" />
+              </div>
+              <div className="flex-1">
+                <span className="text-amber-500 text-[8px] font-black uppercase tracking-[0.2em] mb-1 block">Solo Training</span>
+                <h2 className="text-sm font-black uppercase italic tracking-tighter text-slate-900 dark:text-white">vs Computer</h2>
               </div>
             </div>
           </button>

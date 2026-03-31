@@ -62,13 +62,13 @@ const NavFooter = () => {
     getItem("Leaderboards"),
   ].filter((item): item is NavItem => !!item);
 
-  // Tablet md items
+  // Tablet md items (6 visible + 1 center)
   const tabletBarItems: NavItem[] = [
     getItem("PlayZa"),
-    user ? getItem("Wallet") : undefined,
-    user ? getItem("My Games") : undefined,
+    user ? getItem("Wallet") : getItem("Loyalty"),
+    user ? getItem("Profile") : undefined,
     getItem("Leaderboards"),
-    user ? undefined : getItem("Loyalty"),
+    getItem("Referral"),
   ].filter((item): item is NavItem => !!item);
 
   // Potential items for More panel
@@ -396,8 +396,8 @@ const NavFooter = () => {
                 .map(renderBarItem)}
             </div>
 
-            {/* ── Tablet grid ── */}
-            <div className={`hidden md:grid w-full items-center ${tabletBarItems.length === 4 ? 'md:grid-cols-5' : 'md:grid-cols-7'}`}>
+            {/* ── Tablet grid (3 + gamepad + 3 = 7 cols) ── */}
+            <div className="hidden md:grid w-full grid-cols-7 items-center">
               {tabletBarItems
                 .slice(0, Math.floor(tabletBarItems.length / 2))
                 .map(renderBarItem)}
