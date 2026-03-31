@@ -74,15 +74,14 @@ const FullGame = () => {
             Home
           </Link>
           <span className="opacity-50">/</span>
-          <span className="text-slate-900 dark:text-slate-300 font-medium font-heading">Games</span>
+          <span className="text-slate-900 dark:text-slate-300 font-medium font-heading">
+            Games
+          </span>
         </nav>
       </div>
 
-      <section className="relative h-72 md:h-80 flex items-center rounded-xl overflow-hidden shadow-2xl shadow-primary/5">
-        <FeatureGameCard
-          {...biggestPoolGame}
-          subTitle="Featured Challenge"
-        />
+      <section className="relative flex items-center rounded-xl overflow-hidden shadow-2xl shadow-primary/5">
+        <FeatureGameCard {...biggestPoolGame} subTitle="Featured Challenge" />
       </section>
 
       <div className="glass rounded-2xl p-2 md:p-3 flex gap-2 md:gap-4 items-center">
@@ -110,23 +109,25 @@ const FullGame = () => {
             ))}
             {filteredGames.length === 0 && (
               <div className="col-span-full py-2 md:py-20 text-center">
-                <p className="text-slate-500 dark:text-slate-400 text-xs md:text-sm">No games found matching your criteria.</p>
+                <p className="text-slate-500 dark:text-slate-400 text-xs md:text-sm">
+                  No games found matching your criteria.
+                </p>
               </div>
             )}
           </div>
         </section>
       ) : (
-
         <div className="space-y-2 animate-in fade-in duration-500">
-          {groupedGames && Object.entries(groupedGames).map(([category, games]) => (
-            <CategoryRow
-              key={category}
-              title={category}
-              categorySlug={category.toLowerCase()}
-              games={games.slice(0, 8)}
-              totalGames={games.length}
-            />
-          ))}
+          {groupedGames &&
+            Object.entries(groupedGames).map(([category, games]) => (
+              <CategoryRow
+                key={category}
+                title={category}
+                categorySlug={category.toLowerCase()}
+                games={games.slice(0, 8)}
+                totalGames={games.length}
+              />
+            ))}
         </div>
       )}
     </main>

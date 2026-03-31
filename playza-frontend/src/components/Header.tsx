@@ -30,7 +30,7 @@ const Header = () => {
 
   return (
     <header className="sticky top-0 z-50 glass border-b border-primary/20 w-full">
-      <div className="w-full max-w-400 mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
+      <div className="w-full max-w-400 mx-auto px-1.5 md:px-4 h-16 flex items-center justify-between">
         <div className="flex items-center gap-2 md:gap-12">
           <div className="flex items-center gap-2">
             <Link to="/">

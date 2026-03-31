@@ -1,61 +1,57 @@
 import React from "react";
-import { MdClose, MdEmojiEvents, MdLock, MdCheckCircle } from "react-icons/md";
+import { 
+  MdClose, 
+  MdLock, 
+  MdCheckCircle, 
+  MdMilitaryTech 
+} from "react-icons/md";
 
 interface Badge {
   id: string;
   name: string;
-  count: number;
-  total: number;
+  reward: number;
   unlocked: boolean;
+  category: "Identity" | "Gaming" | "Social" | "Rank";
   icon: React.ReactNode;
   description: string;
 }
 
 const badges: Badge[] = [
   {
-    id: "1",
-    name: "Pro Gamer",
-    count: 10,
-    total: 10,
-    unlocked: true,
-    icon: <MdEmojiEvents className="text-yellow-500 text-xl md:text-3xl" />,
-    description: "Win 10 professional matches.",
-  },
-  {
-    id: "2",
-    name: "Ticket Master",
-    count: 150,
-    total: 500,
+    id: "bronze",
+    name: "Iron Vanguard",
+    reward: 500,
     unlocked: false,
-    icon: <MdEmojiEvents className="text-blue-500 text-xl md:text-3xl" />,
-    description: "Earn 500 tickets in total.",
+    category: "Rank",
+    icon: <MdMilitaryTech className="text-amber-700 text-2xl md:text-3xl" />,
+    description: "The beginning of greatness. Reach the Iron Rank to establish your name in the Arena.",
   },
   {
-    id: "3",
-    name: "Unstoppable",
-    count: 5,
-    total: 10,
+    id: "silver",
+    name: "Steel Guardian",
+    reward: 3000,
     unlocked: false,
-    icon: <MdEmojiEvents className="text-red-500 text-xl md:text-3xl" />,
-    description: "Get a 10-match win streak.",
+    category: "Rank",
+    icon: <MdMilitaryTech className="text-slate-400 text-2xl md:text-3xl" />,
+    description: "Proving your consistency. Reach Steel Rank by conquering the mid-tier leaderboards.",
   },
   {
-    id: "4",
-    name: "Social Butterfly",
-    count: 50,
-    total: 50,
-    unlocked: true,
-    icon: <MdEmojiEvents className="text-purple-500 text-xl md:text-3xl" />,
-    description: "Refer 50 friends to the platform.",
-  },
-  {
-    id: "5",
-    name: "High Roller",
-    count: 10000,
-    total: 50000,
+    id: "gold",
+    name: "Aurelian Hero",
+    reward: 20000,
     unlocked: false,
-    icon: <MdEmojiEvents className="text-emerald-500 text-xl md:text-3xl" />,
-    description: "Wager a total of 50,000 in games.",
+    category: "Rank",
+    icon: <MdMilitaryTech className="text-yellow-400 text-2xl md:text-3xl" />,
+    description: "A mark of true skill. Reach Gold Rank and join the elite upper echelons of Playza.",
+  },
+  {
+    id: "platinum",
+    name: "Ascended Master",
+    reward: 100000,
+    unlocked: false,
+    category: "Rank",
+    icon: <MdMilitaryTech className="text-blue-300 text-2xl md:text-3xl" />,
+    description: "True legendary status. Reach Platinum Rank to become a god among players.",
   },
 ];
 
@@ -82,70 +78,92 @@ const BadgeModal: React.FC<BadgeModalProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 md:p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 md:p-4 animate-in fade-in duration-300">
       <div 
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm" 
+        className="absolute inset-0 bg-black/90 backdrop-blur-xl" 
         onClick={onClose}
-      ></div>
-      <div className="glass-card w-full max-w-lg rounded-xl overflow-hidden relative z-10 animate-in fade-in zoom-in duration-300">
+      >
+        <div className="absolute top-0 left-0 w-full h-full bg-linear-to-b from-primary/10 to-transparent"></div>
+      </div>
+      <div className="glass-card w-full max-w-xl rounded-[2rem] overflow-hidden relative z-10 animate-in zoom-in-95 duration-500 border-primary/20 shadow-[0_0_80px_-20px_rgba(var(--primary),0.3)]">
+        <style>
+          {`
+            .hide-scrollbar::-webkit-scrollbar {
+              display: none;
+            }
+            .hide-scrollbar {
+              -ms-overflow-style: none;
+              scrollbar-width: none;
+            }
+          `}
+        </style>
         {/* Header */}
-        <div className="p-2 md:p-6 border-b border-slate-200 dark:border-white/10 flex items-center justify-between bg-primary/5">
-          <div>
-            <h2 className="text-base md:text-xl font-bold text-slate-900 dark:text-white">Platform Badges</h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Unlock these to showcase your achievements</p>
+        <div className="p-5 md:p-8 border-b border-white/5 flex items-center justify-between">
+          <div className="space-y-1">
+            <div className="inline-flex items-center gap-2 px-2 py-0.5 bg-primary/10 rounded-full border border-primary/20 mb-1">
+               <MdMilitaryTech className="text-primary text-[10px]" />
+               <span className="text-[8px] text-primary font-black uppercase tracking-[0.2em] leading-none">Prestige System</span>
+            </div>
+            <h2 className="text-xl md:text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter italic leading-none">
+              Legacy <span className="text-primary">Ranks</span>
+            </h2>
+            <p className="text-[9px] md:text-[11px] text-slate-500 font-bold uppercase tracking-widest opacity-60">Climb the hierarchy to unlock legendary PZA rewards</p>
           </div>
           <button 
             onClick={onClose}
-            className="p-2 hover:bg-white/10 rounded-full transition-colors"
+            className="size-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all hover:scale-110 active:scale-95 group border border-white/5"
           >
-            <MdClose className="text-lg md:text-2xl text-slate-500" />
+            <MdClose className="text-xl text-slate-500 group-hover:text-white transition-colors" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-2 md:p-6 max-h-[60vh] overflow-y-auto space-y-4 custom-scrollbar scrollbar-hide">
-          {badges.map((badge) => (
+        <div className="p-4 md:p-8 space-y-3 max-h-[60vh] overflow-y-auto hide-scrollbar">
+          {badges.map((badge, idx) => (
             <div 
               key={badge.id}
-              className={`p-4 rounded-2xl border flex items-center gap-4 transition-all ${
+              className={`p-4 md:p-6 rounded-[1.5rem] border relative overflow-hidden transition-all duration-700 group ${
                 badge.unlocked 
-                ? "bg-primary/10 border-primary/20" 
-                : "bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/5 opacity-70"
+                ? "bg-primary/5 border-primary/30 shadow-inner" 
+                : "bg-white/2 border-white/5 opacity-80"
               }`}
             >
-              <div className="relative">
-                <div className={`size-16 rounded-xl flex items-center justify-center ${badge.unlocked ? "bg-primary/20" : "bg-slate-300/10"}`}>
-                  {badge.icon}
+              {/* Hover Glow Effect */}
+              <div className="absolute top-0 right-0 w-24 h-24 bg-primary/20 blur-[60px] rounded-full -mr-12 -mt-12 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+
+              <div className="flex flex-col md:flex-row items-center gap-4 md:gap-8 relative z-10">
+                <div className="shrink-0 relative">
+                   <div className={`size-16 md:size-24 rounded-2xl flex items-center justify-center transition-all duration-700 ${badge.unlocked ? "bg-primary/20 shadow-glow scale-105" : "bg-white/5 grayscale saturate-50 opacity-40 group-hover:opacity-100 group-hover:grayscale-0 group-hover:scale-105"}`}>
+                      {badge.icon}
+                   </div>
+                   {badge.unlocked && (
+                     <div className="absolute -top-2 -right-2 bg-primary text-white p-1.5 rounded-lg shadow-2xl shadow-primary/40 animate-bounce">
+                        <MdCheckCircle size={12} />
+                     </div>
+                   )}
+                   {!badge.unlocked && (
+                     <div className="absolute -top-2 -right-2 bg-slate-900 border border-white/10 text-slate-500 p-1.5 rounded-lg shadow-2xl opacity-60">
+                        <MdLock size={12} />
+                     </div>
+                   )}
                 </div>
-                {!badge.unlocked && (
-                  <div className="absolute -top-1 -right-1 bg-slate-800 rounded-full p-1 border border-white/10">
-                    <MdLock className="text-xs text-white/50" />
+
+                <div className="flex-1 text-center md:text-left">
+                  <div className="flex flex-col md:flex-row items-center justify-between gap-2 mb-2">
+                    <div>
+                      <span className="text-[8px] font-black uppercase text-primary tracking-[0.3em] opacity-80 mb-0.5 block leading-none">Tier 0{idx + 1}</span>
+                      <h3 className="text-lg md:text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter italic leading-none group-hover:text-primary transition-colors">
+                        {badge.name}
+                      </h3>
+                    </div>
+                    <div className="inline-flex items-center gap-1.5 bg-primary/10 border border-primary/20 px-3 py-1.5 rounded-xl">
+                       <span className="text-lg font-black text-primary italic leading-none">+{badge.reward.toLocaleString()}</span>
+                       <span className="text-[9px] font-black text-primary uppercase tracking-widest leading-none">PZA</span>
+                    </div>
                   </div>
-                )}
-                {badge.unlocked && (
-                  <div className="absolute -top-1 -right-1 bg-primary rounded-full p-0.5 border border-white/20">
-                    <MdCheckCircle className="text-xs text-white" />
-                  </div>
-                )}
-              </div>
-              
-              <div className="flex-1">
-                <div className="flex justify-between items-center mb-1">
-                  <h3 className="font-bold text-slate-900 dark:text-white">{badge.name}</h3>
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                    {badge.count} / {badge.total}
-                  </span>
-                </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mb-2 leading-tight font-medium">
-                  {badge.description}
-                </p>
-                
-                {/* Progress Bar */}
-                <div className="h-1.5 w-full bg-slate-500/10 rounded-full overflow-hidden">
-                  <div 
-                    className={`h-full transition-all duration-500 ${badge.unlocked ? "bg-primary" : "bg-primary/40"}`}
-                    style={{ width: `${(badge.count / badge.total) * 100}%` }}
-                  ></div>
+                  <p className="text-[10px] md:text-xs text-slate-500 font-bold leading-relaxed max-w-sm">
+                    {badge.description}
+                  </p>
                 </div>
               </div>
             </div>
@@ -153,10 +171,13 @@ const BadgeModal: React.FC<BadgeModalProps> = ({ isOpen, onClose }) => {
         </div>
 
         {/* Footer */}
-        <div className="p-2 md:p-6 bg-primary/5 border-t border-slate-200 dark:border-white/10 text-center">
-          <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold tracking-widest">
-            More badges coming soon!
-          </p>
+        <div className="p-5 md:p-8 bg-linear-to-t from-primary/10 to-transparent text-center border-t border-white/5">
+           <button 
+             onClick={onClose}
+             className="px-8 py-3 bg-primary text-white rounded-xl font-black uppercase tracking-[0.2em] text-[10px] md:text-xs hover:scale-105 active:scale-95 transition-all shadow-glow"
+           >
+             Close Records
+           </button>
         </div>
       </div>
     </div>

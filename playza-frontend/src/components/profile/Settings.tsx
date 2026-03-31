@@ -152,7 +152,10 @@ const Settings = () => {
   return (
     <>
       {showAddMethod && (
-        <AddPaymentMethodModal onClose={() => setShowAddMethod(false)} />
+        <AddPaymentMethodModal 
+          onClose={() => setShowAddMethod(false)} 
+          onSuccess={() => setHasKudaAccount(true)}
+        />
       )}
 
       <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-4xl">
@@ -441,7 +444,7 @@ const Settings = () => {
         </section>
 
         {/* ── Financial Methods ── */}
-        <section className="space-y-3">
+        <section id="financial-methods" className="space-y-3">
           <div className="flex items-center gap-2 md:gap-3 mb-3">
             <div className="size-10 rounded-2xl bg-secondary/10 dark:bg-secondary/20 flex items-center justify-center text-secondary text-base md:text-xl shadow-inner">
               <MdPayments />
@@ -451,69 +454,79 @@ const Settings = () => {
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-6">
-            {/* Existing method */}
-            {hasKudaAccount && (
-              <div className="bg-white dark:bg-white/5 p-2 md:p-8 rounded-xl border border-slate-200 dark:border-white/5 space-y-6 group hover:border-primary/20 transition-all shadow-xl relative overflow-hidden animate-in zoom-in duration-300">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">
-                      Primary Settlement
-                    </p>
-                    <h3 className="text-slate-900 dark:text-white font-black text-sm md:text-lg italic tracking-tighter">
-                      Kuda Bank
+          <div className="space-y-3">
+            {[
+              {
+                id: "zenith",
+                bankName: "Zenith Bank PLC",
+                accountNumber: "2284 **** 8841",
+                logo: "https://lh3.googleusercontent.com/aida-public/AB6AXuAxuRGEeXDIAhTZaRM5cIUhBBwMLqQLItgWx2Ps7uw78Sk2druQ6AnGFk2zttkm1xHbuuxq3rjnIH9NXr5DyLEANUZ_EVccv2xRf14eqXzqRM9M2sd58HOUFTGkSt304ko0OOSm2A4u4gNErVoIXhglSEFG5jxc6aFjYuqyfD2mcYTHvWNxBE83qodOpdT4nzMlLaaqRYGM7iM2hlMd62R7W_UuzdBAdtZvCsmfpf86dvBY_SpYksA4Dn1s5aws_d4QqR-ez-oa6myP",
+                isPrimary: !hasKudaAccount,
+                exists: true
+              },
+              {
+                id: "kuda",
+                bankName: "Kuda Bank",
+                accountNumber: "5501 **** 9920",
+                logo: "https://brandlogos.net/wp-content/uploads/2022/05/kuda_bank-logo-brandlogo.net_.png",
+                isPrimary: hasKudaAccount,
+                exists: hasKudaAccount
+              }
+            ].filter(acc => acc.exists).map((acc) => (
+              <div 
+                key={acc.id}
+                className={`bg-white dark:bg-white/5 p-4 rounded-xl border flex items-center gap-4 group transition-all shadow-xl relative overflow-hidden ${acc.isPrimary ? 'border-primary/30 shadow-primary/5' : 'border-slate-200 dark:border-white/5'}`}
+              >
+                <div className="size-12 rounded-xl bg-white flex items-center justify-center p-2 shadow-inner shrink-0">
+                  <img alt={acc.bankName} className="w-full h-full object-contain" src={acc.logo} />
+                </div>
+                
+                <div className="flex-1 min-w-0">
+                   <div className="flex items-center gap-2">
+                    <h3 className="text-slate-900 dark:text-white font-black text-sm md:text-base italic tracking-tight">
+                      {acc.bankName}
                     </h3>
+                    {acc.isPrimary && (
+                      <span className="bg-primary/10 text-primary text-[8px] px-2 py-0.5 rounded font-black uppercase tracking-widest italic border border-primary/20">
+                        Primary
+                      </span>
+                    )}
                   </div>
-                  <div className="flex flex-col items-end gap-2">
-                    <div className="bg-secondary/10 px-2 md:px-3 py-1 rounded-full text-[10px] font-black uppercase text-secondary tracking-widest">
-                      Active
-                    </div>
-                    <button
-                      onClick={() => setHasKudaAccount(false)}
-                      className="size-8 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500 hover:bg-red-500 hover:text-white transition-all group/del shadow-sm"
-                      title="Remove Account"
-                    >
-                      <MdDelete className="text-sm md:text-lg group-hover/del:scale-110 transition-transform" />
-                    </button>
-                  </div>
+                  <p className="text-slate-400 font-bold text-[10px] tracking-[0.2em] mt-0.5">
+                    {acc.accountNumber}
+                  </p>
                 </div>
 
-                <div className="space-y-4">
-                  <div className="p-2 md:p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/5 shadow-inner">
-                    <p className="text-xs md:text-base text-slate-500 text-[9px] font-black uppercase tracking-widest mb-1">
-                      Account Number
-                    </p>
-                    <p className="text-xs md:text-base text-slate-900 dark:text-white font-black tracking-[0.2em]">
-                      **** **** 8829
-                    </p>
-                  </div>
-                  <div className="p-2 md:p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/5 shadow-inner">
-                    <p className="text-xs md:text-base text-slate-500 text-[9px] font-black uppercase tracking-widest mb-1">
-                      Legal Name
-                    </p>
-                    <p className="text-xs md:text-base text-slate-900 dark:text-white font-black uppercase italic">
-                      {user?.first_name} {user?.last_name}
-                    </p>
-                  </div>
+                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {!acc.isPrimary && (
+                    <button 
+                      onClick={() => setHasKudaAccount(acc.id === 'kuda')}
+                      className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary/10 transition-colors"
+                    >
+                      Make Primary
+                    </button>
+                  )}
+                  <button
+                    onClick={() => acc.id === 'kuda' ? setHasKudaAccount(false) : null}
+                    className="size-8 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center transition-all"
+                    title="Remove Account"
+                  >
+                    <MdDelete className="text-lg" />
+                  </button>
                 </div>
               </div>
-            )}
+            ))}
 
             {/* Add new method card */}
-            <div
+            <button
               onClick={() => setShowAddMethod(true)}
-              className="border-2 border-dashed border-slate-200 dark:border-white/10 rounded-xl flex flex-col items-center justify-center p-2 md:p-8 text-center group cursor-pointer hover:border-primary/40 hover:bg-primary/5 transition-all duration-500"
+              className="w-full border-2 border-dashed border-slate-200 dark:border-white/10 rounded-xl flex items-center justify-center p-4 gap-3 text-slate-500 hover:border-primary/40 hover:bg-primary/5 hover:text-primary transition-all duration-300"
             >
-              <div className="size-16 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center mb-4 group-hover:scale-110 group-hover:bg-primary/20 group-hover:text-primary transition-all text-lg md:text-2xl text-slate-500 shadow-inner">
-                <MdAdd />
-              </div>
-              <h4 className="text-slate-900 dark:text-white font-black italic text-sm md:text-lg uppercase tracking-tighter mb-1">
-                New Method
-              </h4>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-bold max-w-45">
-                Add a bank account or digital wallet to receive winnings.
-              </p>
-            </div>
+              <MdAdd className="text-xl" />
+              <span className="font-black italic text-xs uppercase tracking-widest">
+                Add New Method
+              </span>
+            </button>
           </div>
         </section>
 

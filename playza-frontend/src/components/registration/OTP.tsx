@@ -164,7 +164,7 @@ const OTP = ({ onClick }: OtpProps) => {
     : "your email";
 
   return (
-    <div className="w-full">
+    <div className="w-full max-w-xl">
       <div className="glass-card p-4 md:p-10 rounded-2xl shadow-xl relative overflow-hidden border border-slate-200 dark:border-white/10 text-center">
         {/* Decorative accent line */}
         <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-transparent via-primary to-transparent opacity-50"></div>
