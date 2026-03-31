@@ -13,6 +13,7 @@ import { ZASymbol } from "./currency/ZASymbol";
 import { useAuth } from "@/context/auth";
 import { type RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 import { supabase } from "@/config/supabase";
+import { timeAgo } from "@/utils/time-ago";
 
 interface ChessRoomRow {
   id: string;
@@ -202,9 +203,12 @@ const H2HNotification = () => {
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-black text-xs text-slate-900 dark:text-white uppercase truncate">
+                    <div className="flex items-center justify-between mb-0.5">
+                      <span className="font-black text-xs text-slate-900 dark:text-white uppercase truncate max-w-32">
                         {room.host.username}
+                      </span>
+                      <span className="text-[7px] font-black text-primary/60 uppercase tracking-widest whitespace-nowrap bg-primary/5 px-2 py-0.5 rounded-full border border-primary/10">
+                        {timeAgo(room.created_at)}
                       </span>
                     </div>
                     <div className="flex items-center gap-1.5 md:gap-2">
