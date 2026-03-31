@@ -56,237 +56,277 @@ async function handleGameOver(roomId: string, winnerId: string | null, stake: nu
   }
 }
 
+export async function listWaitingRooms() {
+  const { data, error } = await supabaseAdmin
+    .from("chess_rooms")
+    .select(
+      `
+      id, code, stake, created_at, host_id,
+      host:users!host_id(id, username, avatar_url)
+    `,
+    )
+    .eq("status", "waiting")
+    .order("created_at", { ascending: false })
+    .limit(20);
+
+  if (error) throw error;
+  return data;
+}
+
 export async function createChessRoom(userId: string, stakeValue: number) {
-  const code = generateRoomCode()
-  const stake = Number(stakeValue)
+  const code = generateRoomCode();
+  const stake = Number(stakeValue);
 
   const { data, error } = await supabaseAdmin
-    .from('chess_rooms')
+    .from("chess_rooms")
     .insert({
       code,
       host_id: userId,
       stake,
-      status: 'waiting',
+      status: "waiting",
       board_state: null,
       current_turn: null,
     })
     .select()
-    .single()
+    .single();
 
-  if (error) throw error
+  if (error) throw error;
 
   if (stake > 0) {
     const { data: wallet } = await supabaseAdmin
-      .from('wallets')
-      .select('balance')
-      .eq('user_id', userId)
-      .single()
+      .from("wallets")
+      .select("balance")
+      .eq("user_id", userId)
+      .single();
 
-    if (!wallet || wallet.balance < stake) throw new Error('Insufficient balance to create this game')
+    if (!wallet || wallet.balance < stake)
+      throw new Error("Insufficient balance to create this game");
 
-    await supabaseAdmin.rpc('decrement_wallet_balance', {
+    await supabaseAdmin.rpc("decrement_wallet_balance", {
       p_user_id: userId,
       p_amount: stake,
-    })
+    });
 
-    await supabaseAdmin.from('transactions').insert({
+    await supabaseAdmin.from("transactions").insert({
       user_id: userId,
-      type: 'game_entry',
+      type: "game_entry",
       amount: stake,
-      status: 'successful',
+      status: "successful",
       reference: `PLZ-CHESS-${data.id}`,
-    })
+    });
   }
 
-  return { room_code: code, room_id: data.id, stake, status: 'waiting' }
+  return { room_code: code, room_id: data.id, stake, status: "waiting" };
 }
 
 export async function joinChessRoom(userId: string, code: string) {
   const { data: room, error } = await supabaseAdmin
-    .from('chess_rooms')
-    .select('*')
-    .eq('code', code.toUpperCase())
-    .single()
+    .from("chess_rooms")
+    .select("*")
+    .eq("code", code.toUpperCase())
+    .single();
 
-  if (error || !room) throw new Error('Room not found')
-  if (room.status !== 'waiting') throw new Error('Room is no longer available')
-  if (room.host_id === userId) throw new Error('You cannot join your own room')
+  if (error || !room) throw new Error("Room not found");
+  if (room.status !== "waiting") throw new Error("Room is no longer available");
+  if (room.host_id === userId) throw new Error("You cannot join your own room");
 
   if (room.stake > 0) {
     const { data: wallet } = await supabaseAdmin
-      .from('wallets')
-      .select('balance')
-      .eq('user_id', userId)
-      .single()
+      .from("wallets")
+      .select("balance")
+      .eq("user_id", userId)
+      .single();
 
-    if (!wallet || wallet.balance < room.stake) throw new Error('Insufficient balance to join this game')
+    if (!wallet || wallet.balance < room.stake)
+      throw new Error("Insufficient balance to join this game");
 
-    await supabaseAdmin.rpc('decrement_wallet_balance', {
+    await supabaseAdmin.rpc("decrement_wallet_balance", {
       p_user_id: userId,
       p_amount: room.stake,
-    })
+    });
 
-    await supabaseAdmin.from('transactions').insert({
+    await supabaseAdmin.from("transactions").insert({
       user_id: userId,
-      type: 'game_entry',
+      type: "game_entry",
       amount: room.stake,
-      status: 'successful',
+      status: "successful",
       reference: `PLZ-CHESS-JOIN-${room.id}-${userId}`,
-    })
+    });
   }
 
-  const initialBoard = getInitialBoard()
+  const initialBoard = getInitialBoard();
 
   const { error: updateError } = await supabaseAdmin
-    .from('chess_rooms')
+    .from("chess_rooms")
     .update({
       guest_id: userId,
-      status: 'active',
+      status: "active",
       board_state: initialBoard,
       current_turn: room.host_id,
     })
-    .eq('id', room.id)
+    .eq("id", room.id);
 
-  if (updateError) throw updateError
+  if (updateError) throw updateError;
 
-  return { room_id: room.id, code: room.code, stake: room.stake, status: 'active', board_state: initialBoard }
+  return {
+    room_id: room.id,
+    code: room.code,
+    stake: room.stake,
+    status: "active",
+    board_state: initialBoard,
+  };
 }
 
 export async function createBotRoom(userId: string, stakeValue: number) {
-  const code = generateRoomCode()
-  const stake = Number(stakeValue)
+  const code = generateRoomCode();
+  const stake = Number(stakeValue);
 
   if (stake > 0) {
     const { data: wallet } = await supabaseAdmin
-      .from('wallets')
-      .select('balance')
-      .eq('user_id', userId)
-      .single()
+      .from("wallets")
+      .select("balance")
+      .eq("user_id", userId)
+      .single();
 
-    if (!wallet || wallet.balance < stake) throw new Error('Insufficient balance')
+    if (!wallet || wallet.balance < stake)
+      throw new Error("Insufficient balance");
 
-    await supabaseAdmin.rpc('decrement_wallet_balance', { p_user_id: userId, p_amount: stake })
+    await supabaseAdmin.rpc("decrement_wallet_balance", {
+      p_user_id: userId,
+      p_amount: stake,
+    });
   }
 
-  const initialBoard = getInitialBoard()
+  const initialBoard = getInitialBoard();
 
   const { data, error } = await supabaseAdmin
-    .from('chess_rooms')
+    .from("chess_rooms")
     .insert({
       code,
       host_id: userId,
       guest_id: null,
       stake,
-      status: 'active',
+      status: "active",
       board_state: initialBoard,
       current_turn: userId,
     })
     .select()
-    .single()
+    .single();
 
-  if (error) throw error
+  if (error) throw error;
 
-  return { room_id: data.id, code, stake, status: 'active', board_state: initialBoard }
+  return {
+    room_id: data.id,
+    code,
+    stake,
+    status: "active",
+    board_state: initialBoard,
+  };
 }
 
 export async function getRoom(roomId: string, userId: string) {
   const { data: room, error } = await supabaseAdmin
-    .from('chess_rooms')
-    .select(`
+    .from("chess_rooms")
+    .select(
+      `
       id, code, status, board_state, current_turn, stake, winner_id, created_at, host_id, guest_id,
       host:users!host_id(id, username, avatar_url),
       guest:users!guest_id(id, username, avatar_url)
-    `)
-    .eq('id', roomId)
-    .single()
+    `,
+    )
+    .eq("id", roomId)
+    .single();
 
-  if (error) throw error
-  if (!room) throw new Error('Room not found')
-  if (room.host_id !== userId && room.guest_id !== userId) throw new Error('Unauthorized access')
+  if (error) throw error;
+  if (!room) throw new Error("Room not found");
+  if (room.host_id !== userId && room.guest_id !== userId)
+    throw new Error("Unauthorized access");
 
-  return room
+  return room;
 }
 
-export async function makeMove(roomId: string, userId: string, move: { from: string; to: string; promotion?: string }) {
+export async function makeMove(
+  roomId: string,
+  userId: string,
+  move: { from: string; to: string; promotion?: string },
+) {
   const { data: room, error } = await supabaseAdmin
-    .from('chess_rooms')
-    .select('*')
-    .eq('id', roomId)
-    .single()
+    .from("chess_rooms")
+    .select("*")
+    .eq("id", roomId)
+    .single();
 
-  if (error || !room) throw new Error('Room not found')
-  if (room.status !== 'active') throw new Error('Game over')
-  if (room.current_turn !== userId) throw new Error('Waiting for opponent')
+  if (error || !room) throw new Error("Room not found");
+  if (room.status !== "active") throw new Error("Game over");
+  if (room.current_turn !== userId) throw new Error("Waiting for opponent");
 
-  const chess = new Chess(room.board_state?.fen)
-  const result = chess.move(move)
-  if (!result) throw new Error('Illegal move')
+  const chess = new Chess(room.board_state?.fen);
+  const result = chess.move(move);
+  if (!result) throw new Error("Illegal move");
 
-  const nextTurn = room.current_turn === room.host_id ? room.guest_id : room.host_id
+  const nextTurn =
+    room.current_turn === room.host_id ? room.guest_id : room.host_id;
   const updatedBoard = {
     fen: chess.fen(),
     last_move: move,
-    moves: [...(room.board_state?.moves || []), result.san]
-  }
+    moves: [...(room.board_state?.moves || []), result.san],
+  };
 
-  // Update DB 
+  // Update DB
   const { error: updateError } = await supabaseAdmin
-    .from('chess_rooms')
+    .from("chess_rooms")
     .update({
       board_state: updatedBoard,
       current_turn: nextTurn,
     })
-    .eq('id', roomId)
+    .eq("id", roomId);
 
-  if (updateError) throw updateError
+  if (updateError) throw updateError;
 
   // Check Game Over
   if (chess.isGameOver()) {
-    let winner = null
+    let winner = null;
     if (chess.isCheckmate()) {
-      winner = room.current_turn
+      winner = room.current_turn;
     }
-    await handleGameOver(roomId, winner, room.stake)
-    return { move, next_turn: null, status: 'finished' }
+    await handleGameOver(roomId, winner, room.stake);
+    return { move, next_turn: null, status: "finished" };
   }
 
-  // Handle Bot Turn (guest_id is null for bot matches)
-  if (nextTurn === null && room.status === 'active') {
-    const botMove = getBotMove(chess.fen())
+  if (nextTurn === null && room.status === "active") {
+    const botMove = getBotMove(chess.fen());
     if (botMove) {
-      await new Promise(resolve => setTimeout(resolve, 800))
-      return makeMove(roomId, null as any, botMove)
+      await new Promise((resolve) => setTimeout(resolve, 800));
+      return makeMove(roomId, null as any, botMove);
     }
   }
 
-  return { move, next_turn: nextTurn }
+  return { move, next_turn: nextTurn };
 }
 
 export async function findQuickMatch(userId: string, stakeValue: number) {
-  const stake = Number(stakeValue)
+  const stake = Number(stakeValue);
 
   // 1. Try to find an existing waiting room with the same stake
   const { data: rooms, error: searchError } = await supabaseAdmin
-    .from('chess_rooms')
-    .select('id, code, stake, status, host_id')
-    .eq('status', 'waiting')
-    .eq('stake', stake)
-    .neq('host_id', userId) // Don't match with self
-    .order('created_at', { ascending: true })
-    .limit(1)
+    .from("chess_rooms")
+    .select("id, code, stake, status, host_id")
+    .eq("status", "waiting")
+    .eq("stake", stake)
+    .neq("host_id", userId) // Don't match with self
+    .order("created_at", { ascending: true })
+    .limit(1);
 
   if (rooms && rooms.length > 0) {
-    const room = rooms[0]
+    const room = rooms[0];
     try {
-      return await joinChessRoom(userId, room.code)
+      return await joinChessRoom(userId, room.code);
     } catch (e) {
-      // If joining fails (e.g. someone else joined first), fall through to create
-      console.error('Quick Match join failed:', e)
+      console.error("Quick Match join failed:", e);
     }
   }
 
-  // 2. If no room found or join failed, create a new one
-  return await createChessRoom(userId, stake)
+  return await createChessRoom(userId, stake);
 }
 
 export async function resignGame(roomId: string, userId: string) {

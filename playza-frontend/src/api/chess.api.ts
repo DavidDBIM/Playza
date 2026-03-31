@@ -34,3 +34,8 @@ export const findQuickMatch = async (stake: number) => {
   const { data } = await axiosInstance.post("/chess/quick", { stake });
   return data.data;
 };
+
+export const getWaitingRooms = async () => {
+  const { data } = await axiosInstance.get("/chess/waiting");
+  return data.data;
+};
