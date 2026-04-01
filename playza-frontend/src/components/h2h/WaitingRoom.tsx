@@ -29,7 +29,7 @@ const WaitingRoom = ({ room }: WaitingRoomProps) => {
   };
 
   return (
-    <div className="w-full min-h-[75vh] md:min-h-[85vh] flex flex-col items-center justify-center animate-in fade-in zoom-in duration-700 relative px-4 overflow-hidden py-8 md:py-0">
+    <div className="w-full min-h-[75vh] md:min-h-[85vh] flex flex-col items-center justify-center animate-in fade-in zoom-in duration-700 relative overflow-hidden py-8 md:py-0">
       {/* Dynamic Background Effects */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(var(--primary),0.05),transparent_70%)] pointer-events-none"></div>
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-200 h-200 bg-primary/5 rounded-full blur-[120px] animate-pulse -z-10"></div>

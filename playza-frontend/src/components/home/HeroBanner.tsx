@@ -6,7 +6,8 @@ import {
   Trophy,
   ArrowRight,
   Users,
-  Zap
+  Zap,
+  Sparkles
 } from "lucide-react";
 import { Link } from "react-router";
 import { games } from "@/data/games";
@@ -15,6 +16,19 @@ const tournamentGame = games.find((g) => g.mode === "Tournament") || games[1];
 const newReleaseGame = games.find((g) => g.badge === "NEW" || g.category === "Arcade") || games[1];
 
 const slides = [
+  {
+    id: 5,
+    tag: "WELCOME",
+    title: "WELCOME TO PLAYZA",
+    subtitle: "THE ULTIMATE GAMING HUB",
+    desc: "Join thousands of players in the most rewarding arcade experience.",
+    btn: "Join Now",
+    link: "/registration",
+    icon: <Sparkles size={14} />,
+    color: "from-amber-500 to-yellow-900",
+    accent: "bg-amber-500",
+    image: "/hero.png"
+  },
   {
     id: 1,
     tag: "PLATFORM",

@@ -310,58 +310,57 @@ const Loyalty = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 md:gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2 md:gap-4">
               {quests[activeTab]?.map((quest, idx) => (
                 <div
                   key={idx}
-                  className={`glass-card p-6 rounded-3xl border transition-all duration-500 flex flex-col justify-between h-48 relative group ${
+                  className={`glass-card p-2 md:p-4 rounded-xl md:rounded-xl border transition-all duration-500 flex flex-col justify-between h-26 md:h-32 relative group ${
                     quest.status === "completed"
                       ? "border-green-500/30 bg-green-500/5 shadow-inner opacity-80"
                       : quest.status === "active"
-                        ? "border-primary/40 bg-primary/10 shadow-2xl shadow-primary/10 hover:scale-[1.02] hover:border-primary"
+                         ? "border-primary/40 bg-primary/10 shadow-2xl shadow-primary/10 hover:scale-[1.02] hover:border-primary"
                         : "border-white/5 opacity-40 bg-slate-200/10 grayscale pointer-events-none"
                   }`}
                 >
                   <div className="flex justify-between items-start">
                     <div
-                      className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500 shadow-inner ${
+                      className={`w-8 h-8 md:w-12 md:h-12 rounded-xl flex items-center justify-center transition-all duration-500 shadow-inner ${
                         quest.status === "completed"
                           ? "bg-green-500 text-white shadow-[0_0_15px_rgba(34,197,94,0.3)]"
                           : quest.status === "active"
-                            ? "bg-primary text-white animate-pulse shadow-glow"
+                             ? "bg-primary text-white animate-pulse shadow-glow"
                             : "bg-slate-500/20 text-slate-500"
                       }`}
                     >
-                      {quest.status === "completed" ? <MdCheckCircle size={24} /> : quest.icon}
+                      {quest.status === "completed" ? <MdCheckCircle size={16} className="md:size-24" /> : quest.icon}
                     </div>
                     <div className="text-right">
-                      <div className={`text-base font-black italic tracking-tighter ${quest.status === "completed" ? "text-green-500" : "text-primary"}`}>
+                      <div className={`text-xs md:text-base font-black italic tracking-tighter ${quest.status === "completed" ? "text-green-500" : "text-primary"}`}>
                         +{quest.points.toLocaleString()}
                       </div>
-                      <div className="text-[10px] font-black uppercase opacity-60 tracking-widest leading-none">PZA</div>
+                      <div className="text-[7px] md:text-[10px] font-black uppercase opacity-60 tracking-widest leading-none">PZA</div>
                     </div>
                   </div>
                   
-                  <div className="mt-4">
-                    <h3 className="font-headline font-black text-xs md:text-sm uppercase tracking-tighter text-slate-900 dark:text-white italic leading-none mb-1 group-hover:text-primary transition-colors">
+                  <div className="mt-2 md:mt-4">
+                    <h3 className="font-headline font-black text-[9px] md:text-sm uppercase tracking-tighter text-slate-900 opacity-70 dark:text-white italic leading-none mb-0.5 md:mb-1 group-hover:text-primary transition-colors truncate">
                       {quest.name}
                     </h3>
-                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-tight opacity-70">
-                      {quest.info}
+                    <p className="text-[7px] md:text-[10px] text-primary font-bold uppercase tracking-widest leading-none md:leading-tight line-clamp-2">
+                       {quest.info}
                     </p>
                   </div>
                   
-                  <div className="mt-4 flex items-center justify-between">
-                    <span className="text-[8px] font-black uppercase bg-slate-900/10 dark:bg-white/5 px-2 py-1 rounded-lg text-slate-400">
+                  <div className="mt-2 md:mt-4 flex items-center justify-between">
+                    <span className="text-[6px] md:text-[8px] font-black uppercase bg-slate-900/10 dark:bg-white/5 px-1.5 md:px-2 py-0.5 md:py-1 rounded-lg text-slate-400">
                        {activeTab} • #{idx + 1}
                     </span>
-                    {quest.status === "locked" && <MdLock className="text-slate-500" size={14} />}
+                    {quest.status === "locked" && <MdLock className="text-slate-500" size={10} />}
                   </div>
 
-                  {/* Lock Indicator Overlay for non-activeable tasks */}
                   {activeTab !== "Season 1" && quest.status === "active" && (
-                    <div className="absolute top-2 right-2 flex items-center gap-1 text-[8px] font-black uppercase text-amber-500/60">
-                       Future Season <MdLock size={10} />
+                    <div className="absolute top-1 md:top-2 right-1 md:right-2 flex items-center gap-1 text-[6px] md:text-[8px] font-black uppercase text-amber-500/60">
+                       <MdLock size={8} />
                     </div>
                   )}
                 </div>
