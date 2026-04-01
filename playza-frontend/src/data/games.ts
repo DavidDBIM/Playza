@@ -21,8 +21,8 @@ export const games: Game[] = [
   },
   {
     id: "2",
-    title: "Reaction Rush",
-    slug: "reaction-rush",
+    title: "Speed Battle",
+    slug: "speed-battle",
     thumbnail: "/games/reaction-rush.jpeg",
     category: "Arcade",
     mode: "Quick Match",
@@ -363,8 +363,8 @@ export const games: Game[] = [
   },
   {
     id: "21",
-    title: "Word Arena",
-    slug: "word-arena",
+    title: "Word Scramble",
+    slug: "word-scramble",
     thumbnail: "/games/word-arena.jpeg",
     category: "Puzzle",
     mode: "1v1",

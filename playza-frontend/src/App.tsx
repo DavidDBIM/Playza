@@ -13,6 +13,8 @@ import Game from "./pages/Game";
 import MatchSession from "./pages/MatchSession";
 import GamePlay from "./pages/GamePlay";
 import H2HZone from "./pages/H2HZone";
+import SpeedBattle from "./pages/SpeedBattle";
+import WordScramble from "./pages/WordScramble";
 import Registration from "./pages/Registration";
 
 import Wallet from "./pages/Wallet";
@@ -56,7 +58,9 @@ const AppContent = () => {
   const isGameSessionPage = pathname.includes("/session");
   const isGamePlayPage =
     pathname.includes("/play") ||
-    (pathname.startsWith("/h2h") && pathname !== "/h2h");
+    (pathname.startsWith("/h2h") && pathname !== "/h2h") ||
+    pathname.startsWith("/speed-battle/") ||
+    pathname.startsWith("/word-scramble/");
 
   const isRegistrationPage = pathname.includes("/registration");
 
@@ -152,6 +156,10 @@ const AppContent = () => {
             <Route path="/games/:id/play" element={<GamePlay />} />
             <Route path="/h2h" element={<H2HZone />} />
             <Route path="/h2h/:roomId" element={<H2HZone />} />
+            <Route path="/speed-battle" element={<SpeedBattle />} />
+            <Route path="/speed-battle/:roomId" element={<SpeedBattle />} />
+            <Route path="/word-scramble" element={<WordScramble />} />
+            <Route path="/word-scramble/:roomId" element={<WordScramble />} />
             <Route path="/registration" element={<Registration />} />
 
             <Route path="/wallet/transactions" element={<Transactions />} />
