@@ -14,7 +14,7 @@ import {
 
 import { useAuth } from "@/context/auth";
 import { ZASymbol } from "./currency/ZASymbol";
-import H2HNotification from "./H2HNotification";
+import H2HNotification from "./h2h/H2HNotification";
 
 const Header = () => {
   const { user, logout, isLoading } = useAuth();
