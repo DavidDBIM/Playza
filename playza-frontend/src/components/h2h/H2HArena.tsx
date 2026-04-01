@@ -432,7 +432,7 @@ const H2HArena = ({ room, user }: H2HArenaProps) => {
         <div className="flex items-center gap-2 relative flex-1 min-w-0">
           <div
             className={`shrink-0 w-8.5 h-8.5 rounded-xl flex items-center justify-center font-black text-sm text-white border-2 bg-linear-to-br from-slate-500 to-slate-800 md:w-10.5 md:h-10.5 md:text-base lg:w-11.5 lg:h-11.5 lg:text-lg overflow-hidden
-            ${(hostIsWhite && myTurn) || (!hostIsWhite && oppTurn) ? "border-indigo-400 shadow-[0_0_12px_rgba(99,102,241,0.4)]" : "border-white/10"}`}
+            ${(hostIsWhite && myTurn) || (!hostIsWhite && oppTurn) ? "border-indigo-400" : "border-white/10"}`}
           >
             {room.host?.avatar_url ? (
               <img
@@ -489,7 +489,7 @@ const H2HArena = ({ room, user }: H2HArenaProps) => {
           </div>
           <div
             className={`shrink-0 w-8.5 h-8.5 rounded-xl flex items-center justify-center font-black text-sm text-white border-2 bg-linear-to-br from-slate-900 to-slate-800 md:w-10.5 md:h-10.5 md:text-base lg:w-11.5 lg:h-11.5 lg:text-lg overflow-hidden
-            ${(!hostIsWhite && myTurn) || (hostIsWhite && oppTurn) ? "border-indigo-400 shadow-[0_0_12px_rgba(99,102,241,0.4)]" : "border-white/10"}`}
+            ${(!hostIsWhite && myTurn) || (hostIsWhite && oppTurn) ? "border-indigo-400" : "border-white/10"}`}
           >
             {room.guest?.avatar_url ? (
               <img
@@ -555,13 +555,13 @@ const H2HArena = ({ room, user }: H2HArenaProps) => {
       {/* ── Chess Board ── */}
       <div
         className={`relative w-full aspect-square rounded-2xl overflow-hidden bg-slate-100 dark:bg-white/5 border md:col-start-1 md:row-start-3
-        ${inCheck && myTurn ? "border-red-500/60 shadow-[0_0_30px_rgba(239,68,68,0.1)]" : "border-slate-200 dark:border-indigo-500/20"}`}
+        ${inCheck && myTurn ? "border-red-500/60" : "border-slate-200 dark:border-indigo-500/20"}`}
       >
         <div className="absolute inset-0 pointer-events-none z-0 bg-[radial-gradient(ellipse_at_center,rgba(99,102,241,0.12),transparent_70%)]" />
 
         {/* Check overlay badge on board */}
         {inCheck && (
-          <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5 bg-red-500/90 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-lg tracking-wider uppercase backdrop-blur-sm pointer-events-none">
+          <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5 bg-red-500/90 text-white text-[10px] font-black px-3 py-1 rounded-full tracking-wider uppercase backdrop-blur-sm pointer-events-none">
             <AlertTriangle size={11} />
             CHECK!
           </div>
@@ -581,7 +581,6 @@ const H2HArena = ({ room, user }: H2HArenaProps) => {
               lightSquareStyle: { backgroundColor: "#334155" },
               boardStyle: {
                 borderRadius: "8px",
-                boxShadow: "0 0 60px rgba(99,102,241,0.15)",
               },
             }}
           />
@@ -606,7 +605,7 @@ const H2HArena = ({ room, user }: H2HArenaProps) => {
       {/* ─── DEDUCTION CONFIRMATION (Both Players) ─── */}
       {showDeduction && !game.isGameOver() && (
         <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-300">
-          <div className="w-full max-w-md bg-white dark:bg-slate-900 border-2 border-primary/30 rounded-3xl p-8 shadow-2xl space-y-8 animate-in zoom-in-95 duration-300">
+          <div className="w-full max-w-md bg-white dark:bg-slate-900 border-2 border-primary/30 rounded-3xl p-8 space-y-8 animate-in zoom-in-95 duration-300">
             <div className="flex flex-col items-center text-center space-y-4">
               <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
                 <ShieldAlert className="text-primary w-12 h-12" />
@@ -637,7 +636,7 @@ const H2HArena = ({ room, user }: H2HArenaProps) => {
 
             <button 
               onClick={() => { setShowDeduction(false); setShowRules(true); }}
-              className="w-full py-4 bg-primary text-slate-950 rounded-xl font-black uppercase text-[10px] tracking-[0.2em] hover:scale-105 active:scale-95 shadow-xl shadow-primary/20 transition-all flex items-center justify-center gap-2"
+              className="w-full py-4 bg-primary text-slate-950 rounded-xl font-black uppercase text-[10px] tracking-[0.2em] transition-all flex items-center justify-center gap-2"
             >
               Continue to Battle
             </button>
@@ -647,7 +646,7 @@ const H2HArena = ({ room, user }: H2HArenaProps) => {
 
       {showRules && (
         <div className="fixed inset-0 z-100 flex items-center justify-center p-4 md:p-8 bg-slate-950/60 backdrop-blur-md animate-in fade-in duration-500">
-          <div className="w-full max-w-xl bg-white dark:bg-slate-950 border-4 border-primary rounded-3xl p-6 md:p-10 shadow-3xl transform animate-in zoom-in-95 duration-500 relative overflow-hidden">
+          <div className="w-full max-w-xl bg-white dark:bg-slate-950 border-4 border-primary rounded-3xl p-6 md:p-10 transform animate-in zoom-in-95 duration-500 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
             
             <div className="relative z-10 space-y-6">
@@ -687,7 +686,7 @@ const H2HArena = ({ room, user }: H2HArenaProps) => {
 
               <button
                 onClick={() => setShowRules(false)}
-                className="w-full bg-primary text-white font-headline font-black py-4 md:py-6 rounded-2xl text-lg md:text-2xl tracking-[0.2em] transition-all hover:scale-[1.02] active:scale-95 shadow-2xl shadow-primary/30 uppercase italic"
+                className="w-full bg-primary text-white font-headline font-black py-4 md:py-6 rounded-2xl text-lg md:text-2xl tracking-[0.2em] transition-all uppercase italic"
               >
                 READY TO FIGHT
               </button>
@@ -700,7 +699,7 @@ const H2HArena = ({ room, user }: H2HArenaProps) => {
       <div className="flex flex-col gap-2 md:col-start-2 md:row-start-2 md:row-end-4 md:h-full">
         {/* Stats grid */}
         <div className="grid grid-cols-2 gap-1.5">
-          <div className="flex flex-col items-center gap-0.5 rounded-xl px-2 py-1.5 border bg-white dark:bg-white/5 border-slate-200 dark:border-white/6 shadow-sm backdrop-blur-md">
+          <div className="flex flex-col items-center gap-0.5 rounded-xl px-2 py-1.5 border bg-white dark:bg-white/5 border-slate-200 dark:border-white/6 backdrop-blur-md">
             <span className="text-[7px] font-black text-slate-400 dark:text-slate-100/40 uppercase tracking-[0.12em]">
               ENTRY FEE
             </span>
@@ -708,7 +707,7 @@ const H2HArena = ({ room, user }: H2HArenaProps) => {
               {room.stake} <ZASymbol className="w-2.25 h-2.25" />
             </span>
           </div>
-          <div className="flex flex-col items-center gap-0.5 rounded-xl px-2 py-1.5 border bg-amber-500 dark:bg-amber-500/5 border-amber-500/25 backdrop-blur-md shadow-sm">
+          <div className="flex flex-col items-center gap-0.5 rounded-xl px-2 py-1.5 border bg-amber-500 dark:bg-amber-500/5 border-amber-500/25 backdrop-blur-md">
             <span className="text-[7px] font-black text-white dark:text-amber-100/30 uppercase tracking-[0.12em]">
               PRIZE POOL
             </span>
@@ -716,7 +715,7 @@ const H2HArena = ({ room, user }: H2HArenaProps) => {
               {room.stake * 2} <ZASymbol className="w-2.25 h-2.25" />
             </span>
           </div>
-          <div className="flex flex-col items-center gap-0.5 rounded-xl px-2 py-1.5 border bg-white dark:bg-white/5 border-slate-200 dark:border-white/6 shadow-sm backdrop-blur-md">
+          <div className="flex flex-col items-center gap-0.5 rounded-xl px-2 py-1.5 border bg-white dark:bg-white/5 border-slate-200 dark:border-white/6 backdrop-blur-md">
             <span className="text-[7px] font-black text-slate-400 dark:text-slate-100/40 uppercase tracking-[0.12em]">
               MY MOVES
             </span>
@@ -724,7 +723,7 @@ const H2HArena = ({ room, user }: H2HArenaProps) => {
               {myMoveCount}
             </span>
           </div>
-          <div className="flex flex-col items-center gap-0.5 rounded-xl px-2 py-1.5 border bg-white dark:bg-white/5 border-slate-200 dark:border-white/6 shadow-sm backdrop-blur-md">
+          <div className="flex flex-col items-center gap-0.5 rounded-xl px-2 py-1.5 border bg-white dark:bg-white/5 border-slate-200 dark:border-white/6 backdrop-blur-md">
             <span className="text-[7px] font-black text-slate-400 dark:text-slate-100/40 uppercase tracking-[0.12em]">
               OPP MOVES
             </span>
@@ -735,7 +734,7 @@ const H2HArena = ({ room, user }: H2HArenaProps) => {
         </div>
 
         {/* Battle Log */}
-        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/6 rounded-xl overflow-hidden backdrop-blur-md flex flex-col flex-1 min-h-0 shadow-sm">
+        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/6 rounded-xl overflow-hidden backdrop-blur-md flex flex-col flex-1 min-h-0">
           {/* Header */}
           <div className="flex items-center justify-between gap-1.5 px-3 py-2 border-b border-slate-100 dark:border-white/5 shrink-0">
             <div className="flex items-center gap-1.5 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.12em]">
