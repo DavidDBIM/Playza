@@ -16,9 +16,9 @@ import { ZASymbol } from "@/components/currency/ZASymbol";
 import type { ChessRoom } from "@/types/chess";
 import type { UserProfile } from "@/context/auth";
 import { Maximize, Minimize } from "lucide-react";
-import H2HWinner from "./H2HWinner";
+import ChessWinner from "./ChessWinner";
 
-interface H2HArenaProps {
+interface ChessArenaProps {
   room: ChessRoom;
   user: UserProfile | null;
 }
@@ -81,7 +81,7 @@ function parseSAN(san: string) {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-const H2HArena = ({ room, user }: H2HArenaProps) => {
+const ChessArena = ({ room, user }: ChessArenaProps) => {
   const toast = useToast();
   const logEndRef = useRef<HTMLDivElement>(null);
 
@@ -589,7 +589,7 @@ const H2HArena = ({ room, user }: H2HArenaProps) => {
 
       {game.isGameOver() && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-500 scrollbar-hide">
-          <H2HWinner 
+          <ChessWinner 
             room={room} 
             user={user} 
             localWinnerId={
@@ -978,6 +978,6 @@ const H2HArena = ({ room, user }: H2HArenaProps) => {
       </div>
     </div>
   );
-};;
+};
 
-export default H2HArena;
+export default ChessArena;

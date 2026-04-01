@@ -4,14 +4,14 @@ import type { UserProfile } from '@/context/auth';
 import { Medal } from 'lucide-react';
 import { ZASymbol } from '@/components/currency/ZASymbol';
 
-interface H2HWinnerProps {
+interface ChessWinnerProps {
   room: ChessRoom;
   user: UserProfile | null;
   localWinnerId?: string | null;
   isSyncing?: boolean;
 }
 
-const H2HWinner = ({ room, user, localWinnerId, isSyncing }: H2HWinnerProps) => {
+const ChessWinner = ({ room, user, localWinnerId, isSyncing }: ChessWinnerProps) => {
   const finalWinnerId = room.winner_id || localWinnerId;
   const isWinner = finalWinnerId === user?.id;
   const isDraw = !finalWinnerId; 
@@ -106,4 +106,4 @@ const H2HWinner = ({ room, user, localWinnerId, isSyncing }: H2HWinnerProps) => 
   );
 };
 
-export default H2HWinner;
+export default ChessWinner;

@@ -35,7 +35,7 @@ export default function WordScramble() {
   const [timeLeft, setTimeLeft] = useState(15)
   const [botDifficulty, setBotDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium')
   const inputRef = useRef<HTMLInputElement>(null)
-  const timerRef = useRef<NodeJS.Timeout | null>(null)
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const roomIdResolved = roomId || room?.room_id || room?.id
 
@@ -45,7 +45,7 @@ export default function WordScramble() {
       setRoom(data)
       if (data.status === 'active' && phase === 'waiting') { setPhase('playing'); setTimeLeft(15); setTimeout(() => inputRef.current?.focus(), 100) }
       if (data.status === 'finished' && phase !== 'finished') setPhase('finished')
-    } catch (err) {
+    } catch {
       if (!isPoll) { toast.error('Failed to load room'); navigate('/word-scramble') }
     }
   }, [phase, navigate, toast])
@@ -95,7 +95,7 @@ export default function WordScramble() {
     setPhase('submitted')
     try {
       await wordScrambleApi.submitScore(roomIdResolved, finalScore, finalRoundsWon)
-    } catch (err: any) { toast.error(err.message) }
+    } catch (err) { toast.error(err instanceof Error ? err.message : 'An error occurred') }
   }
 
   function handleAnswer(e: React.FormEvent) {
@@ -113,7 +113,7 @@ export default function WordScramble() {
       navigate(`/word-scramble/${data.room_id}`, { replace: true })
       setPhase(isBot ? 'playing' : 'waiting')
       if (isBot) setTimeout(() => inputRef.current?.focus(), 300)
-    } catch (err: any) { toast.error(err.message) } finally { setLoading(false) }
+    } catch (err) { toast.error(err instanceof Error ? err.message : 'An error occurred') } finally { setLoading(false) }
   }
 
   async function handleJoin() {
@@ -125,7 +125,7 @@ export default function WordScramble() {
       navigate(`/word-scramble/${data.room_id}`, { replace: true })
       setPhase('playing')
       setTimeout(() => inputRef.current?.focus(), 300)
-    } catch (err: any) { toast.error(err.message) } finally { setLoading(false) }
+    } catch (err) { toast.error(err instanceof Error ? err.message : 'An error occurred') } finally { setLoading(false) }
   }
 
   async function handleQuickMatch() {
@@ -136,7 +136,7 @@ export default function WordScramble() {
       navigate(`/word-scramble/${data.room_id}`, { replace: true })
       setPhase(data.status === 'active' ? 'playing' : 'waiting')
       if (data.status === 'active') setTimeout(() => inputRef.current?.focus(), 300)
-    } catch (err: any) { toast.error(err.message) } finally { setLoading(false) }
+    } catch (err) { toast.error(err instanceof Error ? err.message : 'An error occurred') } finally { setLoading(false) }
   }
 
   function handleShare() {
@@ -266,7 +266,7 @@ export default function WordScramble() {
       <div className="glass-card p-6 rounded-xl border border-white/10 space-y-3 w-full max-w-sm">
         {myScore && <div className="flex justify-between text-sm"><span className="text-muted-foreground">Your rounds won</span><span className="text-primary font-black">{myScore.rounds_won}</span></div>}
         {opponentScore && <div className="flex justify-between text-sm"><span className="text-muted-foreground">{room?.is_bot ? 'Bot rounds won' : 'Opponent rounds won'}</span><span className="font-black">{opponentScore.rounds_won}</span></div>}
-        {iWon && room?.stake! > 0 && <div className="text-primary font-bold text-sm pt-2 border-t border-white/10">+₦{(room?.stake! * 2 * 0.9).toFixed(0)} credited to wallet</div>}
+        {iWon && (room?.stake ?? 0) > 0 && <div className="text-primary font-bold text-sm pt-2 border-t border-white/10">+₦{((room?.stake ?? 0) * 2 * 0.9).toFixed(0)} credited to wallet</div>}
       </div>
       <div className="flex gap-3">
         <button onClick={() => { setPhase('lobby'); setRoom(null); setCurrentRound(0); setRoundsWon(0); setScore(0); navigate('/word-scramble') }} className="bg-primary text-black font-black uppercase tracking-widest px-8 py-3 rounded-xl hover:-translate-y-0.5 transition-all">Play Again</button>

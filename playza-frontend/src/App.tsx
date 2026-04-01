@@ -13,8 +13,8 @@ import Game from "./pages/Game";
 import MatchSession from "./pages/MatchSession";
 import GamePlay from "./pages/GamePlay";
 import H2HZone from "./pages/H2HZone";
-import SpeedBattle from "./pages/SpeedBattle";
-import WordScramble from "./pages/WordScramble";
+import SpeedBattle from "./components/h2h/speed-battle/SpeedBattle";
+import WordScramble from "./components/h2h/word-scramble/WordScramble";
 import Registration from "./pages/Registration";
 
 import Wallet from "./pages/Wallet";

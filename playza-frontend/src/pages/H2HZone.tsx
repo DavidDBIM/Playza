@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router';
-import H2HLobby from '@/components/h2h/H2HLobby';
-import WaitingRoom from '@/components/h2h/WaitingRoom';
-import H2HArena from '@/components/h2h/H2HArena';
-import H2HWinner from '@/components/h2h/H2HWinner';
+import ChessLobby from '@/components/h2h/chess/ChessLobby';
+import ChessWaitingRoom from '@/components/h2h/chess/ChessWaitingRoom';
+import ChessArena from '@/components/h2h/chess/ChessArena';
+import ChessWinner from '@/components/h2h/chess/ChessWinner';
 import { createChessRoom, joinChessRoom, getChessRoom, createBotRoom, findQuickMatch } from '@/api/chess.api';
 import { useAuth } from '@/context/auth';
 import type { ChessRoom } from '@/types/chess';
@@ -122,7 +122,7 @@ const H2HZone = () => {
 
         <main className="relative z-10 transition-all duration-500">
           {!roomId ? (
-            <H2HLobby
+            <ChessLobby
               onCreate={handleCreateRoom}
               onBotCreate={handleCreateBotRoom}
               onJoin={handleJoinRoom}
@@ -149,14 +149,14 @@ const H2HZone = () => {
               {(() => {
                 switch (room.status) {
                   case "waiting":
-                    return <WaitingRoom room={room} />;
+                    return <ChessWaitingRoom room={room} />;
                   case "active":
-                    return <H2HArena key={room.id} room={room} user={user} />;
+                    return <ChessArena key={room.id} room={room} user={user} />;
                   case "finished":
-                    return <H2HWinner room={room} user={user} />;
+                    return <ChessWinner room={room} user={user} />;
                   default:
                     return (
-                      <H2HLobby
+                      <ChessLobby
                         onCreate={handleCreateRoom}
                         onBotCreate={handleCreateBotRoom}
                         onJoin={handleJoinRoom}

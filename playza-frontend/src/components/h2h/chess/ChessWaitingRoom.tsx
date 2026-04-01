@@ -8,7 +8,7 @@ interface WaitingRoomProps {
   room: ChessRoom;
 }
 
-const WaitingRoom = ({ room }: WaitingRoomProps) => {
+const ChessWaitingRoom = ({ room }: WaitingRoomProps) => {
   const toast = useToast();
   const navigate = useNavigate();
   const location = useLocation();
@@ -156,4 +156,4 @@ const WaitingRoom = ({ room }: WaitingRoomProps) => {
   );
 };
 
-export default WaitingRoom;
+export default ChessWaitingRoom;

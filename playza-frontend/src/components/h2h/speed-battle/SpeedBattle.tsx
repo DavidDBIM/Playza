@@ -3,8 +3,8 @@ import { useParams, useNavigate } from 'react-router'
 import { useAuth } from '@/context/auth'
 import { useToast } from '@/context/toast'
 import { speedBattleApi } from '@/api/speedbattle.api'
-import { ZASymbol } from '@/components/currency/ZASymbol'
-import { Share2, Zap, Bot, Trophy, Users } from 'lucide-react'
+// import { ZASymbol } from '@/components/currency/ZASymbol'
+import { Share2, Zap, Bot, Users } from "lucide-react";
 
 type Phase = 'lobby' | 'waiting' | 'countdown' | 'playing' | 'submitted' | 'finished'
 
@@ -40,7 +40,7 @@ export default function SpeedBattle() {
   const [accuracy, setAccuracy] = useState(100)
   const [botDifficulty, setBotDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium')
   const inputRef = useRef<HTMLInputElement>(null)
-  const pollRef = useRef<NodeJS.Timeout | null>(null)
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const roomIdResolved = roomId || room?.room_id || room?.id
 
@@ -50,7 +50,7 @@ export default function SpeedBattle() {
       setRoom(data)
       if (data.status === 'active' && phase === 'waiting') setPhase('countdown')
       if (data.status === 'finished' && phase !== 'finished') setPhase('finished')
-    } catch (err) {
+    } catch {
       if (!isPoll) { toast.error('Failed to load room'); navigate('/speed-battle') }
     }
   }, [phase, navigate, toast])
@@ -90,8 +90,8 @@ export default function SpeedBattle() {
     setPhase('submitted')
     try {
       await speedBattleApi.submitResult(roomIdResolved, wpm, accuracy / 100)
-    } catch (err: any) {
-      toast.error(err.message)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'An error occurred')
     }
   }
 
@@ -103,7 +103,7 @@ export default function SpeedBattle() {
       navigate(`/speed-battle/${data.room_id}`, { replace: true })
       setPhase(isBot ? 'countdown' : 'waiting')
       setCountdown(3)
-    } catch (err: any) { toast.error(err.message) } finally { setLoading(false) }
+    } catch (err) { toast.error(err instanceof Error ? err.message : 'An error occurred') } finally { setLoading(false) }
   }
 
   async function handleJoin() {
@@ -115,7 +115,7 @@ export default function SpeedBattle() {
       navigate(`/speed-battle/${data.room_id}`, { replace: true })
       setPhase('countdown')
       setCountdown(3)
-    } catch (err: any) { toast.error(err.message) } finally { setLoading(false) }
+    } catch (err) { toast.error(err instanceof Error ? err.message : 'An error occurred') } finally { setLoading(false) }
   }
 
   async function handleQuickMatch() {
@@ -126,7 +126,7 @@ export default function SpeedBattle() {
       navigate(`/speed-battle/${data.room_id}`, { replace: true })
       setPhase(data.status === 'active' ? 'countdown' : 'waiting')
       setCountdown(3)
-    } catch (err: any) { toast.error(err.message) } finally { setLoading(false) }
+    } catch (err) { toast.error(err instanceof Error ? err.message : 'An error occurred') } finally { setLoading(false) }
   }
 
   function handleShare() {
@@ -203,7 +203,7 @@ export default function SpeedBattle() {
       </div>
       <div className="glass-card p-8 rounded-xl border border-primary/30 space-y-4">
         <p className="text-5xl font-black tracking-[0.3em] text-primary">{room?.code}</p>
-        {room?.stake! > 0 && <p className="text-muted-foreground text-sm">Stake: <span className="text-white font-bold">₦{room?.stake?.toLocaleString()}</span></p>}
+        {(room?.stake ?? 0) > 0 && <p className="text-muted-foreground text-sm">Stake: <span className="text-white font-bold">₦{room?.stake?.toLocaleString()}</span></p>}
         <button onClick={handleShare} className="flex items-center gap-2 mx-auto bg-emerald-500 text-white font-bold px-6 py-2 rounded-xl hover:bg-emerald-600 transition-all"><Share2 className="w-4 h-4" /> Share</button>
       </div>
       <div className="flex gap-1 items-center">
@@ -273,7 +273,7 @@ export default function SpeedBattle() {
       <div className="glass-card p-6 rounded-xl border border-white/10 space-y-3 w-full max-w-sm">
         {myResult && <div className="flex justify-between text-sm"><span className="text-muted-foreground font-bold">Your WPM</span><span className="text-primary font-black">{myResult.wpm}</span></div>}
         {opponentResult && <div className="flex justify-between text-sm"><span className="text-muted-foreground font-bold">{room?.is_bot ? 'Bot WPM' : 'Opponent WPM'}</span><span className="font-black">{opponentResult.wpm}</span></div>}
-        {iWon && room?.stake! > 0 && <div className="text-primary font-bold text-sm pt-2 border-t border-white/10">+₦{(room?.stake! * 2 * 0.9).toFixed(0)} credited to wallet</div>}
+        {iWon && (room?.stake ?? 0) > 0 && <div className="text-primary font-bold text-sm pt-2 border-t border-white/10">+₦{(room!.stake * 2 * 0.9).toFixed(0)} credited to wallet</div>}
       </div>
       <div className="flex gap-3">
         <button onClick={() => { setPhase('lobby'); setRoom(null); setTyped(''); navigate('/speed-battle') }} className="bg-primary text-black font-black uppercase tracking-widest px-8 py-3 rounded-xl hover:-translate-y-0.5 transition-all">Play Again</button>
