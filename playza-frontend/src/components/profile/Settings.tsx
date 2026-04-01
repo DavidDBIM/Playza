@@ -17,6 +17,8 @@ import { useMe } from "../../hooks/users/useMe";
 import { useUpdateMe } from "../../hooks/users/useUpdateMe";
 import { useDeactivateUser } from "../../hooks/users/useDeactivateUser";
 import { useAuth } from "../../context/auth";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import axiosInstance from "@/api/axiosInstance";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,7 +34,26 @@ const Settings = () => {
   const { updateProfile: updateAuthState } = useAuth();
 
   const [showAddMethod, setShowAddMethod] = useState(false);
-  const [hasKudaAccount, setHasKudaAccount] = useState(true);
+  const queryClient = useQueryClient();
+
+  const { data: bankAccounts = [], refetch: refetchBanks } = useQuery({
+    queryKey: ["bank-accounts"],
+    queryFn: async () => {
+      const { data } = await axiosInstance.get("/profile/bank-accounts");
+      return data.data ?? [];
+    },
+  });
+
+  const handleSetPrimary = async (accountId: string) => {
+    await axiosInstance.patch(`/profile/bank-accounts/${accountId}/primary`);
+    refetchBanks();
+  };
+
+  const handleRemoveAccount = async (accountId: string) => {
+    if (!confirm("Remove this bank account?")) return;
+    await axiosInstance.delete(`/profile/bank-accounts/${accountId}`);
+    refetchBanks();
+  };
 
   const {
     register,
@@ -153,8 +174,8 @@ const Settings = () => {
     <>
       {showAddMethod && (
         <AddPaymentMethodModal 
-          onClose={() => setShowAddMethod(false)} 
-          onSuccess={() => setHasKudaAccount(true)}
+          onClose={() => setShowAddMethod(false)}
+          onSuccess={() => refetchBanks()}
         />
       )}
 
@@ -455,38 +476,21 @@ const Settings = () => {
           </div>
 
           <div className="space-y-3">
-            {[
-              {
-                id: "zenith",
-                bankName: "Zenith Bank PLC",
-                accountNumber: "2284 **** 8841",
-                logo: "https://lh3.googleusercontent.com/aida-public/AB6AXuAxuRGEeXDIAhTZaRM5cIUhBBwMLqQLItgWx2Ps7uw78Sk2druQ6AnGFk2zttkm1xHbuuxq3rjnIH9NXr5DyLEANUZ_EVccv2xRf14eqXzqRM9M2sd58HOUFTGkSt304ko0OOSm2A4u4gNErVoIXhglSEFG5jxc6aFjYuqyfD2mcYTHvWNxBE83qodOpdT4nzMlLaaqRYGM7iM2hlMd62R7W_UuzdBAdtZvCsmfpf86dvBY_SpYksA4Dn1s5aws_d4QqR-ez-oa6myP",
-                isPrimary: !hasKudaAccount,
-                exists: true
-              },
-              {
-                id: "kuda",
-                bankName: "Kuda Bank",
-                accountNumber: "5501 **** 9920",
-                logo: "https://brandlogos.net/wp-content/uploads/2022/05/kuda_bank-logo-brandlogo.net_.png",
-                isPrimary: hasKudaAccount,
-                exists: hasKudaAccount
-              }
-            ].filter(acc => acc.exists).map((acc) => (
+            {bankAccounts.map((acc: any) => (
               <div 
                 key={acc.id}
-                className={`bg-white dark:bg-white/5 p-4 rounded-xl border flex items-center gap-4 group transition-all shadow-xl relative overflow-hidden ${acc.isPrimary ? 'border-primary/30 shadow-primary/5' : 'border-slate-200 dark:border-white/5'}`}
+                className={`bg-white dark:bg-white/5 p-4 rounded-xl border flex items-center gap-4 group transition-all shadow-xl relative overflow-hidden ${acc.is_primary ? 'border-primary/30 shadow-primary/5' : 'border-slate-200 dark:border-white/5'}`}
               >
-                <div className="size-12 rounded-xl bg-white flex items-center justify-center p-2 shadow-inner shrink-0">
-                  <img alt={acc.bankName} className="w-full h-full object-contain" src={acc.logo} />
+                <div className="size-12 rounded-xl bg-primary/10 flex items-center justify-center p-2 shadow-inner shrink-0 font-black text-primary text-xl">
+                  {acc.bank_name?.[0]}
                 </div>
                 
                 <div className="flex-1 min-w-0">
                    <div className="flex items-center gap-2">
                     <h3 className="text-slate-900 dark:text-white font-black text-sm md:text-base italic tracking-tight">
-                      {acc.bankName}
+                      {acc.bank_name}
                     </h3>
-                    {acc.isPrimary && (
+                    {acc.is_primary && (
                       <span className="bg-primary/10 text-primary text-[8px] px-2 py-0.5 rounded font-black uppercase tracking-widest italic border border-primary/20">
                         Primary
                       </span>
@@ -498,16 +502,16 @@ const Settings = () => {
                 </div>
 
                 <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  {!acc.isPrimary && (
+                  {!acc.is_primary && (
                     <button 
-                      onClick={() => setHasKudaAccount(acc.id === 'kuda')}
+                      onClick={() => handleSetPrimary(acc.id)}
                       className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary/10 transition-colors"
                     >
                       Make Primary
                     </button>
                   )}
                   <button
-                    onClick={() => acc.id === 'kuda' ? setHasKudaAccount(false) : null}
+                    onClick={() => handleRemoveAccount(acc.id)}
                     className="size-8 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center transition-all"
                     title="Remove Account"
                   >

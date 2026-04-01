@@ -105,8 +105,60 @@ export async function setPrimaryBankAccount(userId: string, accountId: string) {
 }
 
 export async function removeBankAccount(userId: string, accountId: string) {
-  const { data: account (error) throw error
-  return { message: 'Profile updated' }
+  const { data: account } = await supabaseAdmin
+    .from('bank_accounts')
+    .select('is_primary')
+    .eq('id', accountId)
+    .eq('user_id', userId)
+    .single()
+
+  if (!account) throw new Error('Account not found')
+
+  const { error } = await supabaseAdmin
+    .from('bank_accounts')
+    .delete()
+    .eq('id', accountId)
+    .eq('user_id', userId)
+
+  if (error) throw error
+
+  if (account.is_primary) {
+    const { data: remaining } = await supabaseAdmin
+      .from('bank_accounts')
+      .select('id')
+      .eq('user_id', userId)
+      .limit(1)
+      .single()
+
+    if (remaining) {
+      await supabaseAdmin
+        .from('bank_accounts')
+        .update({ is_primary: true })
+        .eq('id', remaining.id)
+    }
+  }
+
+  return { message: 'Bank account removed' }
 }
 
-ex
+export async function getGameHistory(userId: string, page = 1, limit = 20) {
+  const from = (page - 1) * limit
+  const to = from + limit - 1
+
+  const { data, error, count } = await supabaseAdmin
+    .from('game_history')
+    .select('id, game_name, score, position, winnings, status, played_at', { count: 'exact' })
+    .eq('user_id', userId)
+    .order('played_at', { ascending: false })
+    .range(from, to)
+
+  if (error) throw error
+
+  return {
+    history: data ?? [],
+    total: count ?? 0,
+    page,
+    limit,
+    total_pages: Math.ceil((count ?? 0) / limit),
+  }
+}

@@ -24,12 +24,12 @@ const Game = () => {
   const game = games.find((g) => g.slug === slug);
 
   useEffect(() => {
-    if (slug === "chess-masters") {
-      navigate("/h2h", { replace: true });
-    }
+    if (slug === "chess-masters") navigate("/h2h", { replace: true });
+    if (slug === "speed-battle") navigate("/speed-battle", { replace: true });
+    if (slug === "word-scramble") navigate("/word-scramble", { replace: true });
   }, [slug, navigate]);
 
-  if (slug === "chess-masters") return null;
+  if (slug === "chess-masters" || slug === "speed-battle" || slug === "word-scramble") return null;
 
   if (!game) {
     return (
