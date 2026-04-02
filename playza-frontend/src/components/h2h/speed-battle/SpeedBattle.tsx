@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router'
 import { useAuth } from '@/context/auth'
 import { useToast } from '@/context/toast'
 import { speedBattleApi } from '@/api/speedbattle.api'
-// import { ZASymbol } from '@/components/currency/ZASymbol'
 import { Share2, Zap, Bot, Users } from "lucide-react";
 
 type Phase = 'lobby' | 'waiting' | 'countdown' | 'playing' | 'submitted' | 'finished'

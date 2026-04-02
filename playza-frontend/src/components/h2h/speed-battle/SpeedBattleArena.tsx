@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useToast } from '@/context/toast';
 import { speedBattleApi } from '@/api/speedbattle.api';
 
-type Phase = 'prep' | 'playing' | 'submitted';
+type Phase = "prep" | "playing" | "submitted";
 
 interface SpeedBattleArenaProps {
   room: {
