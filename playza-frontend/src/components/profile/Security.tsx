@@ -14,18 +14,29 @@ import { PinModal } from "./PinModal";
 import { Link, useNavigate } from "react-router";
 import { ArrowRight } from "lucide-react";
 import { useAuth } from "@/context/auth";
+import { useSecurity } from "@/hooks/profile/useSecurity";
 
 const Security = () => {
+  const { pinStatus, changePassword, updatePreferences, isLoadingPinStatus } = useSecurity();
   const [isFingerprintEnabled, setIsFingerprintEnabled] = useState(true);
   const [isFaceIDEnabled] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
   const [pinModal, setPinModal] = useState<"change" | "create" | null>(null);
 
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
     navigate("/");
+  };
+
+  const handlePasswordUpdate = () => {
+    if (!currentPassword || !newPassword) return;
+    changePassword({ current_password: currentPassword, new_password: newPassword });
+    setCurrentPassword("");
+    setNewPassword("");
   };
 
   const activeSessions = [
@@ -97,24 +108,35 @@ const Security = () => {
                 <p className="text-slate-900 dark:text-white font-black text-xs md:text-sm italic uppercase tracking-tighter">
                   Withdrawal PIN
                 </p>
-                <p className="text-slate-500 dark:text-slate-500 text-xs font-bold max-w-sm">
-                  Required for all fund transfers and withdrawals. Never share
-                  this PIN with anyone.
-                </p>
+                <div className="flex items-center gap-2">
+                   <p className="text-slate-500 dark:text-slate-500 text-xs font-bold max-w-sm">
+                    Required for all fund transfers and withdrawals.
+                  </p>
+                  {isLoadingPinStatus ? (
+                    <div className="size-3 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                  ) : (
+                    <span className={`text-[8px] px-1.5 py-0.5 rounded font-black uppercase tracking-tighter ${pinStatus?.has_pin ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
+                      {pinStatus?.has_pin ? 'ACTIVE' : 'NOT SET'}
+                    </span>
+                  )}
+                </div>
               </div>
               <div className="flex gap-2 md:gap-3">
-                <button
-                  onClick={() => setPinModal("change")}
-                  className="h-11 px-2 md:px-6 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-xs font-black text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all uppercase tracking-widest shadow-sm"
-                >
-                  Change PIN
-                </button>
-                <button
-                  onClick={() => setPinModal("create")}
-                  className="h-11 px-2 md:px-6 bg-primary/10 border border-primary/20 rounded-xl text-xs font-black text-primary hover:bg-primary/20 transition-all uppercase tracking-widest shadow-lg shadow-primary/10"
-                >
-                  Create New
-                </button>
+                {pinStatus?.has_pin ? (
+                  <button
+                    onClick={() => setPinModal("change")}
+                    className="h-11 px-2 md:px-6 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-xs font-black text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all uppercase tracking-widest shadow-sm"
+                  >
+                    Change PIN
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setPinModal("create")}
+                    className="h-11 px-2 md:px-6 bg-primary/10 border border-primary/20 rounded-xl text-xs font-black text-primary hover:bg-primary/20 transition-all uppercase tracking-widest shadow-lg shadow-primary/10"
+                  >
+                    Create New
+                  </button>
+                )}
               </div>
             </div>
 
@@ -123,17 +145,18 @@ const Security = () => {
             <div className="flex items-center justify-between">
               <div className="space-y-1">
                 <p className="text-slate-900 dark:text-white font-black text-xs md:text-sm italic uppercase tracking-tighter">
-                  2FA for Withdrawals
+                  Account Visibility
                 </p>
                 <p className="text-slate-500 text-xs font-bold max-w-sm">
-                  Receive an SMS/Email code for every withdrawal request.
+                  Allow other players to see your gaming activity.
                 </p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input
                   type="checkbox"
                   className="sr-only peer"
-                  defaultChecked
+                  checked={user?.show_activity}
+                  onChange={(e) => updatePreferences({ show_activity: e.target.checked })}
                 />
                 <div className="w-14 h-7 bg-slate-200 dark:bg-white/5 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-1 after:left-1 after:bg-white dark:after:bg-slate-700 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary shadow-inner transition-colors"></div>
               </label>
@@ -221,6 +244,8 @@ const Security = () => {
                 </label>
                 <input
                   type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
                   placeholder="••••••••••••"
                   className="w-full h-12 px-2 md:px-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold focus:ring-1 focus:ring-primary focus:border-primary transition-all text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700"
                 />
@@ -231,13 +256,18 @@ const Security = () => {
                 </label>
                 <input
                   type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="••••••••••••"
                   className="w-full h-12 px-2 md:px-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold focus:ring-1 focus:ring-primary focus:border-primary transition-all text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700"
                 />
               </div>
             </div>
             <div className="flex justify-end">
-              <button className="h-12 px-2 md:px-10 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs font-black text-slate-900 dark:text-white uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-white/10 transition-all shadow-lg">
+              <button 
+                onClick={handlePasswordUpdate}
+                className="h-12 px-2 md:px-10 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs font-black text-slate-900 dark:text-white uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-white/10 transition-all shadow-lg"
+              >
                 Update Password
               </button>
             </div>

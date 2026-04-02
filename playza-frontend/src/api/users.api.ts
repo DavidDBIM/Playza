@@ -23,6 +23,7 @@ export interface User {
   created_at: string;
   updated_at: string;
   wallet?: Wallet;
+  show_activity?: boolean;
 }
 
 export interface UpdateUserPayload {

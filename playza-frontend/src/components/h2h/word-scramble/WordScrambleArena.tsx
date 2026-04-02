@@ -3,16 +3,26 @@ import { useToast } from '@/context/toast';
 import { wordScrambleApi } from '@/api/wordscramble.api';
 import { Shuffle } from 'lucide-react';
 
-type Phase = 'playing' | 'submitted';
+type Phase = 'prep' | 'playing' | 'submitted';
 
 interface WordScrambleArenaProps {
-  room: any;
+  room: {
+    id: string;
+    rounds: {
+      word: string;
+      scrambled: string;
+      hint: string;
+    }[];
+    stake: number;
+  };
 }
+
+import H2HGamePrep from '../H2HGamePrep';
 
 export default function WordScrambleArena({ room }: WordScrambleArenaProps) {
   const toast = useToast();
 
-  const [phase, setPhase] = useState<Phase>('playing');
+  const [phase, setPhase] = useState<Phase>('prep');
   const [currentRound, setCurrentRound] = useState(0);
   const [answer, setAnswer] = useState('');
   const [roundsWon, setRoundsWon] = useState(0);
@@ -22,6 +32,11 @@ export default function WordScrambleArena({ room }: WordScrambleArenaProps) {
   
   const inputRef = useRef<HTMLInputElement>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const startBattle = () => {
+    setPhase('playing');
+    setTimeout(() => inputRef.current?.focus(), 100);
+  };
 
   const handleSubmit = useCallback(async (finalScore: number, finalRoundsWon: number) => {
     if (!room?.id) return;
@@ -74,6 +89,14 @@ export default function WordScrambleArena({ room }: WordScrambleArenaProps) {
 
   const rounds = room?.rounds || [];
   const currentWord = rounds[currentRound];
+
+  if (phase === 'prep') return (
+    <H2HGamePrep 
+      gameType="word-scramble" 
+      stake={room.stake} 
+      onComplete={startBattle} 
+    />
+  );
 
   if (phase === 'playing' && currentWord) return (
     <div className="w-full max-w-lg mx-auto space-y-6 py-6 animate-in fade-in duration-300">

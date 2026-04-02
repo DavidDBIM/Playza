@@ -40,7 +40,7 @@ const QuickMatchView = ({
       </button>
 
       <div className="w-full relative p-0 md:p-1 rounded-none md:rounded-xl bg-linear-to-b from-indigo-500/20 to-transparent">
-        <section className="w-full bg-slate-900/90 backdrop-blur-3xl rounded-none md:rounded-xl p-2 md:p-12 border-y md:border border-white/10 shadow-lg space-y-8 md:space-y-12 text-center md:text-left">
+        <section className="w-full bg-slate-900/90 backdrop-blur-3xl rounded-none md:rounded-[2.4rem] p-6 md:p-12 border-y md:border border-white/10 shadow-lg space-y-8 md:space-y-12 text-center">
           {quickViewMode === 'list' && publicRooms.length > 0 ? (
             <div className="space-y-6">
               <div className="text-center">
@@ -111,9 +111,7 @@ const QuickMatchView = ({
               )}
               <div className="space-y-6 md:space-y-8">
                 <div className="space-y-3 md:space-y-4">
-                  <label className="text-[10px] uppercase tracking-[0.3em] text-slate-500 font-black pl-1 block text-center md:text-left">
-                    Target Stake (<ZASymbol className="scale-75" />)
-                  </label>
+                  <label className="text-[9px] md:text-[11px] uppercase tracking-[0.3em] text-slate-500 font-bold pl-1 italic block text-center">Arena Entry Stake</label>
                   
                   <div className="grid grid-cols-3 gap-2 md:gap-4">
                     {[100, 200, 500].map((val) => (
@@ -142,7 +140,7 @@ const QuickMatchView = ({
                 </div>
 
                 <div className="bg-indigo-500/5 border border-indigo-500/10 rounded-xl md:rounded-2xl p-4 md:p-6 flex items-center justify-between">
-                  <div className="flex items-center gap-3 md:gap-4">
+                  <div className="flex flex-col items-center justify-center gap-3 md:gap-4">
                     <div className="w-10 h-10 md:w-12 md:h-12 bg-white/5 rounded-lg md:rounded-xl flex items-center justify-center">
                       <Trophy className="text-indigo-400 w-4 h-4 md:w-5 md:h-5" />
                     </div>

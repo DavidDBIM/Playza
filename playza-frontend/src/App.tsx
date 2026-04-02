@@ -57,9 +57,8 @@ const AppContent = () => {
   const isGameSessionPage = pathname.includes("/session");
   const isGamePlayPage =
     pathname.includes("/play") ||
-    (pathname.startsWith("/h2h") && pathname !== "/h2h") ||
-    pathname.startsWith("/speed-battle/") ||
-    pathname.startsWith("/word-scramble/");
+    // Only hide layout if we are in an active game room (e.g., /h2h/chess/room-id)
+    (pathname.startsWith("/h2h") && pathname.split("/").filter(Boolean).length >= 3);
 
   const isRegistrationPage = pathname.includes("/registration");
 

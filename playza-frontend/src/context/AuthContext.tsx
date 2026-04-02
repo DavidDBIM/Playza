@@ -27,6 +27,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             pzaPoints: profile.wallet?.balance || 0,
             wallet: profile.wallet,
             isEmailVerified: profile.is_email_verified,
+            show_activity: profile.show_activity,
           });
         } catch (error) {
           console.error("Auth initialization failed:", error);

@@ -126,14 +126,14 @@ const NavFooter = () => {
           <button
             onClick={item.onClick}
             aria-label="More navigation"
-            className={`flex flex-col items-center justify-center transition-all duration-300 relative py-2 ${
+            className={`flex flex-col items-center justify-center relative py-2 ${
               isMoreOpen
                 ? "text-primary -translate-y-1"
                 : "text-slate-500 hover:text-primary hover:-translate-y-0.5"
             }`}
           >
             <div
-              className={`relative z-10 p-2 rounded-2xl transition-all duration-300 border shadow-md backdrop-blur-md flex items-center justify-center ${
+              className={`relative z-10 p-2 rounded-2xl border shadow-md backdrop-blur-md flex items-center justify-center ${
                 isMoreOpen
                   ? "bg-primary border-primary rotate-90 scale-110 shadow-primary/40"
                   : "bg-white/95 dark:bg-slate-800/90 border-slate-200 dark:border-white/10 hover:border-primary/50"
@@ -199,9 +199,9 @@ const NavFooter = () => {
       <div
         aria-hidden
         onClick={closePanel}
-        className={`lg:hidden fixed inset-0 z-40 transition-all duration-300 ${
+        className={`lg:hidden fixed inset-0 z-40 ${
           openPanel
-            ? "bg-black/40 pointer-events-auto"
+            ? "bg-black/40 backdrop-blur-md pointer-events-auto"
             : "bg-transparent pointer-events-none"
         }`}
       />
@@ -219,7 +219,7 @@ const NavFooter = () => {
 
         {/* ══ GAMES Panel (slides up from gamepad) ══ */}
         <div
-          className={`absolute bottom-20 left-0 right-0 transition-all duration-400 ${
+          className={`absolute bottom-20 left-0 right-0 ${
             isGamesOpen
               ? "opacity-100 translate-y-0 pointer-events-auto"
               : "opacity-0 translate-y-6 pointer-events-none"
@@ -304,7 +304,7 @@ const NavFooter = () => {
 
         {/* ══ MORE Panel (slides up from more button) ══ */}
         <div
-          className={`absolute bottom-20 left-0 right-0 transition-all duration-400 ${
+          className={`absolute bottom-20 left-0 right-0 ${
             isMoreOpen
               ? "opacity-100 translate-y-0 pointer-events-auto"
               : "opacity-0 translate-y-6 pointer-events-none"
@@ -371,7 +371,7 @@ const NavFooter = () => {
                 <button
                   onClick={() => togglePanel("games")}
                   aria-label="Game arena"
-                  className={`relative flex items-center justify-center w-14 h-14 rounded-full shadow-2xl transition-all duration-500 group border-[3px] border-slate-200 dark:border-slate-950 ${
+                  className={`relative flex items-center justify-center w-14 h-14 rounded-full shadow-2xl group border-[3px] border-slate-200 dark:border-slate-950 ${
                     isGamesOpen
                       ? "bg-linear-to-tr from-primary to-purple-400 text-white scale-110 shadow-lg"
                       : "bg-white dark:bg-slate-900 text-slate-400"
@@ -411,7 +411,7 @@ const NavFooter = () => {
                 <button
                   onClick={() => togglePanel("games")}
                   aria-label="Game arena"
-                  className={`relative flex items-center justify-center w-16 h-16 rounded-full shadow-2xl transition-all duration-500 group border-4 border-slate-200 dark:border-slate-950 ${
+                  className={`relative flex items-center justify-center w-16 h-16 rounded-full shadow-2xl group border-4 border-slate-200 dark:border-slate-950 ${
                     isGamesOpen
                       ? "bg-linear-to-tr from-primary to-purple-400 text-white scale-110 shadow-lg"
                       : "bg-white dark:bg-slate-900 text-slate-400"
