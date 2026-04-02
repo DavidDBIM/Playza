@@ -1,17 +1,16 @@
 import { NavLink } from 'react-router';
-import type { ChessRoom } from '@/types/chess';
 import type { UserProfile } from '@/context/auth';
 import { Medal } from 'lucide-react';
 import { ZASymbol } from '@/components/currency/ZASymbol';
 
-interface ChessWinnerProps {
-  room: ChessRoom;
+interface H2HWinnerProps {
+  room: any;
   user: UserProfile | null;
   localWinnerId?: string | null;
   isSyncing?: boolean;
 }
 
-const ChessWinner = ({ room, user, localWinnerId, isSyncing }: ChessWinnerProps) => {
+const H2HWinner = ({ room, user, localWinnerId, isSyncing }: H2HWinnerProps) => {
   const finalWinnerId = room.winner_id || localWinnerId;
   const isWinner = finalWinnerId === user?.id;
   const isDraw = !finalWinnerId; 
@@ -106,4 +105,4 @@ const ChessWinner = ({ room, user, localWinnerId, isSyncing }: ChessWinnerProps)
   );
 };
 
-export default ChessWinner;
+export default H2HWinner;

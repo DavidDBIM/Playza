@@ -1,27 +1,38 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router';
-import ChessLobby from '@/components/h2h/chess/ChessLobby';
-import ChessWaitingRoom from '@/components/h2h/chess/ChessWaitingRoom';
+import H2HLobby from '@/components/h2h/H2HLobby';
+import H2HWaitingRoom from '@/components/h2h/H2HWaitingRoom';
 import ChessArena from '@/components/h2h/chess/ChessArena';
-import ChessWinner from '@/components/h2h/chess/ChessWinner';
-import { createChessRoom, joinChessRoom, getChessRoom, createBotRoom, findQuickMatch } from '@/api/chess.api';
+import SpeedBattleArena from '@/components/h2h/speed-battle/SpeedBattleArena';
+import WordScrambleArena from '@/components/h2h/word-scramble/WordScrambleArena';
+import H2HWinner from '@/components/h2h/H2HWinner';
+import * as chessApi from '@/api/chess.api';
+import { speedBattleApi } from '@/api/speedbattle.api';
+import { wordScrambleApi } from '@/api/wordscramble.api';
 import { useAuth } from '@/context/auth';
-import type { ChessRoom } from '@/types/chess';
 import type { UserProfile } from '@/context/auth';
 import { useToast } from '@/context/toast';
 
 const H2HZone = () => {
     const toast = useToast();
-    const { roomId } = useParams();
+    const { gameType = 'chess', roomId } = useParams();
     const navigate = useNavigate();
     const { user } = useAuth() as { user: UserProfile | null };
-    const [room, setRoom] = useState<ChessRoom | null>(null);
+    const [room, setRoom] = useState<any | null>(null);
     const [loading, setLoading] = useState(false);
+
+    const getApi = useCallback(() => {
+        if (gameType === 'speed-battle') return speedBattleApi;
+        if (gameType === 'word-scramble') return wordScrambleApi;
+        return chessApi;
+    }, [gameType]);
 
     const fetchRoom = useCallback(async (isPoll = false) => {
         if (!roomId) return;
         try {
-            const data = await getChessRoom(roomId);
+            const data = await (gameType === 'chess' 
+                ? chessApi.getChessRoom(roomId)
+                : (getApi() as any).getRoom(roomId));
             setRoom(data);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : "Connection lost";
@@ -33,13 +44,13 @@ const H2HZone = () => {
                 setRoom(prev => {
                     if (!prev) {
                         toast.error("Failed to enter warzone. Returning to lobby.");
-                        navigate('/h2h');
+                        navigate(`/h2h/${gameType}`);
                     }
                     return prev;
                 });
             }
         }
-    }, [roomId, navigate, toast]);
+    }, [roomId, navigate, toast, gameType, getApi]);
 
     useEffect(() => {
         if (roomId) {
@@ -61,8 +72,10 @@ const H2HZone = () => {
     const handleCreateRoom = async (stake: number) => {
         setLoading(true);
         try {
-            const data = await createChessRoom(stake);
-            navigate(`/h2h/${data.room_id}`);
+            const data = await (gameType === 'chess'
+                ? chessApi.createChessRoom(stake)
+                : (getApi() as any).createRoom(stake));
+            navigate(`/h2h/${gameType}/${data.room_id || data.id}`);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : "Failed to create room";
             toast.error(errorMessage);
@@ -74,8 +87,10 @@ const H2HZone = () => {
     const handleJoinRoom = async (code: string) => {
         setLoading(true);
         try {
-            const data = await joinChessRoom(code);
-            navigate(`/h2h/${data.room_id}`);
+            const data = await (gameType === 'chess'
+                ? chessApi.joinChessRoom(code)
+                : (getApi() as any).joinRoom(code));
+            navigate(`/h2h/${gameType}/${data.room_id || data.id}`);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : "Failed to join room";
             toast.error(errorMessage);
@@ -87,8 +102,10 @@ const H2HZone = () => {
     const handleQuickMatch = async (stake: number) => {
         setLoading(true);
         try {
-            const data = await findQuickMatch(stake);
-            navigate(`/h2h/${data.room_id}`, { state: { quickMatch: true } });
+            const data = await (gameType === 'chess'
+                ? chessApi.findQuickMatch(stake)
+                : (getApi() as any).findQuickMatch(stake));
+            navigate(`/h2h/${gameType}/${data.room_id || data.id}`, { state: { quickMatch: true } });
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : "Matchmaking failed";
             toast.error(errorMessage);
@@ -100,8 +117,10 @@ const H2HZone = () => {
     const handleCreateBotRoom = async (stake: number) => {
         setLoading(true);
         try {
-            const data = await createBotRoom(stake);
-            navigate(`/h2h/${data.room_id}`);
+            const data = gameType === 'chess' 
+                ? await chessApi.createBotRoom(stake)
+                : await (getApi() as any).createRoom(stake, true, 'medium'); // speed battle and word scramble
+            navigate(`/h2h/${gameType}/${data.room_id || data.id}`);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : "Failed to start solo match";
             toast.error(errorMessage);
@@ -122,11 +141,12 @@ const H2HZone = () => {
 
         <main className="relative z-10 transition-all duration-500">
           {!roomId ? (
-            <ChessLobby
+            <H2HLobby
               onCreate={handleCreateRoom}
               onBotCreate={handleCreateBotRoom}
               onJoin={handleJoinRoom}
               onQuickMatch={handleQuickMatch}
+              getWaitingRooms={gameType === 'chess' ? chessApi.getWaitingRooms : async () => []}
               loading={loading}
             />
           ) : !room ? (
@@ -149,18 +169,21 @@ const H2HZone = () => {
               {(() => {
                 switch (room.status) {
                   case "waiting":
-                    return <ChessWaitingRoom room={room} />;
+                    return <H2HWaitingRoom room={room} />;
                   case "active":
+                    if (gameType === 'speed-battle') return <SpeedBattleArena key={room.id} room={room} />;
+                    if (gameType === 'word-scramble') return <WordScrambleArena key={room.id} room={room} />;
                     return <ChessArena key={room.id} room={room} user={user} />;
                   case "finished":
-                    return <ChessWinner room={room} user={user} />;
+                    return <H2HWinner room={room} user={user} />;
                   default:
                     return (
-                      <ChessLobby
+                      <H2HLobby
                         onCreate={handleCreateRoom}
                         onBotCreate={handleCreateBotRoom}
                         onJoin={handleJoinRoom}
                         onQuickMatch={handleQuickMatch}
+                        getWaitingRooms={gameType === 'chess' ? chessApi.getWaitingRooms : async () => []}
                         loading={loading}
                       />
                     );
