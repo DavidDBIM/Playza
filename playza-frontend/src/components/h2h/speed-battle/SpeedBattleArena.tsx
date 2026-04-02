@@ -1,20 +1,23 @@
-import { useState, useEffect, useRef } from 'react';
-import { useAuth } from '@/context/auth';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useToast } from '@/context/toast';
 import { speedBattleApi } from '@/api/speedbattle.api';
 
-type Phase = 'countdown' | 'playing' | 'submitted';
+type Phase = 'prep' | 'playing' | 'submitted';
 
 interface SpeedBattleArenaProps {
-  room: any;
+  room: {
+    id: string;
+    paragraph: string;
+    stake: number;
+  };
 }
 
+import H2HGamePrep from '../H2HGamePrep';
+
 export default function SpeedBattleArena({ room }: SpeedBattleArenaProps) {
-  const { user } = useAuth();
   const toast = useToast();
 
-  const [phase, setPhase] = useState<Phase>('countdown');
-  const [countdown, setCountdown] = useState(3);
+  const [phase, setPhase] = useState<Phase>('prep');
   const [typed, setTyped] = useState('');
   const [startTime, setStartTime] = useState<number | null>(null);
   const [wpm, setWpm] = useState(0);
@@ -22,17 +25,20 @@ export default function SpeedBattleArena({ room }: SpeedBattleArenaProps) {
   
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    if (phase !== 'countdown') return;
-    if (countdown === 0) { 
-      setPhase('playing'); 
-      setStartTime(Date.now()); 
-      setTimeout(() => inputRef.current?.focus(), 100); 
-      return; 
+  const startBattle = () => {
+    setPhase('playing');
+    setStartTime(Date.now());
+    setTimeout(() => inputRef.current?.focus(), 100);
+  };
+
+  const handleFinish = useCallback(async () => {
+    setPhase('submitted');
+    try {
+      await speedBattleApi.submitResult(room.id, wpm, accuracy / 100);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'An error occurred');
     }
-    const t = setTimeout(() => setCountdown(c => c - 1), 1000);
-    return () => clearTimeout(t);
-  }, [phase, countdown]);
+  }, [room.id, wpm, accuracy, toast]);
 
   useEffect(() => {
     if (phase !== 'playing' || !startTime || !room) return;
@@ -40,31 +46,31 @@ export default function SpeedBattleArena({ room }: SpeedBattleArenaProps) {
     const words = paragraph.trim().split(' ');
     const typedWords = typed.trim().split(' ');
     const elapsed = (Date.now() - startTime) / 1000 / 60;
+    
     const correctWords = typedWords.filter((w: string, i: number) => w === words[i]).length;
-    setWpm(elapsed > 0 ? Math.round(correctWords / elapsed) : 0);
+    const newWpm = elapsed > 0 ? Math.round(correctWords / elapsed) : 0;
+    
     const correctChars = typed.split('').filter((c: string, i: number) => c === paragraph[i]).length;
-    setAccuracy(typed.length > 0 ? Math.round((correctChars / typed.length) * 100) : 100);
-    if (typed === paragraph) handleFinish();
-  }, [typed, phase, startTime, room]);
-
-  async function handleFinish() {
-    setPhase('submitted');
-    try {
-      await speedBattleApi.submitResult(room.id, wpm, accuracy / 100);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'An error occurred');
-    }
-  }
+    const newAccuracy = typed.length > 0 ? Math.round((correctChars / typed.length) * 100) : 100;
+    
+    const t = setTimeout(() => {
+      setWpm(newWpm);
+      setAccuracy(newAccuracy);
+      if (typed === paragraph) handleFinish();
+    }, 0);
+    
+    return () => clearTimeout(t);
+  }, [typed, phase, startTime, room, handleFinish]);
 
   const paragraph = room?.paragraph || '';
   const progress = paragraph ? (typed.length / paragraph.length) * 100 : 0;
 
-  if (phase === 'countdown') return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 animate-in fade-in duration-300">
-      <img src="/logoImage.png" alt="Playza" className="h-8 opacity-60" />
-      <p className="text-muted-foreground font-black uppercase tracking-widest text-sm">Get ready to type!</p>
-      <div className="text-[120px] font-black text-primary leading-none animate-pulse">{countdown === 0 ? 'GO!' : countdown}</div>
-    </div>
+  if (phase === 'prep') return (
+    <H2HGamePrep 
+      gameType="speed-battle" 
+      stake={room.stake} 
+      onComplete={startBattle} 
+    />
   );
 
   return (

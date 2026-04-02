@@ -1,7 +1,7 @@
 {
   "env": {
     "ANTHROPIC_BASE_URL": "https://openrouter.ai/api",
-    "ANTHROPIC_AUTH_TOKEN": "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",
+    "ANTHROPIC_AUTH_TOKEN": "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",
     "ANTHROPIC_API_KEY": "",
     "ANTHROPIC_MODEL": "qwen/qwen3.6-plus-preview:free"
   },
@@ -13,7 +13,11 @@
       "WebFetch(domain:gist.github.com)",
       "Bash(curl -sI \"https://cdn.jsdelivr.net/npm/three@0.149.0/examples/js/controls/OrbitControls.js\")",
       "Bash(curl -sI \"https://cdn.jsdelivr.net/npm/three@0.141.0/examples/js/controls/OrbitControls.js\")",
-      "Bash(curl -sI \"https://cdn.jsdelivr.net/npm/three@0.120.0/examples/js/controls/OrbitControls.js\")"
+      "Bash(curl -sI \"https://cdn.jsdelivr.net/npm/three@0.120.0/examples/js/controls/OrbitControls.js\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"http://localhost:5173/gameLib/rubiks-cube/\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"http://localhost:5173/gameLib/rubiks-cube/index.html\")",
+      "Bash(curl -s \"http://localhost:5173/gameLib/rubiks-cube/js/Cube.js\")",
+      "Bash(curl -s \"http://localhost:5173/gameLib/rubiks-cube/index.html\")"
     ]
   }
 }

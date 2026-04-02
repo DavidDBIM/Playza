@@ -1,19 +1,9 @@
 import { MdChevronLeft, MdChevronRight, MdSearch, MdFilterList, MdTrendingUp, MdTrendingDown } from "react-icons/md";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { ZASymbol } from "../currency/ZASymbol";
-import axiosInstance from "@/api/axiosInstance";
-
-interface GameHistoryItem {
-  id: string;
-  game_name: string;
-  game_slug?: string;
-  score: number;
-  position?: string;
-  winnings: number;
-  status: string;
-  played_at: string;
-}
+import { useGameHistory } from "@/hooks/profile/useProfile";
+import type { GameHistoryItem } from "@/api/profile.api";
 
 const LIMIT = 10;
 
@@ -21,27 +11,13 @@ const History = () => {
   const [page, setPage] = useState(1);
   const [filterBy, setFilterBy] = useState("all");
   const [search, setSearch] = useState("");
-  const [history, setHistory] = useState<GameHistoryItem[]>([]);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(false);
+  
+  const { data: historyData, isLoading: loading } = useGameHistory(page, LIMIT);
+  
+  const history = historyData?.history ?? [];
+  const total = historyData?.total ?? 0;
 
-  useEffect(() => {
-    const fetchHistory = async () => {
-      setLoading(true);
-      try {
-        const { data } = await axiosInstance.get(`/profile/history?page=${page}&limit=${LIMIT}`);
-        setHistory(data.data.history ?? []);
-        setTotal(data.data.total ?? 0);
-      } catch {
-        setHistory([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchHistory();
-  }, [page]);
-
-  const filtered = history.filter(m => {
+  const filtered = history.filter((m: GameHistoryItem) => {
     const matchesSearch = m.game_name.toLowerCase().includes(search.toLowerCase());
     if (filterBy === "win") return matchesSearch && m.winnings > 0;
     if (filterBy === "loss") return matchesSearch && m.winnings === 0;
@@ -90,7 +66,7 @@ const History = () => {
         ) : (
           <>
             <div className="grid grid-cols-1 gap-2 md:gap-3 md:hidden">
-              {filtered.map((match) => (
+              {filtered.map((match: GameHistoryItem) => (
                 <div key={match.id} className="glass-card p-3 rounded-xl border-white/5 flex items-center justify-between hover:border-primary/20 transition-all">
                   <div className="flex items-center gap-3">
                     <div className={`size-10 rounded-xl flex items-center justify-center ${match.winnings > 0 ? "bg-green-500/10" : "bg-red-500/10"}`}>
@@ -122,7 +98,7 @@ const History = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filtered.map((match) => (
+                  {filtered.map((match: GameHistoryItem) => (
                     <TableRow key={match.id} className="border-b border-slate-50 dark:border-white/5 last:border-0 hover:bg-slate-50/50 dark:hover:bg-white/3 transition-colors group">
                       <TableCell className="px-4 py-3"><span className="text-slate-400 font-bold text-xs">{new Date(match.played_at).toLocaleDateString()}</span></TableCell>
                       <TableCell className="px-4 py-3">

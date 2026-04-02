@@ -134,11 +134,11 @@ const H2HNotification = () => {
 
       {open && typeof document !== "undefined" && createPortal(
         <div 
-          className="fixed inset-0 z-9999 flex items-start justify-center sm:items-center bg-slate-950/90 backdrop-blur-xl p-4 sm:p-4 transition-all duration-300 overflow-y-auto"
+          className="fixed inset-0 z-200 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4 animate-in fade-in duration-300"
           onClick={() => setOpen(false)}
         >
           <div 
-            className="w-full max-w-md bg-slate-900 border border-white/10 rounded-xl overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] my-auto animate-in zoom-in-95 duration-200"
+            className="w-full max-w-md bg-white dark:bg-slate-900 border-2 border-primary/30 rounded-3xl p-6 md:p-8 shadow-2xl space-y-6 md:space-y-8 animate-in zoom-in-95 duration-300"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
