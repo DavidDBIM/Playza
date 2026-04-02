@@ -1,23 +1,22 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate, useLocation } from 'react-router';
 import { Zap, Swords, Trophy } from 'lucide-react';
-import { getWaitingRooms } from '@/api/chess.api';
-import H2HLobbySkeleton from '../../skeletons/H2HLobbySkeleton';
-import type { ChessRoom } from '@/types/chess';
+import H2HLobbySkeleton from '../skeletons/H2HLobbySkeleton';
 
 // Extracted Components
-import LobbyHub from '../LobbyHub';
-import GameModeModal from '../GameModeModal';
+import LobbyHub from './LobbyHub';
+import GameModeModal from './GameModeModal';
 import QuickMatchView from './QuickMatchView';
 import BotMatchView from './BotMatchView';
 import InviteFriendView from './InviteFriendView';
-import ActionConfirmationModal from '../ActionConfirmationModal';
+import ActionConfirmationModal from './ActionConfirmationModal';
 
-interface ChessLobbyProps {
+interface H2HLobbyProps {
   onCreate: (stake: number) => void;
   onBotCreate: (stake: number) => void;
   onJoin: (code: string) => void;
   onQuickMatch: (stake: number) => void;
+  getWaitingRooms: () => Promise<any[]>;
   loading: boolean;
 }
 
@@ -30,16 +29,17 @@ interface GameType {
   comingSoon?: boolean;
 }
 
-const ChessLobby = ({ onCreate, onBotCreate, onJoin, onQuickMatch, loading }: ChessLobbyProps) => {
+const H2HLobby = ({ onCreate, onBotCreate, onJoin, onQuickMatch, getWaitingRooms, loading }: H2HLobbyProps) => {
   const navigate = useNavigate();
-  const [view, setView] = useState<'hub' | 'quick' | 'invite' | 'bot'>('hub');
+  const location = useLocation();
+  const [view, setView] = useState<'hub' | 'quick' | 'invite' | 'bot'>(location.state?.view || 'hub');
   const [stakeValue, setStakeValue] = useState(100);
   const [customStake, setCustomStake] = useState('');
   const [joinCode, setJoinCode] = useState('');
   const [isFinding, setIsFinding] = useState(false);
   const [selectedGame, setSelectedGame] = useState<GameType | null>(null);
   const [inviteMobileTab, setInviteMobileTab] = useState<"create" | "join" | null>(null);
-  const [publicRooms, setPublicRooms] = useState<ChessRoom[]>([]);
+  const [publicRooms, setPublicRooms] = useState<any[]>([]);
   const [quickViewMode, setQuickViewMode] = useState<'list' | 'create'>('list');
   const [loadingRooms, setLoadingRooms] = useState(false);
   const [confirmingAction, setConfirmingAction] = useState<{ type: 'create' | 'join' | 'quick' | 'bot', stake: number, code?: string } | null>(null);
@@ -56,7 +56,7 @@ const ChessLobby = ({ onCreate, onBotCreate, onJoin, onQuickMatch, loading }: Ch
     } finally {
       setLoadingRooms(false);
     }
-  }, []);
+  }, [getWaitingRooms]);
 
   useEffect(() => {
     if (view === 'quick') {
@@ -131,10 +131,8 @@ const ChessLobby = ({ onCreate, onBotCreate, onJoin, onQuickMatch, loading }: Ch
             isOpen={!!selectedGame}
             onClose={() => setSelectedGame(null)}
             onSelectMode={(mode: 'hub' | 'quick' | 'invite' | 'bot') => {
-              if (selectedGame?.id === 'speed-battle') {
-                navigate('/speed-battle');
-              } else if (selectedGame?.id === 'word-scramble') {
-                navigate('/word-scramble');
+              if (selectedGame?.id) {
+                navigate(`/h2h/${selectedGame.id}`, { state: { view: mode } });
               } else {
                 setView(mode);
               }
@@ -199,5 +197,5 @@ const ChessLobby = ({ onCreate, onBotCreate, onJoin, onQuickMatch, loading }: Ch
   );
 };
 
-export default ChessLobby;
+export default H2HLobby;
 
