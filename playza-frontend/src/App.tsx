@@ -13,8 +13,7 @@ import Game from "./pages/Game";
 import MatchSession from "./pages/MatchSession";
 import GamePlay from "./pages/GamePlay";
 import H2HZone from "./pages/H2HZone";
-import SpeedBattle from "./pages/SpeedBattle";
-import WordScramble from "./pages/WordScramble";
+// Individual games are now handled dynamically by H2HZone
 import Registration from "./pages/Registration";
 
 import Wallet from "./pages/Wallet";
@@ -155,11 +154,8 @@ const AppContent = () => {
             <Route path="/games/:id/session" element={<MatchSession />} />
             <Route path="/games/:id/play" element={<GamePlay />} />
             <Route path="/h2h" element={<H2HZone />} />
-            <Route path="/h2h/:roomId" element={<H2HZone />} />
-            <Route path="/speed-battle" element={<SpeedBattle />} />
-            <Route path="/speed-battle/:roomId" element={<SpeedBattle />} />
-            <Route path="/word-scramble" element={<WordScramble />} />
-            <Route path="/word-scramble/:roomId" element={<WordScramble />} />
+            <Route path="/h2h/:gameType" element={<H2HZone />} />
+            <Route path="/h2h/:gameType/:roomId" element={<H2HZone />} />
             <Route path="/registration" element={<Registration />} />
 
             <Route path="/wallet/transactions" element={<Transactions />} />

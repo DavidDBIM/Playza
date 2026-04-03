@@ -1,24 +1,23 @@
 import { useLocation, useNavigate } from 'react-router';
 import { useToast } from '@/context/toast';
-import type { ChessRoom } from '@/types/chess';
 import { Share2, Radar, ShieldCheck } from 'lucide-react';
 import { ZASymbol } from '@/components/currency/ZASymbol';
 
 interface WaitingRoomProps {
-  room: ChessRoom;
+  room: any;
 }
 
-const WaitingRoom = ({ room }: WaitingRoomProps) => {
+const H2HWaitingRoom = ({ room }: WaitingRoomProps) => {
   const toast = useToast();
   const navigate = useNavigate();
   const location = useLocation();
   const isQuickMatch = location.state?.quickMatch;
 
   const handleShare = () => {
-    const text = `Join my H2H Chess battle on Playza! Room Code: ${room.code} \nLink: ${window.location.href}`;
+    const text = `Join my H2H battle on Playza! Room Code: ${room.code} \nLink: ${window.location.href}`;
     if (navigator.share) {
       navigator.share({
-        title: 'Playza Chess Battle',
+        title: 'Playza H2H Battle',
         text: text,
         url: window.location.href,
       }).catch(() => {});
@@ -156,4 +155,4 @@ const WaitingRoom = ({ room }: WaitingRoomProps) => {
   );
 };
 
-export default WaitingRoom;
+export default H2HWaitingRoom;

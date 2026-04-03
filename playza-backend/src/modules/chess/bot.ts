@@ -136,7 +136,7 @@ function minimax(
     return evaluateBoard(chess);
   }
 
-  const moves = chess.moves();
+  const moves = chess.moves({ verbose: true });
 
   if (isMaximizingPlayer) {
     let bestEval = -Infinity;
@@ -185,7 +185,8 @@ export function getBotMove(
   if (moves.length === 0) return null;
 
   let bestMove: Move | null = null;
-  const depth = 4; // Increased depth
+  const depth = 2; // Reduced depth to prevent Node.js event loop blocking & provide instant moves
+  console.log(`[Bot] Evaluating move at depth ${depth} for fen: ${fen}`);
   const isMaximizing = chess.turn() === "w";
   let bestValue = isMaximizing ? -Infinity : Infinity;
 
