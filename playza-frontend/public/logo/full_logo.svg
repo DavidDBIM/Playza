@@ -1,0 +1,20 @@
+<svg width="512" height="1024" viewBox="0 0 256 384" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Monogram P -->
+  <path d="M48 32H176L208 64V128L176 160H88V224H48V32ZM88 72V120H168L176 112V80L168 72H88Z" fill="#FF9A00" />
+  
+  <!-- PLAYZA text underneath -->
+  <g transform="translate(48, 256) scale(0.6)">
+    <!-- P -->
+    <path d="M0 0H48L64 16V48L48 64H16V96H0V0ZM16 16V48H40L48 40V24L40 16H16Z" fill="#FF9A00" />
+    <!-- L -->
+    <path d="M80 0H96V80H128V96H80V0Z" fill="#FF9A00" />
+    <!-- A -->
+    <path d="M144 96L176 0H192L224 96H208L200 72H168L160 96H144ZM173 56H195L184 20L173 56Z" fill="#FF9A00" />
+    <!-- Y -->
+    <path d="M240 0H256L272 48L288 0H304L280 64V96H264V64L240 0Z" fill="#FF9A00" />
+    <!-- Z -->
+    <path d="M320 0H368V16L336 80H368V96H320V80L352 16H320V0Z" fill="#FF9A00" />
+    <!-- A (duplicate) -->
+    <path d="M384 96L416 0H432L464 96H448L440 72H408L400 96H384ZM413 56H435L424 20L413 56Z" fill="#FF9A00" />
+  </g>
+</svg>

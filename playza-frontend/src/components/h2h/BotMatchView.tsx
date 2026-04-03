@@ -21,7 +21,7 @@ const BotMatchView = ({
   setView,
 }: BotMatchViewProps) => {
   return (
-    <div className="w-full mx-auto">
+    <div className="w-full max-w-xl mx-auto">
       <button
         onClick={() => setView("hub")}
         className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-slate-900 dark:hover:text-white mb-6 md:mb-8"

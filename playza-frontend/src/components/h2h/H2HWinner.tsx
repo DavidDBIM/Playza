@@ -4,11 +4,29 @@ import { Medal } from 'lucide-react';
 import { ZASymbol } from '@/components/currency/ZASymbol';
 
 interface H2HWinnerProps {
-  room: any;
+  room: {
+    id: string;
+    stake: number;
+    winner_id?: string | null;
+    host_id: string;
+    guest_id?: string | null;
+    host?: { id: string; username: string; avatar_url?: string } | null;
+    guest?: { id: string; username: string; avatar_url?: string } | null;
+  };
   user: UserProfile | null;
   localWinnerId?: string | null;
   isSyncing?: boolean;
 }
+
+const motivationalPhrases = [
+  "Every Grandmaster was once a beginner. Keep pushing!",
+  "Losses are just lessons in disguise. Return stronger.",
+  "The board is set for your comeback. Don't give up!",
+  "A champion is defined by how they get up after a fall.",
+  "Stay focused. Your next victory is around the corner."
+];
+
+const randomPhrase = motivationalPhrases[Math.floor(Math.random() * motivationalPhrases.length)];
 
 const H2HWinner = ({ room, user, localWinnerId, isSyncing }: H2HWinnerProps) => {
   const finalWinnerId = room.winner_id || localWinnerId;
@@ -31,13 +49,14 @@ const H2HWinner = ({ room, user, localWinnerId, isSyncing }: H2HWinnerProps) => 
                     <Medal className="text-secondary w-16 h-16 md:w-24 md:h-24" />
                 </div>
             )}
-            <div className={`w-40 h-40 md:w-64 md:h-64 rounded-full p-1.5 md:p-2 border border-black/10 dark:border-white/10 ${isWinner ? 'bg-primary' : 'bg-slate-700'}`}>
+            <div className={`w-40 h-40 md:w-64 md:h-64 rounded-full p-1.5 md:p-2 border border-black/10 dark:border-white/10 ${isWinner ? 'bg-primary' : isDraw ? 'bg-slate-600' : 'bg-red-600 animate-pulse'}`}>
                 <div className="w-full h-full rounded-full bg-slate-950 flex items-center justify-center relative overflow-hidden">
+                   {!isWinner && !isDraw && <div className="absolute inset-0 bg-red-600/20 blur-xl"></div>}
                 </div>
             </div>
             
             <div className="absolute inset-0 flex items-center justify-center flex-col z-10">
-                <h1 className={`font-headline text-3xl md:text-8xl font-black italic tracking-tighter uppercase leading-none rotate-[-5deg] ${isWinner ? 'text-white' : 'text-slate-500'}`}>
+                <h1 className={`font-headline text-3xl md:text-8xl font-black italic tracking-tighter uppercase leading-none rotate-[-5deg] ${isWinner ? 'text-white' : isDraw ? 'text-slate-400' : 'text-red-500'}`}>
                     {isWinner ? "VICTORY!" : isDraw ? "DRAW!" : "DEFEAT"}
                 </h1>
                 {isSyncing && (
@@ -49,12 +68,22 @@ const H2HWinner = ({ room, user, localWinnerId, isSyncing }: H2HWinnerProps) => 
         </div>
 
         {/* Reward Stats */}
-        <div className="bg-white/80 dark:bg-slate-900/40 p-6 md:p-10 rounded-3xl border border-black/5 dark:border-white/10 text-center relative overflow-hidden mx-2 md:mx-0">
-            <p className="text-[10px] font-black uppercase tracking-[0.5em] text-slate-500 italic mb-4 md:mb-6">Match Result</p>
-            <div className={`font-headline text-3xl md:text-8xl font-black italic tracking-tighter leading-none mb-6 font-headline ${isWinner ? 'text-secondary' : 'text-slate-900 dark:text-white'}`}>
-              {isWinner ? `+${winningAmount.toFixed(0)}` : `-${room.stake}`} <span className="text-[10px] md:text-2xl not-italic font-sans opacity-50 uppercase tracking-widest"><ZASymbol className="inline-block scale-110 md:scale-125 ml-1 md:ml-2" /></span>
+        <div className="bg-white/80 dark:bg-slate-900/40 p-6 md:p-10 rounded-3xl border border-black/5 dark:border-white/10 text-center relative overflow-hidden mx-2 md:mx-0 shadow-2xl">
+            <p className="text-[10px] font-black uppercase tracking-[0.5em] text-slate-500 italic mb-4 md:mb-6">
+              {isWinner ? "Match Reward" : isDraw ? "Match Result" : "Prize Pool Lost"}
+            </p>
+            <div className={`font-headline text-3xl md:text-8xl font-black italic tracking-tighter leading-none mb-6 font-headline ${isWinner ? 'text-secondary' : isDraw ? 'text-white' : 'text-red-500'}`}>
+              {isWinner ? `+${winningAmount.toFixed(0)}` : isDraw ? "0" : `-${room.stake}`} <span className="text-[10px] md:text-2xl not-italic font-sans opacity-50 uppercase tracking-widest"><ZASymbol className="inline-block scale-110 md:scale-125 ml-1 md:ml-2" /></span>
             </div>
             
+            {!isWinner && !isDraw && (
+              <div className="mb-6 animate-in fade-in slide-in-from-top-2 duration-700">
+                <p className="text-sm md:text-lg font-bold text-slate-900 dark:text-slate-100 italic leading-snug">
+                  "{randomPhrase}"
+                </p>
+              </div>
+            )}
+
             <div className="h-px bg-black/5 dark:bg-white/10 w-24 md:w-48 mx-auto mb-6 md:mb-8"></div>
             
             <div className="grid grid-cols-2 gap-3 md:gap-8">
@@ -67,7 +96,7 @@ const H2HWinner = ({ room, user, localWinnerId, isSyncing }: H2HWinnerProps) => 
                 <div className="space-y-1 md:space-y-2 p-3 md:p-4 rounded-xl bg-black/5 dark:bg-white/5 border border-transparent">
                     <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest italic leading-none">Experience</p>
                     <p className="text-[10px] md:text-base font-headline font-black text-slate-900 dark:text-white italic">
-                        {isWinner ? "85% BOOST" : "15% GAIN"}
+                        {isWinner ? "85% BOOST" : isDraw ? "30% GAIN" : "15% GAIN"}
                     </p>
                 </div>
             </div>
@@ -77,15 +106,15 @@ const H2HWinner = ({ room, user, localWinnerId, isSyncing }: H2HWinnerProps) => 
         <div className="flex flex-col md:flex-row gap-4 md:gap-6 justify-center px-4 md:px-0">
           <NavLink 
             to="/h2h"
-            className="flex-1 md:flex-none px-6 md:px-12 py-4 md:py-6 bg-white dark:bg-slate-950 border-2 md:border-[3px] border-primary text-primary font-headline font-black rounded-xl uppercase tracking-widest text-[10px] md:text-lg italic text-center"
+            className="flex-1 md:flex-none px-6 md:px-12 py-4 md:py-6 bg-white dark:bg-slate-950 border-2 md:border-[3px] border-primary text-primary font-headline font-black rounded-xl uppercase tracking-widest text-[10px] md:text-lg italic text-center shadow-lg active:translate-y-1 transition-all"
           >
             NEXT BATTLE
           </NavLink>
           <NavLink 
-            to="/leaderboard"
-            className="flex-1 md:flex-none px-6 md:px-12 py-4 md:py-6 bg-slate-900 dark:bg-white text-white dark:text-slate-950 font-headline font-black rounded-xl uppercase tracking-widest text-[10px] md:text-lg italic text-center"
+            to="/h2h"
+            className="flex-1 md:flex-none px-6 md:px-12 py-4 md:py-6 bg-slate-900 dark:bg-indigo-600 text-white font-headline font-black rounded-xl uppercase tracking-widest text-[10px] md:text-lg italic text-center shadow-lg active:translate-y-1 transition-all"
           >
-            LEADERBOARD
+            H2H ZONE
           </NavLink>
         </div>
 
