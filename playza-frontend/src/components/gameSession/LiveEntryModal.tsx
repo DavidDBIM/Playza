@@ -31,13 +31,13 @@ const LiveEntryModal = ({ game, onClick, onConfirm, userBalance = 1250 }: LiveEn
   const isInsufficient = newBalance < 0;
 
   return (
-    <main className="fixed inset-0 z-100 overflow-y-auto backdrop-blur-xl bg-slate-100/80 dark:bg-slate-950/80 animate-in fade-in duration-300">
+    <main className="fixed inset-0 z-100 overflow-y-auto backdrop-blur-xl bg-slate-100/80 dark:bg-slate-950/80">
       <div className="min-h-full flex items-center justify-center p-2 md:p-4">
-        <div className="relative w-full max-w-md bg-white dark:bg-slate-900 glass-card rounded-xl border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+        <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden">
           
           <button
             onClick={() => onClick(false)}
-            className="absolute top-4 right-4 p-2 rounded-full bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all z-20"
+            className="absolute top-4 right-4 p-2 rounded-full bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 z-20"
           >
             <X size={18} />
           </button>
@@ -52,7 +52,7 @@ const LiveEntryModal = ({ game, onClick, onConfirm, userBalance = 1250 }: LiveEn
               </p>
             </div>
 
-            <div className="relative rounded-2xl border border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-slate-900/40 overflow-hidden mb-6">
+            <div className="relative rounded-xl border border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-slate-900/40 overflow-hidden mb-6">
               <div className="h-20 w-full relative">
                 <img 
                   src={game.thumbnail} 
@@ -121,10 +121,10 @@ const LiveEntryModal = ({ game, onClick, onConfirm, userBalance = 1250 }: LiveEn
             <button 
               disabled={isInsufficient}
               onClick={onConfirm}
-              className={`w-full py-4 rounded-xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 group
+              className={`w-full py-4 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 group
                 ${isInsufficient 
                   ? 'bg-slate-800 text-slate-500 cursor-not-allowed' 
-                  : 'bg-linear-to-r from-primary to-blue-600 hover:scale-[1.02] active:scale-98 text-slate-950 shadow-lg shadow-primary/20 cursor-pointer'}
+                  : 'bg-primary text-slate-950 cursor-pointer'}
               `}
             >
               Confirm & Enter Arena

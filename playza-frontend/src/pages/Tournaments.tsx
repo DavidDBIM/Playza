@@ -51,7 +51,7 @@ const Tournaments = () => {
   });
 
   return (
-    <div className="flex flex-col flex-1 pb-2 md:pb-20 w-full animate-in fade-in duration-500 overflow-x-hidden">
+    <div className="flex flex-col flex-1 pb-2 md:pb-20 w-full overflow-x-hidden">
       <div className="flex flex-col gap-2 md:gap-6 md:px-0">
         <div className="flex flex-col gap-2 mt-4 px-2 md:px-0">
           <h1 className="text-3xl md:text-5xl font-black font-headline tracking-tighter text-slate-900 dark:text-white uppercase flex items-center gap-2 md:gap-3">
@@ -64,11 +64,11 @@ const Tournaments = () => {
 
         {/* Featured Tournament Hero */}
         {featuredTournament && featuredGame && (
-          <section className="relative w-full h-87.5 md:h-112.5 rounded-2xl overflow-hidden border border-white/5 bg-slate-950 group select-none shadow-lg mx-1 md:mx-0">
+          <section className="relative w-full h-87.5 md:h-112.5 rounded-xl overflow-hidden border border-white/5 bg-slate-950 select-none mx-1 md:mx-0">
             <div className="absolute inset-0 z-0">
               <div className="absolute inset-0 bg-linear-to-t from-slate-950 via-slate-950/80 to-transparent z-10" />
               <div
-                className="absolute inset-0 w-full h-full bg-cover bg-center opacity-40 mix-blend-overlay group-hover:scale-105 transition-transform duration-[10s]"
+                className="absolute inset-0 w-full h-full bg-cover bg-center opacity-40"
                 style={{ backgroundImage: `url(${featuredGame.thumbnail})` }}
               />
               <div className="absolute inset-0 bg-linear-to-r from-primary/30 to-transparent z-10" />
@@ -98,7 +98,7 @@ const Tournaments = () => {
 
               <Link
                 to={`/tournaments/${featuredTournament.id}`}
-                className="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-widest px-8 md:px-12 py-2 md:py-4 rounded-xl transition-all shadow-md w-full md:w-auto"
+                className="inline-flex items-center justify-center gap-2 bg-primary md:hover:bg-primary/90 text-white font-black uppercase tracking-widest px-8 md:px-12 py-2 md:py-4 rounded-xl w-full md:w-auto"
               >
                 Join Tournament <ArrowRight size={18} />
               </Link>
@@ -108,16 +108,16 @@ const Tournaments = () => {
 
         {/* Filters & Tabs */}
         <section className="flex flex-col gap-2 md:gap-4 mt-4 px-2 md:px-0">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-4 bg-slate-50 border border-slate-200 dark:border-white/5 dark:bg-white/5 p-2 md:p-4 rounded-2xl">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-4 bg-slate-50 border border-slate-200 dark:border-white/5 dark:bg-white/5 p-2 md:p-4 rounded-xl">
             <div className="flex gap-2 w-full md:w-auto overflow-x-auto custom-scrollbar pb-1 md:pb-0">
               {(["live", "upcoming", "completed"] as const).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`px-5 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest whitespace-nowrap transition-all ${
+                  className={`px-5 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest whitespace-nowrap ${
                     activeTab === tab
-                      ? "bg-primary text-white shadow-sm"
-                      : "bg-black/5 dark:bg-black/20 text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                      ? "bg-primary text-white"
+                      : "bg-black/5 dark:bg-black/20 text-slate-500 md:hover:text-slate-900 md:dark:hover:text-white"
                   }`}
                 >
                   {tab === "live"
@@ -159,14 +159,14 @@ const Tournaments = () => {
                   <ChevronDown size={14} className="opacity-50" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
-                  className="w-50 bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl border border-slate-200 dark:border-white/10 p-2 rounded-xl shadow-lg"
+                  className="w-50 bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl border border-slate-200 dark:border-white/10 p-2 rounded-xl"
                   align="end"
                 >
                   {PRIZE_OPTIONS.map((opt) => (
                     <DropdownMenuItem
                       key={opt.value}
                       onClick={() => setFilterPrize(opt.value)}
-                      className={`text-xs font-bold uppercase tracking-widest cursor-pointer py-2 px-3 rounded-lg outline-none transition-colors ${filterPrize === opt.value ? "bg-primary/10 text-primary" : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white"}`}
+                      className={`text-xs font-bold uppercase tracking-widest cursor-pointer py-2 px-3 rounded-lg outline-none ${filterPrize === opt.value ? "bg-primary/10 text-primary" : "text-slate-600 dark:text-slate-400 md:hover:bg-slate-100 md:dark:hover:bg-white/5 md:hover:text-slate-900 md:dark:hover:text-white"}`}
                     >
                       {opt.label}
                     </DropdownMenuItem>
@@ -185,11 +185,11 @@ const Tournaments = () => {
                 return (
                   <div
                     key={t.id}
-                    className="glass-card rounded-2xl border border-slate-200 dark:border-white/5 overflow-hidden group hover:border-primary/50 transition-colors shadow-sm flex flex-col h-full animate-in fade-in duration-500"
+                    className="glass-card rounded-xl border border-slate-200 dark:border-white/5 overflow-hidden flex flex-col h-full"
                   >
                     <div className="h-32 bg-slate-900 relative overflow-hidden">
                       <div
-                        className="absolute inset-0 bg-cover bg-center opacity-60 mix-blend-overlay group-hover:scale-105 transition-transform duration-500"
+                        className="absolute inset-0 bg-cover bg-center opacity-60"
                         style={{ backgroundImage: `url(${g.thumbnail})` }}
                       />
                       <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-md px-2 md:px-3 py-1 rounded border border-white/10 text-[10px] font-black uppercase text-white flex items-center gap-1.5">
@@ -232,12 +232,12 @@ const Tournaments = () => {
 
                       <Link
                         to={`/tournaments/${t.id}`}
-                        className={`w-full py-3 rounded-xl font-black uppercase tracking-widest text-[10px] text-center transition-all ${
+                        className={`w-full py-3 rounded-xl font-black uppercase tracking-widest text-[10px] text-center ${
                           t.status === "live"
-                            ? "bg-primary text-white hover:bg-primary/90 shadow-sm"
+                            ? "bg-primary text-white md:hover:bg-primary/90"
                             : t.status === "completed"
-                              ? "bg-slate-200 dark:bg-white/5 text-slate-500 hover:bg-slate-300 dark:hover:bg-white/10"
-                              : "bg-playza-yellow/10 text-playza-yellow hover:bg-playza-yellow/20"
+                              ? "bg-slate-200 dark:bg-white/5 text-slate-500 md:hover:bg-slate-300 md:dark:hover:bg-white/10"
+                              : "bg-playza-yellow/10 text-playza-yellow md:hover:bg-playza-yellow/20"
                         }`}
                       >
                         {t.status === "live"
@@ -251,7 +251,7 @@ const Tournaments = () => {
                 );
               })
             ) : (
-              <div className="col-span-full py-2 md:py-20 flex flex-col items-center justify-center text-center glass-card rounded-2xl border border-white/5">
+              <div className="col-span-full py-2 md:py-20 flex flex-col items-center justify-center text-center glass-card rounded-xl border border-white/5">
                 <Trophy className="text-slate-700 opacity-20 mb-4" size={64} />
                 <h3 className="font-headline font-black text-lg md:text-2xl text-slate-900 dark:text-white uppercase mb-2">
                   No Tournaments Found

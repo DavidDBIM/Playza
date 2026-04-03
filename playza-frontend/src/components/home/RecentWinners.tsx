@@ -30,39 +30,31 @@ const RecentWinners = () => {
       <div 
         className="relative w-full overflow-hidden flex items-center rounded-2xl mask-horizontal-fade"
       >
-        <div className="flex w-max items-center gap-2 md:gap-4 py-2 recent-winner hover:paused]">
-          {[...winners, ...winners, ...winners].map(
+        <div className="flex w-max items-center gap-2 md:gap-4 py-2 recent-winner">
+          {[...winners, ...winners].map(
             ({ id, username, game, amountWon }, i) => (
               <div
                 key={`${id}-${i}`}
-                className="group relative flex items-center gap-2 md:gap-4 px-2 md:px-4 py-2 rounded-2xl glass-card border border-primary/20 hover:border-primary/50 transition-all duration-300 hover:-translate-y-1 bg-slate-900/60 cursor-pointer overflow-hidden"
+                className="relative flex items-center gap-2 md:gap-4 px-2 md:px-4 py-2 rounded-2xl glass-card border border-primary/20 bg-slate-900/40 dark:bg-slate-900/60 shrink-0"
               >
-                {/* Shine effect on hover */}
-                <div className="absolute inset-0 -translate-x-[150%] bg-linear-to-r from-transparent via-white/10 to-transparent group-hover:translate-x-[150%] transition-transform duration-1000 ease-in-out skew-x-12" />
-
-                {/* Icon Circle */}
-                {/* <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/20 text-primary border border-primary/30 group-hover:bg-primary group-hover:text-white group-hover:shadow-[0_0_15px_rgba(168,85,247,0.6)] transition-all duration-300 shrink-0">
-                  <Sparkles className="w-5 h-5" />
-                </div> */}
-
                 {/* Content */}
                 <div className="flex justify-center gap-1">
-                  <div className="flex items-center gap-2 text-sm leading-none pt-1">
+                  <div className="flex items-center gap-2 text-[10px] md:text-xs leading-none pt-1">
                     <span className="font-bold truncate max-w-30">{username}</span>
-                    <span className=" text-xs italic">won</span>
+                    <span className="italic opacity-80">won</span>
                     <div className="flex items-center gap-1">
                       <ZASymbol className="text-sm scale-75" />
-                      <span className="font-extrabold text-base md:text-xl text-emerald-400  font-mono tracking-tight leading-none">
+                      <span className="font-extrabold text-sm md:text-base lg:text-lg text-emerald-400 font-mono tracking-tight leading-none">
                         {amountWon.toLocaleString()}
                       </span>
                     </div>
                   </div>
                   
-                  <div className="flex items-center justify-between gap-2 md:gap-6 mt-0.5">
-                    <span className="text-[11px] font-semibold uppercase tracking-widest truncate max-w-37.5">
+                  <div className="flex items-center justify-between gap-1 md:gap-4 mt-0.5">
+                    <span className="text-[10px] md:text-xs font-semibold uppercase tracking-widest truncate max-w-37.5">
                       in {game}
                     </span>
-                    <div className="flex items-center gap-1.5 text-[10px] font-medium whitespace-nowrap bg-black/20 px-2 py-0.5 rounded-full">
+                    <div className="flex items-center gap-1.5 text-[9px] md:text-[10px] font-medium whitespace-nowrap bg-black/20 px-2 py-0.5 rounded-full">
                       <Clock className="w-3 h-3 " />
                       <span>{randomTimes[i] || 1}m ago</span>
                     </div>

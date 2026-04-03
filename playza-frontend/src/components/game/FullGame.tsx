@@ -68,11 +68,11 @@ const FullGame = () => {
   return (
     <main className="space-y-6 md:space-y-8">
 
-      <section className="relative flex items-center rounded-xl overflow-hidden shadow-2xl shadow-primary/5">
+      <section className="relative flex items-center rounded-xl overflow-hidden">
         <FeatureGameCard {...biggestPoolGame} subTitle="Featured Challenge" />
       </section>
 
-      <div className="glass rounded-2xl p-2 md:p-3 flex gap-2 md:gap-4 items-center">
+      <div className="glass rounded-xl p-2 md:p-3 flex gap-2 md:gap-4 items-center">
         <Search
           placeholder="Search for your favorite games..."
           value={query}
@@ -84,7 +84,7 @@ const FullGame = () => {
       </div>
 
       {filteredGames ? (
-        <section className="animate-in fade-in duration-500">
+        <section className="">
           <div className="flex items-center gap-2 md:gap-3 mb-6 px-2">
             <div className="w-1.5 h-6 bg-primary rounded-full"></div>
             <h2 className="font-heading text-lg md:text-xl font-bold tracking-tight text-slate-900 dark:text-white uppercase">
@@ -105,7 +105,7 @@ const FullGame = () => {
           </div>
         </section>
       ) : (
-        <div className="space-y-2 animate-in fade-in duration-500">
+        <div className="space-y-4">
           {groupedGames &&
             Object.entries(groupedGames).map(([category, games]) => (
               <CategoryRow

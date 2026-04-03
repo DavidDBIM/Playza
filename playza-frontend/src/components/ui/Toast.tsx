@@ -87,7 +87,7 @@ const getBg = (type: ToastType) => {
   }
 };
 
-export const Toast = ({ id, type, message, user, onClose, duration = 4000 }: ToastProps) => {
+export const Toast = ({ id, type, message, user, onClose, duration = 3000 }: ToastProps) => {
   useEffect(() => {
     const timer = setTimeout(() => {
       onClose(id);
@@ -97,7 +97,7 @@ export const Toast = ({ id, type, message, user, onClose, duration = 4000 }: Toa
 
   return (
     <div
-      className={`pointer-events-auto relative overflow-hidden flex items-center gap-3 p-3 rounded-xl border backdrop-blur-3xl shadow-2xl transition-all duration-500 animate-in slide-in-from-right-full fade-in ${getBg(type)} max-w-sm w-full mb-2`}
+      className={`pointer-events-auto relative overflow-hidden flex items-center gap-2.5 p-2 rounded-lg border backdrop-blur-3xl shadow-2xl transition-all duration-500 animate-in slide-in-from-right-full fade-in ${getBg(type)} max-w-xs w-full mb-2`}
     >
       {/* Progress Bar */}
       <div className="absolute bottom-0 left-0 h-0.5 bg-primary/20 w-full">

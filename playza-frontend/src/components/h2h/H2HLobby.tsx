@@ -135,7 +135,7 @@ const H2HLobby = ({ onCreate, onBotCreate, onJoin, onQuickMatch, getWaitingRooms
   ];
 
   return (
-    <div className="w-full mx-auto animate-in fade-in duration-500">
+    <div className="w-full mx-auto">
       {view === "hub" && (
         <>
           <LobbyHub 

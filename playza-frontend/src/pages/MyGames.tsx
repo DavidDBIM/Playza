@@ -21,9 +21,9 @@ const MyGames = () => {
   const renderActiveCard = (game: Game) => (
     <div
       key={game.id}
-      className="glass-card rounded-xl p-2 md:p-5 border border-white/5 shadow-md relative overflow-hidden group"
+      className="glass-card rounded-xl p-2 md:p-5 border border-white/5 relative overflow-hidden"
     >
-      <div className="absolute top-0 right-0 p-2 md:p-4 opacity-10 rounded-full bg-primary/20 pointer-events-none group-hover:bg-primary/40 transition-colors"></div>
+      <div className="absolute top-0 right-0 p-2 md:p-4 opacity-10 rounded-full bg-primary/20 pointer-events-none"></div>
 
       <div className="flex justify-between items-start mb-4">
         <div>
@@ -65,7 +65,7 @@ const MyGames = () => {
 
         <Link
           to={`/games/${game.slug}/session`}
-          className="w-full md:w-auto bg-primary hover:bg-primary/90 text-white font-black uppercase text-xs tracking-widest px-8 md:px-10 py-2 md:py-3 rounded-xl transition-all text-center relative z-10 shadow-sm"
+          className="w-full md:w-auto bg-primary text-white font-black uppercase text-xs tracking-widest px-8 md:px-10 py-2 md:py-3 rounded-xl md:hover:bg-primary/90 text-center relative z-10"
         >
           View Live
         </Link>
@@ -76,7 +76,7 @@ const MyGames = () => {
   const renderUpcomingCard = (game: Game) => (
     <div
       key={game.id}
-      className="glass-card rounded-xl p-2 md:p-5 border border-white/5 shadow-md opacity-90 group"
+      className="glass-card rounded-xl p-2 md:p-5 border border-white/5 opacity-90"
     >
       <div className="flex justify-between items-start mb-4">
         <div>
@@ -104,7 +104,7 @@ const MyGames = () => {
 
         <Link
           to={`/games/${game.slug}/session`}
-          className="w-full md:w-auto bg-slate-200 dark:bg-white/10 hover:bg-slate-300 dark:hover:bg-white/20 text-slate-900 dark:text-white font-black uppercase text-xs tracking-widest px-8 md:px-10 py-2 md:py-3 rounded-xl transition-colors text-center"
+          className="w-full md:w-auto bg-slate-200 dark:bg-white/10 md:hover:bg-slate-300 md:dark:hover:bg-white/20 text-slate-900 dark:text-white font-black uppercase text-xs tracking-widest px-8 md:px-10 py-2 md:py-3 rounded-xl text-center"
         >
           View Details
         </Link>
@@ -115,7 +115,7 @@ const MyGames = () => {
   const renderEndedCard = (game: Game) => (
     <div
       key={game.id}
-      className="glass-card rounded-xl p-2 md:p-5 border border-white/5 shadow-sm opacity-70 filter transition-all hover:opacity-100 group"
+      className="glass-card rounded-xl p-2 md:p-5 border border-white/5 opacity-70 filter"
     >
       <div className="flex justify-between items-start mb-4">
         <div>
@@ -143,7 +143,7 @@ const MyGames = () => {
 
         <Link
           to={`/games/${game.slug}/session`}
-          className="w-full md:w-auto border border-white/10 dark:border-white/20 hover:bg-white/5 text-slate-900 dark:text-white font-black uppercase text-xs tracking-widest px-8 md:px-10 py-2 md:py-3 rounded-xl transition-colors text-center"
+          className="w-full md:w-auto border border-white/10 dark:border-white/20 md:hover:bg-white/5 text-slate-900 dark:text-white font-black uppercase text-xs tracking-widest px-8 md:px-10 py-2 md:py-3 rounded-xl text-center"
         >
           View Results
         </Link>
@@ -152,10 +152,9 @@ const MyGames = () => {
   );
 
   return (
-    <div className="flex-1 min-w-0 space-y-8 pb-2 md:pb-20 animate-in fade-in duration-500">
+    <div className="flex-1 min-w-0 space-y-8 pb-2 md:pb-20">
       {!user ? (
-        <div className="glass-card rounded-2xl p-2 md:p-12 text-center h-[50vh] flex flex-col items-center justify-center border border-white/5 shadow-lg relative overflow-hidden">
-          <div className="absolute inset-0 bg-primary/5 blur-3xl opacity-50 pointer-events-none"></div>
+        <div className="glass-card rounded-xl p-2 md:p-12 text-center h-[50vh] flex flex-col items-center justify-center border border-white/5 relative overflow-hidden">
           <MdVideogameAsset className="text-4xl md:text-6xl text-slate-300 dark:text-slate-700 mb-4 relative z-10" />
           <h2 className="text-lg md:text-2xl font-black font-headline uppercase text-slate-900 dark:text-white relative z-10">
             Sign in to view games
@@ -206,10 +205,10 @@ const MyGames = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as TabTypes)}
-                className={`flex flex-col min-w-28 px-4 py-3 rounded-xl border transition-all text-left ${
+                className={`flex flex-col min-w-28 px-4 py-3 rounded-xl border text-left ${
                   activeTab === tab.id
-                    ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-transparent shadow-md scale-100"
-                    : "glass-card border-white/5 text-slate-500 hover:text-slate-900 hover:dark:text-white hover:bg-slate-100 hover:dark:bg-white/5 opacity-80"
+                    ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-transparent"
+                    : "glass-card border-white/5 text-slate-500 md:hover:text-slate-900 md:hover:dark:text-white md:hover:bg-slate-100 md:hover:dark:bg-white/5 opacity-80"
                 }`}
               >
                 <div className="flex items-center gap-2 mb-1">
@@ -241,7 +240,7 @@ const MyGames = () => {
                 (liveGames.length ? (
                   liveGames.map(renderActiveCard)
                 ) : (
-                  <div className="text-center py-2 md:py-12 text-slate-500 font-bold uppercase tracking-widest text-xs glass-card rounded-2xl border border-white/5">
+                  <div className="text-center py-2 md:py-12 text-slate-500 font-bold uppercase tracking-widest text-xs glass-card rounded-xl border border-white/5">
                     No active games
                   </div>
                 ))}
@@ -249,7 +248,7 @@ const MyGames = () => {
                 (upcomingGames.length ? (
                   upcomingGames.map(renderUpcomingCard)
                 ) : (
-                  <div className="text-center py-2 md:py-12 text-slate-500 font-bold uppercase tracking-widest text-xs glass-card rounded-2xl border border-white/5">
+                  <div className="text-center py-2 md:py-12 text-slate-500 font-bold uppercase tracking-widest text-xs glass-card rounded-xl border border-white/5">
                     No upcoming games
                   </div>
                 ))}
@@ -257,7 +256,7 @@ const MyGames = () => {
                 (endedGames.length ? (
                   endedGames.map(renderEndedCard)
                 ) : (
-                  <div className="text-center py-2 md:py-12 text-slate-500 font-bold uppercase tracking-widest text-xs glass-card rounded-2xl border border-white/5">
+                  <div className="text-center py-2 md:py-12 text-slate-500 font-bold uppercase tracking-widest text-xs glass-card rounded-xl border border-white/5">
                     No ended games
                   </div>
                 ))}

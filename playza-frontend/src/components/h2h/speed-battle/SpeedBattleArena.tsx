@@ -74,25 +74,28 @@ export default function SpeedBattleArena({ room }: SpeedBattleArenaProps) {
   );
 
   return (
-    <div className="w-full max-w-2xl mx-auto space-y-6 py-4 animate-in fade-in duration-300">
+    <div className="w-full max-w-2xl mx-auto space-y-6 py-4 px-2 md:px-0">
       <div className="flex items-center justify-between">
-        <img src="/logoImage.png" alt="Playza" className="h-6 opacity-60" />
-        <div className="flex items-center gap-4 text-sm font-bold">
+        <img src="/logoImage.png" alt="Playza" className="h-6 opacity-60" loading="lazy" />
+        <div className="flex items-center gap-4 text-[10px] md:text-sm font-bold">
           <span className="text-primary">{wpm} WPM</span>
-          <span className="text-muted-foreground">{accuracy}% accuracy</span>
+          <span className="text-slate-500">{accuracy}% accuracy</span>
         </div>
       </div>
 
-      <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
-        <div className="h-full bg-primary transition-all duration-100 rounded-full" style={{ width: `${progress}%` }} />
+      <div className="w-full h-2 bg-black/5 dark:bg-white/10 rounded-xl overflow-hidden">
+        <div 
+          className="h-full bg-primary rounded-xl" 
+          style={{ width: `${progress}%` }} 
+        />
       </div>
 
-      <div className="glass-card p-6 rounded-xl border border-white/10">
-        <div className="font-mono text-base leading-relaxed select-none">
+      <div className="bg-white/80 dark:bg-slate-900/40 p-6 rounded-xl border border-black/5 dark:border-white/10">
+        <div className="font-mono text-sm md:text-base leading-relaxed select-none">
           {paragraph.split('').map((char: string, i: number) => {
-            let color = 'text-muted-foreground';
+            let color = 'text-slate-500';
             if (i < typed.length) color = typed[i] === char ? 'text-primary' : 'text-red-500 bg-red-500/20';
-            if (i === typed.length) color = 'text-white bg-white/20';
+            if (i === typed.length) color = 'text-slate-900 dark:text-white bg-black/5 dark:bg-white/20';
             return <span key={i} className={color}>{char}</span>;
           })}
         </div>
@@ -103,7 +106,7 @@ export default function SpeedBattleArena({ room }: SpeedBattleArenaProps) {
         value={typed}
         onChange={e => { if (phase === 'playing') setTyped(e.target.value) }}
         disabled={phase === 'submitted'}
-        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 font-mono text-sm focus:border-primary outline-none disabled:opacity-50"
+        className="w-full bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 rounded-xl px-4 py-3 font-mono text-[10px] md:text-sm focus:border-primary outline-none disabled:opacity-50 text-slate-900 dark:text-white"
         placeholder="Start typing here..."
         autoComplete="off"
         autoCorrect="off"
@@ -111,7 +114,7 @@ export default function SpeedBattleArena({ room }: SpeedBattleArenaProps) {
       />
 
       {phase === 'submitted' && (
-        <div className="text-center text-muted-foreground text-sm animate-pulse font-bold uppercase tracking-widest">
+        <div className="text-center text-slate-500 text-[10px] md:text-sm font-bold uppercase tracking-widest">
           Waiting for opponent to finish...
         </div>
       )}

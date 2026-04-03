@@ -73,7 +73,7 @@ const CategoryRow = ({ games, title, categorySlug, totalGames }: CategoryRowProp
           {totalGames > 8 && (
             <Link 
               to={`/games/category/${categorySlug}`} 
-              className="text-primary hover:text-primary/80 text-xs md:text-sm font-bold transition-colors whitespace-nowrap"
+              className="text-primary text-xs md:text-sm font-bold whitespace-nowrap"
             >
               Show All
             </Link>
@@ -82,7 +82,7 @@ const CategoryRow = ({ games, title, categorySlug, totalGames }: CategoryRowProp
             <button
               onClick={() => scroll("left")}
               disabled={!canScrollLeft}
-              className="flex items-center justify-center p-1.5 rounded-lg transition-all duration-300 border border-black/5 dark:border-white/5 bg-slate-100/50 dark:bg-white/5 text-slate-500 dark:text-white/50 hover:border-primary/30 hover:bg-primary/5 hover:text-primary disabled:opacity-20 disabled:cursor-not-allowed"
+              className="flex items-center justify-center p-1.5 rounded-lg border border-black/5 dark:border-white/5 bg-slate-100/50 dark:bg-white/5 text-slate-500 dark:text-white/50 disabled:opacity-20 disabled:cursor-not-allowed"
               aria-label="Scroll Left"
             >
               <ChevronLeft size={18} />
@@ -90,7 +90,7 @@ const CategoryRow = ({ games, title, categorySlug, totalGames }: CategoryRowProp
             <button
               onClick={() => scroll("right")}
               disabled={!canScrollRight}
-              className="flex items-center justify-center p-1.5 rounded-lg transition-all duration-300 border border-black/5 dark:border-white/5 bg-slate-100/50 dark:bg-white/5 text-slate-500 dark:text-white/50 hover:border-primary/30 hover:bg-primary/5 hover:text-primary disabled:opacity-20 disabled:cursor-not-allowed"
+              className="flex items-center justify-center p-1.5 rounded-lg border border-black/5 dark:border-white/5 bg-slate-100/50 dark:bg-white/5 text-slate-500 dark:text-white/50 disabled:opacity-20 disabled:cursor-not-allowed"
               aria-label="Scroll Right"
             >
               <ChevronRight size={18} />

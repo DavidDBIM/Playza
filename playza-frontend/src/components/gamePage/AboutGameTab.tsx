@@ -4,9 +4,9 @@ export const AboutGameTab = () => {
   return (
     <div className="space-y-4 md:space-y-12">
       {/* Overview Card */}
-      <div className="bg-white dark:bg-white/5 p-2 md:p-4 rounded-xl border border-slate-200 dark:border-white/5 space-y-6 shadow-xl">
+      <div className="bg-white dark:bg-white/5 p-2 md:p-6 rounded-xl border border-slate-200 dark:border-white/5 space-y-6">
         <div className="flex items-center gap-2 md:gap-4 mb-2">
-          <div className="p-2 md:p-3 bg-primary/10 rounded-2xl">
+          <div className="p-2 md:p-3 bg-primary/10 rounded-xl">
             <Info className="w-6 h-6 text-primary" />
           </div>
           <h2 className="text-xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight italic uppercase">Game Overview</h2>
@@ -68,7 +68,7 @@ export const AboutGameTab = () => {
       </div>
 
       {/* Final CTA Area */}
-      <div className="p-4 md:p-8 bg-slate-900 dark:bg-linear-to-br dark:from-playza-blue/20 dark:via-playza-blue/5 dark:to-transparent rounded-xl border border-slate-800 dark:border-playza-blue/20 text-center space-y-8 shadow-2xl">
+      <div className="p-4 md:p-8 bg-slate-900 rounded-xl border border-slate-800 dark:border-playza-blue/20 text-center space-y-8">
         <div className="max-w-xl mx-auto space-y-4">
           <h2 className="text-base md:text-xl font-black text-white tracking-tight uppercase italic">Ready to dominate?</h2>
           <p className="text-slate-400 text-xs md:text-lg font-medium">
@@ -77,7 +77,7 @@ export const AboutGameTab = () => {
         </div>
         
         <div className="flex  items-center justify-center">
-          <button className="w-full sm:w-auto px-2 md:px-10 py-2 md:py-5 bg-white dark:bg-primary text-slate-900 dark:text-white font-black rounded-2xl flex items-center justify-center gap-2 md:gap-3 hover:bg-slate-100 dark:hover:bg-primary/90 transition-all shadow-xl shadow-playza-blue/20 group">
+          <button className="w-full sm:w-auto px-2 md:px-10 py-2 md:py-5 bg-white dark:bg-primary text-slate-900 dark:text-white font-black rounded-xl flex items-center justify-center gap-2 md:gap-3 group">
             <Play className="w-5 h-5 fill-current" />
             PLAY NOW
           </button>

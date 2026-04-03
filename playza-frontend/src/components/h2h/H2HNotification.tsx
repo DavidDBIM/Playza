@@ -113,18 +113,15 @@ const H2HNotification = () => {
           setOpen(true);
           setHasNew(false);
         }}
-        className="relative p-1.5 md:p-2 rounded-full hover:bg-slate-100 dark:hover:bg-white/10 transition-colors group flex items-center justify-center outline-none"
+        className="relative p-1.5 md:p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 group flex items-center justify-center outline-none"
       >
         <Bell
-          className={`w-4 h-4 md:w-5 md:h-5 ${hasNew ? "text-indigo-500 animate-bounce font-black" : "text-slate-500"}`}
+          className={`w-4 h-4 md:w-5 md:h-5 ${hasNew ? "text-indigo-500 font-black" : "text-slate-500"}`}
         />
         {waitingRooms.length > 0 && (
           <span className="absolute top-0.5 right-0.5 md:top-1 md:right-1 flex h-3.5 w-3.5 md:h-4 md:w-4">
             <span
-              className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${hasNew ? "bg-indigo-500" : "bg-indigo-400"}`}
-            ></span>
-            <span
-              className={`relative inline-flex rounded-full h-3.5 w-3.5 md:h-4 md:w-4 items-center justify-center text-[7px] md:text-[8px] font-black text-white ${hasNew ? "bg-indigo-500" : "bg-indigo-600"}`}
+              className={`relative inline-flex rounded-full h-3.5 w-3.5 md:h-4 md:w-4 items-center justify-center text-[8px] md:text-[10px] font-black text-white ${hasNew ? "bg-indigo-500" : "bg-indigo-600"}`}
             >
               {waitingRooms.length}
             </span>
@@ -134,38 +131,38 @@ const H2HNotification = () => {
 
       {open && typeof document !== "undefined" && createPortal(
         <div 
-          className="fixed inset-0 z-200 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4 animate-in fade-in duration-300"
+          className="fixed inset-0 z-200 flex items-center justify-center bg-slate-950/80 p-4"
           onClick={() => setOpen(false)}
         >
           <div 
-            className="w-full max-w-md bg-white dark:bg-slate-900 border-2 border-primary/30 rounded-3xl p-6 md:p-8 shadow-2xl space-y-6 md:space-y-8 animate-in zoom-in-95 duration-300"
+            className="w-full max-w-md bg-white dark:bg-slate-900 border-2 border-primary/30 rounded-3xl p-4 md:p-6 space-y-4 md:space-y-6"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="p-4 md:p-5 border-b border-white/5 bg-linear-to-b from-indigo-500/10 to-transparent relative">
+            <div className="p-4 md:p-5 border-b border-black/5 dark:border-white/5 relative">
               <div className="absolute top-0 right-0 p-3 opacity-5">
-                <Bell size={64} className="text-white" />
+                <Bell size={64} className="text-slate-900 dark:text-white" />
               </div>
               <div className="relative z-10 text-center">
-                <p className="text-[9px] font-black uppercase tracking-[0.4em] text-indigo-400/60 mb-1 whitespace-nowrap italic">Live Combat Arena</p>
-                <h2 className="text-lg md:text-xl font-black text-white uppercase italic tracking-tighter leading-none">
+                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-indigo-500/60 mb-1 whitespace-nowrap italic">Live Combat Arena</p>
+                <h2 className="text-lg md:text-xl font-black text-slate-900 dark:text-white uppercase italic tracking-tighter leading-none">
                     RIBOSE <span className="text-indigo-500">LOBBY</span>
                 </h2>
               </div>
             </div>
 
             {/* Modal Content */}
-            <div className="max-h-[50vh] overflow-y-auto scrollbar-hide p-3 md:p-4 space-y-3">
+            <div className="max-h-[50vh] overflow-y-auto scrollbar-hide p-2 md:p-4 space-y-3">
               {waitingRooms.length === 0 ? (
                 <div className="py-10 flex flex-col items-center justify-center text-center space-y-4">
-                  <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center border border-dashed border-white/10 text-slate-500">
+                  <div className="w-14 h-14 rounded-2xl bg-black/5 dark:bg-white/5 flex items-center justify-center border border-dashed border-black/10 dark:border-white/10 text-slate-500">
                     <Users size={28} />
                   </div>
                   <div className="space-y-1">
-                    <p className="text-[11px] font-black uppercase text-slate-400 tracking-widest italic">
+                    <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest italic">
                       Zero Hostilities
                     </p>
-                    <p className="text-[9px] text-slate-600 font-bold uppercase tracking-widest italic leading-tight">
+                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest italic leading-tight">
                       Waiting for challengers...
                     </p>
                   </div>
@@ -176,15 +173,16 @@ const H2HNotification = () => {
                     <button
                       key={room.id}
                       onClick={() => handleJoin(room.id)}
-                      className="w-full flex items-center justify-between p-3 rounded-2xl bg-white/5 border border-white/10 hover:border-indigo-500/50 hover:bg-slate-800/50 transition-all group active:scale-[0.98]"
+                      className="w-full flex items-center justify-between p-3 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 hover:bg-black/10 dark:hover:bg-slate-800/50 group"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/10 bg-slate-900 shadow-inner">
+                        <div className="w-10 h-10 rounded-xl overflow-hidden border border-black/5 dark:border-white/10 bg-slate-900">
                           {room.host.avatar_url ? (
                             <img
                               src={room.host.avatar_url}
                               alt={room.host.username}
                               className="w-full h-full object-cover"
+                              loading="lazy"
                             />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center bg-indigo-600 text-white font-black text-sm">
@@ -193,18 +191,18 @@ const H2HNotification = () => {
                           )}
                         </div>
                         <div className="text-left">
-                          <span className="block text-[12px] font-black text-white uppercase tracking-tight truncate max-w-30 italic leading-none mb-1">{room.host.username}</span>
-                          <span className="block text-[8px] font-bold text-indigo-400/50 uppercase tracking-[0.2em]">{timeAgo(room.created_at)}</span>
+                          <span className="block text-[10px] md:text-xs font-black text-slate-900 dark:text-white uppercase tracking-tight truncate max-w-30 italic leading-none mb-1">{room.host.username}</span>
+                          <span className="block text-[10px] font-bold text-indigo-400/50 uppercase tracking-[0.2em]">{timeAgo(room.created_at)}</span>
                         </div>
                       </div>
                       <div className="flex items-center gap-4">
                         <div className="text-right">
-                          <div className="flex items-center gap-1.5 text-[14px] font-black text-indigo-400 italic">
+                          <div className="flex items-center gap-1.5 text-[10px] md:text-sm font-black text-indigo-500 italic">
                             {room.stake} <ZASymbol className="w-2.5 h-2.5" />
                           </div>
-                          <span className="text-[7px] text-slate-600 font-black uppercase tracking-tighter block leading-none">STAKE</span>
+                          <span className="text-[10px] text-slate-600 font-black uppercase tracking-tighter block leading-none">STAKE</span>
                         </div>
-                        <div className="w-9 h-9 rounded-xl bg-indigo-500 flex items-center justify-center text-slate-900 group-hover:bg-white transition-colors shadow-lg shadow-indigo-500/20">
+                        <div className="w-9 h-9 rounded-xl bg-indigo-500 flex items-center justify-center text-slate-950">
                           <Swords size={16} strokeWidth={2.5} />
                         </div>
                       </div>
@@ -215,10 +213,10 @@ const H2HNotification = () => {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 md:p-5 bg-slate-950/50 border-t border-white/5 flex gap-3">
+            <div className="p-4 md:p-5 bg-black/5 dark:bg-slate-950/50 border-t border-black/5 dark:border-white/5 flex gap-3">
               <button
                 onClick={() => setOpen(false)}
-                className="flex-1 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest text-slate-500 hover:text-white hover:bg-white/5 transition-all italic border border-transparent hover:border-white/10"
+                className="flex-1 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest text-slate-500 hover:text-slate-900 dark:hover:text-white italic"
               >
                 Close
               </button>
@@ -227,7 +225,7 @@ const H2HNotification = () => {
                   setOpen(false);
                   navigate("/h2h");
                 }}
-                className="flex-2 py-3 bg-indigo-500 text-white rounded-xl font-black text-[10px] uppercase tracking-[0.3em] italic shadow-[0_0_20px_rgba(99,102,241,0.3)] hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-3 border border-indigo-400/50"
+                className="flex-2 py-3 bg-indigo-500 text-white rounded-xl font-black text-[10px] uppercase tracking-[0.3em] italic flex items-center justify-center gap-3"
               >
                 <Zap size={14} className="fill-current" />
                 GO TO ARENA

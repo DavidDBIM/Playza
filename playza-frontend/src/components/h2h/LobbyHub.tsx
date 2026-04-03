@@ -18,17 +18,16 @@ const LobbyHub = ({ games, setSelectedGame }: LobbyHubProps) => {
   return (
     <div className="space-y-12">
       <header className="text-center space-y-4">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-[10px] font-black uppercase tracking-[0.2em]">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-500 dark:text-indigo-400 text-[10px] font-black uppercase tracking-[0.2em]">
           <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
           </span>
           Battle Master Arena
         </div>
-        <h1 className="font-headline text-5xl md:text-7xl font-black tracking-tighter uppercase italic leading-tight">
+        <h1 className="font-headline text-3xl md:text-5xl lg:text-7xl font-black tracking-tighter uppercase italic leading-tight text-slate-900 dark:text-white">
           SELECT YOUR <span className="text-indigo-500">GAME</span>
         </h1>
-        <p className="text-slate-400 max-w-xl mx-auto text-xs md:text-sm font-medium">
+        <p className="text-slate-500 max-w-xl mx-auto text-[10px] md:text-xs lg:text-sm font-medium">
           Choose your battlefield. Compete in high-stakes matches against global
           rivals or challenge your friends for ultimate bragging rights.
         </p>
@@ -39,28 +38,25 @@ const LobbyHub = ({ games, setSelectedGame }: LobbyHubProps) => {
           <div
             key={game.id}
             onClick={() => !game.comingSoon && setSelectedGame(game)}
-            className={`relative group transition-all duration-300 ${game.comingSoon ? "opacity-50 grayscale cursor-not-allowed" : "cursor-pointer hover:scale-[1.02]"}`}
+            className={`relative group ${game.comingSoon ? "opacity-50 grayscale cursor-not-allowed" : "cursor-pointer"}`}
           >
-            <div
-              className={`absolute -inset-0.5 bg-linear-to-r ${game.color} rounded-2xl md:rounded-3xl blur opacity-20 group-hover:opacity-40 transition-opacity`}
-            ></div>
-            <div className="relative bg-slate-900/80 border border-white/10 rounded-2xl md:rounded-3xl p-4 md:p-6 backdrop-blur-xl h-full flex flex-col justify-between items-center text-center overflow-hidden">
+            <div className="relative bg-white dark:bg-slate-900 border border-black/5 dark:border-white/10 rounded-2xl md:rounded-3xl p-4 md:p-6 h-full flex flex-col justify-between items-center text-center overflow-hidden">
               {game.comingSoon && (
-                <div className="absolute top-3 md:top-4 right-3 md:right-4 bg-white/30 backdrop-blur-md px-2 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest border border-white/10">
+                <div className="absolute top-3 md:top-4 right-3 md:right-4 bg-black/20 dark:bg-white/30 px-2 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest border border-white/10 text-white">
                   Coming Soon
                 </div>
               )}
               <div
-                className={`w-14 h-14 md:w-20 md:h-20 rounded-xl md:rounded-2xl bg-linear-to-br ${game.color} flex items-center justify-center shadow-lg mb-4 md:mb-6 group-hover:rotate-6 transition-transform`}
+                className={`w-14 h-14 md:w-20 md:h-20 rounded-xl md:rounded-2xl bg-linear-to-br ${game.color} flex items-center justify-center mb-4 md:mb-6 shadow-lg shadow-black/10`}
               >
                 <game.icon className="text-white w-6 h-6 md:w-10 md:h-10" />
               </div>
               <div>
-                <h3 className="text-xl md:text-2xl font-black uppercase italic tracking-tighter text-white mb-1 md:mb-2">
+                <h3 className="text-lg md:text-xl lg:text-2xl font-black uppercase italic tracking-tighter text-slate-900 dark:text-white mb-1 md:mb-2">
                   {game.name}
                 </h3>
-                <div className="flex items-center justify-center gap-2 text-[8px] md:text-[10px] uppercase tracking-widest font-bold text-indigo-400">
-                  <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+                <div className="flex items-center justify-center gap-2 text-[9px] md:text-[10px] uppercase tracking-widest font-bold text-indigo-500 dark:text-indigo-400">
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
                   {game.players} Active Now
                 </div>
               </div>
