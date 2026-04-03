@@ -53,7 +53,7 @@ const Header = () => {
               >
                 <Button
                   variant={"outline"}
-                  className="border-primary/50 text-primary hover:bg-primary/10"
+                  className="border-primary/50 text-primary md:hover:bg-primary/10"
                 >
                   Log In
                 </Button>
@@ -77,7 +77,7 @@ const Header = () => {
                   </div>
                   <button
                     onClick={() => navigate("?modal=deposit")}
-                    className="font-bold uppercase bg-primary hover:bg-primary/90 rounded-full flex items-center justify-center w-6 h-6 md:w-auto md:h-auto md:px-3 md:py-1"
+                    className="font-bold uppercase bg-primary md:hover:bg-primary/90 rounded-full flex items-center justify-center w-6 h-6 md:w-auto md:h-auto md:px-3 md:py-1"
                   >
                     <Plus className="text-slate-900 dark:text-white w-4 h-4 md:hidden font-bold" />
                     <span className="hidden md:inline text-slate-900 dark:text-white text-[10px] font-black tracking-widest uppercase">
@@ -126,7 +126,7 @@ const Header = () => {
                             setTheme("light");
                             setOpen(false);
                           }}
-                          className={`flex-1 py-1.5 rounded-full transition-all flex items-center justify-center ${theme === "light" ? "bg-white text-primary" : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"}`}
+                          className={`flex-1 py-1.5 rounded-full flex items-center justify-center ${theme === "light" ? "bg-white text-primary" : "text-slate-500 md:hover:text-slate-900 dark:text-slate-400 dark:md:hover:text-white"}`}
                         >
                           <Sun className="w-4 h-4" />
                         </button>
@@ -135,7 +135,7 @@ const Header = () => {
                             setTheme("system");
                             setOpen(false);
                           }}
-                          className={`flex-1 py-1.5 rounded-full transition-all flex items-center justify-center ${theme === "system" ? "bg-white dark:bg-slate-800 text-primary" : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"}`}
+                          className={`flex-1 py-1.5 rounded-full flex items-center justify-center ${theme === "system" ? "bg-white dark:bg-slate-800 text-primary" : "text-slate-500 md:hover:text-slate-900 dark:text-slate-400 dark:md:hover:text-white"}`}
                         >
                           <Monitor className="w-4 h-4" />
                         </button>
@@ -144,7 +144,7 @@ const Header = () => {
                             setTheme("dark");
                             setOpen(false);
                           }}
-                          className={`flex-1 py-1.5 rounded-full transition-all flex items-center justify-center ${theme === "dark" ? "bg-slate-800 text-primary" : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"}`}
+                          className={`flex-1 py-1.5 rounded-full flex items-center justify-center ${theme === "dark" ? "bg-slate-800 text-primary" : "text-slate-500 md:hover:text-slate-900 dark:text-slate-400 dark:md:hover:text-white"}`}
                         >
                           <Moon className="w-4 h-4" />
                         </button>
@@ -152,8 +152,8 @@ const Header = () => {
                     </div>
                     <div className="h-px bg-slate-200 dark:bg-slate-700 my-1 mx-2" />
                     <Link to="/loyalty">
-                      <DropdownMenuItem className="cursor-pointer gap-2 md:gap-3 py-2 md:py-3 px-2 md:px-4 rounded-xl bg-linear-to-r from-primary/10 to-secondary/10 hover:from-primary/20 hover:to-secondary/20 text-primary border border-primary/20 transition-all my-1 group">
-                        <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <DropdownMenuItem className="cursor-pointer gap-2 md:gap-3 py-2 md:py-3 px-2 md:px-4 rounded-xl bg-linear-to-r from-primary/10 to-secondary/10 md:hover:from-primary/20 md:hover:to-secondary/20 text-primary border border-primary/20 my-1 group">
+                        <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center md:group-hover:scale-110">
                           <Gift className="w-4 h-4" />
                         </div>
                         <div className="flex flex-col">
@@ -168,20 +168,20 @@ const Header = () => {
                     </Link>
                     <div className="h-px bg-slate-200 dark:bg-slate-700 my-1 mx-2" />
                     <Link to="/profile">
-                      <DropdownMenuItem className="cursor-pointer gap-2 md:gap-3 py-2 md:py-2.5 px-2 md:px-3 rounded-xl focus:bg-primary/10 data-highlighted:bg-primary/10 focus:text-primary data-highlighted:text-primary dark:focus:bg-white/5 dark:data-highlighted:bg-white/5 transition-colors">
+                      <DropdownMenuItem className="cursor-pointer gap-2 md:gap-3 py-2 md:py-2.5 px-2 md:px-3 rounded-xl focus:bg-primary/10 data-highlighted:bg-primary/10 focus:text-primary data-highlighted:text-primary dark:focus:bg-white/5 dark:data-highlighted:bg-white/5">
                         <User className="w-4 h-4" />
                         <span className="font-medium text-sm">Profile</span>
                       </DropdownMenuItem>
                     </Link>
                     <DropdownMenuItem
                       onClick={() => navigate("?modal=withdraw")}
-                      className="cursor-pointer gap-2 md:gap-3 py-2 md:py-2.5 px-2 md:px-3 rounded-xl focus:bg-primary/10 data-highlighted:bg-primary/10 focus:text-primary data-highlighted:text-primary dark:focus:bg-white/5 dark:data-highlighted:bg-white/5 transition-colors"
+                      className="cursor-pointer gap-2 md:gap-3 py-2 md:py-2.5 px-2 md:px-3 rounded-xl focus:bg-primary/10 data-highlighted:bg-primary/10 focus:text-primary data-highlighted:text-primary dark:focus:bg-white/5 dark:data-highlighted:bg-white/5"
                     >
                       <CreditCard className="w-4 h-4" />
                       <span className="font-medium text-sm">Withdrawal</span>
                     </DropdownMenuItem>
                     <Link to="/profile/settings">
-                      <DropdownMenuItem className="cursor-pointer gap-2 md:gap-3 py-2 md:py-2.5 px-2 md:px-3 rounded-xl focus:bg-primary/10 data-highlighted:bg-primary/10 focus:text-primary data-highlighted:text-primary dark:focus:bg-white/5 dark:data-highlighted:bg-white/5 transition-colors">
+                      <DropdownMenuItem className="cursor-pointer gap-2 md:gap-3 py-2 md:py-2.5 px-2 md:px-3 rounded-xl focus:bg-primary/10 data-highlighted:bg-primary/10 focus:text-primary data-highlighted:text-primary dark:focus:bg-white/5 dark:data-highlighted:bg-white/5">
                         <Settings className="w-4 h-4" />
                         <span className="font-medium text-sm">Settings</span>
                       </DropdownMenuItem>
@@ -189,7 +189,7 @@ const Header = () => {
                     <div className="h-px bg-slate-200 dark:bg-slate-700 my-1 mx-2" />
                     <DropdownMenuItem
                       onClick={handleLogout}
-                      className="cursor-pointer gap-2 md:gap-3 py-2 md:py-2.5 px-2 md:px-3 rounded-xl text-red-500 focus:bg-red-50/50 dark:focus:bg-red-900/20 data-highlighted:bg-red-50/50 dark:data-highlighted:bg-red-900/20 focus:text-red-500 data-highlighted:text-red-500 transition-colors"
+                      className="cursor-pointer gap-2 md:gap-3 py-2 md:py-2.5 px-2 md:px-3 rounded-xl text-red-500 focus:bg-red-50/50 dark:focus:bg-red-900/20 data-highlighted:bg-red-50/50 dark:data-highlighted:bg-red-900/20 focus:text-red-500 data-highlighted:text-red-500"
                     >
                       <LogOut className="w-4 h-4" />
                       <span className="font-medium text-sm">Log out</span>

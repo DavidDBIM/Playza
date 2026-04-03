@@ -280,7 +280,8 @@ h1,h2,h3 {
   }
   body {
     font-family: 'Inter', sans-serif;
-    background-color: #020617;
+    background-color: var(--background);
+    background-image: linear-gradient(to bottom right, var(--background) 0%, rgba(139, 92, 246, 0.03) 100%);
     overscroll-behavior-y: none;
     -webkit-overflow-scrolling: touch;
   }
