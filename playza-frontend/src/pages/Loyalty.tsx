@@ -131,13 +131,10 @@ const Loyalty = () => {
   return (
     <div className="flex-1 space-y-12 pb-2 md:pb-20">
       {!user ? (
-        <div className="mt-6 mb-12 glass-card p-2 md:p-10 rounded-xl border-primary/20 relative overflow-hidden flex flex-col items-center text-center gap-2 md:gap-8 shadow-2xl">
-          <div className="absolute -top-24 -left-24 size-96 bg-primary/20 blur-[120px] rounded-full" />
-          <div className="absolute -bottom-24 -right-24 size-96 bg-secondary/20 blur-[120px] rounded-full" />
-
+        <div className="mt-6 mb-12 glass-card p-2 md:p-10 rounded-xl border-primary/20 relative overflow-hidden flex flex-col items-center text-center gap-2 md:gap-8">
           <div className="relative z-10 space-y-4 max-w-2xl">
-            <div className="size-24 bg-primary/20 rounded-xl flex items-center justify-center mx-auto mb-8 border border-primary/30 shadow-inner group">
-              <MdStars className="text-3xl md:text-5xl text-primary animate-pulse" />
+            <div className="size-24 bg-primary/20 rounded-xl flex items-center justify-center mx-auto mb-8 border border-primary/30">
+              <MdStars className="text-3xl md:text-5xl text-primary" />
             </div>
             <h1 className="text-2xl md:text-4xl font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-none italic">
               PZA <span className="text-primary">Rewards</span> Center
@@ -150,14 +147,14 @@ const Loyalty = () => {
 
           <div className="relative z-10 flex flex-col sm:flex-row gap-2 md:gap-4 w-full max-w-md">
             <Link to="/registration?view=signup" className="flex-1">
-              <Button className="w-full h-16 bg-primary text-white rounded-2xl font-black uppercase tracking-widest text-sm md:text-lg hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary/20 glow-accent">
+              <Button className="w-full h-16 bg-primary text-white rounded-xl font-black uppercase tracking-widest text-sm md:text-lg">
                 Join Rewards
               </Button>
             </Link>
             <Link to="/registration?view=login" className="flex-1">
               <Button
                 variant="outline"
-                className="w-full h-16 border-primary/30 text-primary rounded-2xl font-black uppercase tracking-widest text-sm md:text-lg hover:bg-primary/10 transition-all"
+                className="w-full h-16 border-primary/30 text-primary rounded-xl font-black uppercase tracking-widest text-sm md:text-lg md:hover:bg-primary/10"
               >
                 Member Login
               </Button>
@@ -169,13 +166,13 @@ const Loyalty = () => {
           <div className="flex justify-end pt-2 md:pt-4">
             <Link
               to="/leaderboard?tab=Loyalty"
-              className="px-2 md:px-4 py-2 bg-primary/10 text-primary rounded-lg font-bold uppercase text-xs hover:bg-primary/20 transition-colors"
+              className="px-2 md:px-4 py-2 bg-primary/10 text-primary rounded-lg font-bold uppercase text-xs md:hover:bg-primary/20"
             >
               Reward Leaderboard
             </Link>
           </div>
           <section className="grid grid-cols-1 lg:grid-cols-3 gap-2 md:gap-6">
-            <div className="lg:col-span-2 glass-card rounded-xl p-2 md:p-8 relative overflow-hidden border border-white/5 neon-glow">
+            <div className="lg:col-span-2 glass-card rounded-xl p-2 md:p-8 relative overflow-hidden border border-white/5">
               <div className="absolute top-0 right-0 p-2 md:p-8 opacity-10">
                 <MdDiamond className="text-9xl" />
               </div>
@@ -207,7 +204,7 @@ const Loyalty = () => {
                         <span className="text-primary font-black">{nextTier}</span>
                         <button
                           onClick={() => setIsTierModalOpen(true)}
-                          className="text-primary hover:text-primary/80 transition-colors p-0.5"
+                          className="text-primary md:hover:text-primary/80 p-0.5"
                           title="View Tiers"
                         >
                           <MdInfo className="text-xs" />
@@ -217,12 +214,11 @@ const Loyalty = () => {
                         {totalPoints.toLocaleString()} / {nextTarget.toLocaleString()} PZA
                       </span>
                     </div>
-                    <div className="h-3 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden border border-white/5 shadow-inner">
+                    <div className="h-3 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden border border-white/5">
                       <div 
-                        className="h-full bg-linear-to-r from-primary to-secondary relative transition-all duration-1000"
+                        className="h-full bg-linear-to-r from-primary to-secondary relative"
                         style={{ width: `${progressPercent}%` }}
                       >
-                        <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
                       </div>
                     </div>
                   </div>
@@ -235,7 +231,7 @@ const Loyalty = () => {
                 <div className="text-sm uppercase tracking-widest text-slate-500 font-bold">
                   Current Streak
                 </div>
-                <div className="bg-red-500/10 text-red-500 px-2 md:px-3 py-1 rounded-full text-xs font-bold border border-red-500/20">
+                <div className="bg-red-500/10 text-red-500 px-2 py-1 rounded-full text-xs font-bold border border-red-500/20">
                    {loyaltyData?.streak_days || 1} Days 🔥
                 </div>
               </div>
@@ -256,7 +252,7 @@ const Loyalty = () => {
         <>
           {/* Daily Status */}
           <section className="space-y-6">
-            <div className="flex justify-between items-center bg-slate-900/5 dark:bg-white/5 p-4 rounded-2xl border border-white/5">
+            <div className="flex justify-between items-center bg-slate-900/5 dark:bg-white/5 p-4 rounded-xl border border-white/5">
               <h2 className="font-headline text-lg font-bold tracking-tight text-slate-900 dark:text-white uppercase italic leading-none">
                 Daily Rewards Status
               </h2>
@@ -267,7 +263,7 @@ const Loyalty = () => {
             {/* Streak UI logic */}
             <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
                {[1, 2, 3, 4, 5, 6, 7].map(day => (
-                 <div key={day} className={`glass-card p-4 rounded-xl border flex flex-col items-center gap-2 ${day <= (loyaltyData?.streak_days ?? 1) ? 'border-primary bg-primary/5 shadow-inner shadow-primary/10' : 'opacity-40 border-white/5'}`}>
+                 <div key={day} className={`glass-card p-4 rounded-xl border flex flex-col items-center gap-2 ${day <= (loyaltyData?.streak_days ?? 1) ? 'border-primary bg-primary/5' : 'opacity-40 border-white/5'}`}>
                     <span className="text-[10px] font-black uppercase text-slate-500">Day {day}</span>
                     <MdToken className={day <= (loyaltyData?.streak_days ?? 1) ? 'text-primary' : 'text-slate-500'} size={20} />
                  </div>
@@ -283,7 +279,7 @@ const Loyalty = () => {
                    Legacy <span className="text-primary italic">Missions</span>
                 </h2>
                 <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-1.5 px-3 py-1 bg-primary/10 rounded-full border border-primary/20">
+                  <div className="flex items-center gap-1.5 px-3 py-1 bg-primary/10 rounded-xl border border-primary/20">
                     <MdEvent size={14} className="text-primary" />
                     <span className="text-[10px] text-primary font-black uppercase tracking-widest leading-none">50+ Challenges</span>
                   </div>
@@ -294,13 +290,13 @@ const Loyalty = () => {
               </div>
 
               {/* Season Tabs */}
-              <div className="flex bg-slate-900/5 dark:bg-white/5 p-1.5 rounded-2xl border border-white/5 gap-1 shrink-0 overflow-x-auto max-w-full hide-scrollbar">
+              <div className="flex bg-slate-900/5 dark:bg-white/5 p-1.5 rounded-xl border border-white/5 gap-1 shrink-0 overflow-x-auto max-w-full">
                 {Object.keys(quests).map((tab) => (
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
                     className={`px-4 md:px-6 py-2.5 rounded-xl text-[10px] md:text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap flex items-center gap-2 ${
-                      activeTab === tab ? "bg-primary text-white shadow-xl scale-105" : "text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-white/5"
+                      activeTab === tab ? "bg-primary text-white" : "text-slate-500 md:hover:text-slate-900 md:dark:hover:text-white md:hover:bg-white/5"
                     }`}
                   >
                     {tab}
@@ -314,21 +310,21 @@ const Loyalty = () => {
               {quests[activeTab]?.map((quest, idx) => (
                 <div
                   key={idx}
-                  className={`glass-card p-2 md:p-4 rounded-xl md:rounded-xl border transition-all duration-500 flex flex-col justify-between h-26 md:h-32 relative group ${
+                  className={`glass-card p-2 md:p-4 rounded-xl border flex flex-col justify-between h-26 md:h-32 relative ${
                     quest.status === "completed"
-                      ? "border-green-500/30 bg-green-500/5 shadow-inner opacity-80"
+                      ? "border-green-500/30 bg-green-500/5 opacity-80"
                       : quest.status === "active"
-                         ? "border-primary/40 bg-primary/10 shadow-2xl shadow-primary/10 hover:scale-[1.02] hover:border-primary"
+                         ? "border-primary/40 bg-primary/10 md:hover:border-primary"
                         : "border-white/5 opacity-40 bg-slate-200/10 grayscale pointer-events-none"
                   }`}
                 >
                   <div className="flex justify-between items-start">
                     <div
-                      className={`w-8 h-8 md:w-12 md:h-12 rounded-xl flex items-center justify-center transition-all duration-500 shadow-inner ${
+                      className={`w-8 h-8 md:w-12 md:h-12 rounded-xl flex items-center justify-center ${
                         quest.status === "completed"
-                          ? "bg-green-500 text-white shadow-[0_0_15px_rgba(34,197,94,0.3)]"
+                          ? "bg-green-500 text-white"
                           : quest.status === "active"
-                             ? "bg-primary text-white animate-pulse shadow-glow"
+                             ? "bg-primary text-white"
                             : "bg-slate-500/20 text-slate-500"
                       }`}
                     >
@@ -343,16 +339,16 @@ const Loyalty = () => {
                   </div>
                   
                   <div className="mt-2 md:mt-4">
-                    <h3 className="font-headline font-black text-[9px] md:text-sm uppercase tracking-tighter text-slate-900 opacity-70 dark:text-white italic leading-none mb-0.5 md:mb-1 group-hover:text-primary transition-colors truncate">
+                    <h3 className="font-headline font-black text-[9px] md:text-sm uppercase tracking-tighter text-slate-900 opacity-70 dark:text-white italic leading-none mb-0.5 md:mb-1 md:group-hover:text-primary truncate">
                       {quest.name}
                     </h3>
-                    <p className="text-[7px] md:text-[10px] text-primary font-bold uppercase tracking-widest leading-none md:leading-tight line-clamp-2">
+                    <p className="text-[10px] md:text-[10px] text-primary font-bold uppercase tracking-widest leading-none md:leading-tight line-clamp-2">
                        {quest.info}
                     </p>
                   </div>
                   
                   <div className="mt-2 md:mt-4 flex items-center justify-between">
-                    <span className="text-[6px] md:text-[8px] font-black uppercase bg-slate-900/10 dark:bg-white/5 px-1.5 md:px-2 py-0.5 md:py-1 rounded-lg text-slate-400">
+                    <span className="text-[10px] md:text-[8px] font-black uppercase bg-slate-900/10 dark:bg-white/5 px-1.5 md:px-2 py-0.5 md:py-1 rounded-xl text-slate-400">
                        {activeTab} • #{idx + 1}
                     </span>
                     {quest.status === "locked" && <MdLock className="text-slate-500" size={10} />}
@@ -381,7 +377,7 @@ const Loyalty = () => {
           </button>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-6">
-          <div className="glass-card rounded-xl overflow-hidden border border-white/5 group bg-slate-100/50 dark:bg-white/5 transition-all hover:scale-[1.01]">
+          <div className="glass-card rounded-xl overflow-hidden border border-white/5 bg-slate-100/50 dark:bg-white/5 md:hover:scale-[1.01]">
             <div className="h-32 bg-linear-to-br from-primary/20 to-secondary/20 flex items-center justify-center relative">
               <MdAccountBalanceWallet className="text-3xl md:text-5xl text-slate-500 opacity-20" />
               <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur px-2 py-1 rounded text-[10px] font-bold uppercase text-white">
@@ -406,7 +402,7 @@ const Loyalty = () => {
                   </span>
                 </div>
                 <button
-                  className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${user ? "bg-primary text-white hover:scale-105 shadow-glow" : "bg-slate-200 dark:bg-white/10 text-slate-400 cursor-not-allowed"}`}
+                  className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest ${user ? "bg-primary text-white md:hover:scale-105" : "bg-slate-200 dark:bg-white/10 text-slate-400 cursor-not-allowed"}`}
                 >
                   {user ? "Redeem" : "Locked"}
                 </button>
@@ -414,7 +410,7 @@ const Loyalty = () => {
             </div>
           </div>
 
-          <div className="glass-card rounded-xl overflow-hidden border border-white/5 group bg-slate-100/50 dark:bg-white/5 transition-all hover:scale-[1.01]">
+          <div className="glass-card rounded-xl overflow-hidden border border-white/5 bg-slate-100/50 dark:bg-white/5 md:hover:scale-[1.01]">
             <div className="h-32 bg-linear-to-br from-secondary/20 to-primary/20 flex items-center justify-center relative">
               <MdConfirmationNumber className="text-3xl md:text-5xl text-slate-500 opacity-20" />
               <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur px-2 py-1 rounded text-[10px] font-bold uppercase text-white">
@@ -438,7 +434,7 @@ const Loyalty = () => {
                   </span>
                 </div>
                 <button
-                  className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${user ? "bg-primary text-white hover:scale-105 shadow-glow" : "bg-slate-200 dark:bg-white/10 text-slate-400 cursor-not-allowed"}`}
+                  className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest ${user ? "bg-primary text-white md:hover:scale-105" : "bg-slate-200 dark:bg-white/10 text-slate-400 cursor-not-allowed"}`}
                 >
                   {user ? "Redeem" : "Locked"}
                 </button>
@@ -446,7 +442,7 @@ const Loyalty = () => {
             </div>
           </div>
 
-          <div className="glass-card rounded-xl overflow-hidden border border-white/5 group bg-slate-100/50 dark:bg-white/5 transition-all hover:scale-[1.01]">
+          <div className="glass-card rounded-xl overflow-hidden border border-white/5 bg-slate-100/50 dark:bg-white/5 md:hover:scale-[1.01]">
             <div className="h-32 bg-linear-to-br from-secondary/20 to-red-500/20 flex items-center justify-center relative">
               <MdLocalMall className="text-3xl md:text-5xl text-slate-500 opacity-20" />
               <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur px-2 py-1 rounded text-[10px] font-bold uppercase text-white">
@@ -480,11 +476,11 @@ const Loyalty = () => {
 
       {/* Tier Modal */}
       {isTierModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 md:p-4 bg-black/80 backdrop-blur-xl animate-in fade-in duration-300">
-          <div className="relative w-full max-w-lg glass-card rounded-xl overflow-hidden border border-white/10 shadow-2xl p-6 md:p-10 animate-in zoom-in-95 duration-300">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 md:p-4 bg-black/80">
+          <div className="relative w-full max-w-lg glass-card rounded-xl overflow-hidden border border-white/10 p-6 md:p-10">
             <button
               onClick={() => setIsTierModalOpen(false)}
-              className="absolute top-6 right-6 p-2 rounded-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+              className="absolute top-6 right-6 p-2 rounded-xl bg-white/5 md:hover:bg-white/10 text-slate-400 md:hover:text-white"
             >
               <MdClose className="text-base md:text-xl" />
             </button>
@@ -525,9 +521,9 @@ const Loyalty = () => {
               ].map((tier) => (
                 <div
                   key={tier.name}
-                  className={`glass-card p-4 rounded-2xl border flex flex-col items-center text-center gap-2 transition-all ${
+                  className={`glass-card p-4 rounded-xl border flex flex-col items-center text-center gap-2 ${
                     tier.active
-                      ? "border-primary bg-primary/10 shadow-lg scale-105"
+                      ? "border-primary bg-primary/10"
                       : "border-white/5 opacity-60 bg-white/5"
                   }`}
                 >
@@ -556,7 +552,7 @@ const Loyalty = () => {
 
             <button
               onClick={() => setIsTierModalOpen(false)}
-              className="w-full mt-10 bg-primary hover:bg-primary/90 text-white py-3 md:py-4 rounded-2xl font-black uppercase tracking-widest transition-all shadow-xl shadow-primary/20"
+              className="w-full mt-10 bg-primary md:hover:bg-primary/90 text-white py-3 md:py-4 rounded-xl font-black uppercase tracking-widest"
             >
               Got it
             </button>

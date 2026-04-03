@@ -1,6 +1,7 @@
 import type { Session } from "@/types/types";
 import { X, Wallet, AlertCircle } from "lucide-react";
 import { ZASymbol } from "../currency/ZASymbol";
+import { useEffect } from "react";
 
 interface EntryConfirmationModalProps {
   session: Session | null;
@@ -10,6 +11,13 @@ interface EntryConfirmationModalProps {
 }
 
 export const EntryConfirmationModal = ({ session, onClose, onConfirm, userBalance }: EntryConfirmationModalProps) => {
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, []);
+
   if (!session) return null;
 
   const remainingBalance = userBalance - session.entryFee;
@@ -21,19 +29,17 @@ export const EntryConfirmationModal = ({ session, onClose, onConfirm, userBalanc
         {/* Backdrop */}
         <div
           onClick={onClose}
-          className="absolute inset-0 bg-slate-900/40 dark:bg-playza-dark/80 backdrop-blur-sm"
+          className="absolute inset-0 bg-slate-900/40 dark:bg-playza-dark/80"
         />
 
         {/* Modal Content */}
         <div
-          className="relative w-full max-w-md bg-white dark:bg-playza-dark border border-slate-200 dark:border-white/10 rounded-xl p-2 md:p-8 backdrop-blur-3xl overflow-hidden"
+          className="relative w-full max-w-md bg-white dark:bg-playza-dark border border-slate-200 dark:border-white/10 rounded-xl p-2 md:p-8 overflow-hidden"
         >
-          {/* Decorative Background Element */}
-          <div className="absolute top-0 right-0 w-32 h-32 bg-playza-blue/10 blur-[60px] rounded-full -translate-y-1/2 translate-x-1/2" />
           
           <button 
             onClick={onClose}
-            className="absolute top-6 right-6 p-2 text-slate-400 bg-slate-100 dark:bg-white/5 rounded-full"
+            className="absolute top-6 right-6 p-2 text-slate-400 bg-slate-100 dark:bg-white/5 rounded-xl md:hover:text-slate-900 md:dark:hover:text-white"
           >
             <X className="w-5 h-5" />
           </button>
@@ -90,7 +96,7 @@ export const EntryConfirmationModal = ({ session, onClose, onConfirm, userBalanc
                 disabled={!canAfford}
                 className={`w-full py-5 rounded-xl font-black text-white uppercase tracking-widest ${
                   canAfford 
-                    ? 'bg-primary' 
+                    ? 'bg-primary md:hover:bg-primary/90' 
                     : 'bg-red-500/50 cursor-not-allowed text-white/50'
                 }`}
               >
@@ -98,7 +104,7 @@ export const EntryConfirmationModal = ({ session, onClose, onConfirm, userBalanc
               </button>
               <button 
                 onClick={onClose}
-                className="w-full py-2 md:py-5 bg-transparent text-slate-500 font-black rounded-xl uppercase tracking-widest text-xs"
+                className="w-full py-2 md:py-5 bg-transparent text-slate-500 font-black rounded-xl uppercase tracking-widest text-xs md:hover:text-slate-900 md:dark:hover:text-white"
               >
                 Cancel
               </button>

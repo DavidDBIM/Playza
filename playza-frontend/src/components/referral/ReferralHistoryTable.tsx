@@ -76,7 +76,7 @@ const ReferralHistoryTable = ({ referrals: apiReferrals }: ReferralHistoryTableP
                 setSearchQuery(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl pl-10 pr-2 md:pr-4 py-2 text-sm text-slate-900 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm"
+              className="w-full bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl pl-10 pr-2 md:pr-4 py-2 text-sm text-slate-900 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
         </div>
@@ -90,10 +90,10 @@ const ReferralHistoryTable = ({ referrals: apiReferrals }: ReferralHistoryTableP
               setFilter(tab);
               setCurrentPage(1);
             }}
-            className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest whitespace-nowrap transition-all border ${
+            className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest whitespace-nowrap border ${
               filter === tab
-                ? "bg-primary text-white border-primary shadow-lg shadow-primary/20"
-                : "bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600"
+                ? "bg-primary text-white border-primary"
+                : "bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700 md:hover:border-slate-300 md:dark:hover:border-slate-600"
             }`}
           >
             {tab}
@@ -101,7 +101,7 @@ const ReferralHistoryTable = ({ referrals: apiReferrals }: ReferralHistoryTableP
         ))}
       </div>
 
-      <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 overflow-hidden shadow-sm">
+      <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 overflow-hidden">
         <Table className="w-full">
           <TableHeader>
             <TableRow className="bg-slate-50/50 dark:bg-slate-800/50 hover:bg-transparent border-slate-200 dark:border-slate-800">
@@ -124,11 +124,11 @@ const ReferralHistoryTable = ({ referrals: apiReferrals }: ReferralHistoryTableP
               paginatedData.map((referral) => (
                 <TableRow
                   key={referral.id}
-                  className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors border-slate-100 dark:border-slate-800 group"
+                  className="md:hover:bg-slate-50 md:dark:hover:bg-slate-800/30 border-slate-100 dark:border-slate-800"
                 >
                   <TableCell className="p-2 md:p-4">
                     <div className="flex items-center gap-2 md:gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold text-xs border border-primary/20">
+                      <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold text-xs border border-primary/20">
                         {referral.avatar}
                       </div>
                     <div className="flex flex-col min-w-0">
@@ -208,29 +208,29 @@ const ReferralHistoryTable = ({ referrals: apiReferrals }: ReferralHistoryTableP
             <button
               onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
               disabled={currentPage === 1}
-              className="px-2 md:px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-30 transition-all border border-slate-200 dark:border-slate-700"
+              className="px-2 md:px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 text-xs font-bold md:hover:bg-slate-200 md:dark:hover:bg-slate-700 disabled:opacity-30 border border-slate-200 dark:border-slate-700"
             >
               Prev
             </button>
             
             {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-              <button
-                key={page}
-                onClick={() => setCurrentPage(page)}
-                className={`w-8 h-8 flex items-center justify-center rounded-lg text-xs font-black transition-all ${
-                  currentPage === page 
-                    ? "bg-primary text-white shadow-lg shadow-primary/20" 
-                    : "bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700"
-                }`}
-              >
-                {page}
-              </button>
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className={`w-8 h-8 flex items-center justify-center rounded-xl text-xs font-black ${
+                    currentPage === page 
+                      ? "bg-primary text-white" 
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-500 md:hover:bg-slate-200 md:dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700"
+                  }`}
+                >
+                  {page}
+                </button>
             ))}
 
             <button
               onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
-              className="px-2 md:px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-30 transition-all border border-slate-200 dark:border-slate-700"
+              className="px-2 md:px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 text-xs font-bold md:hover:bg-slate-200 md:dark:hover:bg-slate-700 disabled:opacity-30 border border-slate-200 dark:border-slate-700"
             >
               Next
             </button>

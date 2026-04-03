@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, useEffect } from "react";
 import { User, ShieldCheck, X } from "lucide-react";
 import { useUpdateProfile } from "@/hooks/profile/useProfile";
 import { Button } from "../ui/button";
@@ -13,6 +13,13 @@ export const CompleteProfileModal = ({ onClose, onSuccess }: CompleteProfileModa
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
 
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, []);
+
   const handleSave = (e: FormEvent) => {
     e.preventDefault();
     if (!firstName || !lastName) return;
@@ -23,19 +30,18 @@ export const CompleteProfileModal = ({ onClose, onSuccess }: CompleteProfileModa
   };
 
   return (
-    <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/80 backdrop-blur-md p-2 md:p-4 animate-in fade-in duration-300">
-      <div className="relative w-full max-w-md glass-card rounded-xl shadow-2xl border border-white/10 overflow-hidden animate-in zoom-in-95 duration-300">
-        <div className="absolute -top-20 -right-20 w-48 h-48 bg-primary/10 blur-[80px] rounded-full"></div>
+    <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/80 p-2 md:p-4">
+      <div className="relative w-full max-w-md glass-card rounded-xl border border-white/10 overflow-hidden">
 
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/5 text-slate-500 hover:text-white transition-all z-20"
+          className="absolute top-4 right-4 p-2 rounded-xl text-slate-500 md:hover:bg-white/5 md:hover:text-white z-20"
         >
           <X size={18} />
         </button>
 
         <div className="p-2 md:p-8 relative z-10 text-center">
-          <div className="size-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6 border border-primary/20 shadow-[0_0_30px_rgba(var(--primary),0.1)]">
+          <div className="size-16 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-6 border border-primary/20">
             <ShieldCheck className="text-primary" size={32} />
           </div>
 
@@ -55,14 +61,14 @@ export const CompleteProfileModal = ({ onClose, onSuccess }: CompleteProfileModa
                 </label>
                 <div className="relative group">
                   <User
-                    className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-primary transition-colors"
+                    className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 md:group-focus-within:text-primary"
                     size={18}
                   />
                   <input
                     required
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl py-2 md:py-3.5 pl-2 md:pl-12 pr-2 md:pr-4 focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none text-white placeholder:text-slate-600 transition-all font-medium text-sm"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl py-2 md:py-3.5 pl-2 md:pl-12 pr-2 md:pr-4 focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none text-white placeholder:text-slate-600 font-medium text-sm"
                     placeholder="e.g. Anthony"
                     type="text"
                   />
@@ -82,7 +88,7 @@ export const CompleteProfileModal = ({ onClose, onSuccess }: CompleteProfileModa
                     required
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl py-2 md:py-3.5 pl-2 md:pl-12 pr-2 md:pr-4 focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none text-white placeholder:text-slate-600 transition-all font-medium text-sm"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl py-2 md:py-3.5 pl-2 md:pl-12 pr-2 md:pr-4 focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none text-white placeholder:text-slate-600 font-medium text-sm"
                     placeholder="e.g. Guseltony"
                     type="text"
                   />
@@ -93,7 +99,7 @@ export const CompleteProfileModal = ({ onClose, onSuccess }: CompleteProfileModa
             <div className="flex flex-col gap-2 md:gap-3 pt-2">
               <Button
                 disabled={isSaving || !firstName || !lastName}
-                className="w-full h-14 bg-primary text-black font-black uppercase tracking-widest rounded-xl shadow-lg shadow-primary/20 hover:shadow-primary/40 active:scale-[0.98] transition-all border-none"
+                className="w-full h-14 bg-primary text-black font-black uppercase tracking-widest rounded-xl border-none md:hover:scale-[1.02]"
                 type="submit"
               >
                 {isSaving ? "Saving..." : "Save & Continue"}
@@ -101,7 +107,7 @@ export const CompleteProfileModal = ({ onClose, onSuccess }: CompleteProfileModa
               <button
                 type="button"
                 onClick={onClose}
-                className="w-full py-2 md:py-4 text-xs font-black text-slate-500 uppercase tracking-widest hover:text-white transition-all"
+                className="w-full py-2 md:py-4 text-xs font-black text-slate-500 uppercase tracking-widest md:hover:text-white"
               >
                 Maybe Later
               </button>

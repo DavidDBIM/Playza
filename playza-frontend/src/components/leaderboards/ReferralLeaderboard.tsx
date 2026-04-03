@@ -124,19 +124,19 @@ const ReferralLeaderboard = () => {
       <div ref={observerTop} className="h-1 w-full absolute top-0 left-0 -z-10 bg-transparent" />
 
       <div className="overflow-auto custom-scrollbar flex-1 relative">
-        <Table className={`w-full text-left transition-all duration-700 ${!user ? "blur-sm grayscale select-none pointer-events-none" : ""}`}>
+        <Table className={`w-full text-left ${!user ? "opacity-50 grayscale select-none pointer-events-none" : ""}`}>
           <TableHeader className="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
             <TableRow className="hover:bg-transparent">
-              <TableHead className="px-3 md:px-6 py-4 md:py-6 w-12 md:w-28 font-black uppercase text-[10px] tracking-widest text-slate-500">
+              <TableHead className="px-2 md:px-6 py-4 md:py-6 w-12 md:w-28 font-black uppercase text-[10px] tracking-widest text-slate-500">
                 Rank
               </TableHead>
-              <TableHead className="px-3 md:px-6 py-4 md:py-6 font-black uppercase text-[10px] tracking-widest text-slate-500">
+              <TableHead className="px-2 md:px-6 py-4 md:py-6 font-black uppercase text-[10px] tracking-widest text-slate-500">
                 Operative
               </TableHead>
-              <TableHead className="px-3 md:px-6 py-4 md:py-6 font-black uppercase text-[10px] tracking-widest text-slate-500 hidden sm:table-cell">
+              <TableHead className="px-2 md:px-6 py-4 md:py-6 font-black uppercase text-[10px] tracking-widest text-slate-500 hidden sm:table-cell">
                 Recruits
               </TableHead>
-              <TableHead className="px-3 md:px-6 py-4 md:py-6 text-right font-black uppercase text-[10px] tracking-widest text-slate-500 pr-4 md:pr-6">
+              <TableHead className="px-2 md:px-6 py-4 md:py-6 text-right font-black uppercase text-[10px] tracking-widest text-slate-500 pr-4 md:pr-6">
                 Reward
               </TableHead>
             </TableRow>
@@ -152,25 +152,25 @@ const ReferralLeaderboard = () => {
                 return (
                   <TableRow
                     key={entry.rank}
-                    className={`group transition-all border-slate-50 dark:border-slate-800/50 ${
+                    className={`border-slate-50 dark:border-slate-800/50 ${
                       isMatch
-                        ? "bg-primary/20 dark:bg-primary/20 border-y border-y-primary border-l-[3px] border-l-primary shadow-[inset_0_0_20px_rgba(168,85,247,0.2)]"
+                        ? "bg-primary/20 dark:bg-primary/20 border-y border-y-primary border-l-[3px] border-l-primary"
                         : range.start + idx < 3 && !searchQuery
-                        ? "bg-primary/5 dark:bg-primary/5 hover:bg-slate-50/50 dark:hover:bg-slate-800/40"
-                        : "hover:bg-slate-50/50 dark:hover:bg-slate-800/40"
+                        ? "bg-primary/5 dark:bg-primary/5 md:hover:bg-slate-50/50 md:dark:hover:bg-slate-800/40"
+                        : "md:hover:bg-slate-50/50 md:dark:hover:bg-slate-800/40"
                     }`}
                   >
-                    <TableCell className="px-3 md:px-6 py-4 md:py-6 font-display font-black italic tracking-tighter text-base md:text-lg">
+                    <TableCell className="px-2 md:px-6 py-4 md:py-6 font-display font-black italic tracking-tighter text-base md:text-lg">
                       <span
                         className={`${range.start + idx === 0 && !searchQuery ? "text-primary" : range.start + idx === 1 && !searchQuery ? "text-slate-400" : range.start + idx === 2 && !searchQuery ? "text-amber-600" : "text-slate-300 dark:text-slate-700"}`}
                       >
                         #{entry.rank < 10 ? `0${entry.rank}` : entry.rank}
                       </span>
                     </TableCell>
-                    <TableCell className="px-3 md:px-6 py-4 md:py-6">
+                    <TableCell className="px-2 md:px-6 py-4 md:py-6">
                       <div className="flex items-center gap-2 md:gap-3">
                         <div
-                          className={`w-6 h-6 md:w-10 md:h-10 rounded-lg overflow-hidden border shrink-0 ${range.start + idx === 0 && !searchQuery ? "border-primary" : "border-slate-200 dark:border-slate-800"}`}
+                          className={`w-6 h-6 md:w-10 md:h-10 rounded-xl overflow-hidden border shrink-0 ${range.start + idx === 0 && !searchQuery ? "border-primary" : "border-slate-200 dark:border-slate-800"}`}
                         >
                           <img
                             src={entry.avatar}
@@ -179,7 +179,7 @@ const ReferralLeaderboard = () => {
                           />
                         </div>
                         <div className="min-w-0">
-                          <p className="font-display font-black text-slate-900 dark:text-slate-100 text-[11px] md:text-sm tracking-tight uppercase italic group-hover:text-primary transition-colors truncate max-w-17.5 xs:max-w-[100px] sm:max-w-none">
+                          <p className="font-display font-black text-slate-900 dark:text-slate-100 text-[11px] md:text-sm tracking-tight uppercase italic md:group-hover:text-primary truncate max-w-17.5 xs:max-w-[100px] sm:max-w-none">
                             <HighlightMatch
                               text={entry.name}
                               query={searchQuery}
@@ -191,10 +191,10 @@ const ReferralLeaderboard = () => {
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className="px-3 md:px-6 py-4 md:py-6 hidden sm:table-cell font-display font-black text-slate-900 dark:text-slate-100 italic">
+                    <TableCell className="px-2 md:px-6 py-4 md:py-6 hidden sm:table-cell font-display font-black text-slate-900 dark:text-slate-100 italic">
                       {entry.referrals}
                     </TableCell>
-                    <TableCell className="px-3 md:px-6 py-4 md:py-6 text-right font-display font-black italic tracking-tighter text-xs md:text-base pr-4 md:pr-6 whitespace-nowrap">
+                    <TableCell className="px-2 md:px-6 py-4 md:py-6 text-right font-display font-black italic tracking-tighter text-xs md:text-base pr-4 md:pr-6 whitespace-nowrap">
                       <div className="flex items-center gap-1.5 justify-end">
                         {entry.earnings !== "-" && <ZASymbol className="text-xs scale-90" />}
                         <span
@@ -230,7 +230,7 @@ const ReferralLeaderboard = () => {
         {isLoading && (
           <div className="flex flex-col items-center justify-center p-2 md:p-8 text-slate-500 gap-2 md:gap-3">
             <Loader2 className="animate-spin text-primary" size={24} />
-            <p className="text-[10px] font-black uppercase tracking-widest animate-pulse">
+            <p className="text-[10px] font-black uppercase tracking-widest">
               Syncing Rankings...
             </p>
           </div>
