@@ -112,6 +112,7 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
   const [inCheck, setInCheck] = useState(false);
   const [checkmateDeclared, setCheckmateDeclared] = useState(false);
   const [showWinnerDelayed, setShowWinnerDelayed] = useState(false);
+  const [showGameOverAcknowledge, setShowGameOverAcknowledge] = useState(false);
   const [showResignModal, setShowResignModal] = useState(false);
   const [resignationWinnerId, setResignationWinnerId] = useState<string | null>(null);
 
@@ -163,23 +164,20 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
 
   // ── Delay Winner Screen ───────────────────────────────────────────────────
   useEffect(() => {
-    if (game.isGameOver() && (room.status === "finished" || game.isGameOver()) && !showWinnerDelayed) {
-      const timer = setTimeout(() => {
-        setShowWinnerDelayed(true);
-      }, 7000); // 7 second delay to see the final board
-      return () => clearTimeout(timer);
+    if (game.isGameOver() && (room.status === "finished" || game.isGameOver()) && !showWinnerDelayed && !showGameOverAcknowledge) {
+      setShowGameOverAcknowledge(true);
     }
-  }, [game, room.status, showWinnerDelayed]);
+  }, [game, room.status, showWinnerDelayed, showGameOverAcknowledge]);
 
   // Prevent body scrolling when winner modal is open
   useEffect(() => {
-    if (showWinnerDelayed) {
+    if (showWinnerDelayed || showGameOverAcknowledge) {
       document.body.classList.add("overflow-hidden");
     } else {
       document.body.classList.remove("overflow-hidden");
     }
     return () => document.body.classList.remove("overflow-hidden");
-  }, [showWinnerDelayed]);
+  }, [showWinnerDelayed, showGameOverAcknowledge]);
 
   // ── Detect check / checkmate from local game state ──────────────────────────
   useEffect(() => {
@@ -514,18 +512,19 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
           onConfirm={confirmResign}
         />
       )}
+      {/* ── Fullscreen Toggle (NEW) ── */}
+      <div className="flex justify-end w-full md:col-span-2">
+        <button
+          onClick={toggleFullscreen}
+          className="p-2 rounded-xl bg-slate-100 dark:bg-white/5 md:hover:bg-slate-200 dark:md:hover:bg-white/10 text-slate-600 dark:text-slate-400"
+          title="Toggle Fullscreen"
+        >
+          {isFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
+        </button>
+      </div>
+
       {/* ── Header Bar ── */}
-      <div className="flex items-center justify-between gap-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 md:col-span-2 md:px-5 md:py-3 shadow-sm">
-        {/* Fullscreen Toggle (NEW) */}
-        <div className="flex items-center gap-2">
-          <button
-            onClick={toggleFullscreen}
-            className="p-2 rounded-lg bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 transition-colors text-slate-600 dark:text-slate-400"
-            title="Toggle Fullscreen"
-          >
-            {isFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
-          </button>
-        </div>
+      <div className="flex items-center justify-between gap-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-xl px-2 py-2 md:col-span-2 md:px-5 md:py-3 box-border">
         {/* Host chip */}
         <div className="flex items-center gap-2 relative flex-1 min-w-0">
           <div
@@ -610,7 +609,7 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
       {/* ── Turn / Check Banner ── */}
       {inCheck ? (
         myTurn ? (
-          <div className="flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl text-[10px] font-extrabold tracking-widest uppercase bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 md:col-start-1 md:text-xs">
+          <div className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-[10px] font-extrabold tracking-widest uppercase bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 md:col-start-1 md:text-xs">
             <AlertTriangle size={14} className="shrink-0" />
             <span>⚠️ YOU ARE IN CHECK — Protect your king!</span>
           </div>
@@ -654,9 +653,57 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
         </div>
       )}
 
+
+      {/* ── Context Info Banner ── */}
+      {(() => {
+        if (game.isCheckmate()) {
+          return (
+            <div className="text-[10px] text-center md:text-sm text-amber-500 font-bold md:col-start-1 mt-1">
+              Checkmate: The King is under attack and has no legal moves to escape.
+            </div>
+          );
+        }
+        if (game.isStalemate()) {
+          return (
+            <div className="text-[10px] text-center md:text-sm text-slate-500 font-bold md:col-start-1 mt-1">
+              Stalemate: The player to move has no legal moves and is not in check. The game is a draw.
+            </div>
+          );
+        }
+        if (game.isThreefoldRepetition()) {
+          return (
+            <div className="text-[10px] text-center md:text-sm text-slate-500 font-bold md:col-start-1 mt-1">
+              Draw: Threefold repetition. The exact same board position has occurred three times.
+            </div>
+          );
+        }
+        if (game.isInsufficientMaterial()) {
+          return (
+            <div className="text-[10px] text-center md:text-sm text-slate-500 font-bold md:col-start-1 mt-1">
+              Draw: Insufficient material to force a checkmate.
+            </div>
+          );
+        }
+        if (game.isDraw()) {
+          return (
+            <div className="text-[10px] text-center md:text-sm text-slate-500 font-bold md:col-start-1 mt-1">
+              Draw: The game has ended in a tie.
+            </div>
+          );
+        }
+        if (inCheck) {
+          return (
+            <div className="text-[10px] text-center md:text-sm text-red-500 font-bold md:col-start-1 mt-1">
+              Check: The King is under immediate attack! Move it, block the attack, or capture the attacking piece.
+            </div>
+          );
+        }
+        return null;
+      })()}
+
       {/* ── Chess Board ── */}
       <div
-        className={`relative w-full max-w-[85vh] mx-auto aspect-square rounded-xl overflow-hidden bg-white dark:bg-slate-900 border-4 shadow-2xl md:col-start-1 md:row-start-3
+        className={`relative w-full max-w-[90vh] mx-auto aspect-square rounded-xl overflow-hidden bg-white dark:bg-slate-900 border-4 md:col-start-1 md:row-start-3
         ${inCheck && myTurn ? "border-red-500/60" : "border-slate-800 dark:border-slate-700"}`}
       >
         <div className="absolute inset-0 pointer-events-none z-0 bg-[radial-gradient(ellipse_at_center,rgba(99,102,241,0.12),transparent_70%)]" />
@@ -694,9 +741,26 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
         </div>
       </div>
 
+      {showGameOverAcknowledge && !showWinnerDelayed && (
+        <div className="fixed inset-0 z-[200] overflow-y-auto bg-slate-950/70 flex items-center justify-center p-2">
+          <div className="w-full max-w-[300px] bg-white dark:bg-slate-900 rounded-xl overflow-hidden p-6 text-center">
+             <h3 className="text-xl font-bold mb-2 text-slate-800 dark:text-white">Game Over</h3>
+             <p className="text-sm text-slate-600 dark:text-slate-300 mb-6">
+                {game.isCheckmate() ? "Checkmate! The King is under attack and cannot escape." : 
+                 game.isStalemate() ? "Stalemate! A draw because no legal moves are available." :
+                 game.isInsufficientMaterial() ? "Draw! Insufficient material to force a checkmate." :
+                 "The game has ended in a draw."}
+             </p>
+             <button onClick={() => { setShowGameOverAcknowledge(false); setShowWinnerDelayed(true); }} className="p-2 bg-indigo-600 text-white rounded-xl w-full font-bold md:hover:bg-indigo-500">
+               Acknowledge & Proceed
+             </button>
+          </div>
+        </div>
+      )}
+
       {showWinnerDelayed && (
-        <div className="fixed inset-0 z-200 overflow-y-auto bg-slate-950/90 flex items-center justify-center p-4">
-          <div className="w-full max-w-2xl bg-white dark:bg-slate-900 rounded-xl overflow-hidden shadow-2xl border border-white/10">
+        <div className="fixed inset-0 z-200 overflow-y-auto bg-slate-950/90 flex items-center justify-center p-2">
+          <div className="w-full max-w-2xl bg-white dark:bg-slate-900 rounded-xl overflow-hidden border border-white/10">
             <H2HWinner
               room={room}
               user={user}

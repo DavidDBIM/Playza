@@ -128,19 +128,19 @@ const NavFooter = () => {
             aria-label="More navigation"
             className={`flex flex-col items-center justify-center relative py-2 ${
               isMoreOpen
-                ? "text-primary -translate-y-1"
-                : "text-slate-500 hover:text-primary hover:-translate-y-0.5"
+                ? "text-primary md:-translate-y-1"
+                : "text-slate-500 md:hover:text-primary md:hover:-translate-y-0.5"
             }`}
           >
             <div
-              className={`relative z-10 p-2 rounded-2xl border shadow-md backdrop-blur-md flex items-center justify-center ${
+              className={`relative z-10 p-2 rounded-xl border flex items-center justify-center ${
                 isMoreOpen
-                  ? "bg-primary border-primary rotate-90 scale-110 shadow-primary/40"
-                  : "bg-white/95 dark:bg-slate-800/90 border-slate-200 dark:border-white/10 hover:border-primary/50"
+                  ? "bg-primary border-primary md:rotate-90 md:scale-110"
+                  : "bg-white/95 dark:bg-slate-800/90 border-slate-200 dark:border-white/10 md:hover:border-primary/50"
               }`}
             >
               <item.icon
-                className={`size-5 md:size-6 transition-transform duration-300 ${
+                className={`size-5 md:size-6 ${
                   isMoreOpen ? "text-white" : "text-slate-500"
                 }`}
               />
@@ -158,24 +158,24 @@ const NavFooter = () => {
         <NavLink
           to={item.path}
           className={({ isActive: active }) =>
-            `flex flex-col items-center justify-center transition-all duration-300 relative py-2 ${
+            `flex flex-col items-center justify-center relative py-2 ${
               active
-                ? "text-primary -translate-y-1"
-                : "text-slate-400 hover:text-primary hover:-translate-y-0.5"
+                ? "text-primary md:-translate-y-1"
+                : "text-slate-400 md:hover:text-primary md:hover:-translate-y-0.5"
             }`
           }
         >
           {({ isActive: active }) => (
             <>
               <item.icon
-                className={`transition-all duration-300 z-10 size-5 md:size-6 ${
+                className={`z-10 size-5 md:size-6 ${
                   active
-                    ? "scale-110 drop-shadow-[0_0_8px_rgba(168,85,247,0.4)]"
-                    : "scale-100"
+                    ? "md:scale-110"
+                    : "md:scale-100"
                 }`}
               />
               <span
-                className={`absolute -bottom-2.5 md:-bottom-3.5 text-[8px] md:text-[9px] font-black uppercase tracking-widest whitespace-nowrap transition-all duration-300 z-10 ${
+                className={`absolute -bottom-2.5 md:-bottom-3.5 text-[8px] md:text-[9px] font-black uppercase tracking-widest whitespace-nowrap z-10 ${
                   active
                     ? "opacity-100 translate-y-0 text-primary dark:text-white"
                     : "opacity-0 translate-y-2 pointer-events-none text-slate-400"
@@ -264,20 +264,20 @@ const NavFooter = () => {
                     key={item.label}
                     to={item.path}
                     onClick={closePanel}
-                    className={`flex items-center gap-4 p-3.5 rounded-2xl transition-all border group relative overflow-hidden ${
+                    className={`flex items-center gap-4 p-2 md:p-3.5 rounded-xl border group relative overflow-hidden ${
                       isActive
                         ? "bg-primary/10 border-primary/30 text-primary"
-                        : "bg-slate-50 dark:bg-black/30 border-slate-100 dark:border-white/5 text-slate-600 dark:text-slate-300 hover:border-primary/20 hover:bg-primary/5"
+                        : "bg-slate-50 dark:bg-black/30 border-slate-100 dark:border-white/5 text-slate-600 dark:text-slate-300 md:hover:border-primary/20 md:hover:bg-primary/5"
                     }`}
                   >
                     {isActive && (
                       <div className="absolute inset-0 bg-linear-to-r from-primary/5 to-transparent pointer-events-none" />
                     )}
                     <div
-                      className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all duration-300 ${
+                      className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
                         isActive
-                          ? "bg-primary text-white shadow-lg shadow-primary/30"
-                          : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-500 group-hover:text-primary group-hover:border-primary/30 group-hover:scale-110"
+                          ? "bg-primary text-white"
+                          : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-500 md:group-hover:text-primary md:group-hover:border-primary/30 md:group-hover:scale-110"
                       }`}
                     >
                       <item.icon className="size-5" />
@@ -336,14 +336,14 @@ const NavFooter = () => {
                   to={item.path}
                   onClick={closePanel}
                   className={({ isActive }) =>
-                    `flex flex-col items-center justify-center gap-2.5 p-4 rounded-3xl transition-all border relative overflow-hidden group ${
+                    `flex flex-col items-center justify-center gap-2.5 p-2 md:p-4 rounded-xl border relative overflow-hidden group ${
                       isActive
-                        ? "bg-primary/10 border-primary/30 text-primary shadow-sm"
-                        : "bg-slate-50 dark:bg-black/40 border-slate-100 dark:border-white/5 text-slate-500 hover:border-primary/20 hover:text-primary"
+                        ? "bg-primary/10 border-primary/30 text-primary"
+                        : "bg-slate-50 dark:bg-black/40 border-slate-100 dark:border-white/5 text-slate-500 md:hover:border-primary/20 md:hover:text-primary"
                     }`
                   }
                 >
-                  <item.icon className="size-5 relative z-10 transition-transform group-hover:scale-110" />
+                  <item.icon className="size-5 relative z-10 md:group-hover:scale-110" />
                   <span className="text-[9px] font-black uppercase tracking-wider relative z-10 text-center">
                     {item.label}
                   </span>
@@ -371,17 +371,17 @@ const NavFooter = () => {
                 <button
                   onClick={() => togglePanel("games")}
                   aria-label="Game arena"
-                  className={`relative flex items-center justify-center w-14 h-14 rounded-full shadow-2xl group border-[3px] border-slate-200 dark:border-slate-950 ${
+                  className={`relative flex items-center justify-center w-14 h-14 rounded-full group border-[3px] border-slate-200 dark:border-slate-950 ${
                     isGamesOpen
-                      ? "bg-linear-to-tr from-primary to-purple-400 text-white scale-110 shadow-lg"
+                      ? "bg-linear-to-tr from-primary to-purple-400 text-white md:scale-110"
                       : "bg-white dark:bg-slate-900 text-slate-400"
                   }`}
                 >
                   <Gamepad2
-                    className={`size-6 transition-all duration-300 ${
+                    className={`size-6 ${
                       isGamesOpen
                         ? "text-white"
-                        : "text-slate-400 group-hover:text-primary"
+                        : "text-slate-400 md:group-hover:text-primary"
                     }`}
                   />
                   {!isGamesOpen && (
@@ -411,9 +411,9 @@ const NavFooter = () => {
                 <button
                   onClick={() => togglePanel("games")}
                   aria-label="Game arena"
-                  className={`relative flex items-center justify-center w-16 h-16 rounded-full shadow-2xl group border-4 border-slate-200 dark:border-slate-950 ${
+                  className={`relative flex items-center justify-center w-16 h-16 rounded-full group border-4 border-slate-200 dark:border-slate-950 ${
                     isGamesOpen
-                      ? "bg-linear-to-tr from-primary to-purple-400 text-white scale-110 shadow-lg"
+                      ? "bg-linear-to-tr from-primary to-purple-400 text-white md:scale-110"
                       : "bg-white dark:bg-slate-900 text-slate-400"
                   }`}
                 >
