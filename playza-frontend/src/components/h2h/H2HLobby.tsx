@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate, useLocation } from 'react-router';
 import { Zap, Swords, Trophy } from 'lucide-react';
-import { getWaitingRooms } from '@/api/chess.api';
 import H2HLobbySkeleton from '../skeletons/H2HLobbySkeleton';
-import type { ChessRoom } from '@/types/chess';
 
 // Extracted Components
 import LobbyHub from './LobbyHub';
+import GameModeModal from './GameModeModal';
 import QuickMatchView from './QuickMatchView';
 import BotMatchView from './BotMatchView';
 import InviteFriendView from './InviteFriendView';
@@ -16,6 +16,7 @@ interface H2HLobbyProps {
   onBotCreate: (stake: number) => void;
   onJoin: (code: string) => void;
   onQuickMatch: (stake: number) => void;
+  getWaitingRooms: () => Promise<any[]>;
   loading: boolean;
 }
 
@@ -28,15 +29,17 @@ interface GameType {
   comingSoon?: boolean;
 }
 
-const H2HLobby = ({ onCreate, onBotCreate, onJoin, onQuickMatch, loading }: H2HLobbyProps) => {
-  const [view, setView] = useState<'hub' | 'quick' | 'invite' | 'bot'>('hub');
+const H2HLobby = ({ onCreate, onBotCreate, onJoin, onQuickMatch, getWaitingRooms, loading }: H2HLobbyProps) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [view, setView] = useState<'hub' | 'quick' | 'invite' | 'bot'>(location.state?.view || 'hub');
   const [stakeValue, setStakeValue] = useState(100);
   const [customStake, setCustomStake] = useState('');
   const [joinCode, setJoinCode] = useState('');
   const [isFinding, setIsFinding] = useState(false);
   const [selectedGame, setSelectedGame] = useState<GameType | null>(null);
   const [inviteMobileTab, setInviteMobileTab] = useState<"create" | "join" | null>(null);
-  const [publicRooms, setPublicRooms] = useState<ChessRoom[]>([]);
+  const [publicRooms, setPublicRooms] = useState<any[]>([]);
   const [quickViewMode, setQuickViewMode] = useState<'list' | 'create'>('list');
   const [loadingRooms, setLoadingRooms] = useState(false);
   const [confirmingAction, setConfirmingAction] = useState<{ type: 'create' | 'join' | 'quick' | 'bot', stake: number, code?: string } | null>(null);
@@ -53,7 +56,7 @@ const H2HLobby = ({ onCreate, onBotCreate, onJoin, onQuickMatch, loading }: H2HL
     } finally {
       setLoadingRooms(false);
     }
-  }, []);
+  }, [getWaitingRooms]);
 
   useEffect(() => {
     if (view === 'quick') {
@@ -108,6 +111,8 @@ const H2HLobby = ({ onCreate, onBotCreate, onJoin, onQuickMatch, loading }: H2HL
 
   const games: GameType[] = [
     { id: 'chess', name: 'Grand Chess', icon: Swords, players: '2.4k', color: 'from-indigo-500 to-purple-600' },
+    { id: 'speed-battle', name: 'Speed Battle', icon: Zap, players: '1.2k', color: 'from-blue-500 to-indigo-600' },
+    { id: 'word-scramble', name: 'Word Scramble', icon: Trophy, players: '900', color: 'from-purple-500 to-pink-600' },
     { id: 'ludo', name: 'Ludo Pro', icon: Trophy, players: '1.8k', color: 'from-emerald-500 to-teal-600', comingSoon: true },
     { id: 'pool', name: '8-Ball Pool', icon: Zap, players: '3.1k', color: 'from-amber-500 to-orange-600', comingSoon: true },
   ];
@@ -115,12 +120,25 @@ const H2HLobby = ({ onCreate, onBotCreate, onJoin, onQuickMatch, loading }: H2HL
   return (
     <div className="w-full mx-auto animate-in fade-in duration-500">
       {view === "hub" && (
-        <LobbyHub 
-          games={games} 
-          selectedGame={selectedGame} 
-          setSelectedGame={setSelectedGame} 
-          setView={setView} 
-        />
+        <>
+          <LobbyHub 
+            games={games} 
+            selectedGame={selectedGame} 
+            setSelectedGame={setSelectedGame} 
+            setView={setView} 
+          />
+          <GameModeModal
+            isOpen={!!selectedGame}
+            onClose={() => setSelectedGame(null)}
+            onSelectMode={(mode: 'hub' | 'quick' | 'invite' | 'bot') => {
+              if (selectedGame?.id) {
+                navigate(`/h2h/${selectedGame.id}`, { state: { view: mode } });
+              } else {
+                setView(mode);
+              }
+            }}
+          />
+        </>
       )}
 
       {view === "quick" && loadingRooms && <H2HLobbySkeleton />}

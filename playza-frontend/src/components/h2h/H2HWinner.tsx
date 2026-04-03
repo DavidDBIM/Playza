@@ -1,11 +1,10 @@
 import { NavLink } from 'react-router';
-import type { ChessRoom } from '@/types/chess';
 import type { UserProfile } from '@/context/auth';
 import { Medal } from 'lucide-react';
 import { ZASymbol } from '@/components/currency/ZASymbol';
 
 interface H2HWinnerProps {
-  room: ChessRoom;
+  room: any;
   user: UserProfile | null;
   localWinnerId?: string | null;
   isSyncing?: boolean;
