@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { MdClose, MdAccountBalance, MdCheckCircle, MdPayments, MdChevronRight } from "react-icons/md";
 import axiosInstance from "@/api/axiosInstance";
+import { useAddBankAccount } from "@/hooks/profile/useProfile";
 
 type AddPaymentMethodModalProps = {
   onClose: () => void;
@@ -18,7 +19,6 @@ export const AddPaymentMethodModal = ({ onClose, onSuccess }: AddPaymentMethodMo
   const [verifiedName, setVerifiedName] = useState("");
   const [resolvedFor, setResolvedFor] = useState("");
   const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const backdropRef = useRef<HTMLDivElement>(null);
 
@@ -61,6 +61,8 @@ export const AddPaymentMethodModal = ({ onClose, onSuccess }: AddPaymentMethodMo
     return () => clearTimeout(t);
   }, [accountNumber, bankCode]);
 
+  const { mutate: addBankAccount, isPending: saving } = useAddBankAccount();
+
   const handleBankChange = (code: string) => {
     setBankCode(code);
     const selected = banks.find(b => b.code === code);
@@ -78,18 +80,22 @@ export const AddPaymentMethodModal = ({ onClose, onSuccess }: AddPaymentMethodMo
     setStep("details");
   };
 
-  const handleSubmit = async () => {
-    setSaving(true);
-    try {
-      await axiosInstance.post("/profile/bank-accounts", { bank_name: bankName, bank_code: bankCode, account_number: accountNumber, account_name: verifiedName });
-      setStep("success");
-      if (onSuccess) onSuccess();
-      setTimeout(onClose, 2000);
-    } catch (err: any) {
-      setError(err.message || "Failed to save account");
-    } finally {
-      setSaving(false);
-    }
+  const handleSubmit = () => {
+    setError("");
+    addBankAccount(
+      { bank_name: bankName, bank_code: bankCode, account_number: accountNumber, account_name: verifiedName },
+      {
+        onSuccess: () => {
+          setStep("success");
+          if (onSuccess) onSuccess();
+          setTimeout(onClose, 2000);
+        },
+        onError: (err: unknown) => {
+          const message = err instanceof Error ? err.message : "Failed to save account";
+          setError(message);
+        }
+      }
+    );
   };
 
   return (

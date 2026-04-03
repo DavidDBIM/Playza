@@ -4,7 +4,6 @@ import GamesCard from "@/utils/GamesCard";
 import { games } from "@/data/games";
 import { calculatePrizePool } from "@/utils/calculatedPrizePool";
 import FeatureGameCard from "../FeatureGameCard";
-import { Link } from "react-router";
 import CategoryRow from "./CategoryRow";
 import Filter, { type FilterOption } from "./Filter";
 import { filterGames } from "@/lib/filterGames";
@@ -68,17 +67,6 @@ const FullGame = () => {
 
   return (
     <main className="space-y-6 md:space-y-8">
-      <div className="overflow-hidden">
-        <nav className="flex text-[10px] md:text-xs text-slate-500 gap-2 mb-1 px-1">
-          <Link to="/" className="hover:text-primary transition-colors">
-            Home
-          </Link>
-          <span className="opacity-50">/</span>
-          <span className="text-slate-900 dark:text-slate-300 font-medium font-heading">
-            Games
-          </span>
-        </nav>
-      </div>
 
       <section className="relative flex items-center rounded-xl overflow-hidden shadow-2xl shadow-primary/5">
         <FeatureGameCard {...biggestPoolGame} subTitle="Featured Challenge" />

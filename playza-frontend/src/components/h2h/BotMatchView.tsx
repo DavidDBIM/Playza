@@ -30,8 +30,8 @@ const BotMatchView = ({
       </button>
 
       <div className="w-full relative p-0 md:p-1 rounded-none md:rounded-[2.5rem] bg-linear-to-b from-amber-500/20 to-transparent">
-        <section className="w-full bg-slate-900/90 backdrop-blur-3xl rounded-none md:rounded-[2.4rem] p-6 md:p-12 border-y md:border border-white/10 shadow-lg space-y-8 md:space-y-12 text-center md:text-left">
-          <div className="flex items-center justify-center md:justify-start gap-3 md:gap-4">
+        <section className="w-full bg-slate-900/90 backdrop-blur-3xl rounded-none md:rounded-[2.4rem] p-6 md:p-12 border-y md:border border-white/10 shadow-lg space-y-8 md:space-y-12 text-center">
+          <div className="flex flex-col items-center justify-center gap-3 md:gap-4">
             <div className="w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-2xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center">
               <Trophy className="text-amber-400 w-6 h-6 md:w-8 md:h-8" />
             </div>
@@ -47,7 +47,7 @@ const BotMatchView = ({
 
           <div className="space-y-6 md:space-y-8">
             <div className="space-y-3 md:space-y-4">
-              <label className="text-[10px] uppercase tracking-[0.3em] text-slate-500 font-black pl-1 block text-center md:text-left">
+              <label className="text-[9px] md:text-[11px] uppercase tracking-[0.3em] text-slate-500 font-bold pl-1 italic block text-center">
                 Practice Stake (<ZASymbol className="scale-75" />)
               </label>
               

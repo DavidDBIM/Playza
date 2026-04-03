@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { User, ShieldCheck, X } from "lucide-react";
-import { useAuth } from "@/context/auth";
+import { useUpdateProfile } from "@/hooks/profile/useProfile";
 import { Button } from "../ui/button";
 
 interface CompleteProfileModalProps {
@@ -9,22 +9,17 @@ interface CompleteProfileModalProps {
 }
 
 export const CompleteProfileModal = ({ onClose, onSuccess }: CompleteProfileModalProps) => {
-  const { updateProfile } = useAuth();
+  const { mutate: update, isPending: isSaving } = useUpdateProfile();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = (e: FormEvent) => {
     e.preventDefault();
     if (!firstName || !lastName) return;
     
-    setIsSaving(true);
-    // Simulate API delay
-    setTimeout(() => {
-      updateProfile({ firstName, lastName });
-      setIsSaving(false);
-      onSuccess();
-    }, 1000);
+    update({ first_name: firstName, last_name: lastName }, {
+      onSuccess: () => onSuccess()
+    });
   };
 
   return (

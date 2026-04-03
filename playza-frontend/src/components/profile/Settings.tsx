@@ -11,48 +11,46 @@ import {
   MdDelete,
   MdLock,
 } from "react-icons/md";
-import { User } from "lucide-react";
-import { AddPaymentMethodModal } from "./AddPaymentMethodModal";
-import { useMe } from "../../hooks/users/useMe";
-import { useUpdateMe } from "../../hooks/users/useUpdateMe";
+import {
+  useProfile,
+  useUpdateProfile,
+  useBankAccounts,
+  useSetPrimaryBankAccount,
+  useRemoveBankAccount,
+} from "../../hooks/profile/useProfile";
 import { useDeactivateUser } from "../../hooks/users/useDeactivateUser";
 import { useAuth } from "../../context/auth";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import axiosInstance from "@/api/axiosInstance";
+import type { BankAccount } from "../../api/profile.api";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { AddPaymentMethodModal } from "./AddPaymentMethodModal";
 
 const Settings = () => {
-  const { data: user, isLoading } = useMe();
-  const { mutate: updateProfile, isPending } = useUpdateMe();
+  const { data: profile, isLoading } = useProfile();
+  const { mutate: updateProfile, isPending } = useUpdateProfile();
   const { mutate: deactivateUser, isPending: isDeactivating } =
     useDeactivateUser();
   const { updateProfile: updateAuthState } = useAuth();
 
   const [showAddMethod, setShowAddMethod] = useState(false);
-  const queryClient = useQueryClient();
 
-  const { data: bankAccounts = [], refetch: refetchBanks } = useQuery({
-    queryKey: ["bank-accounts"],
-    queryFn: async () => {
-      const { data } = await axiosInstance.get("/profile/bank-accounts");
-      return data.data ?? [];
-    },
-  });
 
-  const handleSetPrimary = async (accountId: string) => {
-    await axiosInstance.patch(`/profile/bank-accounts/${accountId}/primary`);
-    refetchBanks();
+  const { data: bankAccounts = [], refetch: refetchBanks } = useBankAccounts();
+  const { mutate: setPrimary } = useSetPrimaryBankAccount();
+  const { mutate: removeAccount } = useRemoveBankAccount();
+
+  const handleSetPrimary = (accountId: string) => {
+    setPrimary(accountId);
   };
 
-  const handleRemoveAccount = async (accountId: string) => {
+  const handleRemoveAccount = (accountId: string) => {
     if (!confirm("Remove this bank account?")) return;
-    await axiosInstance.delete(`/profile/bank-accounts/${accountId}`);
-    refetchBanks();
+    removeAccount(accountId);
   };
 
   const {
@@ -65,10 +63,13 @@ const Settings = () => {
   } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      firstName: "",
-      lastName: "",
-      phone: "",
-      avatarUrl: "",
+      firstName: profile?.first_name || "",
+      lastName: profile?.last_name || "",
+      phone: profile?.phone || "",
+      avatarUrl: profile?.avatar_url || "",
+      tagline: profile?.tagline || "",
+      bio: profile?.bio || "",
+      showActivity: profile?.show_activity ?? true,
     },
   });
 
@@ -78,26 +79,29 @@ const Settings = () => {
   const initialized = useRef(false);
 
   useEffect(() => {
-    if (user && !initialized.current) {
+    if (profile && !initialized.current) {
       reset({
-        firstName: user.first_name || "",
-        lastName: user.last_name || "",
-        phone: user.phone || "",
-        avatarUrl: user.avatar_url || "",
+        firstName: profile.first_name || "",
+        lastName: profile.last_name || "",
+        phone: profile.phone || "",
+        avatarUrl: profile.avatar_url || "",
+        tagline: profile.tagline || "",
+        bio: profile.bio || "",
+        showActivity: profile.show_activity ?? true,
       });
       initialized.current = true;
     }
-  }, [user, reset]);
+  }, [profile, reset]);
 
   const onProfileSubmit = (data: ProfileFormValues) => {
     // Immediate optimistic update for blazing fast UI
     updateAuthState({
-      firstName: user?.first_name || data.firstName,
-      lastName: user?.last_name || data.lastName,
-      phone: user?.phone || data.phone,
+      firstName: profile?.first_name || data.firstName,
+      lastName: profile?.last_name || data.lastName,
+      phone: profile?.phone || data.phone,
       avatarUrl: data.avatarUrl,
     });
-    
+
     // reset form to remove dirty state instantly
     reset(data);
 
@@ -107,10 +111,16 @@ const Settings = () => {
         last_name: data.lastName,
         phone: data.phone,
         avatar_url: data.avatarUrl,
+        tagline: data.tagline,
+        bio: data.bio,
+        show_activity: data.showActivity,
       },
       {
         onSuccess: (result) => {
-          console.log("[Settings] Profile updated successfully in background:", result);
+          console.log(
+            "[Settings] Profile updated successfully in background:",
+            result,
+          );
         },
         onError: (error) => {
           console.error("[Settings] Profile update failed:", error);
@@ -133,12 +143,12 @@ const Settings = () => {
   };
   const handleDeactivate = () => {
     if (
-      user &&
+      profile &&
       confirm(
         "Are you sure you want to deactivate your account? This action cannot be undone.",
       )
     ) {
-      deactivateUser(user.id, {
+      deactivateUser(profile.id, {
         onSuccess: () => {
           localStorage.removeItem("playza_token");
           window.location.href = "/";
@@ -173,7 +183,7 @@ const Settings = () => {
   return (
     <>
       {showAddMethod && (
-        <AddPaymentMethodModal 
+        <AddPaymentMethodModal
           onClose={() => setShowAddMethod(false)}
           onSuccess={() => refetchBanks()}
         />
@@ -203,15 +213,17 @@ const Settings = () => {
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <div className="size-32 rounded-xl bg-slate-100 dark:bg-white/5 border-2 border-slate-200 dark:border-white/10 overflow-hidden shadow-2xl transition-transform duration-500 group-hover/avatar:scale-105 cursor-pointer relative">
-                      {avatarUrl || user?.avatar_url ? (
+                      {avatarUrl || profile?.avatar_url ? (
                         <img
                           alt="Avatar"
                           className="w-full h-full object-cover opacity-90 group-hover/avatar:opacity-100 transition-opacity"
-                          src={avatarUrl || user?.avatar_url}
+                          src={avatarUrl || profile?.avatar_url}
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
-                          <User className="size-12 text-primary/50" />
+                          <span className="size-12 text-primary/50 text-4xl flex items-center justify-center">
+                            <MdPhotoCamera />
+                          </span>
                         </div>
                       )}
                       <div className="absolute inset-0 bg-primary/60 opacity-0 group-hover/avatar:opacity-100 flex items-center justify-center transition-all backdrop-blur-sm">
@@ -219,7 +231,10 @@ const Settings = () => {
                       </div>
                     </div>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="center" className="w-48 glass bg-white/90 dark:bg-slate-900/90 border-primary/20 p-2">
+                  <DropdownMenuContent
+                    align="center"
+                    className="w-48 glass bg-white/90 dark:bg-slate-900/90 border-primary/20 p-2"
+                  >
                     <DropdownMenuItem
                       onClick={() => fileInputRef.current?.click()}
                       className="cursor-pointer gap-2 py-2 md:py-2.5 px-2 md:px-3 rounded-xl focus:bg-primary/10 data-highlighted:bg-primary/10 transition-colors"
@@ -255,36 +270,46 @@ const Settings = () => {
               className="space-y-6"
               onSubmit={handleSubmit(onProfileSubmit)}
             >
-            {/* Real Name row */}
+              {/* Real Name row */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-6">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-1.5">
-                    First Name {!!user?.first_name && <MdLock className="text-[10px] opacity-50" />}
+                    First Name{" "}
+                    {!!profile?.first_name && (
+                      <MdLock className="text-[10px] opacity-50" />
+                    )}
                   </label>
                   <input
                     {...register("firstName")}
-                    readOnly={!!user?.first_name}
-                    className={`w-full h-12 px-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold text-slate-900 dark:text-white ${user?.first_name ? 'opacity-60 cursor-not-allowed' : 'focus:ring-1 focus:ring-primary focus:border-primary transition-all placeholder:text-slate-400 dark:placeholder:text-slate-700'}`}
+                    readOnly={!!profile?.first_name}
+                    className={`w-full h-12 px-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold text-slate-900 dark:text-white ${profile?.first_name ? "opacity-60 cursor-not-allowed" : "focus:ring-1 focus:ring-primary focus:border-primary transition-all placeholder:text-slate-400 dark:placeholder:text-slate-700"}`}
                     type="text"
                     placeholder="First Name"
                   />
                   {errors.firstName && (
-                    <p className="text-[10px] text-red-500 font-bold ml-1 italic">{errors.firstName.message}</p>
+                    <p className="text-[10px] text-red-500 font-bold ml-1 italic">
+                      {errors.firstName.message}
+                    </p>
                   )}
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-1.5">
-                    Last Name {!!user?.last_name && <MdLock className="text-[10px] opacity-50" />}
+                    Last Name{" "}
+                    {!!profile?.last_name && (
+                      <MdLock className="text-[10px] opacity-50" />
+                    )}
                   </label>
                   <input
                     {...register("lastName")}
-                    readOnly={!!user?.last_name}
-                    className={`w-full h-12 px-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold text-slate-900 dark:text-white ${user?.last_name ? 'opacity-60 cursor-not-allowed' : 'focus:ring-1 focus:ring-primary focus:border-primary transition-all placeholder:text-slate-400 dark:placeholder:text-slate-700'}`}
+                    readOnly={!!profile?.last_name}
+                    className={`w-full h-12 px-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold text-slate-900 dark:text-white ${profile?.last_name ? "opacity-60 cursor-not-allowed" : "focus:ring-1 focus:ring-primary focus:border-primary transition-all placeholder:text-slate-400 dark:placeholder:text-slate-700"}`}
                     type="text"
                     placeholder="Last Name"
                   />
                   {errors.lastName && (
-                    <p className="text-[10px] text-red-500 font-bold ml-1 italic">{errors.lastName.message}</p>
+                    <p className="text-[10px] text-red-500 font-bold ml-1 italic">
+                      {errors.lastName.message}
+                    </p>
                   )}
                 </div>
               </div>
@@ -308,23 +333,28 @@ const Settings = () => {
                   <input
                     className="w-full h-12 px-2 md:px-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold opacity-60 cursor-not-allowed text-slate-900 dark:text-white"
                     type="email"
-                    value={user?.email || ""}
+                    value={profile?.email || ""}
                     readOnly
                   />
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-1.5">
-                    Phone Number {!!user?.phone && <MdLock className="text-[10px] opacity-50" />}
+                    Phone Number{" "}
+                    {!!profile?.phone && (
+                      <MdLock className="text-[10px] opacity-50" />
+                    )}
                   </label>
                   <input
                     {...register("phone")}
-                    readOnly={!!user?.phone}
-                    className={`w-full h-12 px-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold text-slate-900 dark:text-white ${user?.phone ? 'opacity-60 cursor-not-allowed' : 'focus:ring-1 focus:ring-primary focus:border-primary transition-all placeholder:text-slate-400 dark:placeholder:text-slate-700'}`}
+                    readOnly={!!profile?.phone}
+                    className={`w-full h-12 px-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold text-slate-900 dark:text-white ${profile?.phone ? "opacity-60 cursor-not-allowed" : "focus:ring-1 focus:ring-primary focus:border-primary transition-all placeholder:text-slate-400 dark:placeholder:text-slate-700"}`}
                     type="tel"
                     placeholder="080 000 0000"
                   />
                   {errors.phone && (
-                    <p className="text-[10px] text-red-500 font-bold ml-1 italic">{errors.phone.message}</p>
+                    <p className="text-[10px] text-red-500 font-bold ml-1 italic">
+                      {errors.phone.message}
+                    </p>
                   )}
                 </div>
               </div>
@@ -333,12 +363,13 @@ const Settings = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-6">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-1.5">
-                    Gaming Nickname <MdLock className="text-[10px] opacity-50" />
+                    Gaming Nickname{" "}
+                    <MdLock className="text-[10px] opacity-50" />
                   </label>
                   <input
                     className="w-full h-12 px-2 md:px-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold opacity-60 cursor-not-allowed text-slate-900 dark:text-white"
                     type="text"
-                    value={user?.username || ""}
+                    value={profile?.username || ""}
                     readOnly
                     placeholder="Nickname"
                   />
@@ -351,6 +382,7 @@ const Settings = () => {
                   Tagline / Title
                 </label>
                 <input
+                  {...register("tagline")}
                   className="w-full h-12 px-2 md:px-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold focus:ring-1 focus:ring-primary focus:border-primary transition-all text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700"
                   type="text"
                   placeholder="The Subway Legend"
@@ -363,6 +395,7 @@ const Settings = () => {
                   Bio / About Me
                 </label>
                 <textarea
+                  {...register("bio")}
                   className="w-full p-2 md:p-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold focus:ring-1 focus:ring-primary focus:border-primary transition-all text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700 resize-none"
                   placeholder="Hooked on mobile gaming since 2012. Ready for any challenge!"
                   rows={4}
@@ -416,7 +449,7 @@ const Settings = () => {
                 <input
                   type="checkbox"
                   className="sr-only peer"
-                  defaultChecked
+                  {...register("showActivity")}
                 />
                 <div className="w-14 h-7 bg-slate-200 dark:bg-white/5 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-1 after:left-1 after:bg-white dark:after:bg-slate-700 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary shadow-inner transition-colors"></div>
               </label>
@@ -456,7 +489,7 @@ const Settings = () => {
                 <input
                   type="checkbox"
                   className="sr-only peer"
-                  defaultChecked
+                  {...register("showActivity")}
                 />
                 <div className="w-14 h-7 bg-slate-200 dark:bg-white/5 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-1 after:left-1 after:bg-white dark:after:bg-slate-700 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary shadow-inner transition-colors"></div>
               </label>
@@ -476,17 +509,17 @@ const Settings = () => {
           </div>
 
           <div className="space-y-3">
-            {bankAccounts.map((acc: any) => (
-              <div 
+            {bankAccounts.map((acc: BankAccount) => (
+              <div
                 key={acc.id}
-                className={`bg-white dark:bg-white/5 p-4 rounded-xl border flex items-center gap-4 group transition-all shadow-xl relative overflow-hidden ${acc.is_primary ? 'border-primary/30 shadow-primary/5' : 'border-slate-200 dark:border-white/5'}`}
+                className={`bg-white dark:bg-white/5 p-4 rounded-xl border flex items-center gap-4 group transition-all shadow-xl relative overflow-hidden ${acc.is_primary ? "border-primary/30 shadow-primary/5" : "border-slate-200 dark:border-white/5"}`}
               >
                 <div className="size-12 rounded-xl bg-primary/10 flex items-center justify-center p-2 shadow-inner shrink-0 font-black text-primary text-xl">
                   {acc.bank_name?.[0]}
                 </div>
-                
+
                 <div className="flex-1 min-w-0">
-                   <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2">
                     <h3 className="text-slate-900 dark:text-white font-black text-sm md:text-base italic tracking-tight">
                       {acc.bank_name}
                     </h3>
@@ -497,13 +530,13 @@ const Settings = () => {
                     )}
                   </div>
                   <p className="text-slate-400 font-bold text-[10px] tracking-[0.2em] mt-0.5">
-                    {acc.accountNumber}
+                    {acc.account_number}
                   </p>
                 </div>
 
                 <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   {!acc.is_primary && (
-                    <button 
+                    <button
                       onClick={() => handleSetPrimary(acc.id)}
                       className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary/10 transition-colors"
                     >

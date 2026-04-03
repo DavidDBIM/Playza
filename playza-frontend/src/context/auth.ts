@@ -19,6 +19,7 @@ export interface UserProfile {
   isEmailVerified?: boolean;
   createdAt?: string;
   wallet?: Wallet;
+  show_activity?: boolean;
 }
 
 export interface AuthContextType {
