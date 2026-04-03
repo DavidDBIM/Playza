@@ -66,10 +66,10 @@ const GameLeaderboard = () => {
         {visibleGames.map((game) => (
           <button
             key={game}
-            className={`px-4 py-2.5 font-bold rounded-xl cursor-pointer transition-all duration-300 border ${
+            className={`px-4 py-2.5 font-bold rounded-xl cursor-pointer border ${
               activeGame === game
-                ? "bg-primary text-white border-primary shadow-[0_4px_15px_rgba(168,85,247,0.4)] scale-105"
-                : "bg-slate-900/5 dark:bg-white/5 text-slate-600 dark:text-slate-400 border-transparent dark:border-white/5 hover:bg-slate-900/10 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white"
+                ? "bg-primary text-white border-primary"
+                : "bg-slate-900/5 dark:bg-white/5 text-slate-600 dark:text-slate-400 border-transparent dark:border-white/5 md:hover:bg-slate-900/10 md:dark:hover:bg-white/10 md:hover:text-slate-900 md:dark:hover:text-white"
             }`}
             title={game}
             onClick={() => setActiveGame(game as GameName)}
@@ -80,7 +80,7 @@ const GameLeaderboard = () => {
       </div>
 
       <div className="overflow-auto custom-scrollbar flex-1 relative">
-        <Table className={`w-full text-left transition-all duration-700 ${!user ? "blur-sm grayscale select-none pointer-events-none" : ""}`}>
+        <Table className={`w-full text-left ${!user ? "opacity-50 grayscale select-none pointer-events-none" : ""}`}>
           <TableHeader>
             <TableRow className="border-b-slate-200 dark:border-b-white/10 hover:bg-transparent">
               <TableHead className="px-2 md:px-4 py-2 md:py-4 text-[10px] uppercase font-black tracking-widest text-slate-500 w-16 text-center">
@@ -121,38 +121,38 @@ const GameLeaderboard = () => {
                   const isMe = rank === 4;
 
                   const rankStyle =
-                    isGold ? "bg-playza-yellow/20 text-playza-yellow border-playza-yellow/50 shadow-[0_0_15px_rgba(245,158,11,0.3)]" :
-                    isSilver ? "bg-slate-300/20 text-slate-700 dark:text-slate-200 border-slate-300/50 shadow-[0_0_15px_rgba(203,213,225,0.2)]" :
-                    isBronze ? "bg-amber-600/20 text-amber-500 border-amber-600/50 shadow-[0_0_15px_rgba(217,119,6,0.2)]" :
-                    isMe ? "bg-primary text-white border-primary shadow-[0_0_15px_rgba(168,85,247,0.4)]" :
+                    isGold ? "bg-playza-yellow/20 text-playza-yellow border-playza-yellow/50" :
+                    isSilver ? "bg-slate-300/20 text-slate-700 dark:text-slate-200 border-slate-300/50" :
+                    isBronze ? "bg-amber-600/20 text-amber-500 border-amber-600/50" :
+                    isMe ? "bg-primary text-white border-primary" :
                     "bg-slate-900/5 dark:bg-white/5 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-white/10";
 
                   return (
                     <TableRow
                       key={id}
-                      className={`border-b-slate-200 dark:border-b-white/5 group transition-colors ${
+                      className={`border-b-slate-200 dark:border-b-white/5 ${
                         isMatch
-                          ? "bg-primary/20 dark:bg-primary/20 border-y border-y-primary border-l-[3px] border-l-primary shadow-[inset_0_0_20px_rgba(168,85,247,0.2)]"
+                          ? "bg-primary/20 dark:bg-primary/20 border-y border-y-primary border-l-[3px] border-l-primary"
                           : isMe
-                          ? "bg-primary/5 hover:bg-primary/10 border-l-[3px] border-l-primary"
-                          : "hover:bg-slate-900/5 dark:hover:bg-white/5"
+                          ? "bg-primary/5 md:hover:bg-primary/10 border-l-[3px] border-l-primary"
+                          : "md:hover:bg-slate-900/5 md:dark:hover:bg-white/5"
                       }`}
                     >
                       <TableCell className=" py-2 md:py-3 sm:py-4">
                         <div className="flex justify-center">
-                          <div className={`size-7 sm:size-8 flex items-center justify-center rounded-xl font-black text-xs sm:text-sm border ${rankStyle} transition-all duration-300 group-hover:scale-110`}>
+                          <div className={`size-7 sm:size-8 flex items-center justify-center rounded-xl font-black text-xs sm:text-sm border ${rankStyle}`}>
                             {rank}
                           </div>
                         </div>
                       </TableCell>
 
                       <TableCell className=" py-2 md:py-3 sm:py-4 flex items-center gap-2 md:gap-3 sm:gap-4">
-                        <div className={`relative size-8 sm:size-10 rounded-full overflow-hidden border-2 ${isGold ? 'border-playza-yellow shadow-[0_0_10px_rgba(245,158,11,0.5)]' : isMe ? 'border-primary' : 'border-slate-200 dark:border-white/10'}`}>
+                        <div className={`relative size-8 sm:size-10 rounded-full overflow-hidden border-2 ${isGold ? 'border-playza-yellow' : isMe ? 'border-primary' : 'border-slate-200 dark:border-white/10'}`}>
                           <img src={avatar} alt={username} className="w-full h-full object-cover" />
                           {isGold && <div className="absolute inset-0 ring-inset ring-2 ring-playza-yellow/20 rounded-full" />}
                         </div>
                         <div className="flex flex-col">
-                          <span className={`transition-colors ${isMe ? "font-black text-slate-900 dark:text-white" : isGold ? "font-bold text-playza-yellow" : "font-bold text-slate-700 dark:text-slate-200 group-hover:text-slate-900 dark:group-hover:text-white"}`}>
+                          <span className={`${isMe ? "font-black text-slate-900 dark:text-white" : isGold ? "font-bold text-playza-yellow" : "font-bold text-slate-700 dark:text-slate-200 md:group-hover:text-slate-900 md:dark:group-hover:text-white"}`}>
                             {username} {isMe && <span className="text-primary text-[10px] ml-1 uppercase tracking-widest bg-primary/20 px-1.5 py-0.5 rounded-md">(You)</span>}
                           </span>
                           <span className="sm:hidden text-[10px] text-slate-500 font-black tracking-widest flex items-center gap-1 mt-0.5">

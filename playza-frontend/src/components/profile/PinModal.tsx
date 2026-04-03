@@ -20,16 +20,14 @@ export const PinModal = ({ mode, onClose }: PinModalProps) => {
 
   // close on Escape key
   useEffect(() => {
-    document.body.classList.add("modal-open", "overflow-hidden");
-    document.documentElement.classList.add("modal-open", "overflow-hidden");
+    document.body.style.overflow = "hidden";
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
     window.addEventListener("keydown", handler);
     return () => {
       window.removeEventListener("keydown", handler);
-      document.body.classList.remove("modal-open", "overflow-hidden");
-      document.documentElement.classList.remove("modal-open", "overflow-hidden");
+      document.body.style.overflow = "unset";
     };
   }, [onClose]);
 
@@ -88,13 +86,13 @@ export const PinModal = ({ mode, onClose }: PinModalProps) => {
       onClick={(e) => {
         if (e.target === backdropRef.current) onClose();
       }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 dark:bg-black/70 backdrop-blur-sm px-2 md:px-4 animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 dark:bg-black/70 px-2 md:px-4"
     >
-      <div className="w-full max-w-md bg-white dark:bg-playza-dark/60 border border-slate-200 dark:border-white/10 rounded-xl shadow-2xl p-2 md:p-8 animate-in slide-in-from-bottom-4 duration-300 backdrop-blur-3xl">
+      <div className="w-full max-w-md bg-white dark:bg-playza-dark border border-slate-200 dark:border-white/10 rounded-xl p-2 md:p-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-2 md:gap-3">
-            <div className="size-10 rounded-2xl bg-primary/10 flex items-center justify-center text-primary text-base md:text-xl shadow-inner">
+            <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary text-base md:text-xl">
               <MdLock />
             </div>
             <h3 className="text-slate-900 dark:text-white font-black text-sm md:text-lg italic uppercase tracking-tight">
@@ -103,7 +101,7 @@ export const PinModal = ({ mode, onClose }: PinModalProps) => {
           </div>
           <button
             onClick={onClose}
-            className="size-9 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all shadow-sm"
+            className="size-9 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-400 md:hover:text-slate-900 md:dark:hover:text-white"
           >
             <MdClose />
           </button>
@@ -111,7 +109,7 @@ export const PinModal = ({ mode, onClose }: PinModalProps) => {
 
         {success ? (
           <div className="flex flex-col items-center gap-2 md:gap-4 py-2 md:py-8 text-center">
-            <div className="size-16 rounded-full bg-playza-green/20 flex items-center justify-center text-playza-green text-2xl md:text-4xl animate-in zoom-in duration-300 shadow-lg shadow-playza-green/20">
+            <div className="size-16 rounded-full bg-playza-green/20 flex items-center justify-center text-playza-green text-2xl md:text-4xl">
               <MdCheckCircle />
             </div>
             <p className="text-slate-900 dark:text-white font-black uppercase tracking-tight text-xs md:text-base italic">
@@ -135,7 +133,7 @@ export const PinModal = ({ mode, onClose }: PinModalProps) => {
                   placeholder="••••"
                   value={oldPin}
                   onChange={(e) => setOldPin(onlyDigits(e.target.value))}
-                  className="w-full h-12 px-2 md:px-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold tracking-[0.5em] focus:ring-1 focus:ring-primary focus:border-primary transition-all text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700"
+                  className="w-full h-12 px-2 md:px-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-xl text-sm font-bold tracking-[0.5em] focus:ring-1 focus:ring-primary focus:border-primary text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700"
                 />
               </div>
             )}
@@ -151,7 +149,7 @@ export const PinModal = ({ mode, onClose }: PinModalProps) => {
                 placeholder="••••"
                 value={newPin}
                 onChange={(e) => setNewPin(onlyDigits(e.target.value))}
-                className="w-full h-12 px-2 md:px-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold tracking-[0.5em] focus:ring-1 focus:ring-primary focus:border-primary transition-all text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700"
+                className="w-full h-12 px-2 md:px-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-xl text-sm font-bold tracking-[0.5em] focus:ring-1 focus:ring-primary focus:border-primary text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700"
               />
             </div>
 
@@ -166,7 +164,7 @@ export const PinModal = ({ mode, onClose }: PinModalProps) => {
                 placeholder="••••"
                 value={confirmPin}
                 onChange={(e) => setConfirmPin(onlyDigits(e.target.value))}
-                className={`w-full h-12 px-5 bg-slate-50 dark:bg-white/5 border rounded-2xl text-sm font-bold tracking-[0.5em] focus:ring-1 focus:ring-primary focus:border-primary transition-all text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700 ${
+                className={`w-full h-12 px-5 bg-slate-50 dark:bg-white/5 border rounded-xl text-sm font-bold tracking-[0.5em] focus:ring-1 focus:ring-primary focus:border-primary text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700 ${
                   confirmPin && confirmPin !== newPin
                     ? "border-red-500/50"
                     : "border-slate-200 dark:border-white/5"
@@ -175,7 +173,7 @@ export const PinModal = ({ mode, onClose }: PinModalProps) => {
             </div>
 
             {error && (
-              <p className="text-xs md:text-base text-red-400 text-[11px] font-bold tracking-wide animate-in fade-in duration-200">
+              <p className="text-xs md:text-base text-red-400 text-[11px] font-bold tracking-wide">
                 ⚠ {error}
               </p>
             )}
@@ -183,18 +181,17 @@ export const PinModal = ({ mode, onClose }: PinModalProps) => {
             <div className="flex gap-2 md:gap-3 pt-2">
               <button
                 onClick={onClose}
-                className="flex-1 h-12 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest hover:text-slate-900 dark:hover:text-white transition-all shadow-sm"
+                className="flex-1 h-12 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest md:hover:text-slate-900 md:dark:hover:text-white"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSubmit}
                 disabled={loading}
-                className="flex-1 h-12 rounded-2xl bg-primary text-white text-xs font-black uppercase tracking-widest hover:brightness-110 transition-all shadow-lg glow-accent disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 h-12 rounded-xl bg-primary text-white text-xs font-black uppercase tracking-widest md:hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? (
                   <span className="flex items-center justify-center gap-2">
-                    <span className="size-4 border-2 border-background-dark/30 border-t-background-dark rounded-full animate-spin" />
                     Saving…
                   </span>
                 ) : mode === "change" ? (

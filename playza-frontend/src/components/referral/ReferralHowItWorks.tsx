@@ -43,18 +43,18 @@ const ReferralHowItWorks = () => {
         {steps.map((step, idx) => (
           <div 
             key={idx} 
-            className="group relative bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-2xl p-2 md:p-6 hover:border-primary/50 transition-all duration-300 shadow-sm hover:shadow-xl hover:shadow-primary/5 cursor-default"
+            className="group relative bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl p-2 md:p-6 md:hover:border-primary/50 cursor-default"
           >
-            <div className="absolute top-4 right-4 text-xl md:text-3xl font-display font-black text-slate-100 dark:text-slate-800/50 z-0 group-hover:text-primary/10 transition-colors">
+            <div className="absolute top-4 right-4 text-xl md:text-3xl font-display font-black text-slate-100 dark:text-slate-800/50 z-0 md:group-hover:text-primary/10">
               0{step.number}
             </div>
             
             <div className="relative z-10 flex md:flex-col items-center md:items-start gap-4 md:gap-4">
-              <div className="w-12 h-12 md:w-16 md:h-16 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-primary flex items-center justify-center shrink-0 group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all duration-300 shadow-inner">
+              <div className="w-12 h-12 md:w-16 md:h-16 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-primary flex items-center justify-center shrink-0 md:group-hover:scale-110 md:group-hover:bg-primary md:group-hover:text-white">
                 {step.icon}
               </div>
               <div className="text-left">
-                <h3 className="text-slate-900 dark:text-slate-100 font-display font-bold text-sm md:text-base leading-tight group-hover:text-primary transition-colors">
+                <h3 className="text-slate-900 dark:text-slate-100 font-display font-bold text-sm md:text-base leading-tight md:group-hover:text-primary">
                   {step.title}
                 </h3>
                 <p className="text-slate-500 dark:text-slate-400 text-[11px] md:text-xs leading-snug mt-1">

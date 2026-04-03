@@ -30,11 +30,9 @@ const Referral = () => {
     <div className="flex-1 w-full pb-2 md:pb-20">
       {!user ? (
         <div className="mt-6 mb-12 glass-card p-2 md:p-10 rounded-xl border-primary/20 relative overflow-hidden flex flex-col items-center text-center gap-2 md:gap-8">
-          <div className="absolute -top-24 -left-24 size-64 bg-primary/20 blur-[100px] rounded-full" />
-          <div className="absolute -bottom-24 -right-24 size-64 bg-secondary/20 blur-[100px] rounded-full" />
 
           <div className="relative z-10 space-y-4 max-w-2xl">
-            <div className="size-20 bg-primary/20 rounded-xl flex items-center justify-center mx-auto mb-6 border border-primary/30 shadow-inner rotate-3 group-hover:rotate-6 transition-transform">
+            <div className="size-20 bg-primary/20 rounded-xl flex items-center justify-center mx-auto mb-6 border border-primary/30">
               <MdGroupAdd className="text-2xl md:text-4xl text-primary" />
             </div>
             <h1 className="text-4xl md:text-6xl font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-none italic">
@@ -49,14 +47,14 @@ const Referral = () => {
 
           <div className="relative z-10 flex flex-col sm:flex-row gap-2 md:gap-4 w-full max-w-md">
             <Link to="/registration?view=signup" className="flex-1">
-              <Button className="w-full h-14 bg-primary text-white rounded-2xl font-black uppercase tracking-widest text-base hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary/20 glow-accent">
+              <Button className="w-full h-14 bg-primary text-white rounded-xl font-black uppercase tracking-widest text-base">
                 Start Recruiting
               </Button>
             </Link>
             <Link to="/registration?view=login" className="flex-1">
               <Button
                 variant="outline"
-                className="w-full h-14 border-primary/30 text-primary rounded-2xl font-black uppercase tracking-widest text-base hover:bg-primary/10 transition-all"
+                className="w-full h-14 border-primary/30 text-primary rounded-xl font-black uppercase tracking-widest text-base md:hover:bg-primary/10"
               >
                 Sign In
               </Button>
@@ -76,11 +74,11 @@ const Referral = () => {
             </div>
             <Link
               to="/leaderboard?tab=Referral"
-              className="flex items-center gap-2 bg-primary/10 hover:bg-primary/20 text-primary px-2 md:px-6 py-2 md:py-3 rounded-xl border border-primary/20 transition-all font-black uppercase tracking-widest text-xs group self-start md:self-auto shadow-sm"
+              className="flex items-center gap-2 bg-primary/10 md:hover:bg-primary/20 text-primary px-2 md:px-6 py-2 md:py-3 rounded-xl border border-primary/20 font-black uppercase tracking-widest text-xs group self-start md:self-auto"
             >
               <MdEmojiEvents className="text-sm md:text-lg" />
               <span>Leaderboard</span>
-              <MdArrowForward className=" group-hover:translate-x-1 transition-transform" />
+              <MdArrowForward className="md:group-hover:translate-x-1" />
             </Link>
           </div>
         </div>

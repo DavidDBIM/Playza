@@ -1,6 +1,7 @@
 import { MdClose, MdEmojiEvents, MdPeople, MdShowChart, MdFormatListNumbered, MdOpenInNew } from "react-icons/md";
 import type { MatchHistory } from "@/data/matchHistory";
 import { ZASymbol } from "../currency/ZASymbol";
+import { useEffect } from "react";
 
 type GameResultModalProps = {
   match: MatchHistory;
@@ -8,12 +9,19 @@ type GameResultModalProps = {
 };
 
 export const GameResultModal = ({ match, onClose }: GameResultModalProps) => {
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, []);
+
   const isWin = match.result === "WIN";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 dark:bg-black/80 backdrop-blur-md px-2 md:px-4 animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 dark:bg-black/80 px-2 md:px-4">
       <div 
-        className="w-full max-w-lg bg-white dark:bg-[#0a0f1e]/80 border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-500 relative rounded-xl backdrop-blur-3xl"
+        className="w-full max-w-lg bg-white dark:bg-[#0a0f1e] border border-slate-200 dark:border-white/10 overflow-hidden relative rounded-xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Banner Section */}
@@ -21,21 +29,21 @@ export const GameResultModal = ({ match, onClose }: GameResultModalProps) => {
           <img 
             src={match.banner} 
             alt={match.game} 
-            className="w-full h-full object-cover scale-110 blur-[2px] opacity-40 dark:opacity-20"
+            className="w-full h-full object-cover scale-110 opacity-40 dark:opacity-20"
           />
           <div className="absolute inset-0 bg-linear-to-t from-white dark:from-[#0a0f1e] via-white/80 dark:via-[#0a0f1e]/80 to-transparent" />
           
           {/* Close Button */}
           <button 
             onClick={onClose}
-            className="absolute top-6 right-6 size-10 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-white/10 transition-all z-10 shadow-sm"
+            className="absolute top-6 right-6 size-10 rounded-xl bg-slate-100 md:hover:bg-slate-200 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-400 md:hover:text-slate-900 dark:text-slate-400 md:dark:hover:text-white z-10"
           >
-            <MdClose className="text-base md:text-xl" />
+            <MdClose className="text-xl" />
           </button>
 
           {/* Result Badge */}
           <div className="absolute inset-0 flex flex-col items-center justify-center pt-2 md:pt-8">
-            <div className={`mb-3 p-3 rounded-2xl ${isWin ? 'bg-playza-green/20 text-playza-green' : 'bg-playza-red/20 text-playza-red'} animate-in slide-in-from-bottom-4 duration-700`}>
+            <div className={`mb-3 p-3 rounded-xl ${isWin ? 'bg-playza-green/20 text-playza-green' : 'bg-playza-red/20 text-playza-red'}`}>
               <MdEmojiEvents className="text-2xl md:text-4xl" />
             </div>
             <h2 className={`text-4xl font-black italic uppercase tracking-tighter ${isWin ? 'text-playza-green' : 'text-playza-red'}`}>
@@ -52,7 +60,7 @@ export const GameResultModal = ({ match, onClose }: GameResultModalProps) => {
           <div className="flex items-center gap-2 md:gap-6">
             <img 
               src={match.banner} 
-              className="size-20 rounded-xl object-cover border-2 border-slate-100 dark:border-white/10 shadow-xl"
+              className="size-20 rounded-xl object-cover border-2 border-slate-100 dark:border-white/10"
               alt={match.game}
             />
             <div>
@@ -63,7 +71,7 @@ export const GameResultModal = ({ match, onClose }: GameResultModalProps) => {
 
           {/* Stats Grid */}
           <div className="grid grid-cols-2 gap-2 md:gap-4">
-            <div className="p-2 md:p-6 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-white/5 space-y-2 shadow-inner">
+            <div className="p-2 md:p-6 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-white/5 space-y-2">
               <div className="flex items-center gap-2 text-slate-500">
                 <MdShowChart className="text-sm md:text-lg" />
                 <span className="text-[10px] font-black uppercase tracking-widest">Score</span>
@@ -73,7 +81,7 @@ export const GameResultModal = ({ match, onClose }: GameResultModalProps) => {
               </p>
             </div>
 
-            <div className="p-2 md:p-6 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-white/5 space-y-2 shadow-inner">
+            <div className="p-2 md:p-6 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-white/5 space-y-2">
               <div className="flex items-center gap-2 text-slate-500">
                 <MdFormatListNumbered className="text-sm md:text-lg" />
                 <span className="text-[10px] font-black uppercase tracking-widest">Final Rank</span>
@@ -83,7 +91,7 @@ export const GameResultModal = ({ match, onClose }: GameResultModalProps) => {
               </p>
             </div>
 
-            <div className="p-2 md:p-6 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-white/5 space-y-2 shadow-inner">
+            <div className="p-2 md:p-6 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-white/5 space-y-2">
               <div className="flex items-center gap-2 text-slate-500">
                 <MdPeople className="text-sm md:text-lg" />
                 <span className="text-[10px] font-black uppercase tracking-widest">Participants</span>
@@ -93,18 +101,18 @@ export const GameResultModal = ({ match, onClose }: GameResultModalProps) => {
               </p>
             </div>
 
-            <div className="p-2 md:p-6 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-white/5 space-y-2 shadow-inner">
+            <div className="p-2 md:p-6 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-white/5 space-y-2">
               <div className="flex items-center gap-2 text-slate-500">
                 <MdEmojiEvents className="text-sm md:text-lg" />
                 <span className="text-[10px] font-black uppercase tracking-widest">Entry Fee</span>
               </div>
-              <p className="text-xs md:text-base font-black text-slate-900 dark:text-white italic tracking-tighter flex items-center gap-1.5 transition-all">
+              <p className="text-xs md:text-base font-black text-slate-900 dark:text-white italic tracking-tighter flex items-center gap-1.5">
                 <ZASymbol className="text-sm md:text-lg" />
                 <span>{match.entryFee.toLocaleString()}</span>
               </p>
             </div>
 
-            <div className="p-2 md:p-6 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-white/5 space-y-2 col-span-2 shadow-inner">
+            <div className="p-2 md:p-6 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-white/5 space-y-2 col-span-2">
               <div className="flex items-center gap-2 text-slate-500">
                 <MdEmojiEvents className="text-sm md:text-lg" />
                 <span className="text-[10px] font-black uppercase tracking-widest">Earnings</span>
@@ -128,17 +136,17 @@ export const GameResultModal = ({ match, onClose }: GameResultModalProps) => {
           {/* Actions */}
           <div className="flex flex-col sm:flex-row gap-2 md:gap-4 pt-2 md:pt-4">
             <button 
-              className="flex-1 h-16 rounded-2xl bg-primary text-white font-black uppercase tracking-widest text-xs hover:scale-[1.02] hover:brightness-110 transition-all shadow-lg glow-accent flex items-center justify-center gap-2 group"
+              className="flex-1 h-16 rounded-xl bg-primary text-white font-black uppercase tracking-widest text-xs md:hover:brightness-110 flex items-center justify-center gap-2 group"
               onClick={() => {
                 // Future orientation to leaderboard
                 onClose();
               }}
             >
-              View Leaderboard <MdOpenInNew className="text-sm md:text-lg group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+              View Leaderboard <MdOpenInNew className="text-sm md:text-lg md:group-hover:translate-x-0.5 md:group-hover:-translate-y-0.5" />
             </button>
             <button 
               onClick={onClose}
-              className="flex-1 h-16 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest hover:text-slate-900 dark:hover:text-white transition-all shadow-sm"
+              className="flex-1 h-16 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest md:hover:text-slate-900 md:dark:hover:text-white"
             >
               Back to History
             </button>
