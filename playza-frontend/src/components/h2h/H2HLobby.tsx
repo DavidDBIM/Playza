@@ -10,13 +10,16 @@ import QuickMatchView from './QuickMatchView';
 import BotMatchView from './BotMatchView';
 import InviteFriendView from './InviteFriendView';
 import ActionConfirmationModal from './ActionConfirmationModal';
+import type { ChessRoom as WaitingRoom } from '@/types/chess';
+
+
 
 interface H2HLobbyProps {
   onCreate: (stake: number) => void;
   onBotCreate: (stake: number) => void;
   onJoin: (code: string) => void;
   onQuickMatch: (stake: number) => void;
-  getWaitingRooms: () => Promise<any[]>;
+  getWaitingRooms: () => Promise<WaitingRoom[]>;
   loading: boolean;
 }
 
@@ -39,7 +42,7 @@ const H2HLobby = ({ onCreate, onBotCreate, onJoin, onQuickMatch, getWaitingRooms
   const [isFinding, setIsFinding] = useState(false);
   const [selectedGame, setSelectedGame] = useState<GameType | null>(null);
   const [inviteMobileTab, setInviteMobileTab] = useState<"create" | "join" | null>(null);
-  const [publicRooms, setPublicRooms] = useState<any[]>([]);
+  const [publicRooms, setPublicRooms] = useState<WaitingRoom[]>([]);
   const [quickViewMode, setQuickViewMode] = useState<'list' | 'create'>('list');
   const [loadingRooms, setLoadingRooms] = useState(false);
   const [confirmingAction, setConfirmingAction] = useState<{ type: 'create' | 'join' | 'quick' | 'bot', stake: number, code?: string } | null>(null);
@@ -63,6 +66,20 @@ const H2HLobby = ({ onCreate, onBotCreate, onJoin, onQuickMatch, getWaitingRooms
       fetchPublicRooms();
     }
   }, [view, fetchPublicRooms]);
+
+  // Function to change view and stay in sync with URL state
+  const handleSetView = (newView: 'hub' | 'quick' | 'invite' | 'bot') => {
+    // We update the location state so that the sync useEffect doesn't override us
+    navigate(location.pathname, { state: { ...location.state, view: newView }, replace: true });
+    setView(newView);
+  };
+
+  // Sync view state with location state (e.g. from H2HZone navigation)
+  useEffect(() => {
+    if (location.state?.view && location.state.view !== view) {
+      setView(location.state.view);
+    }
+  }, [location.state?.view, view]);
 
   const handleQuickMatch = () => {
     const finalStake = customStake ? parseInt(customStake) : stakeValue;
@@ -123,18 +140,20 @@ const H2HLobby = ({ onCreate, onBotCreate, onJoin, onQuickMatch, getWaitingRooms
         <>
           <LobbyHub 
             games={games} 
-            selectedGame={selectedGame} 
             setSelectedGame={setSelectedGame} 
-            setView={setView} 
           />
           <GameModeModal
             isOpen={!!selectedGame}
             onClose={() => setSelectedGame(null)}
             onSelectMode={(mode: 'hub' | 'quick' | 'invite' | 'bot') => {
-              if (selectedGame?.id) {
+              // If we are already on the page for this game, just set the view locally
+              // This fixes the issue of the lobby 'not proceeding' when already on the game route
+              const isSameGame = location.pathname.includes(`/h2h/${selectedGame?.id}`);
+              
+              if (selectedGame?.id && !isSameGame) {
                 navigate(`/h2h/${selectedGame.id}`, { state: { view: mode } });
               } else {
-                setView(mode);
+                handleSetView(mode);
               }
             }}
           />
@@ -155,7 +174,7 @@ const H2HLobby = ({ onCreate, onBotCreate, onJoin, onQuickMatch, getWaitingRooms
           handleQuickMatch={handleQuickMatch}
           setConfirmingAction={setConfirmingAction}
           isBtnLoading={isBtnLoading}
-          setView={setView}
+          setView={handleSetView}
         />
       )}
 
@@ -167,7 +186,7 @@ const H2HLobby = ({ onCreate, onBotCreate, onJoin, onQuickMatch, getWaitingRooms
           setCustomStake={setCustomStake}
           handleBotMatch={handleBotMatch}
           loading={loading}
-          setView={setView}
+          setView={handleSetView}
         />
       )}
 
@@ -183,7 +202,7 @@ const H2HLobby = ({ onCreate, onBotCreate, onJoin, onQuickMatch, getWaitingRooms
           joinCode={joinCode}
           setJoinCode={setJoinCode}
           loading={loading}
-          setView={setView}
+          setView={handleSetView}
         />
       )}
 

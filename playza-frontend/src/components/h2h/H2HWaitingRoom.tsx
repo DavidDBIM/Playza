@@ -4,7 +4,16 @@ import { Share2, Radar, ShieldCheck } from 'lucide-react';
 import { ZASymbol } from '@/components/currency/ZASymbol';
 
 interface WaitingRoomProps {
-  room: any;
+  room: {
+    code?: string;
+    stake?: number | string;
+    host?: {
+      username?: string;
+      avatar_url?: string;
+      [key: string]: unknown;
+    };
+    [key: string]: unknown;
+  };
 }
 
 const H2HWaitingRoom = ({ room }: WaitingRoomProps) => {

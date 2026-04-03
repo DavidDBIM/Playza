@@ -11,8 +11,9 @@ import {
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router";
 import BadgeModal from "../components/profile/BadgeModal";
 
-import { useMe } from "../hooks/users/useMe";
-import { useAuth, type UserProfile } from "@/context/auth";
+import { useProfile } from "../hooks/profile/useProfile";
+import { useAuth } from "@/context/auth";
+import { type User } from "@/api/users.api";
 import { ZASymbol } from "@/components/currency/ZASymbol";
 
 import { ProfileSkeleton } from "@/components/skeletons/ProfileSkeleton";
@@ -22,7 +23,7 @@ const Profile = () => {
   const [isBadgeModalOpen, setIsBadgeModalOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { data: userData, isLoading } = useMe();
+  const { data: profileData, isLoading } = useProfile();
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -40,7 +41,7 @@ const Profile = () => {
 
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-  console.log("user:", userData);
+  console.log("profile:", profileData);
 
   useEffect(() => {
     const handleResize = () => {
@@ -62,22 +63,26 @@ const Profile = () => {
     return <ProfileSkeleton />;
   }
 
-  const profile: UserProfile | null = userData
+  const profile: User | null = profileData
     ? {
-        id: userData.id,
-        username: userData.username,
-        email: userData.email,
-        phone: userData.phone,
-        referralCode: userData.referral_code,
-        firstName: userData.first_name,
-        lastName: userData.last_name,
-        avatarUrl: userData.avatar_url,
-        createdAt: userData.created_at,
-        isEmailVerified: userData.is_email_verified,
-        pzaPoints: userData.pza_points,
-        wallet: userData.wallet,
+        id: profileData.id,
+        username: profileData.username,
+        email: profileData.email,
+        phone: profileData.phone,
+        referral_code: profileData.referral_code,
+        first_name: profileData.first_name,
+        last_name: profileData.last_name,
+        avatar_url: profileData.avatar_url,
+        created_at: profileData.created_at,
+        is_email_verified: profileData.is_email_verified,
+        pza_points: profileData.pza_points,
+        wallet: profileData.wallet,
+        role: "user",
+        is_active: true,
+        is_verified: true,
+        updated_at: profileData.created_at,
       }
-    : user;
+    : (user as User | null);
 
   return (
     <div className="flex-1 pb-2 md:pb-10 transition-all duration-500">
@@ -90,9 +95,9 @@ const Profile = () => {
           {/* Profile Picture Section */}
           <div className="relative group/avatar shrink-0">
             <div className="size-28 md:size-32 rounded-xl border-4 border-white/10 shadow-2xl overflow-hidden transition-transform duration-500 group-hover/avatar:scale-105 bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-900 dark:text-white">
-              {profile?.avatarUrl ? (
+              {profile?.avatar_url ? (
                 <img
-                  src={profile.avatarUrl}
+                  src={profile.avatar_url}
                   alt={profile.username}
                   className="w-full h-full object-cover"
                 />
@@ -104,7 +109,7 @@ const Profile = () => {
               onClick={() => setIsBadgeModalOpen(true)}
               className="absolute -bottom-2 -right-2 bg-primary text-slate-900 font-black px-2 md:px-4 py-1.5 rounded-full uppercase tracking-widest shadow-lg hover:scale-110 hover:brightness-110 transition-all cursor-pointer border border-white/20 glow-accent text-[10px]"
             >
-              {(profile?.pzaPoints ?? 0) < 1000 ? "TRAINEE" : (profile?.pzaPoints ?? 0) < 5000 ? "ELITE" : "LEGEND"}
+              {(profile?.pza_points ?? 0) < 1000 ? "TRAINEE" : (profile?.pza_points ?? 0) < 5000 ? "ELITE" : "LEGEND"}
             </button>
           </div>
 
@@ -116,15 +121,15 @@ const Profile = () => {
               </h1>
               <div className="flex items-center px-2 md:px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 backdrop-blur-md shadow-inner">
                 <span className="text-primary text-[10px] font-black uppercase tracking-widest italic">
-                  {(profile?.pzaPoints ?? 0) < 1000 ? "BRONZE VANGUARD" : (profile?.pzaPoints ?? 0) < 5000 ? "SILVER GUARDIAN" : (profile?.pzaPoints ?? 0) < 10000 ? "GOLDEN HERO" : "ASCENDED MASTER"}
+                  {(profile?.pza_points ?? 0) < 1000 ? "BRONZE VANGUARD" : (profile?.pza_points ?? 0) < 5000 ? "SILVER GUARDIAN" : (profile?.pza_points ?? 0) < 10000 ? "GOLDEN HERO" : "ASCENDED MASTER"}
                 </span>
               </div>
             </div>
 
             <div className="flex flex-col gap-0.5">
-              {(profile?.firstName || profile?.lastName) && (
+              {(profile?.first_name || profile?.last_name) && (
                 <p className="text-slate-900 dark:text-white text-xs md:text-sm font-black tracking-widest uppercase mb-1">
-                  {profile?.firstName} {profile?.lastName}
+                  {profile?.first_name} {profile?.last_name}
                 </p>
               )}
               <p className="text-slate-500 dark:text-slate-400 text-[10px] md:text-xs font-bold tracking-wider opacity-80 flex items-center justify-center lg:justify-start gap-1.5 underline decoration-primary/30 decoration-2 underline-offset-4">

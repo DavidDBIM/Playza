@@ -68,7 +68,7 @@ const InviteFriendView = ({
 
             <div className="space-y-6">
               <div className="space-y-3">
-                <label className="text-[9px] md:text-[11px] uppercase tracking-[0.3em] text-slate-500 font-bold pl-1 italic">Arena Entry Stake</label>
+                <label className="text-[9px] md:text-[11px] uppercase tracking-[0.3em] text-slate-500 font-bold pl-1 italic block text-center">Arena Entry Stake</label>
                 <div className="relative group/input">
                   <input value={customStake} onChange={(e) => setCustomStake(e.target.value)} className="w-full bg-slate-50 dark:bg-black/40 border-2 border-slate-200 dark:border-white/10 rounded-2xl px-6 py-4 font-black text-2xl text-slate-900 dark:text-white focus:border-emerald-500 outline-none transition-all tracking-tighter italic" placeholder="100" type="number" />
                   <span className="-translate-y-1/2 absolute right-6 top-1/2 text-emerald-500 scale-125"><ZASymbol /></span>
@@ -113,7 +113,7 @@ const InviteFriendView = ({
             </div>
             <div className="space-y-6">
               <div className="space-y-3">
-                <label className="text-[9px] md:text-[11px] uppercase tracking-[0.3em] text-slate-500 font-bold pl-1 italic">Match Access Code</label>
+                <label className="text-[9px] md:text-[11px] uppercase tracking-[0.3em] text-slate-500 font-bold pl-1 italic block text-center">Match Access Code</label>
                 <form onSubmit={handleJoinByCode} className="space-y-4">
                   <input value={joinCode} onChange={(e) => setJoinCode(e.target.value.toUpperCase())} maxLength={6} placeholder="ROOM-ID" className="w-full bg-slate-50 dark:bg-black/40 border-2 border-slate-200 dark:border-white/10 rounded-2xl px-6 py-4 font-mono font-black text-center tracking-[0.5em] text-2xl text-slate-900 dark:text-white focus:border-amber-500 outline-none transition-all uppercase" />
                   <button type="submit" disabled={joinCode.length < 6 || loading} className="w-full bg-amber-500 text-slate-950 py-5 rounded-2xl font-black text-sm md:text-base tracking-[0.2em] hover:brightness-110 transition-all active:scale-95 disabled:opacity-30 uppercase italic shadow-lg shadow-amber-500/20">ENTER WARZONE</button>

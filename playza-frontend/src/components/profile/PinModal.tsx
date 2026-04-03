@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { MdCheckCircle, MdClose, MdLock } from "react-icons/md";
+import { useSecurity } from "@/hooks/profile/useSecurity";
 
 type PinModalProps = {
   mode: "change" | "create";
@@ -7,13 +8,15 @@ type PinModalProps = {
 };
 
 export const PinModal = ({ mode, onClose }: PinModalProps) => {
+  const { createPin, changePin, isCreatingPin, isChangingPin } = useSecurity();
   const [oldPin, setOldPin] = useState("");
   const [newPin, setNewPin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const backdropRef = useRef<HTMLDivElement>(null);
+
+  const loading = isCreatingPin || isChangingPin;
 
   // close on Escape key
   useEffect(() => {
@@ -51,12 +54,29 @@ export const PinModal = ({ mode, onClose }: PinModalProps) => {
       return;
     }
 
-    setLoading(true);
-    // Simulate API call
-    await new Promise((r) => setTimeout(r, 1200));
-    setLoading(false);
-    setSuccess(true);
-    setTimeout(onClose, 1800);
+    if (mode === "create") {
+      createPin(newPin, {
+        onSuccess: () => {
+          setSuccess(true);
+          setTimeout(onClose, 1800);
+        },
+        onError: (err: unknown) => {
+           const error = err as { response?: { data?: { message?: string } } };
+           setError(error.response?.data?.message || "Something went wrong");
+        }
+      });
+    } else {
+      changePin({ oldPin, newPin }, {
+        onSuccess: () => {
+          setSuccess(true);
+          setTimeout(onClose, 1800);
+        },
+        onError: (err: unknown) => {
+          const error = err as { response?: { data?: { message?: string } } };
+          setError(error.response?.data?.message || "Something went wrong");
+        }
+      });
+    }
   };
 
   const title =

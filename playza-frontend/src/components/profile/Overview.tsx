@@ -4,27 +4,19 @@ import {
   MdMilitaryTech, MdTrendingUp, MdVerified,
 } from "react-icons/md";
 import { ZASymbol } from "@/components/currency/ZASymbol";
-import { useMe } from "@/hooks/users/useMe";
-import { useQuery } from "@tanstack/react-query";
-import axiosInstance from "@/api/axiosInstance";
+import { useProfile, useGameHistory } from "@/hooks/profile/useProfile";
+import type { GameHistoryItem } from "@/api/profile.api";
 
 const Overview = () => {
-  const { data: user } = useMe();
-
-  const { data: historyData } = useQuery({
-    queryKey: ["game-history"],
-    queryFn: async () => {
-      const { data } = await axiosInstance.get("/profile/history?limit=3");
-      return data.data;
-    },
-  });
+  const { data: profile } = useProfile();
+  const { data: historyData } = useGameHistory(1, 3);
 
   const recentMatches = historyData?.history ?? [];
   const totalGames = historyData?.total ?? 0;
-  const wins = recentMatches.filter((m: any) => m.status === "completed" && m.winnings > 0).length;
+  const wins = recentMatches.filter((m: GameHistoryItem) => m.status === "completed" && m.winnings > 0).length;
   const winRate = totalGames > 0 ? Math.round((wins / totalGames) * 100) : 0;
-  const highestScore = recentMatches.reduce((max: number, m: any) => Math.max(max, m.score || 0), 0);
-  const pzaPoints = user?.pza_points ?? 0;
+  const highestScore = recentMatches.reduce((max: number, m: GameHistoryItem) => Math.max(max, m.score || 0), 0);
+  const pzaPoints = profile?.pza_points ?? 0;
 
   const rankInfo = (() => {
     if (pzaPoints >= 100000) return { label: "PLATINUM", next: null, pct: 100 };
@@ -65,7 +57,7 @@ const Overview = () => {
             <div className="space-y-1">
               <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Wallet Balance</p>
               <p className="text-xs md:text-base text-slate-900 dark:text-white font-black flex items-center gap-1">
-                <ZASymbol className="text-xs" />{(user?.wallet?.balance ?? 0).toLocaleString()}
+                <ZASymbol className="text-xs" />{(profile?.wallet?.balance ?? 0).toLocaleString()}
               </p>
             </div>
             <div className="size-10 rounded-xl bg-green-500/10 flex items-center justify-center text-green-500 text-xl"><MdHistory /></div>
@@ -83,7 +75,7 @@ const Overview = () => {
                 No game history yet. Play your first game!
               </div>
             ) : (
-              recentMatches.map((match: any, i: number) => (
+              recentMatches.map((match: GameHistoryItem, i: number) => (
                 <div key={i} className="glass-card p-2 md:p-4 rounded-xl flex items-center justify-between group hover:border-slate-300 dark:hover:border-white/10 transition-all shadow-md">
                   <div className="flex items-center gap-2 md:gap-4">
                     <div className={`size-10 rounded-xl flex items-center justify-center text-xl ${match.winnings > 0 ? "bg-green-500/10" : "bg-red-500/10"}`}>
@@ -149,11 +141,11 @@ const Overview = () => {
           </div>
           <div className="grid grid-cols-3 gap-2 md:gap-3">
             {[
-              { icon: <MdVerified className="text-primary" />, title: user?.is_email_verified ? "Verified" : "Unverified" },
+              { icon: <MdVerified className="text-primary" />, title: profile?.is_email_verified ? "Verified" : "Unverified" },
               { icon: <MdMilitaryTech className="text-amber-500" />, title: rankInfo.label },
               { icon: <MdFavorite className="text-red-400" />, title: "Player" },
             ].map((item, i) => (
-              <div key={i} className="size-12 bg-primary/10 rounded-xl flex items-center justify-center border border-primary/20 hover:scale-110 transition-all cursor-help relative shadow-lg" title={item.title}>
+              <div key={i} className="size-12 bg-linear-to-br from-primary/10 to-transparent rounded-xl flex items-center justify-center border border-primary/20 hover:scale-110 transition-all cursor-help relative shadow-lg" title={item.title}>
                 <span className="text-2xl">{item.icon}</span>
               </div>
             ))}
