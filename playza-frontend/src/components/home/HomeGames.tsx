@@ -67,7 +67,7 @@ const HomeGames = ({ games, title }: { games: Game[]; title: string }) => {
         <div className="flex gap-2 md:gap-3 items-center">
           <Link 
             to="/games" 
-            className="px-2 md:px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all duration-300 border border-black/10 dark:border-white/10 bg-slate-100/50 dark:bg-white/5 text-slate-600 dark:text-white/80 hover:border-primary/50 hover:bg-primary hover:text-white hover:-translate-y-0.5"
+            className="px-2 md:px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider border border-black/10 dark:border-white/10 bg-slate-100/50 dark:bg-white/5 text-slate-600 dark:text-white/80"
           >
             View All
           </Link>
@@ -75,7 +75,7 @@ const HomeGames = ({ games, title }: { games: Game[]; title: string }) => {
             <button
               onClick={() => scroll("left")}
               disabled={!canScrollLeft}
-              className="flex items-center justify-center p-2 rounded-xl transition-all duration-300 border border-black/10 dark:border-white/10 bg-slate-100/50 dark:bg-white/5 text-slate-600 dark:text-white/70 hover:border-primary/50 hover:bg-primary/10 hover:text-primary disabled:opacity-20 disabled:cursor-not-allowed disabled:border-black/5 dark:disabled:border-white/5 hover:-translate-y-0.5"
+              className="flex items-center justify-center p-2 rounded-xl border border-black/10 dark:border-white/10 bg-slate-100/50 dark:bg-white/5 text-slate-600 dark:text-white/70 disabled:opacity-20 disabled:cursor-not-allowed"
               aria-label="Scroll Left"
             >
               <ChevronLeft size={20} />
@@ -83,7 +83,7 @@ const HomeGames = ({ games, title }: { games: Game[]; title: string }) => {
             <button
               onClick={() => scroll("right")}
               disabled={!canScrollRight}
-              className="flex items-center justify-center p-2 rounded-xl transition-all duration-300 border border-black/10 dark:border-white/10 bg-slate-100/50 dark:bg-white/5 text-slate-600 dark:text-white/70 hover:border-primary/50 hover:bg-primary/10 hover:text-primary disabled:opacity-20 disabled:cursor-not-allowed disabled:border-black/5 dark:disabled:border-white/5 hover:-translate-y-0.5"
+              className="flex items-center justify-center p-2 rounded-xl border border-black/10 dark:border-white/10 bg-slate-100/50 dark:bg-white/5 text-slate-600 dark:text-white/70 disabled:opacity-20 disabled:cursor-not-allowed"
               aria-label="Scroll Right"
             >
               <ChevronRight size={20} />

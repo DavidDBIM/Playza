@@ -1,7 +1,6 @@
 import {
   Table,
   TableBody,
-  // TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -77,12 +76,12 @@ const LeaderBoard = () => {
                   className={
                     isMe
                       ? "bg-primary/10 border-l-4 border-l-primary"
-                      : "hover:bg-accent-dark/20 transition-colors"
+                      : "hover:bg-accent-dark/20"
                   }
                 >
                   <TableCell className="px-2 sm:px-6 py-2 md:py-4">
                     <div
-                      className={`flex items-center justify-center w-6 h-6 rounded font-bold text-xs ${
+                      className={`flex items-center justify-center w-6 h-6 rounded font-bold text-[10px] ${
                         isGold
                           ? "bg-yellow-500/20 text-yellow-500"
                           : isSilver
@@ -98,13 +97,13 @@ const LeaderBoard = () => {
 
                   <TableCell className="px-2 sm:px-6 py-2 md:py-4 flex items-center gap-2 md:gap-3">
                     <div className="h-8 w-8 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
-                      <img src={avatar} alt={username} />
+                      <img src={avatar} alt={username} loading="lazy" />
                     </div>
                     <span
                       className={
                         isMe
-                          ? "font-bold "
-                          : "font-medium text-sm"
+                          ? "font-bold text-[10px] md:text-sm"
+                          : "font-medium text-[10px] md:text-sm"
                       }
                     >
                       {username}
@@ -112,14 +111,14 @@ const LeaderBoard = () => {
                   </TableCell>
 
                   <TableCell
-                    className={`px-2 sm:px-6 py-4 font-bold ${
+                    className={`px-2 sm:px-6 py-4 font-bold text-[10px] md:text-sm ${
                       isGold || isMe ? "text-primary" : ""
                     }`}
                   >
                     {points.toLocaleString()}
                   </TableCell>
 
-                  <TableCell className="px-2 sm:px-6 py-2 md:py-4 text-right text-sm">
+                  <TableCell className="px-2 sm:px-6 py-2 md:py-4 text-right text-[10px] md:text-sm">
                     {formatZA(Number(prizeWon) * 100)}
                   </TableCell>
                 </TableRow>

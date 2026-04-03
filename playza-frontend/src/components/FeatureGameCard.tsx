@@ -16,7 +16,7 @@ const FeatureGameCard = ({
   slug
 }: Props) => {
   return (
-    <div className="relative w-full h-44 md:h-52 group overflow-hidden rounded-2xl border border-white/5 bg-slate-950 shadow-2xl transition-all hover:border-primary/20">
+    <div className="relative w-full h-60 md:h-72 group overflow-hidden rounded-2xl border border-white/5 bg-slate-950 shadow-2xl transition-all hover:border-primary/20">
       {/* Background Graphic Layer */}
       <div className="absolute inset-0 bg-linear-to-br from-primary/20 to-secondary/10 opacity-30" />
       <div className="absolute inset-0 bg-linear-to-r from-slate-950 via-slate-950/80 to-transparent z-10" />

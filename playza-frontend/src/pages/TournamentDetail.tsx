@@ -59,21 +59,21 @@ const TournamentDetail = () => {
   const isActive = tournament.status === "live";
 
   return (
-    <div className="flex flex-col flex-1 pb-2 md:pb-20 w-full animate-in fade-in duration-500 overflow-x-hidden">
+    <div className="flex flex-col flex-1 pb-2 md:pb-20 w-full overflow-x-hidden">
       <div className="w-full flex-col mt-4">
         <Link
           to="/tournaments"
-          className="inline-flex items-center gap-2 text-slate-500 hover:text-white font-black uppercase text-xs tracking-widest mb-6 px-4 md:px-0 transition-colors"
+          className="inline-flex items-center gap-2 text-slate-500 md:hover:text-white font-black uppercase text-xs tracking-widest mb-6 px-4 md:px-0"
         >
           <ArrowLeft size={16} /> Back to Hub
         </Link>
 
         {/* Hero Header */}
-        <section className="relative rounded-2xl overflow-hidden glass-card border border-white/5 mx-2 md:mx-0 shadow-2xl bg-black group select-none">
+        <section className="relative rounded-xl overflow-hidden glass-card border border-white/5 mx-2 md:mx-0 bg-black select-none">
           <div className="absolute inset-0 z-0">
             <div className="absolute inset-0 bg-linear-to-b from-black/20 via-slate-900/80 to-slate-950 z-10" />
             <div
-              className="absolute inset-0 w-full h-full bg-cover bg-center opacity-40 mix-blend-overlay group-hover:scale-105 transition-transform duration-[10s]"
+              className="absolute inset-0 w-full h-full bg-cover bg-center opacity-40"
               style={{ backgroundImage: `url(${game.thumbnail})` }}
             />
           </div>
@@ -83,7 +83,7 @@ const TournamentDetail = () => {
               <div className="inline-flex items-center gap-2 mb-4">
                 {isActive ? (
                   <span className="bg-red-500/20 text-red-500 border border-red-500/30 px-2 md:px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />{" "}
+                    <span className="w-2 h-2 rounded-full bg-red-500" />{" "}
                     LIVE NOW
                   </span>
                 ) : tournament.status === "upcoming" ? (
@@ -97,7 +97,7 @@ const TournamentDetail = () => {
                 )}
               </div>
 
-              <h1 className="text-3xl md:text-5xl font-black font-headline text-white uppercase tracking-tighter drop-shadow-lg mb-2">
+              <h1 className="text-3xl md:text-5xl font-black font-headline text-white uppercase tracking-tighter mb-2">
                 {tournament.name}
               </h1>
 
@@ -111,7 +111,7 @@ const TournamentDetail = () => {
                     ? `${hoursRemaining}h remaining`
                     : "Ended"}
                 </div>
-                <div className="flex items-center gap-2 bg-black/40 px-2 md:px-4 py-2 rounded-lg border border-white/10 text-xs font-black uppercase tracking-widest text-slate-300 shadow-[0_0_10px_rgba(234,179,8,0.2)]">
+                <div className="flex items-center gap-2 bg-black/40 px-2 md:px-4 py-2 rounded-lg border border-white/10 text-xs font-black uppercase tracking-widest text-slate-300">
                   <Trophy className="text-yellow-500" size={16} />{" "}
                   <ZASymbol className="text-yellow-500 scale-90" />{" "}
                   {tournament.prizePool.toLocaleString()}
@@ -121,7 +121,7 @@ const TournamentDetail = () => {
 
             <div className="w-full md:w-auto shrink-0 flex flex-col md:items-end">
               <button
-                className="w-full bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-widest px-2 md:px-10 py-2 md:py-4 rounded-xl shadow-[0_0_20px_rgba(168,85,247,0.4)] disabled:opacity-50 transition-all text-xs"
+                className="w-full bg-primary md:hover:bg-primary/90 text-white font-black uppercase tracking-widest px-2 md:px-10 py-2 md:py-4 rounded-xl disabled:opacity-50 text-xs"
                 disabled={!isActive}
               >
                 {isActive
@@ -147,7 +147,7 @@ const TournamentDetail = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                className={`pb-4 px-2 text-xs md:text-sm font-black uppercase tracking-widest whitespace-nowrap transition-colors relative ${activeTab === tab.id ? "text-primary border-b-2 border-primary" : "text-slate-500 hover:text-white"}`}
+                className={`pb-4 px-2 text-xs md:text-sm font-black uppercase tracking-widest whitespace-nowrap relative ${activeTab === tab.id ? "text-primary border-b-2 border-primary" : "text-slate-500 md:hover:text-white"}`}
               >
                 {tab.label}
               </button>
@@ -158,9 +158,9 @@ const TournamentDetail = () => {
         {/* Dynamic Tab Content */}
         <div className="py-2 md:py-8 px-2 md:px-0 min-h-100">
           {activeTab === "overview" && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-6 animate-in fade-in w-full">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-6 w-full">
               <div className="col-span-1 md:col-span-2 space-y-6">
-                <div className="glass-card rounded-2xl p-6 md:p-8 border border-white/5">
+                <div className="glass-card rounded-xl p-6 md:p-8 border border-white/5">
                   <h3 className="font-headline font-black text-lg md:text-2xl uppercase mb-4 text-white">
                     About the {game.title} Series
                   </h3>
@@ -203,7 +203,7 @@ const TournamentDetail = () => {
               </div>
 
               <div className="space-y-6">
-                <div className="glass-card rounded-2xl p-2 md:p-6 border border-white/5 bg-slate-900/50 relative overflow-hidden">
+                <div className="glass-card rounded-xl p-2 md:p-6 border border-white/5 bg-slate-900/50 relative overflow-hidden">
                   <div className="absolute inset-0 bg-primary/5 mix-blend-color-burn" />
                   <h3 className="font-headline font-black text-base md:text-xl uppercase mb-6 text-white text-center flex justify-center items-center gap-2">
                     <Trophy className="text-yellow-500" /> Prize Distribution
@@ -211,14 +211,14 @@ const TournamentDetail = () => {
                   <div className="space-y-3">
                     <div className="flex items-center justify-between p-2 md:p-3 rounded-xl bg-white/5 border border-white/10">
                       <div className="flex items-center gap-2 md:gap-3">
-                        <span className="text-yellow-500 font-black italic text-sm md:text-lg drop-shadow-sm">
+                        <span className="text-yellow-500 font-black italic text-sm md:text-lg">
                           1st
                         </span>
                         <span className="text-xs font-black uppercase tracking-widest text-slate-400">
                           Champion
                         </span>
                       </div>
-                      <div className="flex items-center gap-1.5 transition-all">
+                      <div className="flex items-center gap-1.5">
                         <ZASymbol className="text-sm scale-90" />
                         <span className="font-black text-transparent bg-clip-text bg-linear-to-r from-yellow-400 via-amber-200 to-yellow-600 uppercase">
                           {(tournament.prizePool * 0.5).toLocaleString()}
@@ -227,14 +227,14 @@ const TournamentDetail = () => {
                     </div>
                     <div className="flex items-center justify-between p-2 md:p-3 rounded-xl bg-white/5 border border-white/10">
                       <div className="flex items-center gap-2 md:gap-3">
-                        <span className="text-slate-300 font-black italic text-sm md:text-lg drop-shadow-sm">
+                        <span className="text-slate-300 font-black italic text-sm md:text-lg">
                           2nd
                         </span>
                         <span className="text-xs font-black uppercase tracking-widest text-slate-400">
                           Runner-Up
                         </span>
                       </div>
-                      <div className="flex items-center gap-1.5 transition-all">
+                      <div className="flex items-center gap-1.5">
                         <ZASymbol className="text-sm scale-90" />
                         <span className="font-black text-slate-200 uppercase">
                           {(tournament.prizePool * 0.25).toLocaleString()}
@@ -243,14 +243,14 @@ const TournamentDetail = () => {
                     </div>
                     <div className="flex items-center justify-between p-2 md:p-3 rounded-xl bg-white/5 border border-white/10">
                       <div className="flex items-center gap-2 md:gap-3">
-                        <span className="text-orange-500 font-black italic text-sm md:text-lg drop-shadow-sm">
+                        <span className="text-orange-500 font-black italic text-sm md:text-lg">
                           3rd
                         </span>
                         <span className="text-xs font-black uppercase tracking-widest text-slate-400">
                           Finalist
                         </span>
                       </div>
-                      <div className="flex items-center gap-1.5 transition-all">
+                      <div className="flex items-center gap-1.5">
                         <ZASymbol className="text-sm scale-90" />
                         <span className="font-black text-orange-400 uppercase">
                           {(tournament.prizePool * 0.1).toLocaleString()}
@@ -269,7 +269,7 @@ const TournamentDetail = () => {
           )}
 
           {activeTab === "stages" && (
-            <div className="animate-in fade-in space-y-8 w-full">
+            <div className="space-y-8 w-full">
               <div className="flex flex-col md:flex-row items-center gap-2 md:gap-4 relative py-2 md:py-6">
                 {/* Decorative connecting line */}
                 <div className="hidden md:block absolute top-[50%] left-0 w-full h-1 bg-white/5 -z-10 rounded-full" />
@@ -280,7 +280,7 @@ const TournamentDetail = () => {
                   return (
                     <div
                       key={stage.id}
-                      className={`flex-1 w-full glass-card p-6 rounded-2xl border transition-all ${isActiveStage ? "border-primary/50 shadow-[0_0_30px_rgba(168,85,247,0.15)] bg-slate-900" : "border-white/5 opacity-70 bg-black/40"}`}
+                      className={`flex-1 w-full glass-card p-6 rounded-xl border ${isActiveStage ? "border-primary/50 bg-slate-900" : "border-white/5 opacity-70 bg-black/40"}`}
                     >
                       <div className="flex justify-between items-start mb-4">
                         <div
@@ -330,16 +330,16 @@ const TournamentDetail = () => {
           )}
 
           {activeTab === "leaderboard" && (
-            <div className="animate-in fade-in w-full glass-card rounded-2xl border border-white/5 p-2 md:p-6 h-125 overflow-hidden">
+            <div className="w-full glass-card rounded-xl border border-white/5 p-2 md:p-6 h-125 overflow-hidden">
               <SessionLeaderboard />
             </div>
           )}
 
           {activeTab === "progress" && (
-            <div className="animate-in fade-in grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-6 w-full">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-6 w-full">
               {myParticipant ? (
                 <>
-                  <div className="glass-card rounded-2xl p-2 md:p-8 border border-white/5 relative overflow-hidden bg-slate-900 border-x-primary/30">
+                  <div className="glass-card rounded-xl p-2 md:p-8 border border-white/5 relative overflow-hidden bg-slate-900 border-x-primary/30">
                     <div className="absolute inset-0 bg-linear-to-b from-primary/5 to-transparent pointer-events-none" />
 
                     <h3 className="text-xs uppercase font-black text-slate-400 tracking-widest mb-6">
@@ -351,7 +351,7 @@ const TournamentDetail = () => {
                         <img
                           src={`https://i.pravatar.cc/150?img=11`}
                           alt="avatar"
-                          className="w-16 h-16 rounded-full border-2 border-primary shadow-[0_0_15px_rgba(168,85,247,0.5)]"
+                          className="w-16 h-16 rounded-full border-2 border-primary"
                         />
                         <div>
                           <h2 className="text-lg md:text-2xl font-black font-headline text-white uppercase tracking-tighter">
@@ -395,7 +395,7 @@ const TournamentDetail = () => {
                     </div>
                   </div>
 
-                  <div className="glass-card rounded-2xl p-2 md:p-8 border border-white/5">
+                  <div className="glass-card rounded-xl p-2 md:p-8 border border-white/5">
                     <h3 className="text-xs uppercase font-black text-slate-400 tracking-widest mb-6 flex items-center gap-2">
                       <Medal size={14} className="text-primary" /> Qualification
                       Path
@@ -419,8 +419,8 @@ const TournamentDetail = () => {
                       <div className="ml-4 w-0.5 h-6 bg-white/10" />
 
                       <div className="flex gap-2 md:gap-4">
-                        <div className="w-8 h-8 rounded-full bg-primary/20 text-primary border border-primary/30 flex items-center justify-center shrink-0 shadow-[0_0_10px_rgba(168,85,247,0.3)]">
-                          <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                        <div className="w-8 h-8 rounded-full bg-primary/20 text-primary border border-primary/30 flex items-center justify-center shrink-0">
+                          <span className="w-2 h-2 rounded-full bg-primary" />
                         </div>
                         <div className="flex-1">
                           <h4 className="font-bold text-white uppercase text-sm tracking-widest">
@@ -454,7 +454,7 @@ const TournamentDetail = () => {
                   </div>
                 </>
               ) : (
-                <div className="col-span-full py-2 md:py-20 flex flex-col items-center justify-center text-center glass-card rounded-2xl border border-white/5">
+                <div className="col-span-full py-2 md:py-20 flex flex-col items-center justify-center text-center glass-card rounded-xl border border-white/5">
                   <h3 className="font-headline font-black text-lg md:text-2xl text-slate-900 dark:text-white uppercase mb-2">
                     Not participating
                   </h3>
@@ -467,11 +467,11 @@ const TournamentDetail = () => {
           )}
 
           {activeTab === "sessions" && (
-            <div className="animate-in fade-in space-y-4 w-full">
-              <div className="glass-card rounded-2xl p-2 md:p-6 border border-white/5 flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-4 bg-slate-900/50">
+            <div className="space-y-4 w-full">
+              <div className="glass-card rounded-xl p-2 md:p-6 border border-white/5 flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-4 bg-slate-900/50">
                 <div>
                   <h4 className="font-headline font-black text-base md:text-xl text-white uppercase tracking-widest mb-1 flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />{" "}
+                    <span className="w-2 h-2 rounded-full bg-green-500" />{" "}
                     Official Server #081
                   </h4>
                   <p className="text-xs font-bold uppercase text-slate-400 tracking-widest">
@@ -480,13 +480,13 @@ const TournamentDetail = () => {
                 </div>
                 <Link
                   to={`/games/${game.slug}/session`}
-                  className="bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-widest text-xs px-2 md:px-6 py-2 md:py-3 rounded-lg flex items-center gap-2 shadow-lg w-full md:w-auto text-center shrink-0"
+                  className="bg-primary md:hover:bg-primary/90 text-white font-black uppercase tracking-widest text-xs px-2 md:px-6 py-2 md:py-3 rounded-lg flex items-center gap-2 w-full md:w-auto text-center shrink-0"
                 >
                   Join Session <ExternalLink size={14} />
                 </Link>
               </div>
 
-              <div className="glass-card rounded-2xl p-2 md:p-6 border border-white/5 flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-4 bg-black/40 opacity-70">
+              <div className="glass-card rounded-xl p-2 md:p-6 border border-white/5 flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-4 bg-black/40 opacity-70">
                 <div>
                   <h4 className="font-headline font-black text-base md:text-xl text-white uppercase tracking-widest mb-1 flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-red-500" />{" "}

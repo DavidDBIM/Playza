@@ -16,10 +16,8 @@ export const SessionCard = ({ session, gameTitle, onJoin }: SessionCardProps) =>
 
   return (
     <div className="group relative">
-      {/* Glow Effect on Hover */}
-      <div className="absolute inset-0 bg-playza-blue/10 blur-3xl rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
-      <div className="relative bg-white dark:bg-[#0a0f1e]/80 backdrop-blur-3xl rounded-2xl p-4 md:p-5 border border-slate-200 dark:border-white/5 space-y-3 md:space-y-4 shadow-2xl overflow-hidden group-hover:border-primary/30 transition-colors">
+      <div className="relative bg-white dark:bg-[#0a0f1e]/80 rounded-xl p-4 md:p-5 border border-slate-200 dark:border-white/5 space-y-3 md:space-y-4 overflow-hidden">
         {/* Header: Title & Badge */}
         <div className="flex justify-between items-start">
           <div className="space-y-1 md:space-y-2">
@@ -111,10 +109,10 @@ export const SessionCard = ({ session, gameTitle, onJoin }: SessionCardProps) =>
                 {session.playersJoined}
               </span>
             </div>
-            <div className="h-1.5 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden shadow-inner">
+            <div className="h-1.5 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
               <div
                 style={{ width: `${progress}%` }}
-                className="h-full bg-playza-blue rounded-full shadow-[0_0_8px_rgba(59,130,246,0.5)]"
+                className="h-full bg-playza-blue rounded-full"
               />
             </div>
           </div>
@@ -124,9 +122,9 @@ export const SessionCard = ({ session, gameTitle, onJoin }: SessionCardProps) =>
         <button
           onClick={() => onJoin(session)}
           disabled={!isLive && !isStartingSoon}
-          className={`w-full py-2.5 md:py-3 rounded-xl font-black text-[10px] md:text-xs uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 active:scale-95 ${
+          className={`w-full py-2.5 md:py-3 rounded-xl font-black text-[10px] md:text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-2 ${
             isLive || isStartingSoon
-              ? "bg-primary text-white hover:brightness-110 shadow-lg glow-accent"
+              ? "bg-primary text-white"
               : "bg-slate-100 dark:bg-white/5 text-slate-500 cursor-not-allowed border border-slate-200 dark:border-white/5"
           }`}
         >

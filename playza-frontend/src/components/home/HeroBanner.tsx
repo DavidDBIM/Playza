@@ -132,7 +132,7 @@ const HeroBanner = () => {
       <div 
         ref={scrollRef}
         onScroll={handleScroll}
-        className="flex overflow-x-auto scrollbar-hide snap-x snap-mandatory h-44 md:h-52 rounded-2xl border border-white/5 bg-slate-950 shadow-2xl"
+        className="flex overflow-x-auto scrollbar-hide snap-x snap-mandatory h-52 md:h-64 rounded-2xl border border-white/5 bg-slate-950"
       >
         {slides.map((slide) => (
           <div 
@@ -149,9 +149,11 @@ const HeroBanner = () => {
             {/* Slide Image - Shaped */}
             {slide.image && (
               <div className="absolute right-4 md:right-12 top-1/2 -translate-y-1/2 w-32 md:w-48 h-28 md:h-36 z-0">
-                <div 
-                  className="w-full h-full bg-cover bg-center rounded-3xl rotate-6 border border-white/10 shadow-2xl skew-x-3 scale-110 opacity-40 md:opacity-100"
-                  style={{ backgroundImage: `url(${slide.image})` }}
+                <img 
+                  src={slide.image}
+                  alt={slide.title}
+                  loading="lazy"
+                  className="w-full h-full object-cover rounded-3xl rotate-6 border border-white/10 opacity-40 md:opacity-100"
                 />
               </div>
             )}
@@ -159,20 +161,20 @@ const HeroBanner = () => {
             {/* Content Layer */}
             <div className="relative z-20 px-6 md:px-12 flex flex-col items-start gap-1 md:gap-2">
               <div className="flex items-center gap-2 mb-1">
-                <div className={`px-2 py-0.5 ${slide.accent} rounded-md text-[8px] md:text-[9px] font-black text-white uppercase tracking-widest`}>
+                <div className={`px-2 py-0.5 ${slide.accent} rounded-md text-[9px] font-black text-white uppercase tracking-widest`}>
                   {slide.tag}
                 </div>
                 <div className="h-px w-8 bg-white/20" />
               </div>
               
               <div className="space-y-0.5 md:space-y-1">
-                <h2 className="text-sm md:text-lg font-black text-white uppercase tracking-tighter leading-tight italic">
+                <h2 className="text-[10px] md:text-sm lg:text-lg font-black text-white uppercase tracking-tighter leading-tight italic">
                   {slide.title}
                 </h2>
-                <p className="text-xs md:text-sm font-bold text-slate-300 uppercase tracking-wide leading-none">
+                <p className="text-[10px] md:text-xs lg:text-sm font-bold text-slate-300 uppercase tracking-wide leading-none">
                   {slide.subtitle}
                 </p>
-                <p className="text-[9px] md:text-xs text-slate-500 font-bold max-w-xs md:max-w-sm leading-tight">
+                <p className="text-[9px] md:text-[10px] lg:text-xs text-slate-500 font-bold max-w-xs md:max-w-sm leading-tight">
                   {slide.desc}
                 </p>
               </div>
@@ -180,7 +182,7 @@ const HeroBanner = () => {
               <div className="mt-2 flex items-center gap-4">
                 <Link
                   to={slide.link}
-                  className={`flex items-center gap-2 px-4 md:px-6 py-2 ${slide.accent} text-white font-black text-[10px] md:text-xs uppercase tracking-widest rounded-lg transition-all hover:scale-105 active:scale-95 shadow-lg shadow-black/20`}
+                  className={`flex items-center gap-2 px-4 md:px-6 py-2 ${slide.accent} text-white font-black text-[10px] md:text-xs uppercase tracking-widest rounded-lg`}
                 >
                   {slide.icon}
                   {slide.btn}

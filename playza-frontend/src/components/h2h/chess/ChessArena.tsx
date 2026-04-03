@@ -16,6 +16,8 @@ import {
   Zap,
   AlertTriangle,
   ShieldAlert,
+  Maximize,
+  Minimize,
 } from "lucide-react";
 import H2HGamePrep from "../H2HGamePrep";
 import { makeChessMove, resignChessGame } from "@/api/chess.api";
@@ -110,6 +112,7 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
   const [legalMoveSquares, setLegalMoveSquares] = useState<string[]>([]);
   const [inCheck, setInCheck] = useState(false);
   const [checkmateDeclared, setCheckmateDeclared] = useState(false);
+  const [showWinnerDelayed, setShowWinnerDelayed] = useState(false);
 
   // Track the last move we already applied so we don't re-apply it
   const lastAppliedMoveRef = useRef<string | null>(null);
@@ -118,6 +121,18 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [phase, setPhase] = useState<"prep" | "playing">("prep");
+
+  const toggleFullscreen = useCallback(() => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch((err) => {
+        console.error(`Error attempting to enable fullscreen: ${err.message}`);
+      });
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+    }
+  }, []);
 
   // ── Prevent Accidental Leave ────────────────────────────────────────────────
   useEffect(() => {
@@ -132,7 +147,7 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
 
   // ── Auto-scroll battle log ──────────────────────────────────────────────────
   useEffect(() => {
-    logEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    logEndRef.current?.scrollIntoView({ behavior: "auto" });
   }, [game]);
 
   // ── Fullscreen Support ──────────────────────────────────────────────────────
@@ -145,19 +160,25 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
 
-  // Auto-fullscreen when game starts
+  // ── Delay Winner Screen ───────────────────────────────────────────────────
   useEffect(() => {
-    if (phase === "playing" && !isFullscreen && !document.fullscreenElement) {
-      try {
-        const docEl = document.documentElement;
-        if (docEl.requestFullscreen) {
-          docEl.requestFullscreen().catch(() => {});
-        }
-      } catch (err) {
-        console.warn("Fullscreen request failed", err);
-      }
+    if (game.isGameOver() && room.status === "finished" && !showWinnerDelayed) {
+      const timer = setTimeout(() => {
+        setShowWinnerDelayed(true);
+      }, 5000); // 5 second delay to see the final board
+      return () => clearTimeout(timer);
     }
-  }, [phase, isFullscreen]);
+  }, [game, room.status, showWinnerDelayed]);
+
+  // Prevent body scrolling when winner modal is open
+  useEffect(() => {
+    if (showWinnerDelayed) {
+      document.body.classList.add("overflow-hidden");
+    } else {
+      document.body.classList.remove("overflow-hidden");
+    }
+    return () => document.body.classList.remove("overflow-hidden");
+  }, [showWinnerDelayed]);
 
   // ── Detect check / checkmate from local game state ──────────────────────────
   useEffect(() => {
@@ -465,13 +486,7 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
         <img
           src={`https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/${piece}.svg`}
           alt={piece}
-          style={{
-            width: "100%",
-            height: "100%",
-            filter: "drop-shadow(0 6px 8px rgba(0,0,0,0.5))",
-            cursor: "grab",
-            pointerEvents: "none",
-          }}
+          className="w-full h-full drop-shadow-[0_6px_8px_rgba(0,0,0,0.5)] cursor-grab pointer-events-none"
         />
       );
     });
@@ -480,20 +495,31 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
 
   // ── Render
   return (
-    <div className="flex flex-col gap-1.5 w-full max-w-170 mx-auto p-1.5 box-border md:max-w-275 md:grid md:grid-cols-[1fr_320px] md:grid-rows-[auto_auto_1fr] md:gap-3 md:p-3 lg:gap-4 lg:p-4">
+    <div className="flex flex-col gap-2 w-full max-w-full mx-auto p-2 box-border md:grid md:grid-cols-[1fr_380px] md:grid-rows-[auto_auto_1fr] md:gap-4 md:p-4 lg:p-6 min-h-screen bg-slate-50 dark:bg-slate-950">
       {/* ── Header Bar ── */}
-      <div className="flex items-center justify-between gap-1.5 bg-slate-200/50 dark:bg-white/5 border border-slate-300 dark:border-white/[0.07] rounded-2xl px-3 py-2 backdrop-blur-xl md:col-span-2 md:px-4 md:py-2.5">
+      <div className="flex items-center justify-between gap-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 md:col-span-2 md:px-5 md:py-3 shadow-sm">
+        {/* Fullscreen Toggle (NEW) */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={toggleFullscreen}
+            className="p-2 rounded-lg bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 transition-colors text-slate-600 dark:text-slate-400"
+            title="Toggle Fullscreen"
+          >
+            {isFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
+          </button>
+        </div>
         {/* Host chip */}
         <div className="flex items-center gap-2 relative flex-1 min-w-0">
           <div
-            className={`shrink-0 w-8.5 h-8.5 rounded-xl flex items-center justify-center font-black text-sm text-white border-2 bg-linear-to-br from-slate-500 to-slate-800 md:w-10.5 md:h-10.5 md:text-base lg:w-11.5 lg:h-11.5 lg:text-lg overflow-hidden
-            ${(hostIsWhite && myTurn) || (!hostIsWhite && oppTurn) ? "border-indigo-400" : "border-white/10"}`}
+            className={`shrink-0 w-8.5 h-8.5 rounded-xl flex items-center justify-center font-black text-[10px] md:text-sm text-white border-2 bg-slate-700 md:w-10.5 md:h-10.5 lg:w-11.5 lg:h-11.5 overflow-hidden
+            ${(hostIsWhite && myTurn) || (!hostIsWhite && oppTurn) ? "border-indigo-500" : "border-black/10 dark:border-white/10"}`}
           >
             {room.host?.avatar_url ? (
               <img
                 src={room.host.avatar_url}
                 className="w-full h-full object-cover rounded-md"
                 alt=""
+                loading="lazy"
               />
             ) : (
               room.host?.username?.[0]?.toUpperCase()
@@ -501,27 +527,27 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
           </div>
           <div className="flex flex-col min-w-0 overflow-hidden">
             <span
-              className={`font-black text-[13px] truncate uppercase tracking-wide leading-tight md:text-[15px] ${(hostIsWhite && myTurn) || (!hostIsWhite && oppTurn) ? "text-indigo-600 dark:text-indigo-400" : "text-slate-900 dark:text-slate-100"}`}
+              className={`font-black text-[10px] md:text-xs truncate uppercase tracking-wide leading-tight md:text-[15px] ${(hostIsWhite && myTurn) || (!hostIsWhite && oppTurn) ? "text-indigo-600 dark:text-indigo-500" : "text-slate-900 dark:text-slate-100"}`}
             >
               {room.host?.username || "Host"}
             </span>
-            <span className="text-[9px] text-slate-500 dark:text-slate-500 font-bold uppercase tracking-widest leading-none">
+            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-none">
               {room.host_id === user?.id ? "YOU" : "RIVAL"} · ⬜
             </span>
           </div>
           {((hostIsWhite && myTurn) || (!hostIsWhite && oppTurn)) && (
-            <span className="absolute top-0 right-0 w-2 h-2 rounded-full bg-indigo-400 animate-pulse" />
+            <span className="absolute top-0 right-0 w-2 h-2 rounded-full bg-indigo-500" />
           )}
         </div>
 
         {/* Centre VS */}
         <div className="flex flex-col items-center gap-1 shrink-0">
-          <div className="flex items-center gap-1 bg-indigo-500/15 border border-indigo-500/30 rounded-lg px-2 py-0.5 text-indigo-400 font-black text-[11px] tracking-widest uppercase">
+          <div className="flex items-center gap-1 bg-indigo-500/10 border border-indigo-500/20 rounded-lg px-2 py-0.5 text-indigo-500 font-black text-[10px] tracking-widest uppercase">
             <Zap size={10} />
             <span>VS</span>
             <Zap size={10} />
           </div>
-          <div className="flex items-center gap-0.5 bg-amber-500/10 border border-amber-500/20 rounded-md px-1.5 py-0.5 text-amber-400 font-black text-[9px]">
+          <div className="flex items-center gap-0.5 bg-amber-500/10 border border-amber-500/20 rounded-md px-1.5 py-0.5 text-amber-500 font-black text-[10px]">
             <Trophy size={9} />
             <span>{room.stake * 2}</span>
             <ZASymbol className="w-2.5 h-2.5" />
@@ -529,27 +555,28 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
         </div>
 
         {/* Guest chip */}
-        <div className="flex items-center justify-end gap-2 relative flex-1 min-w-0">
+        <div className="flex items-center justify-end gap-2 relative flex-1 min-w-0 text-right">
           <div className="flex flex-col items-end min-w-0 overflow-hidden">
             <span
-              className={`font-black text-[13px] truncate uppercase tracking-wide leading-tight md:text-[15px] ${(!hostIsWhite && myTurn) || (hostIsWhite && oppTurn) ? "text-indigo-600 dark:text-indigo-400" : "text-slate-900 dark:text-slate-100"}`}
+              className={`font-black text-[10px] md:text-xs truncate uppercase tracking-wide leading-tight md:text-[15px] ${(!hostIsWhite && myTurn) || (hostIsWhite && oppTurn) ? "text-indigo-600 dark:text-indigo-500" : "text-slate-900 dark:text-slate-100"}`}
             >
               {room.guest?.username ||
                 (room.guest_id ? "Waiting..." : "COMPUTER")}
             </span>
-            <span className="text-[9px] text-slate-500 dark:text-slate-500 font-bold uppercase tracking-widest leading-none">
+            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-none">
               ⬛ · {room.guest_id === user?.id ? "YOU" : "RIVAL"}
             </span>
           </div>
           <div
-            className={`shrink-0 w-8.5 h-8.5 rounded-xl flex items-center justify-center font-black text-sm text-white border-2 bg-linear-to-br from-slate-900 to-slate-800 md:w-10.5 md:h-10.5 md:text-base lg:w-11.5 lg:h-11.5 lg:text-lg overflow-hidden
-            ${(!hostIsWhite && myTurn) || (hostIsWhite && oppTurn) ? "border-indigo-400" : "border-white/10"}`}
+            className={`shrink-0 w-8.5 h-8.5 rounded-lg flex items-center justify-center font-black text-[10px] md:text-sm text-white border bg-slate-900 md:w-10.5 md:h-10.5 lg:w-11.5 lg:h-11.5 overflow-hidden
+            ${(!hostIsWhite && myTurn) || (hostIsWhite && oppTurn) ? "border-indigo-500" : "border-slate-200 dark:border-white/10"}`}
           >
             {room.guest?.avatar_url ? (
               <img
                 src={room.guest.avatar_url}
-                className="w-full h-full object-cover rounded-md"
+                className="w-full h-full object-cover"
                 alt=""
+                loading="lazy"
               />
             ) : (
               room.guest?.username?.[0]?.toUpperCase() ||
@@ -557,7 +584,7 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
             )}
           </div>
           {((!hostIsWhite && myTurn) || (hostIsWhite && oppTurn)) && (
-            <span className="absolute top-0 left-0 w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+            <span className="absolute top-0 left-0 w-2 h-2 rounded-full bg-amber-500" />
           )}
         </div>
       </div>
@@ -565,28 +592,28 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
       {/* ── Turn / Check Banner ── */}
       {inCheck ? (
         myTurn ? (
-          <div className="flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl text-[11px] font-extrabold tracking-widest uppercase bg-red-500/20 border border-red-500/50 text-red-600 dark:text-red-300 animate-pulse md:col-start-1 md:text-xs">
+          <div className="flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl text-[10px] font-extrabold tracking-widest uppercase bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 md:col-start-1 md:text-xs">
             <ShieldAlert size={14} className="shrink-0" />
             <span>⚠️ YOU ARE IN CHECK — Protect your king!</span>
           </div>
         ) : (
-          <div className="flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl text-[11px] font-extrabold tracking-widest uppercase bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-300 md:col-start-1 md:text-xs text-center leading-none">
+          <div className="flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl text-[10px] font-extrabold tracking-widest uppercase bg-amber-500/5 border border-amber-500/20 text-amber-600 dark:text-amber-400 md:col-start-1 md:text-xs text-center leading-none">
             <AlertTriangle size={14} className="shrink-0" />
             <span>🎯 {oppUsername || "Rival"} IS IN CHECK — FINISH THEM!</span>
           </div>
         )
       ) : game.isCheckmate() ? (
-        <div className="flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl text-[11px] font-extrabold tracking-widest uppercase bg-amber-500/20 border border-amber-500/50 text-amber-600 dark:text-amber-300 md:col-start-1 md:text-xs">
+        <div className="flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl text-[10px] font-extrabold tracking-widest uppercase bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 md:col-start-1 md:text-xs">
           <Trophy size={14} className="shrink-0" />
           <span>CHECKMATE — Game Over</span>
         </div>
       ) : (
         <div
-          className={`flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-xl text-[11px] font-extrabold tracking-widest uppercase md:col-start-1 md:text-xs
+          className={`flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-xl text-[10px] font-extrabold tracking-widest uppercase md:col-start-1 md:text-xs
           ${
             myTurn
-              ? "bg-indigo-500/15 border border-indigo-500/30 text-indigo-600 dark:text-indigo-300 animate-pulse"
-              : "bg-slate-100 dark:bg-white/3 border border-slate-200 dark:border-white/6 text-slate-400 dark:text-slate-500"
+              ? "bg-indigo-500/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400"
+              : "bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 text-slate-500"
           }`}
         >
           {myTurn ? (
@@ -611,8 +638,8 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
 
       {/* ── Chess Board ── */}
       <div
-        className={`relative w-full aspect-square rounded-2xl overflow-hidden bg-slate-100 dark:bg-white/5 border md:col-start-1 md:row-start-3
-        ${inCheck && myTurn ? "border-red-500/60" : "border-slate-200 dark:border-indigo-500/20"}`}
+        className={`relative w-full max-w-[75vh] mx-auto aspect-square rounded-xl overflow-hidden bg-white dark:bg-slate-900 border-4 shadow-2xl md:col-start-1 md:row-start-3
+        ${inCheck && myTurn ? "border-red-500/60" : "border-slate-800 dark:border-slate-700"}`}
       >
         <div className="absolute inset-0 pointer-events-none z-0 bg-[radial-gradient(ellipse_at_center,rgba(99,102,241,0.12),transparent_70%)]" />
 
@@ -642,8 +669,6 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
               lightSquareStyle: { backgroundColor: "#ebecd0" },
               boardStyle: {
                 borderRadius: "4px",
-                boxShadow:
-                  "0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 10px rgba(0,0,0,0.5)",
                 border: "6px solid #2d2013",
               },
             }}
@@ -651,23 +676,25 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
         </div>
       </div>
 
-      {game.isGameOver() && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-500 scrollbar-hide">
-          <H2HWinner
-            room={room}
-            user={user}
-            localWinnerId={
-              game.isDraw() ||
-              game.isStalemate() ||
-              game.isThreefoldRepetition() ||
-              game.isInsufficientMaterial()
-                ? null
-                : game.turn() === "w"
-                  ? room.guest_id
-                  : room.host_id
-            }
-            isSyncing={room.status !== "finished"}
-          />
+      {showWinnerDelayed && (
+        <div className="fixed inset-0 z-200 overflow-y-auto bg-slate-950/90 flex items-center justify-center p-4">
+          <div className="w-full max-w-2xl bg-white dark:bg-slate-900 rounded-xl overflow-hidden shadow-2xl border border-white/10">
+            <H2HWinner
+              room={room}
+              user={user}
+              localWinnerId={
+                game.isDraw() ||
+                game.isStalemate() ||
+                game.isThreefoldRepetition() ||
+                game.isInsufficientMaterial()
+                  ? null
+                  : game.turn() === "w"
+                    ? room.guest_id
+                    : room.host_id
+              }
+              isSyncing={room.status !== "finished"}
+            />
+          </div>
         </div>
       )}
 
@@ -684,60 +711,60 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
       <div className="flex flex-col gap-2 md:col-start-2 md:row-start-2 md:row-end-4 md:h-full">
         {/* Stats grid */}
         <div className="grid grid-cols-4 gap-1 md:gap-1.5">
-          <div className="flex flex-col items-center gap-0.5 rounded-xl px-2 py-1.5 border bg-white dark:bg-white/5 border-slate-200 dark:border-white/6 backdrop-blur-md">
-            <span className="text-[7px] font-black text-slate-400 dark:text-slate-100/40 uppercase tracking-[0.12em]">
-              ENTRY FEE
+          <div className="flex flex-col items-center gap-0.5 rounded-xl px-2 py-1.5 border bg-white dark:bg-black/20 border-black/5 dark:border-white/5">
+            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">
+              ENTRY
             </span>
-            <span className="text-xs font-black text-slate-900 dark:text-slate-100 flex items-center gap-0.5">
+            <span className="text-[10px] md:text-xs font-black text-slate-900 dark:text-slate-100 flex items-center gap-0.5">
               {room.stake} <ZASymbol className="w-2.25 h-2.25" />
             </span>
           </div>
-          <div className="flex flex-col items-center gap-0.5 rounded-xl px-2 py-1.5 border bg-amber-500 dark:bg-amber-500/5 border-amber-500/25 backdrop-blur-md">
-            <span className="text-[7px] font-black text-white dark:text-amber-100/30 uppercase tracking-[0.12em]">
-              PRIZE POOL
+          <div className="flex flex-col items-center gap-0.5 rounded-xl px-2 py-1.5 border bg-amber-500 text-slate-950">
+            <span className="text-[10px] font-black uppercase tracking-widest leading-none">
+              PRIZE
             </span>
-            <span className="text-xs font-black text-white dark:text-amber-400 flex items-center gap-1 leading-none">
+            <span className="text-[10px] md:text-xs font-black flex items-center gap-1 leading-none">
               {room.stake * 2} <ZASymbol className="w-2.25 h-2.25" />
             </span>
           </div>
-          <div className="flex flex-col items-center gap-0.5 rounded-xl px-2 py-1.5 border bg-white dark:bg-white/5 border-slate-200 dark:border-white/6 backdrop-blur-md">
-            <span className="text-[7px] font-black text-slate-400 dark:text-slate-100/40 uppercase tracking-[0.12em]">
-              MY MOVES
+          <div className="flex flex-col items-center gap-0.5 rounded-xl px-2 py-1.5 border bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/5">
+            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">
+              MINE
             </span>
-            <span className="text-xs font-black text-indigo-600 dark:text-indigo-300 flex items-center gap-0.5">
+            <span className="text-[10px] md:text-xs font-black text-indigo-600 dark:text-indigo-400 flex items-center gap-0.5">
               {myMoveCount}
             </span>
           </div>
-          <div className="flex flex-col items-center gap-0.5 rounded-xl px-2 py-1.5 border bg-white dark:bg-white/5 border-slate-200 dark:border-white/6 backdrop-blur-md">
-            <span className="text-[7px] font-black text-slate-400 dark:text-slate-100/40 uppercase tracking-[0.12em]">
-              OPP MOVES
+          <div className="flex flex-col items-center gap-0.5 rounded-xl px-2 py-1.5 border bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/5">
+            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">
+              OPP
             </span>
-            <span className="text-xs font-black text-slate-700 dark:text-slate-300 flex items-center gap-0.5">
+            <span className="text-[10px] md:text-xs font-black text-slate-700 dark:text-slate-300 flex items-center gap-0.5">
               {oppMoveCount}
             </span>
           </div>
         </div>
 
         {/* Battle Log */}
-        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/6 rounded-xl overflow-hidden backdrop-blur-md flex flex-col flex-1 min-h-0">
-          <div className="flex items-center justify-between gap-1.5 px-3 py-1.5 border-b border-slate-100 dark:border-white/5 shrink-0">
-            <div className="flex items-center gap-1.5 text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.12em]">
+        <div className="bg-white dark:bg-black/20 border border-black/5 dark:border-white/5 rounded-xl overflow-hidden flex flex-col flex-1 min-h-0">
+          <div className="flex items-center justify-between gap-1.5 px-3 py-1.5 border-b border-black/5 dark:border-white/5 shrink-0">
+            <div className="flex items-center gap-1.5 text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">
               <Swords
                 size={12}
                 className="text-indigo-600 dark:text-indigo-400"
               />
-              <span>Log</span>
+              <span>LOG</span>
             </div>
 
             {/* Last Move Display (as requested) */}
             {history.length > 0 && (
-              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-[9px] font-black text-indigo-600 dark:text-indigo-300">
+              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-[10px] font-black text-indigo-600 dark:text-indigo-400">
                 <span className="opacity-50">LAST:</span>
                 <span className="tracking-widest uppercase">
                   {history[history.length - 1]?.san}
                 </span>
                 {inCheck && (
-                  <span className="ml-1 text-red-500 animate-pulse">CHECK</span>
+                  <span className="ml-1 text-red-500">CHECK</span>
                 )}
               </div>
             )}
@@ -745,11 +772,11 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
 
           {/* Captured Pieces */}
           {(whiteCaptured.length > 0 || blackCaptured.length > 0) && (
-            <div className="flex flex-col gap-0.5 px-2 py-0.5 bg-slate-50/50 dark:bg-black/20 border-b border-slate-100 dark:border-white/5 text-[10px] opacity-80 backdrop-blur-sm shrink-0">
+            <div className="flex flex-col gap-0.5 px-2 py-1 bg-black/5 dark:bg-black/20 border-b border-black/5 dark:border-white/5 text-[10px] opacity-80 shrink-0">
               <div className="flex flex-col gap-0.5">
                 {whiteCaptured.length > 0 && (
                   <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-                    <span className="text-[7px] font-black uppercase text-slate-400 tracking-widest leading-none shrink-0 w-7">
+                    <span className="text-[8px] font-black uppercase text-slate-500 tracking-widest leading-none shrink-0 w-8">
                       W CP
                     </span>
                     <div className="flex gap-0.5 text-[11px]">
@@ -762,11 +789,11 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
                   </div>
                 )}
                 {blackCaptured.length > 0 && (
-                  <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar border-t border-slate-100 dark:border-white/5 pt-0.5">
-                    <span className="text-[7px] font-black uppercase text-slate-400 tracking-widest leading-none shrink-0 w-7">
+                  <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar border-t border-black/5 dark:border-white/5 pt-0.5">
+                    <span className="text-[8px] font-black uppercase text-slate-500 tracking-widest leading-none shrink-0 w-8">
                       B CP
                     </span>
-                    <div className="flex gap-0.5 text-slate-600 dark:text-slate-300 text-[11px]">
+                    <div className="flex gap-0.5 text-slate-700 dark:text-slate-300 text-[11px]">
                       {blackCaptured.map((p, i) => (
                         <span key={i} title={PIECE_NAME[p.toUpperCase()]}>
                           {PIECE_ICON[p]}
@@ -781,8 +808,7 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
 
           {/* Log body */}
           <div
-            className="p-1 overflow-y-auto flex-1 scrollbar-none"
-            style={{ maxHeight: "160px" }}
+            className="p-1 overflow-y-auto flex-1 scrollbar-none max-h-[160px]"
           >
             {movePairs.length === 0 ? (
               <p className="text-[10px] text-slate-500 font-bold text-center py-4 italic uppercase tracking-widest">
@@ -799,22 +825,22 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
                     <div
                       key={index}
                       className={`flex items-stretch gap-1 rounded-lg overflow-hidden text-[10px]
-                        ${latest ? "bg-indigo-500/8 border border-indigo-500/15" : "bg-slate-50 dark:bg-white/1"}`}
+                        ${latest ? "bg-indigo-500/10 border border-indigo-500/20" : "bg-black/5 dark:bg-white/5"}`}
                     >
                       {/* Move number */}
-                      <span className="w-10 flex flex-col items-center justify-center text-[8px] text-slate-400 dark:text-slate-700 font-black shrink-0 bg-slate-100 dark:bg-white/2 border-r border-slate-200 dark:border-white/4 py-1">
-                        <span className="opacity-40 uppercase">Mv</span>
+                      <span className="w-10 flex flex-col items-center justify-center text-[10px] text-slate-500 font-black shrink-0 bg-black/5 dark:bg-white/5 border-r border-black/5 dark:border-white/5 py-1">
+                        <span className="opacity-40 uppercase">MV</span>
                         {index + 1}
                       </span>
 
                       <div
-                        className={`flex-1 flex items-center gap-1 px-1.5 py-1 border-r border-slate-200 dark:border-white/4
-                        ${latest && !black ? "text-indigo-600 dark:text-indigo-300" : "text-slate-900 dark:text-slate-300"}`}
+                        className={`flex-1 flex items-center gap-1 px-1.5 py-1 border-r border-black/5 dark:border-white/5
+                        ${latest && !black ? "text-indigo-600 dark:text-indigo-400" : "text-slate-900 dark:text-slate-300"}`}
                       >
                         {wp && (
                           <>
                             <span
-                              className="text-[11px] shrink-0"
+                              className="text-[10px] md:text-[11px] shrink-0"
                               title={`Piece: ${wp.pieceChar}`}
                             >
                               {PIECE_ICON[wp.pieceChar] ?? "♙"}
@@ -823,7 +849,7 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
                               <span className="font-black uppercase tracking-wide truncate">
                                 {white?.san}
                               </span>
-                              <span className="text-[7px] text-slate-400 dark:text-slate-500 font-bold uppercase leading-none">
+                              <span className="text-[10px] text-slate-500 font-bold uppercase leading-none">
                                 {PIECE_NAME[wp.pieceChar] || "PAWN"}
                               </span>
                             </div>
@@ -843,7 +869,7 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
                               )}
                               {wp.isCheckmate && (
                                 <span
-                                  className="text-red-400 text-[8px] font-black"
+                                  className="text-red-500 text-[8px] font-black"
                                   title="Checkmate"
                                 >
                                   #
@@ -851,7 +877,7 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
                               )}
                               {wp.isCastle && (
                                 <span
-                                  className="text-cyan-400 text-[8px]"
+                                  className="text-cyan-500 text-[8px]"
                                   title="Castle"
                                 >
                                   🏰
@@ -859,7 +885,7 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
                               )}
                               {wp.isPromotion && (
                                 <span
-                                  className="text-purple-400 text-[8px]"
+                                  className="text-purple-500 text-[8px]"
                                   title="Promotion"
                                 >
                                   ⬆
@@ -872,13 +898,13 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
 
                       {/* Black move */}
                       <div
-                        className={`flex-1 flex items-center  gap-1 px-1.5 py-1
-                        ${latest && black ? "text-indigo-600 dark:text-indigo-300" : "text-slate-600 dark:text-slate-500"}`}
+                        className={`flex-1 flex items-center gap-1 px-1.5 py-1
+                        ${latest && black ? "text-indigo-600 dark:text-indigo-400" : "text-slate-600 dark:text-slate-500"}`}
                       >
                         {bp ? (
                           <>
                             <span
-                              className="text-[11px] shrink-0 opacity-80"
+                              className="text-[10px] md:text-[11px] shrink-0 opacity-80"
                               title={`Piece: ${bp.pieceChar}`}
                             >
                               {PIECE_ICON[bp.pieceChar.toLowerCase()] ?? "♟"}
@@ -887,19 +913,19 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
                               <span className="font-black uppercase tracking-wide truncate">
                                 {black?.san}
                               </span>
-                              <span className="text-[7px] text-slate-400 dark:text-slate-500 font-bold uppercase leading-none">
+                              <span className="text-[10px] text-slate-500 font-bold uppercase leading-none">
                                 {PIECE_NAME[bp.pieceChar] || "PAWN"}
                               </span>
                             </div>
                             <span className="flex items-center gap-0.5 ml-auto shrink-0">
                               {bp.isCapture && (
-                                <span className="text-red-400" title="Capture">
+                                <span className="text-red-500" title="Capture">
                                   ✕
                                 </span>
                               )}
                               {bp.isCheck && !bp.isCheckmate && (
                                 <span
-                                  className="text-amber-400 text-[8px] font-black"
+                                  className="text-amber-500 text-[8px] font-black"
                                   title="Check"
                                 >
                                   +
@@ -907,7 +933,7 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
                               )}
                               {bp.isCheckmate && (
                                 <span
-                                  className="text-red-400 text-[8px] font-black"
+                                  className="text-red-500 text-[8px] font-black"
                                   title="Checkmate"
                                 >
                                   #
@@ -915,7 +941,7 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
                               )}
                               {bp.isCastle && (
                                 <span
-                                  className="text-cyan-400 text-[8px]"
+                                  className="text-cyan-500 text-[8px]"
                                   title="Castle"
                                 >
                                   🏰
@@ -923,7 +949,7 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
                               )}
                               {bp.isPromotion && (
                                 <span
-                                  className="text-purple-400 text-[8px]"
+                                  className="text-purple-500 text-[8px]"
                                   title="Promotion"
                                 >
                                   ⬆
@@ -932,7 +958,7 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
                             </span>
                           </>
                         ) : (
-                          <span className="text-slate-700 italic text-[9px]">
+                          <span className="text-slate-500 italic text-[10px]">
                             …
                           </span>
                         )}
@@ -946,13 +972,32 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
           </div>
         </div>
 
+        {/* Move Info / Game Over Reason Bar (NEW) */}
+        <div className="bg-slate-50/5 dark:bg-white/5 border border-slate-300/20 dark:border-white/10 rounded-xl p-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1">
+              <span className="text-[8px] font-black text-slate-500 uppercase tracking-[0.2em]">Room Status</span>
+              <div className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-slate-100 text-[10px]">
+                <div className={`w-1.5 h-1.5 rounded-full ${room.status === 'active' ? 'bg-indigo-500 animate-pulse' : 'bg-slate-500'}`} />
+                <span className="tracking-widest">{room.status?.toUpperCase() || 'UNKNOWN'}</span>
+              </div>
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="text-[8px] font-black text-slate-500 uppercase tracking-[0.2em]">Game Info</span>
+              <div className="flex items-center gap-1 font-bold text-slate-900 dark:text-slate-100 text-[10px]">
+                <Trophy size={10} className="text-amber-500" />
+                <span className="tracking-widest">STAKE: {room.stake * 2} ZA</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Resign */}
         <button
           id="resign-btn"
           onClick={handleResign}
           disabled={isResigning || room.status !== "active"}
-          className="w-full py-1.5 rounded-xl border border-red-500/10 bg-transparent text-red-500/60 text-[9px] font-black tracking-[0.15em] uppercase cursor-pointer transition-all duration-200
-            hover:enabled:bg-red-500/5 hover:enabled:border-red-500/30 disabled:opacity-30 disabled:cursor-not-allowed"
+          className="w-full py-4 rounded-xl border-2 border-red-500/20 bg-transparent text-red-500 text-[10px] font-black tracking-widest uppercase cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed hover:bg-red-500/5 active:translate-y-1 transition-all"
         >
           {isResigning ? "Resigning…" : "⚑ Resign"}
         </button>

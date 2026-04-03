@@ -30,15 +30,15 @@ const SessionLeaderboard = () => {
     
     return (
       <div
-        className={`relative group transition-all duration-300 ${
+        className={`relative ${
           isTop3 
-            ? "mb-3 md:mb-4 p-2.5 md:p-4 rounded-xl md:rounded-2xl bg-white/5 dark:bg-linear-to-br dark:from-white/10 dark:to-transparent border border-slate-200 dark:border-white/20 shadow-xl overflow-hidden" 
-            : "mb-1.5 md:mb-2 p-2 md:p-3 rounded-lg md:rounded-xl bg-slate-900/5 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-primary/30 shadow-sm"
-        } ${isMe ? "ring-2 ring-primary ring-offset-2 dark:ring-offset-slate-900 border-primary shadow-[0_0_20px_rgba(244,192,37,0.2)]" : ""} 
-          ${isMatch ? "bg-primary/10 dark:bg-primary/20 border-primary ring-1 ring-primary/40 -translate-x-1" : ""}`}
+            ? "mb-3 md:mb-4 p-2.5 md:p-4 rounded-xl bg-white/5 dark:bg-slate-900/40 border border-slate-200 dark:border-white/20 overflow-hidden" 
+            : "mb-1.5 md:mb-2 p-2 md:p-3 rounded-xl bg-slate-900/5 dark:bg-white/5 border border-slate-200 dark:border-white/10"
+        } ${isMe ? "ring-2 ring-primary ring-offset-2 dark:ring-offset-slate-900 border-primary" : ""} 
+          ${isMatch ? "bg-primary/10 dark:bg-primary/20 border-primary ring-1 ring-primary/40" : ""}`}
       >
         {isTop3 && (
-          <div className="absolute top-0 right-0 p-2 md:p-8 opacity-5 group-hover:opacity-10 transition-opacity">
+          <div className="absolute top-0 right-0 p-2 md:p-8 opacity-5">
             {item.rank === 1 && <Trophy size={80} className="text-slate-900 dark:text-white" />}
             {item.rank === 2 && <Medal size={80} className="text-slate-900 dark:text-white" />}
             {item.rank === 3 && <Star size={80} className="text-slate-900 dark:text-white" />}
@@ -48,7 +48,7 @@ const SessionLeaderboard = () => {
         <div className="flex items-center justify-between relative z-10">
           <div className="flex items-center gap-2 md:gap-4">
             <div className={`w-10 h-10 flex items-center justify-center rounded-full font-black text-sm ${
-              item.rank === 1 ? "bg-yellow-400 text-slate-900 shadow-[0_0_15px_rgba(250,204,21,0.5)]" :
+              item.rank === 1 ? "bg-yellow-400 text-slate-900" :
               item.rank === 2 ? "bg-slate-300 text-slate-900" :
               item.rank === 3 ? "bg-orange-400 text-slate-900" :
               "bg-slate-200 dark:bg-white/10 text-slate-500 dark:text-slate-400"
@@ -106,7 +106,7 @@ const SessionLeaderboard = () => {
   };
 
   return (
-    <div className="p-1 md:p-6 space-y-3 md:space-y-6">
+    <div className="p-2 md:p-6 space-y-3 md:space-y-6">
       <div className="relative">
         <Search
           placeholder="Search global rankings..."
@@ -191,11 +191,10 @@ const SessionLeaderboard = () => {
 
       <div className="pt-2 md:pt-6 mt-8 border-t border-slate-200 dark:border-white/5">
         {!query && (
-          <div className="mb-8 p-2 md:p-6 rounded-xl bg-primary/5 dark:bg-primary/10 border border-primary/20 text-center relative overflow-hidden group">
-            <div className="absolute inset-0 bg-primary/5 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 skew-x-12" />
+          <div className="mb-8 p-2 md:p-6 rounded-xl bg-primary/5 dark:bg-primary/10 border border-primary/20 text-center relative overflow-hidden">
             <h4 className="text-slate-900 dark:text-white font-black uppercase tracking-tight mb-1">Want to see your name here?</h4>
             <p className="text-slate-500 dark:text-slate-400 text-xs mb-4">You are only 1,240 pts away from breaking into the Prize Zone!</p>
-            <button className="bg-primary text-black text-[10px] font-black uppercase tracking-widest px-2 md:px-6 py-2 md:py-3 rounded-xl shadow-lg hover:scale-105 hover:shadow-primary/20 active:scale-95 transition-all">
+            <button className="bg-primary text-black text-[10px] font-black uppercase tracking-widest px-2 md:px-6 py-2 md:py-3 rounded-xl">
               Launch Match Arena
             </button>
           </div>

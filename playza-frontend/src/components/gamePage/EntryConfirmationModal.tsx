@@ -26,20 +26,20 @@ export const EntryConfirmationModal = ({ session, onClose, onConfirm, userBalanc
 
         {/* Modal Content */}
         <div
-          className="relative w-full max-w-md bg-white dark:bg-playza-dark/60 border border-slate-200 dark:border-white/10 rounded-xl p-2 md:p-8 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] dark:shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] backdrop-blur-3xl overflow-hidden"
+          className="relative w-full max-w-md bg-white dark:bg-playza-dark border border-slate-200 dark:border-white/10 rounded-xl p-2 md:p-8 backdrop-blur-3xl overflow-hidden"
         >
           {/* Decorative Background Element */}
           <div className="absolute top-0 right-0 w-32 h-32 bg-playza-blue/10 blur-[60px] rounded-full -translate-y-1/2 translate-x-1/2" />
           
           <button 
             onClick={onClose}
-            className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors bg-slate-100 dark:bg-white/5 rounded-full hover:bg-slate-200 dark:hover:bg-white/10"
+            className="absolute top-6 right-6 p-2 text-slate-400 bg-slate-100 dark:bg-white/5 rounded-full"
           >
             <X className="w-5 h-5" />
           </button>
 
           <div className="text-center space-y-8 relative">
-            <div className="inline-flex p-2 md:p-5 bg-primary/20 rounded-xl shadow-lg shadow-primary/10">
+            <div className="inline-flex p-2 md:p-5 bg-primary/20 rounded-xl">
               <Wallet className="w-10 h-10 text-primary" />
             </div>
             
@@ -50,7 +50,7 @@ export const EntryConfirmationModal = ({ session, onClose, onConfirm, userBalanc
               </p>
             </div>
 
-            <div className="bg-slate-50 dark:bg-white/5 rounded-xl p-2 md:p-8 border border-slate-100 dark:border-white/5 space-y-5 shadow-inner">
+            <div className="bg-slate-50 dark:bg-white/5 rounded-xl p-2 md:p-8 border border-slate-100 dark:border-white/5 space-y-5">
               <div className="flex justify-between items-center px-2">
                 <span className="text-slate-500 font-black uppercase tracking-widest text-[10px]">Entry Fee</span>
                 <div className="flex items-center gap-1.5">
@@ -68,7 +68,7 @@ export const EntryConfirmationModal = ({ session, onClose, onConfirm, userBalanc
               </div>
               <div className="pt-2 px-2 flex justify-between items-center border-t border-slate-200 dark:border-white/10">
                 <span className="text-primary font-black uppercase tracking-widest text-[10px]">Remaining</span>
-                <div className="flex items-center gap-1.5 transition-all">
+                <div className="flex items-center gap-1.5 ">
                   <ZASymbol className={`text-sm scale-90 ${canAfford ? '' : 'opacity-50'}`} />
                   <span className={`text-2xl font-black ${canAfford ? 'text-slate-900 dark:text-white' : 'text-red-500'} italic`}>
                     {remainingBalance.toLocaleString()}
@@ -88,9 +88,9 @@ export const EntryConfirmationModal = ({ session, onClose, onConfirm, userBalanc
               <button 
                 onClick={onConfirm}
                 disabled={!canAfford}
-                className={`w-full py-5 rounded-3xl font-black text-white uppercase tracking-widest transition-all shadow-xl ${
+                className={`w-full py-5 rounded-xl font-black text-white uppercase tracking-widest ${
                   canAfford 
-                    ? 'bg-primary hover:brightness-110 shadow-primary/20 glow-accent' 
+                    ? 'bg-primary' 
                     : 'bg-red-500/50 cursor-not-allowed text-white/50'
                 }`}
               >
@@ -98,7 +98,7 @@ export const EntryConfirmationModal = ({ session, onClose, onConfirm, userBalanc
               </button>
               <button 
                 onClick={onClose}
-                className="w-full py-2 md:py-5 bg-transparent hover:bg-slate-100 dark:hover:bg-white/5 text-slate-500 hover:text-slate-900 dark:hover:text-white font-black rounded-2xl transition-all uppercase tracking-widest text-xs"
+                className="w-full py-2 md:py-5 bg-transparent text-slate-500 font-black rounded-xl uppercase tracking-widest text-xs"
               >
                 Cancel
               </button>

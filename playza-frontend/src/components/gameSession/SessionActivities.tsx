@@ -15,7 +15,7 @@ const FEED_DATA = [
 
 const SessionActivities = () => {
   return (
-    <main className="flex-1 mx-auto w-full py-2 md:py-4 bg-transparent rounded-xl overflow-hidden min-h-150 flex flex-col relative transition-colors duration-300">
+    <main className="flex-1 mx-auto w-full py-2 md:py-4 bg-transparent rounded-xl overflow-hidden min-h-150 flex flex-col relative">
       {/* Visual Accents */}
       <div className="absolute top-0 right-0 p-2 opacity-5 pointer-events-none">
          <Users size={200} className="text-primary rotate-12" />
@@ -69,13 +69,12 @@ const SessionActivities = () => {
 
       {/* <!-- Live Feed List --> */}
       <div className="flex-1 overflow-y-auto p-2 md:p-4  space-y-2 md:space-y-4 custom-scrollbar relative z-10">
-        {FEED_DATA.map((item, idx) => (
+        {FEED_DATA.map((item) => (
           <div 
             key={item.id} 
-            className="flex items-center gap-3 md:gap-4 p-3 md:p-4 rounded-2xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/5 hover:border-primary/30 hover:bg-white/10 transition-all group relative animate-in fade-in slide-in-from-right duration-500 shadow-sm"
-            style={{ animationDelay: `${idx * 100}ms` }}
+            className="flex items-center gap-3 md:gap-4 p-3 md:p-4 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/5 group relative"
           >
-            <div className={`${item.bg} ${item.color} flex items-center justify-center rounded-xl shrink-0 size-12 border border-slate-100 dark:border-white/5 shadow-inner`}>
+            <div className={`${item.bg} ${item.color} flex items-center justify-center rounded-xl shrink-0 size-12 border border-slate-100 dark:border-white/5`}>
               {item.icon}
             </div>
             
@@ -100,20 +99,18 @@ const SessionActivities = () => {
               </div>
             </div>
 
-            {/* Event Line Connector */}
-            <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-1 h-8 rounded-full bg-primary/40 opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
         ))}
 
         {/* <!-- Dynamic Loading State --> */}
         <div className="pt-4 md:pt-6 flex flex-col items-center gap-3 md:gap-4">
-           <div className="flex items-center gap-2 md:gap-3 py-2 md:py-3 px-4 md:px-6 rounded-full border border-slate-200 dark:border-white/5 bg-white dark:bg-white/5 animate-pulse shadow-sm">
+           <div className="flex items-center gap-2 md:gap-3 py-2 md:py-3 px-4 md:px-6 rounded-full border border-slate-200 dark:border-white/5 bg-white dark:bg-white/5">
               <div className="size-2 rounded-full bg-primary" />
               <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.3em]">Monitoring Stream...</span>
            </div>
            
-           <button className="flex items-center gap-2 md:gap-3 px-2 md:px-8 py-2 md:py-3.5 rounded-2xl bg-white dark:bg-white/5 hover:bg-primary hover:text-slate-900 border border-slate-200 dark:border-white/10 hover:border-primary transition-all duration-300 text-xs font-black uppercase tracking-widest shadow-lg group text-slate-700 dark:text-white">
-             <ArrowUp className="size-4 group-hover:-translate-y-1 transition-transform" />
+           <button className="flex items-center gap-2 md:gap-3 px-2 md:px-8 py-2 md:py-3.5 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs font-black uppercase tracking-widest group text-slate-700 dark:text-white">
+             <ArrowUp className="size-4" />
              Show Older Activity
            </button>
         </div>

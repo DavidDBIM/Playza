@@ -24,6 +24,17 @@ const Game = () => {
   const game = games.find((g) => g.slug === slug);
 
   useEffect(() => {
+    if (selectedSession) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [selectedSession]);
+
+  useEffect(() => {
     if (slug === "chess-masters") navigate("/h2h", { replace: true });
     if (slug === "speed-battle") navigate("/speed-battle", { replace: true });
     if (slug === "word-scramble") navigate("/word-scramble", { replace: true });
@@ -54,6 +65,7 @@ const Game = () => {
     setSelectedSession(null);
   };
 
+
   const tabs = [
     { id: "sessions", label: "Sessions", icon: MdTimeline },
     { id: "about", label: "About", icon: MdInfo },
@@ -61,7 +73,7 @@ const Game = () => {
   ];
 
   return (
-    <main className="flex-1 space-y-6 pb-24 md:pb-10">
+    <main className="flex-1 space-y-4 p-2 md:p-6 pb-24 md:pb-10">
       <GameHero game={game} prizePool={prizePool} />
 
       <div className="flex border-b border-slate-200 dark:border-white/10">
@@ -69,10 +81,10 @@ const Game = () => {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as Tab)}
-            className={`flex items-center gap-2 px-4 py-3 text-sm font-bold transition-colors relative ${
+            className={`flex items-center gap-2 px-4 py-3 text-[10px] md:text-sm font-bold relative ${
               activeTab === tab.id
                 ? "text-primary"
-                : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                : "text-slate-500 md:hover:text-slate-900 md:dark:hover:text-white"
             }`}
           >
             <tab.icon size={16} />

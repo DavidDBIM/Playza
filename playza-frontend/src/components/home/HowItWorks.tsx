@@ -23,51 +23,48 @@ const HowItWorks = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
           {/* Step 1 */}
-          <div className="referral-card group p-5 md:p-8 flex flex-row md:flex-col items-center gap-5 md:gap-6 text-left md:text-center transition-all duration-300 hover:scale-[1.02]">
+          <div className="referral-card p-5 md:p-8 flex flex-row md:flex-col items-center gap-5 md:gap-6 text-left md:text-center border border-black/5 dark:border-white/5 rounded-2xl bg-white/50 dark:bg-slate-900/50">
             <div className="relative shrink-0">
-               <div className="absolute inset-0 bg-primary/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
-               <div className="relative w-14 h-14 md:w-20 md:h-20 bg-primary/10 rounded-2xl flex items-center justify-center border border-primary/20 group-hover:bg-primary transition-all duration-300">
-                <FaWallet className="text-xl md:text-4xl text-primary group-hover:text-white" />
+               <div className="relative w-14 h-14 md:w-20 md:h-20 bg-primary/10 rounded-2xl flex items-center justify-center border border-primary/20">
+                <FaWallet className="text-xl md:text-4xl text-primary" />
               </div>
               <div className="absolute -top-2 -right-2 w-7 h-7 step-badge backdrop-blur-md">01</div>
             </div>
             <div className="space-y-1 md:space-y-2">
-              <h4 className="text-lg md:text-xl font-bold  tracking-tight">Fund Wallet</h4>
-              <p className="text-xs md:text-sm text-slate-500 leading-relaxed">
+              <h4 className="text-sm md:text-lg font-bold tracking-tight uppercase">Fund Wallet</h4>
+              <p className="text-[10px] md:text-xs lg:text-sm text-slate-500 leading-relaxed">
                 Deposit securely via Bank Transfer, Card, or USSD.
               </p>
             </div>
           </div>
 
           {/* Step 2 */}
-          <div className="referral-card group p-5 md:p-8 flex flex-row md:flex-col items-center gap-5 md:gap-6 text-left md:text-center transition-all duration-300 hover:scale-[1.02]">
+          <div className="referral-card p-5 md:p-8 flex flex-row md:flex-col items-center gap-5 md:gap-6 text-left md:text-center border border-black/5 dark:border-white/5 rounded-2xl bg-white/50 dark:bg-slate-900/50">
             <div className="relative shrink-0">
-               <div className="absolute inset-0 bg-secondary/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
-               <div className="relative w-14 h-14 md:w-20 md:h-20 bg-secondary/10 rounded-2xl flex items-center justify-center border border-secondary/20 group-hover:bg-secondary transition-all duration-300">
-                <MdStadium className="text-xl md:text-4xl text-secondary group-hover:text-white" />
+               <div className="relative w-14 h-14 md:w-20 md:h-20 bg-secondary/10 rounded-2xl flex items-center justify-center border border-secondary/20">
+                <MdStadium className="text-xl md:text-4xl text-secondary" />
               </div>
               <div className="absolute -top-2 -right-2 w-7 h-7 step-badge backdrop-blur-md">02</div>
             </div>
             <div className="space-y-1 md:space-y-2">
-              <h4 className="text-lg md:text-xl font-bold  tracking-tight">Pick a Duel</h4>
-              <p className="text-xs md:text-sm text-slate-500 leading-relaxed">
+              <h4 className="text-sm md:text-lg font-bold tracking-tight uppercase">Pick a Duel</h4>
+              <p className="text-[10px] md:text-xs lg:text-sm text-slate-500 leading-relaxed">
                 Choose your favorite game and stake to match.
               </p>
             </div>
           </div>
 
           {/* Step 3 */}
-          <div className="referral-card group p-5 md:p-8 flex flex-row md:flex-col items-center gap-5 md:gap-6 text-left md:text-center transition-all duration-300 hover:scale-[1.02]">
+          <div className="referral-card p-5 md:p-8 flex flex-row md:flex-col items-center gap-5 md:gap-6 text-left md:text-center border border-black/5 dark:border-white/5 rounded-2xl bg-white/50 dark:bg-slate-900/50">
             <div className="relative shrink-0">
-               <div className="absolute inset-0 bg-primary/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
-               <div className="relative w-14 h-14 md:w-20 md:h-20 bg-primary/10 rounded-2xl flex items-center justify-center border border-primary/20 group-hover:bg-primary transition-all duration-300">
-                <FaTrophy className="text-xl md:text-4xl text-primary group-hover:text-white" />
+               <div className="relative w-14 h-14 md:w-20 md:h-20 bg-primary/10 rounded-2xl flex items-center justify-center border border-primary/20">
+                <FaTrophy className="text-xl md:text-4xl text-primary" />
               </div>
               <div className="absolute -top-2 -right-2 w-7 h-7 step-badge backdrop-blur-md">03</div>
             </div>
             <div className="space-y-1 md:space-y-2">
-              <h4 className="text-lg md:text-xl font-bold  tracking-tight">Win & Cashout</h4>
-              <p className="text-xs md:text-sm text-slate-500 leading-relaxed">
+              <h4 className="text-sm md:text-lg font-bold tracking-tight uppercase">Win & Cashout</h4>
+              <p className="text-[10px] md:text-xs lg:text-sm text-slate-500 leading-relaxed">
                 Top the leaderboard and withdraw instantly.
               </p>
             </div>

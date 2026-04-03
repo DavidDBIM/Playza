@@ -186,16 +186,13 @@ const H2HZone = () => {
   };
 
   return (
-    <div className="relative flex-1 min-w-0 overflow-x-hidden scrollbar-hide flex flex-col items-center">
+    <div className="relative flex-1 min-w-0 overflow-x-hidden scrollbar-hide flex flex-col items-center px-2">
       {/* Subtle Ambient Background - Optimized for Performance */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-0 left-0 w-full h-full bg-linear-to-br from-indigo-500/5 via-transparent to-purple-500/5 opacity-50"></div>
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-500/5 rounded-full blur-[80px]"></div>
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-500/5 rounded-full blur-[80px]"></div>
-        <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.02] mix-blend-overlay"></div>
+      <div className="fixed inset-0 pointer-events-none -z-10 bg-slate-50 dark:bg-slate-950">
+        <div className="absolute inset-0 bg-linear-to-br from-indigo-500/3 to-purple-500/3" />
       </div>
 
-      <main className="relative z-10 transition-all duration-500">
+      <main className="relative z-10 w-full">
         {!roomId ? (
           <H2HLobby
             onCreate={handleCreateRoom}
@@ -208,22 +205,19 @@ const H2HZone = () => {
             loading={loading}
           />
         ) : !room ? (
-          <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6 animate-in fade-in duration-500">
-            <div className="relative">
-              <div className="absolute inset-0 bg-indigo-500/20 blur-xl rounded-full animate-ping"></div>
-              <div className="relative animate-spin rounded-xl h-12 w-12 border-b-2 border-indigo-500" />
-            </div>
+          <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6">
+            <div className="w-10 h-10 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
             <div className="text-center">
-              <h3 className="text-xl font-black uppercase tracking-widest italic text-indigo-400">
+              <h3 className="text-[10px] md:text-sm lg:text-xl font-black uppercase tracking-widest italic text-indigo-500 dark:text-indigo-400">
                 Loading Warzone
               </h3>
-              <p className="text-slate-500 text-xs mt-1 uppercase font-bold tracking-widest">
+              <p className="text-slate-500 text-[10px] md:text-xs mt-1 uppercase font-bold tracking-widest">
                 Preparing your battle room...
               </p>
             </div>
           </div>
         ) : (
-          <div className="animate-in fade-in duration-500">
+          <div className="w-full">
             {(() => {
               switch (room.status) {
                 case "waiting":
