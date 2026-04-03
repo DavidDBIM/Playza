@@ -567,6 +567,7 @@ export const games: Game[] = [
     title: "Trivia Master",
     slug: "trivia-master",
     thumbnail: "/games/trivia-master.png",
+    iframeUrl: "/gameLib/HexGL/index.html",
     category: "Trivia",
     mode: "Tournament",
     entryFee: 1000,

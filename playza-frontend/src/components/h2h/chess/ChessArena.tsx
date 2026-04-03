@@ -12,10 +12,8 @@ import { Chessboard } from "react-chessboard";
 import {
   Trophy,
   Swords,
-  Crown,
   Zap,
   AlertTriangle,
-  ShieldAlert,
   Maximize,
   Minimize,
 } from "lucide-react";
@@ -26,6 +24,7 @@ import { ZASymbol } from "@/components/currency/ZASymbol";
 import type { ChessRoom } from "@/types/chess";
 import type { UserProfile } from "@/context/auth";
 import H2HWinner from "../H2HWinner";
+import ResignConfirmationModal from "./ResignConfirmationModal";
 
 interface ChessArenaProps {
   room: ChessRoom;
@@ -113,6 +112,8 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
   const [inCheck, setInCheck] = useState(false);
   const [checkmateDeclared, setCheckmateDeclared] = useState(false);
   const [showWinnerDelayed, setShowWinnerDelayed] = useState(false);
+  const [showResignModal, setShowResignModal] = useState(false);
+  const [resignationWinnerId, setResignationWinnerId] = useState<string | null>(null);
 
   // Track the last move we already applied so we don't re-apply it
   const lastAppliedMoveRef = useRef<string | null>(null);
@@ -162,10 +163,10 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
 
   // ── Delay Winner Screen ───────────────────────────────────────────────────
   useEffect(() => {
-    if (game.isGameOver() && room.status === "finished" && !showWinnerDelayed) {
+    if (game.isGameOver() && (room.status === "finished" || game.isGameOver()) && !showWinnerDelayed) {
       const timer = setTimeout(() => {
         setShowWinnerDelayed(true);
-      }, 5000); // 5 second delay to see the final board
+      }, 7000); // 7 second delay to see the final board
       return () => clearTimeout(timer);
     }
   }, [game, room.status, showWinnerDelayed]);
@@ -363,11 +364,20 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
 
   // ── Resign
   const handleResign = async () => {
-    if (!window.confirm("Are you sure you want to resign?")) return;
+    setShowResignModal(true);
+  };
+
+  const confirmResign = async () => {
     setIsResigning(true);
     try {
       await resignChessGame(room.id);
       toast.success("You resigned the game.");
+      const winnerId: string =
+        user && room.host_id === user.id
+          ? room.guest_id || "GUEST_WIN"
+          : room.host_id || "HOST_WIN";
+      setResignationWinnerId(winnerId);
+      setShowResignModal(false);
     } catch (err: unknown) {
       const error = err as { message?: string };
       toast.error(error.message || "Failed to resign");
@@ -495,7 +505,15 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
 
   // ── Render
   return (
-    <div className="flex flex-col gap-2 w-full max-w-full mx-auto p-2 box-border md:grid md:grid-cols-[1fr_380px] md:grid-rows-[auto_auto_1fr] md:gap-4 md:p-4 lg:p-6 min-h-screen bg-slate-50 dark:bg-slate-950">
+    <div className="flex flex-col gap-1.5 w-full max-w-full mx-auto p-2 box-border md:grid md:grid-cols-[1fr_360px] md:grid-rows-[auto_auto_1fr] md:gap-4 md:p-4 lg:p-6 min-h-screen bg-slate-50 dark:bg-slate-950 overflow-y-auto">
+      {showResignModal && (
+        <ResignConfirmationModal
+          stake={room.stake}
+          isLoading={isResigning}
+          onCancel={() => setShowResignModal(false)}
+          onConfirm={confirmResign}
+        />
+      )}
       {/* ── Header Bar ── */}
       <div className="flex items-center justify-between gap-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 md:col-span-2 md:px-5 md:py-3 shadow-sm">
         {/* Fullscreen Toggle (NEW) */}
@@ -593,7 +611,7 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
       {inCheck ? (
         myTurn ? (
           <div className="flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl text-[10px] font-extrabold tracking-widest uppercase bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 md:col-start-1 md:text-xs">
-            <ShieldAlert size={14} className="shrink-0" />
+            <AlertTriangle size={14} className="shrink-0" />
             <span>⚠️ YOU ARE IN CHECK — Protect your king!</span>
           </div>
         ) : (
@@ -618,7 +636,7 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
         >
           {myTurn ? (
             <>
-              <Crown size={12} className="shrink-0 animate-bounce" />
+              <Zap size={12} className="shrink-0 animate-bounce" />
               <span>Your turn — make your move</span>
             </>
           ) : (
@@ -638,7 +656,7 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
 
       {/* ── Chess Board ── */}
       <div
-        className={`relative w-full max-w-[75vh] mx-auto aspect-square rounded-xl overflow-hidden bg-white dark:bg-slate-900 border-4 shadow-2xl md:col-start-1 md:row-start-3
+        className={`relative w-full max-w-[85vh] mx-auto aspect-square rounded-xl overflow-hidden bg-white dark:bg-slate-900 border-4 shadow-2xl md:col-start-1 md:row-start-3
         ${inCheck && myTurn ? "border-red-500/60" : "border-slate-800 dark:border-slate-700"}`}
       >
         <div className="absolute inset-0 pointer-events-none z-0 bg-[radial-gradient(ellipse_at_center,rgba(99,102,241,0.12),transparent_70%)]" />
@@ -683,6 +701,7 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
               room={room}
               user={user}
               localWinnerId={
+                resignationWinnerId || (
                 game.isDraw() ||
                 game.isStalemate() ||
                 game.isThreefoldRepetition() ||
@@ -691,6 +710,7 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
                   : game.turn() === "w"
                     ? room.guest_id
                     : room.host_id
+                )
               }
               isSyncing={room.status !== "finished"}
             />
@@ -808,7 +828,7 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
 
           {/* Log body */}
           <div
-            className="p-1 overflow-y-auto flex-1 scrollbar-none max-h-[160px]"
+            className="p-1 overflow-y-auto flex-1 scrollbar-none max-h-40"
           >
             {movePairs.length === 0 ? (
               <p className="text-[10px] text-slate-500 font-bold text-center py-4 italic uppercase tracking-widest">
@@ -972,25 +992,7 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
           </div>
         </div>
 
-        {/* Move Info / Game Over Reason Bar (NEW) */}
-        <div className="bg-slate-50/5 dark:bg-white/5 border border-slate-300/20 dark:border-white/10 rounded-xl p-3">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="flex flex-col gap-1">
-              <span className="text-[8px] font-black text-slate-500 uppercase tracking-[0.2em]">Room Status</span>
-              <div className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-slate-100 text-[10px]">
-                <div className={`w-1.5 h-1.5 rounded-full ${room.status === 'active' ? 'bg-indigo-500 animate-pulse' : 'bg-slate-500'}`} />
-                <span className="tracking-widest">{room.status?.toUpperCase() || 'UNKNOWN'}</span>
-              </div>
-            </div>
-            <div className="flex flex-col gap-1">
-              <span className="text-[8px] font-black text-slate-500 uppercase tracking-[0.2em]">Game Info</span>
-              <div className="flex items-center gap-1 font-bold text-slate-900 dark:text-slate-100 text-[10px]">
-                <Trophy size={10} className="text-amber-500" />
-                <span className="tracking-widest">STAKE: {room.stake * 2} ZA</span>
-              </div>
-            </div>
-          </div>
-        </div>
+        <div className="flex-1 min-h-0" />
 
         {/* Resign */}
         <button
