@@ -12,8 +12,10 @@ import { speedBattleApi } from '@/api/speedbattle.api';
 import { wordScrambleApi } from '@/api/wordscramble.api';
 import { poolApi } from '@/api/poolApi';
 import { useAuth } from '@/context/auth';
+import type { PoolRoom } from '@/game/pool/types';
 import type { UserProfile } from '@/context/auth';
 import { useToast } from '@/context/toast';
+import type { ChessRoom } from '@/types/chess';
 
 interface GameRoom {
   id?: string;
@@ -205,7 +207,7 @@ const H2HZone = () => {
             onQuickMatch={handleQuickMatch}
             getWaitingRooms={
               gameType === "chess" ? chessApi.getWaitingRooms : 
-              gameType === "pool" ? poolApi.listRooms :
+              gameType === "pool" ? (poolApi.listRooms as unknown as () => Promise<ChessRoom[]>) :
               async () => []
             }
             loading={loading}
@@ -263,7 +265,7 @@ const H2HZone = () => {
                       return (
                         <PoolArena
                           key={room.id}
-                          room={room}
+                          room={room as unknown as PoolRoom}
                           user={user}
                         />
                       );
@@ -300,7 +302,7 @@ const H2HZone = () => {
                         gameType === "chess"
                           ? chessApi.getWaitingRooms :
                         gameType === "pool"
-                          ? poolApi.listRooms
+                          ? (poolApi.listRooms as unknown as () => Promise<ChessRoom[]>)
                           : async () => []
                       }
                       loading={loading}
