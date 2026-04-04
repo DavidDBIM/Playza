@@ -141,7 +141,7 @@ const GamePlay = () => {
             )}
 
             {/* Iframe Container */}
-            <div className="flex-1 w-full h-full relative" onClick={(e) => (e.currentTarget.querySelector('iframe') as HTMLIFrameElement)?.focus()}>
+            <div className={`flex-1 w-full h-full relative ${gameOverData ? 'hidden' : ''}`} onClick={(e) => (e.currentTarget.querySelector('iframe') as HTMLIFrameElement)?.focus()}>
                 <iframe 
                     src={game.iframeUrl} 
                     className="w-full h-full border-none shadow-2xl" 
