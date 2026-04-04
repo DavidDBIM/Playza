@@ -9,8 +9,8 @@ export const poolApi = {
     return data.data
   },
 
-  createRoom: async (stake: number): Promise<PoolRoom> => {
-    const { data } = await axiosInstance.post(`/pool/create`, { stake })
+  createRoom: async (stake: number, isBot?: boolean, botDifficulty?: string): Promise<PoolRoom> => {
+    const { data } = await axiosInstance.post(`/pool/create`, { stake, isBot, botDifficulty })
     return data.data
   },
 

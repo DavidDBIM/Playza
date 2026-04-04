@@ -28,7 +28,7 @@ const PoolArena = ({ room: initialRoom, user }: PoolArenaProps) => {
   // Track turn locally for UI responsivity
   const myPlayer = user?.id === room.host_id ? 'host' : 'guest'
   const isMyTurn = room.game_state?.currentPlayer === myPlayer
-  const oppUsername = myPlayer === 'host' ? (room.guest?.username || 'GUEST') : (room.host?.username || 'HOST')
+  const oppUsername = myPlayer === 'host' ? (room.guest?.username || (room.guest_id === null ? 'PLAYZA BOT' : 'GUEST')) : (room.host?.username || 'HOST')
 
   useEffect(() => {
     setRoom(initialRoom)
@@ -179,7 +179,7 @@ const PoolArena = ({ room: initialRoom, user }: PoolArenaProps) => {
         <div className="flex items-center justify-end gap-2 relative flex-1 min-w-0 text-right">
           <div className="flex flex-col items-end min-w-0 overflow-hidden text-right">
             <span className={`font-black text-[10px] md:text-xs truncate uppercase tracking-wide leading-tight md:text-[15px] ${room.game_state?.currentPlayer === 'guest' ? "text-indigo-600 dark:text-indigo-500" : "text-slate-900 dark:text-slate-100"}`}>
-              {room.guest?.username || "Guest"}
+              {room.guest?.username || (room.guest_id === null ? "PLAYZA BOT" : "Guest")}
             </span>
             <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-none">
               {room.guest_id === user?.id ? "YOU" : "RIVAL"}

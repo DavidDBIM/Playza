@@ -15,8 +15,10 @@ router.get('/rooms', async (req: AuthRequest, res: Response) => {
 
 router.post('/create', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
-    const { stake = 0 } = req.body
-    const data = await PoolService.createPoolRoom(req.user!.id, Number(stake))
+    const { stake = 0, isBot = false } = req.body
+    const data = isBot
+      ? await PoolService.createBotRoom(req.user!.id, Number(stake))
+      : await PoolService.createPoolRoom(req.user!.id, Number(stake))
     res.status(201).json({ success: true, data })
   } catch (error: any) {
     res.status(400).json({ success: false, message: error.message })

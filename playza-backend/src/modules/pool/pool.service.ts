@@ -2,6 +2,7 @@ import { supabaseAdmin } from '../../config/supabase'
 import crypto from 'crypto'
 import { PoolPhysics } from './physics'
 import { PoolRules, GameState, PlayerType } from './rules'
+import { getPoolBotMove } from './bot'
 
 const TABLE_WIDTH = 2540
 const TABLE_HEIGHT = 1270
@@ -185,7 +186,7 @@ export async function executeShot(
   const player = userId === room.host_id ? 'host' : 'guest'
   const gameState = room.game_state as GameState
 
-  if (gameState.currentPlayer !== player) {
+  if (userId !== null && gameState.currentPlayer !== player) {
     throw new Error('Not your turn')
   }
 
@@ -201,7 +202,7 @@ export async function executeShot(
     .eq('id', roomId)
 
   if (newState.status === 'finished') {
-    await handleGameOver(roomId, newState.winner!, room.stake)
+    await handleGameOver(roomId, newState.winner === 'host' ? room.host_id : room.guest_id, room.stake)
     return {
       game_state: newState,
       pocketed_balls: pocketedBalls,
@@ -211,12 +212,68 @@ export async function executeShot(
     }
   }
 
+  // If it's a bot's turn, trigger bot move automatically
+  if (newState.currentPlayer === 'guest' && room.guest_id === null && newState.status === 'active') {
+    const botShot = getPoolBotMove(newState, 'guest', 'medium');
+    if (botShot) {
+      // Small delay for realism
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      return await executeShot(roomId, null as any, botShot);
+    }
+  }
+
   return {
     game_state: newState,
     pocketed_balls: pocketedBalls,
     foul,
     foul_type: foulType,
     next_turn: newState.currentPlayer,
+  }
+}
+
+export async function createBotRoom(userId: string, stakeValue: number) {
+  const code = generateRoomCode()
+  const stake = Number(stakeValue)
+
+  if (stake > 0) {
+    const { data: wallet } = await supabaseAdmin
+      .from('wallets')
+      .select('balance')
+      .eq('user_id', userId)
+      .single()
+
+    if (!wallet || wallet.balance < stake)
+      throw new Error('Insufficient balance')
+
+    await supabaseAdmin.rpc('decrement_wallet_balance', {
+      p_user_id: userId,
+      p_amount: stake,
+    })
+  }
+
+  const initialState = PoolRules.createInitialState()
+
+  const { data, error } = await supabaseAdmin
+    .from('pool_rooms')
+    .insert({
+      code,
+      host_id: userId,
+      guest_id: null, // null means bot
+      stake,
+      status: 'active',
+      game_state: initialState,
+    })
+    .select()
+    .single()
+
+  if (error) throw error
+
+  return {
+    room_id: data.id,
+    code,
+    stake,
+    status: 'active',
+    game_state: initialState,
   }
 }
 
