@@ -14,6 +14,7 @@ import profileRoutes from './modules/profile/profile.routes'
 import securityRoutes from './modules/security/security.routes'
 import speedbattleRoutes from './modules/speedbattle/speedbattle.routes'
 import wordscrambleRoutes from './modules/wordscramble/wordscramble.routes'
+import poolRoutes from './modules/pool/pool.routes'
 
 dotenv.config()
 
