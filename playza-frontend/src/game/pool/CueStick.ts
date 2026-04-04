@@ -2,7 +2,6 @@ import Phaser from 'phaser'
 
 export class CueStick extends Phaser.GameObjects.Container {
   private stick!: Phaser.GameObjects.Graphics
-  private offset: number = 60
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y)
@@ -24,36 +23,35 @@ export class CueStick extends Phaser.GameObjects.Container {
       0x4d3522,
     ]
 
-    const height = 200
+    const height = 300
     const baseWidth = 8
-    const tipWidth = 3
+    const tipWidth = 4
 
     for (let i = 0; i < height; i++) {
-      const t = i / height
-      const width = baseWidth - (baseWidth - tipWidth) * t
-      const colorIndex = Math.floor(t * (gradient.length - 1))
-      const color = gradient[colorIndex]
+        const t = i / height
+        const width = baseWidth - (baseWidth - tipWidth) * t
+        const colorIndex = Math.floor(t * (gradient.length - 1))
+        const color = gradient[colorIndex]
 
-      this.stick.fillStyle(color, 1)
-      this.stick.fillRect(-width / 2, -height + i, width, 1)
+        this.stick.fillStyle(color, 1)
+        this.stick.fillRect(-width / 2, i, width, 1)
     }
 
+    // Add a tip
     this.stick.fillStyle(0xffffff, 0.9)
-    this.stick.fillCircle(0, -height + 5, 2)
+    this.stick.fillRect(-tipWidth / 2, 0, tipWidth, 2)
+    this.stick.fillStyle(0x333333, 1)
+    this.stick.fillRect(-tipWidth / 2, 2, tipWidth, 5)
 
     this.add(this.stick)
   }
 
   setOffset(offset: number) {
-    this.offset = offset
-    this.x += offset * 0.1
+    this.stick.y = offset
   }
 
   setStickRotation(rotation: number) {
-    this.rotation = rotation
-    const dist = this.offset + 30
-    this.x = this.scene.cameras.main.width / 2 + Math.cos(rotation) * dist
-    this.y = this.scene.cameras.main.height / 2 + Math.sin(rotation) * dist
+    this.rotation = rotation - Math.PI / 2 // Rotate stick so it points correctly
     return this
   }
 }

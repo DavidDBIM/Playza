@@ -5,10 +5,12 @@ import H2HWaitingRoom from '@/components/h2h/H2HWaitingRoom';
 import ChessArena from '@/components/h2h/chess/ChessArena';
 import SpeedBattleArena from '@/components/h2h/speed-battle/SpeedBattleArena';
 import WordScrambleArena from '@/components/h2h/word-scramble/WordScrambleArena';
+import PoolArena from '@/components/h2h/pool/PoolArena';
 import H2HWinner from '@/components/h2h/H2HWinner';
 import * as chessApi from '@/api/chess.api';
 import { speedBattleApi } from '@/api/speedbattle.api';
 import { wordScrambleApi } from '@/api/wordscramble.api';
+import { poolApi } from '@/api/poolApi';
 import { useAuth } from '@/context/auth';
 import type { UserProfile } from '@/context/auth';
 import { useToast } from '@/context/toast';
@@ -45,6 +47,8 @@ const H2HZone = () => {
       return speedBattleApi as unknown as GameApi;
     if (gameType === "word-scramble")
       return wordScrambleApi as unknown as GameApi;
+    if (gameType === "pool")
+      return poolApi as unknown as GameApi;
     return null; // chess uses direct methods
   }, [gameType]);
 
@@ -200,7 +204,9 @@ const H2HZone = () => {
             onJoin={handleJoinRoom}
             onQuickMatch={handleQuickMatch}
             getWaitingRooms={
-              gameType === "chess" ? chessApi.getWaitingRooms : async () => []
+              gameType === "chess" ? chessApi.getWaitingRooms : 
+              gameType === "pool" ? poolApi.listRooms :
+              async () => []
             }
             loading={loading}
           />
@@ -253,17 +259,25 @@ const H2HZone = () => {
                         }
                       />
                     );
-                  return (
-                    <ChessArena
-                      key={room.id}
-                      room={
-                        room as unknown as React.ComponentProps<
-                          typeof ChessArena
-                        >["room"]
-                      }
-                      user={user}
-                    />
-                  );
+                    if (gameType === "pool")
+                      return (
+                        <PoolArena
+                          key={room.id}
+                          room={room}
+                          user={user}
+                        />
+                      );
+                    return (
+                      <ChessArena
+                        key={room.id}
+                        room={
+                          room as unknown as React.ComponentProps<
+                            typeof ChessArena
+                          >["room"]
+                        }
+                        user={user}
+                      />
+                    );
                 case "finished":
                   return (
                     <H2HWinner
@@ -284,7 +298,9 @@ const H2HZone = () => {
                       onQuickMatch={handleQuickMatch}
                       getWaitingRooms={
                         gameType === "chess"
-                          ? chessApi.getWaitingRooms
+                          ? chessApi.getWaitingRooms :
+                        gameType === "pool"
+                          ? poolApi.listRooms
                           : async () => []
                       }
                       loading={loading}
