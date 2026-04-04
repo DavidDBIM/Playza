@@ -41,7 +41,6 @@ import TermsAndConditions from "./pages/TermsAndConditions";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Loyalty from "./pages/Loyalty";
 import CategoryPage from "./pages/CategoryPage";
-import PoolGame from "./pages/PoolGame";
 
 const AppContent = () => {
   const { pathname } = useLocation();
@@ -156,7 +155,6 @@ const AppContent = () => {
             <Route path="/h2h" element={<H2HZone />} />
             <Route path="/h2h/:gameType" element={<H2HZone />} />
             <Route path="/h2h/:gameType/:roomId" element={<H2HZone />} />
-            <Route path="/pool" element={<PoolGame />} />
             <Route path="/registration" element={<Registration />} />
 
             <Route path="/wallet/transactions" element={<Transactions />} />

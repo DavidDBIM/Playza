@@ -10,7 +10,7 @@ interface Rule {
 }
 
 interface H2HGamePrepProps {
-  gameType: 'chess' | 'speed-battle' | 'word-scramble';
+  gameType: 'chess' | 'speed-battle' | 'word-scramble' | 'pool';
   stake: number;
   onComplete: () => void;
 }
@@ -82,6 +82,29 @@ const gameRules: Record<string, Rule[]> = {
       icon: AlertCircle,
       title: 'No Cheating',
       description: 'Using external aids or refreshing the page will lead to an immediate disqualification.',
+      color: 'text-red-500'
+    }
+  ],
+  pool: [
+    {
+      id: '01',
+      icon: Zap,
+      title: 'Aim & Power',
+      description: 'Drag from the cue ball to aim. The farther you drag, the more power you apply to the shot.',
+      color: 'text-indigo-500'
+    },
+    {
+      id: '02',
+      icon: Trophy,
+      title: 'Ball Assignment',
+      description: 'The first player to pocket a ball (other than the 8-ball) is assigned that group (Solids or Stripes).',
+      color: 'text-amber-500'
+    },
+    {
+      id: '03',
+      icon: AlertCircle,
+      title: 'The 8-Ball',
+      description: 'Pocketing the 8-ball before clearing your group results in an immediate loss. Pocket it last to win!',
       color: 'text-red-500'
     }
   ]

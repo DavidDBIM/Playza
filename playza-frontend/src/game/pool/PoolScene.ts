@@ -9,6 +9,7 @@ interface PoolSceneCallbacks {
   onBallInHand: (position: { x: number; y: number }) => void
 }
 
+
 export class PoolScene extends Phaser.Scene {
   private balls: Phaser.Physics.Arcade.Sprite[] = []
   private cueBall!: Phaser.Physics.Arcade.Sprite
@@ -18,19 +19,24 @@ export class PoolScene extends Phaser.Scene {
   private power = 0
   private spin = { x: 0, y: 0 }
   private isMyTurn = false
-  private gameState: GameState | null = null
   private socketManager: SocketManager | null = null
   private callbacks: PoolSceneCallbacks | null = null
 
   private tableGraphics!: Phaser.GameObjects.Graphics
   private pockets: Phaser.GameObjects.Arc[] = []
   private predictionLine!: Phaser.GameObjects.Graphics
-  private turnIndicator!: Phaser.GameObjects.Text
-  private statusText!: Phaser.GameObjects.Text
-  private playerBallsText!: Phaser.GameObjects.Text
+
 
   constructor() {
     super({ key: 'PoolScene' })
+  }
+
+  preload() {
+    // Create a procedural ball texture (white circle)
+    const graphics = this.make.graphics({ x: 0, y: 0 }, false)
+    graphics.fillStyle(0xffffff)
+    graphics.fillCircle(16, 16, 16)
+    graphics.generateTexture('ball', 32, 32)
   }
 
   init() {
@@ -45,7 +51,6 @@ export class PoolScene extends Phaser.Scene {
     this.createBalls()
     this.createCueStick()
     this.createPredictionLine()
-    this.createUI()
     this.setupSocketListeners()
   }
 
@@ -135,8 +140,8 @@ export class PoolScene extends Phaser.Scene {
       this.balls.push(ball)
     }
 
-    this.physics.add.collider(this.balls, this.balls, (_ball1, _ball2) => {
-      // Ball collision handled
+    this.physics.add.collider(this.balls, this.balls, () => {
+      // Ball collision logic can be added here (e.g. sound effects)
     }, undefined, this)
   }
 
@@ -149,28 +154,6 @@ export class PoolScene extends Phaser.Scene {
     this.predictionLine = this.add.graphics()
   }
 
-  private createUI() {
-    const offsetY = 20
-
-    this.turnIndicator = this.add.text(20, offsetY, 'Waiting...', {
-      fontSize: '24px',
-      color: '#ffffff',
-      fontFamily: 'Arial',
-    })
-
-    this.statusText = this.add.text(20, offsetY + 35, '', {
-      fontSize: '16px',
-      color: '#cccccc',
-      fontFamily: 'Arial',
-    })
-
-    this.playerBallsText = this.add.text(20, offsetY + 60, '', {
-      fontSize: '14px',
-      color: '#aaaaaa',
-      fontFamily: 'Arial',
-    })
-  }
-
   private setupSocketListeners() {
     if (!this.socketManager) return
 
@@ -180,19 +163,19 @@ export class PoolScene extends Phaser.Scene {
 
     this.socketManager.on('turn_change', (data: { player: PlayerType }) => {
       this.isMyTurn = data.player === 'host'
-      this.updateTurnIndicator()
     })
+
 
     this.socketManager.on('ball_pocketed', (data: { balls: string[] }) => {
       this.handlePocketedBalls(data.balls)
     })
 
-    this.socketManager.on('foul', (data: { type: string; ballInHand: boolean }) => {
-      this.handleFoul(data.type, data.ballInHand)
+    this.socketManager.on('foul', () => {
+      this.handleFoul()
     })
   }
 
-  private startAim(_pointer: Phaser.Input.Pointer) {
+  private startAim() {
     if (!this.isMyTurn || this.isBallsMoving()) return
 
     this.isAiming = true
@@ -213,7 +196,7 @@ export class PoolScene extends Phaser.Scene {
     this.updatePredictionLine()
   }
 
-  private endAim(_pointer: Phaser.Input.Pointer) {
+  private endAim() {
     if (!this.isAiming) return
 
     this.isAiming = false
@@ -224,7 +207,6 @@ export class PoolScene extends Phaser.Scene {
       const adjustedAngle = this.aimAngle + Math.PI
       this.callbacks.onShot(adjustedAngle, this.power * 40, this.spin)
       this.isMyTurn = false
-      this.updateTurnIndicator()
     }
   }
 
@@ -281,16 +263,11 @@ export class PoolScene extends Phaser.Scene {
     }
   }
 
-  private handleFoul(type: string, ballInHand: boolean) {
-    this.statusText.setText(`Foul: ${type}`)
-    if (ballInHand) {
-      this.statusText.setText(`${this.statusText.text} - Ball in Hand`)
-    }
+  private handleFoul() {
+    // Foul notification can also be in React layer
   }
 
   updateGameState(state: GameState) {
-    this.gameState = state
-
     if (state.balls) {
       for (let i = 0; i < state.balls.length; i++) {
         const serverBall = state.balls[i]
@@ -307,29 +284,6 @@ export class PoolScene extends Phaser.Scene {
         }
       }
     }
-
-    this.updateTurnIndicator()
-    this.updatePlayerBalls()
-  }
-
-  private updateTurnIndicator() {
-    if (this.isMyTurn) {
-      this.turnIndicator.setText('Your Turn')
-      this.turnIndicator.setColor('#00ff00')
-    } else {
-      this.turnIndicator.setText("Opponent's Turn")
-      this.turnIndicator.setColor('#ff0000')
-    }
-  }
-
-  private updatePlayerBalls() {
-    if (!this.gameState) return
-
-    let text = ''
-    if (this.gameState.hostAssigned !== 'none') {
-      text += `You: ${this.gameState.hostAssigned.toUpperCase()}s`
-    }
-    this.playerBallsText.setText(text)
   }
 
   setSocketManager(socket: SocketManager) {
@@ -342,13 +296,11 @@ export class PoolScene extends Phaser.Scene {
 
   setMyPlayer(player: 'host' | 'guest') {
     this.isMyTurn = player === 'host'
-    this.updateTurnIndicator()
   }
 
   enableBallInHand(enabled: boolean) {
     if (enabled) {
       this.input.on('pointerdown', this.handleBallInHandClick, this)
-      this.statusText.setText('Place cue ball - Click on table')
     }
   }
 
@@ -366,7 +318,6 @@ export class PoolScene extends Phaser.Scene {
 
     if (pointer.x >= minX && pointer.x <= maxX && pointer.y >= minY && pointer.y <= maxY) {
       this.callbacks.onBallInHand({ x: pointer.x, y: pointer.y })
-      this.statusText.setText('')
       this.input.off('pointerdown', this.handleBallInHandClick)
     }
   }

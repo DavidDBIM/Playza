@@ -1,6 +1,8 @@
 import { Server as SocketServer } from 'socket.io'
 import { Server as HttpServer } from 'http'
 import jwt from 'jsonwebtoken'
+import { PoolPhysics } from '../modules/pool/physics'
+import { PoolRules } from '../modules/pool/rules'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'playza-secret-key'
 
@@ -135,16 +137,11 @@ export function removeGameRoom(roomId: string) {
 }
 
 function simulateShot(state: any, shot: any): any[] {
-  return state.balls.map((ball: any) => {
-    if (ball.id === 'cue') {
-      const newVel = {
-        x: Math.cos(shot.angle) * shot.power,
-        y: Math.sin(shot.angle) * shot.power,
-      }
-      return { ...ball, velocity: newVel }
-    }
-    return { ...ball }
-  })
+  const physics = new PoolPhysics(state.balls);
+  const cueBall = state.balls.find((b: any) => b.id === 'cue');
+  const cueBallPos = cueBall ? cueBall.position : { x: 0, y: 0 };
+  
+  return physics.simulateShot(cueBallPos, shot.angle, shot.power, shot.spin);
 }
 
 function getPocketedBalls(balls: any[]): string[] {
@@ -154,18 +151,6 @@ function getPocketedBalls(balls: any[]): string[] {
 }
 
 function determineNextTurn(state: any, pocketedBalls: string[]): string {
-  const currentPlayer = state.currentPlayer
-  const assigned = currentPlayer === 'host' ? state.hostAssigned : state.guestAssigned
-
-  const pocketedOwn = pocketedBalls.filter((id: string) => {
-    if (id === 'cue' || id === 'ball_8') return false
-    const ball = state.balls.find((b: any) => b.id === id)
-    if (!ball) return false
-
-    if (assigned === 'solid') return ball.type === 'solid'
-    if (assigned === 'stripe') return ball.type === 'stripe'
-    return true
-  })
-
-  return pocketedOwn.length > 0 ? currentPlayer : (currentPlayer === 'host' ? 'guest' : 'host')
+  const { newState } = PoolRules.processShot(state, { angle: 0, power: 0, spin: {x:0, y:0} }, state.currentPlayer);
+  return newState.currentPlayer;
 }
