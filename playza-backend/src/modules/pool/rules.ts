@@ -1,7 +1,7 @@
 import { Ball, Vector2, GameState, PlayerType, ShotInput, createInitialBalls } from './types'
 import { PoolPhysics, PHYSICS_CONFIG } from './physics'
 
-export { PoolRules }
+export { PoolRules, GameState, PlayerType }
 
 const TABLE_WIDTH = 2540
 const TABLE_HEIGHT = 1270

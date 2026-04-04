@@ -1,6 +1,6 @@
 import { io, Socket } from 'socket.io-client'
 
-type EventCallback = (...args: any[]) => void
+type EventCallback = (...args: unknown[]) => void
 
 export class SocketManager {
   private socket: Socket | null = null
@@ -63,26 +63,26 @@ export class SocketManager {
     }
   }
 
-  on(event: string, callback: EventCallback) {
+  on<T extends unknown[]>(event: string, callback: (...args: T) => void) {
     if (!this.listeners.has(event)) {
       this.listeners.set(event, new Set())
     }
-    this.listeners.get(event)!.add(callback)
+    this.listeners.get(event)!.add(callback as unknown as EventCallback)
 
     if (this.socket) {
-      this.socket.on(event, callback)
+      this.socket.on(event, callback as unknown as EventCallback)
     }
   }
 
-  off(event: string, callback: EventCallback) {
-    this.listeners.get(event)?.delete(callback)
+  off<T extends unknown[]>(event: string, callback: (...args: T) => void) {
+    this.listeners.get(event)?.delete(callback as unknown as EventCallback)
 
     if (this.socket) {
-      this.socket.off(event, callback)
+      this.socket.off(event, callback as unknown as EventCallback)
     }
   }
 
-  private emit(event: string, ...args: any[]) {
+  private emit(event: string, ...args: unknown[]) {
     this.listeners.get(event)?.forEach((callback) => callback(...args))
   }
 
