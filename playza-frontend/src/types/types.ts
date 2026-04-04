@@ -60,6 +60,11 @@ export type Game = {
   badge: GameBadge;
 
   iframeUrl?: string; // Optional URL for the game iframe
+  howToPlay?: {
+    controls: string;
+    rules: string;
+    scoring: string;
+  };
   createdAt: string;
   updatedAt: string;
 };

@@ -10,6 +10,7 @@ import SessionPerformance from "@/components/gameSession/SessionPerformance";
 import SessionActivities from "@/components/gameSession/SessionActivities";
 import SessionHero from "@/components/gameSession/SessionHero";
 import LiveEntryModal from "@/components/gameSession/LiveEntryModal";
+import HowToPlayModal from "@/components/gameSession/HowToPlayModal";
 import ActivityToasts from "@/components/gameSession/ActivityToasts";
 import { ZASymbol } from "@/components/currency/ZASymbol";
 import { useAuth } from "@/context/auth";
@@ -23,10 +24,10 @@ const MatchSession = () => {
   const [activeTab, setActiveTab] = useState("Live Leaderboard");
 
 
-  const [liveEntry, setLiveEntry] = useState(false);
+  const [entryState, setEntryState] = useState<"none" | "fee" | "how-to-play">("none");
 
   useEffect(() => {
-    if (liveEntry) {
+    if (entryState !== "none") {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "unset";
@@ -34,7 +35,7 @@ const MatchSession = () => {
     return () => {
       document.body.style.overflow = "unset";
     };
-  }, [liveEntry]);
+  }, [entryState]);
 
   const param = useParams();
   const slug = param.id;
@@ -58,8 +59,7 @@ const MatchSession = () => {
     if (!user) {
       navigate(`/registration?view=login&redirect=${encodeURIComponent(location.pathname)}`);
     } else {
-
-      setLiveEntry(true);
+      setEntryState("fee");
     }
   };
 
@@ -98,12 +98,21 @@ const MatchSession = () => {
 
   return (
     <main className="relative flex-1 max-w-400 mx-auto overflow-x-hidden p-2 md:p-6 lg:p-8">
-      {liveEntry && (
+      {entryState === "fee" && (
         <LiveEntryModal 
           game={game} 
-          onClick={setLiveEntry} 
+          onClick={(open) => setEntryState(open ? "fee" : "none")} 
           onConfirm={() => {
-            setLiveEntry(false);
+            setEntryState("how-to-play");
+          }} 
+        />
+      )}
+      {entryState === "how-to-play" && (
+        <HowToPlayModal 
+          game={game} 
+          onClose={() => setEntryState("none")} 
+          onConfirm={() => {
+            setEntryState("none");
             navigate(`/games/${slug}/play`);
           }} 
         />
