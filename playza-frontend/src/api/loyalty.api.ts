@@ -1,0 +1,25 @@
+import axiosInstance from "./axiosInstance";
+
+export interface PzaEvent {
+  event_type: string;
+  points_awarded: number;
+  created_at: string;
+}
+
+export interface ClaimedTask {
+  task_id: string;
+  claimed_at: string;
+}
+
+export interface LoyaltyData {
+  total_points: number;
+  streak_days: number;
+  can_claim_streak_today: boolean;
+  recent_events: PzaEvent[];
+  claimed_tasks: ClaimedTask[];
+}
+
+export const getLoyaltyMeApi = async (): Promise<LoyaltyData> => {
+  const { data } = await axiosInstance.get(`/pza/me`);
+  return data.data;
+};
