@@ -48,6 +48,7 @@ app.use('/api/profile', profileRoutes)
 app.use('/api/security', securityRoutes)
 app.use('/api/speedbattle', speedbattleRoutes)
 app.use('/api/wordscramble', wordscrambleRoutes)
+app.use('/api/pool', poolRoutes)
 
 app.use((req, res) => {
   res.status(404).json({ success: false, message: 'Route not found' })

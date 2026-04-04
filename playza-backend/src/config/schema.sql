@@ -212,3 +212,22 @@ create table if not exists wordscramble_scores (
 
 alter table wordscramble_rooms enable row level security;
 alter table wordscramble_scores enable row level security;
+
+-- 8 BALL POOL
+create table if not exists pool_rooms (
+  id uuid primary key default uuid_generate_v4(),
+  code text unique not null,
+  host_id uuid not null references users(id) on delete cascade,
+  guest_id uuid references users(id) on delete set null,
+  stake numeric(12, 2) default 0,
+  status text default 'waiting' check (status in ('waiting', 'active', 'finished', 'abandoned')),
+  game_state jsonb default null,
+  winner_id uuid references users(id) on delete set null,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create trigger pool_rooms_updated_at before update on pool_rooms
+  for each row execute function update_updated_at();
+
+alter table pool_rooms enable row level security;
