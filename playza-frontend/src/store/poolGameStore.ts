@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { GameState, PoolRoom, PlayerType } from '@/game/pool/types'
+import type { GameState, PoolRoom, PlayerType } from '@/components/h2h/pool/game/pool/types'
 
 interface PoolGameState {
   room: PoolRoom | null

@@ -10,8 +10,8 @@ interface H2HWinnerProps {
     winner_id?: string | null;
     host_id: string;
     guest_id?: string | null;
-    host?: { id: string; username: string; avatar_url?: string } | null;
-    guest?: { id: string; username: string; avatar_url?: string } | null;
+    host?: { id: string; username: string; avatar_url?: string | null } | null;
+    guest?: { id: string; username: string; avatar_url?: string | null } | null;
   };
   user: UserProfile | null;
   localWinnerId?: string | null;

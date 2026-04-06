@@ -1,5 +1,5 @@
 
-import type { PoolRoom } from '@/game/pool/types'
+import type { PoolRoom } from '@/components/h2h/pool/game/pool/types'
 import axiosInstance from './axiosInstance'
 
 
@@ -41,6 +41,11 @@ export const poolApi = {
 
   resign: async (roomId: string): Promise<{ success: boolean }> => {
     const { data } = await axiosInstance.post(`/pool/resign`, { roomId })
+    return data
+  },
+
+  placeBall: async (roomId: string, position: { x: number; y: number }): Promise<{ success: boolean; data?: { game_state: PoolRoom['game_state'] } }> => {
+    const { data } = await axiosInstance.post(`/pool/place-ball`, { roomId, position })
     return data
   },
 }

@@ -42,8 +42,30 @@ export function getPoolBotMove(
     { x: TABLE_CONFIG.width, y: TABLE_CONFIG.height },
   ]
 
+  const isPathClear = (start: Vector2, end: Vector2, ignoredBallIds: string[] = []) => {
+    const dx = end.x - start.x
+    const dy = end.y - start.y
+    const dist = Math.sqrt(dx * dx + dy * dy)
+    if (dist < 1) return true
+
+    const steps = Math.ceil(dist / 10)
+    for (let i = 1; i < steps; i++) {
+        const checkPos = {
+            x: start.x + (dx / steps) * i,
+            y: start.y + (dy / steps) * i
+        }
+        
+        for (const b of state.balls) {
+            if (b.pocketed || ignoredBallIds.includes(b.id)) continue
+            const bDist = Math.sqrt((checkPos.x - b.position.x)**2 + (checkPos.y - b.position.y)**2)
+            if (bDist < TABLE_CONFIG.ballRadius * 2) return false
+        }
+    }
+    return true
+  }
+
   let bestShot: ShotInput | null = null
-  let minDistance = Infinity
+  let maxScore = -Infinity
 
   for (const ball of targetBalls) {
     for (const pocket of pockets) {
@@ -55,40 +77,38 @@ export function getPoolBotMove(
       const unitX = dx / dist
       const unitY = dy / dist
       
-      // The point on the ball we need to hit is directly opposite the pocket
-      // Impact point is ball.position + unitVector * (2 * ballRadius)
-      // Actually, we want the center of the cue ball to be at:
-      // impactPos = ball.position + unitVector * (2 * ballRadius)
+      // Point for cue ball to hit (center to center distance is 2*ballRadius)
       const impactPos = {
         x: ball.position.x + unitX * (TABLE_CONFIG.ballRadius * 2),
         y: ball.position.y + unitY * (TABLE_CONFIG.ballRadius * 2)
       }
       
-      // Vector from cue ball to impactPos
+      // Check if cue ball can reach impactPos and target ball can reach pocket
+      if (!isPathClear(cueBall.position, impactPos, ['cue', ball.id])) continue
+      if (!isPathClear(ball.position, pocket, [ball.id])) continue
+
       const shotDx = impactPos.x - cueBall.position.x
       const shotDy = impactPos.y - cueBall.position.y
       const shotDist = Math.sqrt(shotDx * shotDx + shotDy * shotDy)
       
       const angle = Math.atan2(shotDy, shotDx)
       
-      // Simple heuristic: choose the shot where the target ball is closest to the pocket
-      // And the cue ball has a relatively short path to the impact point
-      const totalDist = dist + shotDist
+      // Heuristic: Prefer shots where target is near pocket and cue ball path is clear
+      const score = 10000 / (dist + 1) - shotDist * 0.1
       
-      if (totalDist < minDistance) {
-        minDistance = totalDist
+      if (score > maxScore) {
+        maxScore = score
         
-        // Power based on distance, but capped
-        let power = 1500 + (totalDist / 2)
+        // Power based on distance
+        let power = 800 + (dist * 0.5) + (shotDist * 0.5)
         
-        // Add some noise based on difficulty
         let variance = 0
-        if (difficulty === 'easy') variance = 0.15
-        else if (difficulty === 'medium') variance = 0.05
-        else variance = 0.01
+        if (difficulty === 'easy') variance = 0.1
+        else if (difficulty === 'medium') variance = 0.03
+        else variance = 0
 
         const adjustedAngle = angle + (Math.random() - 0.5) * variance
-        const adjustedPower = Math.max(800, Math.min(3000, power * (1 + (Math.random() - 0.5) * variance)))
+        const adjustedPower = Math.max(800, Math.min(3500, power * (1 + (Math.random() - 0.5) * variance)))
 
         bestShot = {
           angle: adjustedAngle,
@@ -97,6 +117,13 @@ export function getPoolBotMove(
         }
       }
     }
+  }
+
+  // Fallback: If no "clear" shot, just aim directly at the first target ball
+  if (!bestShot && targetBalls.length > 0) {
+      const ball = targetBalls[0]
+      const angle = Math.atan2(ball.position.y - cueBall.position.y, ball.position.x - cueBall.position.x)
+      bestShot = { angle, power: 1500, spin: { x: 0, y: 0 } }
   }
 
   return bestShot

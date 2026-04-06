@@ -164,9 +164,15 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
 
   // ── Delay Winner Screen ───────────────────────────────────────────────────
   useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout>;
     if (game.isGameOver() && (room.status === "finished" || game.isGameOver()) && !showWinnerDelayed && !showGameOverAcknowledge) {
-      setShowGameOverAcknowledge(true);
+      timeoutId = setTimeout(() => {
+        setShowGameOverAcknowledge(true);
+      }, 4000); // 4-second delay to let users see the final board state
     }
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, [game, room.status, showWinnerDelayed, showGameOverAcknowledge]);
 
   // Prevent body scrolling when winner modal is open

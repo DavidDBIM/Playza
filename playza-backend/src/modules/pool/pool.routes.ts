@@ -77,4 +77,15 @@ router.post('/resign', requireAuth, async (req: AuthRequest, res: Response) => {
   }
 })
 
+router.post('/place-ball', requireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    const { roomId, position } = req.body
+    if (!roomId || !position) throw new Error('Room ID and position are required')
+    const data = await PoolService.placeBall(roomId, req.user!.id, position)
+    res.json({ success: true, data })
+  } catch (error: any) {
+    res.status(400).json({ success: false, message: error.message })
+  }
+})
+
 export default router
