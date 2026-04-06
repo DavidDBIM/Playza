@@ -7,6 +7,8 @@ import {
   verifyOtpController,
   resendOtpController,
   forgotPasswordController,
+  refreshTokenController,
+  logoutController,
 } from './auth.controller'
 import {
   signupSchema,
@@ -23,5 +25,7 @@ router.post('/signin', authLimiter, validate(signinSchema), signinController)
 router.post('/verify-otp', validate(verifyOtpSchema), verifyOtpController)
 router.post('/resend-otp', authLimiter, validate(resendOtpSchema), resendOtpController)
 router.post('/forgot-password', authLimiter, validate(forgotPasswordSchema), forgotPasswordController)
+router.post('/refresh', refreshTokenController)
+router.post('/logout', logoutController)
 
 export default router

@@ -6,15 +6,20 @@ export interface PzaEvent {
   created_at: string;
 }
 
+export interface ClaimedTask {
+  task_id: string;
+  claimed_at: string;
+}
+
 export interface LoyaltyData {
   total_points: number;
   streak_days: number;
+  can_claim_streak_today: boolean;
   recent_events: PzaEvent[];
+  claimed_tasks: ClaimedTask[];
 }
 
 export const getLoyaltyMeApi = async (): Promise<LoyaltyData> => {
-  console.log("[LoyaltyAPI] Fetching loyalty data...");
   const { data } = await axiosInstance.get(`/pza/me`);
-  console.log("[LoyaltyAPI] Data received:", data.data);
   return data.data;
 };

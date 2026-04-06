@@ -48,3 +48,28 @@ export async function forgotPasswordController(req: Request, res: Response) {
     res.status(400).json({ success: false, message: err.message })
   }
 }
+
+export async function refreshTokenController(req: Request, res: Response) {
+  try {
+    const { refresh_token } = req.body
+    if (!refresh_token) {
+      res.status(400).json({ success: false, message: 'refresh_token required' })
+      return
+    }
+    const result = await authService.refreshToken(refresh_token)
+    res.status(200).json({ success: true, data: result })
+  } catch (err: any) {
+    res.status(401).json({ success: false, message: err.message })
+  }
+}
+
+export async function logoutController(req: Request, res: Response) {
+  try {
+    const header = req.headers.authorization
+    const token = header?.split(' ')[1] || ''
+    const result = await authService.logout(token)
+    res.status(200).json({ success: true, data: result })
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message })
+  }
+}
