@@ -234,17 +234,21 @@ const Settings = () => {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent
                     align="center"
-                    className="w-48 glass bg-white/90 dark:bg-slate-900/90 border-primary/20 p-2"
+                    sideOffset={5}
+                    className="w-48 glass bg-white/90 dark:bg-slate-900/90 border-primary/20 p-2 z-50 relative"
                   >
                     <DropdownMenuItem
-                      onClick={() => fileInputRef.current?.click()}
+                      onSelect={(e) => {
+                        // Small timeout helps avoid Radix closing animation unmounting the DOM too fast
+                        setTimeout(() => fileInputRef.current?.click(), 10);
+                      }}
                       className="cursor-pointer gap-2 py-2 md:py-2.5 px-2 md:px-3 rounded-xl focus:bg-primary/10 data-highlighted:bg-primary/10 transition-colors"
                     >
                       <MdPhotoCamera className="text-sm md:text-lg" />
                       <span className="font-medium text-sm">Change Image</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={deleteAvatar}
+                      onSelect={deleteAvatar}
                       className="cursor-pointer gap-2 py-2 md:py-2.5 px-2 md:px-3 rounded-xl text-red-500 focus:bg-red-50/50 dark:focus:bg-red-900/20 transition-colors"
                     >
                       <MdDelete className="text-sm md:text-lg" />
@@ -257,8 +261,9 @@ const Settings = () => {
                   type="file"
                   ref={fileInputRef}
                   onChange={handleFileChange}
-                  accept="image/*"
-                  className="hidden"
+                  accept="image/png, image/jpeg, image/jpg, image/webp"
+                  style={{ position: 'absolute', width: 0, height: 0, opacity: 0 }}
+                  tabIndex={-1}
                 />
                 <div className="absolute -bottom-2 -right-2 bg-primary text-white size-8 flex items-center justify-center rounded-full border-4 border-white dark:border-slate-900 shadow-xl glow-accent pointer-events-none">
                   <MdAdd className="text-base md:text-xl" />
