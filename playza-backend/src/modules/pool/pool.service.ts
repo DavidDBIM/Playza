@@ -231,6 +231,41 @@ export async function executeShot(
   }
 }
 
+export async function placeBall(
+  roomId: string,
+  userId: string,
+  position: { x: number; y: number }
+) {
+  const { data: room, error } = await supabaseAdmin
+    .from('pool_rooms')
+    .select('*')
+    .eq('id', roomId)
+    .single()
+
+  if (error || !room) throw new Error('Room not found')
+  if (room.status !== 'active') throw new Error('Game over')
+
+  const player = userId === room.host_id ? 'host' : 'guest'
+  const gameState = room.game_state as GameState
+
+  if (gameState.currentPlayer !== player) {
+    throw new Error('Not your turn')
+  }
+
+  if (!gameState.ballInHand) {
+    throw new Error('You do not have ball in hand')
+  }
+
+  const newState = PoolRules.placeBallInHand(gameState, position)
+
+  await supabaseAdmin
+    .from('pool_rooms')
+    .update({ game_state: newState })
+    .eq('id', roomId)
+
+  return { game_state: newState }
+}
+
 export async function createBotRoom(userId: string, stakeValue: number) {
   const code = generateRoomCode()
   const stake = Number(stakeValue)

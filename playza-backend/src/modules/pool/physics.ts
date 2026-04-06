@@ -4,7 +4,7 @@ export const TABLE_CONFIG = {
   width: 2540,
   height: 1270,
   cushionHeight: 45,
-  pocketRadius: 45,
+  pocketRadius: 60,
   ballRadius: 28.5,
 }
 
@@ -103,29 +103,76 @@ export class PoolPhysics {
     return anyMoving
   }
 
+  private handleAngledCollision(ball: Ball, normal: Vector2) {
+    const dvn = ball.velocity.x * normal.x + ball.velocity.y * normal.y
+    if (dvn < 0) {
+      ball.velocity.x -= (1 + PHYSICS_CONFIG.cushionRestitution) * dvn * normal.x
+      ball.velocity.y -= (1 + PHYSICS_CONFIG.cushionRestitution) * dvn * normal.y
+    }
+  }
+
   private handleCushionCollisions(ball: Ball) {
     const r = TABLE_CONFIG.ballRadius
     const cushion = TABLE_CONFIG.cushionHeight
+    const w = TABLE_CONFIG.width
+    const h = TABLE_CONFIG.height
+    // pr is the width of the angled cushion near pockets
+    const pr = TABLE_CONFIG.pocketRadius * 0.8 
 
+    // Left cushions (Segmented)
     if (ball.position.x < cushion + r) {
-      ball.position.x = cushion + r
-      ball.velocity.x = -ball.velocity.x * PHYSICS_CONFIG.cushionRestitution
-      this.cushionBounces++
+        if (ball.position.y > pr && ball.position.y < h - pr) {
+            ball.position.x = cushion + r
+            ball.velocity.x = -ball.velocity.x * PHYSICS_CONFIG.cushionRestitution
+        } else if (ball.position.y <= pr) {
+            this.handleAngledCollision(ball, { x: 1, y: 1 })
+        } else if (ball.position.y >= h - pr) {
+            this.handleAngledCollision(ball, { x: 1, y: -1 })
+        }
     }
-    if (ball.position.x > TABLE_CONFIG.width - cushion - r) {
-      ball.position.x = TABLE_CONFIG.width - cushion - r
-      ball.velocity.x = -ball.velocity.x * PHYSICS_CONFIG.cushionRestitution
-      this.cushionBounces++
+
+    // Right cushions
+    if (ball.position.x > w - cushion - r) {
+        if (ball.position.y > pr && ball.position.y < h - pr) {
+            ball.position.x = w - cushion - r
+            ball.velocity.x = -ball.velocity.x * PHYSICS_CONFIG.cushionRestitution
+        } else if (ball.position.y <= pr) {
+            this.handleAngledCollision(ball, { x: -1, y: 1 })
+        } else if (ball.position.y >= h - pr) {
+            this.handleAngledCollision(ball, { x: -1, y: -1 })
+        }
     }
+
+    // Top cushions (Segmented around middle pocket)
     if (ball.position.y < cushion + r) {
-      ball.position.y = cushion + r
-      ball.velocity.y = -ball.velocity.y * PHYSICS_CONFIG.cushionRestitution
-      this.cushionBounces++
+        const mw = w / 2
+        const isNearMiddle = Math.abs(ball.position.x - mw) < pr
+        const isNearLeft = ball.position.x < pr
+        const isNearRight = ball.position.x > w - pr
+
+        if (!isNearMiddle && !isNearLeft && !isNearRight) {
+            ball.position.y = cushion + r
+            ball.velocity.y = -ball.velocity.y * PHYSICS_CONFIG.cushionRestitution
+        } else if (isNearMiddle) {
+            const side = ball.position.x < mw ? -1 : 1
+            this.handleAngledCollision(ball, { x: side, y: 1 })
+        }
     }
-    if (ball.position.y > TABLE_CONFIG.height - cushion - r) {
-      ball.position.y = TABLE_CONFIG.height - cushion - r
-      ball.velocity.y = -ball.velocity.y * PHYSICS_CONFIG.cushionRestitution
-      this.cushionBounces++
+
+    // Bottom cushions
+    if (ball.position.y > h - cushion - r) {
+        const mw = w / 2
+        const isNearMiddle = Math.abs(ball.position.x - mw) < pr
+        const isNearLeft = ball.position.x < pr
+        const isNearRight = ball.position.x > w - pr
+
+        if (!isNearMiddle && !isNearLeft && !isNearRight) {
+            ball.position.y = h - cushion - r
+            ball.velocity.y = -ball.velocity.y * PHYSICS_CONFIG.cushionRestitution
+        } else if (isNearMiddle) {
+            const side = ball.position.x < mw ? -1 : 1
+            this.handleAngledCollision(ball, { x: side, y: -1 })
+        }
     }
   }
 

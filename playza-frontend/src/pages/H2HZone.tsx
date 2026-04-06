@@ -12,7 +12,7 @@ import { speedBattleApi } from '@/api/speedbattle.api';
 import { wordScrambleApi } from '@/api/wordscramble.api';
 import { poolApi } from '@/api/poolApi';
 import { useAuth } from '@/context/auth';
-import type { PoolRoom } from '@/game/pool/types';
+import type { PoolRoom } from '@/components/h2h/pool/game/pool/types';
 import type { UserProfile } from '@/context/auth';
 import { useToast } from '@/context/toast';
 import type { ChessRoom } from '@/types/chess';

@@ -238,8 +238,7 @@ const Settings = () => {
                     className="w-48 glass bg-white/90 dark:bg-slate-900/90 border-primary/20 p-2 z-50 relative"
                   >
                     <DropdownMenuItem
-                      onSelect={(e) => {
-                        // Small timeout helps avoid Radix closing animation unmounting the DOM too fast
+                      onSelect={() => {
                         setTimeout(() => fileInputRef.current?.click(), 10);
                       }}
                       className="cursor-pointer gap-2 py-2 md:py-2.5 px-2 md:px-3 rounded-xl focus:bg-primary/10 data-highlighted:bg-primary/10 transition-colors"
