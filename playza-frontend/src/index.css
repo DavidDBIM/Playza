@@ -232,7 +232,6 @@
 html {
   overflow-y: scroll;
   scroll-behavior: smooth;
-  overscroll-behavior-y: none;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -282,7 +281,6 @@ h1,h2,h3 {
     font-family: 'Inter', sans-serif;
     background-color: var(--background);
     background-image: linear-gradient(to bottom right, var(--background) 0%, rgba(139, 92, 246, 0.03) 100%);
-    overscroll-behavior-y: none;
     -webkit-overflow-scrolling: touch;
   }
 

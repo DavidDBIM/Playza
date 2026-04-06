@@ -1,6 +1,6 @@
 import { Route, Routes, useLocation, useNavigate } from "react-router";
 
-import { useState, useEffect } from "react";
+import { useState} from "react";
 import Home from "./pages/Home";
 import Header from "./components/Header";
 import NavFooter from "./components/NavFooter";
@@ -64,29 +64,7 @@ const AppContent = () => {
 
   // const isGameDetailPage = pathname.startsWith(`/games/${id}`);
 
-  const [isInitializing, setIsInitializing] = useState(
-    () => window.innerWidth < 768,
-  );
 
-  useEffect(() => {
-    if (isInitializing) {
-      const timer = setTimeout(() => {
-        setIsInitializing(false);
-      }, 1500);
-      return () => clearTimeout(timer);
-    }
-  }, [isInitializing]);
-
-  if (isInitializing) {
-    return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center">
-        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
-        <p className="text-primary font-bold animate-pulse">
-          Loading PlayZa...
-        </p>
-      </div>
-    );
-  }
 
   const handleWithdrawClick = () => {
     if (!isProfileComplete) {
