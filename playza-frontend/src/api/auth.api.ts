@@ -88,6 +88,22 @@ export interface ForgotPasswordResponse {
   };
 }
 
+export interface RefreshTokenResponse {
+  success: boolean;
+  data: {
+    access_token: string;
+    refresh_token: string;
+    expires_in: number;
+  };
+}
+
+export interface LogoutResponse {
+  success: boolean;
+  data: {
+    message: string;
+  };
+}
+
 // API Functions
 
 export const signupApi = async (
@@ -137,5 +153,20 @@ export const forgotPasswordApi = async (
     "/auth/forgot-password",
     payload,
   );
+  return data;
+};
+
+export const refreshTokenApi = async (
+  refreshToken: string,
+): Promise<RefreshTokenResponse> => {
+  const { data } = await axiosInstance.post<RefreshTokenResponse>(
+    "/auth/refresh",
+    { refresh_token: refreshToken },
+  );
+  return data;
+};
+
+export const logoutApi = async (): Promise<LogoutResponse> => {
+  const { data } = await axiosInstance.post<LogoutResponse>("/auth/logout");
   return data;
 };

@@ -86,10 +86,15 @@ router.post('/streak/claim', requireAuth, async (req: AuthRequest, res) => {
         })
         .eq('user_id', userId)
 
-      const bonusPoints = newStreak >= 30 ? 500 : newStreak >= 21 ? 250 : newStreak >= 14 ? 150 : newStreak >= 7 ? 80 : newStreak >= 3 ? 30 : 10
-      await awardPZA(userId, 'STREAK_3_GAMES')
+      let eventType: PZAEvent = 'DAILY_STREAK_CLAIM'
+      if (newStreak === 30) eventType = 'STREAK_30_GAMES'
+      else if (newStreak === 21) eventType = 'STREAK_21_GAMES'
+      else if (newStreak === 14) eventType = 'STREAK_14_GAMES'
+      else if (newStreak === 7) eventType = 'STREAK_7_GAMES'
+      else if (newStreak === 3) eventType = 'STREAK_3_GAMES'
 
-      res.json({ success: true, data: { streak_days: newStreak, points_awarded: bonusPoints } })
+      const pointsAwarded = await awardPZA(userId, eventType)
+      res.json({ success: true, data: { streak_days: newStreak, points_awarded: pointsAwarded } })
     } else {
       await supabaseAdmin.from('user_streaks').insert({
         user_id: userId,
@@ -98,8 +103,8 @@ router.post('/streak/claim', requireAuth, async (req: AuthRequest, res) => {
         streak_reward_claimed_today: true,
       })
 
-      await awardPZA(userId, 'STREAK_3_GAMES')
-      res.json({ success: true, data: { streak_days: 1, points_awarded: 10 } })
+      const pointsAwarded = await awardPZA(userId, 'DAILY_STREAK_CLAIM')
+      res.json({ success: true, data: { streak_days: 1, points_awarded: pointsAwarded } })
     }
   } catch (err: any) {
     res.status(400).json({ success: false, message: err.message })

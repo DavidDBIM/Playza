@@ -21,6 +21,7 @@ import {
 import { useDeactivateUser } from "../../hooks/users/useDeactivateUser";
 import { useAuth } from "../../context/auth";
 import type { BankAccount } from "../../api/profile.api";
+import { TokenStorage } from "../../api/axiosInstance";
 
 import {
   DropdownMenu,
@@ -150,7 +151,7 @@ const Settings = () => {
     ) {
       deactivateUser(profile.id, {
         onSuccess: () => {
-          localStorage.removeItem("playza_token");
+          TokenStorage.clearTokens();
           window.location.href = "/";
         },
       });

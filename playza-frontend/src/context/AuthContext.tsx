@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useMemo, type ReactNode } from "react";
 import { AuthContext, type UserProfile } from "./auth";
 import { getMeApi } from "@/api/users.api";
+import { logoutApi } from "@/api/auth.api";
+import { TokenStorage } from "@/api/axiosInstance";
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -9,7 +11,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Initialize auth state from localStorage
   useEffect(() => {
     const fetchUser = async () => {
-      const token = localStorage.getItem("playza_token");
+      const token = TokenStorage.getAccessToken();
       if (token) {
         try {
           const profile = await getMeApi();
@@ -31,7 +33,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           });
         } catch (error) {
           console.error("Auth initialization failed:", error);
-          localStorage.removeItem("playza_token");
+          TokenStorage.clearTokens();
           setUser(null);
         }
       }
@@ -41,14 +43,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     fetchUser();
   }, []);
 
-  const setAuth = useCallback((newUser: UserProfile, token: string) => {
-    localStorage.setItem("playza_token", token);
-    setUser(newUser);
-  }, []);
+  /**
+   * Persists both the access token and refresh token, then updates the user state.
+   * The refresh token is needed so axiosInstance can silently renew the session.
+   */
+  const setAuth = useCallback(
+    (newUser: UserProfile, token: string, refreshToken?: string) => {
+      if (refreshToken) {
+        TokenStorage.setTokens(token, refreshToken);
+      } else {
+        localStorage.setItem("playza_token", token);
+      }
+      setUser(newUser);
+    },
+    [],
+  );
 
-  const logout = useCallback(() => {
-    localStorage.removeItem("playza_token");
-    setUser(null);
+  /**
+   * Calls the backend logout endpoint (best‑effort) to invalidate the Supabase
+   * session server‑side, then always clears local storage and user state.
+   */
+  const logout = useCallback(async () => {
+    try {
+      await logoutApi();
+    } catch (err) {
+      // Non-critical — local cleanup always runs
+      console.warn("[Auth] Backend logout call failed:", err);
+    } finally {
+      TokenStorage.clearTokens();
+      setUser(null);
+    }
   }, []);
 
   const updateProfile = useCallback((data: Partial<UserProfile>) => {
@@ -57,14 +81,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const isProfileComplete = useMemo(() => !!(user?.firstName && user?.lastName), [user]);
 
-  const value = useMemo(() => ({
-    user,
-    setAuth,
-    logout,
-    updateProfile,
-    isProfileComplete,
-    isLoading,
-  }), [user, isProfileComplete, isLoading, setAuth, logout, updateProfile]);
+  const value = useMemo(
+    () => ({
+      user,
+      setAuth,
+      logout,
+      updateProfile,
+      isProfileComplete,
+      isLoading,
+    }),
+    [user, isProfileComplete, isLoading, setAuth, logout, updateProfile],
+  );
 
   return (
     <AuthContext.Provider value={value}>

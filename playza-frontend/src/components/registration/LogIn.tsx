@@ -27,7 +27,7 @@ const LogIn = ({ onClick }: LogInProps) => {
       {
         onSuccess: (data) => {
           console.log("[LogIn] Success! Token and user data received:", data);
-          const { access_token, user } = data.data;
+          const { access_token, refresh_token, user } = data.data;
           setAuth(
             {
               id: user.id,
@@ -42,6 +42,7 @@ const LogIn = ({ onClick }: LogInProps) => {
               isEmailVerified: user.is_email_verified,
             },
             access_token,
+            refresh_token,
           );
           const redirectTo = searchParams.get("redirect") || "/";
           navigate(redirectTo);

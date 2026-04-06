@@ -24,8 +24,8 @@ export interface UserProfile {
 
 export interface AuthContextType {
   user: UserProfile | null;
-  setAuth: (user: UserProfile, token: string) => void;
-  logout: () => void;
+  setAuth: (user: UserProfile, token: string, refreshToken?: string) => void;
+  logout: () => Promise<void>;
   updateProfile: (data: Partial<UserProfile>) => void;
   isProfileComplete: boolean;
   isLoading: boolean;
