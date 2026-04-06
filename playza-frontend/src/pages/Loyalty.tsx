@@ -1,10 +1,9 @@
-import { useState } from "react";
+import { useState, type ReactElement } from "react";
 import { useLoyaltyMe } from "@/hooks/loyalty/useLoyaltyMe";
 import { useAuth } from "@/context/auth";
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
 import { LoyaltySkeleton } from "@/components/skeletons/LoyaltySkeleton";
-import axiosInstance from "@/api/axiosInstance";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   MdCheckCircle, MdLock, MdMilitaryTech, MdAccountCircle,
@@ -15,8 +14,28 @@ import {
   MdLocalFireDepartment, MdArrowForward, MdOpenInNew,
 } from "react-icons/md";
 import { Zap, Trophy, Target, Flame, Star, Users, Shield, Gift } from "lucide-react";
+import type { PzaEvent, ClaimedTask } from "@/api/loyalty.api";
+import { claimStreakApi, claimTaskApi } from "@/api/loyalty.api";
 
-const TASK_CATEGORIES = [
+interface Task {
+  id: string;
+  name: string;
+  desc: string;
+  points: number;
+  icon: ReactElement;
+  auto?: boolean;
+  link?: string;
+}
+
+interface TaskCategory {
+  id: string;
+  label: string;
+  icon: ReactElement;
+  color: string;
+  tasks: Task[];
+}
+
+const TASK_CATEGORIES: TaskCategory[] = [
   {
     id: "onboarding",
     label: "Getting Started",
@@ -157,8 +176,8 @@ export default function Loyalty() {
   const totalPoints = loyaltyData?.total_points ?? 0;
   const streakDays = loyaltyData?.streak_days ?? 0;
   const canClaimStreak = loyaltyData?.can_claim_streak_today ?? false;
-  const claimedTaskIds = new Set((loyaltyData?.claimed_tasks ?? []).map((t: any) => t.task_id));
-  const completedEventTypes = new Set((loyaltyData?.recent_events ?? []).map((e: any) => e.event_type));
+  const claimedTaskIds = new Set((loyaltyData?.claimed_tasks ?? []).map((t: ClaimedTask) => t.task_id));
+  const completedEventTypes = new Set((loyaltyData?.recent_events ?? []).map((e: PzaEvent) => e.event_type));
 
   const currentTier = TIER_CONFIG.find(t => totalPoints >= t.min && totalPoints <= t.max) || TIER_CONFIG[0];
   const nextTier = TIER_CONFIG.find(t => t.min > totalPoints);
@@ -173,10 +192,10 @@ export default function Loyalty() {
   async function claimStreak() {
     setClaimingStreak(true);
     try {
-      await axiosInstance.post('/pza/streak/claim');
+      await claimStreakApi();
       await refetch();
-    } catch (err: any) {
-      alert(err.message);
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'An unknown error occurred');
     } finally {
       setClaimingStreak(false);
     }
@@ -185,17 +204,17 @@ export default function Loyalty() {
   async function claimTask(taskId: string, points: number) {
     setClaimingTask(taskId);
     try {
-      await axiosInstance.post('/pza/task/claim', { task_id: taskId, points });
+      await claimTaskApi(taskId, points);
       await refetch();
       queryClient.invalidateQueries({ queryKey: ['loyalty', 'me'] });
-    } catch (err: any) {
-      alert(err.message);
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'An unknown error occurred');
     } finally {
       setClaimingTask(null);
     }
   }
 
-  function getTaskStatus(task: any): 'completed' | 'claimable' | 'active' | 'locked' {
+  function getTaskStatus(task: Task): 'completed' | 'claimable' | 'active' | 'locked' {
     if (claimedTaskIds.has(task.id)) return 'completed';
     if (completedEventTypes.has(task.id)) return 'claimable';
     if (task.auto) return 'locked';
@@ -232,7 +251,7 @@ export default function Loyalty() {
       {/* Hero Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
         {/* PZA Balance Card */}
-        <div className="md:col-span-2 bg-gradient-to-br from-blue-600 to-blue-700 dark:from-blue-700 dark:to-blue-900 rounded-2xl p-6 text-white shadow-lg shadow-blue-500/20">
+        <div className="md:col-span-2 bg-linear-to-br from-blue-600 to-blue-700 dark:from-blue-700 dark:to-blue-900 rounded-2xl p-6 text-white shadow-lg shadow-blue-500/20">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-blue-200 text-xs font-bold uppercase tracking-widest mb-1">Your PZA Balance</p>
@@ -435,7 +454,7 @@ export default function Loyalty() {
               {TIER_CONFIG.map(tier => {
                 const active = totalPoints >= tier.min && totalPoints <= tier.max;
                 return (
-                  <div key={tier.name} className={`bg-gradient-to-br ${tier.bg} border ${tier.border} rounded-xl p-4 ${active ? 'ring-2 ring-blue-500 dark:ring-blue-400' : ''}`}>
+                  <div key={tier.name} className={`bg-linear-to-br ${tier.bg} border ${tier.border} rounded-xl p-4 ${active ? 'ring-2 ring-blue-500 dark:ring-blue-400' : ''}`}>
                     <MdMilitaryTech className={`text-2xl ${tier.color} mb-2`} />
                     <p className={`font-black text-sm ${tier.color}`}>{tier.name}</p>
                     <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">

@@ -23,3 +23,13 @@ export const getLoyaltyMeApi = async (): Promise<LoyaltyData> => {
   const { data } = await axiosInstance.get(`/pza/me`);
   return data.data;
 };
+
+export const claimStreakApi = async () => {
+  const { data } = await axiosInstance.post(`/pza/streak/claim`);
+  return data.data;
+};
+
+export const claimTaskApi = async (taskId: string, points: number) => {
+  const { data } = await axiosInstance.post(`/pza/task/claim`, { task_id: taskId, points });
+  return data.data;
+};

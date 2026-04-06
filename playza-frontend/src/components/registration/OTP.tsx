@@ -110,6 +110,7 @@ const OTP = ({ onClick }: OtpProps) => {
               referralCode: user.referral_code,
             },
             session.access_token,
+            session.refresh_token,
           );
           const redirectTo = searchParams.get("redirect") || "/";
           navigate(redirectTo);
