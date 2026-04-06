@@ -231,3 +231,28 @@ create trigger pool_rooms_updated_at before update on pool_rooms
   for each row execute function update_updated_at();
 
 alter table pool_rooms enable row level security;
+
+
+-- USER STREAKS
+create table if not exists user_streaks (
+  id uuid primary key default uuid_generate_v4(),
+  user_id uuid unique not null references users(id) on delete cascade,
+  streak_days integer default 0,
+  last_claimed_at timestamptz,
+  streak_reward_claimed_today boolean default false,
+  updated_at timestamptz default now()
+);
+
+alter table user_streaks enable row level security;
+
+-- CLAIMED TASKS
+create table if not exists claimed_tasks (
+  id uuid primary key default uuid_generate_v4(),
+  user_id uuid not null references users(id) on delete cascade,
+  task_id text not null,
+  points_awarded integer not null,
+  claimed_at timestamptz default now(),
+  unique(user_id, task_id)
+);
+
+alter table claimed_tasks enable row level security;

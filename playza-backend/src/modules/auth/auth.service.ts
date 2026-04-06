@@ -203,3 +203,24 @@ export async function forgotPassword(email: string) {
   if (error) throw error
   return { message: 'Password reset link sent to your email' }
 }
+
+export async function refreshToken(refreshToken: string) {
+  const { data, error } = await supabase.auth.refreshSession({ refresh_token: refreshToken })
+  if (error) throw error
+  if (!data.session) throw new Error('Could not refresh session')
+
+  return {
+    access_token: data.session.access_token,
+    refresh_token: data.session.refresh_token,
+    expires_in: data.session.expires_in,
+  }
+}
+
+export async function logout(accessToken: string) {
+  const { error } = await supabase.auth.admin.signOut(accessToken)
+  if (error) {
+    // Non-critical — token may already be expired, still clear client side
+    console.warn('Logout warning:', error.message)
+  }
+  return { message: 'Logged out successfully' }
+}
