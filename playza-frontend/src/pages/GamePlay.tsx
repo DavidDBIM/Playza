@@ -146,8 +146,7 @@ const GamePlay = () => {
                     src={game.iframeUrl} 
                     className="w-full h-full border-none shadow-2xl" 
                     title={game.title}
-                    allow="autoplay; fullscreen; keyboard; gamepad"
-                    allowFullScreen
+                    allow="autoplay; fullscreen; gamepad"
                     onLoad={() => setIsLoading(false)}
                 />
             </div>

@@ -626,7 +626,7 @@ export const games: Game[] = [
     updatedAt: "2026-03-01T00:00:00Z",
   },
   {
-    id: "33",
+    id: "34",
     title: "Dungeon Explorer",
     slug: "dungeon-explorer",
     thumbnail: "/games/dominion-arena.jpeg",
