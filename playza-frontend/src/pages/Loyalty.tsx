@@ -4,7 +4,6 @@ import { useAuth } from "@/context/auth";
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
 import { LoyaltySkeleton } from "@/components/skeletons/LoyaltySkeleton";
-import { useQueryClient } from "@tanstack/react-query";
 import {
   MdCheckCircle, MdLock, MdMilitaryTech, MdAccountCircle,
   MdSportsEsports, MdAccountBalanceWallet, MdConfirmationNumber,
@@ -15,7 +14,8 @@ import {
 } from "react-icons/md";
 import { Zap, Trophy, Target, Flame, Star, Users, Shield, Gift } from "lucide-react";
 import type { PzaEvent, ClaimedTask } from "@/api/loyalty.api";
-import { claimStreakApi, claimTaskApi } from "@/api/loyalty.api";
+import { useClaimStreak } from "@/hooks/loyalty/useClaimStreak";
+import { useClaimTask } from "@/hooks/loyalty/useClaimTask";
 
 interface Task {
   id: string;
@@ -42,11 +42,11 @@ const TASK_CATEGORIES: TaskCategory[] = [
     icon: <Target className="w-4 h-4" />,
     color: "blue",
     tasks: [
-      { id: "signup", name: "Genesis Join", desc: "Join the Playza ecosystem", points: 5, icon: <MdStars />, auto: true },
-      { id: "email_verified", name: "Verify Email", desc: "Confirm your email address", points: 10, icon: <MdVerified />, auto: true },
-      { id: "phone_verified", name: "Verify Phone", desc: "Add and verify your phone number", points: 10, icon: <MdPhonelinkRing />, auto: true },
-      { id: "profile_completed", name: "Complete Profile", desc: "Fill in your bio and details", points: 30, icon: <MdAccountCircle />, link: "/profile/settings" },
-      { id: "avatar_uploaded", name: "Upload Avatar", desc: "Set your profile picture", points: 20, icon: <MdToken />, link: "/profile/settings" },
+      { id: "SIGNUP", name: "Genesis Join", desc: "Join the Playza ecosystem", points: 5, icon: <MdStars />, auto: true },
+      { id: "EMAIL_VERIFIED", name: "Verify Email", desc: "Confirm your email address", points: 10, icon: <MdVerified />, auto: true },
+      { id: "PHONE_VERIFIED", name: "Verify Phone", desc: "Add and verify your phone number", points: 10, icon: <MdPhonelinkRing />, auto: true },
+      { id: "PROFILE_COMPLETED", name: "Complete Profile", desc: "Fill in your bio and details", points: 30, icon: <MdAccountCircle />, link: "/profile/settings" },
+      { id: "AVATAR_UPLOADED", name: "Upload Avatar", desc: "Set your profile picture", points: 20, icon: <MdToken />, link: "/profile/settings" },
     ],
   },
   {
@@ -55,13 +55,13 @@ const TASK_CATEGORIES: TaskCategory[] = [
     icon: <Zap className="w-4 h-4" />,
     color: "purple",
     tasks: [
-      { id: "first_game_played", name: "First Match", desc: "Play your very first game", points: 200, icon: <MdSportsEsports />, link: "/games" },
-      { id: "first_ticket_bought", name: "Buy First Ticket", desc: "Purchase a game entry ticket", points: 50, icon: <MdShoppingBag />, link: "/games" },
-      { id: "match_completed", name: "Complete a Duel", desc: "Finish a competitive duel", points: 1000, icon: <MdSportsEsports />, link: "/h2h" },
-      { id: "match_won", name: "Win a Match", desc: "Claim your first victory", points: 1000, icon: <MdEmojiEvents />, link: "/games" },
-      { id: "win_streak_3", name: "Hot Streak", desc: "Win 3 matches in a row", points: 200, icon: <MdStars />, link: "/games" },
-      { id: "five_games_played", name: "5 Games Played", desc: "Complete 5 total matches", points: 1000, icon: <MdSportsEsports />, link: "/games" },
-      { id: "ten_games_played", name: "10 Games Played", desc: "Complete 10 total matches", points: 2000, icon: <MdSportsEsports />, link: "/games" },
+      { id: "FIRST_GAME_PLAYED", name: "First Match", desc: "Play your very first game", points: 200, icon: <MdSportsEsports />, link: "/games" },
+      { id: "FIRST_TICKET_BOUGHT", name: "Buy First Ticket", desc: "Purchase a game entry ticket", points: 50, icon: <MdShoppingBag />, link: "/games" },
+      { id: "MATCH_COMPLETED", name: "Complete a Duel", desc: "Finish a competitive duel", points: 1000, icon: <MdSportsEsports />, link: "/h2h" },
+      { id: "MATCH_WON", name: "Win a Match", desc: "Claim your first victory", points: 1000, icon: <MdEmojiEvents />, link: "/games" },
+      { id: "WIN_STREAK_3", name: "Hot Streak", desc: "Win 3 matches in a row", points: 200, icon: <MdStars />, link: "/games" },
+      { id: "FIVE_GAMES_PLAYED", name: "5 Games Played", desc: "Complete 5 total matches", points: 1000, icon: <MdSportsEsports />, link: "/games" },
+      { id: "TEN_GAMES_PLAYED", name: "10 Games Played", desc: "Complete 10 total matches", points: 2000, icon: <MdSportsEsports />, link: "/games" },
     ],
   },
   {
@@ -70,12 +70,12 @@ const TASK_CATEGORIES: TaskCategory[] = [
     icon: <Trophy className="w-4 h-4" />,
     color: "amber",
     tasks: [
-      { id: "tournament_joined", name: "Join Tournament", desc: "Enter a scheduled tournament", points: 100, icon: <MdEvent />, link: "/tournaments" },
-      { id: "tournament_finished", name: "Finish Tournament", desc: "Complete a full tournament", points: 1000, icon: <MdEmojiEvents />, link: "/tournaments" },
-      { id: "tournament_won", name: "Win Tournament", desc: "Claim a tournament champion title", points: 2000, icon: <MdEmojiEvents />, link: "/tournaments" },
-      { id: "weekend_challenge", name: "Weekend Challenge", desc: "Complete a weekend challenge event", points: 200, icon: <MdEvent />, link: "/tournaments" },
-      { id: "holiday_tournament", name: "Holiday Event", desc: "Win a special holiday tournament", points: 500, icon: <MdEvent />, link: "/tournaments" },
-      { id: "weekly_leaderboard_top", name: "Top Leaderboard", desc: "Reach top of weekly leaderboard", points: 1000, icon: <MdEmojiEvents />, link: "/leaderboard" },
+      { id: "TOURNAMENT_JOINED", name: "Join Tournament", desc: "Enter a scheduled tournament", points: 100, icon: <MdEvent />, link: "/tournaments" },
+      { id: "TOURNAMENT_FINISHED", name: "Finish Tournament", desc: "Complete a full tournament", points: 1000, icon: <MdEmojiEvents />, link: "/tournaments" },
+      { id: "TOURNAMENT_WON", name: "Win Tournament", desc: "Claim a tournament champion title", points: 2000, icon: <MdEmojiEvents />, link: "/tournaments" },
+      { id: "WEEKEND_CHALLENGE", name: "Weekend Challenge", desc: "Complete a weekend challenge event", points: 200, icon: <MdEvent />, link: "/tournaments" },
+      { id: "HOLIDAY_TOURNAMENT", name: "Holiday Event", desc: "Win a special holiday tournament", points: 500, icon: <MdEvent />, link: "/tournaments" },
+      { id: "WEEKLY_LEADERBOARD_TOP", name: "Top Leaderboard", desc: "Reach top of weekly leaderboard", points: 1000, icon: <MdEmojiEvents />, link: "/leaderboard" },
     ],
   },
   {
@@ -84,21 +84,21 @@ const TASK_CATEGORIES: TaskCategory[] = [
     icon: <Users className="w-4 h-4" />,
     color: "green",
     tasks: [
-      { id: "referral_signed_up", name: "First Referral", desc: "Refer your first friend to Playza", points: 10, icon: <MdGroups />, link: "/referral" },
-      { id: "referral_email_verified", name: "Referral Verified", desc: "Your referral verifies their email", points: 10, icon: <MdVerified />, link: "/referral" },
-      { id: "referral_first_game", name: "Referral Plays", desc: "Your referral plays their first game", points: 200, icon: <MdSportsEsports />, link: "/referral" },
-      { id: "referral_five_games", name: "Referral x5 Games", desc: "Your referral plays 5 games", points: 500, icon: <MdSportsEsports />, link: "/referral" },
-      { id: "referral_ten_games", name: "Referral x10 Games", desc: "Your referral plays 10 games", points: 1000, icon: <MdSportsEsports />, link: "/referral" },
-      { id: "referral_first_deposit", name: "Referral Deposits", desc: "Your referral makes first deposit", points: 200, icon: <MdAccountBalanceWallet />, link: "/referral" },
-      { id: "referral_deposit_1k", name: "Referral ₦1k Deposit", desc: "Referral deposits over ₦1,000", points: 500, icon: <MdAccountBalanceWallet />, link: "/referral" },
-      { id: "referral_deposit_10k", name: "Referral ₦10k Deposit", desc: "Referral deposits over ₦10,000", points: 5000, icon: <MdAccountBalanceWallet />, link: "/referral" },
-      { id: "referral_milestone_1", name: "1 Referral", desc: "Reach first referral milestone", points: 5, icon: <MdGroups />, link: "/referral" },
-      { id: "referral_milestone_10", name: "10 Referrals", desc: "Refer 10 active members", points: 50, icon: <MdGroups />, link: "/referral" },
-      { id: "referral_milestone_50", name: "50 Referrals", desc: "Refer 50 active members", points: 200, icon: <MdGroups />, link: "/referral" },
-      { id: "referral_milestone_100", name: "100 Referrals", desc: "Refer 100 active members", points: 500, icon: <MdGroups />, link: "/referral" },
-      { id: "referral_milestone_500", name: "500 Referrals", desc: "Refer 500 active members", points: 1000, icon: <MdGroups />, link: "/referral" },
-      { id: "referral_milestone_1000", name: "1,000 Referrals", desc: "Refer 1,000 active members", points: 5000, icon: <MdGroups />, link: "/referral" },
-      { id: "referral_milestone_5000", name: "5,000 Referrals", desc: "Refer 5,000 active members", points: 10000, icon: <MdGroups />, link: "/referral" },
+      { id: "REFERRAL_SIGNED_UP", name: "First Referral", desc: "Refer your first friend to Playza", points: 10, icon: <MdGroups />, link: "/referral" },
+      { id: "REFERRAL_EMAIL_VERIFIED", name: "Referral Verified", desc: "Your referral verifies their email", points: 10, icon: <MdVerified />, link: "/referral" },
+      { id: "REFERRAL_FIRST_GAME", name: "Referral Plays", desc: "Your referral plays their first game", points: 200, icon: <MdSportsEsports />, link: "/referral" },
+      { id: "REFERRAL_FIVE_GAMES", name: "Referral x5 Games", desc: "Your referral plays 5 games", points: 500, icon: <MdSportsEsports />, link: "/referral" },
+      { id: "REFERRAL_TEN_GAMES", name: "Referral x10 Games", desc: "Your referral plays 10 games", points: 1000, icon: <MdSportsEsports />, link: "/referral" },
+      { id: "REFERRAL_FIRST_DEPOSIT", name: "Referral Deposits", desc: "Your referral makes first deposit", points: 200, icon: <MdAccountBalanceWallet />, link: "/referral" },
+      { id: "REFERRAL_DEPOSIT_1K", name: "Referral ₦1k Deposit", desc: "Referral deposits over ₦1,000", points: 500, icon: <MdAccountBalanceWallet />, link: "/referral" },
+      { id: "REFERRAL_DEPOSIT_10K", name: "Referral ₦10k Deposit", desc: "Referral deposits over ₦10,000", points: 5000, icon: <MdAccountBalanceWallet />, link: "/referral" },
+      { id: "REFERRAL_MILESTONE_1", name: "1 Referral", desc: "Reach first referral milestone", points: 5, icon: <MdGroups />, link: "/referral" },
+      { id: "REFERRAL_MILESTONE_10", name: "10 Referrals", desc: "Refer 10 active members", points: 50, icon: <MdGroups />, link: "/referral" },
+      { id: "REFERRAL_MILESTONE_50", name: "50 Referrals", desc: "Refer 50 active members", points: 200, icon: <MdGroups />, link: "/referral" },
+      { id: "REFERRAL_MILESTONE_100", name: "100 Referrals", desc: "Refer 100 active members", points: 500, icon: <MdGroups />, link: "/referral" },
+      { id: "REFERRAL_MILESTONE_500", name: "500 Referrals", desc: "Refer 500 active members", points: 1000, icon: <MdGroups />, link: "/referral" },
+      { id: "REFERRAL_MILESTONE_1000", name: "1,000 Referrals", desc: "Refer 1,000 active members", points: 5000, icon: <MdGroups />, link: "/referral" },
+      { id: "REFERRAL_MILESTONE_5000", name: "5,000 Referrals", desc: "Refer 5,000 active members", points: 10000, icon: <MdGroups />, link: "/referral" },
     ],
   },
   {
@@ -107,12 +107,12 @@ const TASK_CATEGORIES: TaskCategory[] = [
     icon: <Shield className="w-4 h-4" />,
     color: "rose",
     tasks: [
-      { id: "comment_on_match", name: "Comment on Match", desc: "Leave a comment on any match", points: 100, icon: <MdOutlineForum /> },
-      { id: "like_share_content", name: "Like & Share", desc: "Like or share a platform event", points: 50, icon: <MdThumbUp /> },
-      { id: "join_community_event", name: "Community Event", desc: "Join a community live event", points: 500, icon: <MdOutlineForum /> },
-      { id: "valid_cheat_report", name: "Report Cheater", desc: "Submit a valid cheat report", points: 1000, icon: <MdReportProblem /> },
-      { id: "content_created", name: "Create Content", desc: "Create recognized content or art", points: 2000, icon: <MdVideoLibrary /> },
-      { id: "weekly_referral_campaign", name: "Referral Campaign", desc: "Win a weekly referral race", points: 1000, icon: <MdStars /> },
+      { id: "MATCH_COMMENT", name: "Comment on Match", desc: "Leave a comment on any match", points: 10, icon: <MdOutlineForum /> },
+      { id: "CONTENT_LIKED_SHARED", name: "Like & Share", desc: "Like or share a platform event", points: 5, icon: <MdThumbUp /> },
+      { id: "COMMUNITY_EVENT_JOINED", name: "Community Event", desc: "Join a community live event", points: 50, icon: <MdOutlineForum /> },
+      { id: "CHEATER_REPORTED", name: "Report Cheater", desc: "Submit a valid cheat report", points: 200, icon: <MdReportProblem /> },
+      { id: "CONTENT_CREATED", name: "Create Content", desc: "Create recognized content or art", points: 500, icon: <MdVideoLibrary /> },
+      { id: "REFERRAL_CAMPAIGN_JOINED", name: "Referral Campaign", desc: "Win a weekly referral race", points: 100, icon: <MdStars /> },
     ],
   },
   {
@@ -121,15 +121,15 @@ const TASK_CATEGORIES: TaskCategory[] = [
     icon: <Star className="w-4 h-4" />,
     color: "cyan",
     tasks: [
-      { id: "rank_bronze", name: "Bronze Rank", desc: "Reach Bronze tier (0 - 4,999 PZA)", points: 500, icon: <MdMilitaryTech />, auto: true },
-      { id: "rank_silver", name: "Silver Rank", desc: "Reach Silver tier (5,000 - 24,999 PZA)", points: 3000, icon: <MdMilitaryTech />, auto: true },
-      { id: "rank_gold", name: "Gold Rank", desc: "Reach Gold tier (25,000 - 99,999 PZA)", points: 20000, icon: <MdMilitaryTech />, auto: true },
-      { id: "rank_platinum", name: "Platinum Rank", desc: "Reach Platinum tier (100,000+ PZA)", points: 100000, icon: <MdMilitaryTech />, auto: true },
-      { id: "streak_3_games", name: "3-Day Streak", desc: "Play 3 consecutive days", points: 30, icon: <Flame className="w-4 h-4" />, auto: true },
-      { id: "streak_7_games", name: "7-Day Streak", desc: "Play 7 consecutive days", points: 80, icon: <Flame className="w-4 h-4" />, auto: true },
-      { id: "streak_14_games", name: "14-Day Streak", desc: "Play 14 consecutive days", points: 150, icon: <Flame className="w-4 h-4" />, auto: true },
-      { id: "streak_21_games", name: "21-Day Streak", desc: "Play 21 consecutive days", points: 250, icon: <Flame className="w-4 h-4" />, auto: true },
-      { id: "streak_30_games", name: "30-Day Streak", desc: "Play 30 consecutive days", points: 500, icon: <Flame className="w-4 h-4" />, auto: true },
+      { id: "RANK_BRONZE", name: "Bronze Rank", desc: "Reach Bronze tier (0 - 4,999 PZA)", points: 500, icon: <MdMilitaryTech />, auto: true },
+      { id: "RANK_SILVER", name: "Silver Rank", desc: "Reach Silver tier (5,000 - 24,999 PZA)", points: 3000, icon: <MdMilitaryTech />, auto: true },
+      { id: "RANK_GOLD", name: "Gold Rank", desc: "Reach Gold tier (25,000 - 99,999 PZA)", points: 20000, icon: <MdMilitaryTech />, auto: true },
+      { id: "RANK_PLATINUM", name: "Platinum Rank", desc: "Reach Platinum tier (100,000+ PZA)", points: 100000, icon: <MdMilitaryTech />, auto: true },
+      { id: "STREAK_3_GAMES", name: "3-Day Streak", desc: "Play 3 consecutive days", points: 30, icon: <Flame className="w-4 h-4" />, auto: true },
+      { id: "STREAK_7_GAMES", name: "7-Day Streak", desc: "Play 7 consecutive days", points: 80, icon: <Flame className="w-4 h-4" />, auto: true },
+      { id: "STREAK_14_GAMES", name: "14-Day Streak", desc: "Play 14 consecutive days", points: 150, icon: <Flame className="w-4 h-4" />, auto: true },
+      { id: "STREAK_21_GAMES", name: "21-Day Streak", desc: "Play 21 consecutive days", points: 250, icon: <Flame className="w-4 h-4" />, auto: true },
+      { id: "STREAK_30_GAMES", name: "30-Day Streak", desc: "Play 30 consecutive days", points: 500, icon: <Flame className="w-4 h-4" />, auto: true },
     ],
   },
 ];
@@ -164,11 +164,10 @@ const STREAK_REWARDS = [
 
 export default function Loyalty() {
   const { user } = useAuth();
-  const { data: loyaltyData, isLoading, refetch } = useLoyaltyMe();
-  const queryClient = useQueryClient();
+  const { data: loyaltyData, isLoading } = useLoyaltyMe();
+  const { mutate: performClaimStreak, isPending: claimingStreak } = useClaimStreak();
+  const { mutate: performClaimTask, isPending: isMutationPending, variables: mutationVariables } = useClaimTask();
   const [activeCategory, setActiveCategory] = useState("onboarding");
-  const [claimingStreak, setClaimingStreak] = useState(false);
-  const [claimingTask, setClaimingTask] = useState<string | null>(null);
   const [tierModal, setTierModal] = useState(false);
   const [countdown, setCountdown] = useState<string>('');
 
@@ -188,8 +187,9 @@ export default function Loyalty() {
   }, [lastClaimedAt]);
 
   useEffect(() => {
-    setCountdown(computeCountdown());
-    const timer = setInterval(() => setCountdown(computeCountdown()), 1000);
+    const update = () => setCountdown(computeCountdown());
+    update();
+    const timer = setInterval(update, 1000);
     return () => clearInterval(timer);
   }, [computeCountdown]);
 
@@ -212,28 +212,23 @@ export default function Loyalty() {
   const totalTasksInCategory = activeCategory_.tasks.length;
 
   async function claimStreak() {
-    setClaimingStreak(true);
-    try {
-      await claimStreakApi();
-      await refetch();
-    } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'An unknown error occurred');
-    } finally {
-      setClaimingStreak(false);
-    }
+    performClaimStreak(undefined, {
+      onSuccess: () => alert("Daily reward claimed!"),
+      onError: (err: unknown) => {
+        const msg = err instanceof Error ? err.message : "Failed to claim reward";
+        alert(msg);
+      },
+    });
   }
 
-  async function claimTask(taskId: string, points: number) {
-    setClaimingTask(taskId);
-    try {
-      await claimTaskApi(taskId, points);
-      await refetch();
-      queryClient.invalidateQueries({ queryKey: ['loyalty', 'me'] });
-    } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'An unknown error occurred');
-    } finally {
-      setClaimingTask(null);
-    }
+  async function claimTask(taskId: string) {
+    performClaimTask(taskId, {
+      onSuccess: () => alert("Task Reward claimed!"),
+      onError: (err: unknown) => {
+        const msg = err instanceof Error ? err.message : "Failed to claim reward";
+        alert(msg);
+      },
+    });
   }
 
   function getTaskStatus(task: Task): 'completed' | 'claimable' | 'active' | 'locked' {
@@ -376,7 +371,7 @@ export default function Loyalty() {
         <div className="divide-y divide-slate-100 dark:divide-slate-800">
           {sortedTasks.map((task) => {
             const status = getTaskStatus(task);
-            const isClaiming = claimingTask === task.id;
+            const isClaiming = isMutationPending && mutationVariables === task.id;
             const isCompleted = status === 'completed';
             const isClaimable = status === 'claimable';
             const isLocked = status === 'locked';
@@ -407,7 +402,7 @@ export default function Loyalty() {
                       <MdCheckCircle className="text-emerald-500 text-lg" />
                     </div>
                   ) : isClaimable ? (
-                    <button onClick={() => claimTask(task.id, task.points)} disabled={isClaiming}
+                    <button onClick={() => claimTask(task.id)} disabled={isClaiming}
                       className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-xs font-bold transition-all disabled:opacity-50 shadow-sm shadow-emerald-500/30">
                       {isClaiming ? '…' : 'Claim'}
                     </button>
