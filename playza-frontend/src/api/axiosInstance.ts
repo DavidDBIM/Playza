@@ -1,6 +1,6 @@
 import axios from "axios";
 
-// ── Token storage helpers ──────────────────────────────────────────────────
+// ── Token storage helpers
 export const TokenStorage = {
   getAccessToken: () => localStorage.getItem("playza_token"),
   getRefreshToken: () => localStorage.getItem("playza_refresh_token"),
@@ -20,7 +20,7 @@ const axiosInstance = axios.create({
   withCredentials: true,
 });
 
-// ── Request interceptor: attach access token ───────────────────────────────
+// ── Request interceptor: attach access token
 axiosInstance.interceptors.request.use(
   (config) => {
     const token = TokenStorage.getAccessToken();
@@ -32,7 +32,7 @@ axiosInstance.interceptors.request.use(
   (error) => Promise.reject(error),
 );
 
-// ── Track in-flight refresh to avoid parallel refresh storms ──────────────
+// ── Track in-flight refresh to avoid parallel refresh storms 
 let isRefreshing = false;
 let pendingQueue: Array<{
   resolve: (token: string) => void;
@@ -46,7 +46,7 @@ function processPendingQueue(err: unknown, token: string | null) {
   pendingQueue = [];
 }
 
-// ── Response interceptor: silent refresh on 401 ────────────────────────────
+// ── Response interceptor: silent refresh on 401 
 axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -69,14 +69,20 @@ axiosInstance.interceptors.response.use(
 
     const status = error.response?.status;
 
-    // ── 401 handling ──────────────────────────────────────────────────────
+    // ── 401 handling 
     if (status === 401 && !originalRequest._retry) {
       const refreshToken = TokenStorage.getRefreshToken();
 
       // No refresh token available → clear & redirect
       if (!refreshToken) {
         TokenStorage.clearTokens();
-        if (window.location.pathname !== "/") window.location.href = "/";
+        // Do NOT redirect if we are on the registration/login page or if it's a sign-in attempt
+        const isAuthPage = window.location.pathname.includes("/registration");
+        const isSigninRequest = originalRequest.url?.includes("/auth/signin");
+
+        if (!isAuthPage && !isSigninRequest && window.location.pathname !== "/") {
+          window.location.href = "/";
+        }
         return Promise.reject(new Error(message));
       }
 

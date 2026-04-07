@@ -64,8 +64,8 @@ const LogIn = ({ onClick }: LogInProps) => {
 
   return (
     <div className="w-full max-w-md">
-      <div className="glass-card p-4 md:p-10 rounded-2xl shadow-md relative overflow-hidden border border-slate-200 dark:border-white/10">
-        <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-transparent via-primary to-transparent opacity-50"></div>
+      <div className="p-4 md:p-10 relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-transparent via-primary to-transparent opacity-30"></div>
 
         <div className="text-center mb-10">
           <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-3 tracking-tighter uppercase font-display">

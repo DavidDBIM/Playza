@@ -108,6 +108,11 @@ const OTP = ({ onClick }: OtpProps) => {
               email: user.email,
               phone: user.phone,
               referralCode: user.referral_code,
+              avatarUrl: user.avatar_url,
+              firstName: user.first_name,
+              lastName: user.last_name,
+              pzaPoints: user.pza_points,
+              isEmailVerified: user.is_email_verified,
             },
             session.access_token,
             session.refresh_token,
@@ -166,9 +171,9 @@ const OTP = ({ onClick }: OtpProps) => {
 
   return (
     <div className="w-full max-w-xl">
-      <div className="glass-card p-4 md:p-10 rounded-2xl shadow-xl relative overflow-hidden border border-slate-200 dark:border-white/10 text-center">
+      <div className="p-4 md:p-10 relative overflow-hidden text-center">
         {/* Decorative accent line */}
-        <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-transparent via-primary to-transparent opacity-50"></div>
+        <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-transparent via-primary to-transparent opacity-30"></div>
 
         <div className="bg-primary/10 w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center mx-auto mb-8 border border-primary/20 shadow-inner">
           <ShieldCheck className="text-primary" size={32} />

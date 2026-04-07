@@ -4,8 +4,8 @@ import { MdLockReset } from "react-icons/md";
 const NewPassword = ({ onClick }: { onClick: (value: string) => void }) => {
   return (
     <div className="w-full max-w-lg">
-      <div className="glass-card rounded-2xl p-4 md:p-10 shadow-xl relative overflow-hidden border border-slate-200 dark:border-white/5">
-        <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-transparent via-primary to-transparent opacity-50"></div>
+      <div className="p-4 md:p-10 relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-transparent via-primary to-transparent opacity-30"></div>
         <div className="text-center mb-10">
           <div className="inline-flex items-center justify-center p-4 bg-primary/10 rounded-full mb-4">
             <MdLockReset className="text-primary text-3xl" />
