@@ -127,6 +127,7 @@ const H2HLobby = ({ onCreate, onBotCreate, onJoin, onQuickMatch, getWaitingRooms
   const isBtnLoading = loading || isFinding;
 
   const games: GameType[] = [
+    { id: 'arena-duel', name: 'Arena Duel', icon: Swords, players: '1.5k', color: 'from-orange-500 to-red-600' },
     { id: 'chess', name: 'Grand Chess', icon: Swords, players: '2.4k', color: 'from-indigo-500 to-purple-600' },
     { id: 'speed-battle', name: 'Speed Battle', icon: Zap, players: '1.2k', color: 'from-blue-500 to-indigo-600' },
     { id: 'word-scramble', name: 'Word Scramble', icon: Trophy, players: '900', color: 'from-purple-500 to-pink-600' },

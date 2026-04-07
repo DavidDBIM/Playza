@@ -6,6 +6,7 @@ import ChessArena from '@/components/h2h/chess/ChessArena';
 import SpeedBattleArena from '@/components/h2h/speed-battle/SpeedBattleArena';
 import WordScrambleArena from '@/components/h2h/word-scramble/WordScrambleArena';
 import PoolArena from '@/components/h2h/pool/PoolArena';
+import ArenaDuel from '@/components/h2h/arena-duel/ArenaDuel';
 import H2HWinner from '@/components/h2h/H2HWinner';
 import * as chessApi from '@/api/chess.api';
 import { poolApi } from '@/api/poolApi';
@@ -36,6 +37,10 @@ const H2HZone = () => {
 
   const handleCreateRoom = async (stake: number) => {
     try {
+      if (gameType === "arena-duel") {
+        navigate(`/h2h/${gameType}/match-local`);
+        return;
+      }
       const data = await createRoom.mutateAsync(stake) as { room_id?: string; id?: string };
       navigate(`/h2h/${gameType}/${data.room_id || data.id}`);
     } catch (err) {
@@ -65,6 +70,10 @@ const H2HZone = () => {
 
   const handleCreateBotRoom = async (stake: number) => {
     try {
+      if (gameType === "arena-duel") {
+        navigate(`/h2h/${gameType}/match-bot`);
+        return;
+      }
       const data = await createBotRoom.mutateAsync(stake) as { room_id?: string; id?: string };
       navigate(`/h2h/${gameType}/${data.room_id || data.id}`);
     } catch (err) {
@@ -95,7 +104,7 @@ const H2HZone = () => {
             }
             loading={loading}
           />
-        ) : !room ? (
+        ) : (!room && gameType !== "arena-duel") ? (
           <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6">
             <div className="w-10 h-10 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
             <div className="text-center">
@@ -110,6 +119,9 @@ const H2HZone = () => {
         ) : (
           <div className="w-full">
             {(() => {
+              if (gameType === "arena-duel" && !room) {
+                return <ArenaDuel />;
+              }
               switch (room.status) {
                 case "waiting":
                   return (
@@ -151,6 +163,10 @@ const H2HZone = () => {
                           room={room as unknown as PoolRoom}
                           user={user}
                         />
+                      );
+                    if (gameType === "arena-duel")
+                      return (
+                        <ArenaDuel key={room.id} />
                       );
                     return (
                       <ChessArena

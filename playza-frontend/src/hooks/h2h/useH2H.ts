@@ -4,7 +4,7 @@ import { speedBattleApi } from "@/api/speedbattle.api";
 import { wordScrambleApi } from "@/api/wordscramble.api";
 import { poolApi } from "@/api/poolApi";
 
-export type GameType = "chess" | "speed-battle" | "word-scramble" | "pool";
+export type GameType = "chess" | "speed-battle" | "word-scramble" | "pool" | "arena-duel";
 
 export interface GameApi {
   getRoom?: (roomId: string) => Promise<unknown>;
