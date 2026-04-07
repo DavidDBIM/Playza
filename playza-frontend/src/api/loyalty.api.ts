@@ -30,7 +30,7 @@ export const claimStreakApi = async () => {
   return data.data;
 };
 
-export const claimTaskApi = async (taskId: string, points: number) => {
-  const { data } = await axiosInstance.post(`/pza/task/claim`, { task_id: taskId, points });
+export const claimTaskApi = async (taskId: string) => {
+  const { data } = await axiosInstance.post(`/pza/task/claim`, { task_id: taskId });
   return data.data;
 };

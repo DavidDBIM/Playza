@@ -1,7 +1,7 @@
 import { Router } from 'express'
-import { supabaseAdmin } from '../../config/supabase'
-import { requireAuth, AuthRequest } from '../../middleware/auth'
-import { awardPZA, PZAEvent } from '../../lib/pzaEngine'
+import { supabaseAdmin } from "../config/supabase";
+import { requireAuth, AuthRequest } from "../middleware/auth";
+import { awardPZA, PZAEvent, getPZAPoints } from "../lib/pzaEngine";
 
 const router = Router()
 
@@ -115,10 +115,17 @@ router.post('/streak/claim', requireAuth, async (req: AuthRequest, res) => {
 router.post('/task/claim', requireAuth, async (req: AuthRequest, res) => {
   try {
     const userId = req.user!.id
-    const { task_id, points } = req.body
+    const { task_id } = req.body
 
-    if (!task_id || !points) {
-      res.status(400).json({ success: false, message: 'task_id and points required' })
+    if (!task_id) {
+      res.status(400).json({ success: false, message: 'task_id required' })
+      return
+    }
+
+    // Get points from backend truth, not frontend
+    const points = getPZAPoints(task_id as PZAEvent)
+    if (!points && points !== 0) {
+      res.status(400).json({ success: false, message: `Invalid task_id: ${task_id}` })
       return
     }
 
@@ -134,6 +141,19 @@ router.post('/task/claim', requireAuth, async (req: AuthRequest, res) => {
       return
     }
 
+    // Ensure the event actually happened by checking pza_events
+    const { data: eventExists } = await supabaseAdmin
+      .from('pza_events')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('event_type', task_id)
+      .maybeSingle()
+
+    if (!eventExists) {
+      res.status(400).json({ success: false, message: 'Task criteria not yet met' })
+      return
+    }
+
     await supabaseAdmin.from('claimed_tasks').insert({
       user_id: userId,
       task_id,
@@ -143,12 +163,6 @@ router.post('/task/claim', requireAuth, async (req: AuthRequest, res) => {
     await supabaseAdmin.rpc('increment_pza_points', {
       p_user_id: userId,
       p_points: points,
-    })
-
-    await supabaseAdmin.from('pza_events').insert({
-      user_id: userId,
-      event_type: task_id,
-      points_awarded: points,
     })
 
     res.json({ success: true, data: { task_id, points_awarded: points } })

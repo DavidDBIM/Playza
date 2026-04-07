@@ -45,7 +45,7 @@ export type PZAEvent =
   | 'FIRST_100_TICKET'
   | 'FIRST_100_EVENT'
 
-const PZA_POINTS: Record<PZAEvent, number> = {
+export const PZA_POINTS: Record<PZAEvent, number> = {
   SIGNUP: 5,
   EMAIL_VERIFIED: 10,
   PROFILE_COMPLETED: 30,
@@ -89,6 +89,10 @@ const PZA_POINTS: Record<PZAEvent, number> = {
   DAILY_STREAK_CLAIM: 10,
   FIRST_100_TICKET: 1000,
   FIRST_100_EVENT: 200,
+}
+
+export function getPZAPoints(event: PZAEvent): number {
+  return PZA_POINTS[event] || 0
 }
 
 export async function awardPZA(userId: string, event: PZAEvent, multiplier = 1) {
