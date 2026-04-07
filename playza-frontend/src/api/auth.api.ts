@@ -37,6 +37,11 @@ export interface VerifyOtpResponse {
       username: string;
       phone: string;
       referral_code: string;
+      is_email_verified: boolean;
+      pza_points: number;
+      avatar_url?: string;
+      first_name?: string;
+      last_name?: string;
     };
   };
 }

@@ -169,8 +169,8 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
         Back to Home
       </Link>
 
-      <div className="glass-card p-4 md:p-10 rounded-2xl shadow-xl relative overflow-hidden border border-slate-200 dark:border-white/5 bg-white/40 dark:bg-slate-900/40 backdrop-blur-md">
-        <div className="absolute -top-24 -left-24 w-64 h-64 bg-primary/10 blur-[100px] rounded-full pointer-events-none"></div>
+      <div className="p-4 md:p-10 relative overflow-hidden">
+        <div className="absolute -top-24 -left-24 w-64 h-64 bg-primary/10 blur-[100px] rounded-full pointer-events-none opacity-40"></div>
 
         <div className="text-center mb-8 relative z-10">
           <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-2 tracking-tight uppercase">

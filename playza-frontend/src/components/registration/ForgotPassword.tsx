@@ -34,8 +34,8 @@ const ForgotPassword = ({ onClick }: { onClick: (value: string) => void }) => {
 
   return (
     <div className="w-full max-w-lg">
-      <div className="glass-card w-full rounded-2xl p-4 md:p-12 shadow-xl relative overflow-hidden border border-slate-200 dark:border-white/5">
-        <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-transparent via-primary to-transparent opacity-50"></div>
+      <div className="w-full p-4 md:p-12 relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-transparent via-primary to-transparent opacity-30"></div>
         <div className="flex flex-col items-center text-center mb-10">
           <div className="bg-primary/10 p-4 rounded-full mb-6">
             {isSuccess ? (
