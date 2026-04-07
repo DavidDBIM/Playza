@@ -15,18 +15,9 @@ interface WalletProps {
 
 const Wallet = ({ onWithdrawClick }: WalletProps) => {
   const { user, isProfileComplete } = useAuth();
-  const { balance, fetchBalance, loading } = useWallet();
+  const { data: balance, isLoading: loading } = useWallet();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchBalance();
-  }, [fetchBalance]);
-
-  useEffect(() => {
-    if (balance) {
-      console.log("[Wallet] Current balance state:", balance);
-    }
-  }, [balance]);
   useEffect(() => {
     if (!user) {
       navigate("/");

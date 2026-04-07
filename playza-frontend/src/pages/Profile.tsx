@@ -51,9 +51,6 @@ const Profile = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const isMobileSubRoute = location.pathname.includes("/profile/");
-  const showMobileContent = isMobileSubRoute;
-
   const isOverviewActive = isMobile
     ? location.pathname === "/profile/overview"
     : location.pathname === "/profile" ||
@@ -230,16 +227,8 @@ const Profile = () => {
         </div>
 
         {/* Dynamic Content Area */}
-        <div className="flex-1 md:block hidden">
+        <div className="flex-1 w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
           <Outlet />
-        </div>
-        <div
-          className="flex-1 md:hidden scroll-mt-24"
-          id="profile-content-mobile"
-        >
-          {showMobileContent && <Outlet />}
-
-          {/* Mobile Content Area */}
         </div>
       </div>
 
