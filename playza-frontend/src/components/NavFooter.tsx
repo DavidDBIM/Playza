@@ -199,10 +199,10 @@ const NavFooter = () => {
       <div
         aria-hidden
         onClick={closePanel}
-        className={`lg:hidden fixed inset-0 z-40 ${
+        className={`lg:hidden fixed inset-0 z-40 transition-all duration-300 ${
           openPanel
-            ? "bg-black/40 backdrop-blur-md pointer-events-auto"
-            : "bg-transparent pointer-events-none"
+            ? "bg-black/40 backdrop-blur-md pointer-events-auto opacity-100"
+            : "bg-transparent pointer-events-none opacity-0"
         }`}
       />
 
@@ -217,15 +217,15 @@ const NavFooter = () => {
           }
         `}</style>
 
-        {/* ══ GAMES Panel (slides up from gamepad) ══ */}
+        {/* ══ GAMES Panel ══ */}
         <div
-          className={`absolute bottom-20 left-0 right-0 ${
+          className={`absolute bottom-20 left-0 right-0 transition-all duration-300 cubic-bezier(0.4, 0, 0.2, 1) ${
             isGamesOpen
-              ? "opacity-100 translate-y-0 pointer-events-auto"
-              : "opacity-0 translate-y-6 pointer-events-none"
+              ? "opacity-100 translate-y-0 scale-100 pointer-events-auto"
+              : "opacity-0 translate-y-8 scale-95 pointer-events-none"
           }`}
         >
-          <div className="bg-white/98 dark:bg-slate-950/95 backdrop-blur-md rounded-2xl border border-slate-200 dark:border-primary/20 shadow-xl overflow-hidden">
+          <div className="bg-white/98 dark:bg-slate-950/95 backdrop-blur-md rounded-2xl border border-slate-200 dark:border-primary/20 shadow-2xl overflow-hidden">
             {/* Accent line */}
             <div className="absolute top-0 inset-x-0 h-0.5 bg-linear-to-r from-transparent via-primary/60 to-transparent" />
 
@@ -302,15 +302,15 @@ const NavFooter = () => {
           </div>
         </div>
 
-        {/* ══ MORE Panel (slides up from more button) ══ */}
+        {/* ══ MORE Panel ══ */}
         <div
-          className={`absolute bottom-20 left-0 right-0 ${
+          className={`absolute bottom-20 left-0 right-0 transition-all duration-300 cubic-bezier(0.4, 0, 0.2, 1) ${
             isMoreOpen
-              ? "opacity-100 translate-y-0 pointer-events-auto"
-              : "opacity-0 translate-y-6 pointer-events-none"
+              ? "opacity-100 translate-y-0 scale-100 pointer-events-auto"
+              : "opacity-0 translate-y-8 scale-95 pointer-events-none"
           }`}
         >
-          <div className="bg-white/98 dark:bg-slate-950/95 backdrop-blur-md rounded-2xl border border-slate-200 dark:border-primary/20 shadow-xl overflow-hidden">
+          <div className="bg-white/98 dark:bg-slate-950/95 backdrop-blur-md rounded-2xl border border-slate-200 dark:border-primary/20 shadow-2xl overflow-hidden">
             <div className="absolute top-0 inset-x-0 h-0.5 bg-linear-to-r from-transparent via-primary/60 to-transparent" />
 
             {/* Header */}

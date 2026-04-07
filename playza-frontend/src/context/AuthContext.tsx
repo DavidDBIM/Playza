@@ -3,45 +3,43 @@ import { AuthContext, type UserProfile } from "./auth";
 import { getMeApi } from "@/api/users.api";
 import { logoutApi } from "@/api/auth.api";
 import { TokenStorage } from "@/api/axiosInstance";
+import { useQuery } from "@tanstack/react-query";
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const token = TokenStorage.getAccessToken();
 
-  // Initialize auth state from localStorage
+  const { data: profile, isLoading, isError } = useQuery({
+    queryKey: ["users", "me"],
+    queryFn: getMeApi,
+    enabled: !!token,
+    retry: false,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+
+  // Sync user state with query data
   useEffect(() => {
-    const fetchUser = async () => {
-      const token = TokenStorage.getAccessToken();
-      if (token) {
-        try {
-          const profile = await getMeApi();
-
-          setUser({
-            id: profile.id,
-            username: profile.username,
-            email: profile.email,
-            phone: profile.phone,
-            referralCode: profile.referral_code || "",
-            firstName: profile.first_name,
-            lastName: profile.last_name,
-            avatarUrl: profile.avatar_url,
-            createdAt: profile.created_at,
-            pzaPoints: profile.wallet?.balance || 0,
-            wallet: profile.wallet,
-            isEmailVerified: profile.is_email_verified,
-            show_activity: profile.show_activity,
-          });
-        } catch (error) {
-          console.error("Auth initialization failed:", error);
-          TokenStorage.clearTokens();
-          setUser(null);
-        }
-      }
-      setIsLoading(false);
-    };
-
-    fetchUser();
-  }, []);
+    if (profile) {
+      setUser({
+        id: profile.id,
+        username: profile.username,
+        email: profile.email,
+        phone: profile.phone,
+        referralCode: profile.referral_code || "",
+        firstName: profile.first_name,
+        lastName: profile.last_name,
+        avatarUrl: profile.avatar_url,
+        createdAt: profile.created_at,
+        pzaPoints: profile.wallet?.balance || 0,
+        wallet: profile.wallet,
+        isEmailVerified: profile.is_email_verified,
+        show_activity: profile.show_activity,
+      });
+    } else if (isError) {
+      TokenStorage.clearTokens();
+      setUser(null);
+    }
+  }, [profile, isError]);
 
   /**
    * Persists both the access token and refresh token, then updates the user state.

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { LockOpen, Eye, EyeOff, CheckCircle2, AlertCircle } from "lucide-react";
 import { MdLockReset } from "react-icons/md";
-import axiosInstance from "@/api/axiosInstance";
+import { resetPasswordApi } from "@/api/auth.api";
 import { useNavigate } from "react-router";
 
 const NewPassword = ({ onClick }: { onClick: (value: string) => void }) => {
@@ -63,7 +63,7 @@ const NewPassword = ({ onClick }: { onClick: (value: string) => void }) => {
 
     setLoading(true);
     try {
-      await axiosInstance.post("/auth/reset-password", {
+      await resetPasswordApi({
         access_token: accessToken,
         new_password: newPassword,
       });
@@ -72,8 +72,8 @@ const NewPassword = ({ onClick }: { onClick: (value: string) => void }) => {
         onClick("login");
         navigate("/registration?view=login");
       }, 2500);
-    } catch (err: any) {
-      setError(err.message || "Failed to reset password. Please try again.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to reset password. Please try again.");
     } finally {
       setLoading(false);
     }

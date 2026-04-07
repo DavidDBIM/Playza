@@ -1,47 +1,61 @@
 import { Route, Routes, useLocation, useNavigate } from "react-router";
 
-import { useState} from "react";
-import Home from "./pages/Home";
+import { lazy, Suspense, useState } from "react";
 import Header from "./components/Header";
 import NavFooter from "./components/NavFooter";
-import LeaderBoard from "./pages/LeaderBoard";
-import Profile from "./pages/Profile";
-import Games from "./pages/Games";
 import SideBar from "./components/SideBar";
 import Footer from "./components/Footer";
-import Game from "./pages/Game";
-import MatchSession from "./pages/MatchSession";
-import GamePlay from "./pages/GamePlay";
-import H2HZone from "./pages/H2HZone";
-// Individual games are now handled dynamically by H2HZone
-import Registration from "./pages/Registration";
-import ResetPassword from "./pages/ResetPassword";
-
-import Wallet from "./pages/Wallet";
-import Transactions from "./pages/Transactions";
-import Deposit from "./pages/Deposit";
-import Withdrawal from "./pages/Withdrawal";
-import Overview from "./components/profile/Overview";
-import History from "./components/profile/History";
-import MyGames from "./pages/MyGames";
-import Settings from "./components/profile/Settings";
-import Achievements from "./components/profile/Achievements";
-import Security from "./components/profile/Security";
 import { ThemeProvider } from "./components/theme/ThemeProvider";
-import Tournaments from "./pages/Tournaments";
-import TournamentDetail from "./pages/TournamentDetail";
-import Referral from "./pages/Referral";
 import DepositModal from "./components/wallet/DepositModal";
 import WithdrawModal from "./components/wallet/WithdrawModal";
-import WithdrawSuccess from "./pages/WithdrawSuccess";
 import { AuthProvider } from "./context/AuthContext";
 import { ToastProvider } from "./context/ToastContext";
 import { useAuth } from "./context/auth";
 import { CompleteProfileModal } from "./components/profile/CompleteProfileModal";
-import TermsAndConditions from "./pages/TermsAndConditions";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import Loyalty from "./pages/Loyalty";
-import CategoryPage from "./pages/CategoryPage";
+
+// Lazy-loaded pages for better performance
+const Home = lazy(() => import("./pages/Home"));
+const LeaderBoard = lazy(() => import("./pages/LeaderBoard"));
+const Profile = lazy(() => import("./pages/Profile"));
+const Games = lazy(() => import("./pages/Games"));
+const Game = lazy(() => import("./pages/Game"));
+const MatchSession = lazy(() => import("./pages/MatchSession"));
+const GamePlay = lazy(() => import("./pages/GamePlay"));
+const H2HZone = lazy(() => import("./pages/H2HZone"));
+const Registration = lazy(() => import("./pages/Registration"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const Wallet = lazy(() => import("./pages/Wallet"));
+const Transactions = lazy(() => import("./pages/Transactions"));
+const Deposit = lazy(() => import("./pages/Deposit"));
+const Withdrawal = lazy(() => import("./pages/Withdrawal"));
+const MyGames = lazy(() => import("./pages/MyGames"));
+const Tournaments = lazy(() => import("./pages/Tournaments"));
+const TournamentDetail = lazy(() => import("./pages/TournamentDetail"));
+const Referral = lazy(() => import("./pages/Referral"));
+const WithdrawSuccess = lazy(() => import("./pages/WithdrawSuccess"));
+const TermsAndConditions = lazy(() => import("./pages/TermsAndConditions"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const Loyalty = lazy(() => import("./pages/Loyalty"));
+const CategoryPage = lazy(() => import("./pages/CategoryPage"));
+
+// Lazy-loaded profile subcomponents
+const Overview = lazy(() => import("./components/profile/Overview"));
+const History = lazy(() => import("./components/profile/History"));
+const Achievements = lazy(() => import("./components/profile/Achievements"));
+const Settings = lazy(() => import("./components/profile/Settings"));
+const Security = lazy(() => import("./components/profile/Security"));
+
+// Page loading skeleton
+const PageLoader = () => (
+  <div className="w-full h-[60vh] flex items-center justify-center">
+    <div className="flex flex-col items-center gap-4">
+      <div className="size-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+      <span className="text-xs font-black uppercase tracking-widest text-slate-500 animate-pulse">
+        Loading...
+      </span>
+    </div>
+  </div>
+);
 
 const AppContent = () => {
   const { pathname } = useLocation();
@@ -59,13 +73,12 @@ const AppContent = () => {
   const isGamePlayPage =
     pathname.includes("/play") ||
     // Only hide layout if we are in an active game room (e.g., /h2h/chess/room-id)
-    (pathname.startsWith("/h2h") && pathname.split("/").filter(Boolean).length >= 3);
+    (pathname.startsWith("/h2h") &&
+      pathname.split("/").filter(Boolean).length >= 3);
 
   const isRegistrationPage = pathname.includes("/registration");
 
   // const isGameDetailPage = pathname.startsWith(`/games/${id}`);
-
-
 
   const handleWithdrawClick = () => {
     if (!isProfileComplete) {
@@ -113,51 +126,52 @@ const AppContent = () => {
         )}
 
         <main className="flex-1 min-w-0 w-full ">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/leaderboard" element={<LeaderBoard />} />
-            <Route path="/tournaments" element={<Tournaments />} />
-            <Route path="/tournaments/:id" element={<TournamentDetail />} />
-            <Route
-              path="/wallet"
-              element={<Wallet onWithdrawClick={handleWithdrawClick} />}
-            />
-            <Route path="/games" element={<Games />} />
-            <Route path="/my-games" element={<MyGames />} />
-            <Route
-              path="/games/category/:category"
-              element={<CategoryPage />}
-            />
-            <Route path="/games/:id" element={<Game />} />
-            <Route path="/games/:id/session" element={<MatchSession />} />
-            <Route path="/games/:id/play" element={<GamePlay />} />
-            <Route path="/h2h" element={<H2HZone />} />
-            <Route path="/h2h/:gameType" element={<H2HZone />} />
-            <Route path="/h2h/:gameType/:roomId" element={<H2HZone />} />
-            <Route path="/registration" element={<Registration />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/leaderboard" element={<LeaderBoard />} />
+              <Route path="/tournaments" element={<Tournaments />} />
+              <Route path="/tournaments/:id" element={<TournamentDetail />} />
+              <Route
+                path="/wallet"
+                element={<Wallet onWithdrawClick={handleWithdrawClick} />}
+              />
+              <Route path="/games" element={<Games />} />
+              <Route path="/my-games" element={<MyGames />} />
+              <Route
+                path="/games/category/:category"
+                element={<CategoryPage />}
+              />
+              <Route path="/games/:id" element={<Game />} />
+              <Route path="/games/:id/session" element={<MatchSession />} />
+              <Route path="/games/:id/play" element={<GamePlay />} />
+              <Route path="/h2h" element={<H2HZone />} />
+              <Route path="/h2h/:gameType" element={<H2HZone />} />
+              <Route path="/h2h/:gameType/:roomId" element={<H2HZone />} />
+              <Route path="/registration" element={<Registration />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
 
-            <Route path="/wallet/transactions" element={<Transactions />} />
-            <Route path="/referral" element={<Referral />} />
-            <Route path="/wallet/deposit" element={<Deposit />} />
-            <Route path="/wallet/withdraw" element={<Withdrawal />} />
-            <Route
-              path="/wallet/withdraw/success"
-              element={<WithdrawSuccess />}
-            />
-            <Route path="/terms" element={<TermsAndConditions />} />
-            <Route path="/privacy" element={<PrivacyPolicy />} />
-            <Route path="/loyalty" element={<Loyalty />} />
-            <Route path="/profile" element={<Profile />}>
-              <Route index element={<Overview />} />
-              <Route path="overview" element={<Overview />} />
-              {/* <Route path="performance" element={<Performance />} /> */}
-              <Route path="history" element={<History />} />
-              <Route path="achievements" element={<Achievements />} />
-              <Route path="settings" element={<Settings />} />
-              <Route path="security" element={<Security />} />
-            </Route>
-          </Routes>
+              <Route path="/wallet/transactions" element={<Transactions />} />
+              <Route path="/referral" element={<Referral />} />
+              <Route path="/wallet/deposit" element={<Deposit />} />
+              <Route path="/wallet/withdraw" element={<Withdrawal />} />
+              <Route
+                path="/wallet/withdraw/success"
+                element={<WithdrawSuccess />}
+              />
+              <Route path="/terms" element={<TermsAndConditions />} />
+              <Route path="/privacy" element={<PrivacyPolicy />} />
+              <Route path="/loyalty" element={<Loyalty />} />
+              <Route path="/profile" element={<Profile />}>
+                <Route index element={<Overview />} />
+                <Route path="overview" element={<Overview />} />
+                <Route path="history" element={<History />} />
+                <Route path="achievements" element={<Achievements />} />
+                <Route path="settings" element={<Settings />} />
+                <Route path="security" element={<Security />} />
+              </Route>
+            </Routes>
+          </Suspense>
         </main>
       </div>
 

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { MdClose, MdAccountBalance, MdCheckCircle, MdPayments, MdChevronRight } from "react-icons/md";
-import axiosInstance from "@/api/axiosInstance";
+import { walletApi } from "@/api/wallet.api";
 import { useAddBankAccount } from "@/hooks/profile/useProfile";
 
 type AddPaymentMethodModalProps = {
@@ -28,7 +28,7 @@ export const AddPaymentMethodModal = ({ onClose, onSuccess }: AddPaymentMethodMo
     const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", handler);
 
-    axiosInstance.get("/wallet/banks").then(({ data }) => setBanks(data.data ?? [])).catch(() => {});
+    walletApi.getBankList().then((data) => setBanks(data ?? [])).catch(() => {});
 
     return () => {
       window.removeEventListener("keydown", handler);
@@ -47,8 +47,8 @@ export const AddPaymentMethodModal = ({ onClose, onSuccess }: AddPaymentMethodMo
     const t = setTimeout(async () => {
       setLoading(true);
       try {
-        const { data } = await axiosInstance.post("/wallet/verify-account", { account_number: accountNumber, bank_code: bankCode });
-        setVerifiedName(data.data.account_name);
+        const data = await walletApi.verifyBankAccount(accountNumber, bankCode);
+        setVerifiedName(data.account_name);
         setResolvedFor(accountNumber);
       } catch {
         setVerifiedName("");
