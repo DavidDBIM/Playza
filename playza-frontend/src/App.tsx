@@ -163,7 +163,6 @@ const AppContent = () => {
               <Route path="/privacy" element={<PrivacyPolicy />} />
               <Route path="/loyalty" element={<Loyalty />} />
               <Route path="/profile" element={<Profile />}>
-                <Route index element={<Overview />} />
                 <Route path="overview" element={<Overview />} />
                 <Route path="history" element={<History />} />
                 <Route path="achievements" element={<Achievements />} />

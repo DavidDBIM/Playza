@@ -4,15 +4,25 @@ import { getMeApi } from "@/api/users.api";
 import { logoutApi } from "@/api/auth.api";
 import { TokenStorage } from "@/api/axiosInstance";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getProfileApi, getBankAccountsApi } from "@/api/profile.api";
+import {
+  getProfileApi,
+  getBankAccountsApi,
+  getGameHistoryApi,
+} from "@/api/profile.api";
 import { walletApi } from "@/api/wallet.api";
+import { getLoyaltyMeApi } from "@/api/loyalty.api";
+import { getReferralStatsApi } from "@/api/referral.api";
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const token = TokenStorage.getAccessToken();
   const queryClient = useQueryClient();
 
-  const { data: profile, isLoading, isError } = useQuery({
+  const {
+    data: profile,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ["users", "me"],
     queryFn: getMeApi,
     enabled: !!token,
@@ -40,7 +50,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
 
       // Background prefetch commonly-accessed data on sign-in
-      // so those pages load instantly with no skeleton flicker
+
+      // Profile & wallet — visited on almost every session
       queryClient.prefetchQuery({
         queryKey: ["profile"],
         queryFn: getProfileApi,
@@ -51,9 +62,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         queryFn: walletApi.getWallet,
         staleTime: 2 * 60 * 1000,
       });
+      // Bank accounts & bank list — needed for withdrawals
       queryClient.prefetchQuery({
         queryKey: ["profile", "bank-accounts"],
         queryFn: getBankAccountsApi,
+        staleTime: 5 * 60 * 1000,
+      });
+      queryClient.prefetchQuery({
+        queryKey: ["wallet", "banks"],
+        queryFn: walletApi.getBankList,
+        staleTime: 60 * 60 * 1000,
+      });
+      // Game history — first page shown in Profile Overview
+      queryClient.prefetchQuery({
+        queryKey: ["profile", "history", 1, 3],
+        queryFn: () => getGameHistoryApi(1, 3),
+        staleTime: 2 * 60 * 1000,
+      });
+      // Loyalty & referral — shown in dedicated pages
+      queryClient.prefetchQuery({
+        queryKey: ["loyalty", "me"],
+        queryFn: getLoyaltyMeApi,
+        staleTime: 2 * 60 * 1000,
+      });
+      queryClient.prefetchQuery({
+        queryKey: ["referral", "stats"],
+        queryFn: getReferralStatsApi,
         staleTime: 5 * 60 * 1000,
       });
     } else if (isError) {
@@ -86,7 +120,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       await logoutApi();
     } catch (err) {
-      // Non-critical — local cleanup always runs
       console.warn("[Auth] Backend logout call failed:", err);
     } finally {
       TokenStorage.clearTokens();
@@ -98,7 +131,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser((prev) => (prev ? { ...prev, ...data } : null));
   }, []);
 
-  const isProfileComplete = useMemo(() => !!(user?.firstName && user?.lastName), [user]);
+  const isProfileComplete = useMemo(
+    () => !!(user?.firstName && user?.lastName),
+    [user],
+  );
 
   const value = useMemo(
     () => ({
@@ -112,9 +148,5 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     [user, isProfileComplete, isLoading, setAuth, logout, updateProfile],
   );
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
