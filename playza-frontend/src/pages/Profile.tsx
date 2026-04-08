@@ -51,10 +51,10 @@ const Profile = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const isOverviewActive = isMobile
-    ? location.pathname === "/profile/overview"
-    : location.pathname === "/profile" ||
-      location.pathname === "/profile/overview";
+  const isOverviewActive =
+    !isMobile &&
+    (location.pathname === "/profile" ||
+      location.pathname === "/profile/overview");
 
   if (isLoading) {
     return <ProfileSkeleton />;
@@ -106,7 +106,11 @@ const Profile = () => {
               onClick={() => setIsBadgeModalOpen(true)}
               className="absolute -bottom-2 -right-2 bg-primary text-slate-900 font-black px-2 md:px-4 py-1.5 rounded-full uppercase tracking-widest shadow-lg hover:scale-110 hover:brightness-110 transition-all cursor-pointer border border-white/20 glow-accent text-[10px]"
             >
-              {(profile?.pza_points ?? 0) < 1000 ? "TRAINEE" : (profile?.pza_points ?? 0) < 5000 ? "ELITE" : "LEGEND"}
+              {(profile?.pza_points ?? 0) < 1000
+                ? "TRAINEE"
+                : (profile?.pza_points ?? 0) < 5000
+                  ? "ELITE"
+                  : "LEGEND"}
             </button>
           </div>
 
@@ -118,7 +122,13 @@ const Profile = () => {
               </h1>
               <div className="flex items-center px-2 md:px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 backdrop-blur-md shadow-inner">
                 <span className="text-primary text-[10px] font-black uppercase tracking-widest italic">
-                  {(profile?.pza_points ?? 0) < 1000 ? "BRONZE VANGUARD" : (profile?.pza_points ?? 0) < 5000 ? "SILVER GUARDIAN" : (profile?.pza_points ?? 0) < 10000 ? "GOLDEN HERO" : "ASCENDED MASTER"}
+                  {(profile?.pza_points ?? 0) < 1000
+                    ? "BRONZE VANGUARD"
+                    : (profile?.pza_points ?? 0) < 5000
+                      ? "SILVER GUARDIAN"
+                      : (profile?.pza_points ?? 0) < 10000
+                        ? "GOLDEN HERO"
+                        : "ASCENDED MASTER"}
                 </span>
               </div>
             </div>
@@ -191,7 +201,11 @@ const Profile = () => {
                 key={item.label}
                 className={({ isActive }) => {
                   const active =
-                    item.label === "Overview" ? isOverviewActive : isActive;
+                    item.label === "Overview"
+                      ? isMobile
+                        ? isActive
+                        : isOverviewActive
+                      : isActive;
                   return `flex items-center gap-4 px-5 py-4 rounded-xl transition-all duration-300 font-bold text-sm ${
                     active
                       ? "bg-primary text-white shadow-lg glow-accent scale-[1.02]"

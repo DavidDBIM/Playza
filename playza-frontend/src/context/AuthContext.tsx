@@ -3,11 +3,14 @@ import { AuthContext, type UserProfile } from "./auth";
 import { getMeApi } from "@/api/users.api";
 import { logoutApi } from "@/api/auth.api";
 import { TokenStorage } from "@/api/axiosInstance";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { getProfileApi, getBankAccountsApi } from "@/api/profile.api";
+import { walletApi } from "@/api/wallet.api";
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const token = TokenStorage.getAccessToken();
+  const queryClient = useQueryClient();
 
   const { data: profile, isLoading, isError } = useQuery({
     queryKey: ["users", "me"],
@@ -35,11 +38,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         isEmailVerified: profile.is_email_verified,
         show_activity: profile.show_activity,
       });
+
+      // Background prefetch commonly-accessed data on sign-in
+      // so those pages load instantly with no skeleton flicker
+      queryClient.prefetchQuery({
+        queryKey: ["profile"],
+        queryFn: getProfileApi,
+        staleTime: 5 * 60 * 1000,
+      });
+      queryClient.prefetchQuery({
+        queryKey: ["wallet", "balance"],
+        queryFn: walletApi.getWallet,
+        staleTime: 2 * 60 * 1000,
+      });
+      queryClient.prefetchQuery({
+        queryKey: ["profile", "bank-accounts"],
+        queryFn: getBankAccountsApi,
+        staleTime: 5 * 60 * 1000,
+      });
     } else if (isError) {
       TokenStorage.clearTokens();
       setUser(null);
     }
-  }, [profile, isError]);
+  }, [profile, isError, queryClient]);
 
   /**
    * Persists both the access token and refresh token, then updates the user state.
