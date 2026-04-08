@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from "react-router";
 import { ArrowLeft } from "lucide-react";
 import OtpPin from "@/components/withdrawal/OtpPin";
 import ReqWithdraw from "@/components/withdrawal/ReqWithdraw";
-import { useWallet } from "@/hooks/wallet/useWallet";
+import { useWithdrawMutation } from "@/hooks/wallet/useWallet";
 
 export default function Withdrawal() {
   const [searchParams] = useSearchParams();
@@ -14,7 +14,7 @@ export default function Withdrawal() {
   
   const [status, setStatus] = useState<"idle" | "verify" | "failed">("idle");
   const [isProcessing, setIsProcessing] = useState(false);
-  const { withdraw } = useWallet();
+  const { mutateAsync: withdraw } = useWithdrawMutation();
   
   const amount = Number(amountStr);
 

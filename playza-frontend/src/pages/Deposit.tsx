@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router";
 import { CheckCircle2, Loader2, ArrowLeft, XCircle, CreditCard, Building2 } from "lucide-react";
 import { ZASymbol } from "@/components/currency/ZASymbol";
-import { useWallet } from "@/hooks/wallet/useWallet";
+import { useDepositMutation } from "@/hooks/wallet/useWallet";
 import { useAuth } from "@/context/auth";
 import { PaystackButton } from "react-paystack";
 import type { PaystackProps } from "react-paystack/dist/types";
@@ -15,7 +15,7 @@ export default function Deposit() {
   const method = searchParams.get("method") || "card";
   
   const [status, setStatus] = useState<"idle" | "processing" | "success" | "failed">("idle");
-  const { initializeDeposit } = useWallet();
+  const { mutateAsync: initializeDeposit } = useDepositMutation();
   const { user } = useAuth();
   const [paystackProps, setPaystackProps] = useState<PaystackProps | null>(null);
   

@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { ShieldAlert, Swords, Zap, Trophy, Timer, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { ShieldAlert, Swords, Zap, Trophy, Timer, AlertCircle, CheckCircle2, type LucideIcon } from 'lucide-react';
 
 interface Rule {
   id: string;
-  icon: React.ElementType;
+  icon: LucideIcon;
   title: string;
   description: string;
   color: string;
