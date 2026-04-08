@@ -12,7 +12,7 @@ import {
 
 interface NavItem {
   label: string;
-  icon: React.ElementType;
+  icon: React.ComponentType<{ className?: string }>;
   path: string;
   onClick?: () => void;
 }

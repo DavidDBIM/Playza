@@ -5,7 +5,7 @@ import dotenv from 'dotenv'
 
 import authRoutes from './modules/auth/auth.routes'
 import referralRoutes from './modules/referral/referral.routes'
-import pzaRoutes from "./modules/pza.routes";
+import pzaRoutes from "./modules/pza/pza.routes";
 import usersRoutes from './modules/users/users.routes'
 import adminRoutes from './modules/admin/admin.routes'
 import walletRoutes from './modules/wallet/wallet.routes'
