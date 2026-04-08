@@ -5,5 +5,6 @@ export const useReferralStats = () => {
   return useQuery({
     queryKey: ["referral", "stats"],
     queryFn: getReferralStatsApi,
+    staleTime: 5 * 60 * 1000,
   });
 };

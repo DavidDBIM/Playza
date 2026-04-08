@@ -39,20 +39,18 @@ const Profile = () => {
     { label: "Security", icon: <MdSecurity />, to: "security" },
   ];
 
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-
-  console.log("profile:", profileData);
+  // On desktop: auto-highlight Overview when at /profile or /profile/overview
+  // On mobile:  nothing is active by default — user must tap a tab
+  const [isDesktop, setIsDesktop] = useState(() => window.innerWidth >= 768);
 
   useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
+    const handleResize = () => setIsDesktop(window.innerWidth >= 768);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   const isOverviewActive =
-    !isMobile &&
+    isDesktop &&
     (location.pathname === "/profile" ||
       location.pathname === "/profile/overview");
 
@@ -202,9 +200,9 @@ const Profile = () => {
                 className={({ isActive }) => {
                   const active =
                     item.label === "Overview"
-                      ? isMobile
-                        ? isActive
-                        : isOverviewActive
+                      ? !isDesktop
+                        ? isActive // mobile: only active if router says so
+                        : isOverviewActive // desktop: auto-highlight at /profile
                       : isActive;
                   return `flex items-center gap-4 px-5 py-4 rounded-xl transition-all duration-300 font-bold text-sm ${
                     active

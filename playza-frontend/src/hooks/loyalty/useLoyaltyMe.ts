@@ -5,5 +5,6 @@ export const useLoyaltyMe = () => {
   return useQuery({
     queryKey: ["loyalty", "me"],
     queryFn: getLoyaltyMeApi,
+    staleTime: 2 * 60 * 1000,
   });
 };

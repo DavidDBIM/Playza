@@ -14,7 +14,7 @@ export const useProfile = () => {
   return useQuery({
     queryKey: ["profile"],
     queryFn: getProfileApi,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 };
 
@@ -34,6 +34,7 @@ export const useGameHistory = (page = 1, limit = 20) => {
   return useQuery({
     queryKey: ["profile", "history", page, limit],
     queryFn: () => getGameHistoryApi(page, limit),
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
 };
 
@@ -41,6 +42,7 @@ export const useBankAccounts = () => {
   return useQuery({
     queryKey: ["profile", "bank-accounts"],
     queryFn: getBankAccountsApi,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };
 
