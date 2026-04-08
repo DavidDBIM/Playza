@@ -253,9 +253,12 @@ export async function logout(accessToken: string) {
 export async function resetPassword(accessToken: string, newPassword: string) {
   if (newPassword.length < 8) throw new Error('Password must be at least 8 characters')
 
-  const { error } = await supabase.auth.updateUser(
-    { password: newPassword },
-    { accessToken }
+  const { data, error: userError } = await supabase.auth.getUser(accessToken)
+  if (userError || !data.user) throw new Error("Invalid or expired access token")
+
+  const { error } = await supabaseAdmin.auth.admin.updateUserById(
+    data.user.id,
+    { password: newPassword }
   )
 
   if (error) throw error
