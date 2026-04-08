@@ -95,14 +95,6 @@ const Settings = () => {
   }, [profile, reset]);
 
   const onProfileSubmit = (data: ProfileFormValues) => {
-    // Immediate optimistic update for blazing fast UI
-    updateAuthState({
-      firstName: profile?.first_name || data.firstName,
-      lastName: profile?.last_name || data.lastName,
-      phone: profile?.phone || data.phone,
-      avatarUrl: data.avatarUrl,
-    });
-
     // reset form to remove dirty state instantly
     reset(data);
 
@@ -122,6 +114,12 @@ const Settings = () => {
             "[Settings] Profile updated successfully in background:",
             result,
           );
+          updateAuthState({
+            firstName: data.firstName,
+            lastName: data.lastName,
+            phone: data.phone,
+            avatarUrl: data.avatarUrl,
+          });
         },
         onError: (error) => {
           console.error("[Settings] Profile update failed:", error);

@@ -44,7 +44,7 @@ const Header = () => {
           </div>
         </div>
         <div className="flex gap-2 md:gap-4 items-center">
-          {isLoading ? (
+          {isLoading || (localStorage.getItem("accessToken") && !user) ? (
             <HeaderSkeleton />
           ) : !user ? (
             <div className="flex gap-2">
