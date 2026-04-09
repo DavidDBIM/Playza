@@ -219,7 +219,7 @@ export const games: Game[] = [
     thumbnail: "/games/vocal-ring-rush.png",
     iframeUrl: "/gameLib/vocal-ring-rush/index.html",
     category: "Arcade",
-    mode: "Voice Challenge",
+    mode: "Quick Match",
     entryFee: 600,
     difficulty: "Medium",
     durationInSeconds: 120,
