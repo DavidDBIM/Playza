@@ -114,10 +114,10 @@ router.post('/streak/claim', requireAuth, async (req: AuthRequest, res) => {
 router.post('/task/claim', requireAuth, async (req: AuthRequest, res) => {
   try {
     const userId = req.user!.id
-    const { task_id, points } = req.body
+    const { task_id } = req.body
 
-    if (!task_id || !points) {
-      res.status(400).json({ success: false, message: 'task_id and points required' })
+    if (!task_id) {
+      res.status(400).json({ success: false, message: 'task_id is required' })
       return
     }
 
@@ -133,20 +133,11 @@ router.post('/task/claim', requireAuth, async (req: AuthRequest, res) => {
       return
     }
 
+    const points = await awardPZA(userId, task_id as PZAEvent)
+
     await supabaseAdmin.from('claimed_tasks').insert({
       user_id: userId,
       task_id,
-      points_awarded: points,
-    })
-
-    await supabaseAdmin.rpc('increment_pza_points', {
-      p_user_id: userId,
-      p_points: points,
-    })
-
-    await supabaseAdmin.from('pza_events').insert({
-      user_id: userId,
-      event_type: task_id,
       points_awarded: points,
     })
 
