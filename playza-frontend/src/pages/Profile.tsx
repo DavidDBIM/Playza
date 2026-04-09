@@ -28,8 +28,10 @@ const Profile = () => {
   useEffect(() => {
     if (!isLoading && !user) {
       navigate("/registration?view=login");
+    } else if (location.pathname === "/profile" || location.pathname === "/profile/") {
+      navigate("/profile/overview", { replace: true });
     }
-  }, [user, isLoading, navigate]);
+  }, [user, isLoading, navigate, location.pathname]);
 
   const menuItems = [
     { label: "Overview", icon: <MdPerson />, to: "overview" },
@@ -39,20 +41,7 @@ const Profile = () => {
     { label: "Security", icon: <MdSecurity />, to: "security" },
   ];
 
-  // On desktop: auto-highlight Overview when at /profile or /profile/overview
-  // On mobile:  nothing is active by default — user must tap a tab
-  const [isDesktop, setIsDesktop] = useState(() => window.innerWidth >= 768);
 
-  useEffect(() => {
-    const handleResize = () => setIsDesktop(window.innerWidth >= 768);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  const isOverviewActive =
-    isDesktop &&
-    (location.pathname === "/profile" ||
-      location.pathname === "/profile/overview");
 
   if (isLoading) {
     return <ProfileSkeleton />;
@@ -198,14 +187,8 @@ const Profile = () => {
                 to={item.to}
                 key={item.label}
                 className={({ isActive }) => {
-                  const active =
-                    item.label === "Overview"
-                      ? !isDesktop
-                        ? isActive // mobile: only active if router says so
-                        : isOverviewActive // desktop: auto-highlight at /profile
-                      : isActive;
                   return `flex items-center gap-4 px-5 py-4 rounded-xl transition-all duration-300 font-bold text-sm ${
-                    active
+                    isActive
                       ? "bg-primary text-white shadow-lg glow-accent scale-[1.02]"
                       : "text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5"
                   }`;

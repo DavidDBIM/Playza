@@ -38,9 +38,10 @@ const Game = () => {
     if (slug === "chess-masters") navigate("/h2h", { replace: true });
     if (slug === "speed-battle") navigate("/speed-battle", { replace: true });
     if (slug === "word-scramble") navigate("/word-scramble", { replace: true });
+    if (slug === "8-ball-pool") navigate("/h2h/pool", { replace: true });
   }, [slug, navigate]);
 
-  if (slug === "chess-masters" || slug === "speed-battle" || slug === "word-scramble") return null;
+  if (slug === "chess-masters" || slug === "speed-battle" || slug === "word-scramble" || slug === "8-ball-pool") return null;
 
   if (!game) {
     return (

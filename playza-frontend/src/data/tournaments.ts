@@ -32,7 +32,7 @@ export const tournaments: Tournament[] = [
   {
     id: "tour_1",
     name: "Shadow Strategy Championship",
-    gameId: "1",
+    gameId: "33", // Bullet Fury
     entryFee: 3000,
     prizePool: 150000,
     status: "live",
@@ -42,7 +42,7 @@ export const tournaments: Tournament[] = [
   {
     id: "tour_2",
     name: "High Stakes Winter Classic",
-    gameId: "3",
+    gameId: "32", // VelocityGL
     entryFee: 5000,
     prizePool: 300000,
     status: "upcoming",
@@ -52,7 +52,7 @@ export const tournaments: Tournament[] = [
   {
     id: "tour_3",
     name: "Quick Trivia Cup",
-    gameId: "4",
+    gameId: "29", // Crystal Match
     entryFee: 1000,
     prizePool: 50000,
     status: "completed",
@@ -62,7 +62,7 @@ export const tournaments: Tournament[] = [
   {
     id: "tour_4",
     name: "Dominion Arena Pro League",
-    gameId: "5",
+    gameId: "54", // StrikeForce
     entryFee: 2500,
     prizePool: 75000,
     status: "live",
@@ -72,7 +72,7 @@ export const tournaments: Tournament[] = [
   {
     id: "tour_5",
     name: "Champions Gauntlet Masters",
-    gameId: "15",
+    gameId: "55", // Cyber Surge
     entryFee: 10000,
     prizePool: 1000000,
     status: "upcoming",

@@ -5,14 +5,14 @@ const Footer = ({ showAbout = true }: { showAbout?: boolean }) => {
 
   const year = new Date().getFullYear();
   return (
-    <footer className="relative bg-slate-50 dark:bg-playza-dark/50 border-t border-slate-200 dark:border-white/5 py-16 md:py-24 overflow-hidden">
+    <footer className="relative bg-slate-50 dark:bg-playza-dark/50 border-t border-slate-200 dark:border-white/5 pt-8 md:pt-12 pb-16 md:pb-12 overflow-hidden">
       {/* Dynamic Glows */}
       <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5 blur-[120px] rounded-full pointer-events-none" />
       <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-secondary/5 blur-[120px] rounded-full pointer-events-none" />
 
-      <div className="max-w-7xl mx-auto px-2 md:px-6 pb-24 md:pb-12">
+      <div className="max-w-7xl mx-auto px-2 md:px-6 pb-32 md:pb-12 lg:pb-4">
         {showAbout && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 md:gap-12 lg:gap-20 mb-20">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 md:gap-12 lg:gap-20 mb-8">
             {/* About Section */}
             <div className="lg:col-span-6">
               <About />
