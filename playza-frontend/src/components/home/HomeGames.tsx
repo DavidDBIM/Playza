@@ -55,7 +55,8 @@ const HomeGames = ({ games, title }: { games: Game[]; title: string }) => {
   }, [games]);
 
   return (
-    <div>
+    <div className="relative">
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl h-full bg-primary/8 blur-[120px] pointer-events-none" />
       <div className="flex items-end justify-between mb-6">
         <div>
           <h2 className="font-heading text-lg md:text-2xl font-black uppercase tracking-tight">
@@ -71,24 +72,26 @@ const HomeGames = ({ games, title }: { games: Game[]; title: string }) => {
           >
             View All
           </Link>
-          <div className="flex gap-2">
-            <button
-              onClick={() => scroll("left")}
-              disabled={!canScrollLeft}
-              className="flex items-center justify-center p-2 rounded-xl border border-black/10 dark:border-white/10 bg-slate-100/50 dark:bg-white/5 text-slate-600 dark:text-white/70 disabled:opacity-20 disabled:cursor-not-allowed"
-              aria-label="Scroll Left"
-            >
-              <ChevronLeft size={20} />
-            </button>
-            <button
-              onClick={() => scroll("right")}
-              disabled={!canScrollRight}
-              className="flex items-center justify-center p-2 rounded-xl border border-black/10 dark:border-white/10 bg-slate-100/50 dark:bg-white/5 text-slate-600 dark:text-white/70 disabled:opacity-20 disabled:cursor-not-allowed"
-              aria-label="Scroll Right"
-            >
-              <ChevronRight size={20} />
-            </button>
-          </div>
+          {games.length > 4 && (
+            <div className="flex gap-2">
+              <button
+                onClick={() => scroll("left")}
+                disabled={!canScrollLeft}
+                className="flex items-center justify-center p-2 rounded-xl border border-black/10 dark:border-white/10 bg-slate-100/50 dark:bg-white/5 text-slate-600 dark:text-white/70 disabled:opacity-20 disabled:cursor-not-allowed"
+                aria-label="Scroll Left"
+              >
+                <ChevronLeft size={20} />
+              </button>
+              <button
+                onClick={() => scroll("right")}
+                disabled={!canScrollRight}
+                className="flex items-center justify-center p-2 rounded-xl border border-black/10 dark:border-white/10 bg-slate-100/50 dark:bg-white/5 text-slate-600 dark:text-white/70 disabled:opacity-20 disabled:cursor-not-allowed"
+                aria-label="Scroll Right"
+              >
+                <ChevronRight size={20} />
+              </button>
+            </div>
+          )}
         </div>
       </div>
       

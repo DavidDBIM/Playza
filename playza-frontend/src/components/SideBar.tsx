@@ -18,7 +18,7 @@ const SideBar = () => {
   });
 
   return (
-    <div className="flex flex-col h-[80vh] bg-background/60 backdrop-blur-xl border-r border-border/40 py-4 ">
+    <div className="flex flex-col h-[80vh] bg-background/60 backdrop-blur-xl py-4 ">
       {/* Menu Area */}
       <div className="mb-4">
         <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest pl-4 mb-4 opacity-70">
@@ -76,7 +76,7 @@ const SideBar = () => {
 
       {/* User Area at Bottom */}
       {user && (
-        <div className="pt-6 border-t border-border/30">
+        <div className="pt-6">
           <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-accent/20 hover:bg-accent/40 hover:shadow-lg transition-all duration-300 cursor-pointer border border-border/40 hover:border-primary/50 group">
             <div className="h-12 w-12 shrink-0 rounded-xl bg-linear-to-br from-primary to-primary/60 flex items-center justify-center text-primary-foreground font-black shadow-[0_4px_12px_rgba(var(--primary),0.4)] group-hover:scale-110 transition-all duration-500 overflow-hidden border-2 border-white/10">
               {user.avatarUrl ? (

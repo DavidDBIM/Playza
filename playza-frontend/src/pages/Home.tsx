@@ -13,7 +13,7 @@ const Home = () => {
     .filter((game) => game.badge === "POPULAR")
     .slice(0, 8);
   const hottestGames = games.filter((game) => game.badge === "HOT").slice(0, 8);
-  const newestGames = games.filter((game) => game.badge === "HOT").slice(0, 6);
+  const newestGames = games.filter((game) => game.badge === "NEW").slice(0, 6);
 
   return (
     <main className="flex-1 min-w-0 space-y-6">
@@ -43,9 +43,9 @@ const Home = () => {
         </div>
       </Link>
 
-      <HomeGames games={newestGames} title="Newest Games" />
-      <HomeGames games={popularGames} title="Popular Games" />
-      <HomeGames games={hottestGames} title="Hottest Games" />
+      {newestGames.length > 0 && <HomeGames games={newestGames} title="Newest Games" />}
+      {popularGames.length > 0 && <HomeGames games={popularGames} title="Popular Games" />}
+      {hottestGames.length > 0 && <HomeGames games={hottestGames} title="Hottest Games" />}
       <CTAReferral />
       {/* <LeaderBoard /> */}
       <HowItWorks />
