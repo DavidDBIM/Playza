@@ -1,4 +1,5 @@
 import { MdShare, MdPeople, MdAccountBalanceWallet } from "react-icons/md";
+import { ZASymbol } from "@/components/currency/ZASymbol";
 
 const ReferralHowItWorks = () => {
   const steps = [
@@ -16,7 +17,7 @@ const ReferralHowItWorks = () => {
     },
     {
       icon: <MdAccountBalanceWallet className="text-xl md:text-2xl" />,
-      title: "Earn XP/Cash",
+      title: <span className="flex items-center gap-1">Earn <ZASymbol className="text-xs" /> / PZA</span>,
       description: "Get paid instantly in wallet.",
       number: "3"
     }

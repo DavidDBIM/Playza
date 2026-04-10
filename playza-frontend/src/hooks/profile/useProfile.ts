@@ -9,12 +9,14 @@ import {
   removeBankAccountApi,
 } from "../../api/profile.api";
 import type { UpdateProfilePayload } from "../../api/profile.api";
+import { TokenStorage } from "../../api/axiosInstance";
 
 export const useProfile = () => {
   return useQuery({
     queryKey: ["profile"],
     queryFn: getProfileApi,
     staleTime: 5 * 60 * 1000,
+    enabled: !!TokenStorage.getAccessToken(),
   });
 };
 

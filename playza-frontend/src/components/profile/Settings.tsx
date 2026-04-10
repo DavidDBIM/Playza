@@ -426,6 +426,76 @@ const Settings = () => {
           </div>
         </section>
 
+        {/* ── Financial Methods ── */}
+        <section id="financial-methods" className="space-y-3">
+          <div className="flex items-center gap-2 md:gap-3 mb-3">
+            <div className="size-10 rounded-2xl bg-secondary/10 dark:bg-secondary/20 flex items-center justify-center text-secondary text-base md:text-xl shadow-inner">
+              <MdPayments />
+            </div>
+            <h2 className="text-lg md:text-2xl font-black text-slate-900 dark:text-white italic tracking-tight">
+              Financial Methods
+            </h2>
+          </div>
+
+          <div className="space-y-3">
+            {bankAccounts.map((acc: BankAccount) => (
+              <div
+                key={acc.id}
+                className={`bg-white dark:bg-white/5 p-4 rounded-xl border flex items-center gap-4 group transition-all shadow-xl relative overflow-hidden ${acc.is_primary ? "border-primary/30 shadow-primary/5" : "border-slate-200 dark:border-white/5"}`}
+              >
+                <div className="size-12 rounded-xl bg-primary/10 flex items-center justify-center p-2 shadow-inner shrink-0 font-black text-primary text-xl">
+                  {acc.bank_name?.[0]}
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-slate-900 dark:text-white font-black text-sm md:text-base italic tracking-tight">
+                      {acc.bank_name}
+                    </h3>
+                    {acc.is_primary && (
+                      <span className="bg-primary/10 text-primary text-[8px] px-2 py-0.5 rounded font-black uppercase tracking-widest italic border border-primary/20">
+                        Primary
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-slate-400 font-bold text-[10px] tracking-[0.2em] mt-0.5">
+                    {acc.account_number}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {!acc.is_primary && (
+                    <button
+                      onClick={() => handleSetPrimary(acc.id)}
+                      className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary/10 transition-colors"
+                    >
+                      Make Primary
+                    </button>
+                  )}
+                  <button
+                    onClick={() => handleRemoveAccount(acc.id)}
+                    className="size-8 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center transition-all"
+                    title="Remove Account"
+                  >
+                    <MdDelete className="text-lg" />
+                  </button>
+                </div>
+              </div>
+            ))}
+
+            {/* Add new method card */}
+            <button
+              onClick={() => setShowAddMethod(true)}
+              className="w-full border-2 border-dashed border-slate-200 dark:border-white/10 rounded-xl flex items-center justify-center p-4 gap-3 text-slate-500 hover:border-primary/40 hover:bg-primary/5 hover:text-primary transition-all duration-300"
+            >
+              <MdAdd className="text-xl" />
+              <span className="font-black italic text-xs uppercase tracking-widest">
+                Add New Method
+              </span>
+            </button>
+          </div>
+        </section>
+
         {/* ── Preferences ── */}
         <section className="space-y-3">
           <div className="flex items-center gap-2 md:gap-3 mb-3">
@@ -497,76 +567,6 @@ const Settings = () => {
                 <div className="w-14 h-7 bg-slate-200 dark:bg-white/5 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-1 after:left-1 after:bg-white dark:after:bg-slate-700 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary shadow-inner transition-colors"></div>
               </label>
             </div>
-          </div>
-        </section>
-
-        {/* ── Financial Methods ── */}
-        <section id="financial-methods" className="space-y-3">
-          <div className="flex items-center gap-2 md:gap-3 mb-3">
-            <div className="size-10 rounded-2xl bg-secondary/10 dark:bg-secondary/20 flex items-center justify-center text-secondary text-base md:text-xl shadow-inner">
-              <MdPayments />
-            </div>
-            <h2 className="text-lg md:text-2xl font-black text-slate-900 dark:text-white italic tracking-tight">
-              Financial Methods
-            </h2>
-          </div>
-
-          <div className="space-y-3">
-            {bankAccounts.map((acc: BankAccount) => (
-              <div
-                key={acc.id}
-                className={`bg-white dark:bg-white/5 p-4 rounded-xl border flex items-center gap-4 group transition-all shadow-xl relative overflow-hidden ${acc.is_primary ? "border-primary/30 shadow-primary/5" : "border-slate-200 dark:border-white/5"}`}
-              >
-                <div className="size-12 rounded-xl bg-primary/10 flex items-center justify-center p-2 shadow-inner shrink-0 font-black text-primary text-xl">
-                  {acc.bank_name?.[0]}
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-slate-900 dark:text-white font-black text-sm md:text-base italic tracking-tight">
-                      {acc.bank_name}
-                    </h3>
-                    {acc.is_primary && (
-                      <span className="bg-primary/10 text-primary text-[8px] px-2 py-0.5 rounded font-black uppercase tracking-widest italic border border-primary/20">
-                        Primary
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-slate-400 font-bold text-[10px] tracking-[0.2em] mt-0.5">
-                    {acc.account_number}
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  {!acc.is_primary && (
-                    <button
-                      onClick={() => handleSetPrimary(acc.id)}
-                      className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary/10 transition-colors"
-                    >
-                      Make Primary
-                    </button>
-                  )}
-                  <button
-                    onClick={() => handleRemoveAccount(acc.id)}
-                    className="size-8 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center transition-all"
-                    title="Remove Account"
-                  >
-                    <MdDelete className="text-lg" />
-                  </button>
-                </div>
-              </div>
-            ))}
-
-            {/* Add new method card */}
-            <button
-              onClick={() => setShowAddMethod(true)}
-              className="w-full border-2 border-dashed border-slate-200 dark:border-white/10 rounded-xl flex items-center justify-center p-4 gap-3 text-slate-500 hover:border-primary/40 hover:bg-primary/5 hover:text-primary transition-all duration-300"
-            >
-              <MdAdd className="text-xl" />
-              <span className="font-black italic text-xs uppercase tracking-widest">
-                Add New Method
-              </span>
-            </button>
           </div>
         </section>
 

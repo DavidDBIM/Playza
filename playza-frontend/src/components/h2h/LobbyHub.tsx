@@ -1,4 +1,8 @@
-import React from "react";
+import React, { useState } from "react";
+import { Link } from "react-router";
+import { useAuth } from "@/context/auth";
+import { Button } from "@/components/ui/button";
+import { MdLogin, MdClose } from "react-icons/md";
 
 interface GameType {
   id: string;
@@ -15,6 +19,18 @@ interface LobbyHubProps {
 }
 
 const LobbyHub = ({ games, setSelectedGame }: LobbyHubProps) => {
+  const { user } = useAuth();
+  const [showLoginModal, setShowLoginModal] = useState(false);
+
+  const handleGameClick = (game: GameType) => {
+    if (game.comingSoon) return;
+    if (!user) {
+      setShowLoginModal(true);
+      return;
+    }
+    setSelectedGame(game);
+  };
+
   return (
     <div className="space-y-12">
       <header className="text-center space-y-4">
@@ -37,7 +53,7 @@ const LobbyHub = ({ games, setSelectedGame }: LobbyHubProps) => {
         {games.map((game) => (
           <div
             key={game.id}
-            onClick={() => !game.comingSoon && setSelectedGame(game)}
+            onClick={() => handleGameClick(game)}
             className={`relative group ${game.comingSoon ? "opacity-50 grayscale cursor-not-allowed" : "cursor-pointer"}`}
           >
             <div className="relative bg-white dark:bg-slate-900 border border-black/5 dark:border-white/10 rounded-2xl md:rounded-3xl p-4 md:p-6 h-full flex flex-col justify-between items-center text-center overflow-hidden">
@@ -64,6 +80,36 @@ const LobbyHub = ({ games, setSelectedGame }: LobbyHubProps) => {
           </div>
         ))}
       </div>
+
+      {showLoginModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm" onClick={() => setShowLoginModal(false)}>
+          <div className="w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl p-6 shadow-2xl relative" onClick={e => e.stopPropagation()}>
+            <button
+              onClick={() => setShowLoginModal(false)}
+              className="absolute top-4 right-4 text-slate-500 md:hover:text-slate-900 md:dark:hover:text-white transition-colors"
+            >
+              <MdClose size={24} />
+            </button>
+            <div className="flex flex-col items-center text-center space-y-4">
+              <div className="size-16 bg-indigo-500/10 rounded-xl flex items-center justify-center border border-indigo-500/20">
+                <MdLogin className="text-3xl text-indigo-500" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase italic tracking-tight">Login Required</h3>
+                <p className="text-sm font-medium text-slate-500">You need to sign in or create an account to challenge other players in the Arena.</p>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-3 w-full pt-4">
+                <Link to="/registration?view=login" className="flex-1">
+                  <Button className="w-full h-12 bg-indigo-500 hover:bg-indigo-600 text-white font-black uppercase tracking-widest text-xs rounded-xl transition-colors">Sign In</Button>
+                </Link>
+                <Link to="/registration?view=signup" className="flex-1">
+                  <Button variant="outline" className="w-full h-12 border-indigo-500/30 text-indigo-500 hover:bg-indigo-500/10 font-black uppercase tracking-widest text-xs rounded-xl transition-colors">Register</Button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

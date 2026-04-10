@@ -12,15 +12,15 @@ import ReferralHistoryTable from "../components/referral/ReferralHistoryTable";
 import InviteFriendModal from "../components/referral/InviteFriendModal";
 
 const Referral = () => {
-  const { user } = useAuth();
-  const { data: stats, isLoading } = useReferralStats();
+  const { user, isLoading: authLoading } = useAuth();
+  const { data: stats, isLoading: statsLoading } = useReferralStats();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
-  if (user && isLoading) {
+  if (authLoading || (user && statsLoading)) {
     return <ReferralSkeleton />;
   }
 
