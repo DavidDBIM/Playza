@@ -14,17 +14,17 @@ interface WalletProps {
 }
 
 const Wallet = ({ onWithdrawClick }: WalletProps) => {
-  const { user, isProfileComplete } = useAuth();
-  const { data: balance, isLoading: loading } = useWallet();
+  const { user, isProfileComplete, isLoading: authLoading } = useAuth();
+  const { data: balance, isLoading: walletLoading } = useWallet();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!user) {
+    if (!authLoading && !user) {
       navigate("/");
     }
-  }, [user, navigate]);
+  }, [user, authLoading, navigate]);
 
-  if (loading && !balance) {
+  if (authLoading || (walletLoading && !balance)) {
     return (
       <main className="flex-1 flex flex-col gap-4 md:gap-10 pb-2 md:pb-10 animate-in fade-in duration-500">
         <WalletSkeleton />

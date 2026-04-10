@@ -6,13 +6,17 @@ import { Link, useSearchParams } from "react-router";
 import GameLeaderboard from "@/components/leaderboards/GameLeaderboard";
 import ReferralLeaderboard from "@/components/leaderboards/ReferralLeaderboard";
 import LoyaltyLeaderboard from "@/components/leaderboards/LoyaltyLeaderboard";
+import { LeaderBoardSkeleton } from "@/components/skeletons/LeaderBoardSkeleton";
 
 const LeaderBoard = () => {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get("tab");
   const initialTab = tabParam && ["Games", "Referral", "Loyalty"].includes(tabParam) ? tabParam : "Games";
   const [activeTab, setActiveTab] = useState(initialTab);
+
+  if (isLoading) return <LeaderBoardSkeleton />;
+
 
 
   const tabs = [
@@ -72,14 +76,16 @@ const LeaderBoard = () => {
       {/* Content Area */}
       <div className="glass-card rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden flex-1 flex flex-col relative">
         
-        <div className="flex-1 flex flex-col overflow-hidden relative p-2 md:p-6 min-h-125">
-          {activeTab === "Games" && <GameLeaderboard />}
-          {activeTab === "Referral" && <ReferralLeaderboard />}
-          {activeTab === "Loyalty" && <LoyaltyLeaderboard />}
-
-          {!user && (
-            <div className="absolute inset-0 z-20 flex items-center justify-center p-2 md:p-6 text-center bg-background/40">
-              <div className="max-w-md w-full glass-card p-2 md:p-10 rounded-xl border-primary/20 relative overflow-hidden bg-white dark:bg-slate-900">
+        <div className="flex-1 flex flex-col overflow-hidden relative p-2 md:p-6 min-h-[30rem]">
+          {user ? (
+            <>
+              {activeTab === "Games" && <GameLeaderboard />}
+              {activeTab === "Referral" && <ReferralLeaderboard />}
+              {activeTab === "Loyalty" && <LoyaltyLeaderboard />}
+            </>
+          ) : (
+            <div className="flex-1 flex items-center justify-center p-2 md:p-6 text-center">
+              <div className="max-w-md w-full glass-card p-2 md:p-10 rounded-xl border-primary/20 relative overflow-hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 shadow-2xl">
                 <div className="relative z-10 space-y-6">
                   <div className="size-20 bg-primary/20 rounded-xl flex items-center justify-center mx-auto mb-2 border border-primary/30">
                     <MdLogin className="text-2xl md:text-4xl text-primary" />

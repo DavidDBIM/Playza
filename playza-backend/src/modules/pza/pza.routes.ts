@@ -28,9 +28,17 @@ router.get('/me', requireAuth, async (req: AuthRequest, res) => {
       .eq('user_id', userId)
       .single()
 
-    const today = new Date().toISOString().split('T')[0]
-    const lastClaimed = streak?.last_claimed_at?.split('T')[0]
-    const canClaimToday = !streak?.streak_reward_claimed_today || lastClaimed !== today
+    const now = new Date().getTime()
+    const lastClaimed = streak?.last_claimed_at ? new Date(streak.last_claimed_at).getTime() : 0
+    const diffMs = now - lastClaimed
+
+    // Can claim if no previous claim, or it's been over 24 hours
+    const canClaimToday = !streak?.streak_reward_claimed_today || diffMs >= 24 * 60 * 60 * 1000
+
+    let activeStreak = streak?.streak_days ?? 0
+    if (lastClaimed && diffMs >= 48 * 60 * 60 * 1000) {
+      activeStreak = 0 // Streak broken if more than 48 hours passed
+    }
 
     const { data: claimedTasks } = await supabaseAdmin
       .from('claimed_tasks')
@@ -43,7 +51,8 @@ router.get('/me', requireAuth, async (req: AuthRequest, res) => {
       data: {
         total_points: points?.total_points ?? 0,
         recent_events: events ?? [],
-        streak_days: streak?.streak_days ?? 0,
+        streak_days: activeStreak,
+        last_claimed_at: streak?.last_claimed_at ?? null,
         can_claim_streak_today: canClaimToday,
         claimed_tasks: claimedTasks ?? [],
       },
@@ -65,17 +74,17 @@ router.post('/streak/claim', requireAuth, async (req: AuthRequest, res) => {
       .single()
 
     if (streak) {
-      const lastClaimed = streak.last_claimed_at?.split('T')[0]
-      if (lastClaimed === today) {
-        res.status(400).json({ success: false, message: 'Already claimed today' })
+      const now = new Date()
+      const lastClaimedTime = streak.last_claimed_at ? new Date(streak.last_claimed_at).getTime() : 0
+      const diffMs = now.getTime() - lastClaimedTime
+
+      if (streak.streak_reward_claimed_today && diffMs < 24 * 60 * 60 * 1000) {
+        res.status(400).json({ success: false, message: 'Please wait 24 hours between claims' })
         return
       }
 
-      const yesterday = new Date()
-      yesterday.setDate(yesterday.getDate() - 1)
-      const yesterdayStr = yesterday.toISOString().split('T')[0]
-
-      const newStreak = lastClaimed === yesterdayStr ? streak.streak_days + 1 : 1
+      // If less than 48 hours have passed since last claim, continue streak. Otherwise, reset to 1.
+      const newStreak = (streak.last_claimed_at && diffMs < 48 * 60 * 60 * 1000) ? streak.streak_days + 1 : 1
 
       await supabaseAdmin
         .from('user_streaks')

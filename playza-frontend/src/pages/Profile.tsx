@@ -19,19 +19,19 @@ import { ZASymbol } from "@/components/currency/ZASymbol";
 import { ProfileSkeleton } from "@/components/skeletons/ProfileSkeleton";
 
 const Profile = () => {
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const [isBadgeModalOpen, setIsBadgeModalOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { data: profileData, isLoading } = useProfile();
+  const { data: profileData, isLoading: profileLoading } = useProfile();
 
   useEffect(() => {
-    if (!isLoading && !user) {
+    if (!authLoading && !profileLoading && !user) {
       navigate("/registration?view=login");
     } else if (location.pathname === "/profile" || location.pathname === "/profile/") {
       navigate("/profile/overview", { replace: true });
     }
-  }, [user, isLoading, navigate, location.pathname]);
+  }, [user, authLoading, profileLoading, navigate, location.pathname]);
 
   const menuItems = [
     { label: "Overview", icon: <MdPerson />, to: "overview" },
@@ -43,7 +43,7 @@ const Profile = () => {
 
 
 
-  if (isLoading) {
+  if (authLoading || profileLoading) {
     return <ProfileSkeleton />;
   }
 

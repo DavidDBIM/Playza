@@ -163,8 +163,8 @@ const STREAK_REWARDS = [
 ];
 
 export default function Loyalty() {
-  const { user } = useAuth();
-  const { data: loyaltyData, isLoading } = useLoyaltyMe();
+  const { user, isLoading: authLoading } = useAuth();
+  const { data: loyaltyData, isLoading: loyaltyLoading } = useLoyaltyMe();
   const { mutate: performClaimStreak, isPending: claimingStreak } = useClaimStreak();
   const { mutate: performClaimTask, isPending: isMutationPending, variables: mutationVariables } = useClaimTask();
   const [activeCategory, setActiveCategory] = useState("onboarding");
@@ -172,19 +172,30 @@ export default function Loyalty() {
   const [countdown, setCountdown] = useState<string>('');
 
   const lastClaimedAt = loyaltyData?.last_claimed_at ?? null;
+  const totalPoints = loyaltyData?.total_points ?? 0;
+  const streakDays = loyaltyData?.streak_days ?? 0;
+  const canClaimStreak = loyaltyData?.can_claim_streak_today ?? false;
+  const claimedTaskIds = new Set((loyaltyData?.claimed_tasks ?? []).map((t: ClaimedTask) => t.task_id));
+  const completedEventTypes = new Set((loyaltyData?.recent_events ?? []).map((e: PzaEvent) => e.event_type));
 
   const computeCountdown = useCallback(() => {
-    if (!lastClaimedAt) return '';
-    const last = new Date(lastClaimedAt);
+    if (canClaimStreak || !lastClaimedAt) return '';
+    let parsedDate = lastClaimedAt;
+    if (!parsedDate.includes('Z') && !parsedDate.includes('+')) {
+      parsedDate = parsedDate.replace(' ', 'T') + 'Z';
+    }
+    const last = new Date(parsedDate);
     const next = new Date(last.getTime() + 24 * 60 * 60 * 1000);
     const now = new Date();
     const diff = next.getTime() - now.getTime();
-    if (diff <= 0) return '';
+    
+    if (diff <= 0) return '00:00:00';
+    
     const h = Math.floor(diff / 3600000);
     const m = Math.floor((diff % 3600000) / 60000);
     const s = Math.floor((diff % 60000) / 1000);
     return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-  }, [lastClaimedAt]);
+  }, [lastClaimedAt, canClaimStreak]);
 
   useEffect(() => {
     const update = () => setCountdown(computeCountdown());
@@ -193,13 +204,7 @@ export default function Loyalty() {
     return () => clearInterval(timer);
   }, [computeCountdown]);
 
-  if (user && isLoading) return <LoyaltySkeleton />;
-
-  const totalPoints = loyaltyData?.total_points ?? 0;
-  const streakDays = loyaltyData?.streak_days ?? 0;
-  const canClaimStreak = loyaltyData?.can_claim_streak_today ?? false;
-  const claimedTaskIds = new Set((loyaltyData?.claimed_tasks ?? []).map((t: ClaimedTask) => t.task_id));
-  const completedEventTypes = new Set((loyaltyData?.recent_events ?? []).map((e: PzaEvent) => e.event_type));
+  if (authLoading || (user && loyaltyLoading)) return <LoyaltySkeleton />;
 
   const currentTier = TIER_CONFIG.find(t => totalPoints >= t.min && totalPoints <= t.max) || TIER_CONFIG[0];
   const nextTier = TIER_CONFIG.find(t => t.min > totalPoints);

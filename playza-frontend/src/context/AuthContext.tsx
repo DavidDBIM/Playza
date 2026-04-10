@@ -136,6 +136,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     [user],
   );
 
+  const authLoading = isLoading || (!!token && !isError && !user);
+
   const value = useMemo(
     () => ({
       user,
@@ -143,9 +145,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       logout,
       updateProfile,
       isProfileComplete,
-      isLoading,
+      isLoading: authLoading,
     }),
-    [user, isProfileComplete, isLoading, setAuth, logout, updateProfile],
+    [user, isProfileComplete, authLoading, setAuth, logout, updateProfile],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

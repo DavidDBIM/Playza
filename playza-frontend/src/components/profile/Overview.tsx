@@ -1,15 +1,17 @@
 import {
-  MdAnalytics, MdCancel, MdCheckCircle, MdEmojiEvents,
-  MdFavorite, MdGrade, MdHistory, MdLocalFireDepartment,
-  MdMilitaryTech, MdTrendingUp, MdVerified,
+  MdAnalytics, MdCancel, MdCheckCircle, MdEmojiEvents, MdGrade, MdHistory, MdMilitaryTech, MdTrendingUp, MdLocalFireDepartment, MdGroupAdd
 } from "react-icons/md";
 import { ZASymbol } from "@/components/currency/ZASymbol";
 import { useProfile, useGameHistory } from "@/hooks/profile/useProfile";
+import { useLoyaltyMe } from "@/hooks/loyalty/useLoyaltyMe";
+import { useReferralStats } from "@/hooks/referral/useReferralStats";
 import type { GameHistoryItem } from "@/api/profile.api";
 
 const Overview = () => {
   const { data: profile } = useProfile();
   const { data: historyData } = useGameHistory(1, 3);
+  const { data: loyaltyData } = useLoyaltyMe();
+  const { data: referralData } = useReferralStats();
 
   const recentMatches = historyData?.history ?? [];
   const totalGames = historyData?.total ?? 0;
@@ -18,15 +20,8 @@ const Overview = () => {
   const highestScore = recentMatches.reduce((max: number, m: GameHistoryItem) => Math.max(max, m.score || 0), 0);
   const pzaPoints = profile?.pza_points ?? 0;
 
-  const rankInfo = (() => {
-    if (pzaPoints >= 100000) return { label: "PLATINUM", next: null, pct: 100 };
-    if (pzaPoints >= 10000) return { label: "GOLD", next: 100000, pct: Math.round((pzaPoints / 100000) * 100) };
-    if (pzaPoints >= 1000) return { label: "SILVER", next: 10000, pct: Math.round((pzaPoints / 10000) * 100) };
-    return { label: "BRONZE", next: 1000, pct: Math.round((pzaPoints / 1000) * 100) };
-  })();
-
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-3 gap-2 md:gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700 overflow-hidden">
+    <div className="grid grid-cols-1 xl:grid-cols-2 gap-2 md:gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700 overflow-hidden">
       <h2 className="md:hidden text-lg font-black text-slate-900 dark:text-white tracking-tight col-span-full">Overview</h2>
 
       <div className="xl:col-span-2 space-y-8">
@@ -45,22 +40,40 @@ const Overview = () => {
           ))}
         </div>
 
-        <div className="grid grid-cols-2 gap-2 md:gap-4">
+        <div className="grid grid-cols-2 2xl:grid-cols-4 gap-2 md:gap-4">
           <div className="glass-card p-2 md:p-4 rounded-xl flex items-center justify-between hover:bg-primary/5 transition-all">
             <div className="space-y-1">
               <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">PZA Points</p>
               <p className="text-xs md:text-base text-slate-900 dark:text-white font-black">{pzaPoints.toLocaleString()}</p>
             </div>
-            <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary text-xl"><MdMilitaryTech /></div>
+            <div className="size-10 flex-shrink-0 rounded-xl bg-primary/10 flex items-center justify-center text-primary text-xl"><MdMilitaryTech /></div>
           </div>
           <div className="glass-card p-2 md:p-4 rounded-xl flex items-center justify-between hover:bg-secondary/5 transition-all">
             <div className="space-y-1">
-              <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Wallet Balance</p>
+              <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Wallet</p>
               <p className="text-xs md:text-base text-slate-900 dark:text-white font-black flex items-center gap-1">
                 <ZASymbol className="text-xs" />{(profile?.wallet?.balance ?? 0).toLocaleString()}
               </p>
             </div>
-            <div className="size-10 rounded-xl bg-green-500/10 flex items-center justify-center text-green-500 text-xl"><MdHistory /></div>
+            <div className="size-10 flex-shrink-0 rounded-xl bg-green-500/10 flex items-center justify-center text-green-500 text-xl"><MdHistory /></div>
+          </div>
+          <div className="glass-card p-2 md:p-4 rounded-xl flex items-center justify-between hover:bg-orange-500/5 transition-all">
+            <div className="space-y-1">
+              <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Daily Streak</p>
+              <p className="text-xs md:text-base text-slate-900 dark:text-white font-black">
+                {loyaltyData?.streak_days ?? 0}
+              </p>
+            </div>
+            <div className="size-10 flex-shrink-0 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-500 text-xl"><MdLocalFireDepartment /></div>
+          </div>
+          <div className="glass-card p-2 md:p-4 rounded-xl flex items-center justify-between hover:bg-purple-500/5 transition-all">
+            <div className="space-y-1">
+              <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Referrals</p>
+              <p className="text-xs md:text-base text-slate-900 dark:text-white font-black">
+                {referralData?.referrals?.length ?? 0}
+              </p>
+            </div>
+            <div className="size-10 flex-shrink-0 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-500 text-xl"><MdGroupAdd /></div>
           </div>
         </div>
 
@@ -97,60 +110,6 @@ const Overview = () => {
             )}
           </div>
         </section>
-      </div>
-
-      <div className="space-y-8">
-        <div className="glass-card p-4 md:p-8 rounded-xl relative overflow-hidden text-center group shadow-2xl border-primary/20 bg-linear-to-br from-primary/10 to-transparent">
-          <div className="relative z-10">
-            <div className="inline-flex size-14 rounded-xl bg-primary/20 items-center justify-center mb-3 shadow-inner animate-pulse">
-              <MdLocalFireDepartment className="text-primary text-3xl" />
-            </div>
-            <h3 className="text-slate-500 dark:text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mb-2">PZA Rank</h3>
-            <p className="text-slate-900 dark:text-white font-black text-xl mb-1">{rankInfo.label}</p>
-            <p className="text-primary text-[10px] font-black uppercase tracking-widest mt-4">{pzaPoints.toLocaleString()} PZA Points</p>
-            <div className="mt-4 w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
-              <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${rankInfo.pct}%` }} />
-            </div>
-            {rankInfo.next && (
-              <p className="text-slate-500 text-[10px] mt-2 font-bold">{rankInfo.next.toLocaleString()} PZA to next rank</p>
-            )}
-          </div>
-        </div>
-
-        <div className="glass-card p-4 md:p-8 rounded-xl shadow-xl">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="size-12 rounded-2xl bg-primary/20 flex items-center justify-center text-primary text-2xl shadow-inner border border-primary/20">
-                <MdMilitaryTech />
-              </div>
-              <div>
-                <p className="text-slate-500 text-[9px] font-bold uppercase tracking-[0.2em]">Current Rank</p>
-                <h3 className="text-slate-900 dark:text-white font-black text-xl tracking-tighter italic leading-none">{rankInfo.label}</h3>
-              </div>
-            </div>
-            <span className="text-primary text-xs font-black bg-primary/10 px-3 py-1 rounded-full border border-primary/20">{rankInfo.pct}%</span>
-          </div>
-          <div className="relative h-3 w-full bg-slate-200 dark:bg-white/5 rounded-full overflow-hidden border border-slate-300 dark:border-white/5">
-            <div className="absolute h-full inset-y-0.5 left-0.5 bg-primary rounded-full transition-all duration-1000" style={{ width: `calc(${rankInfo.pct}% - 4px)` }} />
-          </div>
-        </div>
-
-        <div className="glass-card p-4 md:p-8 rounded-xl shadow-xl border-slate-200 dark:border-white/5">
-          <div className="flex items-center justify-between mb-4 md:p-4">
-            <h3 className="text-slate-900 dark:text-white font-black text-sm md:text-lg">Milestones</h3>
-          </div>
-          <div className="grid grid-cols-3 gap-2 md:gap-3">
-            {[
-              { icon: <MdVerified className="text-primary" />, title: profile?.is_email_verified ? "Verified" : "Unverified" },
-              { icon: <MdMilitaryTech className="text-amber-500" />, title: rankInfo.label },
-              { icon: <MdFavorite className="text-red-400" />, title: "Player" },
-            ].map((item, i) => (
-              <div key={i} className="size-12 bg-linear-to-br from-primary/10 to-transparent rounded-xl flex items-center justify-center border border-primary/20 hover:scale-110 transition-all cursor-help relative shadow-lg" title={item.title}>
-                <span className="text-2xl">{item.icon}</span>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
     </div>
   );
