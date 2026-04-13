@@ -29,6 +29,7 @@ interface GameType {
   icon: React.ComponentType<{ className?: string; size?: number }>;
   players: string;
   color: string;
+  thumbnailUrl: string;
   comingSoon?: boolean;
 }
 
@@ -127,12 +128,12 @@ const H2HLobby = ({ onCreate, onBotCreate, onJoin, onQuickMatch, getWaitingRooms
   const isBtnLoading = loading || isFinding;
 
   const games: GameType[] = [
-    { id: 'arena-duel', name: 'Arena Duel', icon: Swords, players: '1.5k', color: 'from-orange-500 to-red-600' },
-    { id: 'chess', name: 'Grand Chess', icon: Swords, players: '2.4k', color: 'from-indigo-500 to-purple-600' },
-    { id: 'speed-battle', name: 'Speed Battle', icon: Zap, players: '1.2k', color: 'from-blue-500 to-indigo-600' },
-    { id: 'word-scramble', name: 'Word Scramble', icon: Trophy, players: '900', color: 'from-purple-500 to-pink-600' },
-    { id: 'ludo', name: 'Ludo Pro', icon: Trophy, players: '1.8k', color: 'from-emerald-500 to-teal-600', comingSoon: true },
-    { id: 'pool', name: '8-Ball Pool', icon: Zap, players: '3.1k', color: 'from-amber-500 to-orange-600' },
+    { id: 'arena-duel', name: 'Arena Duel', icon: Swords, players: '1.5k', color: 'from-orange-500 to-red-600', thumbnailUrl: '/thumbnails/h2h/arena-duel.jpg' },
+    { id: 'chess', name: 'Grand Chess', icon: Swords, players: '2.4k', color: 'from-indigo-500 to-purple-600', thumbnailUrl: '/thumbnails/h2h/chess.jpg' },
+    { id: 'speed-battle', name: 'Speed Battle', icon: Zap, players: '1.2k', color: 'from-blue-500 to-indigo-600', thumbnailUrl: '/thumbnails/h2h/speed-battle.jpg' },
+    { id: 'word-scramble', name: 'Word Scramble', icon: Trophy, players: '900', color: 'from-purple-500 to-pink-600', thumbnailUrl: '/thumbnails/h2h/word-scramble.jpg' },
+    { id: 'ludo', name: 'Ludo Pro', icon: Trophy, players: '1.8k', color: 'from-emerald-500 to-teal-600', thumbnailUrl: '/thumbnails/h2h/ludo.jpg', comingSoon: true },
+    { id: 'pool', name: '8-Ball Pool', icon: Zap, players: '3.1k', color: 'from-amber-500 to-orange-600', thumbnailUrl: '/thumbnails/h2h/pool.jpg' },
   ];
 
   return (

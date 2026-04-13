@@ -16,7 +16,9 @@ import {
   AlertTriangle,
   Maximize,
   Minimize,
+  Clock,
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import H2HGamePrep from "../H2HGamePrep";
 import { makeChessMove, resignChessGame } from "@/api/chess.api";
 import { useToast } from "@/context/toast";
@@ -116,6 +118,17 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
   const [showResignModal, setShowResignModal] = useState(false);
   const [resignationWinnerId, setResignationWinnerId] = useState<string | null>(null);
 
+  // ── Timing State (10+5 Format) ──────────────────────────────────────────
+  const [whiteTime, setWhiteTime] = useState(600); // 10 minutes
+  const [blackTime, setBlackTime] = useState(600);
+  const [timeoutWinnerId, setTimeoutWinnerId] = useState<string | null>(null);
+
+  // ── Promotion State ────────────────────────────────────────────────────────
+  const [promotionMove, setPromotionMove] = useState<{
+    from: string;
+    to: string;
+  } | null>(null);
+
   // Track the last move we already applied so we don't re-apply it
   const lastAppliedMoveRef = useRef<string | null>(null);
   // Track whether we are waiting for the server to confirm our move
@@ -135,6 +148,30 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
       }
     }
   }, []);
+  
+  // ── Navigation Blocking (Back Button) ───────────────────────────────────────
+  useEffect(() => {
+    if (phase !== "playing" || room.status !== "active" || game.isGameOver()) return;
+
+    // Push an extra entry into history so we can intercept the back button
+    // This allows us to catch the back button before the user actually leaves
+    window.history.pushState(null, "", window.location.href);
+
+    const handlePopState = () => {
+      // User hit back button. 
+      // 1. Put the state back so we stay on this page
+      window.history.pushState(null, "", window.location.href);
+      // 2. Show the modal
+      setShowResignModal(true);
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+      // If we are leaving because the game is over, we don't need to do anything special here
+      // but if the component unmounts, we should clean up.
+    };
+  }, [phase, room.status, game]);
 
   // ── Prevent Accidental Leave ────────────────────────────────────────────────
   useEffect(() => {
@@ -168,7 +205,7 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
     if (game.isGameOver() && (room.status === "finished" || game.isGameOver()) && !showWinnerDelayed && !showGameOverAcknowledge) {
       timeoutId = setTimeout(() => {
         setShowGameOverAcknowledge(true);
-      }, 4000); // 4-second delay to let users see the final board state
+      }, 15000); // 15-second delay to let users analyze the final board state
     }
     return () => {
       if (timeoutId) clearTimeout(timeoutId);
@@ -207,6 +244,38 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
       );
     }
   }, [game, checkmateDeclared, room.host_id, user?.id, toast]);
+
+  // ── Timer Logic ────────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (room.status !== "active" || game.isGameOver() || timeoutWinnerId || phase !== "playing") return;
+
+    const interval = setInterval(() => {
+      const turn = game.turn();
+      if (turn === "w") {
+        setWhiteTime((t) => {
+          if (t <= 1) {
+            clearInterval(interval);
+            setTimeoutWinnerId(room.guest_id || "GUEST_WIN");
+            toast.error("White ran out of time!");
+            return 0;
+          }
+          return t - 1;
+        });
+      } else {
+        setBlackTime((t) => {
+          if (t <= 1) {
+            clearInterval(interval);
+            setTimeoutWinnerId(room.host_id || "HOST_WIN");
+            toast.error("Black ran out of time!");
+            return 0;
+          }
+          return t - 1;
+        });
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [game, room.status, room.host_id, room.guest_id, timeoutWinnerId, toast, phase]);
 
   // ── Sync opponent move from server ─────────────────────────────────────────
   useEffect(() => {
@@ -254,6 +323,13 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
             );
           }
 
+          // Apply +5s increment to the person who just moved (the opponent)
+          if (copy.turn() === "w") {
+            setBlackTime(prev => prev + 5);
+          } else {
+            setWhiteTime(prev => prev + 5);
+          }
+
           return copy;
         } catch {
           return prev;
@@ -277,24 +353,43 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
       : room.host?.username || "HOST";
 
   const attemptMove = useCallback(
-    (sourceSquare: string, targetSquare: string): boolean => {
+    (sourceSquare: string, targetSquare: string, promotion: string = "q"): boolean => {
       if (!isYourTurn) {
         toast.error("It's not your turn!");
         return false;
       }
+
+      // Check for promotion if not already handling it
+      const gameCopyForCheck = new Chess(game.fen());
+      const moveOptions = gameCopyForCheck.moves({ square: sourceSquare as Square, verbose: true });
+      const isPromotionMove = moveOptions.some(m => m.to === targetSquare && m.flags.includes('p'));
+
+      if (isPromotionMove && !promotionMove && promotion === "q") {
+        setPromotionMove({ from: sourceSquare, to: targetSquare });
+        return true;
+      }
+
       try {
         const gameCopy = new Chess(game.fen());
         const move = gameCopy.move({
           from: sourceSquare,
           to: targetSquare,
-          promotion: "q",
+          promotion: promotion,
         });
         if (!move) return false;
 
         setGame(gameCopy);
         setSelectedSquare(null);
         setLegalMoveSquares([]);
+        setPromotionMove(null);
         pendingMoveRef.current = true;
+
+        // Apply +5s increment
+        if (game.turn() === "w") {
+          setWhiteTime(prev => prev + 5);
+        } else {
+          setBlackTime(prev => prev + 5);
+        }
 
         const { isCheck, isCheckmate, isCapture, isCastle, pieceChar } =
           parseSAN(move.san);
@@ -317,13 +412,13 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
           );
         }
 
-        const moveKey = `${sourceSquare}${targetSquare}q`;
+        const moveKey = `${sourceSquare}${targetSquare}${promotion}`;
         lastAppliedMoveRef.current = moveKey;
 
         makeChessMove(room.id, {
           from: sourceSquare,
           to: targetSquare,
-          promotion: "q",
+          promotion: promotion,
         }).catch((err: unknown) => {
           const error = err as { message?: string };
           toast.error(error.message || "Failed to sync move — reverting");
@@ -335,7 +430,7 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
         return false;
       }
     },
-    [game, isYourTurn, room.id, toast, oppUsername],
+    [game, isYourTurn, room.id, toast, oppUsername, promotionMove],
   );
 
   // ── Click-to-move
@@ -378,16 +473,26 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
       toast.success("You resigned the game.");
       const winnerId: string =
         user && room.host_id === user.id
-          ? room.guest_id || "GUEST_WIN"
+          ? room.guest_id || "00000000-0000-0000-0000-000000000000"
           : room.host_id || "HOST_WIN";
       setResignationWinnerId(winnerId);
+      
       setShowResignModal(false);
+      
+      // Delay slightly then show winner screen (Resigner loses)
+      setTimeout(() => {
+        setShowWinnerDelayed(true);
+      }, 2000);
     } catch (err: unknown) {
       const error = err as { message?: string };
       toast.error(error.message || "Failed to resign");
     } finally {
       setIsResigning(false);
     }
+  };
+
+  const cancelResign = () => {
+    setShowResignModal(false);
   };
 
   // ── Square highlight styles
@@ -406,7 +511,17 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
     };
   });
 
-  // ── Derived values
+  // ── Helper: Format Time ────────────────────────────────────────────────────
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  const isWhiteLowTime = whiteTime < 30;
+  const isBlackLowTime = blackTime < 30;
+
+  // ── Derived values ─────────────────────────────────────────────────────────
   const hostIsWhite = room.host_id === user?.id;
   const myTurn = isYourTurn;
   const oppTurn = !myTurn && room.status === "active";
@@ -509,17 +624,17 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
 
   // ── Render
   return (
-    <div className="flex flex-col gap-1.5 w-full max-w-full mx-auto p-2 box-border md:grid md:grid-cols-[1fr_360px] md:grid-rows-[auto_auto_1fr] md:gap-4 md:p-4 lg:p-6 min-h-screen bg-slate-50 dark:bg-slate-950 overflow-y-auto">
+    <div className="flex flex-col gap-1.5 w-full max-w-full mx-auto p-2 box-border md:grid md:grid-cols-[1fr_360px] md:grid-rows-[auto_auto_auto_auto_1fr] md:gap-4 md:p-4 lg:p-6 min-h-screen bg-slate-50 dark:bg-slate-950 overflow-y-auto">
       {showResignModal && (
         <ResignConfirmationModal
           stake={room.stake}
           isLoading={isResigning}
-          onCancel={() => setShowResignModal(false)}
+          onCancel={cancelResign}
           onConfirm={confirmResign}
         />
       )}
       {/* ── Fullscreen Toggle (NEW) ── */}
-      <div className="flex justify-end w-full md:col-span-2">
+      <div className="flex justify-end w-full md:col-span-2 md:row-start-1">
         <button
           onClick={toggleFullscreen}
           className="p-2 rounded-xl bg-slate-100 dark:bg-white/5 md:hover:bg-slate-200 dark:md:hover:bg-white/10 text-slate-600 dark:text-slate-400"
@@ -530,37 +645,52 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
       </div>
 
       {/* ── Header Bar ── */}
-      <div className="flex items-center justify-between gap-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-xl px-2 py-2 md:col-span-2 md:px-5 md:py-3 box-border">
+      <div className="flex items-center justify-between gap-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-xl px-2 py-2 md:col-span-2 md:row-start-2 md:px-5 md:py-3 box-border">
         {/* Host chip */}
-        <div className="flex items-center gap-2 relative flex-1 min-w-0">
-          <div
-            className={`shrink-0 w-8.5 h-8.5 rounded-xl flex items-center justify-center font-black text-[10px] md:text-sm text-white border-2 bg-slate-700 md:w-10.5 md:h-10.5 lg:w-11.5 lg:h-11.5 overflow-hidden
-            ${(hostIsWhite && myTurn) || (!hostIsWhite && oppTurn) ? "border-indigo-500" : "border-black/10 dark:border-white/10"}`}
-          >
-            {room.host?.avatar_url ? (
-              <img
-                src={room.host.avatar_url}
-                className="w-full h-full object-cover rounded-md"
-                alt=""
-                loading="lazy"
-              />
-            ) : (
-              room.host?.username?.[0]?.toUpperCase()
-            )}
-          </div>
-          <div className="flex flex-col min-w-0 overflow-hidden">
-            <span
-              className={`font-black text-[10px] md:text-xs truncate uppercase tracking-wide leading-tight md:text-[15px] ${(hostIsWhite && myTurn) || (!hostIsWhite && oppTurn) ? "text-indigo-600 dark:text-indigo-500" : "text-slate-900 dark:text-slate-100"}`}
+        <div className="flex flex-col md:flex-row items-start md:items-center gap-1 md:gap-2 relative flex-1 min-w-0">
+          <div className="flex items-center gap-2 min-w-0 md:w-auto">
+            <div
+              className={`shrink-0 w-8.5 h-8.5 rounded-xl flex items-center justify-center font-black text-[10px] md:text-sm text-white border-2 bg-slate-700 md:w-10.5 md:h-10.5 lg:w-11.5 lg:h-11.5 overflow-hidden
+              ${(hostIsWhite && myTurn) || (!hostIsWhite && oppTurn) ? "border-indigo-500" : "border-black/10 dark:border-white/10"}`}
             >
-              {room.host?.username || "Host"}
-            </span>
-            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-none">
-              {room.host_id === user?.id ? "YOU" : "RIVAL"} · ⬜
-            </span>
+              {room.host?.avatar_url ? (
+                <img
+                  src={room.host.avatar_url}
+                  className="w-full h-full object-cover rounded-md"
+                  alt=""
+                  loading="lazy"
+                />
+              ) : (
+                room.host?.username?.[0]?.toUpperCase()
+              )}
+            </div>
+            <div className="flex flex-col min-w-0 overflow-hidden">
+              <span
+                className={`font-black text-[10px] md:text-xs truncate uppercase tracking-wide leading-tight md:text-[15px] ${(hostIsWhite && myTurn) || (!hostIsWhite && oppTurn) ? "text-indigo-600 dark:text-indigo-500" : "text-slate-900 dark:text-slate-100"}`}
+              >
+                {room.host?.username || "Host"}
+              </span>
+              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-none">
+                {room.host_id === user?.id ? "YOU" : "RIVAL"} · ⬜
+              </span>
+            </div>
           </div>
-          {((hostIsWhite && myTurn) || (!hostIsWhite && oppTurn)) && (
-            <span className="absolute top-0 right-0 w-2 h-2 rounded-full bg-indigo-500" />
-          )}
+
+          {/* Timer Display Host */}
+          <motion.div 
+            animate={isWhiteLowTime && ((hostIsWhite && myTurn) || (!hostIsWhite && oppTurn)) ? { scale: [1, 1.05, 1], color: ["#ef4444", "#ffffff", "#ef4444"] } : {}}
+            transition={{ repeat: Infinity, duration: 1 }}
+            className={`md:ml-1 px-2 py-1 rounded-lg font-black tabular-nums text-[10px] md:text-sm flex items-center gap-1.5 border whitespace-nowrap
+              ${(hostIsWhite && myTurn) || (!hostIsWhite && oppTurn) 
+                ? isWhiteLowTime 
+                  ? "bg-red-500/20 border-red-500 text-red-500" 
+                  : "bg-indigo-500/10 border-indigo-500/20 text-indigo-600 dark:text-indigo-400"
+                : "bg-slate-100 dark:bg-white/5 border-transparent text-slate-500"
+              }`}
+          >
+            <Clock size={12} className={((hostIsWhite && myTurn) || (!hostIsWhite && oppTurn)) ? "animate-pulse" : ""} />
+            {formatTime(whiteTime)}
+          </motion.div>
         </div>
 
         {/* Centre VS */}
@@ -578,61 +708,132 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
         </div>
 
         {/* Guest chip */}
-        <div className="flex items-center justify-end gap-2 relative flex-1 min-w-0 text-right">
-          <div className="flex flex-col items-end min-w-0 overflow-hidden">
-            <span
-              className={`font-black text-[10px] md:text-xs truncate uppercase tracking-wide leading-tight md:text-[15px] ${(!hostIsWhite && myTurn) || (hostIsWhite && oppTurn) ? "text-indigo-600 dark:text-indigo-500" : "text-slate-900 dark:text-slate-100"}`}
+        <div className="flex flex-col md:flex-row items-end md:items-center justify-end gap-1 md:gap-2 relative flex-1 min-w-0 text-right">
+          <div className="flex items-center justify-end gap-2 min-w-0 md:w-auto">
+            <div className="flex flex-col items-end min-w-0 overflow-hidden">
+              <span
+                className={`font-black text-[10px] md:text-xs truncate uppercase tracking-wide leading-tight md:text-[15px] ${(!hostIsWhite && myTurn) || (hostIsWhite && oppTurn) ? "text-indigo-600 dark:text-indigo-500" : "text-slate-900 dark:text-slate-100"}`}
+              >
+                {room.guest?.username ||
+                  (room.guest_id ? "Waiting..." : "COMPUTER")}
+              </span>
+              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-none">
+                ⬛ · {room.guest_id === user?.id ? "YOU" : "RIVAL"}
+              </span>
+            </div>
+
+            <div
+              className={`shrink-0 w-8.5 h-8.5 rounded-lg flex items-center justify-center font-black text-[10px] md:text-sm text-white border bg-slate-900 md:w-10.5 md:h-10.5 lg:w-11.5 lg:h-11.5 overflow-hidden
+              ${(!hostIsWhite && myTurn) || (hostIsWhite && oppTurn) ? "border-indigo-500" : "border-slate-200 dark:border-white/10"}`}
             >
-              {room.guest?.username ||
-                (room.guest_id ? "Waiting..." : "COMPUTER")}
-            </span>
-            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-none">
-              ⬛ · {room.guest_id === user?.id ? "YOU" : "RIVAL"}
-            </span>
+              {room.guest?.avatar_url ? (
+                <img
+                  src={room.guest.avatar_url}
+                  className="w-full h-full object-cover"
+                  alt=""
+                  loading="lazy"
+                />
+              ) : (
+                room.guest?.username?.[0]?.toUpperCase() ||
+                (room.guest_id ? "?" : "C")
+              )}
+            </div>
           </div>
-          <div
-            className={`shrink-0 w-8.5 h-8.5 rounded-lg flex items-center justify-center font-black text-[10px] md:text-sm text-white border bg-slate-900 md:w-10.5 md:h-10.5 lg:w-11.5 lg:h-11.5 overflow-hidden
-            ${(!hostIsWhite && myTurn) || (hostIsWhite && oppTurn) ? "border-indigo-500" : "border-slate-200 dark:border-white/10"}`}
+
+          {/* Timer Display Guest */}
+          <motion.div 
+            animate={isBlackLowTime && ((!hostIsWhite && myTurn) || (hostIsWhite && oppTurn)) ? { scale: [1, 1.05, 1], color: ["#ef4444", "#ffffff", "#ef4444"] } : {}}
+            transition={{ repeat: Infinity, duration: 1 }}
+            className={`md:mr-1 px-2 py-1 rounded-lg font-black tabular-nums text-[10px] md:text-sm flex items-center gap-1.5 border whitespace-nowrap
+              ${(!hostIsWhite && myTurn) || (hostIsWhite && oppTurn) 
+                ? isBlackLowTime 
+                  ? "bg-red-500/20 border-red-500 text-red-500" 
+                  : "bg-indigo-500/10 border-indigo-500/20 text-indigo-600 dark:text-indigo-400"
+                : "bg-slate-100 dark:bg-white/5 border-transparent text-slate-500"
+              }`}
           >
-            {room.guest?.avatar_url ? (
-              <img
-                src={room.guest.avatar_url}
-                className="w-full h-full object-cover"
-                alt=""
-                loading="lazy"
-              />
-            ) : (
-              room.guest?.username?.[0]?.toUpperCase() ||
-              (room.guest_id ? "?" : "C")
-            )}
-          </div>
+            {formatTime(blackTime)}
+            <Clock size={12} className={((!hostIsWhite && myTurn) || (hostIsWhite && oppTurn)) ? "animate-pulse" : ""} />
+          </motion.div>
+
           {((!hostIsWhite && myTurn) || (hostIsWhite && oppTurn)) && (
             <span className="absolute top-0 left-0 w-2 h-2 rounded-full bg-amber-500" />
           )}
         </div>
       </div>
 
+      {/* ── Pawn Promotion Overlay (Premium) ── */}
+      <AnimatePresence>
+        {promotionMove && (
+          <div className="fixed inset-0 z-300 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="bg-white dark:bg-slate-900 border border-white/10 rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center"
+            >
+              <div className="mb-6">
+                <div className="w-16 h-16 bg-indigo-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <span className="text-4xl text-slate-900 dark:text-white">♙</span>
+                </div>
+                <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Pawn Promotion</h3>
+                <p className="text-slate-500 dark:text-slate-400 font-medium mt-1">Choose a piece to empower your pawn</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                {[
+                  { id: 'q', name: 'Queen', icon: '♛', color: 'text-amber-500' },
+                  { id: 'n', name: 'Knight', icon: '♞', color: 'text-indigo-500' },
+                  { id: 'r', name: 'Rook', icon: '♜', color: 'text-slate-500' },
+                  { id: 'b', name: 'Bishop', icon: '♝', color: 'text-emerald-500' },
+                ].map((piece) => (
+                  <button
+                    key={piece.id}
+                    onClick={() => attemptMove(promotionMove.from, promotionMove.to, piece.id)}
+                    className="group relative flex flex-col items-center gap-2 p-4 rounded-2xl bg-slate-100 dark:bg-white/5 border border-transparent hover:border-indigo-500/50 hover:bg-slate-200 dark:hover:bg-white/10 transition-all active:scale-95"
+                  >
+                    <div className={`text-4xl mb-1 group-hover:scale-110 transition-transform ${piece.color}`}>
+                      {piece.icon}
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                      {piece.name}
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              <button 
+                onClick={() => setPromotionMove(null)}
+                className="mt-6 text-xs font-bold text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+              >
+                Cancel Move
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* ── Turn / Check Banner ── */}
       {inCheck ? (
         myTurn ? (
-          <div className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-[10px] font-extrabold tracking-widest uppercase bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 md:col-start-1 md:text-xs">
+          <div className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-[10px] font-extrabold tracking-widest uppercase bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 md:col-start-1 md:row-start-3 md:text-xs">
             <AlertTriangle size={14} className="shrink-0" />
             <span>⚠️ YOU ARE IN CHECK — Protect your king!</span>
           </div>
         ) : (
-          <div className="flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl text-[10px] font-extrabold tracking-widest uppercase bg-amber-500/5 border border-amber-500/20 text-amber-600 dark:text-amber-400 md:col-start-1 md:text-xs text-center leading-none">
+          <div className="flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl text-[10px] font-extrabold tracking-widest uppercase bg-amber-500/5 border border-amber-500/20 text-amber-600 dark:text-amber-400 md:col-start-1 md:row-start-3 md:text-xs text-center leading-none">
             <AlertTriangle size={14} className="shrink-0" />
             <span>🎯 {oppUsername || "Rival"} IS IN CHECK — FINISH THEM!</span>
           </div>
         )
       ) : game.isCheckmate() ? (
-        <div className="flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl text-[10px] font-extrabold tracking-widest uppercase bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 md:col-start-1 md:text-xs">
+        <div className="flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl text-[10px] font-extrabold tracking-widest uppercase bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 md:col-start-1 md:row-start-3 md:text-xs">
           <Trophy size={14} className="shrink-0" />
           <span>CHECKMATE — Game Over</span>
         </div>
       ) : (
         <div
-          className={`flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-xl text-[10px] font-extrabold tracking-widest uppercase md:col-start-1 md:text-xs
+          className={`flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-xl text-[10px] font-extrabold tracking-widest uppercase md:col-start-1 md:row-start-3 md:text-xs
           ${
             myTurn
               ? "bg-indigo-500/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400"
@@ -664,42 +865,49 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
       {(() => {
         if (game.isCheckmate()) {
           return (
-            <div className="text-[10px] text-center md:text-sm text-amber-500 font-bold md:col-start-1 mt-1">
+            <div className="text-[10px] text-center md:text-sm text-amber-500 font-bold md:col-start-1 md:row-start-4 mt-1">
               Checkmate: The King is under attack and has no legal moves to escape.
             </div>
           );
         }
         if (game.isStalemate()) {
           return (
-            <div className="text-[10px] text-center md:text-sm text-slate-500 font-bold md:col-start-1 mt-1">
+            <div className="text-[10px] text-center md:text-sm text-slate-500 font-bold md:col-start-1 md:row-start-4 mt-1">
               Stalemate: The player to move has no legal moves and is not in check. The game is a draw.
             </div>
           );
         }
         if (game.isThreefoldRepetition()) {
           return (
-            <div className="text-[10px] text-center md:text-sm text-slate-500 font-bold md:col-start-1 mt-1">
+            <div className="text-[10px] text-center md:text-sm text-slate-500 font-bold md:col-start-1 md:row-start-4 mt-1">
               Draw: Threefold repetition. The exact same board position has occurred three times.
             </div>
           );
         }
         if (game.isInsufficientMaterial()) {
           return (
-            <div className="text-[10px] text-center md:text-sm text-slate-500 font-bold md:col-start-1 mt-1">
+            <div className="text-[10px] text-center md:text-sm text-slate-500 font-bold md:col-start-1 md:row-start-4 mt-1">
               Draw: Insufficient material to force a checkmate.
             </div>
           );
         }
         if (game.isDraw()) {
           return (
-            <div className="text-[10px] text-center md:text-sm text-slate-500 font-bold md:col-start-1 mt-1">
+            <div className="text-[10px] text-center md:text-sm text-slate-500 font-bold md:col-start-1 md:row-start-4 mt-1">
               Draw: The game has ended in a tie.
+            </div>
+          );
+        }
+        if (timeoutWinnerId) {
+          return (
+            <div className="text-[10px] text-center md:text-sm text-red-500 font-bold md:col-start-1 md:row-start-4 mt-1">
+              Time Out: {timeoutWinnerId === room.host_id ? "White" : "Black"} ran out of time!
             </div>
           );
         }
         if (inCheck) {
           return (
-            <div className="text-[10px] text-center md:text-sm text-red-500 font-bold md:col-start-1 mt-1">
+            <div className="text-[10px] text-center md:text-sm text-red-500 font-bold md:col-start-1 md:row-start-4 mt-1">
               Check: The King is under immediate attack! Move it, block the attack, or capture the attacking piece.
             </div>
           );
@@ -709,7 +917,7 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
 
       {/* ── Chess Board ── */}
       <div
-        className={`relative w-full max-w-[90vh] mx-auto aspect-square rounded-xl overflow-hidden bg-white dark:bg-slate-900 border-4 md:col-start-1 md:row-start-3
+        className={`relative w-full max-w-[75vh] mx-auto aspect-square rounded-xl overflow-hidden bg-white dark:bg-slate-900 border-4 md:col-start-1 md:row-start-5
         ${inCheck && myTurn ? "border-red-500/60" : "border-slate-800 dark:border-slate-700"}`}
       >
         <div className="absolute inset-0 pointer-events-none z-0 bg-[radial-gradient(ellipse_at_center,rgba(99,102,241,0.12),transparent_70%)]" />
@@ -748,8 +956,8 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
       </div>
 
       {showGameOverAcknowledge && !showWinnerDelayed && (
-        <div className="fixed inset-0 z-[200] overflow-y-auto bg-slate-950/70 flex items-center justify-center p-2">
-          <div className="w-full max-w-[300px] bg-white dark:bg-slate-900 rounded-xl overflow-hidden p-6 text-center">
+        <div className="fixed inset-0 z-200 overflow-y-auto bg-slate-950/70 flex items-center justify-center p-2">
+          <div className="w-full max-w-75 bg-white dark:bg-slate-900 rounded-xl overflow-hidden p-6 text-center">
              <h3 className="text-xl font-bold mb-2 text-slate-800 dark:text-white">Game Over</h3>
              <p className="text-sm text-slate-600 dark:text-slate-300 mb-6">
                 {game.isCheckmate() ? "Checkmate! The King is under attack and cannot escape." : 
@@ -771,14 +979,16 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
               room={room}
               user={user}
               localWinnerId={
-                resignationWinnerId || (
+                resignationWinnerId || 
+                timeoutWinnerId ||
+                (
                 game.isDraw() ||
                 game.isStalemate() ||
                 game.isThreefoldRepetition() ||
                 game.isInsufficientMaterial()
                   ? null
                   : game.turn() === "w"
-                    ? room.guest_id
+                    ? room.guest_id || "00000000-0000-0000-0000-000000000000"
                     : room.host_id
                 )
               }
@@ -798,7 +1008,7 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
       )}
 
       {/* ── Side Panel ── */}
-      <div className="flex flex-col gap-2 md:col-start-2 md:row-start-2 md:row-end-4 md:h-full">
+      <div className="flex flex-col gap-2 md:col-start-2 md:row-start-3 md:row-span-3 md:h-full">
         {/* Stats grid */}
         <div className="grid grid-cols-4 gap-1 md:gap-1.5">
           <div className="flex flex-col items-center gap-0.5 rounded-xl px-2 py-1.5 border bg-white dark:bg-black/20 border-black/5 dark:border-white/5">

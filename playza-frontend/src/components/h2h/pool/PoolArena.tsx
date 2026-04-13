@@ -29,6 +29,8 @@ const PoolArena = ({ room: initialRoom, user }: PoolArenaProps) => {
   
   const [phase, setPhase] = useState<'prep' | 'playing'>('playing')
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [showWinnerDelayed, setShowWinnerDelayed] = useState(false)
+  const [showGameOverAcknowledge, setShowGameOverAcknowledge] = useState(false)
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -38,7 +40,18 @@ const PoolArena = ({ room: initialRoom, user }: PoolArenaProps) => {
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
   }, [])
 
-  
+  // ── Delay Winner Screen ───────────────────────────────────────────────────
+  useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout>;
+    if (gameState?.status === 'finished' && !showWinnerDelayed && !showGameOverAcknowledge) {
+      timeoutId = setTimeout(() => {
+        setShowGameOverAcknowledge(true);
+      }, 15000); // 15-second delay to let users analyze the table state
+    }
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [gameState?.status, showWinnerDelayed, showGameOverAcknowledge]);
 
   useEffect(() => {
     setRoom(initialRoom)
@@ -236,13 +249,27 @@ const PoolArena = ({ room: initialRoom, user }: PoolArenaProps) => {
         </button>
       </div>
 
-      {isGameOver && (
-        <div className="fixed inset-0 z-200 bg-slate-950/90 backdrop-blur-sm flex items-center justify-center p-4">
+      {showGameOverAcknowledge && !showWinnerDelayed && (
+        <div className="fixed inset-0 z-200 overflow-y-auto bg-slate-950/70 flex items-center justify-center p-2">
+          <div className="w-full max-w-75 bg-white dark:bg-slate-900 rounded-xl overflow-hidden p-6 text-center">
+             <h3 className="text-xl font-bold mb-2 text-slate-800 dark:text-white">Game Over</h3>
+             <p className="text-sm text-slate-600 dark:text-slate-300 mb-6">
+                The match has concluded. Take a moment to review the final table state.
+             </p>
+             <button onClick={() => { setShowGameOverAcknowledge(false); setShowWinnerDelayed(true); }} className="p-2 bg-indigo-600 text-white rounded-xl w-full font-bold md:hover:bg-indigo-500">
+               Acknowledge & Proceed
+             </button>
+          </div>
+        </div>
+      )}
+
+      {showWinnerDelayed && (
+        <div className="fixed inset-0 z-200 overflow-y-auto bg-slate-950/90 backdrop-blur-sm flex items-center justify-center p-4">
            <div className="w-full max-w-2xl">
              <H2HWinner 
                room={room}
                user={user}
-               localWinnerId={gameState.winner === 'host' ? room.host_id : (room.guest_id || "BOT")}
+               localWinnerId={gameState.winner === 'host' ? room.host_id : (room.guest_id || "00000000-0000-0000-0000-000000000000")}
                isSyncing={false}
              />
            </div>

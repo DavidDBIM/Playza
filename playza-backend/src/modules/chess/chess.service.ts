@@ -16,7 +16,7 @@ async function handleGameOver(roomId: string, winnerId: string | null, stake: nu
     })
     .eq('id', roomId)
 
-  if (stake > 0 && winnerId) {
+  if (stake > 0 && winnerId && winnerId !== SYSTEM_BOT_ID) {
     const totalPrize = stake * 2
     const platformCut = totalPrize * 0.1
     const winnerPrize = totalPrize - platformCut
@@ -287,7 +287,7 @@ export async function makeMove(
   if (chess.isGameOver()) {
     let winner = null;
     if (chess.isCheckmate()) {
-      winner = room.current_turn;
+      winner = room.current_turn || SYSTEM_BOT_ID;
     }
     await handleGameOver(roomId, winner, room.stake);
     return { move, next_turn: null, status: "finished" };

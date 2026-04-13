@@ -99,7 +99,7 @@ const Header = () => {
                             : "Unverified"}
                         </p>
                       </div>
-                      <div className="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 border-primary overflow-hidden bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                      <div className="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 border-primary overflow-hidden bg-white dark:bg-slate-800 flex items-center justify-center">
                         {user.avatarUrl ? (
                           <img
                             alt={user.username}

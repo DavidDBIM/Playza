@@ -7,7 +7,6 @@ import SpeedBattleArena from '@/components/h2h/speed-battle/SpeedBattleArena';
 import WordScrambleArena from '@/components/h2h/word-scramble/WordScrambleArena';
 import PoolArena from '@/components/h2h/pool/PoolArena';
 import ArenaDuel from '@/components/h2h/arena-duel/ArenaDuel';
-import H2HWinner from '@/components/h2h/H2HWinner';
 import * as chessApi from '@/api/chess.api';
 import { poolApi } from '@/api/poolApi';
 import { useH2HRoom, useH2HMutations, type GameType } from '@/hooks/h2h/useH2H';
@@ -134,6 +133,7 @@ const H2HZone = () => {
                     />
                   );
                 case "active":
+                case "finished":
                   if (gameType === "speed-battle")
                     return (
                       <SpeedBattleArena
@@ -156,35 +156,24 @@ const H2HZone = () => {
                         }
                       />
                     );
-                    if (gameType === "pool")
-                      return (
-                        <PoolArena
-                          key={room.id}
-                          room={room as unknown as PoolRoom}
-                          user={user}
-                        />
-                      );
-                    if (gameType === "arena-duel")
-                      return (
-                        <ArenaDuel key={room.id} />
-                      );
+                  if (gameType === "pool")
                     return (
-                      <ChessArena
+                      <PoolArena
                         key={room.id}
-                        room={
-                          room as unknown as React.ComponentProps<
-                            typeof ChessArena
-                          >["room"]
-                        }
+                        room={room as unknown as PoolRoom}
                         user={user}
                       />
                     );
-                case "finished":
+                  if (gameType === "arena-duel")
+                    return (
+                      <ArenaDuel key={room.id} />
+                    );
                   return (
-                    <H2HWinner
+                    <ChessArena
+                      key={room.id}
                       room={
                         room as unknown as React.ComponentProps<
-                          typeof H2HWinner
+                          typeof ChessArena
                         >["room"]
                       }
                       user={user}

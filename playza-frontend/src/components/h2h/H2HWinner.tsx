@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { NavLink } from 'react-router';
 import type { UserProfile } from '@/context/auth';
 import { Medal } from 'lucide-react';
@@ -29,6 +30,14 @@ const motivationalPhrases = [
 const randomPhrase = motivationalPhrases[Math.floor(Math.random() * motivationalPhrases.length)];
 
 const H2HWinner = ({ room, user, localWinnerId, isSyncing }: H2HWinnerProps) => {
+  useEffect(() => {
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(err => {
+        console.error(`Error attempting to exit fullscreen: ${err.message}`);
+      });
+    }
+  }, []);
+
   const finalWinnerId = room.winner_id || localWinnerId;
   const isWinner = finalWinnerId === user?.id;
   const isDraw = !finalWinnerId; 

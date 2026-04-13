@@ -112,6 +112,14 @@ function getPieceValue(piece: { type: string; color: string }, x: number, y: num
 }
 
 function evaluateBoard(chess: Chess): number {
+  if (chess.isCheckmate()) {
+    // Current turn in 'chess' is the one who IS checkmated
+    return chess.turn() === 'w' ? -1000000 : 1000000;
+  }
+  if (chess.isDraw() || chess.isStalemate() || chess.isThreefoldRepetition()) {
+    return 0;
+  }
+
   let totalEvaluation = 0;
   const board = chess.board();
 
@@ -122,6 +130,12 @@ function evaluateBoard(chess: Chess): number {
       }
     }
   }
+
+  // Bonus for checking the opponent
+  if (chess.isCheck()) {
+    totalEvaluation += chess.turn() === 'w' ? -50 : 50;
+  }
+
   return totalEvaluation;
 }
 
@@ -185,7 +199,7 @@ export function getBotMove(
   if (moves.length === 0) return null;
 
   let bestMove: Move | null = null;
-  const depth = 2; // Reduced depth to prevent Node.js event loop blocking & provide instant moves
+  const depth = 3; // Increased depth for better tactical awareness (checkmates etc)
   console.log(`[Bot] Evaluating move at depth ${depth} for fen: ${fen}`);
   const isMaximizing = chess.turn() === "w";
   let bestValue = isMaximizing ? -Infinity : Infinity;
