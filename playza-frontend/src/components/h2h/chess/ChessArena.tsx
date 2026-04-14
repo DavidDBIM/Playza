@@ -205,7 +205,7 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
     if (game.isGameOver() && (room.status === "finished" || game.isGameOver()) && !showWinnerDelayed && !showGameOverAcknowledge) {
       timeoutId = setTimeout(() => {
         setShowGameOverAcknowledge(true);
-      }, 15000); // 15-second delay to let users analyze the final board state
+      }, 10000); // 15-second delay to let users analyze the final board state
     }
     return () => {
       if (timeoutId) clearTimeout(timeoutId);

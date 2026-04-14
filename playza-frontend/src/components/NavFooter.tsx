@@ -25,13 +25,14 @@ const NavFooter = () => {
   const [openPanel, setOpenPanel] = useState<PanelType>(null);
   const [prevPathname, setPrevPathname] = useState(pathname);
 
-  // Close panel on route change — must be in useEffect, not in render body
-  useEffect(() => {
-    if (prevPathname !== pathname) {
-      setPrevPathname(pathname);
-      if (openPanel !== null) setOpenPanel(null);
+  // If the URL has changed since the last render, reset the panel state during the render phase.
+  // React will immediately re-render with the new state before the browser paints.
+  if (pathname !== prevPathname) {
+    setPrevPathname(pathname);
+    if (openPanel !== null) {
+      setOpenPanel(null);
     }
-  }, [pathname, prevPathname, openPanel]);
+  }
 
   const closePanel = () => setOpenPanel(null);
   const togglePanel = (panel: PanelType) =>
