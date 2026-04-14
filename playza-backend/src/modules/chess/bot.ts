@@ -253,39 +253,8 @@ export function getBotMove(
   const moves = chess.moves({ verbose: true });
   if (moves.length === 0) return null;
 
-  let bestMove: Move | null = null;
-  // Depth 3 with optimized pruning and quiescence depth limit
-  const depth = 3;
-  const isMaximizing = chess.turn() === "w";
-  let bestValue = isMaximizing ? -Infinity : Infinity;
-
-  const sortedMoves = sortMoves(moves);
-
-  for (const move of sortedMoves) {
-    chess.move(move);
-    const boardValue = minimax(
-      chess,
-      depth - 1,
-      -Infinity,
-      Infinity,
-      !isMaximizing,
-    );
-    chess.undo();
-
-    if (isMaximizing) {
-      if (boardValue > bestValue) {
-        bestValue = boardValue;
-        bestMove = move;
-      }
-    } else {
-      if (boardValue < bestValue) {
-        bestValue = boardValue;
-        bestMove = move;
-      }
-    }
-  }
-
-  if (!bestMove) return null;
+  // DIAGNOSTIC CHANGE: Just pick the first move
+  const bestMove = moves[0];
 
   return {
     from: bestMove.from,
