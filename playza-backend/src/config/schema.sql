@@ -256,3 +256,23 @@ create table if not exists claimed_tasks (
 );
 
 alter table claimed_tasks enable row level security;
+
+-- LUDO ROOMS
+create table if not exists ludo_rooms (
+  id uuid primary key default uuid_generate_v4(),
+  code text unique not null,
+  host_id uuid not null references users(id) on delete cascade,
+  guest_id uuid references users(id) on delete set null,
+  stake numeric(12, 2) default 0,
+  status text default 'waiting' check (status in ('waiting', 'active', 'finished', 'abandoned')),
+  board_state jsonb default null,
+  current_turn uuid references users(id) on delete set null,
+  winner_id uuid references users(id) on delete set null,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create trigger ludo_rooms_updated_at before update on ludo_rooms
+  for each row execute function update_updated_at();
+
+alter table ludo_rooms enable row level security;

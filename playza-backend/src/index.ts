@@ -15,6 +15,7 @@ import securityRoutes from './modules/security/security.routes'
 import speedbattleRoutes from './modules/speedbattle/speedbattle.routes'
 import wordscrambleRoutes from './modules/wordscramble/wordscramble.routes'
 import poolRoutes from './modules/pool/pool.routes'
+import ludoRoutes from './modules/ludo/ludo.routes'
 
 dotenv.config()
 
@@ -50,6 +51,7 @@ app.use('/api/security', securityRoutes)
 app.use('/api/speedbattle', speedbattleRoutes)
 app.use('/api/wordscramble', wordscrambleRoutes)
 app.use('/api/pool', poolRoutes)
+app.use('/api/ludo', ludoRoutes)
 
 app.use((req, res) => {
   res.status(404).json({ success: false, message: 'Route not found' })

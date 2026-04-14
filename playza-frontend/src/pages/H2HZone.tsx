@@ -7,6 +7,7 @@ import SpeedBattleArena from '@/components/h2h/speed-battle/SpeedBattleArena';
 import WordScrambleArena from '@/components/h2h/word-scramble/WordScrambleArena';
 import PoolArena from '@/components/h2h/pool/PoolArena';
 import ArenaDuel from '@/components/h2h/arena-duel/ArenaDuel';
+import LudoArena from '@/components/h2h/ludo/LudoArena';
 import * as chessApi from '@/api/chess.api';
 import { poolApi } from '@/api/poolApi';
 import { useH2HRoom, useH2HMutations, type GameType } from '@/hooks/h2h/useH2H';
@@ -167,6 +168,14 @@ const H2HZone = () => {
                   if (gameType === "arena-duel")
                     return (
                       <ArenaDuel key={room.id} />
+                    );
+                  if (gameType === "ludo")
+                    return (
+                      <LudoArena
+                        key={room.id}
+                        room={room}
+                        user={user}
+                      />
                     );
                   return (
                     <ChessArena

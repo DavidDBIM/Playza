@@ -3,8 +3,9 @@ import * as chessApi from "@/api/chess.api";
 import { speedBattleApi } from "@/api/speedbattle.api";
 import { wordScrambleApi } from "@/api/wordscramble.api";
 import { poolApi } from "@/api/poolApi";
+import * as ludoApi from "@/api/ludo.api";
 
-export type GameType = "chess" | "speed-battle" | "word-scramble" | "pool" | "arena-duel";
+export type GameType = "chess" | "speed-battle" | "word-scramble" | "pool" | "arena-duel" | "ludo";
 
 export interface GameApi {
   getRoom?: (roomId: string) => Promise<unknown>;
@@ -19,6 +20,7 @@ export const getApiForGame = (gameType: GameType): GameApi => {
   if (gameType === "speed-battle") return speedBattleApi as unknown as GameApi;
   if (gameType === "word-scramble") return wordScrambleApi as unknown as GameApi;
   if (gameType === "pool") return poolApi as unknown as GameApi;
+  if (gameType === "ludo") return ludoApi as unknown as GameApi;
   return chessApi as unknown as GameApi; // Fallback to chess for unified interface
 };
 
@@ -27,6 +29,7 @@ export const useWaitingRooms = (gameType: GameType) => {
     queryKey: ["h2h", "waiting-rooms", gameType],
     queryFn: async () => {
       if (gameType === "chess") return chessApi.getWaitingRooms();
+      if (gameType === "ludo") return ludoApi.getWaitingRooms();
       if (gameType === "pool") return poolApi.listRooms();
       return [];
     },
@@ -41,6 +44,7 @@ export const useH2HRoom = (roomId: string | undefined, gameType: GameType) => {
     queryFn: async () => {
       if (!roomId) throw new Error("Room ID required");
       if (gameType === "chess") return chessApi.getChessRoom(roomId);
+      if (gameType === "ludo") return ludoApi.getLudoRoom(roomId);
       
       const api = getApiForGame(gameType);
       if (api.getRoom) {
@@ -64,6 +68,7 @@ export const useH2HMutations = (gameType: GameType) => {
   const createRoom = useMutation({
     mutationFn: (stake: number) => {
       if (gameType === "chess") return chessApi.createChessRoom(stake);
+      if (gameType === "ludo") return ludoApi.createLudoRoom(stake);
       if (!api.createRoom) throw new Error("Creation not supported for this game");
       return api.createRoom(stake);
     },
@@ -72,6 +77,7 @@ export const useH2HMutations = (gameType: GameType) => {
   const createBotRoom = useMutation({
     mutationFn: (stake: number) => {
       if (gameType === "chess") return chessApi.createBotRoom(stake);
+      if (gameType === "ludo") return ludoApi.createBotRoom(stake);
       if (!api.createRoom) throw new Error("Bot match not supported for this game");
       return api.createRoom(stake, true, "medium");
     },
@@ -80,6 +86,7 @@ export const useH2HMutations = (gameType: GameType) => {
   const joinRoom = useMutation({
     mutationFn: (code: string) => {
       if (gameType === "chess") return chessApi.joinChessRoom(code);
+      if (gameType === "ludo") return ludoApi.joinLudoRoom(code);
       if (!api.joinRoom) throw new Error("Joining by code not supported");
       return api.joinRoom(code);
     },
@@ -88,6 +95,7 @@ export const useH2HMutations = (gameType: GameType) => {
   const quickMatch = useMutation({
     mutationFn: (stake: number) => {
       if (gameType === "chess") return chessApi.findQuickMatch(stake);
+      if (gameType === "ludo") return ludoApi.findQuickMatch(stake);
       if (!api.findQuickMatch) throw new Error("Quick match not supported");
       return api.findQuickMatch(stake);
     },

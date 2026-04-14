@@ -132,7 +132,7 @@ const H2HLobby = ({ onCreate, onBotCreate, onJoin, onQuickMatch, getWaitingRooms
     { id: 'chess', name: 'Grand Chess', icon: Swords, players: '2.4k', color: 'from-indigo-500 to-purple-600', thumbnailUrl: '/thumbnails/h2h/chess.jpg' },
     { id: 'speed-battle', name: 'Speed Battle', icon: Zap, players: '1.2k', color: 'from-blue-500 to-indigo-600', thumbnailUrl: '/thumbnails/h2h/speed-battle.jpg' },
     { id: 'word-scramble', name: 'Word Scramble', icon: Trophy, players: '900', color: 'from-purple-500 to-pink-600', thumbnailUrl: '/thumbnails/h2h/word-scramble.jpg' },
-    { id: 'ludo', name: 'Ludo Pro', icon: Trophy, players: '1.8k', color: 'from-emerald-500 to-teal-600', thumbnailUrl: '/thumbnails/h2h/ludo.jpg', comingSoon: true },
+    { id: 'ludo', name: 'Ludo Pro', icon: Trophy, players: '1.8k', color: 'from-emerald-500 to-teal-600', thumbnailUrl: '/thumbnails/h2h/ludo.jpg' },
     { id: 'pool', name: '8-Ball Pool', icon: Zap, players: '3.1k', color: 'from-amber-500 to-orange-600', thumbnailUrl: '/thumbnails/h2h/pool.jpg' },
   ];
 
