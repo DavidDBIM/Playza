@@ -25,10 +25,13 @@ const NavFooter = () => {
   const [openPanel, setOpenPanel] = useState<PanelType>(null);
   const [prevPathname, setPrevPathname] = useState(pathname);
 
-  if (prevPathname !== pathname) {
-    setPrevPathname(pathname);
-    if (openPanel !== null) setOpenPanel(null);
-  }
+  // Close panel on route change — must be in useEffect, not in render body
+  useEffect(() => {
+    if (prevPathname !== pathname) {
+      setPrevPathname(pathname);
+      if (openPanel !== null) setOpenPanel(null);
+    }
+  }, [pathname, prevPathname, openPanel]);
 
   const closePanel = () => setOpenPanel(null);
   const togglePanel = (panel: PanelType) =>
@@ -158,10 +161,10 @@ const NavFooter = () => {
         <NavLink
           to={item.path}
           className={({ isActive: active }) =>
-            `flex flex-col items-center justify-center relative py-2 ${
+            `flex flex-col items-center justify-center relative py-2 transition-colors duration-100 ${
               active
-                ? "text-primary md:-translate-y-1"
-                : "text-slate-400 md:hover:text-primary md:hover:-translate-y-0.5"
+                ? "text-primary"
+                : "text-slate-400 md:hover:text-primary"
             }`
           }
         >

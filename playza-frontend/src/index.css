@@ -231,10 +231,17 @@
 
 html {
   overflow-y: scroll;
-  scroll-behavior: smooth;
+  /* No smooth scroll on html root — it slows perceived navigation speed */
+  scroll-behavior: auto;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+}
+
+/* GPU-accelerate nav transitions so they don't trigger layout */
+.nav-item-link {
+  will-change: color;
+  transform: translateZ(0);
 }
 
 

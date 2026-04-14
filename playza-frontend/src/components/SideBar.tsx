@@ -32,10 +32,10 @@ const SideBar = () => {
             to={path}
             key={label}
             className={({ isActive }) =>
-              `group relative flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-300 ease-out overflow-hidden ${
+              `group relative flex items-center gap-4 px-4 py-3.5 rounded-xl transition-colors duration-150 overflow-hidden ${
                 isActive
                   ? "text-primary bg-primary/10 shadow-[inset_2px_0_0_0_var(--primary)]"
-                  : "text-muted-foreground hover:bg-white/5 hover:text-foreground hover:shadow-[inset_2px_0_0_0_rgba(255,255,255,0.2)]"
+                  : "text-muted-foreground hover:bg-white/5 hover:text-foreground"
               }`
             }
           >
@@ -56,10 +56,10 @@ const SideBar = () => {
                 </div>
 
                 <span
-                  className={`relative z-10 font-medium tracking-wide transition-all duration-300 ${
+                  className={`relative z-10 font-medium tracking-wide transition-colors duration-150 ${
                     isActive
-                      ? "text-primary font-semibold drop-shadow-sm"
-                      : "group-hover:translate-x-1"
+                      ? "text-primary font-semibold"
+                      : "group-hover:text-foreground"
                   }`}
                 >
                   {label}

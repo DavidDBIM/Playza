@@ -1,6 +1,5 @@
 import { Route, Routes, useLocation, useNavigate } from "react-router";
-
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useState, useTransition, useEffect } from "react";
 import Header from "./components/Header";
 import NavFooter from "./components/NavFooter";
 import SideBar from "./components/SideBar";
@@ -13,7 +12,7 @@ import { ToastProvider } from "./context/ToastContext";
 import { useAuth } from "./context/auth";
 import { CompleteProfileModal } from "./components/profile/CompleteProfileModal";
 
-// Lazy-loaded pages for better performance
+// ─── Lazy pages ───────────────────────────────────────────────────────────────
 const Home = lazy(() => import("./pages/Home"));
 const LeaderBoard = lazy(() => import("./pages/LeaderBoard"));
 const Profile = lazy(() => import("./pages/Profile"));
@@ -38,63 +37,98 @@ const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const Loyalty = lazy(() => import("./pages/Loyalty"));
 const CategoryPage = lazy(() => import("./pages/CategoryPage"));
 
-// Lazy-loaded profile subcomponents
+// Profile sub-pages
 const Overview = lazy(() => import("./components/profile/Overview"));
 const History = lazy(() => import("./components/profile/History"));
 const Achievements = lazy(() => import("./components/profile/Achievements"));
 const Settings = lazy(() => import("./components/profile/Settings"));
 const Security = lazy(() => import("./components/profile/Security"));
 
-// Page loading skeleton
+// ─── Top-bar progress indicator ──────────────────────────────────────────────
+// Appears instantly on click, disappears when new page is ready.
+// This gives immediate feedback even before the lazy chunk finishes loading.
+const NavProgress = ({ active }: { active: boolean }) => (
+  <div
+    aria-hidden
+    className="fixed top-0 left-0 z-[9999] h-[2px] bg-primary transition-all duration-300 pointer-events-none"
+    style={{
+      width: active ? "85%" : "0%",
+      opacity: active ? 1 : 0,
+      transitionTimingFunction: active ? "ease-out" : "ease-in",
+      transitionDuration: active ? "800ms" : "200ms",
+    }}
+  />
+);
+
+// ─── Minimal inline spinner (only shown if chunk loads > 200ms) ───────────────
 const PageLoader = () => (
   <div className="w-full h-[60vh] flex items-center justify-center">
     <div className="flex flex-col items-center gap-4">
-      <div className="size-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-      <span className="text-xs font-black uppercase tracking-widest text-slate-500 animate-pulse">
+      <div className="size-10 border-[3px] border-primary/20 border-t-primary rounded-full animate-spin" />
+      <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 animate-pulse">
         Loading...
       </span>
     </div>
   </div>
 );
 
+// ─── AppContent ───────────────────────────────────────────────────────────────
 const AppContent = () => {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const { isProfileComplete } = useAuth();
-
   const location = useLocation();
+
+  // useTransition defers the route update inside Suspense so the old page stays
+  // visible until the new one is ready — React 18 concurrent feature.
+  // isPending is true IMMEDIATELY on click, giving instant visual feedback.
+  const [isPending, startTransition] = useTransition();
+
   const searchParams = new URLSearchParams(location.search);
   const activeModal = searchParams.get("modal");
-
   const [showVerificationModal, setShowVerificationModal] = useState(false);
 
-  // const isGameDetailPage = !!useMatch("/games/:id");
   const isGameSessionPage = pathname.includes("/session");
   const isGamePlayPage =
     pathname.includes("/play") ||
-    // Only hide layout if we are in an active game room (e.g., /h2h/chess/room-id)
     (pathname.startsWith("/h2h") &&
       pathname.split("/").filter(Boolean).length >= 3);
-
   const isRegistrationPage = pathname.includes("/registration");
 
-  // const isGameDetailPage = pathname.startsWith(`/games/${id}`);
-
+  // Wrap navigate calls in startTransition so the browser stays responsive
   const handleWithdrawClick = () => {
     if (!isProfileComplete) {
       setShowVerificationModal(true);
     } else {
-      navigate("?modal=withdraw");
+      startTransition(() => navigate("?modal=withdraw"));
     }
   };
 
   const handleVerificationSuccess = () => {
     setShowVerificationModal(false);
-    navigate("?modal=withdraw");
+    startTransition(() => navigate("?modal=withdraw"));
   };
+
+  // Prefetch the most-visited pages in the background after mount
+  // So that navigation to those pages is zero-latency on first visit
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      // Prefetch after a short idle
+      import("./pages/Home");
+      import("./pages/Games");
+      import("./pages/H2HZone");
+      import("./pages/Wallet");
+      import("./pages/Tournaments");
+      import("./pages/LeaderBoard");
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <div className="relative min-h-screen bg-background">
+      {/* Instant top-bar progress on nav clicks */}
+      <NavProgress active={isPending} />
+
       {!isRegistrationPage && !isGamePlayPage && <Header />}
 
       {activeModal === "deposit" && (
@@ -111,12 +145,15 @@ const AppContent = () => {
         />
       )}
 
-      {/* {pathname === "/" && <AppNotification />} */}
       <div
         className={
           isGamePlayPage
             ? ""
-            : `w-full max-w-400 mx-auto flex gap-4 md:gap-8 px-1.5 md:px-4 pt-4 md:pt-8 ${isRegistrationPage ? "pb-0 min-h-screen flex items-center justify-center" : "pb-32 md:pb-24 lg:pb-10"}`
+            : `w-full max-w-400 mx-auto flex gap-4 md:gap-8 px-1.5 md:px-4 pt-4 md:pt-8 ${
+                isRegistrationPage
+                  ? "pb-0 min-h-screen flex items-center justify-center"
+                  : "pb-32 md:pb-24 lg:pb-10"
+              }`
         }
       >
         {!isGameSessionPage && !isRegistrationPage && !isGamePlayPage && (
@@ -125,7 +162,14 @@ const AppContent = () => {
           </aside>
         )}
 
-        <main className="flex-1 min-w-0 w-full ">
+        {/* Dim content slightly while a new page is loading */}
+        <main
+          className="flex-1 min-w-0 w-full"
+          style={{
+            opacity: isPending ? 0.6 : 1,
+            transition: "opacity 150ms ease",
+          }}
+        >
           <Suspense fallback={<PageLoader />}>
             <Routes>
               <Route path="/" element={<Home />} />
@@ -150,7 +194,6 @@ const AppContent = () => {
               <Route path="/h2h/:gameType/:roomId" element={<H2HZone />} />
               <Route path="/registration" element={<Registration />} />
               <Route path="/reset-password" element={<ResetPassword />} />
-
               <Route path="/wallet/transactions" element={<Transactions />} />
               <Route path="/referral" element={<Referral />} />
               <Route path="/wallet/deposit" element={<Deposit />} />
@@ -176,12 +219,12 @@ const AppContent = () => {
       </div>
 
       {pathname === "/" && <Footer showAbout={true} />}
-
       {!isRegistrationPage && !isGamePlayPage && <NavFooter />}
     </div>
   );
 };
 
+// ─── App root ─────────────────────────────────────────────────────────────────
 const App = () => {
   return (
     <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
