@@ -9,7 +9,8 @@ const PIECE_VALUES: Record<string, number> = {
   k: 20000,
 };
 
-const PAWN_EVAL_WHITE = [
+// Piece-Square tables for positional play
+const PAWN_EVAL = [
   [0,  0,  0,  0,  0,  0,  0,  0],
   [50, 50, 50, 50, 50, 50, 50, 50],
   [10, 10, 20, 30, 30, 20, 10, 10],
@@ -20,7 +21,7 @@ const PAWN_EVAL_WHITE = [
   [0,  0,  0,  0,  0,  0,  0,  0]
 ];
 
-const KNIGHT_EVAL_WHITE = [
+const KNIGHT_EVAL = [
   [-50,-40,-30,-30,-30,-30,-40,-50],
   [-40,-20,  0,  0,  0,  0,-20,-40],
   [-30,  0, 10, 15, 15, 10,  0,-30],
@@ -31,92 +32,7 @@ const KNIGHT_EVAL_WHITE = [
   [-50,-40,-30,-30,-30,-30,-40,-50]
 ];
 
-const BISHOP_EVAL_WHITE = [
-  [-20,-10,-10,-10,-10,-10,-10,-20],
-  [-10,  0,  0,  0,  0,  0,  0,-10],
-  [-10,  0,  5, 10, 10,  5,  0,-10],
-  [-10,  5,  5, 10, 10,  5,  5,-10],
-  [-10,  0, 10, 10, 10, 10,  0,-10],
-  [-10, 10, 10, 10, 10, 10, 10,-10],
-  [-10,  5,  0,  0,  0,  0,  5,-10],
-  [-20,-10,-10,-10,-10,-10,-10,-20]
-];
-
-const ROOK_EVAL_WHITE = [
-  [0,  0,  0,  0,  0,  0,  0,  0],
-  [5, 10, 10, 10, 10, 10, 10,  5],
-  [-5,  0,  0,  0,  0,  0,  0, -5],
-  [-5,  0,  0,  0,  0,  0,  0, -5],
-  [-5,  0,  0,  0,  0,  0,  0, -5],
-  [-5,  0,  0,  0,  0,  0,  0, -5],
-  [-5,  0,  0,  0,  0,  0,  0, -5],
-  [0,  0,  0,  5,  5,  0,  0,  0]
-];
-
-const QUEEN_EVAL_WHITE = [
-  [-20,-10,-10, -5, -5,-10,-10,-20],
-  [-10,  0,  0,  0,  0,  0,  0,-10],
-  [-10,  0,  5,  5,  5,  5,  0,-10],
-  [ -5,  0,  5,  5,  5,  5,  0, -5],
-  [  0,  0,  5,  5,  5,  5,  0, -5],
-  [-10,  5,  5,  5,  5,  5,  0,-10],
-  [-10,  0,  5,  0,  0,  0,  0,-10],
-  [-20,-10,-10, -5, -5,-10,-10,-20]
-];
-
-const KING_EVAL_WHITE = [
-  [-30,-40,-40,-50,-50,-40,-40,-30],
-  [-30,-40,-40,-50,-50,-40,-40,-30],
-  [-30,-40,-40,-50,-50,-40,-40,-30],
-  [-30,-40,-40,-50,-50,-40,-40,-30],
-  [-20,-30,-30,-40,-40,-30,-30,-20],
-  [-10,-20,-20,-20,-20,-20,-20,-10],
-  [ 20, 20,  0,  0,  0,  0, 20, 20],
-  [ 20, 30, 10,  0,  0, 10, 30, 20]
-];
-
-function reverseArray(arr: number[][]): number[][] {
-  return arr.slice().reverse();
-}
-
-const PAWN_EVAL_BLACK = reverseArray(PAWN_EVAL_WHITE);
-const KNIGHT_EVAL_BLACK = reverseArray(KNIGHT_EVAL_WHITE);
-const BISHOP_EVAL_BLACK = reverseArray(BISHOP_EVAL_WHITE);
-const ROOK_EVAL_BLACK = reverseArray(ROOK_EVAL_WHITE);
-const QUEEN_EVAL_BLACK = reverseArray(QUEEN_EVAL_WHITE);
-const KING_EVAL_BLACK = reverseArray(KING_EVAL_WHITE);
-
-function getPieceValue(piece: { type: string; color: string }, x: number, y: number): number {
-  const val = PIECE_VALUES[piece.type] || 0;
-  let positional = 0;
-  
-  if (piece.color === 'w') {
-      if (piece.type === 'p') positional = PAWN_EVAL_WHITE[y][x];
-      else if (piece.type === 'n') positional = KNIGHT_EVAL_WHITE[y][x];
-      else if (piece.type === 'b') positional = BISHOP_EVAL_WHITE[y][x];
-      else if (piece.type === 'r') positional = ROOK_EVAL_WHITE[y][x];
-      else if (piece.type === 'q') positional = QUEEN_EVAL_WHITE[y][x];
-      else if (piece.type === 'k') positional = KING_EVAL_WHITE[y][x];
-  } else {
-      if (piece.type === 'p') positional = PAWN_EVAL_BLACK[y][x];
-      else if (piece.type === 'n') positional = KNIGHT_EVAL_BLACK[y][x];
-      else if (piece.type === 'b') positional = BISHOP_EVAL_BLACK[y][x];
-      else if (piece.type === 'r') positional = ROOK_EVAL_BLACK[y][x];
-      else if (piece.type === 'q') positional = QUEEN_EVAL_BLACK[y][x];
-      else if (piece.type === 'k') positional = KING_EVAL_BLACK[y][x];
-  }
-  
-  return piece.color === 'w' ? val + positional : -(val + positional);
-}
-
-const TRANSPOSITION_TABLE = new Map<string, number>();
-
 function evaluateBoard(chess: Chess): number {
-  const fen = chess.fen();
-  // Using simple FEN check for speed
-  const cacheKey = fen.split(' ', 4).join(' ');
-  if (TRANSPOSITION_TABLE.has(cacheKey)) return TRANSPOSITION_TABLE.get(cacheKey)!;
-
   let totalEvaluation = 0;
   const board = chess.board();
 
@@ -124,18 +40,23 @@ function evaluateBoard(chess: Chess): number {
     for (let j = 0; j < 8; j++) {
       const piece = board[i][j];
       if (piece) {
-        totalEvaluation += getPieceValue(piece, j, i);
+        let val = PIECE_VALUES[piece.type] || 0;
+        
+        // Basic positional bonus for pawns and knights
+        if (piece.type === 'p') {
+          val += piece.color === 'w' ? PAWN_EVAL[i][j] : PAWN_EVAL[7-i][j];
+        } else if (piece.type === 'n') {
+          val += piece.color === 'w' ? KNIGHT_EVAL[i][j] : KNIGHT_EVAL[7-i][j];
+        }
+
+        totalEvaluation += piece.color === 'w' ? val : -val;
       }
     }
   }
 
+  // Slight bonus for checks
   if (chess.isCheck()) {
     totalEvaluation += chess.turn() === 'w' ? -50 : 50;
-  }
-
-  TRANSPOSITION_TABLE.set(cacheKey, totalEvaluation);
-  if (TRANSPOSITION_TABLE.size > 50000) {
-    TRANSPOSITION_TABLE.clear(); // Fresh start if table too large
   }
 
   return totalEvaluation;
@@ -160,61 +81,21 @@ function sortMoves(moves: Move[]): Move[] {
   });
 }
 
-function quiescenceSearch(
-  chess: Chess,
-  alpha: number,
-  beta: number,
-  isMaximizing: boolean,
-  depth: number = 0
-): number {
-  const standPat = evaluateBoard(chess);
-
-  if (isMaximizing) {
-    if (standPat >= beta) return beta;
-    if (standPat > alpha) alpha = standPat;
-  } else {
-    if (standPat <= alpha) return alpha;
-    if (standPat < beta) beta = standPat;
-  }
-
-  // Limit quiescence search to avoid explosion
-  if (depth >= 4) return standPat;
-
-  // Use fast capture generation if supported or filter
-  const moves = sortMoves(chess.moves({ verbose: true }).filter(m => m.captured));
-
-  for (const move of moves) {
-    chess.move(move);
-    const score = quiescenceSearch(chess, alpha, beta, !isMaximizing, depth + 1);
-    chess.undo();
-
-    if (isMaximizing) {
-      if (score >= beta) return beta;
-      if (score > alpha) alpha = score;
-    } else {
-      if (score <= alpha) return alpha;
-      if (score < beta) beta = score;
-    }
-  }
-
-  return isMaximizing ? alpha : beta;
-}
-
 function minimax(
   chess: Chess,
   depth: number,
   alpha: number,
   beta: number,
-  isMaximizingPlayer: boolean,
+  isMaximizingPlayer: boolean
 ): number {
   if (depth === 0) {
-    return quiescenceSearch(chess, alpha, beta, isMaximizingPlayer, 0);
+    return evaluateBoard(chess);
   }
 
   const moves = chess.moves({ verbose: true });
   if (moves.length === 0) {
     if (chess.isCheck()) {
-      return isMaximizingPlayer ? -1000000 - depth : 1000000 + depth;
+      return isMaximizingPlayer ? -1000000 : 1000000;
     }
     return 0;
   }
@@ -253,8 +134,33 @@ export function getBotMove(
   const moves = chess.moves({ verbose: true });
   if (moves.length === 0) return null;
 
-  // DIAGNOSTIC CHANGE: Just pick the first move
-  const bestMove = moves[0];
+  let bestMove: Move | null = null;
+  const isMaximizing = chess.turn() === "w";
+  let bestValue = isMaximizing ? -Infinity : Infinity;
+  
+  // Depth 3 without Quiescence is very fast and decently strong
+  const depth = 3;
+  const sortedMoves = sortMoves(moves);
+
+  for (const move of sortedMoves) {
+    chess.move(move);
+    const boardValue = minimax(chess, depth - 1, -Infinity, Infinity, !isMaximizing);
+    chess.undo();
+
+    if (isMaximizing) {
+      if (boardValue > bestValue) {
+        bestValue = boardValue;
+        bestMove = move;
+      }
+    } else {
+      if (boardValue < bestValue) {
+        bestValue = boardValue;
+        bestMove = move;
+      }
+    }
+  }
+
+  if (!bestMove) return moves[Math.floor(Math.random() * moves.length)];
 
   return {
     from: bestMove.from,
