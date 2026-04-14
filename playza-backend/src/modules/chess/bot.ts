@@ -112,11 +112,12 @@ function getPieceValue(piece: { type: string; color: string }, x: number, y: num
 const TRANSPOSITION_TABLE = new Map<string, number>();
 
 function evaluateBoard(chess: Chess): number {
-  const fen = chess.fen().split(' ').slice(0, 4).join(' ');
-  if (TRANSPOSITION_TABLE.has(fen)) return TRANSPOSITION_TABLE.get(fen)!;
+  const fen = chess.fen();
+  // Using simple FEN check for speed
+  const cacheKey = fen.split(' ', 4).join(' ');
+  if (TRANSPOSITION_TABLE.has(cacheKey)) return TRANSPOSITION_TABLE.get(cacheKey)!;
 
   let totalEvaluation = 0;
-  // Minimize board() calls as they are expensive in chess.js
   const board = chess.board();
 
   for (let i = 0; i < 8; i++) {
@@ -128,18 +129,13 @@ function evaluateBoard(chess: Chess): number {
     }
   }
 
-  // Bonus for checking the opponent
   if (chess.isCheck()) {
-    totalEvaluation += chess.turn() === 'w' ? -70 : 70;
+    totalEvaluation += chess.turn() === 'w' ? -50 : 50;
   }
-  
-  // Removed mobility bonus as chess.moves() is expensive
-  // totalEvaluation += (chess.turn() === 'w' ? chess.moves().length * 2 : -chess.moves().length * 2);
 
-  TRANSPOSITION_TABLE.set(fen, totalEvaluation);
-  if (TRANSPOSITION_TABLE.size > 20000) {
-    const firstKey = TRANSPOSITION_TABLE.keys().next().value;
-    if (firstKey !== undefined) TRANSPOSITION_TABLE.delete(firstKey);
+  TRANSPOSITION_TABLE.set(cacheKey, totalEvaluation);
+  if (TRANSPOSITION_TABLE.size > 50000) {
+    TRANSPOSITION_TABLE.clear(); // Fresh start if table too large
   }
 
   return totalEvaluation;
@@ -168,7 +164,8 @@ function quiescenceSearch(
   chess: Chess,
   alpha: number,
   beta: number,
-  isMaximizing: boolean
+  isMaximizing: boolean,
+  depth: number = 0
 ): number {
   const standPat = evaluateBoard(chess);
 
@@ -180,11 +177,15 @@ function quiescenceSearch(
     if (standPat < beta) beta = standPat;
   }
 
+  // Limit quiescence search to avoid explosion
+  if (depth >= 4) return standPat;
+
+  // Use fast capture generation if supported or filter
   const moves = sortMoves(chess.moves({ verbose: true }).filter(m => m.captured));
 
   for (const move of moves) {
     chess.move(move);
-    const score = quiescenceSearch(chess, alpha, beta, !isMaximizing);
+    const score = quiescenceSearch(chess, alpha, beta, !isMaximizing, depth + 1);
     chess.undo();
 
     if (isMaximizing) {
@@ -206,17 +207,16 @@ function minimax(
   beta: number,
   isMaximizingPlayer: boolean,
 ): number {
+  if (depth === 0) {
+    return quiescenceSearch(chess, alpha, beta, isMaximizingPlayer, 0);
+  }
+
   const moves = chess.moves({ verbose: true });
-  
   if (moves.length === 0) {
     if (chess.isCheck()) {
       return isMaximizingPlayer ? -1000000 - depth : 1000000 + depth;
     }
     return 0;
-  }
-
-  if (depth === 0) {
-    return quiescenceSearch(chess, alpha, beta, isMaximizingPlayer);
   }
 
   const sortedMoves = sortMoves(moves);
@@ -254,7 +254,7 @@ export function getBotMove(
   if (moves.length === 0) return null;
 
   let bestMove: Move | null = null;
-  // Depth 3 + Quiescence is a good balance between speed and strength
+  // Depth 3 with optimized pruning and quiescence depth limit
   const depth = 3;
   const isMaximizing = chess.turn() === "w";
   let bestValue = isMaximizing ? -Infinity : Infinity;
