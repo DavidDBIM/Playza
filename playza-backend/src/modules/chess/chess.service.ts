@@ -247,7 +247,7 @@ export async function getRoom(roomId: string, userId: string) {
 
 export async function makeMove(
   roomId: string,
-  userId: string,
+  userId: string | null,
   move: { from: string; to: string; promotion?: string },
 ) {
   const { data: room, error } = await supabaseAdmin
@@ -300,7 +300,7 @@ export async function makeMove(
         await new Promise((resolve) => setTimeout(resolve, 200));
         const botMove = getBotMove(chess.fen());
         if (botMove) {
-          await makeMove(roomId, null as any, botMove);
+          await makeMove(roomId, null, botMove);
         }
       } catch (err) {
         console.error("Delayed bot move error:", err);

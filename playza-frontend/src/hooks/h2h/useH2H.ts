@@ -1,9 +1,11 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as chessApi from "@/api/chess.api";
 import { speedBattleApi } from "@/api/speedbattle.api";
 import { wordScrambleApi } from "@/api/wordscramble.api";
 import { poolApi } from "@/api/poolApi";
 import * as ludoApi from "@/api/ludo.api";
+import { supabase } from "@/config/supabase";
+import { useEffect } from "react";
 
 export type GameType = "chess" | "speed-battle" | "word-scramble" | "pool" | "arena-duel" | "ludo";
 
@@ -39,6 +41,35 @@ export const useWaitingRooms = (gameType: GameType) => {
 };
 
 export const useH2HRoom = (roomId: string | undefined, gameType: GameType) => {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (!roomId) return;
+
+    const table = gameType === "ludo" ? "ludo_rooms" : "chess_rooms";
+    
+    const channel = supabase
+      .channel(`room-${roomId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: table,
+          filter: `id=eq.${roomId}`,
+        },
+        (payload) => {
+          // Manually update the query cache when a change is detected
+          queryClient.setQueryData(["h2h", "room", roomId], payload.new);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [roomId, gameType, queryClient]);
+
   return useQuery({
     queryKey: ["h2h", "room", roomId],
     queryFn: async () => {
@@ -53,10 +84,11 @@ export const useH2HRoom = (roomId: string | undefined, gameType: GameType) => {
       return null;
     },
     enabled: !!roomId,
+    // Keep refetch as fallback, but the subscription will handle the speed
     refetchInterval: (query) => {
       const data = query.state.data as { status?: string };
       const status = data?.status;
-      if (status === "waiting" || status === "active") return 2000;
+      if (status === "waiting" || status === "active") return 5000;
       return false;
     },
   });

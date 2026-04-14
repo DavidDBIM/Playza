@@ -177,7 +177,7 @@ export async function findQuickMatch(userId: string, stakeValue: number) {
   return await createLudoRoom(userId, stake);
 }
 
-export async function rollDice(roomId: string, userId: string): Promise<{ status: string; board_state: any }> {
+export async function rollDice(roomId: string, userId: string | null): Promise<{ status: string; board_state: any }> {
   const room = await getAndValidateActiveRoom(roomId, userId);
   
   const state = room.board_state;
@@ -230,7 +230,7 @@ export async function rollDice(roomId: string, userId: string): Promise<{ status
   return triggerBotIfApplicable(roomId, state, room, newCurrentTurn);
 }
 
-export async function makeMove(roomId: string, userId: string, pieceId: string): Promise<{ status: string; board_state: any }> {
+export async function makeMove(roomId: string, userId: string | null, pieceId: string): Promise<{ status: string; board_state: any }> {
   const room = await getAndValidateActiveRoom(roomId, userId);
   const state = room.board_state;
 
@@ -321,11 +321,11 @@ export async function resignGame(roomId: string, userId: string) {
 }
 
 // Helpers
-async function getAndValidateActiveRoom(roomId: string, userId: string) {
+async function getAndValidateActiveRoom(roomId: string, userId: string | null) {
   const { data: room, error } = await supabaseAdmin.from("ludo_rooms").select("*").eq("id", roomId).single();
   if (error || !room) throw new Error("Room not found");
   if (room.status !== "active") throw new Error("Game is not active");
-  if (room.current_turn !== userId) throw new Error("Not your overall turn");
+  if (userId !== null && room.current_turn !== userId) throw new Error("Not your overall turn");
   return room;
 }
 
@@ -340,12 +340,28 @@ async function handleEntryFee(userId: string, stake: number, ref: string) {
 
 // Very basic bot recursion for fast gameplay loop simulation
 async function triggerBotIfApplicable(roomId: string, state: any, room: any, currentTurn: string | null): Promise<{ status: string; board_state: any }> {
-  if (currentTurn === null && room.status === "active") { // Guest is null meaning it's bot
-    // Try to roll
-    if (!state.hasRolled && state.diceValue === null) {
-        await new Promise(r => setTimeout(r, 600));
-        return rollDice(roomId, room.host_id!); // Bot moves act on room (wait, bot endpoints don't have user... we just bypass the checks)
-    }
+  if (currentTurn === null && room.status === "active") {
+    (async () => {
+      try {
+        // 1. Bot Rolls
+        if (!state.hasRolled && state.diceValue === null) {
+          await new Promise(r => setTimeout(r, 800));
+          const rollRes = await rollDice(roomId, null);
+          
+          // 2. Bot Moves (if roll allowed a move)
+          const newState = rollRes.board_state;
+          if (newState.hasRolled && newState.diceValue !== null) {
+            await new Promise(r => setTimeout(r, 800));
+            const botPieceId = getBotLudoMove(newState.pieces, newState.diceValue, ["green", "blue"]);
+            if (botPieceId) {
+              await makeMove(roomId, null, botPieceId);
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Ludo Bot Error:", err);
+      }
+    })();
   }
   return { status: room.status, board_state: state };
 }

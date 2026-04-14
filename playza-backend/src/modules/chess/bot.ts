@@ -254,8 +254,8 @@ export function getBotMove(
   if (moves.length === 0) return null;
 
   let bestMove: Move | null = null;
-  // Depth 2 + Quiescence is much faster, reducing sluggish gameplay
-  const depth = 2;
+  // Depth 3 + Quiescence is a good balance between speed and strength
+  const depth = 3;
   const isMaximizing = chess.turn() === "w";
   let bestValue = isMaximizing ? -Infinity : Infinity;
 
