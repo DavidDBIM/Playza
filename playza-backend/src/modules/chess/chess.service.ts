@@ -293,19 +293,21 @@ export async function makeMove(
     return { move, next_turn: null, status: "finished" };
   }
 
-  if (nextTurn === null && room.status === "active") {
-    // Execute bot move in background to prevent blocking the user's response
-    (async () => {
+  // Bot game: guest_id is null, so nextTurn is also null (bot's turn)
+  const isBotGame = !room.guest_id;
+  if (isBotGame && !chess.isGameOver()) {
+    // Fire bot move asynchronously so the HTTP response is NOT delayed
+    setImmediate(async () => {
       try {
-        await new Promise((resolve) => setTimeout(resolve, 200));
-        const botMove = getBotMove(chess.fen());
+        // 800 ms budget — bot always replies within ~1 second
+        const botMove = getBotMove(chess.fen(), 800);
         if (botMove) {
           await makeMove(roomId, null, botMove);
         }
       } catch (err) {
-        console.error("Delayed bot move error:", err);
+        console.error("Bot move error:", err);
       }
-    })();
+    });
   }
 
   return { move, next_turn: nextTurn };
