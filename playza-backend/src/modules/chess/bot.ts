@@ -53,6 +53,17 @@ const ROOK_EVAL = [
   [0,  0,  0,  5,  5,  0,  0,  0]
 ];
 
+const QUEEN_EVAL = [
+  [-20,-10,-10, -5, -5,-10,-10,-20],
+  [-10,  0,  0,  0,  0,  0,  0,-10],
+  [-10,  0,  5,  5,  5,  5,  0,-10],
+  [ -5,  0,  5,  5,  5,  5,  0, -5],
+  [  0,  0,  5,  5,  5,  5,  0, -5],
+  [-10,  5,  5,  5,  5,  5,  0,-10],
+  [-10,  0,  5,  0,  0,  0,  0,-10],
+  [-20,-10,-10, -5, -5,-10,-10,-20]
+];
+
 const KING_EVAL = [
   [-30,-40,-40,-50,-50,-40,-40,-30],
   [-30,-40,-40,-50,-50,-40,-40,-30],
@@ -80,6 +91,7 @@ function evaluateBoard(chess: Chess): number {
         else if (piece.type === 'n') val += isWhite ? KNIGHT_EVAL[i][j] : KNIGHT_EVAL[7-i][j];
         else if (piece.type === 'b') val += isWhite ? BISHOP_EVAL[i][j] : BISHOP_EVAL[7-i][j];
         else if (piece.type === 'r') val += isWhite ? ROOK_EVAL[i][j] : ROOK_EVAL[7-i][j];
+        else if (piece.type === 'q') val += isWhite ? QUEEN_EVAL[i][j] : QUEEN_EVAL[7-i][j];
         else if (piece.type === 'k') val += isWhite ? KING_EVAL[i][j] : KING_EVAL[7-i][j];
 
         totalEvaluation += isWhite ? val : -val;
@@ -87,113 +99,65 @@ function evaluateBoard(chess: Chess): number {
     }
   }
 
-  if (chess.isCheck()) {
-    totalEvaluation += chess.turn() === 'w' ? -50 : 50;
-  }
-
+  if (chess.isCheck()) totalEvaluation += chess.turn() === 'w' ? -40 : 40;
   return totalEvaluation;
 }
 
 function sortMoves(moves: Move[]): Move[] {
   return moves.sort((a, b) => {
-    let scoreA = 0;
-    let scoreB = 0;
-
-    if (a.captured) {
-      scoreA = 10 * PIECE_VALUES[a.captured] - PIECE_VALUES[a.piece];
-    }
-    if (b.captured) {
-      scoreB = 10 * PIECE_VALUES[b.captured] - PIECE_VALUES[b.piece];
-    }
-
+    let scoreA = 0, scoreB = 0;
+    if (a.captured) scoreA = 10 * PIECE_VALUES[a.captured] - PIECE_VALUES[a.piece];
+    if (b.captured) scoreB = 10 * PIECE_VALUES[b.captured] - PIECE_VALUES[b.piece];
     if (a.promotion) scoreA += 900;
     if (b.promotion) scoreB += 900;
-
     return scoreB - scoreA;
   });
 }
 
-function minimax(
-  chess: Chess,
-  depth: number,
-  alpha: number,
-  beta: number,
-  isMaximizingPlayer: boolean
-): number {
+function minimax(chess: Chess, depth: number, alpha: number, beta: number, isMaximizing: boolean): number {
   if (depth === 0) return evaluateBoard(chess);
-
   const moves = chess.moves({ verbose: true });
-  if (moves.length === 0) {
-    if (chess.isCheck()) return isMaximizingPlayer ? -1000000 : 1000000;
-    return 0;
-  }
-
-  const sortedMoves = sortMoves(moves);
-
-  if (isMaximizingPlayer) {
-    let bestEval = -Infinity;
-    for (const move of sortedMoves) {
-      chess.move(move);
-      const evaluation = minimax(chess, depth - 1, alpha, beta, false);
+  if (moves.length === 0) return chess.isCheck() ? (isMaximizing ? -1000000 : 1000000) : 0;
+  const sorted = sortMoves(moves);
+  if (isMaximizing) {
+    let best = -Infinity;
+    for (const m of sorted) {
+      chess.move(m);
+      const val = minimax(chess, depth - 1, alpha, beta, false);
       chess.undo();
-      bestEval = Math.max(bestEval, evaluation);
-      alpha = Math.max(alpha, evaluation);
+      best = Math.max(best, val);
+      alpha = Math.max(alpha, val);
       if (beta <= alpha) break;
     }
-    return bestEval;
+    return best;
   } else {
-    let bestEval = Infinity;
-    for (const move of sortedMoves) {
-      chess.move(move);
-      const evaluation = minimax(chess, depth - 1, alpha, beta, true);
+    let best = Infinity;
+    for (const m of sorted) {
+      chess.move(m);
+      const val = minimax(chess, depth - 1, alpha, beta, true);
       chess.undo();
-      bestEval = Math.min(bestEval, evaluation);
-      beta = Math.min(beta, evaluation);
+      best = Math.min(best, val);
+      beta = Math.min(beta, val);
       if (beta <= alpha) break;
     }
-    return bestEval;
+    return best;
   }
 }
 
-export function getBotMove(
-  fen: string,
-): { from: string; to: string; promotion?: string } | null {
+export function getBotMove(fen: string): { from: string; to: string; promotion?: string } | null {
   const chess = new Chess(fen);
   const moves = chess.moves({ verbose: true });
   if (moves.length === 0) return null;
-
-  let bestMove: Move | null = null;
-  const isMaximizing = chess.turn() === "w";
-  let bestValue = isMaximizing ? -Infinity : Infinity;
-  
-  const depth = 3;
-  const sortedMoves = sortMoves(moves);
-
-  for (const move of sortedMoves) {
-    chess.move(move);
-    const boardValue = minimax(chess, depth - 1, -Infinity, Infinity, !isMaximizing);
+  const isMaximizing = chess.turn() === "w", depth = 3;
+  let bestMove = null, bestVal = isMaximizing ? -Infinity : Infinity;
+  for (const m of sortMoves(moves)) {
+    chess.move(m);
+    const val = minimax(chess, depth - 1, -Infinity, Infinity, !isMaximizing);
     chess.undo();
-
-    if (isMaximizing) {
-      if (boardValue > bestValue) {
-        bestValue = boardValue;
-        bestMove = move;
-      }
-    } else {
-      if (boardValue < bestValue) {
-        bestValue = boardValue;
-        bestMove = move;
-      }
-    }
+    if (isMaximizing ? val > bestVal : val < bestVal) { bestVal = val; bestMove = m; }
   }
-
-  if (!bestMove) return moves[Math.floor(Math.random() * moves.length)];
-
-  return {
-    from: bestMove.from,
-    to: bestMove.to,
-    promotion: bestMove.promotion || "q",
-  };
+  if (!bestMove) return moves[0];
+  return { from: bestMove.from, to: bestMove.to, promotion: bestMove.promotion || "q" };
 }
 
 export const SYSTEM_BOT_ID = "00000000-0000-0000-0000-000000000000";
