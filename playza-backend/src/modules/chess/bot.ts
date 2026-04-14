@@ -87,8 +87,6 @@ const QUEEN_EVAL_BLACK = reverseArray(QUEEN_EVAL_WHITE);
 const KING_EVAL_BLACK = reverseArray(KING_EVAL_WHITE);
 
 function getPieceValue(piece: { type: string; color: string }, x: number, y: number): number {
-  if (piece === null) return 0;
-  
   const val = PIECE_VALUES[piece.type] || 0;
   let positional = 0;
   
@@ -111,32 +109,94 @@ function getPieceValue(piece: { type: string; color: string }, x: number, y: num
   return piece.color === 'w' ? val + positional : -(val + positional);
 }
 
+const TRANSPOSITION_TABLE = new Map<string, number>();
+
 function evaluateBoard(chess: Chess): number {
-  if (chess.isCheckmate()) {
-    // Current turn in 'chess' is the one who IS checkmated
-    return chess.turn() === 'w' ? -1000000 : 1000000;
-  }
-  if (chess.isDraw() || chess.isStalemate() || chess.isThreefoldRepetition()) {
-    return 0;
-  }
+  const fen = chess.fen().split(' ').slice(0, 4).join(' ');
+  if (TRANSPOSITION_TABLE.has(fen)) return TRANSPOSITION_TABLE.get(fen)!;
 
   let totalEvaluation = 0;
+  // Minimize board() calls as they are expensive in chess.js
   const board = chess.board();
 
   for (let i = 0; i < 8; i++) {
     for (let j = 0; j < 8; j++) {
-      if (board[i][j]) {
-        totalEvaluation += getPieceValue(board[i][j]!, j, i);
+      const piece = board[i][j];
+      if (piece) {
+        totalEvaluation += getPieceValue(piece, j, i);
       }
     }
   }
 
   // Bonus for checking the opponent
   if (chess.isCheck()) {
-    totalEvaluation += chess.turn() === 'w' ? -50 : 50;
+    totalEvaluation += chess.turn() === 'w' ? -70 : 70;
+  }
+  
+  // Mobility bonus
+  totalEvaluation += (chess.turn() === 'w' ? chess.moves().length * 2 : -chess.moves().length * 2);
+
+  TRANSPOSITION_TABLE.set(fen, totalEvaluation);
+  if (TRANSPOSITION_TABLE.size > 20000) {
+    const firstKey = TRANSPOSITION_TABLE.keys().next().value;
+    if (firstKey !== undefined) TRANSPOSITION_TABLE.delete(firstKey);
   }
 
   return totalEvaluation;
+}
+
+function sortMoves(moves: Move[]): Move[] {
+  return moves.sort((a, b) => {
+    let scoreA = 0;
+    let scoreB = 0;
+
+    if (a.captured) {
+      scoreA = 10 * PIECE_VALUES[a.captured] - PIECE_VALUES[a.piece];
+    }
+    if (b.captured) {
+      scoreB = 10 * PIECE_VALUES[b.captured] - PIECE_VALUES[b.piece];
+    }
+
+    if (a.promotion) scoreA += 900;
+    if (b.promotion) scoreB += 900;
+
+    return scoreB - scoreA;
+  });
+}
+
+function quiescenceSearch(
+  chess: Chess,
+  alpha: number,
+  beta: number,
+  isMaximizing: boolean
+): number {
+  const standPat = evaluateBoard(chess);
+
+  if (isMaximizing) {
+    if (standPat >= beta) return beta;
+    if (standPat > alpha) alpha = standPat;
+  } else {
+    if (standPat <= alpha) return alpha;
+    if (standPat < beta) beta = standPat;
+  }
+
+  const moves = sortMoves(chess.moves({ verbose: true }).filter(m => m.captured));
+
+  for (const move of moves) {
+    chess.move(move);
+    const score = quiescenceSearch(chess, alpha, beta, !isMaximizing);
+    chess.undo();
+
+    if (isMaximizing) {
+      if (score >= beta) return beta;
+      if (score > alpha) alpha = score;
+    } else {
+      if (score <= alpha) return alpha;
+      if (score < beta) beta = score;
+    }
+  }
+
+  return isMaximizing ? alpha : beta;
 }
 
 function minimax(
@@ -146,23 +206,26 @@ function minimax(
   beta: number,
   isMaximizingPlayer: boolean,
 ): number {
-  if (depth === 0 || chess.isGameOver()) {
-    return evaluateBoard(chess);
+  const moves = chess.moves({ verbose: true });
+  
+  if (moves.length === 0) {
+    if (chess.isCheck()) {
+      return isMaximizingPlayer ? -1000000 - depth : 1000000 + depth;
+    }
+    return 0;
   }
 
-  const moves = chess.moves({ verbose: true });
+  if (depth === 0) {
+    return quiescenceSearch(chess, alpha, beta, isMaximizingPlayer);
+  }
+
+  const sortedMoves = sortMoves(moves);
 
   if (isMaximizingPlayer) {
     let bestEval = -Infinity;
-    for (const move of moves) {
+    for (const move of sortedMoves) {
       chess.move(move);
-      const evaluation = minimax(
-        chess,
-        depth - 1,
-        alpha,
-        beta,
-        !isMaximizingPlayer,
-      );
+      const evaluation = minimax(chess, depth - 1, alpha, beta, false);
       chess.undo();
       bestEval = Math.max(bestEval, evaluation);
       alpha = Math.max(alpha, evaluation);
@@ -171,15 +234,9 @@ function minimax(
     return bestEval;
   } else {
     let bestEval = Infinity;
-    for (const move of moves) {
+    for (const move of sortedMoves) {
       chess.move(move);
-      const evaluation = minimax(
-        chess,
-        depth - 1,
-        alpha,
-        beta,
-        !isMaximizingPlayer,
-      );
+      const evaluation = minimax(chess, depth - 1, alpha, beta, true);
       chess.undo();
       bestEval = Math.min(bestEval, evaluation);
       beta = Math.min(beta, evaluation);
@@ -193,23 +250,16 @@ export function getBotMove(
   fen: string,
 ): { from: string; to: string; promotion?: string } | null {
   const chess = new Chess(fen);
-  if (chess.isGameOver()) return null;
-
   const moves = chess.moves({ verbose: true });
   if (moves.length === 0) return null;
 
   let bestMove: Move | null = null;
-  const depth = 3; // Increased depth for better tactical awareness (checkmates etc)
-  console.log(`[Bot] Evaluating move at depth ${depth} for fen: ${fen}`);
+  // Depth 3 + Quiescence is very strong and much faster than Depth 4 in JS
+  const depth = 3;
   const isMaximizing = chess.turn() === "w";
   let bestValue = isMaximizing ? -Infinity : Infinity;
 
-  // Prioritize captures and checks to optimize alpha-beta pruning
-  const sortedMoves = moves.sort((a, b) => {
-    if (a.flags.includes('c') || a.flags.includes('p')) return -1;
-    if (b.flags.includes('c') || b.flags.includes('p')) return 1;
-    return 0;
-  });
+  const sortedMoves = sortMoves(moves);
 
   for (const move of sortedMoves) {
     chess.move(move);
