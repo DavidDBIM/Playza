@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useToast } from "@/context/toast";
 
 export type PieceColor = "red" | "green" | "yellow" | "blue";
@@ -49,7 +49,7 @@ export function useLudoGame(isHost: boolean, isBotRoom: boolean) {
   const [animatedDice, setAnimatedDice] = useState<number>(1);
   const toast = useToast();
 
-  const myColors: PieceColor[] = isHost ? ["red", "yellow"] : ["green", "blue"];
+  const myColors: PieceColor[] = useMemo(() => isHost ? ["red", "yellow"] : ["green", "blue"], [isHost]);
   const isMyTurn = myColors.includes(gameState.turn);
   const mySide: PlayerSide = isHost ? "host" : "guest";
 
