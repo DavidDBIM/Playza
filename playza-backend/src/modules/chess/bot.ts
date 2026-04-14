@@ -133,8 +133,8 @@ function evaluateBoard(chess: Chess): number {
     totalEvaluation += chess.turn() === 'w' ? -70 : 70;
   }
   
-  // Mobility bonus
-  totalEvaluation += (chess.turn() === 'w' ? chess.moves().length * 2 : -chess.moves().length * 2);
+  // Removed mobility bonus as chess.moves() is expensive
+  // totalEvaluation += (chess.turn() === 'w' ? chess.moves().length * 2 : -chess.moves().length * 2);
 
   TRANSPOSITION_TABLE.set(fen, totalEvaluation);
   if (TRANSPOSITION_TABLE.size > 20000) {
@@ -254,8 +254,8 @@ export function getBotMove(
   if (moves.length === 0) return null;
 
   let bestMove: Move | null = null;
-  // Depth 3 + Quiescence is very strong and much faster than Depth 4 in JS
-  const depth = 3;
+  // Depth 2 + Quiescence is much faster, reducing sluggish gameplay
+  const depth = 2;
   const isMaximizing = chess.turn() === "w";
   let bestValue = isMaximizing ? -Infinity : Infinity;
 
