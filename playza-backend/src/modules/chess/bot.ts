@@ -1,12 +1,7 @@
 import { Chess, Move } from "chess.js";
 
 const PIECE_VALUES: Record<string, number> = {
-  p: 100,
-  n: 320,
-  b: 330,
-  r: 500,
-  q: 900,
-  k: 20000,
+  p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000,
 };
 
 const PAWN_EVAL = [
@@ -75,89 +70,86 @@ const KING_EVAL = [
   [ 20, 30, 10,  0,  0, 10, 30, 20]
 ];
 
-function evaluateBoard(chess: Chess): number {
-  let totalEvaluation = 0;
-  const board = chess.board();
+// Cache for search results
+const TT = new Map<string, { depth: number; score: number }>();
 
+function evaluateBoard(chess: Chess): number {
+  let total = 0;
+  const board = chess.board();
   for (let i = 0; i < 8; i++) {
     for (let j = 0; j < 8; j++) {
-      const piece = board[i][j];
-      if (piece) {
-        let val = PIECE_VALUES[piece.type] || 0;
-        const isWhite = piece.color === 'w';
-        
-        // Piece-Square positional bonuses
-        if (piece.type === 'p') val += isWhite ? PAWN_EVAL[i][j] : PAWN_EVAL[7-i][j];
-        else if (piece.type === 'n') val += isWhite ? KNIGHT_EVAL[i][j] : KNIGHT_EVAL[7-i][j];
-        else if (piece.type === 'b') val += isWhite ? BISHOP_EVAL[i][j] : BISHOP_EVAL[7-i][j];
-        else if (piece.type === 'r') val += isWhite ? ROOK_EVAL[i][j] : ROOK_EVAL[7-i][j];
-        else if (piece.type === 'q') val += isWhite ? QUEEN_EVAL[i][j] : QUEEN_EVAL[7-i][j];
-        else if (piece.type === 'k') val += isWhite ? KING_EVAL[i][j] : KING_EVAL[7-i][j];
-
-        totalEvaluation += isWhite ? val : -val;
+      const p = board[i][j];
+      if (p) {
+        let val = PIECE_VALUES[p.type] || 0;
+        const isW = p.color === 'w';
+        if (p.type === 'p') val += isW ? PAWN_EVAL[i][j] : PAWN_EVAL[7-i][j];
+        else if (p.type === 'n') val += isW ? KNIGHT_EVAL[i][j] : KNIGHT_EVAL[7-i][j];
+        else if (p.type === 'b') val += isW ? BISHOP_EVAL[i][j] : BISHOP_EVAL[7-i][j];
+        else if (p.type === 'r') val += isW ? ROOK_EVAL[i][j] : ROOK_EVAL[7-i][j];
+        else if (p.type === 'q') val += isW ? QUEEN_EVAL[i][j] : QUEEN_EVAL[7-i][j];
+        else if (p.type === 'k') val += isW ? KING_EVAL[i][j] : KING_EVAL[7-i][j];
+        total += isW ? val : -val;
       }
     }
   }
-
-  if (chess.isCheck()) totalEvaluation += chess.turn() === 'w' ? -40 : 40;
-  return totalEvaluation;
-}
-
-function sortMoves(moves: Move[]): Move[] {
-  return moves.sort((a, b) => {
-    let scoreA = 0, scoreB = 0;
-    if (a.captured) scoreA = 10 * PIECE_VALUES[a.captured] - PIECE_VALUES[a.piece];
-    if (b.captured) scoreB = 10 * PIECE_VALUES[b.captured] - PIECE_VALUES[b.piece];
-    if (a.promotion) scoreA += 900;
-    if (b.promotion) scoreB += 900;
-    return scoreB - scoreA;
-  });
+  if (chess.isCheck()) total += chess.turn() === 'w' ? -50 : 50;
+  return total;
 }
 
 function minimax(chess: Chess, depth: number, alpha: number, beta: number, isMaximizing: boolean): number {
+  const fen = chess.fen().split(' ', 4).join(' ');
+  const cached = TT.get(fen);
+  if (cached && cached.depth >= depth) return cached.score;
+
   if (depth === 0) return evaluateBoard(chess);
+
   const moves = chess.moves({ verbose: true });
   if (moves.length === 0) return chess.isCheck() ? (isMaximizing ? -1000000 : 1000000) : 0;
-  const sorted = sortMoves(moves);
-  if (isMaximizing) {
-    let best = -Infinity;
-    for (const m of sorted) {
-      chess.move(m);
-      const val = minimax(chess, depth - 1, alpha, beta, false);
-      chess.undo();
+
+  // Move sorting (Captures first)
+  const sorted = moves.sort((a,b) => (b.captured ? 10 : 0) - (a.captured ? 10 : 0));
+
+  let best = isMaximizing ? -Infinity : Infinity;
+  for (const m of sorted) {
+    chess.move(m);
+    const val = minimax(chess, depth - 1, alpha, beta, !isMaximizing);
+    chess.undo();
+    if (isMaximizing) {
       best = Math.max(best, val);
       alpha = Math.max(alpha, val);
-      if (beta <= alpha) break;
-    }
-    return best;
-  } else {
-    let best = Infinity;
-    for (const m of sorted) {
-      chess.move(m);
-      const val = minimax(chess, depth - 1, alpha, beta, true);
-      chess.undo();
+    } else {
       best = Math.min(best, val);
       beta = Math.min(beta, val);
-      if (beta <= alpha) break;
     }
-    return best;
+    if (beta <= alpha) break;
   }
+
+  if (TT.size < 50000) TT.set(fen, { depth, score: best });
+  return best;
 }
 
 export function getBotMove(fen: string): { from: string; to: string; promotion?: string } | null {
   const chess = new Chess(fen);
   const moves = chess.moves({ verbose: true });
   if (moves.length === 0) return null;
-  const isMaximizing = chess.turn() === "w", depth = 3;
+  const isMaximizing = chess.turn() === "w";
   let bestMove = null, bestVal = isMaximizing ? -Infinity : Infinity;
-  for (const m of sortMoves(moves)) {
+
+  // Clear Transposition Table for fresh turn
+  TT.clear();
+
+  for (const m of moves) {
     chess.move(m);
-    const val = minimax(chess, depth - 1, -Infinity, Infinity, !isMaximizing);
+    const val = minimax(chess, 2, -Infinity, Infinity, !isMaximizing); // Depth 3 (1 here + 2 in minimax)
     chess.undo();
-    if (isMaximizing ? val > bestVal : val < bestVal) { bestVal = val; bestMove = m; }
+    if (isMaximizing ? val > bestVal : val < bestVal) {
+      bestVal = val;
+      bestMove = m;
+    }
   }
-  if (!bestMove) return moves[0];
-  return { from: bestMove.from, to: bestMove.to, promotion: bestMove.promotion || "q" };
+
+  const final = bestMove || moves[0];
+  return { from: final.from, to: final.to, promotion: final.promotion || "q" };
 }
 
 export const SYSTEM_BOT_ID = "00000000-0000-0000-0000-000000000000";
