@@ -112,10 +112,11 @@ function getPieceValue(piece: { type: string; color: string }, x: number, y: num
 const TRANSPOSITION_TABLE = new Map<string, number>();
 
 function evaluateBoard(chess: Chess): number {
-  const fen = chess.fen().split(' ').slice(0, 4).join(' '); // Simplify FEN for caching balance
+  const fen = chess.fen().split(' ').slice(0, 4).join(' ');
   if (TRANSPOSITION_TABLE.has(fen)) return TRANSPOSITION_TABLE.get(fen)!;
 
   let totalEvaluation = 0;
+  // Minimize board() calls as they are expensive in chess.js
   const board = chess.board();
 
   for (let i = 0; i < 8; i++) {
@@ -132,12 +133,10 @@ function evaluateBoard(chess: Chess): number {
     totalEvaluation += chess.turn() === 'w' ? -70 : 70;
   }
   
-  // Mobility bonus (encourages development and space)
-  const mobility = chess.moves().length * 2;
-  totalEvaluation += (chess.turn() === 'w' ? mobility : -mobility);
+  // Mobility bonus
+  totalEvaluation += (chess.turn() === 'w' ? chess.moves().length * 2 : -chess.moves().length * 2);
 
   TRANSPOSITION_TABLE.set(fen, totalEvaluation);
-  // Keep table size manageable
   if (TRANSPOSITION_TABLE.size > 20000) {
     const firstKey = TRANSPOSITION_TABLE.keys().next().value;
     if (firstKey !== undefined) TRANSPOSITION_TABLE.delete(firstKey);
@@ -151,7 +150,6 @@ function sortMoves(moves: Move[]): Move[] {
     let scoreA = 0;
     let scoreB = 0;
 
-    // MVV-LVA (Most Valuable Victim - Least Valuable Aggressor) heuristic
     if (a.captured) {
       scoreA = 10 * PIECE_VALUES[a.captured] - PIECE_VALUES[a.piece];
     }
@@ -162,16 +160,10 @@ function sortMoves(moves: Move[]): Move[] {
     if (a.promotion) scoreA += 900;
     if (b.promotion) scoreB += 900;
 
-    if (scoreA > scoreB) return -1;
-    if (scoreA < scoreB) return 1;
-    return 0;
+    return scoreB - scoreA;
   });
 }
 
-/**
- * Quiescence Search: Continues searching capture moves beyond the fixed depth
- * to avoid the "Horizon Effect" (blundering a piece just after the limit).
- */
 function quiescenceSearch(
   chess: Chess,
   alpha: number,
@@ -262,9 +254,8 @@ export function getBotMove(
   if (moves.length === 0) return null;
 
   let bestMove: Move | null = null;
-  // Increase depth to 4 for "Powerful" mode. 
-  // Combined with Quiescence, this is significantly stronger than default depth 3.
-  const depth = 4;
+  // Depth 3 + Quiescence is very strong and much faster than Depth 4 in JS
+  const depth = 3;
   const isMaximizing = chess.turn() === "w";
   let bestValue = isMaximizing ? -Infinity : Infinity;
 
