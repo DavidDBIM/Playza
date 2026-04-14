@@ -296,7 +296,7 @@ export async function makeMove(
   if (nextTurn === null && room.status === "active") {
     const botMove = getBotMove(chess.fen());
     if (botMove) {
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      await new Promise((resolve) => setTimeout(resolve, 200));
       return makeMove(roomId, null as any, botMove);
     }
   }
