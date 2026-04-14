@@ -1,4 +1,5 @@
 import { Chess } from "chess.js";
+import type { Square } from "chess.js";
 
 // ─── Piece Values (centipawns) ────────────────────────────────────────────────
 const PIECE_VALUES: Record<string, number> = {
@@ -10,8 +11,7 @@ const PIECE_VALUES: Record<string, number> = {
   k: 20000,
 };
 
-// ─── Piece-Square Tables (from White's perspective, rank 0 = rank 8) ─────────
-// Source: Tomasz Michniewski's simplified evaluation tables (widely used)
+// ─── Piece-Square Tables (White's perspective, index 0 = rank 8, col 0 = a-file)
 const PST: Record<string, number[]> = {
   p: [
      0,  0,  0,  0,  0,  0,  0,  0,
@@ -41,14 +41,14 @@ const PST: Record<string, number[]> = {
      -6, 13, 13, 26, 34, 12, 10,  4,
       0, 15, 15, 15, 14, 27, 18, 10,
       4, 15, 16,  0,  7, 21, 33,  1,
-    -33,-3,-14,-21,-13,-12,-39,-21,
+    -33, -3,-14,-21,-13,-12,-39,-21,
   ],
   r: [
      32, 42, 32, 51, 63,  9, 31, 43,
      27, 32, 58, 62, 80, 67, 26, 44,
      -5, 19, 26, 36, 17, 45, 61, 16,
     -24,-11,  7, 26, 24, 35, -8,-20,
-    -36,-26,-12, -1,  9,-7,  6,-23,
+    -36,-26,-12, -1,  9, -7,  6,-23,
     -45,-25,-16,-17,  3,  0, -5,-33,
     -44,-16,-20, -9, -1, 11, -6,-71,
     -19,-13,  1, 17, 16,  7,-37,-26,
@@ -60,10 +60,9 @@ const PST: Record<string, number[]> = {
     -27,-27,-16,-16, -1, 17, -2,  1,
      -9,-26, -9,-10, -2, -4,  3, -3,
     -14,  2,-11, -2, -5,  2, 14,  5,
-    -35, -8, 11,  2,  8, 15,-3,  1,
+    -35, -8, 11,  2,  8, 15, -3,  1,
      -1,-18, -9, 10,-15,-25,-31,-50,
   ],
-  // Middlegame king: stay in corner / castle
   k_mg: [
     -65, 23, 16,-15,-56,-34,  2, 13,
      29, -1,-20, -7, -8, -4,-38,-29,
@@ -74,7 +73,6 @@ const PST: Record<string, number[]> = {
       1,  7, -8,-64,-43,-16,  9,  8,
     -15, 36, 12,-54,  8,-28, 24, 14,
   ],
-  // Endgame king: centralize
   k_eg: [
     -74,-35,-18,-18,-11, 15,  4,-17,
     -12, 17, 14, 17, 17, 38, 23, 11,
@@ -82,39 +80,44 @@ const PST: Record<string, number[]> = {
      -8, 22, 24, 27, 26, 33, 26,  3,
     -18, -4, 21, 24, 27, 23,  9,-11,
     -19, -3, 11, 21, 23, 16,  7, -9,
-    -27,-11,  4, 13, 14,  4,-5,-17,
+    -27,-11,  4, 13, 14,  4, -5,-17,
     -53,-34,-21,-11,-28,-14,-24,-43,
   ],
 };
 
+// Square name helper
+const FILES = 'abcdefgh';
+function squareName(row: number, col: number): Square {
+  return `${FILES[col]}${8 - row}` as Square;
+}
+
 // ─── Endgame detection ────────────────────────────────────────────────────────
 function isEndgame(chess: Chess): boolean {
   const board = chess.board();
-  let queens = 0;
-  let minors = 0;
-  for (const row of board) {
+  let queens = 0, minors = 0;
+  for (const row of board)
     for (const p of row) {
       if (!p || p.type === 'k') continue;
       if (p.type === 'q') queens++;
       if (p.type === 'n' || p.type === 'b') minors++;
     }
-  }
-  // Endgame: no queens, or queen + max 1 minor per side
   return queens === 0 || (queens <= 2 && minors <= 2);
 }
 
 // ─── Static Evaluation ────────────────────────────────────────────────────────
+// CRITICAL: Must return score from the perspective of the SIDE TO MOVE.
+// Positive = current player is winning. Negative = current player is losing.
+// Negamax correctness depends entirely on this convention.
 function evaluate(chess: Chess): number {
-  if (chess.isCheckmate()) {
-    // The side that just moved delivered checkmate — from the root call perspective,
-    // a negative score at this node means bad for the side to move NOW (they lost)
-    return chess.turn() === 'w' ? -50000 : 50000;
-  }
+  // Terminal states — relative to the side currently to move
+  if (chess.isCheckmate()) return -50000; // side to move is the one that got checkmated
   if (chess.isStalemate() || chess.isDraw()) return 0;
 
   const endgame = isEndgame(chess);
   const board = chess.board();
-  let score = 0;
+  // We accumulate score from White's absolute perspective first,
+  // then convert to relative at the end.
+  let absoluteScore = 0;
 
   for (let i = 0; i < 8; i++) {
     for (let j = 0; j < 8; j++) {
@@ -123,88 +126,106 @@ function evaluate(chess: Chess): number {
 
       const isWhite = p.color === 'w';
       const sign = isWhite ? 1 : -1;
-      const row = isWhite ? i : 7 - i;  // flip for black
-      const idx = row * 8 + j;
+      const pstRow = isWhite ? i : 7 - i; // flip PST for black
+      const idx = pstRow * 8 + j;
 
       let val = PIECE_VALUES[p.type] ?? 0;
-
-      // PST bonus
       if (p.type === 'k') {
         val += endgame ? (PST['k_eg'][idx] ?? 0) : (PST['k_mg'][idx] ?? 0);
       } else {
         val += PST[p.type]?.[idx] ?? 0;
       }
-
-      score += sign * val;
+      absoluteScore += sign * val;
     }
   }
 
-  // Mobility bonus (number of legal moves is a proxy for piece activity)
-  const currentTurn = chess.turn();
-  const myMoves = chess.moves().length;
-  // Penalize lack of mobility
-  score += (currentTurn === 'w' ? 1 : -1) * myMoves * 2;
+  // ── Hanging piece penalty ────────────────────────────────────────────────
+  // For every non-king piece, check if it is attacked by the opponent.
+  // If it's undefended → full-piece penalty (major losing factor).
+  // If it's attacked but defended → smaller penalty (may still be bad exchange).
+  for (let i = 0; i < 8; i++) {
+    for (let j = 0; j < 8; j++) {
+      const p = board[i][j];
+      if (!p || p.type === 'k') continue; // kings can't be "hanging"
 
-  // Check bonus
-  if (chess.isCheck()) {
-    score += (currentTurn === 'w' ? -30 : 30); // being in check is bad
+      const sq = squareName(i, j);
+      const ownColor = p.color;
+      const oppColor = ownColor === 'w' ? 'b' : 'w';
+
+      const underAttack = chess.isAttacked(sq, oppColor);
+      if (!underAttack) continue; // safe piece, no penalty
+
+      const defended = chess.isAttacked(sq, ownColor);
+      const pieceVal = PIECE_VALUES[p.type] ?? 0;
+      const sign = ownColor === 'w' ? -1 : 1; // penalty goes against the owner
+
+      if (!defended) {
+        // Completely undefended and under attack — huge penalty (80% of piece value)
+        absoluteScore += sign * pieceVal * 0.8;
+      } else {
+        // Attacked but defended — the exchange might still be unfavorable.
+        // Apply a smaller penalty proportional to piece value above a pawn.
+        const exchangeLoss = Math.max(0, pieceVal - PIECE_VALUES['p']);
+        absoluteScore += sign * exchangeLoss * 0.12;
+      }
+    }
   }
 
-  return score;
+  // ── Mobility bonus ────────────────────────────────────────────────────────
+  // Number of legal moves is a strong proxy for piece activity / initiative.
+  const moveSideBonus = chess.moves().length * 3;
+  absoluteScore += chess.turn() === 'w' ? moveSideBonus : -moveSideBonus;
+
+  // ── Being in check is bad for the side that IS in check ──────────────────
+  if (chess.isCheck()) {
+    absoluteScore += chess.turn() === 'w' ? -40 : 40;
+  }
+
+  // ── CRITICAL: Convert absolute (white-positive) to relative (current-player-positive)
+  return chess.turn() === 'w' ? absoluteScore : -absoluteScore;
 }
 
-// ─── Killer Moves (heuristic for better move ordering) ───────────────────────
+// ─── Killer Moves ─────────────────────────────────────────────────────────────
 const killerMoves: Array<[string, string][]> = Array(20).fill(null).map(() => []);
 
 // ─── History Heuristic ────────────────────────────────────────────────────────
 const historyTable: Record<string, number> = {};
+const histKey = (from: string, to: string) => `${from}${to}`;
 
-function historyKey(from: string, to: string) {
-  return `${from}${to}`;
-}
-
-// ─── Move Ordering ────────────────────────────────────────────────────────────
-function scoreMove(
+// ─── Move Ordering Score ──────────────────────────────────────────────────────
+function orderScore(
   from: string,
   to: string,
   captured: string | undefined,
   promotion: string | undefined,
-  depth: number
+  ply: number
 ): number {
-  // Checkmate/promotion is highest priority (handled separately via game-over check)
-  if (promotion) return 800;
-
-  // Captures: MVV-LVA (Most Valuable Victim - Least Valuable Attacker)
+  if (promotion) return 900;
   if (captured) {
+    // MVV-LVA: most valuable victim first
     return 100 + (PIECE_VALUES[captured] ?? 0);
   }
-
-  // Killer moves (non-capture moves that caused beta cutoffs at this depth)
-  const killers = killerMoves[depth] ?? [];
-  if (killers.some(([kf, kt]) => kf === from && kt === to)) return 90;
-
-  // History heuristic
-  return historyTable[historyKey(from, to)] ?? 0;
+  const killers = killerMoves[ply] ?? [];
+  if (killers.some(([kf, kt]) => kf === from && kt === to)) return 80;
+  return historyTable[histKey(from, to)] ?? 0;
 }
 
 // ─── Quiescence Search ────────────────────────────────────────────────────────
+// evaluate() now returns relative scores, so negamax negation is correct here.
 function quiesce(chess: Chess, alpha: number, beta: number, depth: number): number {
-  const standPat = evaluate(chess);
+  const standPat = evaluate(chess); // relative to side to move
   if (standPat >= beta) return beta;
   if (standPat > alpha) alpha = standPat;
-
-  // Limit quiescence depth to avoid infinite loops
   if (depth <= 0) return alpha;
 
-  const moves = chess.moves({ verbose: true }).filter(m => m.captured || m.promotion);
-  // Sort: promotions first, then by captured piece value
-  moves.sort((a, b) => {
-    const scoreA = (a.promotion ? 800 : 0) + (PIECE_VALUES[a.captured ?? ''] ?? 0);
-    const scoreB = (b.promotion ? 800 : 0) + (PIECE_VALUES[b.captured ?? ''] ?? 0);
-    return scoreB - scoreA;
+  const captures = chess.moves({ verbose: true }).filter(m => m.captured || m.promotion);
+  captures.sort((a, b) => {
+    const sa = (a.promotion ? 800 : 0) + (PIECE_VALUES[a.captured ?? ''] ?? 0);
+    const sb = (b.promotion ? 800 : 0) + (PIECE_VALUES[b.captured ?? ''] ?? 0);
+    return sb - sa;
   });
 
-  for (const m of moves) {
+  for (const m of captures) {
     chess.move(m);
     const score = -quiesce(chess, -beta, -alpha, depth - 1);
     chess.undo();
@@ -217,7 +238,7 @@ function quiesce(chess: Chess, alpha: number, beta: number, depth: number): numb
 // ─── Transposition Table ──────────────────────────────────────────────────────
 type TTEntry = { depth: number; score: number; flag: 'exact' | 'lower' | 'upper' };
 const transpositionTable = new Map<string, TTEntry>();
-const TT_MAX_SIZE = 500000;
+const TT_MAX_SIZE = 500_000;
 
 function ttKey(chess: Chess): string {
   return chess.fen().split(' ').slice(0, 4).join(' ');
@@ -232,10 +253,8 @@ function search(
   ply: number,
   deadline: number
 ): number {
-  // Time check — abort if we've exceeded our time budget
   if (Date.now() > deadline) return 0;
 
-  // TT lookup
   const key = ttKey(chess);
   const cached = transpositionTable.get(key);
   if (cached && cached.depth >= depth) {
@@ -248,27 +267,25 @@ function search(
 
   const moves = chess.moves({ verbose: true });
   if (moves.length === 0) {
-    // Checkmate or stalemate
-    if (chess.isCheckmate()) return -50000 + ply; // prefer faster mates
+    // evaluate() already handles checkmate/stalemate correctly and returns relative
+    if (chess.isCheckmate()) return -50000 + ply;
     return 0;
   }
 
-  // Sort moves for better pruning
-  moves.sort((a, b) => {
-    const sa = scoreMove(a.from, a.to, a.captured, a.promotion, ply);
-    const sb = scoreMove(b.from, b.to, b.captured, b.promotion, ply);
-    return sb - sa;
-  });
+  moves.sort((a, b) =>
+    orderScore(b.from, b.to, b.captured, b.promotion, ply) -
+    orderScore(a.from, a.to, a.captured, a.promotion, ply)
+  );
 
   let bestScore = -Infinity;
   let flag: TTEntry['flag'] = 'upper';
 
   for (const m of moves) {
     chess.move(m);
-    let score = -search(chess, depth - 1, -beta, -alpha, ply + 1, deadline);
+    const score = -search(chess, depth - 1, -beta, -alpha, ply + 1, deadline);
     chess.undo();
 
-    if (Date.now() > deadline) return 0; // abort cleanly
+    if (Date.now() > deadline) return 0;
 
     if (score > bestScore) {
       bestScore = score;
@@ -276,7 +293,6 @@ function search(
         alpha = score;
         flag = 'exact';
         if (score >= beta) {
-          // Beta cutoff — record killer
           if (!m.captured && ply < 20) {
             const killers = killerMoves[ply];
             if (!killers.some(([kf, kt]) => kf === m.from && kt === m.to)) {
@@ -284,9 +300,8 @@ function search(
               if (killers.length > 2) killers.pop();
             }
           }
-          // Update history
           if (!m.captured) {
-            const hk = historyKey(m.from, m.to);
+            const hk = histKey(m.from, m.to);
             historyTable[hk] = (historyTable[hk] ?? 0) + depth * depth;
           }
           flag = 'lower';
@@ -296,7 +311,6 @@ function search(
     }
   }
 
-  // Store in TT (evict if too large)
   if (transpositionTable.size >= TT_MAX_SIZE) {
     const firstKey = transpositionTable.keys().next().value;
     if (firstKey) transpositionTable.delete(firstKey);
@@ -306,7 +320,7 @@ function search(
   return bestScore;
 }
 
-// ─── Iterative Deepening Root Search ─────────────────────────────────────────
+// ─── Iterative Deepening Root ─────────────────────────────────────────────────
 export function getBotMove(
   fenString: string,
   timeLimitMs = 800
@@ -314,8 +328,6 @@ export function getBotMove(
   const chess = new Chess(fenString);
   const moves = chess.moves({ verbose: true });
   if (moves.length === 0) return null;
-
-  // If only one legal move, play it instantly
   if (moves.length === 1) {
     const m = moves[0];
     return { from: m.from, to: m.to, promotion: m.promotion ?? 'q' };
@@ -324,11 +336,10 @@ export function getBotMove(
   const deadline = Date.now() + timeLimitMs;
   let bestMove = moves[0];
 
-  // Clear history heuristic for fresh search (keep TT between calls for speed)
   Object.keys(historyTable).forEach(k => delete historyTable[k]);
   for (let i = 0; i < 20; i++) killerMoves[i] = [];
 
-  // Immediately check for checkmate-in-1
+  // Checkmate-in-1 shortcut
   for (const m of moves) {
     chess.move(m);
     if (chess.isCheckmate()) {
@@ -338,22 +349,20 @@ export function getBotMove(
     chess.undo();
   }
 
-  // Iterative deepening: start at depth 1, increase until time runs out
   for (let depth = 1; depth <= 12; depth++) {
     if (Date.now() >= deadline) break;
 
-    // Sort moves based on previous iteration results for better pruning
-    moves.sort((a, b) => {
-      const sa = scoreMove(a.from, a.to, a.captured, a.promotion, 0);
-      const sb = scoreMove(b.from, b.to, b.captured, b.promotion, 0);
-      return sb - sa;
-    });
+    moves.sort((a, b) =>
+      orderScore(b.from, b.to, b.captured, b.promotion, 0) -
+      orderScore(a.from, a.to, a.captured, a.promotion, 0)
+    );
 
     let bestScoreThisDepth = -Infinity;
     let bestMoveThisDepth = moves[0];
+    let searchComplete = true;
 
     for (const m of moves) {
-      if (Date.now() >= deadline) break;
+      if (Date.now() >= deadline) { searchComplete = false; break; }
 
       chess.move(m);
       const score = -search(chess, depth - 1, -Infinity, Infinity, 1, deadline);
@@ -365,13 +374,12 @@ export function getBotMove(
       }
     }
 
-    // Only commit result if we finished searching the depth (not timed out mid-depth)
-    if (Date.now() < deadline || depth === 1) {
+    // Only commit if the full depth was searched (avoid partial-depth corruption)
+    if (searchComplete || depth === 1) {
       bestMove = bestMoveThisDepth;
     }
 
-    // If we found forced checkmate, stop searching deeper
-    if (bestScoreThisDepth >= 49000) break;
+    if (bestScoreThisDepth >= 49000) break; // forced mate found
   }
 
   return {
