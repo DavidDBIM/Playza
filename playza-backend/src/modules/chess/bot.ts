@@ -9,7 +9,6 @@ const PIECE_VALUES: Record<string, number> = {
   k: 20000,
 };
 
-// Piece-Square tables for positional play
 const PAWN_EVAL = [
   [0,  0,  0,  0,  0,  0,  0,  0],
   [50, 50, 50, 50, 50, 50, 50, 50],
@@ -32,6 +31,39 @@ const KNIGHT_EVAL = [
   [-50,-40,-30,-30,-30,-30,-40,-50]
 ];
 
+const BISHOP_EVAL = [
+  [-20,-10,-10,-10,-10,-10,-10,-20],
+  [-10,  0,  0,  0,  0,  0,  0,-10],
+  [-10,  0,  5, 10, 10,  5,  0,-10],
+  [-10,  5,  5, 10, 10,  5,  5,-10],
+  [-10,  0, 10, 10, 10, 10,  0,-10],
+  [-10, 10, 10, 10, 10, 10, 10,-10],
+  [-10,  5,  0,  0,  0,  0,  5,-10],
+  [-20,-10,-10,-10,-10,-10,-10,-20]
+];
+
+const ROOK_EVAL = [
+  [0,  0,  0,  0,  0,  0,  0,  0],
+  [5, 10, 10, 10, 10, 10, 10,  5],
+  [-5,  0,  0,  0,  0,  0,  0, -5],
+  [-5,  0,  0,  0,  0,  0,  0, -5],
+  [-5,  0,  0,  0,  0,  0,  0, -5],
+  [-5,  0,  0,  0,  0,  0,  0, -5],
+  [-5,  0,  0,  0,  0,  0,  0, -5],
+  [0,  0,  0,  5,  5,  0,  0,  0]
+];
+
+const KING_EVAL = [
+  [-30,-40,-40,-50,-50,-40,-40,-30],
+  [-30,-40,-40,-50,-50,-40,-40,-30],
+  [-30,-40,-40,-50,-50,-40,-40,-30],
+  [-30,-40,-40,-50,-50,-40,-40,-30],
+  [-20,-30,-30,-40,-40,-30,-30,-20],
+  [-10,-20,-20,-20,-20,-20,-20,-10],
+  [ 20, 20,  0,  0,  0,  0, 20, 20],
+  [ 20, 30, 10,  0,  0, 10, 30, 20]
+];
+
 function evaluateBoard(chess: Chess): number {
   let totalEvaluation = 0;
   const board = chess.board();
@@ -41,20 +73,20 @@ function evaluateBoard(chess: Chess): number {
       const piece = board[i][j];
       if (piece) {
         let val = PIECE_VALUES[piece.type] || 0;
+        const isWhite = piece.color === 'w';
         
-        // Basic positional bonus for pawns and knights
-        if (piece.type === 'p') {
-          val += piece.color === 'w' ? PAWN_EVAL[i][j] : PAWN_EVAL[7-i][j];
-        } else if (piece.type === 'n') {
-          val += piece.color === 'w' ? KNIGHT_EVAL[i][j] : KNIGHT_EVAL[7-i][j];
-        }
+        // Piece-Square positional bonuses
+        if (piece.type === 'p') val += isWhite ? PAWN_EVAL[i][j] : PAWN_EVAL[7-i][j];
+        else if (piece.type === 'n') val += isWhite ? KNIGHT_EVAL[i][j] : KNIGHT_EVAL[7-i][j];
+        else if (piece.type === 'b') val += isWhite ? BISHOP_EVAL[i][j] : BISHOP_EVAL[7-i][j];
+        else if (piece.type === 'r') val += isWhite ? ROOK_EVAL[i][j] : ROOK_EVAL[7-i][j];
+        else if (piece.type === 'k') val += isWhite ? KING_EVAL[i][j] : KING_EVAL[7-i][j];
 
-        totalEvaluation += piece.color === 'w' ? val : -val;
+        totalEvaluation += isWhite ? val : -val;
       }
     }
   }
 
-  // Slight bonus for checks
   if (chess.isCheck()) {
     totalEvaluation += chess.turn() === 'w' ? -50 : 50;
   }
@@ -88,15 +120,11 @@ function minimax(
   beta: number,
   isMaximizingPlayer: boolean
 ): number {
-  if (depth === 0) {
-    return evaluateBoard(chess);
-  }
+  if (depth === 0) return evaluateBoard(chess);
 
   const moves = chess.moves({ verbose: true });
   if (moves.length === 0) {
-    if (chess.isCheck()) {
-      return isMaximizingPlayer ? -1000000 : 1000000;
-    }
+    if (chess.isCheck()) return isMaximizingPlayer ? -1000000 : 1000000;
     return 0;
   }
 
@@ -138,7 +166,6 @@ export function getBotMove(
   const isMaximizing = chess.turn() === "w";
   let bestValue = isMaximizing ? -Infinity : Infinity;
   
-  // Depth 3 without Quiescence is very fast and decently strong
   const depth = 3;
   const sortedMoves = sortMoves(moves);
 
