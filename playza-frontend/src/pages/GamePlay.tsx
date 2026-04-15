@@ -141,14 +141,21 @@ const GamePlay = () => {
             )}
 
             {/* Iframe Container */}
-            <div className={`flex-1 w-full h-full relative ${gameOverData ? 'hidden' : ''}`} onClick={(e) => (e.currentTarget.querySelector('iframe') as HTMLIFrameElement)?.focus()}>
-                <iframe 
-                    src={game.iframeUrl} 
-                    className="w-full h-full border-none shadow-2xl" 
-                    title={game.title}
-                    allow="autoplay; fullscreen; gamepad"
-                    onLoad={() => setIsLoading(false)}
-                />
+            <div className={`flex-1 min-h-0 w-full relative ${gameOverData ? 'hidden' : ''}`}>
+                <div
+                    className="h-full w-full px-2 pb-3 pt-20 md:px-4 md:pb-4 md:pt-24 lg:px-6"
+                    onClick={(e) => (e.currentTarget.querySelector('iframe') as HTMLIFrameElement)?.focus()}
+                >
+                    <div className="mx-auto flex h-full w-full max-w-[1600px] items-center justify-center overflow-hidden rounded-2xl bg-slate-950/80 shadow-2xl ring-1 ring-white/10">
+                        <iframe 
+                            src={game.iframeUrl} 
+                            className="h-full w-full border-none" 
+                            title={game.title}
+                            allow="autoplay; fullscreen; gamepad"
+                            onLoad={() => setIsLoading(false)}
+                        />
+                    </div>
+                </div>
             </div>
 
             {/* Game Over Overlay */}

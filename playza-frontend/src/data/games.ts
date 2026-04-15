@@ -18,9 +18,12 @@ export const games: Game[] = [
     badge: "HOT",
     platformFeePercentage: 10,
     howToPlay: {
-      controls: "Click and drag to swap adjacent crystals. Match 3 or more of the same color.",
-      rules: "Clear as many crystals as possible within the time limit. Matching 4 or more creates special exploding crystals.",
-      scoring: "Base points for 3-matches. Multipliers awarded for chain reactions and large combos.",
+      controls:
+        "Click and drag to swap adjacent crystals. Match 3 or more of the same color.",
+      rules:
+        "Clear as many crystals as possible within the time limit. Matching 4 or more creates special exploding crystals.",
+      scoring:
+        "Base points for 3-matches. Multipliers awarded for chain reactions and large combos.",
     },
     createdAt: "2026-03-01T00:00:00Z",
     updatedAt: "2026-03-01T00:00:00Z",
@@ -42,9 +45,12 @@ export const games: Game[] = [
     badge: "NEW",
     platformFeePercentage: 10,
     howToPlay: {
-      controls: "Use arrow keys or swipe (up, down, left, right) to slide tiles across the board.",
-      rules: "When two tiles with the same number touch, they merge into one. Create the 2048 tile to win.",
-      scoring: "Your score increases by the value of the merged tiles. Combine higher numbers for massive point gains.",
+      controls:
+        "Use arrow keys or swipe (up, down, left, right) to slide tiles across the board.",
+      rules:
+        "When two tiles with the same number touch, they merge into one. Create the 2048 tile to win.",
+      scoring:
+        "Your score increases by the value of the merged tiles. Combine higher numbers for massive point gains.",
     },
     createdAt: "2026-03-27T00:00:00Z",
     updatedAt: "2026-03-27T00:00:00Z",
@@ -66,9 +72,12 @@ export const games: Game[] = [
     badge: "HOT",
     platformFeePercentage: 10,
     howToPlay: {
-      controls: "Use W, A, S, D to move and Left Mouse Click to shoot magical projectiles.",
-      rules: "Navigate the maze, defeat dungeon enemies, and survive the onslaught without losing all your hearts.",
-      scoring: "Earn points by defeating enemies and clearing maze sections quickly.",
+      controls:
+        "Use W, A, S, D to move and Left Mouse Click to shoot magical projectiles.",
+      rules:
+        "Navigate the maze, defeat dungeon enemies, and survive the onslaught without losing all your hearts.",
+      scoring:
+        "Earn points by defeating enemies and clearing maze sections quickly.",
     },
     createdAt: "2026-03-27T00:00:00Z",
     updatedAt: "2026-03-27T00:00:00Z",
@@ -90,9 +99,12 @@ export const games: Game[] = [
     badge: "NEW",
     platformFeePercentage: 10,
     howToPlay: {
-      controls: "Use Left/Right arrow keys or A/D to steer the ship. Up/W to accelerate.",
-      rules: "Stay on the track and hit speed boost pads. Avoid hitting walls which will damage your ship and slow you down.",
-      scoring: "Complete laps as fast as possible. Your final score is heavily based on your lap time.",
+      controls:
+        "Use Left/Right arrow keys or A/D to steer the ship. Up/W to accelerate.",
+      rules:
+        "Stay on the track and hit speed boost pads. Avoid hitting walls which will damage your ship and slow you down.",
+      scoring:
+        "Complete laps as fast as possible. Your final score is heavily based on your lap time.",
     },
     createdAt: "2026-03-01T00:00:00Z",
     updatedAt: "2026-03-01T00:00:00Z",
@@ -114,9 +126,12 @@ export const games: Game[] = [
     badge: "HOT",
     platformFeePercentage: 10,
     howToPlay: {
-      controls: "Use W, A, S, D to move and Mouse to aim/shoot. R or click icon to reload. L to lock mouse cursor for better aiming.",
-      rules: "Infiltrate the enemy base and eliminate all hostile forces. Your score is based on enemies killed, time remaining, and health preserved. Watch out for enemy fire!",
-      scoring: "100 points per enemy killed. Bonus points for remaining health and fast completion. Headshots provide massive score boosts.",
+      controls:
+        "Use W, A, S, D to move and Mouse to aim/shoot. R or click icon to reload. L to lock mouse cursor for better aiming.",
+      rules:
+        "Infiltrate the enemy base and eliminate all hostile forces. Your score is based on enemies killed, time remaining, and health preserved. Watch out for enemy fire!",
+      scoring:
+        "100 points per enemy killed. Bonus points for remaining health and fast completion. Headshots provide massive score boosts.",
     },
     createdAt: "2026-03-01T00:00:00Z",
     updatedAt: "2026-03-01T00:00:00Z",
@@ -157,9 +172,12 @@ export const games: Game[] = [
     badge: "HOT",
     platformFeePercentage: 10,
     howToPlay: {
-      controls: "Use arrow keys or touch buttons to move and rotate blocks. Space or DROP to fall instantly.",
-      rules: "Stack blocks to complete horizontal lines. Completed lines disappear and earn points. Game ends if stack reaches the top.",
-      scoring: "Points awarded per line cleared. Clearing 4 lines (TETRIS) at once gives a massive bonus.",
+      controls:
+        "Use arrow keys or touch buttons to move and rotate blocks. Space or DROP to fall instantly.",
+      rules:
+        "Stack blocks to complete horizontal lines. Completed lines disappear and earn points. Game ends if stack reaches the top.",
+      scoring:
+        "Points awarded per line cleared. Clearing 4 lines (TETRIS) at once gives a massive bonus.",
     },
     createdAt: "2026-04-07T00:00:00Z",
     updatedAt: "2026-04-07T00:00:00Z",
@@ -181,9 +199,12 @@ export const games: Game[] = [
     badge: "HOT",
     platformFeePercentage: 10,
     howToPlay: {
-      controls: "WASD to move, Mouse to aim/shoot. R to reload. 1-5 for weapons. Right-click for ADS/Scope.",
-      rules: "Eliminate enemies on the expanded Dust 2 map. Use grenades (Frag, Smoke, Flash) for tactical advantage.",
-      scoring: "100 points per kill, 200 per headshot. Points used for rankings and tournament entry.",
+      controls:
+        "WASD to move, Mouse to aim/shoot. R to reload. 1-5 for weapons. Right-click for ADS/Scope.",
+      rules:
+        "Eliminate enemies on the expanded Dust 2 map. Use grenades (Frag, Smoke, Flash) for tactical advantage.",
+      scoring:
+        "100 points per kill, 200 per headshot. Points used for rankings and tournament entry.",
     },
     createdAt: "2026-04-07T00:00:00Z",
     updatedAt: "2026-04-07T00:00:00Z",
@@ -205,9 +226,12 @@ export const games: Game[] = [
     badge: "NEW",
     platformFeePercentage: 10,
     howToPlay: {
-      controls: "Use WASD or Arrow Keys to move and jump/slide. Avoid obstacles and collect power-ups.",
-      rules: "Run as far as you can through the futuristic subway system. The speed increases over time. Don't hit the trains!",
-      scoring: "Distance-based scoring. Collect neon orbs for point multipliers and special speed boosts.",
+      controls:
+        "Use WASD or Arrow Keys to move and jump/slide. Avoid obstacles and collect power-ups.",
+      rules:
+        "Run as far as you can through the futuristic subway system. The speed increases over time. Don't hit the trains!",
+      scoring:
+        "Distance-based scoring. Collect neon orbs for point multipliers and special speed boosts.",
     },
     createdAt: "2026-04-09T00:00:00Z",
     updatedAt: "2026-04-09T00:00:00Z",
@@ -229,9 +253,12 @@ export const games: Game[] = [
     badge: "NEW",
     platformFeePercentage: 10,
     howToPlay: {
-      controls: "Say the words displayed on screen into your microphone. Tap or use Space if voice is unavailable.",
-      rules: "Pass through the expanding rings by pronouncing words correctly. Miss too many and the rush ends.",
-      scoring: "Points awarded for accuracy and timing. Chain correct pronunciations for massive multipliers.",
+      controls:
+        "Say the words displayed on screen into your microphone. Tap or use Space if voice is unavailable.",
+      rules:
+        "Pass through the expanding rings by pronouncing words correctly. Miss too many and the rush ends.",
+      scoring:
+        "Points awarded for accuracy and timing. Chain correct pronunciations for massive multipliers.",
     },
     createdAt: "2026-04-09T00:00:00Z",
     updatedAt: "2026-04-09T00:00:00Z",
@@ -253,9 +280,12 @@ export const games: Game[] = [
     badge: "HOT",
     platformFeePercentage: 10,
     howToPlay: {
-      controls: "A/D or Arrows to move lanes. Left for Squad buffs, Right for Gun upgrades.",
-      rules: "Build your legion through multipliers. Clear the middle lane of zombie hordes. If your legion is wiped out, the run ends.",
-      scoring: "Score increases for each enemy defeated. Bosses provide huge point boosts.",
+      controls:
+        "A/D or Arrows to move lanes. Left for Squad buffs, Right for Gun upgrades.",
+      rules:
+        "Build your legion through multipliers. Clear the middle lane of zombie hordes. If your legion is wiped out, the run ends.",
+      scoring:
+        "Score increases for each enemy defeated. Bosses provide huge point boosts.",
     },
     createdAt: "2026-04-09T00:00:00Z",
     updatedAt: "2026-04-09T00:00:00Z",
@@ -277,9 +307,12 @@ export const games: Game[] = [
     badge: "NEW",
     platformFeePercentage: 10,
     howToPlay: {
-      controls: "Tap or drag letters from the pool into the slots to build valid words.",
-      rules: "Use all letters in the anagram pool to figure out the target words. Build bonus words for extra points.",
-      scoring: "Points per word crafted. Multipliers for continuous combos without clearing.",
+      controls:
+        "Tap or drag letters from the pool into the slots to build valid words.",
+      rules:
+        "Use all letters in the anagram pool to figure out the target words. Build bonus words for extra points.",
+      scoring:
+        "Points per word crafted. Multipliers for continuous combos without clearing.",
     },
     createdAt: "2026-04-10T00:00:00Z",
     updatedAt: "2026-04-10T00:00:00Z",
@@ -301,11 +334,41 @@ export const games: Game[] = [
     badge: "HOT",
     platformFeePercentage: 10,
     howToPlay: {
-      controls: "Swipe to connect letters in the wheel to form valid words that fit into the crossword grid.",
-      rules: "Fill the crossword grid completely to advance to harder levels. Find valid bonus words for extra points.",
-      scoring: "Get points for every correct word. Scale combos rapidly to get huge bonus payouts.",
+      controls:
+        "Swipe to connect letters in the wheel to form valid words that fit into the crossword grid.",
+      rules:
+        "Fill the crossword grid completely to advance to harder levels. Find valid bonus words for extra points.",
+      scoring:
+        "Get points for every correct word. Scale combos rapidly to get huge bonus payouts.",
     },
     createdAt: "2026-04-10T00:00:00Z",
     updatedAt: "2026-04-10T00:00:00Z",
-  }
+  },
+  {
+    id: "15",
+    title: "Sugar Storm Smash",
+    slug: "sugar-storm",
+    thumbnail: "/games/sugar-storm.png",
+    iframeUrl: "/gameLib/Sugar-storm/index.html",
+    category: "Puzzle",
+    mode: "Quick Match",
+    entryFee: 500,
+    difficulty: "Medium",
+    durationInSeconds: 240,
+    status: "live",
+    activePlayers: 850,
+    ctaLabel: "Smash Candy",
+    badge: "HOT",
+    platformFeePercentage: 10,
+    howToPlay: {
+      controls:
+        "Click and drag to swap neighboring candies. Match 3 or more of the same type.",
+      rules:
+        "Clear the board of sweet treats. Create matches of 4 or 5 to trigger special candy powers like explosions and striped clears.",
+      scoring:
+        "Match 3 for base points. Higher matches create special candies that help clear huge sections of the board for massive combos.",
+    },
+    createdAt: "2026-04-15T00:00:00Z",
+    updatedAt: "2026-04-15T00:00:00Z",
+  },
 ];

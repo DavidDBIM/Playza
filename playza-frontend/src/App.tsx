@@ -36,6 +36,8 @@ const TermsAndConditions = lazy(() => import("./pages/TermsAndConditions"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const Loyalty = lazy(() => import("./pages/Loyalty"));
 const CategoryPage = lazy(() => import("./pages/CategoryPage"));
+const SpeedTapArena = lazy(() => import("./pages/games/SpeedTapArena"));
+
 
 // Profile sub-pages
 const Overview = lazy(() => import("./components/profile/Overview"));
@@ -186,9 +188,12 @@ const AppContent = () => {
                 path="/games/category/:category"
                 element={<CategoryPage />}
               />
+              <Route path="/games/speed-tap-arena" element={<SpeedTapArena />} />
               <Route path="/games/:id" element={<Game />} />
               <Route path="/games/:id/session" element={<MatchSession />} />
               <Route path="/games/:id/play" element={<GamePlay />} />
+
+
               <Route path="/h2h" element={<H2HZone />} />
               <Route path="/h2h/:gameType" element={<H2HZone />} />
               <Route path="/h2h/:gameType/:roomId" element={<H2HZone />} />
