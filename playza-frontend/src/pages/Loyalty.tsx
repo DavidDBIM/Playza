@@ -157,10 +157,25 @@ const STORE_ITEMS = [
   { name: "Double PZA (24h)",        desc: "2x PZA points for 24 hours",             cost: 3000, icon: <MdStars className="w-6 h-6" />, color: "amber" },
 ];
 
-const STREAK_REWARDS = [
-  { day: 1, pts: 10 }, { day: 2, pts: 10 }, { day: 3, pts: 30 },
-  { day: 4, pts: 10 }, { day: 5, pts: 10 }, { day: 6, pts: 10 }, { day: 7, pts: 80 },
-];
+// Points awarded per day position within any 7-day cycle
+// Days 3 and 7 are bonus days; everything else is the base 10
+function getStreakPtsForDay(absoluteDay: number): number {
+  const pos = absoluteDay % 7; // 0 = day 7 slot, 1 = day 1 slot, etc.
+  if (pos === 0) return 80;    // every 7th day
+  if (pos === 3) return 30;    // every 3rd day
+  return 10;
+}
+
+// Build a 7-cell window centred on the user's current streak position.
+// Cells 0-streakDays are "done", the next cell is "today", rest are locked.
+function buildStreakWindow(streakDays: number, canClaimToday: boolean) {
+  // Show days (streakDays - 2) through (streakDays + 4), clamped to min 1
+  const windowStart = Math.max(1, streakDays - 2);
+  return Array.from({ length: 7 }, (_, i) => {
+    const absoluteDay = windowStart + i;
+    return { day: absoluteDay, pts: getStreakPtsForDay(absoluteDay) };
+  });
+}
 
 export default function Loyalty() {
   const { user, isLoading: authLoading } = useAuth();
@@ -307,13 +322,25 @@ export default function Loyalty() {
             <span className="text-2xl font-black text-slate-900 dark:text-white">{streakDays}<span className="text-sm font-bold text-slate-500 ml-1">days</span></span>
           </div>
           <div className="grid grid-cols-7 gap-1 mb-4">
-            {STREAK_REWARDS.map((s, i) => {
-              const done = i < streakDays;
-              const today = i === streakDays && canClaimStreak;
+            {buildStreakWindow(streakDays, canClaimStreak).map((s, i) => {
+              // A cell is "done" if its absolute day number is <= streakDays
+              // and the user has already claimed today (or it's a past day)
+              const isDone = s.day < streakDays || (s.day === streakDays && !canClaimStreak);
+              const isToday = s.day === streakDays && canClaimStreak;
+              const isNext  = s.day === streakDays + 1;
               return (
-                <div key={i} className={`flex flex-col items-center gap-1 p-1.5 rounded-lg text-center transition-all ${done ? 'bg-orange-100 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-800' : today ? 'bg-blue-50 dark:bg-blue-950/40 border border-blue-300 dark:border-blue-700 ring-1 ring-blue-400' : 'bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 opacity-50'}`}>
+                <div key={i} className={`flex flex-col items-center gap-1 p-1.5 rounded-lg text-center transition-all ${
+                  isDone  ? 'bg-orange-100 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-800'
+                  : isToday ? 'bg-blue-50 dark:bg-blue-950/40 border border-blue-300 dark:border-blue-700 ring-1 ring-blue-400'
+                  : 'bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 opacity-50'
+                }`}>
                   <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400">D{s.day}</span>
-                  {done ? <MdCheckCircle className="text-orange-500 text-sm" /> : today ? <MdLocalFireDepartment className="text-blue-500 text-sm" /> : <MdLock className="text-slate-400 text-sm" />}
+                  {isDone
+                    ? <MdCheckCircle className="text-orange-500 text-sm" />
+                    : isToday
+                    ? <MdLocalFireDepartment className="text-blue-500 text-sm animate-pulse" />
+                    : <MdLock className="text-slate-400 text-sm" />
+                  }
                   <span className="text-[8px] font-black text-slate-600 dark:text-slate-300">+{s.pts}</span>
                 </div>
               );
