@@ -27,32 +27,37 @@ const Placeholder = ({ name }: { name: string }) => (
   </div>
 );
 
+import ProtectedRoute from "./components/auth/ProtectedRoute";
+
 const App: React.FC = () => {
   return (
     <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
       <Router>
         <Routes>
           <Route path="/signin" element={<SignIn />} />
-          <Route path="/" element={<Layout />}>
-            <Route index element={<Dashboard />} />
-            <Route path="users" element={<Users />} />
-            <Route path="users/:id" element={<User />} />
-            <Route path="games" element={<Games />} />
-            <Route path="games/create" element={<CreateGame />} />
-            <Route path="games/:slug" element={<Game />} />
-            <Route path="sessions/:id" element={<Session />} />
-            <Route
-              path="sessions/:id/leaderboard"
-              element={<SessionLeaderboard />}
-            />
-            <Route path="leaderboards/*" element={<Leaderboards />} />
-            <Route path="transactions" element={<Transactions />} />
-            <Route path="transactions/:id" element={<TransactionDetails />} />
-            <Route path="withdrawals" element={<Withdrawals />} />
-            <Route path="rewards" element={<Placeholder name="Rewards" />} />
-            <Route path="notifications" element={<Notifications />} />
-            <Route path="content" element={<Placeholder name="Content" />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
+          
+          <Route element={<ProtectedRoute />}>
+            <Route path="/" element={<Layout />}>
+              <Route index element={<Dashboard />} />
+              <Route path="users" element={<Users />} />
+              <Route path="users/:id" element={<User />} />
+              <Route path="games" element={<Games />} />
+              <Route path="games/create" element={<CreateGame />} />
+              <Route path="games/:slug" element={<Game />} />
+              <Route path="sessions/:id" element={<Session />} />
+              <Route
+                path="sessions/:id/leaderboard"
+                element={<SessionLeaderboard />}
+              />
+              <Route path="leaderboards/*" element={<Leaderboards />} />
+              <Route path="transactions" element={<Transactions />} />
+              <Route path="transactions/:id" element={<TransactionDetails />} />
+              <Route path="withdrawals" element={<Withdrawals />} />
+              <Route path="rewards" element={<Placeholder name="Rewards" />} />
+              <Route path="notifications" element={<Notifications />} />
+              <Route path="content" element={<Placeholder name="Content" />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Route>
           </Route>
         </Routes>
       </Router>

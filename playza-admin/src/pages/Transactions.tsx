@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router';
 import { 
   MdSearch, 
   MdReceiptLong, 
   MdVisibility,
-  MdKeyboardArrowDown
+  MdKeyboardArrowDown,
+  MdRefresh
 } from 'react-icons/md';
 import { Button } from '../components/ui/button';
 import { 
@@ -21,24 +22,34 @@ import {
   TableHeader, 
   TableRow 
 } from '../components/ui/table';
-import { transactionHistory } from '../data/usersData';
+import type { TransactionAdmin } from '../types/admin';
+import { useAdminTransactions } from '../hooks/use-admin';
+import { formatNaira } from '../lib/utils';
 
 const Transactions: React.FC = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('All Types');
   const [statusFilter, setStatusFilter] = useState('All Status');
+  const [page, setPage] = useState(1);
 
-  const filteredTransactions = transactionHistory.filter(txn => {
-    const searchLower = searchQuery.toLowerCase();
-    const txnIdLower = txn.id.toLowerCase();
-    const methodLower = txn.method.toLowerCase();
-    
-    const matchesSearch = txnIdLower.includes(searchLower) || methodLower.includes(searchLower) || txn.username.toLowerCase().includes(searchLower);
-    const matchesType = typeFilter === 'All Types' || txn.type === typeFilter;
-    const matchesStatus = statusFilter === 'All Status' || txn.status.toLowerCase() === statusFilter.toLowerCase();
-    return matchesSearch && matchesType && matchesStatus;
+  const apiType = useMemo(() => {
+    if (typeFilter === 'All Types') return '';
+    return typeFilter.toLowerCase().replace(' ', '_');
+  }, [typeFilter]);
+
+  const apiStatus = useMemo(() => {
+    if (statusFilter === 'All Status') return '';
+    return statusFilter.toLowerCase();
+  }, [statusFilter]);
+
+  const { data, isLoading, isError, refetch } = useAdminTransactions({
+    page,
+    type: apiType,
+    status: apiStatus
   });
+
+  const transactions = (data?.transactions as TransactionAdmin[]) || [];
 
   return (
     <main className="flex-1 mx-auto w-full pb-10 p-4 md:p-8 space-y-6 md:space-y-8 max-w-350">
@@ -57,14 +68,18 @@ const Transactions: React.FC = () => {
               Monitor network transactions, deposits, and withdrawal flows.
             </p>
           </div>
-          <div className="flex gap-4">
+          <div className="flex gap-4 items-center">
+            <button 
+              onClick={() => refetch()}
+              className="p-4 rounded-2xl bg-white/50 dark:bg-white/5 hover:bg-primary hover:text-white transition-all border border-slate-200 dark:border-white/10 group/refresh mr-4"
+            >
+              <MdRefresh className={`text-xl ${isLoading ? 'animate-spin' : 'group-hover/refresh:rotate-180 transition-transform duration-700'}`} />
+            </button>
             <div className="bg-slate-50 dark:bg-white/5 px-6 py-4 rounded-2xl border-l-4 border-primary shadow-sm min-w-35">
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-black tracking-widest mb-1">Volume (24h)</p>
-              <p className="text-xl md:text-2xl font-black text-slate-900 dark:text-white tracking-tight">₦4,280,500</p>
-            </div>
-            <div className="bg-slate-50 dark:bg-white/5 px-6 py-4 rounded-2xl border-l-4 border-emerald-500 shadow-sm min-w-35">
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-black tracking-widest mb-1">Success Rate</p>
-              <p className="text-xl md:text-2xl font-black text-emerald-500 tracking-tight">98.4%</p>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-black tracking-widest mb-1">Volume (Total)</p>
+              <p className="text-xl md:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                {isLoading ? '...' : formatNaira(transactions.reduce((acc: number, t: TransactionAdmin) => acc + (t.amount || 0), 0))}
+              </p>
             </div>
           </div>
         </div>
@@ -91,7 +106,7 @@ const Transactions: React.FC = () => {
             </DropdownMenuTrigger>
             <DropdownMenuContent className="p-2 min-w-40 rounded-xl border border-slate-200 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl shadow-xl z-50">
               {['All Types', 'Deposit', 'Withdrawal', 'Game Entry', 'Winnings'].map(t => (
-                <DropdownMenuItem key={t} onClick={() => setTypeFilter(t)} className="text-[10px] font-black uppercase tracking-widest py-3 px-4 rounded-lg cursor-pointer hover:bg-primary/5 hover:text-primary transition-colors">
+                <DropdownMenuItem key={t} onClick={() => { setTypeFilter(t); setPage(1); }} className="text-[10px] font-black uppercase tracking-widest py-3 px-4 rounded-lg cursor-pointer hover:bg-primary/5 hover:text-primary transition-colors">
                   {t}
                 </DropdownMenuItem>
               ))}
@@ -106,7 +121,7 @@ const Transactions: React.FC = () => {
             </DropdownMenuTrigger>
             <DropdownMenuContent className="p-2 min-w-40 rounded-xl border border-slate-200 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl shadow-xl z-50">
               {['All Status', 'Successful', 'Pending', 'Failed'].map(t => (
-                <DropdownMenuItem key={t} onClick={() => setStatusFilter(t)} className={`text-[10px] font-black uppercase tracking-widest py-3 px-4 rounded-lg cursor-pointer hover:bg-primary/5 transition-colors ${t === 'Successful' ? 'text-emerald-500' : t === 'Failed' ? 'text-rose-500' : t === 'Pending' ? 'text-amber-500' : 'text-slate-700 dark:text-slate-300'}`}>
+                <DropdownMenuItem key={t} onClick={() => { setStatusFilter(t); setPage(1); }} className={`text-[10px] font-black uppercase tracking-widest py-3 px-4 rounded-lg cursor-pointer hover:bg-primary/5 transition-colors ${t === 'Successful' ? 'text-emerald-500' : t === 'Failed' ? 'text-rose-500' : t === 'Pending' ? 'text-amber-500' : 'text-slate-700 dark:text-slate-300'}`}>
                   {t}
                 </DropdownMenuItem>
               ))}
@@ -118,67 +133,111 @@ const Transactions: React.FC = () => {
       {/* Table Module */}
       <div className="glass-card rounded-[2rem] overflow-hidden border border-slate-200 dark:border-white/10 shadow-lg bg-white/50 dark:bg-transparent">
         <div className="overflow-x-auto no-scrollbar min-h-120">
-          <Table>
-            <TableHeader className="bg-slate-50/50 dark:bg-white/5 border-b border-slate-200 dark:border-white/10">
-              <TableRow className="hover:bg-transparent border-none">
-                <TableHead className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest h-auto">Transaction ID</TableHead>
-                <TableHead className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest h-auto">Method</TableHead>
-                <TableHead className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest h-auto">User/Account</TableHead>
-                <TableHead className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest h-auto">Type</TableHead>
-                <TableHead className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest text-right h-auto">Amount</TableHead>
-                <TableHead className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest text-center h-auto">Status</TableHead>
-                <TableHead className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest h-auto">Date</TableHead>
-                <TableHead className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest text-right h-auto">Action</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody className="divide-y divide-slate-200 dark:divide-white/10">
-              {filteredTransactions.map((txn) => (
-                <TableRow key={txn.id} className="group hover:bg-slate-50 dark:hover:bg-white/5 transition-all duration-200 border-border/10 cursor-pointer" onClick={() => navigate(`/transactions/${txn.id}`)}>
-                  <TableCell className="px-6 py-5 font-mono text-sm font-bold text-primary">{txn.id}</TableCell>
-                  <TableCell className="px-6 py-5 text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">{txn.method}</TableCell>
-                  <TableCell className="px-6 py-5 text-sm font-bold text-slate-700 dark:text-slate-300">@{txn.username}</TableCell>
-                  <TableCell className="px-6 py-5 text-[10px] font-black uppercase tracking-widest">
-                    <span className={`px-3 py-1 rounded-full ${
-                      txn.type === 'Withdrawal' ? 'bg-rose-500/10 text-rose-500' :
-                      txn.type === 'Deposit' ? 'bg-emerald-500/10 text-emerald-500' :
-                      txn.type === 'Game Entry' ? 'bg-amber-500/10 text-amber-500' :
-                      'bg-sky-500/10 text-sky-500'
-                    }`}>
-                      {txn.type}
-                    </span>
-                  </TableCell>
-                  <TableCell className="px-6 py-5 text-right font-black text-lg text-slate-900 dark:text-white tracking-tight">₦{txn.amount.toLocaleString()}</TableCell>
-                  <TableCell className="px-6 py-5 text-center">
-                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border shadow-sm ${
-                      txn.status === 'Successful' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' :
-                      txn.status === 'Pending' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20' :
-                      'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20'
-                    }`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${
-                        txn.status === 'Successful' ? 'bg-emerald-500' :
-                        txn.status === 'Pending' ? 'bg-amber-500 animate-pulse' :
-                        'bg-rose-500'
-                      }`}></span>
-                      {txn.status}
-                    </span>
-                  </TableCell>
-                  <TableCell className="px-6 py-5 text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">{txn.date}</TableCell>
-                  <TableCell className="px-6 py-5 text-right">
-                    <Button 
-                      variant="ghost" 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/transactions/${txn.id}`);
-                      }}
-                      className="text-slate-400 hover:text-primary transition-colors bg-transparent border-none h-10 px-4 rounded-xl"
-                    >
-                      <MdVisibility className="text-xl" />
-                    </Button>
-                  </TableCell>
+          {isError ? (
+            <div className="py-20 text-center text-rose-500">
+               <p className="font-headline font-black uppercase text-xl text-rose-500">Ledger Link Failure</p>
+               <p className="text-xs opacity-60 mt-2">Could not synchronize with the transaction ledger.</p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader className="bg-slate-50/50 dark:bg-white/5 border-b border-slate-200 dark:border-white/10">
+                <TableRow className="hover:bg-transparent border-none">
+                  <TableHead className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest h-auto">Transaction ID</TableHead>
+                  <TableHead className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest h-auto">User/Account</TableHead>
+                  <TableHead className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest h-auto">Type</TableHead>
+                  <TableHead className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest text-right h-auto">Amount</TableHead>
+                  <TableHead className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest text-center h-auto">Status</TableHead>
+                  <TableHead className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest h-auto">Reference</TableHead>
+                  <TableHead className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest h-auto">Date</TableHead>
+                  <TableHead className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest text-right h-auto">Action</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody className={`divide-y divide-slate-200 dark:divide-white/10 ${isLoading ? 'opacity-30' : ''}`}>
+                {transactions.length > 0 ? (
+                  transactions.map((txn: TransactionAdmin) => (
+                    <TableRow key={txn.id} className="group hover:bg-slate-50 dark:hover:bg-white/5 transition-all duration-200 border-border/10 cursor-pointer" onClick={() => navigate(`/transactions/${txn.id}`)}>
+                      <TableCell className="px-6 py-5 font-mono text-xs font-bold text-primary truncate max-w-32">{txn.id}</TableCell>
+                      <TableCell className="px-6 py-5 text-sm font-bold text-slate-700 dark:text-slate-300">@{txn.users?.username || 'unknown'}</TableCell>
+                      <TableCell className="px-6 py-5 text-[10px] font-black uppercase tracking-widest">
+                        <span className={`px-3 py-1 rounded-full ${
+                          txn.type === 'withdrawal' ? 'bg-rose-500/10 text-rose-500' :
+                          txn.type === 'deposit' ? 'bg-emerald-500/10 text-emerald-500' :
+                          txn.type === 'game_entry' ? 'bg-amber-500/10 text-amber-500' :
+                          'bg-sky-500/10 text-sky-500'
+                        }`}>
+                          {txn.type}
+                        </span>
+                      </TableCell>
+                      <TableCell className="px-6 py-5 text-right font-black text-lg text-slate-900 dark:text-white tracking-tight">{formatNaira(txn.amount)}</TableCell>
+                      <TableCell className="px-6 py-5 text-center">
+                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border shadow-sm ${
+                          txn.status === 'success' || txn.status === 'successful' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' :
+                          txn.status === 'pending' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20' :
+                          'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20'
+                        }`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${
+                            txn.status === 'success' || txn.status === 'successful' ? 'bg-emerald-500' :
+                            txn.status === 'pending' ? 'bg-amber-500 animate-pulse' :
+                            'bg-rose-500'
+                          }`}></span>
+                          {(txn.status || 'unknown').toUpperCase()}
+                        </span>
+                      </TableCell>
+                      <TableCell className="px-6 py-5 text-[10px] font-black uppercase text-slate-400 truncate max-w-32">{txn.reference || 'N/A'}</TableCell>
+                      <TableCell className="px-6 py-5 text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">{new Date(txn.created_at).toLocaleDateString()}</TableCell>
+                      <TableCell className="px-6 py-5 text-right">
+                        <Button 
+                          variant="ghost" 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/transactions/${txn.id}`);
+                          }}
+                          className="text-slate-400 hover:text-primary transition-colors bg-transparent border-none h-10 px-4 rounded-xl"
+                        >
+                          <MdVisibility className="text-xl" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                     <TableCell colSpan={8} className="py-20 text-center opacity-30grayscale">
+                        <p className="font-headline font-black uppercase tracking-widest">No Intelligence Found</p>
+                     </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          )}
+        </div>
+        
+        {/* Footer info & Pagination */}
+        <div className="relative z-10 px-8 py-6 bg-slate-50/50 dark:bg-white/5 border-t border-slate-200 dark:border-white/10 flex items-center justify-between text-slate-500 dark:text-slate-400">
+          <p className="text-[10px] font-black uppercase tracking-[0.2em]">
+            Ledger Sync: <span className={isError ? 'text-rose-500' : 'text-emerald-500'}>
+              {isError ? 'Disconnected' : isLoading ? 'Syncing...' : 'Connected'}
+            </span>
+          </p>
+          <div className="flex items-center gap-4">
+             <p className="text-[10px] font-black uppercase tracking-[0.2em]">
+               Displaying <span className="text-primary">{transactions.length}</span> Records
+             </p>
+             {data && data.total_pages > 1 && (
+               <div className="flex items-center gap-2 border-l border-slate-200 dark:border-white/10 pl-4">
+                 <button 
+                   disabled={page === 1}
+                   onClick={() => setPage(p => p - 1)}
+                   className="text-[10px] font-black uppercase hover:text-primary disabled:opacity-30"
+                 >Prev</button>
+                 <span className="text-[10px] font-black uppercase">Page {page} of {data.total_pages}</span>
+                 <button 
+                   disabled={page === data.total_pages}
+                   onClick={() => setPage(p => p + 1)}
+                   className="text-[10px] font-black uppercase hover:text-primary disabled:opacity-30"
+                 >Next</button>
+               </div>
+             )}
+          </div>
         </div>
       </div>
     </main>

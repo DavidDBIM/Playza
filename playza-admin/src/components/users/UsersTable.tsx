@@ -47,7 +47,7 @@ export const UsersTable: React.FC<UsersTableProps> = ({ users, clearFilters }) =
               <TableRow 
                 key={user.id} 
                 className="group hover:bg-primary/5 transition-all border-border/20 cursor-pointer relative overflow-hidden"
-                onClick={() => navigate(`/users/${user.username}`)}
+                onClick={() => navigate(`/users/${user.id}`)}
               >
                 <TableCell className="px-8 py-5 relative z-10 transition-transform group-hover:translate-x-1">
                   <div className="flex items-center gap-4">

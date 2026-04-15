@@ -6,14 +6,9 @@ import {
   MdAccountTree,
   MdSearch,
   MdFilterList,
-  MdOutlineClear
+  MdOutlineClear,
+  MdRefresh
 } from 'react-icons/md';
-import { 
-  usersData, 
-  matchHistory, 
-  transactionHistory, 
-  referralHistory 
-} from '../data/usersData';
 import { UserIdentityHero } from '../components/user/UserIdentityHero';
 import { UserAdvancedMetrics } from '../components/user/UserAdvancedMetrics';
 import { CombatLog, FinancialFlow, DownlineNetwork } from '../components/user/UserActivityTables';
@@ -26,6 +21,8 @@ import {
   SelectValue 
 } from '../components/ui/select';
 import { Button } from '../components/ui/button';
+import { useAdminUserDetails, useUpdateUserStatus } from '../hooks/use-admin';
+import type { UserRecord, MatchRecord, TransactionRecord, ReferralRecord } from '../data/usersData';
 
 const User: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -33,8 +30,33 @@ const User: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
 
-  // Find user by ID or username (demo logic)
-  const user = usersData.find(u => u.id === id || u.username === id) || usersData[0];
+  const { data: userDetails, isLoading, isError, refetch } = useAdminUserDetails(id || '');
+  const updateStatus = useUpdateUserStatus();
+
+  // Map backend details to our UI format
+  const mappedUser = useMemo((): UserRecord | null => {
+    if (!userDetails) return null;
+    return {
+      id: userDetails.id,
+      username: userDetails.username,
+      email: userDetails.email,
+      phoneNumber: userDetails.phone,
+      fullName: `${userDetails.first_name || ''} ${userDetails.last_name || ''}`.trim() || userDetails.username,
+      walletBalance: userDetails.wallets?.balance || 0,
+      status: userDetails.is_active ? 'Active' : 'Suspended',
+      joinedDate: new Date(userDetails.created_at).toLocaleDateString(),
+      joinedTimestamp: new Date(userDetails.created_at).getTime(),
+      lastActive: 'Just now',
+      avatar: userDetails.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200',
+      kycStatus: userDetails.is_email_verified ? 'Verified' : 'Pending',
+      level: 1, // Default or computed
+      referralCode: userDetails.referral_code,
+      referrals: userDetails.total_referrals,
+      pzaPoints: userDetails.pza_points?.total_points || 0,
+      totalGames: userDetails.pza_history?.length || 0,
+      totalWinnings: userDetails.pza_history?.reduce((acc, match) => acc + (match.amount || 0), 0) || 0
+    };
+  }, [userDetails]);
 
   const tabs = [
     { id: 'matches', icon: MdHistory, label: 'Game History' },
@@ -42,56 +64,106 @@ const User: React.FC = () => {
     { id: 'referrals', icon: MdAccountTree, label: 'Referrals' }
   ] as const;
 
-  // Filtered Data Logic
-  const filteredMatches = useMemo(() => {
-    return matchHistory.filter(match => {
-      const matchesSearch = 
-        match.game.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        match.id.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesStatus = statusFilter === 'All' || match.status === statusFilter;
-      return matchesSearch && matchesStatus;
-    });
-  }, [searchQuery, statusFilter]);
+  // Filtered Data Logic (using live transactions/referrals from backend)
+  const filteredMatches = useMemo((): MatchRecord[] => {
+    if (!userDetails?.pza_history) return [];
+    return userDetails.pza_history
+      .filter(match => match.event_type.toLowerCase().includes(searchQuery.toLowerCase()))
+      .map(match => ({
+        id: match.id,
+        game: match.event_type,
+        score: String(match.details?.score || '0'),
+        position: 'N/A',
+        winnings: match.amount || 0,
+        date: new Date(match.created_at).toLocaleDateString(),
+        status: 'COMPLETED'
+      }));
+  }, [userDetails, searchQuery]);
 
-  const filteredTransactions = useMemo(() => {
-    return transactionHistory.filter(tx => {
-      const matchesSearch = 
-        tx.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        tx.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        tx.method.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesStatus = statusFilter === 'All' || tx.status === statusFilter;
-      return matchesSearch && matchesStatus;
-    });
-  }, [searchQuery, statusFilter]);
+  const filteredTransactions = useMemo((): TransactionRecord[] => {
+    if (!userDetails?.transactions) return [];
+    return userDetails.transactions
+      .filter(tx => {
+        const matchesSearch = 
+          tx.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          tx.type.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesStatus = statusFilter === 'All' || tx.status === statusFilter;
+        return matchesSearch && matchesStatus;
+      })
+      .map(tx => ({
+        id: tx.id,
+        username: userDetails.username,
+        type: tx.type === 'deposit' ? 'Deposit' : 'Withdrawal',
+        amount: tx.amount,
+        method: tx.reference || 'Manual',
+        date: new Date(tx.created_at).toLocaleDateString(),
+        status: tx.status === 'success' ? 'Successful' : tx.status === 'pending' ? 'Pending' : 'Failed'
+      }));
+  }, [userDetails, searchQuery, statusFilter]);
 
-  const filteredReferrals = useMemo(() => {
-    return referralHistory.filter(ref => {
-      const matchesSearch = 
-        ref.username.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesStatus = statusFilter === 'All' || ref.status === statusFilter;
-      return matchesSearch && matchesStatus;
-    });
-  }, [searchQuery, statusFilter]);
+  const filteredReferrals = useMemo((): ReferralRecord[] => {
+    if (!userDetails?.referrals) return [];
+    return userDetails.referrals
+      .filter(ref => {
+        const matchesSearch = 
+          ref.users?.username?.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesStatus = statusFilter === 'All' || ref.status === statusFilter;
+        return matchesSearch && matchesStatus;
+      })
+      .map(ref => ({
+        id: ref.id,
+        username: ref.users?.username || 'unknown',
+        date: new Date(ref.created_at).toLocaleDateString(),
+        reward: 0,
+        status: ref.status === 'completed' ? 'Qualified' : 'Pending'
+      }));
+  }, [userDetails, searchQuery, statusFilter]);
 
   const resetFilters = () => {
     setSearchQuery('');
     setStatusFilter('All');
   };
 
+  const handleUpdateStatus = (action: 'activate' | 'deactivate' | 'ban') => {
+    if (!id) return;
+    updateStatus.mutate({ userId: id, action });
+  };
+
+  if (isLoading) return (
+    <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+      <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+      <span className="text-[10px] font-black uppercase tracking-widest text-primary">Interrogating Registry...</span>
+    </div>
+  );
+
+  if (isError || !mappedUser) return (
+    <div className="flex flex-col items-center justify-center min-h-[60vh] p-10 text-center">
+      <div className="p-8 rounded-[2.5rem] bg-rose-500/5 border border-rose-500/20 max-w-md">
+        <h2 className="text-rose-500 font-headline font-black text-2xl uppercase tracking-widest">Citizen Not Found</h2>
+        <p className="text-muted-foreground/60 text-xs mt-4">The requested identity does not exist in our regional database or the connection was severed.</p>
+        <Button onClick={() => window.history.back()} variant="outline" className="mt-8 border-rose-500/30 text-rose-500 h-14 rounded-2xl w-full">Return to Registry</Button>
+      </div>
+    </div>
+  );
+
   return (
     <main className="flex-1 mx-auto w-full pb-20 p-4 md:p-8 space-y-6 md:space-y-10 max-w-362">
       
       {/* Identity Hero */}
-      <UserIdentityHero user={user} />
+      <UserIdentityHero 
+        user={mappedUser} 
+        onUpdateStatus={handleUpdateStatus} 
+        isUpdating={updateStatus.isPending} 
+      />
 
       {/* Stats */}
-      <UserAdvancedMetrics user={user} />
+      <UserAdvancedMetrics user={mappedUser} />
 
       {/* Activity Console */}
       <section className="glass-card rounded-[2.5rem] overflow-hidden border border-slate-200 dark:border-white/10 shadow-lg transition-all duration-500">
         
         {/* Navigation Tabs */}
-        <div className="px-4 md:px-8 border-b border-slate-200 dark:border-white/10 flex overflow-x-auto scrollbar-hide bg-slate-50/50 dark:bg-white/5 backdrop-blur-xl">
+        <div className="px-4 md:px-8 border-b border-slate-200 dark:border-white/10 flex overflow-x-auto scrollbar-hide bg-slate-50/50 dark:bg-white/5 backdrop-blur-xl justify-between items-center">
           <div className="flex flex-nowrap w-max">
             {tabs.map(tab => (
               <button 
@@ -114,11 +186,19 @@ const User: React.FC = () => {
                 {tab.id === 'referrals' && (
                   <span className={`text-[10px] font-black px-2.5 py-1 rounded-full shadow-sm ml-2 ${
                     activeTab === tab.id ? 'bg-primary text-white' : 'bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-300'
-                  }`}>{user.referrals}</span>
+                  }`}>{mappedUser.referrals}</span>
                 )}
               </button>
             ))}
           </div>
+          
+          <button 
+            onClick={() => refetch()}
+            className="p-3 mr-4 rounded-xl hover:bg-primary/10 transition-colors text-primary"
+            title="Reload Activity"
+          >
+            <MdRefresh className={`text-xl ${isLoading ? 'animate-spin' : ''}`} />
+          </button>
         </div>
 
         {/* Toolbar & Search */}
@@ -152,48 +232,22 @@ const User: React.FC = () => {
                 </SelectTrigger>
                 <SelectContent className="rounded-2xl border-border/20 bg-popover/95 backdrop-blur-xl">
                   <SelectItem value="All" className="font-black text-[10px] uppercase tracking-widest p-3">All Records</SelectItem>
-                  {activeTab === 'matches' && (
-                    <>
-                      <SelectItem value="COMPLETED" className="font-black text-[10px] uppercase tracking-widest p-3">Completed</SelectItem>
-                      <SelectItem value="LOST" className="font-black text-[10px] uppercase tracking-widest p-3">Lost / DNF</SelectItem>
-                    </>
-                  )}
                   {activeTab === 'transactions' && (
                     <>
-                      <SelectItem value="Successful" className="font-black text-[10px] uppercase tracking-widest p-3">Successful</SelectItem>
-                      <SelectItem value="Pending" className="font-black text-[10px] uppercase tracking-widest p-3">Pending</SelectItem>
-                      <SelectItem value="Failed" className="font-black text-[10px] uppercase tracking-widest p-3">Failed</SelectItem>
+                      <SelectItem value="success" className="font-black text-[10px] uppercase tracking-widest p-3">Successful</SelectItem>
+                      <SelectItem value="pending" className="font-black text-[10px] uppercase tracking-widest p-3">Pending</SelectItem>
+                      <SelectItem value="failed" className="font-black text-[10px] uppercase tracking-widest p-3">Failed</SelectItem>
                     </>
                   )}
                   {activeTab === 'referrals' && (
                     <>
-                      <SelectItem value="Qualified" className="font-black text-[10px] uppercase tracking-widest p-3">Qualified</SelectItem>
-                      <SelectItem value="Pending" className="font-black text-[10px] uppercase tracking-widest p-3">Pending</SelectItem>
+                      <SelectItem value="completed" className="font-black text-[10px] uppercase tracking-widest p-3">Qualified</SelectItem>
+                      <SelectItem value="pending" className="font-black text-[10px] uppercase tracking-widest p-3">Pending</SelectItem>
                     </>
                   )}
                 </SelectContent>
               </Select>
-              
-              {(searchQuery || statusFilter !== 'All') && (
-                <Button 
-                  variant="ghost" 
-                  onClick={resetFilters}
-                  className="h-14 px-6 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] text-rose-500 hover:text-rose-600 hover:bg-rose-500/5 gap-2 transition-all shadow-none"
-                >
-                  <MdOutlineClear className="text-lg" />
-                  Clear
-                </Button>
-              )}
             </div>
-          </div>
-          
-          <div className="flex items-center gap-2 mt-4 text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground/40">
-            <span>Query Results:</span>
-            <span className="text-primary">
-              {activeTab === 'matches' ? filteredMatches.length : 
-               activeTab === 'transactions' ? filteredTransactions.length : 
-               filteredReferrals.length} Records Found
-            </span>
           </div>
         </div>
 

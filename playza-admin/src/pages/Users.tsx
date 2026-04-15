@@ -1,50 +1,66 @@
 import React, { useState, useMemo } from 'react';
 import {
-  MdPeople
+  MdPeople,
+  MdRefresh
 } from 'react-icons/md';
-import { userStats, usersData } from '../data/usersData';
+import { userStats } from '../data/usersData';
 import { UsersStats } from '../components/users/UsersStats';
 import { UsersToolbar } from '../components/users/UsersToolbar';
 import { UsersTable } from '../components/users/UsersTable';
-
+import { useAdminUsers } from '../hooks/use-admin';
+import type { UserRecord } from '../data/usersData';
+import type { UserAdmin } from '../types/admin';
 const Users: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All Status');
   const [joinedFilter, setJoinedFilter] = useState('All Time');
+  const [page, setPage] = useState(1);
 
-  const filteredUsers = useMemo(() => {
-    const now = new Date('2024-03-25T06:43:36').getTime(); 
-    const results = usersData.filter(user => {
-      const searchLower = searchQuery.toLowerCase();
-      const matchesSearch = 
-        user.fullName.toLowerCase().includes(searchLower) || 
-        user.username.toLowerCase().includes(searchLower) ||
-        user.email.toLowerCase().includes(searchLower) ||
-        (user.phoneNumber && user.phoneNumber.includes(searchQuery)) ||
-        user.id.toLowerCase().includes(searchLower);
-      
-      const matchesStatus = statusFilter === 'All Status' || user.status === statusFilter;
-      
-      let matchesJoined = true;
-      if (joinedFilter === 'Last 24h') {
-        const oneDayAgo = now - 24 * 60 * 60 * 1000;
-        matchesJoined = user.joinedTimestamp > oneDayAgo;
-      } else if (joinedFilter === 'Last 7 Days') {
-        const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
-        matchesJoined = user.joinedTimestamp > sevenDaysAgo;
-      }
+  // Map UI status filter to API status values
+  const apiStatus = useMemo(() => {
+    switch (statusFilter) {
+      case 'Active': return 'active';
+      case 'Suspended': return 'inactive';
+      case 'Unverified': return 'unverified';
+      default: return '';
+    }
+  }, [statusFilter]);
 
-      return matchesSearch && matchesStatus && matchesJoined;
-    });
+  const { data, isLoading, isError, refetch } = useAdminUsers({
+    page,
+    search: searchQuery,
+    status: apiStatus
+  });
 
-    // Default sort by joined timestamp descending (newest first)
-    return results.sort((a, b) => b.joinedTimestamp - a.joinedTimestamp);
-  }, [searchQuery, statusFilter, joinedFilter]);
+  const users = useMemo((): UserRecord[] => {
+    if (!data?.users) return [];
+
+    return (data.users as UserAdmin[]).map((u) => ({
+      id: u.id,
+      username: u.username,
+      email: u.email,
+      phoneNumber: u.phone,
+      fullName: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.username,
+      walletBalance: u.wallets?.balance || 0,
+      status: u.is_active ? 'Active' : 'Suspended',
+      joinedDate: new Date(u.created_at).toLocaleDateString(),
+      joinedTimestamp: new Date(u.created_at).getTime(),
+      lastActive: 'Just now', // Not available in current endpoint
+      avatar: u.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200',
+      kycStatus: u.is_email_verified ? 'Verified' : 'Pending',
+      pzaPoints: u.pza_points?.total_points || 0,
+      totalGames: 0,
+      totalWinnings: 0,
+      level: 1,
+      referrals: 0
+    }));
+  }, [data]);
 
   const clearFilters = () => {
     setSearchQuery('');
     setStatusFilter('All Status');
     setJoinedFilter('All Time');
+    setPage(1);
   };
 
   return (
@@ -64,6 +80,14 @@ const Users: React.FC = () => {
               Manage platform users, view their activities, and track engagement.
             </p>
           </div>
+          
+          <button 
+            onClick={() => refetch()}
+            className="p-4 rounded-2xl bg-white/50 dark:bg-white/5 hover:bg-primary hover:text-white transition-all border border-slate-200 dark:border-white/10 flex items-center gap-2 group/refresh"
+          >
+            <MdRefresh className={`text-xl ${isLoading ? 'animate-spin' : 'group-hover/refresh:rotate-180 transition-transform duration-700'}`} />
+            <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">Refresh Sync</span>
+          </button>
         </div>
       </div>
 
@@ -78,28 +102,56 @@ const Users: React.FC = () => {
         <div className="relative z-10">
           <UsersToolbar 
             searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
+            setSearchQuery={(q) => { setSearchQuery(q); setPage(1); }}
             statusFilter={statusFilter}
-            setStatusFilter={setStatusFilter}
+            setStatusFilter={(s) => { setStatusFilter(s); setPage(1); }}
             joinedFilter={joinedFilter}
-            setJoinedFilter={setJoinedFilter}
+            setJoinedFilter={(j) => { setJoinedFilter(j); setPage(1); }}
             clearFilters={clearFilters}
           />
         </div>
 
         {/* Table */}
         <div className="relative z-10">
-          <UsersTable users={filteredUsers} clearFilters={clearFilters} />
+          {isError ? (
+            <div className="py-20 text-center text-rose-500">
+              <p className="font-headline font-black uppercase text-xl">Registry Link Failure</p>
+              <p className="text-xs opacity-60 mt-2">Could not synchronize with the user database.</p>
+            </div>
+          ) : (
+            <div className={isLoading ? 'opacity-50 pointer-events-none' : ''}>
+              <UsersTable users={users} clearFilters={clearFilters} />
+            </div>
+          )}
         </div>
 
         {/* Info Footer */}
         <div className="relative z-10 px-8 py-6 bg-slate-50/50 dark:bg-white/5 border-t border-slate-200 dark:border-white/10 flex items-center justify-between text-slate-500 dark:text-slate-400">
           <p className="text-[10px] font-black uppercase tracking-[0.2em]">
-            Database Sync: <span className="text-emerald-500">Connected</span>
+            Database Sync: <span className={isError ? 'text-rose-500' : 'text-emerald-500'}>
+              {isError ? 'Disconnected' : isLoading ? 'Syncing...' : 'Connected'}
+            </span>
           </p>
-          <p className="text-[10px] font-black uppercase tracking-[0.2em]">
-            Displaying <span className="text-primary">{filteredUsers.length}</span> Records
-          </p>
+          <div className="flex items-center gap-4">
+             <p className="text-[10px] font-black uppercase tracking-[0.2em]">
+               Displaying <span className="text-primary">{users.length}</span> Records
+             </p>
+             {data && data.total_pages > 1 && (
+               <div className="flex items-center gap-2 border-l border-slate-200 dark:border-white/10 pl-4">
+                 <button 
+                   disabled={page === 1}
+                   onClick={() => setPage(p => p - 1)}
+                   className="text-[10px] font-black uppercase hover:text-primary disabled:opacity-30"
+                 >Prev</button>
+                 <span className="text-[10px] font-black uppercase">Page {page} of {data.total_pages}</span>
+                 <button 
+                   disabled={page === data.total_pages}
+                   onClick={() => setPage(p => p + 1)}
+                   className="text-[10px] font-black uppercase hover:text-primary disabled:opacity-30"
+                 >Next</button>
+               </div>
+             )}
+          </div>
         </div>
       </div>
     </main>
