@@ -16,6 +16,7 @@ import speedbattleRoutes from './modules/speedbattle/speedbattle.routes'
 import wordscrambleRoutes from './modules/wordscramble/wordscramble.routes'
 import poolRoutes from './modules/pool/pool.routes'
 import ludoRoutes from './modules/ludo/ludo.routes'
+import leaderboardRoutes from './modules/leaderboard/leaderboard.routes'
 
 dotenv.config()
 
@@ -52,6 +53,7 @@ app.use('/api/speedbattle', speedbattleRoutes)
 app.use('/api/wordscramble', wordscrambleRoutes)
 app.use('/api/pool', poolRoutes)
 app.use('/api/ludo', ludoRoutes)
+app.use('/api/leaderboard', leaderboardRoutes)
 
 app.use((req, res) => {
   res.status(404).json({ success: false, message: 'Route not found' })
