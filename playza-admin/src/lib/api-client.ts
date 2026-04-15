@@ -1,6 +1,11 @@
 import axios from "axios";
 
-const API_BASE_URL = `${import.meta.env.VITE_API_URL}/api`;
+const API_URL = import.meta.env.VITE_API_URL || 'https://api.playza.games';
+const API_BASE_URL = `${API_URL}/api`;
+
+if (!import.meta.env.VITE_API_URL) {
+  console.warn("VITE_API_URL is not defined. Using fallback: " + API_URL);
+}
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
