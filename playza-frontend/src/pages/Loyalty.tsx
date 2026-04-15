@@ -6,16 +6,17 @@ import { Button } from "@/components/ui/button";
 import { LoyaltySkeleton } from "@/components/skeletons/LoyaltySkeleton";
 import {
   MdCheckCircle, MdLock, MdMilitaryTech, MdAccountCircle,
-  MdSportsEsports, MdAccountBalanceWallet, MdConfirmationNumber,
-  MdLocalMall, MdClose, MdStars, MdEmojiEvents, MdGroups,
+  MdSportsEsports, MdAccountBalanceWallet,
+  MdStars, MdEmojiEvents, MdGroups,
   MdVerified, MdPhonelinkRing, MdShoppingBag, MdOutlineForum,
   MdThumbUp, MdEvent, MdReportProblem, MdVideoLibrary, MdToken,
-  MdLocalFireDepartment, MdArrowForward, MdOpenInNew,
+  MdLocalFireDepartment, MdArrowForward, MdOpenInNew, MdClose,
 } from "react-icons/md";
-import { Zap, Trophy, Target, Flame, Star, Users, Shield, Gift } from "lucide-react";
+import { Zap, Trophy, Target, Flame, Star, Users, Shield } from "lucide-react";
 import type { PzaEvent, ClaimedTask } from "@/api/loyalty.api";
 import { useClaimStreak } from "@/hooks/loyalty/useClaimStreak";
 import { useClaimTask } from "@/hooks/loyalty/useClaimTask";
+import { RewardsSection } from "@/components/loyalty/RewardsSection";
 
 interface Task {
   id: string;
@@ -150,12 +151,6 @@ const TIER_CONFIG = [
   { name: "Platinum", min: 100000,  max: Infinity, color: "text-blue-500 dark:text-blue-400",  bg: "from-blue-100 to-blue-50 dark:from-blue-950/40 dark:to-blue-900/20",     border: "border-blue-300 dark:border-blue-700" },
 ];
 
-const STORE_ITEMS = [
-  { name: "Wallet Credit ₦500",     desc: "Instant credit to your Playza wallet",   cost: 1500, icon: <MdAccountBalanceWallet className="w-6 h-6" />, color: "blue" },
-  { name: "Free Arena Entry",        desc: "One-time pass for any Pro Arena game",    cost: 800,  icon: <MdConfirmationNumber className="w-6 h-6" />, color: "purple" },
-  { name: "25% Merch Discount",      desc: "Apply to any physical merchandise",       cost: 2500, icon: <MdLocalMall className="w-6 h-6" />, color: "green" },
-  { name: "Double PZA (24h)",        desc: "2x PZA points for 24 hours",             cost: 3000, icon: <MdStars className="w-6 h-6" />, color: "amber" },
-];
 
 // Points awarded per day position within any 7-day cycle
 // Days 3 and 7 are bonus days; everything else is the base 10
@@ -460,41 +455,8 @@ export default function Loyalty() {
         </div>
       </div>
 
-      {/* Redemption Store */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Gift className="w-5 h-5 text-slate-600 dark:text-slate-400" />
-            <h2 className="font-bold text-slate-900 dark:text-white">Redemption Store</h2>
-          </div>
-          <Link to="/leaderboard?tab=Loyalty" className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">
-            Reward Leaderboard <MdArrowForward className="text-sm" />
-          </Link>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {STORE_ITEMS.map((item, i) => {
-            const col = COLOR_MAP[item.color];
-            const canAfford = totalPoints >= item.cost;
-            return (
-              <div key={i} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 flex flex-col gap-4 hover:shadow-md transition-shadow">
-                <div className={`w-12 h-12 rounded-xl ${col.badge} flex items-center justify-center`}>
-                  <span className={col.text}>{item.icon}</span>
-                </div>
-                <div className="flex-1">
-                  <p className="font-bold text-slate-900 dark:text-white text-sm">{item.name}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{item.desc}</p>
-                </div>
-                <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">
-                  <div className={`font-black text-sm ${col.text}`}>{item.cost.toLocaleString()} <span className="text-slate-400 font-medium text-xs">PZA</span></div>
-                  <button disabled={!canAfford} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${canAfford ? `${col.badge} hover:opacity-80` : 'bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed'}`}>
-                    {canAfford ? 'Redeem' : 'Need more'}
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      {/* Rewards Hub */}
+      <RewardsSection totalPoints={totalPoints} />
 
       {/* Tier Modal */}
       {tierModal && (
