@@ -1,4 +1,5 @@
 import { supabase, supabaseAdmin } from '../../config/supabase'
+import { awardPZA } from '../../lib/pzaEngine'
 
 export async function getProfile(userId: string) {
   const { data: user, error } = await supabaseAdmin
@@ -44,12 +45,52 @@ export async function updateProfile(userId: string, data: {
   bio?: string
   show_activity?: boolean
 }) {
+  // Fetch current profile so we can detect first-time avatar / profile completion
+  const { data: current } = await supabaseAdmin
+    .from('users')
+    .select('avatar_url, first_name, last_name')
+    .eq('id', userId)
+    .single()
+
   const { error } = await supabaseAdmin
     .from('users')
     .update({ ...data, updated_at: new Date().toISOString() })
     .eq('id', userId)
 
   if (error) throw error
+
+  // Award AVATAR_UPLOADED only when setting an avatar for the very first time
+  if (data.avatar_url && !current?.avatar_url) {
+    const { data: alreadyAwarded } = await supabaseAdmin
+      .from('pza_events')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('event_type', 'AVATAR_UPLOADED')
+      .limit(1)
+      .single()
+
+    if (!alreadyAwarded) {
+      await awardPZA(userId, 'AVATAR_UPLOADED')
+    }
+  }
+
+  // Award PROFILE_COMPLETED once first_name + last_name are both set
+  const updatedFirst = data.first_name ?? current?.first_name
+  const updatedLast  = data.last_name  ?? current?.last_name
+  if (updatedFirst && updatedLast) {
+    const { data: alreadyAwarded } = await supabaseAdmin
+      .from('pza_events')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('event_type', 'PROFILE_COMPLETED')
+      .limit(1)
+      .single()
+
+    if (!alreadyAwarded) {
+      await awardPZA(userId, 'PROFILE_COMPLETED')
+    }
+  }
+
   return { message: 'Profile updated' }
 }
 
