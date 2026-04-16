@@ -17,12 +17,10 @@ const LeaderBoard = () => {
 
   if (isLoading) return <LeaderBoardSkeleton />;
 
-
-
   const tabs = [
     { id: "Games", icon: MdSportsEsports, label: "Live Games" },
-    { id: "Referral", icon: MdGroupAdd, label: "Top Referrers" },
     { id: "Loyalty", icon: MdMilitaryTech, label: "X-Loyalty" },
+    { id: "Referral", icon: MdGroupAdd, label: "Top Referrers" },
   ];
 
   return (
@@ -80,8 +78,8 @@ const LeaderBoard = () => {
           {user ? (
             <>
               {activeTab === "Games" && <GameLeaderboard />}
-              {activeTab === "Referral" && <ReferralLeaderboard />}
               {activeTab === "Loyalty" && <LoyaltyLeaderboard />}
+              {activeTab === "Referral" && <ReferralLeaderboard />}
             </>
           ) : (
             <div className="flex-1 flex items-center justify-center p-2 md:p-6 text-center">

@@ -1,7 +1,6 @@
-import { useState, useEffect, useMemo, useRef, useCallback } from "react";
-import { Loader2 } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Loader2, Users, Trophy, Award, Medal, UserPlus } from "lucide-react";
 import Search from "@/components/Search";
-import { leaderboardData } from "@/data/referrals";
 import {
   Table,
   TableBody,
@@ -10,82 +9,31 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ZASymbol } from "@/components/currency/ZASymbol";
 import { useAuth } from "@/context/auth";
-
-const ITEMS_PER_PAGE = 15;
+import { useReferralLeaderboard } from "@/hooks/useLeaderboard";
 
 const ReferralLeaderboard = () => {
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
-  const [range, setRange] = useState({ start: 0, end: ITEMS_PER_PAGE });
-  const [isLoading, setIsLoading] = useState(false);
+  const { data: referralData, isLoading } = useReferralLeaderboard("all", 100);
 
-  const observerBottom = useRef<HTMLDivElement>(null);
-  const observerTop = useRef<HTMLDivElement>(null);
+  const filteredItems = useMemo(() => {
+    if (!referralData) return [];
+    if (!searchQuery) return referralData;
 
-  const currentItems = useMemo(() => {
-    if (!searchQuery) return leaderboardData.slice(range.start, range.end);
-    
     const query = searchQuery.toLowerCase();
-    const index = leaderboardData.findIndex(u => u.name.toLowerCase().includes(query));
-    if (index === -1) return [];
+    return referralData.filter((u) => u.username.toLowerCase().includes(query));
+  }, [referralData, searchQuery]);
 
-    const start = Math.max(0, index - 5);
-    const end = Math.min(leaderboardData.length, index + 6);
-    return leaderboardData.slice(start, end);
-  }, [range, searchQuery]);
+  const topThree = useMemo(() => {
+    if (!referralData) return [];
+    return referralData.slice(0, 3);
+  }, [referralData]);
 
-  const hasMoreBelow = range.end < leaderboardData.length;
-  const hasMoreAbove = range.start > 0;
-
-  const loadMore = useCallback(() => {
-    if (isLoading || !hasMoreBelow) return;
-    setIsLoading(true);
-    setTimeout(() => {
-      setRange((prev) => ({
-        ...prev,
-        end: Math.min(leaderboardData.length, prev.end + ITEMS_PER_PAGE),
-      }));
-      setIsLoading(false);
-    }, 500);
-  }, [hasMoreBelow, isLoading]);
-
-  // Bottom Observer (Load More)
-  useEffect(() => {
-    const target = observerBottom.current;
-    if (!target) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMoreBelow && !isLoading) {
-          loadMore();
-        }
-      },
-      { threshold: 0.1 },
-    );
-
-    observer.observe(target);
-    return () => observer.disconnect();
-  }, [hasMoreBelow, isLoading, loadMore]);
-
-  // Top Observer (Reset View)
-  useEffect(() => {
-    const target = observerTop.current;
-    if (!target) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMoreAbove && !isLoading) {
-          setRange({ start: 0, end: ITEMS_PER_PAGE });
-        }
-      },
-      { threshold: 1.0 },
-    );
-
-    observer.observe(target);
-    return () => observer.disconnect();
-  }, [hasMoreAbove, isLoading]);
+  const restOfPlayers = useMemo(() => {
+    if (!filteredItems) return [];
+    return searchQuery ? filteredItems : filteredItems.slice(3);
+  }, [filteredItems, searchQuery]);
 
   const HighlightMatch = ({ text, query }: { text: string; query: string }) => {
     if (!query.trim()) return <span>{text}</span>;
@@ -96,7 +44,7 @@ const ReferralLeaderboard = () => {
           part.toLowerCase() === query.toLowerCase() ? (
             <mark
               key={i}
-              className="bg-primary/20 text-primary font-black rounded-sm px-0.5 underline decoration-primary/30"
+              className="bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-black rounded-sm px-0.5"
             >
               {part}
             </mark>
@@ -110,101 +58,194 @@ const ReferralLeaderboard = () => {
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden relative">
-      <div className="mb-4 space-y-3">
+      {/* Header Info */}
+      <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-[10px] md:text-xs font-black uppercase tracking-[0.3em] text-primary">Top Referrers</h2>
-          <p className="text-xs text-slate-500 font-bold mt-1">Invite friends to climb the ranks and earn passive rewards.</p>
+          <div className="flex items-center gap-2 mb-1">
+            <Users className="w-4 h-4 text-emerald-500" />
+            <h2 className="text-[10px] md:text-xs font-black uppercase tracking-[0.3em] text-emerald-500">
+              Global Recruitment Hub
+            </h2>
+          </div>
+          <p className="text-xs text-slate-500 font-bold">
+            Invite friends to climb the ranks and earn passive rewards.
+          </p>
         </div>
-        <div className="max-w-md">
-          <Search placeholder="Search referrers..." value={searchQuery} onChange={setSearchQuery} />
+        <div className="max-w-md w-full md:w-72">
+          <Search
+            placeholder="Search referrers..."
+            value={searchQuery}
+            onChange={setSearchQuery}
+          />
         </div>
       </div>
 
-      {/* Top Observer Target */}
-      <div ref={observerTop} className="h-1 w-full absolute top-0 left-0 -z-10 bg-transparent" />
+      {/* Podium for Top 3 (Only when not searching) */}
+      {!searchQuery && topThree.length > 0 && !isLoading && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          {topThree.map((player, idx) => {
+            const isFirst = idx === 0;
 
-      <div className="overflow-auto custom-scrollbar flex-1 relative">
-        <Table className={`w-full text-left ${!user ? "opacity-50 grayscale select-none pointer-events-none" : ""}`}>
-          <TableHeader className="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
-            <TableRow className="hover:bg-transparent">
-              <TableHead className="px-2 md:px-6 py-4 md:py-6 w-12 md:w-28 font-black uppercase text-[10px] tracking-widest text-slate-500">
+            const config = isFirst
+              ? {
+                  bg: "from-emerald-500/20 to-emerald-500/5",
+                  border: "border-emerald-500/30",
+                  icon: <Trophy className="text-emerald-500" />,
+                  shadow: "shadow-emerald-500/10",
+                }
+              : idx === 1
+                ? {
+                    bg: "from-slate-400/20 to-slate-400/5",
+                    border: "border-slate-400/30",
+                    icon: <Award className="text-slate-400" />,
+                    shadow: "shadow-slate-400/10",
+                  }
+                : {
+                    bg: "from-amber-700/20 to-amber-700/5",
+                    border: "border-amber-700/30",
+                    icon: <Medal className="text-amber-700" />,
+                    shadow: "shadow-amber-700/10",
+                  };
+
+            return (
+              <div
+                key={player.user_id}
+                className={`relative overflow-hidden bg-linear-to-br ${config.bg} border ${config.border} ${config.shadow} rounded-2xl p-4 flex items-center gap-4 group hover:scale-[1.02] transition-all cursor-default shadow-xl`}
+              >
+                <div className="relative">
+                  <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-white/10 shadow-lg group-hover:border-emerald-500/50 transition-colors">
+                    <img
+                      src={player.avatar_url || "/default-avatar.png"}
+                      alt={player.username}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="absolute -top-2 -right-2 w-8 h-8 rounded-lg bg-white dark:bg-slate-900 border flex items-center justify-center shadow-md">
+                    {config.icon}
+                  </div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-0.5">
+                    Top Operative
+                  </p>
+                  <h3 className="font-display font-black text-slate-900 dark:text-white text-lg truncate uppercase italic leading-tight">
+                    {player.username}
+                  </h3>
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <UserPlus className="w-3.5 h-3.5 text-emerald-500" />
+                    <span className="text-base font-black text-emerald-600 dark:text-emerald-400">
+                      {player.total_referrals.toLocaleString()}
+                    </span>
+                    <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">
+                      Recruits
+                    </span>
+                  </div>
+                </div>
+                {isFirst && (
+                  <div className="absolute -right-4 -bottom-4 opacity-10 rotate-12 text-emerald-500">
+                    <Users size={80} />
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Main Table */}
+      <div className="overflow-auto custom-scrollbar flex-1 relative glass-card rounded-2xl border border-slate-200 dark:border-white/5 bg-white/50 dark:bg-slate-950/50">
+        <Table
+          className={`w-full text-left ${!user ? "opacity-30 grayscale select-none pointer-events-none" : ""}`}
+        >
+          <TableHeader className="bg-slate-100/50 dark:bg-white/5 border-b border-slate-200 dark:border-white/5 sticky top-0 z-20 backdrop-blur-md">
+            <TableRow className="hover:bg-transparent border-none">
+              <TableHead className="px-6 py-5 w-24 font-black uppercase text-[10px] tracking-widest text-slate-500 text-center">
                 Rank
               </TableHead>
-              <TableHead className="px-2 md:px-6 py-4 md:py-6 font-black uppercase text-[10px] tracking-widest text-slate-500">
+              <TableHead className="px-6 py-5 font-black uppercase text-[10px] tracking-widest text-slate-500">
                 Operative
               </TableHead>
-              <TableHead className="px-2 md:px-6 py-4 md:py-6 font-black uppercase text-[10px] tracking-widest text-slate-500 hidden sm:table-cell">
+              <TableHead className="px-6 py-5 text-right font-black uppercase text-[10px] tracking-widest text-slate-500 pr-8">
                 Recruits
-              </TableHead>
-              <TableHead className="px-2 md:px-6 py-4 md:py-6 text-right font-black uppercase text-[10px] tracking-widest text-slate-500 pr-4 md:pr-6">
-                Reward
               </TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody className="divide-y divide-slate-50 dark:divide-slate-800/10">
-            {currentItems.length > 0 ? (
-              currentItems.map((entry, idx) => {
-                const isMatch =
-                  searchQuery &&
-                  entry.name
-                    .toLowerCase()
-                    .includes(searchQuery.toLowerCase());
+          <TableBody className="divide-y divide-slate-100 dark:divide-white/5">
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={3} className="p-20 text-center">
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="relative">
+                      <Loader2
+                        className="animate-spin text-emerald-500 relative z-10"
+                        size={32}
+                      />
+                      <div className="absolute inset-0 blur-xl bg-emerald-500/20 animate-pulse" />
+                    </div>
+                    <p className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-500 animate-pulse">
+                      Syncing Hub...
+                    </p>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : restOfPlayers.length > 0 ? (
+              restOfPlayers.map((entry) => {
+                const isMe = entry.username === user?.username;
+
                 return (
                   <TableRow
-                    key={entry.rank}
-                    className={`border-slate-50 dark:border-slate-800/50 ${
-                      isMatch
-                        ? "bg-primary/20 dark:bg-primary/20 border-y border-y-primary border-l-[3px] border-l-primary"
-                        : range.start + idx < 3 && !searchQuery
-                        ? "bg-primary/5 dark:bg-primary/5 md:hover:bg-slate-50/50 md:dark:hover:bg-slate-800/40"
-                        : "md:hover:bg-slate-50/50 md:dark:hover:bg-slate-800/40"
+                    key={entry.user_id}
+                    className={`group transition-all border-none ${
+                      isMe
+                        ? "bg-emerald-500/10 dark:bg-emerald-500/10 border-l-[4px] border-l-emerald-500"
+                        : "md:hover:bg-slate-100/50 md:dark:hover:bg-white/5"
                     }`}
                   >
-                    <TableCell className="px-2 md:px-6 py-4 md:py-6 font-display font-black italic tracking-tighter text-base md:text-lg">
-                      <span
-                        className={`${range.start + idx === 0 && !searchQuery ? "text-primary" : range.start + idx === 1 && !searchQuery ? "text-slate-400" : range.start + idx === 2 && !searchQuery ? "text-amber-600" : "text-slate-300 dark:text-slate-700"}`}
+                    <TableCell className="px-6 py-5 text-center">
+                      <div
+                        className={`inline-flex items-center justify-center w-10 h-10 rounded-xl font-display font-black italic text-sm ${isMe ? "bg-emerald-500 text-white" : "bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400"}`}
                       >
-                        #{entry.rank < 10 ? `0${entry.rank}` : entry.rank}
-                      </span>
+                        {entry.rank}
+                      </div>
                     </TableCell>
-                    <TableCell className="px-2 md:px-6 py-4 md:py-6">
-                      <div className="flex items-center gap-2 md:gap-3">
-                        <div
-                          className={`w-6 h-6 md:w-10 md:h-10 rounded-xl overflow-hidden border shrink-0 ${range.start + idx === 0 && !searchQuery ? "border-primary" : "border-slate-200 dark:border-slate-800"}`}
-                        >
-                          <img
-                            src={entry.avatar}
-                            alt={entry.name}
-                            className="w-full h-full object-cover"
-                          />
+                    <TableCell className="px-6 py-5">
+                      <div className="flex items-center gap-4">
+                        <div className="relative shrink-0">
+                          <div
+                            className={`w-11 h-11 rounded-xl overflow-hidden border-2 ${isMe ? "border-emerald-500" : "border-slate-200 dark:border-white/10"} group-hover:scale-110 transition-transform shadow-md shadow-black/5`}
+                          >
+                            <img
+                              src={entry.avatar_url || "/default-avatar.png"}
+                              alt={entry.username}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
                         </div>
                         <div className="min-w-0">
-                          <p className="font-display font-black text-slate-900 dark:text-slate-100 text-[11px] md:text-sm tracking-tight uppercase italic md:group-hover:text-primary truncate max-w-17.5 xs:max-w-[100px] sm:max-w-none">
+                          <p
+                            className={`font-display font-black text-[13px] md:text-sm tracking-tight uppercase italic truncate transition-colors ${isMe ? "text-emerald-500" : "text-slate-900 dark:text-slate-100 group-hover:text-emerald-500"}`}
+                          >
                             <HighlightMatch
-                              text={entry.name}
+                              text={entry.username}
                               query={searchQuery}
-                            />
-                          </p>
-                          <p className="text-[8px] md:text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest sm:hidden leading-none">
-                            {entry.referrals} Recruits
+                            />{" "}
+                            {isMe && (
+                              <span className="ml-1 opacity-50 text-[10px]">
+                                (YOU)
+                              </span>
+                            )}
                           </p>
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className="px-2 md:px-6 py-4 md:py-6 hidden sm:table-cell font-display font-black text-slate-900 dark:text-slate-100 italic">
-                      {entry.referrals}
-                    </TableCell>
-                    <TableCell className="px-2 md:px-6 py-4 md:py-6 text-right font-display font-black italic tracking-tighter text-xs md:text-base pr-4 md:pr-6 whitespace-nowrap">
-                      <div className="flex items-center gap-1.5 justify-end">
-                        {entry.earnings !== "-" && <ZASymbol className="text-xs scale-90" />}
-                        <span
-                          className={
-                            range.start + idx < 3 && !searchQuery
-                              ? "text-primary"
-                              : "text-slate-900 dark:text-slate-100"
-                          }
-                        >
-                          {entry.earnings.replace("ZA", "")}
+                    <TableCell className="px-6 py-5 text-right pr-8">
+                      <div className="inline-flex flex-col items-end">
+                        <div className="flex items-center gap-1.5 font-display font-black italic tracking-tighter text-sm md:text-lg text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform origin-right">
+                          <UserPlus className="w-3.5 h-3.5" />
+                          {entry.total_referrals.toLocaleString()}
+                        </div>
+                        <span className="text-[9px] text-slate-400 font-bold uppercase tracking-[0.2em] leading-none">
+                          Net Recruits
                         </span>
                       </div>
                     </TableCell>
@@ -213,28 +254,26 @@ const ReferralLeaderboard = () => {
               })
             ) : (
               <TableRow>
-                <TableCell
-                  colSpan={4}
-                  className="p-2 md:p-10 text-center text-slate-400 text-xs font-bold uppercase tracking-[0.2em]"
-                >
-                  No Rankings Found
+                <TableCell colSpan={3} className="p-20 text-center">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-300 dark:text-slate-700">
+                      <Users size={32} />
+                    </div>
+                    <p className="text-xs font-black uppercase tracking-widest text-slate-500">
+                      No operatives found for "{searchQuery}"
+                    </p>
+                    <button
+                      onClick={() => setSearchQuery("")}
+                      className="text-[10px] font-black text-emerald-500 uppercase border-b border-emerald-500/30 hover:border-emerald-500 transition-all"
+                    >
+                      Clear Filter
+                    </button>
+                  </div>
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
-
-        {/* Bottom Observer Target */}
-        <div ref={observerBottom} className="h-10 w-full" />
-
-        {isLoading && (
-          <div className="flex flex-col items-center justify-center p-2 md:p-8 text-slate-500 gap-2 md:gap-3">
-            <Loader2 className="animate-spin text-primary" size={24} />
-            <p className="text-[10px] font-black uppercase tracking-widest">
-              Syncing Rankings...
-            </p>
-          </div>
-        )}
       </div>
     </div>
   );

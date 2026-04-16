@@ -28,6 +28,7 @@ export const useUpdateProfile = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["profile"] });
       queryClient.invalidateQueries({ queryKey: ["users", "me"] });
+      queryClient.invalidateQueries({ queryKey: ["loyalty", "me"] });
     },
   });
 };

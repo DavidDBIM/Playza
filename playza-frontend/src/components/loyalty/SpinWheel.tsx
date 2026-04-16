@@ -184,21 +184,29 @@ export function SpinWheelModal({ onClose, onEarnPoints, spinsLeft: initialSpins 
   }, []);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md"
+      onClick={onClose}
+    >
       <div
-        className="relative w-full max-w-sm bg-gradient-to-b from-slate-900 to-slate-950 rounded-3xl border border-indigo-500/30 shadow-2xl shadow-indigo-500/20 overflow-hidden"
-        onClick={e => e.stopPropagation()}
+        className="relative w-full max-w-sm bg-linear-to-b from-slate-900 to-slate-950 rounded-3xl border border-indigo-500/30 shadow-2xl shadow-indigo-500/20 overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Top decoration */}
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
+        <div className="absolute top-0 left-0 right-0 h-1 bg-linear-to-r from-indigo-500 via-purple-500 to-pink-500" />
 
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-6 pb-4">
           <div className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-indigo-400" />
-            <h2 className="text-white font-black text-lg tracking-tight">Spin & Earn PZA</h2>
+            <h2 className="text-white font-black text-lg tracking-tight">
+              Spin & Earn PZA
+            </h2>
           </div>
-          <button onClick={onClose} className="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-white transition-all">
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-white transition-all"
+          >
             <MdClose className="text-lg" />
           </button>
         </div>
@@ -207,7 +215,9 @@ export function SpinWheelModal({ onClose, onEarnPoints, spinsLeft: initialSpins 
         <div className="px-6 mb-2">
           <div className="flex items-center justify-center gap-2 bg-indigo-500/10 border border-indigo-500/20 rounded-xl py-2">
             <Zap className="w-4 h-4 text-indigo-400" />
-            <span className="text-indigo-300 text-sm font-bold">{spinsLeft} spin{spinsLeft !== 1 ? 's' : ''} remaining today</span>
+            <span className="text-indigo-300 text-sm font-bold">
+              {spinsLeft} spin{spinsLeft !== 1 ? "s" : ""} remaining today
+            </span>
           </div>
         </div>
 
@@ -215,8 +225,10 @@ export function SpinWheelModal({ onClose, onEarnPoints, spinsLeft: initialSpins 
         <div className="relative flex items-center justify-center py-4 px-4">
           {/* Pointer */}
           <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center">
-            <div className="w-5 h-8 bg-gradient-to-b from-yellow-400 to-orange-500 rounded-t-full shadow-lg shadow-orange-500/50" 
-                 style={{ clipPath: "polygon(50% 100%, 0% 0%, 100% 0%)" }} />
+            <div
+              className="w-5 h-8 bg-linear-to-b from-yellow-400 to-orange-500 rounded-t-full shadow-lg shadow-orange-500/50"
+              style={{ clipPath: "polygon(50% 100%, 0% 0%, 100% 0%)" }}
+            />
           </div>
 
           <canvas
@@ -225,20 +237,28 @@ export function SpinWheelModal({ onClose, onEarnPoints, spinsLeft: initialSpins 
             height={280}
             className="rounded-full cursor-pointer"
             onClick={spin}
-            style={{ filter: isSpinning ? "drop-shadow(0 0 20px rgba(99,102,241,0.6))" : "drop-shadow(0 0 8px rgba(99,102,241,0.3))" }}
+            style={{
+              filter: isSpinning
+                ? "drop-shadow(0 0 20px rgba(99,102,241,0.6))"
+                : "drop-shadow(0 0 8px rgba(99,102,241,0.3))",
+            }}
           />
         </div>
 
         {/* Win display */}
-        <div className="px-6 pb-2 min-h-[60px] flex items-center justify-center">
+        <div className="px-6 pb-2 min-h-15 flex items-center justify-center">
           {wonPoints !== null ? (
             <div className="w-full flex flex-col items-center gap-1 animate-bounce">
-              <div className="flex items-center gap-2 bg-gradient-to-r from-yellow-400/20 to-orange-400/20 border border-yellow-500/40 rounded-2xl px-6 py-3">
+              <div className="flex items-center gap-2 bg-linear-to-r from-yellow-400/20 to-orange-400/20 border border-yellow-500/40 rounded-2xl px-6 py-3">
                 <MdStars className="text-yellow-400 text-2xl" />
-                <span className="text-2xl font-black text-white">+{wonPoints.toLocaleString()}</span>
+                <span className="text-2xl font-black text-white">
+                  +{wonPoints.toLocaleString()}
+                </span>
                 <span className="text-yellow-400 font-bold text-sm">PZA</span>
               </div>
-              <p className="text-slate-400 text-xs">Points added to your balance!</p>
+              <p className="text-slate-400 text-xs">
+                Points added to your balance!
+              </p>
             </div>
           ) : isSpinning ? (
             <div className="flex items-center gap-2 text-indigo-400">
@@ -246,7 +266,9 @@ export function SpinWheelModal({ onClose, onEarnPoints, spinsLeft: initialSpins 
               <span className="text-sm font-bold">Spinning...</span>
             </div>
           ) : (
-            <p className="text-slate-500 text-sm text-center">Tap the wheel or button to spin!</p>
+            <p className="text-slate-500 text-sm text-center">
+              Tap the wheel or button to spin!
+            </p>
           )}
         </div>
 
@@ -258,10 +280,14 @@ export function SpinWheelModal({ onClose, onEarnPoints, spinsLeft: initialSpins 
             className={`w-full py-3.5 rounded-2xl font-black text-sm tracking-wide transition-all ${
               isSpinning || spinsLeft <= 0
                 ? "bg-slate-800 text-slate-600 cursor-not-allowed"
-                : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-lg shadow-indigo-500/30 active:scale-95"
+                : "bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-lg shadow-indigo-500/30 active:scale-95"
             }`}
           >
-            {isSpinning ? "Spinning…" : spinsLeft <= 0 ? "No spins left today" : "🎰 SPIN THE WHEEL"}
+            {isSpinning
+              ? "Spinning…"
+              : spinsLeft <= 0
+                ? "No spins left today"
+                : "🎰 SPIN THE WHEEL"}
           </button>
         </div>
       </div>
