@@ -1,275 +1,532 @@
-import { useState } from "react";
-import { MdStars, MdArrowForward, MdCheckCircle, MdVerified, MdGroups } from "react-icons/md";
-import { Sparkles, Gift, Crown, ShoppingBag, Zap, ChevronRight, Infinity as InfinityIcon } from "lucide-react";
+import { useState, useEffect } from "react";
+import {
+  MdStars, MdArrowForward, MdCheckCircle, MdVerified,
+  MdGroups, MdAutorenew, MdClose, MdWarning,
+} from "react-icons/md";
+import { Sparkles, Crown, ShoppingBag, Zap, ChevronRight, AlertCircle } from "lucide-react";
 import { SpinWheelModal } from "./SpinWheel";
+import {
+  applyAmbassadorApi,
+  getAmbassadorStatusApi,
+  type AmbassadorStatus,
+  type AmbassadorApplyPayload,
+} from "@/api/loyalty.api";
+
+const SPIN_COST = 30;
 
 interface RewardsSectionProps {
   totalPoints: number;
-  onEarnPoints?: (points: number) => void;
+  spinsLeftToday: number;
+  onPointsChanged: () => void; // refetch loyalty data after spin
 }
 
 interface MerchProduct {
-  id: string;
-  name: string;
-  desc: string;
-  cost: number;
-  image: string;
-  badge?: string;
-  badgeColor?: string;
+  id: string; name: string; desc: string; cost: number; image: string; badge?: string; badgeColor?: string;
 }
 
 const MERCH_PRODUCTS: MerchProduct[] = [
-  { id: "cap",   name: "Playza Cap",    desc: "Snapback with embroidered logo",         cost: 8000,  image: "🧢", badge: "Popular", badgeColor: "#3b82f6" },
-  { id: "shirt", name: "Playza T-Shirt", desc: "Premium cotton, gamer edition print",   cost: 12000, image: "👕", badge: "Best Value", badgeColor: "#10b981" },
-  { id: "bag",   name: "Playza Bag",    desc: "Limited edition gaming backpack",        cost: 20000, image: "🎒", badge: "Limited",  badgeColor: "#f97316" },
+  { id: "cap",   name: "Playza Cap",    desc: "Snapback cap with embroidered Playza logo.", cost: 8000,  image: "🧢", badge: "Popular",   badgeColor: "bg-blue-500" },
+  { id: "shirt", name: "Playza T-Shirt",desc: "Premium cotton tee, gamer edition print.",   cost: 12000, image: "👕", badge: "Best Value", badgeColor: "bg-emerald-500" },
+  { id: "bag",   name: "Playza Bag",    desc: "Limited edition gaming-ready backpack.",      cost: 20000, image: "🎒", badge: "Limited",   badgeColor: "bg-orange-500" },
 ];
 
-const AMBASSADOR_PERKS = [
-  { icon: <MdStars className="text-yellow-500 text-sm" />, label: "2x PZA on every game" },
-  { icon: <MdVerified className="text-blue-400 text-sm" />, label: "Verified badge" },
-  { icon: <MdGroups className="text-purple-400 text-sm" />, label: "Private ambassador channel" },
-  { icon: <Gift className="w-3.5 h-3.5 text-pink-400" />, label: "Monthly merch drops" },
+const PLATFORMS = [
+  { id: "x",        label: "X (Twitter)" },
+  { id: "tiktok",   label: "TikTok" },
+  { id: "whatsapp", label: "WhatsApp" },
+  { id: "telegram", label: "Telegram" },
+  { id: "instagram",label: "Instagram" },
+  { id: "youtube",  label: "YouTube" },
+  { id: "facebook", label: "Facebook" },
 ];
 
-const SPIN_COST = 50;
+const QUALIFICATION_TYPES = [
+  {
+    id: "social_influencer",
+    label: "Social Influencer",
+    desc: "Active account on X, WhatsApp, Telegram, TikTok etc. with 10k+ followers",
+    icon: "📱",
+  },
+  {
+    id: "gold_badge",
+    label: "Gold Badge Player",
+    desc: "Players with Gold PZA badge (25,000+ PZA points)",
+    icon: "🥇",
+  },
+  {
+    id: "referral_100",
+    label: "Top Referrer",
+    desc: "Any user with 100+ active referral users",
+    icon: "👥",
+  },
+];
 
-export function RewardsSection({ totalPoints, onEarnPoints }: RewardsSectionProps) {
+export function RewardsSection({ totalPoints, spinsLeftToday, onPointsChanged }: RewardsSectionProps) {
   const [showSpinModal, setShowSpinModal] = useState(false);
   const [showAmbassadorModal, setShowAmbassadorModal] = useState(false);
-  const [ambassadorApplied, setAmbassadorApplied] = useState(false);
   const [redeemModal, setRedeemModal] = useState<MerchProduct | null>(null);
-  const [localPoints, setLocalPoints] = useState(totalPoints);
 
-  function handlePointDelta(delta: number) {
-    setLocalPoints(p => p + delta);
-    onEarnPoints?.(delta);
+  // Ambassador state
+  const [ambassadorStatus, setAmbassadorStatus] = useState<AmbassadorStatus | null>(null);
+  const [ambassadorLoading, setAmbassadorLoading] = useState(true);
+
+  // Form state
+  const [qualificationType, setQualificationType] = useState<'social_influencer' | 'gold_badge' | 'referral_100' | ''>('');
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
+  const [followerCount, setFollowerCount] = useState('');
+  const [socialHandles, setSocialHandles] = useState<Record<string, string>>({});
+  const [contentNiche, setContentNiche] = useState('');
+  const [motivation, setMotivation] = useState('');
+  const [formError, setFormError] = useState('');
+  const [formSubmitting, setFormSubmitting] = useState(false);
+  const [formSuccess, setFormSuccess] = useState(false);
+
+  useEffect(() => {
+    getAmbassadorStatusApi()
+      .then(setAmbassadorStatus)
+      .catch(() => setAmbassadorStatus(null))
+      .finally(() => setAmbassadorLoading(false));
+  }, []);
+
+  function togglePlatform(id: string) {
+    setSelectedPlatforms(prev =>
+      prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
+    );
   }
+
+  async function handleAmbassadorSubmit() {
+    setFormError('');
+    if (!qualificationType) return setFormError('Please select your qualification type.');
+    if (!fullName.trim()) return setFormError('Full name is required.');
+    if (!email.trim()) return setFormError('Email is required.');
+    if (!motivation.trim()) return setFormError('Please tell us why you want to be an ambassador.');
+    if (qualificationType === 'social_influencer') {
+      if (selectedPlatforms.length === 0) return setFormError('Select at least one platform.');
+      if (!followerCount || isNaN(Number(followerCount))) return setFormError('Enter a valid follower count.');
+      if (Number(followerCount) < 10000) return setFormError('You need 10,000+ followers to apply as a Social Influencer.');
+    }
+
+    setFormSubmitting(true);
+    try {
+      const payload: AmbassadorApplyPayload = {
+        full_name: fullName.trim(),
+        email: email.trim(),
+        phone: phone.trim() || undefined,
+        qualification_type: qualificationType as AmbassadorApplyPayload['qualification_type'],
+        motivation: motivation.trim(),
+      };
+      if (qualificationType === 'social_influencer') {
+        payload.platforms = selectedPlatforms;
+        payload.follower_count = Number(followerCount);
+        payload.social_handles = socialHandles;
+        payload.content_niche = contentNiche.trim() || undefined;
+      }
+      await applyAmbassadorApi(payload);
+      setFormSuccess(true);
+      setAmbassadorStatus({ id: '', status: 'pending', created_at: new Date().toISOString(), reviewed_at: null, admin_note: null });
+    } catch (err: any) {
+      setFormError(err?.response?.data?.message ?? 'Submission failed. Please try again.');
+    } finally {
+      setFormSubmitting(false);
+    }
+  }
+
+  const hasApplied = !!ambassadorStatus;
+  const appStatus = ambassadorStatus?.status;
 
   return (
     <>
-      <div className="space-y-5">
+      <div className="space-y-6">
 
-        {/* Section header */}
-        <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "linear-gradient(135deg, #6366f1, #a855f7)" }}>
-            <Gift className="w-3.5 h-3.5 text-white" />
+        {/* ── Section header ── */}
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-sm shadow-indigo-500/30">
+            <Sparkles className="w-4 h-4 text-white" />
           </div>
           <div>
-            <h2 className="font-black text-slate-900 dark:text-white text-sm tracking-tight">Rewards Hub</h2>
-            <p className="text-[11px] text-slate-500 dark:text-slate-500 font-medium">Spin, shop, represent</p>
+            <h2 className="font-black text-slate-900 dark:text-white text-base tracking-tight">Rewards Hub</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Spin to earn, represent Playza, redeem merch</p>
           </div>
         </div>
 
         {/* ── SPIN CARD ── */}
-        <div
-          className="relative overflow-hidden rounded-2xl p-5"
-          style={{ background: "linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1035 100%)", border: "1px solid rgba(99,102,241,0.3)" }}
-        >
-          {/* BG glow blobs */}
-          <div className="absolute -right-6 -top-6 w-32 h-32 rounded-full opacity-30" style={{ background: "radial-gradient(circle, #818cf8, transparent)" }} />
-          <div className="absolute -left-4 -bottom-4 w-24 h-24 rounded-full opacity-20" style={{ background: "radial-gradient(circle, #ec4899, transparent)" }} />
+        <div className="relative overflow-hidden rounded-2xl p-6 shadow-xl"
+             style={{ background: "linear-gradient(135deg,#1A0533 0%,#0A0A2E 60%,#001F3F 100%)" }}>
+          {/* BG orbs */}
+          <div className="absolute -right-10 -top-10 w-44 h-44 rounded-full opacity-20" style={{ background: "radial-gradient(circle,#BF5AF2,transparent)" }} />
+          <div className="absolute -left-6 -bottom-8 w-36 h-36 rounded-full opacity-20" style={{ background: "radial-gradient(circle,#FF2D55,transparent)" }} />
 
-          <div className="relative flex items-center gap-4">
-            {/* Left: text */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5 mb-1">
-                <Sparkles className="w-3 h-3 text-indigo-300" />
-                <span className="text-indigo-300 text-[10px] font-black uppercase tracking-widest">Lucky Wheel</span>
+          <div className="relative flex items-center justify-between gap-4">
+            <div className="flex-1">
+              <div className="flex items-center gap-1.5 mb-2">
+                <div className="h-1.5 w-1.5 rounded-full bg-yellow-400 animate-pulse" />
+                <span className="text-yellow-400 text-[10px] font-black uppercase tracking-widest">Daily Spin</span>
               </div>
-              <h3 className="text-white font-black text-xl leading-tight mb-0.5">Spin & Earn</h3>
-              <p className="text-indigo-200/70 text-xs mb-3">
-                <span className="text-yellow-300 font-black">{SPIN_COST} PZA</span> per spin ·{" "}
-                <span className="inline-flex items-center gap-0.5 text-indigo-300 font-bold">
-                  <InfinityIcon className="w-3 h-3" /> Unlimited
-                </span>
+              <h3 className="text-white font-black text-2xl leading-tight mb-1">Spin & Earn<br />PZA Points</h3>
+              <p className="text-white/60 text-sm mb-4">
+                Win up to <span className="text-yellow-300 font-black">1,000 PZA</span>.
+                Costs <span className="text-red-400 font-black">{SPIN_COST} PZA</span> per spin.
+                {spinsLeftToday} spin{spinsLeftToday !== 1 ? 's' : ''} left today!
               </p>
-              <p className="text-indigo-200/50 text-[11px] mb-3">Win up to <span className="text-yellow-300 font-bold">1,000 PZA</span> · Can land on zero</p>
               <button
                 onClick={() => setShowSpinModal(true)}
-                className="flex items-center gap-1.5 text-indigo-900 font-black text-xs px-4 py-2 rounded-xl transition-all active:scale-95"
-                style={{ background: "linear-gradient(135deg, #fbbf24, #f59e0b)", boxShadow: "0 4px 12px rgba(251,191,36,0.3)" }}
+                disabled={totalPoints < SPIN_COST || spinsLeftToday <= 0}
+                className={`flex items-center gap-2 font-black text-sm px-5 py-2.5 rounded-xl transition-all active:scale-95 ${
+                  totalPoints < SPIN_COST || spinsLeftToday <= 0
+                    ? 'bg-white/10 text-white/30 cursor-not-allowed'
+                    : 'bg-white text-indigo-700 shadow-lg shadow-black/30 hover:bg-yellow-50'
+                }`}
               >
-                🎰 Spin Now <ChevronRight className="w-3 h-3" />
+                <MdAutorenew className="text-lg" />
+                {spinsLeftToday <= 0 ? 'No spins left' : totalPoints < SPIN_COST ? `Need ${SPIN_COST} PZA` : 'Spin Now'}
+                {spinsLeftToday > 0 && totalPoints >= SPIN_COST && <ChevronRight className="w-4 h-4" />}
               </button>
             </div>
-
-            {/* Right: wheel icon */}
-            <button
-              onClick={() => setShowSpinModal(true)}
-              className="shrink-0 w-20 h-20 rounded-full flex items-center justify-center text-4xl transition-transform hover:scale-105 active:scale-95"
-              style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)" }}
-            >
+            <div className="shrink-0 w-24 h-24 rounded-full flex items-center justify-center text-5xl cursor-pointer hover:scale-105 transition-transform border-2 border-white/10 bg-white/5"
+                 onClick={() => setShowSpinModal(true)}>
               🎰
-            </button>
+            </div>
+          </div>
+
+          {/* Spins bar */}
+          <div className="relative mt-4 flex items-center gap-2">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className={`h-1.5 flex-1 rounded-full transition-all ${i < spinsLeftToday ? 'bg-yellow-400' : 'bg-white/15'}`} />
+            ))}
+            <span className="text-white/40 text-[10px] font-bold ml-1">{spinsLeftToday}/3</span>
           </div>
         </div>
 
         {/* ── AMBASSADOR CARD ── */}
-        <div className="rounded-2xl p-4 border border-amber-200/60 dark:border-amber-800/40" style={{ background: "linear-gradient(135deg, rgba(251,191,36,0.06), rgba(249,115,22,0.04))" }}>
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, #f59e0b, #f97316)", boxShadow: "0 4px 12px rgba(245,158,11,0.25)" }}>
-              <Crown className="w-5 h-5 text-white" />
+        <div className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/20 border border-amber-200 dark:border-amber-800/50 rounded-2xl p-5 shadow-sm">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shrink-0 shadow-md shadow-orange-400/30">
+              <Crown className="w-6 h-6 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-0.5">
-                <h3 className="font-black text-slate-900 dark:text-white text-sm">Become an Ambassador</h3>
-                {ambassadorApplied && (
-                  <span className="text-[10px] font-black bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
-                    <MdCheckCircle className="text-xs" /> Applied
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="font-black text-slate-900 dark:text-white text-base">Become an Ambassador</h3>
+                {!ambassadorLoading && hasApplied && (
+                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border flex items-center gap-1 ${
+                    appStatus === 'approved' ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-700'
+                    : appStatus === 'rejected' ? 'bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 border-red-200 dark:border-red-700'
+                    : 'bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-700'
+                  }`}>
+                    {appStatus === 'approved' ? <><MdCheckCircle className="text-xs" /> Approved!</>
+                      : appStatus === 'rejected' ? <><MdWarning className="text-xs" /> Not approved</>
+                      : <><MdAutorenew className="text-xs" /> Under review</>}
                   </span>
                 )}
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mb-2.5 leading-relaxed">
-                Represent Playza, grow the community, earn exclusive perks.
+              <p className="text-sm text-slate-600 dark:text-slate-400 mb-3 font-medium">
+                Represent Playza, grow the community, earn exclusive perks and double your PZA rewards.
               </p>
-              <div className="grid grid-cols-2 gap-1 mb-3">
-                {AMBASSADOR_PERKS.map((p, i) => (
-                  <div key={i} className="flex items-center gap-1 text-[11px] text-slate-600 dark:text-slate-400 font-medium">
-                    {p.icon} {p.label}
+              <div className="grid grid-cols-2 gap-1.5 mb-4">
+                {[
+                  { icon: <MdStars className="text-yellow-500" />, label: "2x PZA on every game" },
+                  { icon: <MdVerified className="text-blue-500" />, label: "Verified ambassador badge" },
+                  { icon: <MdGroups className="text-purple-500" />, label: "Exclusive community access" },
+                  { icon: "🎁", label: "Monthly merch drops" },
+                ].map((p, i) => (
+                  <div key={i} className="flex items-center gap-1.5 text-xs text-slate-700 dark:text-slate-300 font-medium">
+                    <span>{p.icon}</span>{p.label}
                   </div>
                 ))}
               </div>
-              <button
-                onClick={() => setShowAmbassadorModal(true)}
-                disabled={ambassadorApplied}
-                className="flex items-center gap-1.5 text-xs font-black px-4 py-2 rounded-xl transition-all active:scale-95"
-                style={ambassadorApplied
-                  ? { background: "rgba(0,0,0,0.05)", color: "#94a3b8", cursor: "not-allowed" }
-                  : { background: "linear-gradient(135deg, #f59e0b, #f97316)", color: "#fff", boxShadow: "0 4px 12px rgba(249,115,22,0.2)" }
-                }
-              >
-                <Crown className="w-3.5 h-3.5" />
-                {ambassadorApplied ? "Application Submitted" : "Apply Now"}
-                {!ambassadorApplied && <MdArrowForward className="text-sm" />}
-              </button>
+
+              {ambassadorLoading ? (
+                <div className="h-9 w-32 bg-amber-200 dark:bg-amber-900/30 rounded-xl animate-pulse" />
+              ) : hasApplied ? (
+                appStatus === 'approved' ? (
+                  <div className="inline-flex items-center gap-2 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-sm font-black px-4 py-2 rounded-xl border border-emerald-200 dark:border-emerald-700">
+                    <MdCheckCircle /> Ambassador Active 🎉
+                  </div>
+                ) : appStatus === 'rejected' ? (
+                  <div className="flex flex-col gap-2">
+                    <div className="text-xs text-red-600 dark:text-red-400 font-medium bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-3 py-2">
+                      {ambassadorStatus?.admin_note || 'Your application was not approved this time.'}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="inline-flex items-center gap-2 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-xs font-black px-4 py-2 rounded-xl border border-amber-200 dark:border-amber-700">
+                    <MdAutorenew className="animate-spin" /> Application under review…
+                  </div>
+                )
+              ) : (
+                <button
+                  onClick={() => setShowAmbassadorModal(true)}
+                  className="flex items-center gap-2 text-sm font-black px-5 py-2.5 rounded-xl transition-all active:scale-95 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white shadow-md shadow-orange-400/30"
+                >
+                  <Crown className="w-4 h-4" />Apply Now <MdArrowForward className="text-base" />
+                </button>
+              )}
             </div>
           </div>
         </div>
 
         {/* ── MERCH STORE ── */}
         <div>
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-1.5">
-              <ShoppingBag className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <ShoppingBag className="w-4 h-4 text-slate-500 dark:text-slate-400" />
               <h3 className="font-black text-slate-900 dark:text-white text-sm">Merch Store</h3>
             </div>
-            <div className="flex items-center gap-1 rounded-lg px-2 py-1" style={{ background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.15)" }}>
+            <div className="flex items-center gap-1.5 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 rounded-lg px-2.5 py-1">
               <Zap className="w-3 h-3 text-indigo-500" />
-              <span className="text-[11px] font-black text-indigo-600 dark:text-indigo-400">{localPoints.toLocaleString()} PZA</span>
+              <span className="text-xs font-black text-indigo-600 dark:text-indigo-400">{totalPoints.toLocaleString()} PZA</span>
             </div>
           </div>
-
-          {/* Compact list */}
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 overflow-hidden divide-y divide-slate-50 dark:divide-slate-800">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {MERCH_PRODUCTS.map((product) => {
-              const canAfford = localPoints >= product.cost;
+              const canAfford = totalPoints >= product.cost;
               return (
-                <div key={product.id} className={`flex items-center gap-3 px-4 py-3 transition-colors ${canAfford ? "hover:bg-slate-50 dark:hover:bg-slate-800/40" : "opacity-50"}`}>
-                  {/* Emoji icon */}
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
-                    {product.image}
+                <div key={product.id} className={`group relative bg-white dark:bg-slate-900 border rounded-2xl p-4 flex flex-col gap-3 transition-all hover:shadow-lg ${canAfford ? 'border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-700' : 'border-slate-100 dark:border-slate-800 opacity-70'}`}>
+                  {product.badge && (
+                    <span className={`absolute top-3 right-3 text-[9px] font-black text-white px-1.5 py-0.5 rounded-full ${product.badgeColor}`}>{product.badge}</span>
+                  )}
+                  <div className="w-full h-24 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-750 rounded-xl flex items-center justify-center text-5xl group-hover:scale-105 transition-transform">{product.image}</div>
+                  <div className="flex-1">
+                    <p className="font-black text-slate-900 dark:text-white text-sm">{product.name}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">{product.desc}</p>
                   </div>
-
-                  {/* Name + desc */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-bold text-slate-900 dark:text-white text-xs">{product.name}</span>
-                      {product.badge && (
-                        <span className="text-[9px] font-black text-white px-1.5 py-0.5 rounded-full" style={{ background: product.badgeColor }}>
-                          {product.badge}
-                        </span>
-                      )}
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <div>
+                      <p className="font-black text-sm text-indigo-600 dark:text-indigo-400">{product.cost.toLocaleString()}</p>
+                      <p className="text-[10px] text-slate-400 font-bold">PZA</p>
                     </div>
-                    <p className="text-[11px] text-slate-400 dark:text-slate-500 truncate">{product.desc}</p>
-                  </div>
-
-                  {/* Price + button */}
-                  <div className="flex items-center gap-2 shrink-0">
-                    <div className="text-right">
-                      <p className="font-black text-[11px] text-indigo-600 dark:text-indigo-400">{product.cost.toLocaleString()}</p>
-                      <p className="text-[9px] text-slate-400 font-bold">PZA</p>
-                    </div>
-                    <button
-                      onClick={() => canAfford && setRedeemModal(product)}
-                      disabled={!canAfford}
-                      className="px-3 py-1.5 rounded-lg text-[11px] font-black transition-all active:scale-95"
-                      style={canAfford
-                        ? { background: "linear-gradient(135deg, #4f46e5, #7c3aed)", color: "#fff", boxShadow: "0 2px 8px rgba(79,70,229,0.25)" }
-                        : { background: "rgba(0,0,0,0.04)", color: "#94a3b8", cursor: "not-allowed", border: "1px solid rgba(0,0,0,0.05)" }
-                      }
-                    >
-                      {canAfford ? "Redeem" : "Need more"}
+                    <button onClick={() => canAfford && setRedeemModal(product)} disabled={!canAfford}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all ${canAfford ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm shadow-indigo-500/30 active:scale-95' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed'}`}>
+                      {canAfford ? 'Redeem' : 'Need more'}
                     </button>
                   </div>
                 </div>
               );
             })}
           </div>
-          <p className="text-[10px] text-slate-400 dark:text-slate-600 text-center mt-2">More items dropping soon</p>
         </div>
       </div>
 
-      {/* ── SPIN MODAL ── */}
+      {/* ── SPIN WHEEL MODAL ── */}
       {showSpinModal && (
         <SpinWheelModal
           onClose={() => setShowSpinModal(false)}
-          onEarnPoints={handlePointDelta}
-          totalPoints={localPoints}
+          onSpinComplete={(result) => {
+            onPointsChanged();
+            setTimeout(() => setShowSpinModal(false), 2400);
+          }}
+          spinsLeft={spinsLeftToday}
+          totalPoints={totalPoints}
         />
       )}
 
       {/* ── AMBASSADOR MODAL ── */}
       {showAmbassadorModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setShowAmbassadorModal(false)}>
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 w-full max-w-sm shadow-2xl" onClick={e => e.stopPropagation()}>
-            <div className="w-12 h-12 rounded-2xl mx-auto mb-4 flex items-center justify-center" style={{ background: "linear-gradient(135deg, #f59e0b, #f97316)", boxShadow: "0 6px 20px rgba(245,158,11,0.3)" }}>
-              <Crown className="w-6 h-6 text-white" />
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/65 backdrop-blur-sm" onClick={() => !formSubmitting && setShowAmbassadorModal(false)}>
+          <div
+            className="relative bg-white dark:bg-slate-900 w-full sm:max-w-lg rounded-t-3xl sm:rounded-2xl border-t sm:border border-slate-200 dark:border-slate-700 shadow-2xl max-h-[92vh] overflow-y-auto"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Handle bar (mobile) */}
+            <div className="flex justify-center pt-3 pb-1 sm:hidden">
+              <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
             </div>
-            <h3 className="font-black text-slate-900 dark:text-white text-lg text-center mb-1">Ambassador Program</h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400 text-center mb-4 leading-relaxed">
-              Exclusive perks, double PZA, and a direct line to the Playza team.
-            </p>
-            <div className="space-y-1.5 mb-5">
-              {AMBASSADOR_PERKS.map((p, i) => (
-                <div key={i} className="flex items-center gap-2.5 bg-slate-50 dark:bg-slate-800 rounded-xl px-3 py-2.5">
-                  <span className="text-base">{p.icon}</span>
-                  <span className="text-sm font-bold text-slate-700 dark:text-slate-300">{p.label}</span>
+
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-slate-100 dark:border-slate-800 sticky top-0 bg-white dark:bg-slate-900 z-10">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-sm shadow-orange-400/30">
+                  <Crown className="w-4.5 h-4.5 text-white" />
                 </div>
-              ))}
-            </div>
-            <div className="flex gap-2.5">
-              <button onClick={() => setShowAmbassadorModal(false)} className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">Cancel</button>
-              <button
-                onClick={() => { setAmbassadorApplied(true); setShowAmbassadorModal(false); }}
-                className="flex-1 py-2.5 rounded-xl text-white font-black text-sm transition-all active:scale-95"
-                style={{ background: "linear-gradient(135deg, #f59e0b, #f97316)", boxShadow: "0 4px 12px rgba(249,115,22,0.3)" }}
-              >
-                Apply Now 🚀
+                <div>
+                  <h3 className="font-black text-slate-900 dark:text-white text-base leading-tight">Ambassador Application</h3>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Fill in your details below</p>
+                </div>
+              </div>
+              <button onClick={() => setShowAmbassadorModal(false)} className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors">
+                <MdClose />
               </button>
             </div>
+
+            {formSuccess ? (
+              <div className="flex flex-col items-center gap-4 px-6 py-12">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center text-3xl shadow-lg shadow-green-400/30">✅</div>
+                <h4 className="font-black text-slate-900 dark:text-white text-xl text-center">Application Submitted!</h4>
+                <p className="text-slate-500 dark:text-slate-400 text-sm text-center max-w-xs">
+                  Your ambassador application is now under review. We'll get back to you within 3–5 business days.
+                </p>
+                <button onClick={() => setShowAmbassadorModal(false)}
+                  className="mt-2 px-8 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-sm transition-all active:scale-95">
+                  Got it!
+                </button>
+              </div>
+            ) : (
+              <div className="px-5 py-5 space-y-5">
+
+                {/* ── Step 1: Qualification route ── */}
+                <div>
+                  <label className="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2.5">
+                    Qualification Route <span className="text-red-500">*</span>
+                  </label>
+                  <div className="space-y-2">
+                    {QUALIFICATION_TYPES.map((q) => (
+                      <button key={q.id} type="button"
+                        onClick={() => setQualificationType(q.id as typeof qualificationType)}
+                        className={`w-full flex items-start gap-3 p-3.5 rounded-xl border-2 text-left transition-all ${
+                          qualificationType === q.id
+                            ? 'border-amber-400 bg-amber-50 dark:bg-amber-950/30'
+                            : 'border-slate-200 dark:border-slate-700 hover:border-amber-200 dark:hover:border-amber-800 bg-slate-50 dark:bg-slate-800/50'
+                        }`}
+                      >
+                        <span className="text-2xl leading-none mt-0.5">{q.icon}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className={`font-black text-sm ${qualificationType === q.id ? 'text-amber-700 dark:text-amber-400' : 'text-slate-800 dark:text-slate-200'}`}>{q.label}</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">{q.desc}</p>
+                        </div>
+                        <div className={`w-4 h-4 rounded-full border-2 shrink-0 mt-1 flex items-center justify-center transition-all ${qualificationType === q.id ? 'border-amber-500 bg-amber-500' : 'border-slate-300 dark:border-slate-600'}`}>
+                          {qualificationType === q.id && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* ── Step 2: Personal info ── */}
+                <div className="space-y-3">
+                  <label className="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                    Personal Information
+                  </label>
+                  <input
+                    type="text" placeholder="Full Name *" value={fullName} onChange={e => setFullName(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all"
+                  />
+                  <input
+                    type="email" placeholder="Email Address *" value={email} onChange={e => setEmail(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all"
+                  />
+                  <input
+                    type="tel" placeholder="Phone Number (optional)" value={phone} onChange={e => setPhone(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all"
+                  />
+                </div>
+
+                {/* ── Step 3: Social Influencer fields ── */}
+                {qualificationType === 'social_influencer' && (
+                  <div className="space-y-3 border border-dashed border-amber-300 dark:border-amber-700 rounded-xl p-4 bg-amber-50/50 dark:bg-amber-950/10">
+                    <p className="text-xs font-black text-amber-700 dark:text-amber-400 uppercase tracking-wider">Social Influencer Details</p>
+
+                    {/* Platforms */}
+                    <div>
+                      <p className="text-xs font-bold text-slate-600 dark:text-slate-400 mb-2">Select your platforms <span className="text-red-500">*</span></p>
+                      <div className="flex flex-wrap gap-2">
+                        {PLATFORMS.map(p => (
+                          <button key={p.id} type="button" onClick={() => togglePlatform(p.id)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                              selectedPlatforms.includes(p.id)
+                                ? 'bg-amber-500 border-amber-500 text-white'
+                                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-amber-400'
+                            }`}
+                          >
+                            {p.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <input
+                      type="number" placeholder="Total Follower Count (across all platforms) *"
+                      value={followerCount} onChange={e => setFollowerCount(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all"
+                    />
+
+                    {/* Social handles per selected platform */}
+                    {selectedPlatforms.length > 0 && (
+                      <div className="space-y-2">
+                        <p className="text-xs font-bold text-slate-600 dark:text-slate-400">Your handles / usernames</p>
+                        {selectedPlatforms.map(pid => {
+                          const plat = PLATFORMS.find(p => p.id === pid)!;
+                          return (
+                            <input key={pid}
+                              type="text" placeholder={`${plat.label} handle (e.g. @username)`}
+                              value={socialHandles[pid] ?? ''}
+                              onChange={e => setSocialHandles(prev => ({ ...prev, [pid]: e.target.value }))}
+                              className="w-full px-4 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all"
+                            />
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    <input
+                      type="text" placeholder="Content Niche (e.g. Gaming, Lifestyle, Comedy)"
+                      value={contentNiche} onChange={e => setContentNiche(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all"
+                    />
+                  </div>
+                )}
+
+                {/* ── Step 4: Motivation ── */}
+                <div>
+                  <label className="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
+                    Why do you want to be an ambassador? <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    placeholder="Tell us about yourself and why you'd be a great Playza Ambassador…"
+                    rows={4}
+                    value={motivation}
+                    onChange={e => setMotivation(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all resize-none"
+                  />
+                </div>
+
+                {/* Error */}
+                {formError && (
+                  <div className="flex items-center gap-2.5 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3">
+                    <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
+                    <p className="text-red-600 dark:text-red-400 text-xs font-medium">{formError}</p>
+                  </div>
+                )}
+
+                {/* Submit */}
+                <div className="flex gap-3 pb-2">
+                  <button type="button" onClick={() => setShowAmbassadorModal(false)}
+                    className="flex-1 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                    Cancel
+                  </button>
+                  <button type="button" onClick={handleAmbassadorSubmit} disabled={formSubmitting}
+                    className={`flex-1 py-3 rounded-xl font-black text-sm transition-all active:scale-95 ${
+                      formSubmitting
+                        ? 'bg-amber-300 dark:bg-amber-800 text-amber-600 dark:text-amber-300 cursor-not-allowed'
+                        : 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white shadow-md shadow-orange-400/30'
+                    }`}>
+                    {formSubmitting ? 'Submitting…' : 'Submit Application 🚀'}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      {/* ── REDEEM MODAL ── */}
+      {/* ── REDEEM CONFIRM MODAL ── */}
       {redeemModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setRedeemModal(null)}>
           <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 w-full max-w-sm shadow-2xl" onClick={e => e.stopPropagation()}>
-            <div className="w-14 h-14 bg-slate-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-3 text-3xl border border-slate-100 dark:border-slate-700">
-              {redeemModal.image}
-            </div>
-            <h3 className="font-black text-slate-900 dark:text-white text-lg text-center">{redeemModal.name}</h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400 text-center mb-1 mt-0.5">{redeemModal.desc}</p>
-            <p className="text-center font-black text-indigo-600 dark:text-indigo-400 text-xl mb-5">
+            <div className="w-16 h-16 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-750 rounded-2xl flex items-center justify-center mx-auto mb-4 text-4xl">{redeemModal.image}</div>
+            <h3 className="font-black text-slate-900 dark:text-white text-xl text-center mb-1">{redeemModal.name}</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 text-center mb-2">{redeemModal.desc}</p>
+            <p className="text-center font-black text-indigo-600 dark:text-indigo-400 text-lg mb-5">
               {redeemModal.cost.toLocaleString()} <span className="text-sm text-slate-400 font-bold">PZA</span>
             </p>
-            <div className="flex gap-2.5">
-              <button onClick={() => setRedeemModal(null)} className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">Cancel</button>
-              <button
-                onClick={() => { alert(`Redemption request for "${redeemModal.name}" submitted! We'll contact you shortly.`); setRedeemModal(null); }}
-                className="flex-1 py-2.5 rounded-xl text-white font-black text-sm transition-all active:scale-95"
-                style={{ background: "linear-gradient(135deg, #4f46e5, #7c3aed)", boxShadow: "0 4px 12px rgba(79,70,229,0.3)" }}
-              >
+            <div className="flex gap-3">
+              <button onClick={() => setRedeemModal(null)}
+                className="flex-1 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                Cancel
+              </button>
+              <button onClick={() => { alert(`Redemption for "${redeemModal.name}" submitted!`); setRedeemModal(null); }}
+                className="flex-1 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-black text-sm transition-all shadow-md shadow-indigo-500/30 active:scale-95">
                 Confirm Redeem
               </button>
             </div>
