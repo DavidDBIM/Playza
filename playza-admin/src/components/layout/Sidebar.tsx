@@ -32,6 +32,7 @@ const Sidebar: React.FC = () => {
           { path: '/transactions', pathMatch: '/transactions', icon: MdPayments, label: 'Transactions' },
           { path: '/withdrawals', pathMatch: '/withdrawals', icon: MdAccountBalanceWallet, label: 'Withdrawals' },
           { path: '/rewards', pathMatch: '/rewards', icon: MdRedeem, label: 'Rewards' },
+          { path: '/ambassadors', pathMatch: '/ambassadors', icon: MdEmojiPeople, label: 'Ambassadors' },
           { path: '/notifications', pathMatch: '/notifications', icon: MdNotifications, label: 'Notifications' },
           { path: '/content', pathMatch: '/content', icon: MdLayers, label: 'Content' },
         ].map((item) => {
