@@ -213,15 +213,15 @@ const Game: React.FC = () => {
                   <div className="flex items-start gap-4 p-5 md:p-6 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/10">
                     <MdBarChart className="text-primary text-2xl md:text-3xl shrink-0" />
                     <div>
-                      <h4 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-widest mb-1">Architecture</h4>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-tight">V3 Real-Time Infrastructure</p>
+                      <h4 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-widest mb-1">Duration</h4>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-tight">{game.durationInSeconds} Seconds</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-4 p-5 md:p-6 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/10">
                     <MdHistory className="text-primary text-2xl md:text-3xl shrink-0" />
                     <div>
-                      <h4 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-widest mb-1">Update Vector</h4>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-tight">Bi-Weekly Updates</p>
+                      <h4 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-widest mb-1">Platform Fee</h4>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-tight">{game.platformFeePercentage}%</p>
                     </div>
                   </div>
                 </div>

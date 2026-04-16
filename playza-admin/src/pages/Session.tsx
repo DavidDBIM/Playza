@@ -105,10 +105,10 @@ const Session: React.FC = () => {
         {/* Top Level Stats Bento */}
         <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
-            { label: 'Active Roster', value: '128', sub: '+12 joined later', color: 'text-slate-900 dark:text-white', primaryLine: true },
-            { label: 'Current Pool', value: '₦42,500', sub: 'In-Game Credits', color: 'text-emerald-500' },
-            { label: 'Elapsed Time', value: '02:14:55', sub: 'EST. 04:00:00', color: 'text-amber-500' },
-            { label: 'Network Latency', value: '14ms', sub: 'Stable Connection', color: 'text-slate-900 dark:text-white', primaryLine: true },
+            { label: 'Active Roster', value: '124', sub: 'Max Players: 200', color: 'text-slate-900 dark:text-white', primaryLine: true },
+            { label: 'Gross Pool', value: '186,000', sub: 'Total Base', color: 'text-slate-500 dark:text-slate-300' },
+            { label: 'Net Prize Pool', value: '167,400', sub: 'After Platform Fee', color: 'text-emerald-500' },
+            { label: 'Winners Split', value: '20', sub: 'Paid Winners', color: 'text-primary' },
           ].map((stat, i) => (
             <div key={i} className="glass-card p-6 rounded-[2rem] border border-slate-200 dark:border-white/10 shadow-sm relative overflow-hidden group bg-white/50 dark:bg-transparent">
               <div className="absolute top-0 left-0 w-1 h-full bg-primary opacity-20 group-hover:opacity-100 transition-opacity"></div>

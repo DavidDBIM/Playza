@@ -18,26 +18,19 @@ const SessionLeaderboard: React.FC = () => {
 
   // mock 20 players for the full leaderboard
   const allPlayers = [
-    { name: 'NeoKnight_99', region: 'EUW', score: '14,290', rank: '#01', color: 'text-primary' },
-    { name: 'Z-Void_Runner', region: 'USE', score: '13,842', rank: '#02', color: 'text-slate-600 dark:text-slate-400' },
-    { name: 'Loxley_Prime', region: 'ASIA', score: '12,100', rank: '#03', color: 'text-slate-600 dark:text-slate-400' },
-    { name: 'Quantum_Gabe', region: 'USW', score: '11,540', rank: '#04', color: 'text-slate-600 dark:text-slate-400' },
-    { name: 'Redux_Master', region: 'EUW', score: '11,400', rank: '#05', color: 'text-slate-600 dark:text-slate-400' },
-    { name: 'Echo_Shift', region: 'OCE', score: '10,950', rank: '#06', color: 'text-slate-600 dark:text-slate-400' },
-    { name: 'Frost_Bite', region: 'SA', score: '10,800', rank: '#07', color: 'text-slate-600 dark:text-slate-400' },
-    { name: 'Titan_Fall', region: 'AFR', score: '10,500', rank: '#08', color: 'text-slate-600 dark:text-slate-400' },
-    { name: 'Viper_Strike', region: 'USE', score: '10,200', rank: '#09', color: 'text-slate-600 dark:text-slate-400' },
-    { name: 'Nova_Burst', region: 'EUW', score: '9,980', rank: '#10', color: 'text-slate-600 dark:text-slate-400' },
-    { name: 'Cyber_Punk22', region: 'SA', score: '9,500', rank: '#11', color: 'text-slate-600 dark:text-slate-400' },
-    { name: 'Jett_Lag', region: 'NAE', score: '9,120', rank: '#12', color: 'text-slate-600 dark:text-slate-400' },
-    { name: 'Iron_Clad', region: 'EUW', score: '8,900', rank: '#13', color: 'text-slate-600 dark:text-slate-400' },
-    { name: 'Sova_Main', region: 'ASIA', score: '8,450', rank: '#14', color: 'text-slate-600 dark:text-slate-400' },
-    { name: 'Sage_Heals', region: 'AFR', score: '8,100', rank: '#15', color: 'text-slate-600 dark:text-slate-400' },
-    { name: 'Phoenix_Fire', region: 'USE', score: '7,890', rank: '#16', color: 'text-slate-600 dark:text-slate-400' },
-    { name: 'Omen_Dark', region: 'OCE', score: '7,400', rank: '#17', color: 'text-slate-600 dark:text-slate-400' },
-    { name: 'Brim_Stone', region: 'SA', score: '7,100', rank: '#18', color: 'text-slate-600 dark:text-slate-400' },
-    { name: 'Reyna_Carry', region: 'NAW', score: '6,800', rank: '#19', color: 'text-slate-600 dark:text-slate-400' },
-    { name: 'Kill_Joy69', region: 'EUW', score: '6,200', rank: '#20', color: 'text-slate-600 dark:text-slate-400' }
+    { name: 'player1', userId: 'user_1', score: '89,420', rank: '#01', status: 'FINISHED', color: 'text-primary' },
+    { name: 'player2', userId: 'user_2', score: '88,100', rank: '#02', status: 'PLAYING', color: 'text-slate-600 dark:text-slate-400' },
+    { name: 'Loxley_Prime', userId: 'user_3', score: '82,100', rank: '#03', status: 'FINISHED', color: 'text-slate-600 dark:text-slate-400' },
+    { name: 'Quantum_Gabe', userId: 'user_4', score: '81,540', rank: '#04', status: 'FINISHED', color: 'text-slate-600 dark:text-slate-400' },
+    { name: 'Redux_Master', userId: 'user_5', score: '81,400', rank: '#05', status: 'FINISHED', color: 'text-slate-600 dark:text-slate-400' },
+    { name: 'Echo_Shift', userId: 'user_6', score: '70,950', rank: '#06', status: 'PLAYING', color: 'text-slate-600 dark:text-slate-400' },
+    { name: 'Frost_Bite', userId: 'user_7', score: '70,800', rank: '#07', status: 'FINISHED', color: 'text-slate-600 dark:text-slate-400' },
+    { name: 'Titan_Fall', userId: 'user_8', score: '70,500', rank: '#08', status: 'FINISHED', color: 'text-slate-600 dark:text-slate-400' },
+    { name: 'Viper_Strike', userId: 'user_9', score: '60,200', rank: '#09', status: 'PLAYING', color: 'text-slate-600 dark:text-slate-400' },
+    { name: 'Nova_Burst', userId: 'user_10', score: '59,980', rank: '#10', status: 'FINISHED', color: 'text-slate-600 dark:text-slate-400' },
+    { name: 'Cyber_Punk22', userId: 'user_11', score: '59,500', rank: '#11', status: 'FINISHED', color: 'text-slate-600 dark:text-slate-400' },
+    { name: 'currentUser', userId: 'user_12', score: '54,000', rank: '#12', status: 'PLAYING', color: 'text-slate-600 dark:text-slate-400' },
+    { name: 'Jett_Lag', userId: 'user_13', score: '53,200', rank: '#13', status: 'FINISHED', color: 'text-slate-600 dark:text-slate-400' }
   ];
 
   const filteredPlayers = allPlayers.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -115,7 +108,7 @@ const SessionLeaderboard: React.FC = () => {
                       </div>
                       <div>
                         <p className="font-black text-sm text-slate-900 dark:text-white uppercase tracking-tight">{player.name}</p>
-                        <p className="text-[9px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-[0.2em] mt-0.5">Region: {player.region}</p>
+                        <p className="text-[9px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-[0.2em] mt-0.5">ID: {player.userId}</p>
                       </div>
                     </div>
                   </TableCell>
@@ -127,7 +120,7 @@ const SessionLeaderboard: React.FC = () => {
                   </TableCell>
                   <TableCell className="px-6 py-5">
                     <span className="flex items-center gap-2 text-[10px] font-black text-emerald-500 uppercase tracking-widest">
-                      <MdCircle className="text-[8px] animate-pulse" /> Live
+                      <MdCircle className={`text-[8px] ${player.status === 'PLAYING' ? 'animate-pulse' : ''}`} /> {player.status}
                     </span>
                   </TableCell>
                   <TableCell className="px-6 py-5 text-right">

@@ -6,8 +6,6 @@ import {
   MdAdd, 
   MdClose, 
   MdRocketLaunch,
-  MdImage,
-  MdArticle
 } from 'react-icons/md';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -79,7 +77,7 @@ const CreateGame: React.FC = () => {
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] items-center flex gap-1 font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 pl-1">Identifier Slug <span className="text-rose-500">*</span></label>
-                  <Input required className="h-14 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 rounded-2xl font-bold lowercase" placeholder="cyber-strikers-pro" />
+                  <Input required className="h-14 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 rounded-2xl font-bold lowercase" placeholder="velocity-gl" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] items-center flex gap-1 font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 pl-1">Category <span className="text-rose-500">*</span></label>
@@ -93,7 +91,7 @@ const CreateGame: React.FC = () => {
                           <SelectGroup>
                             <SelectLabel>{group.label}</SelectLabel>
                             {group.items.map(item => (
-                              <SelectItem key={item} value={item.toLowerCase().replace(/\s+/g, '-')}>{item}</SelectItem>
+                              <SelectItem key={item} value={item}>{item}</SelectItem>
                             ))}
                           </SelectGroup>
                           {i < categories.length - 1 && <SelectSeparator />}
@@ -110,36 +108,42 @@ const CreateGame: React.FC = () => {
                     </SelectTrigger>
                     <SelectContent>
                       {difficulties.map(item => (
-                        <SelectItem key={item} value={item.toLowerCase()}>{item}</SelectItem>
+                        <SelectItem key={item} value={item}>{item}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] items-center flex gap-1 font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 pl-1">Mode</label>
+                  <Select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Tournament / Quick Match" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Tournament">Tournament</SelectItem>
+                      <SelectItem value="Quick Match">Quick Match</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] items-center flex gap-1 font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 pl-1">Duration (Seconds) <span className="text-rose-500">*</span></label>
+                  <Input type="number" required className="h-14 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 rounded-2xl font-bold" defaultValue={300} />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] items-center flex gap-1 font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 pl-1">Platform Fee (%) <span className="text-rose-500">*</span></label>
+                  <Input type="number" required className="h-14 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 rounded-2xl font-bold" defaultValue={10} />
+                </div>
                 <div className="space-y-2 md:col-span-2">
-                  <label className="text-[10px] items-center flex gap-1 font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 pl-1">Tags / Features (Comma separated)</label>
-                  <Input className="h-14 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 rounded-2xl font-bold uppercase tracking-widest text-xs" placeholder="Multiplayer, Cross-Platform, PvP" />
+                  <label className="text-[10px] items-center flex gap-1 font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 pl-1">Iframe URL <span className="text-rose-500">*</span></label>
+                  <Input required className="h-14 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 rounded-2xl font-bold text-xs" placeholder="https://cdn.playza.com/gameLib/VelocityGL/index.html" />
                 </div>
               </div>
 
               {/* Side Column: Media & Toggle */}
               <div className="space-y-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 pl-1">Cover Asset (Hero Banner)</label>
-                  <div className="aspect-21/9 rounded-2xl bg-slate-50 dark:bg-white/5 border-2 border-dashed border-slate-200 dark:border-white/10 flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all overflow-hidden group">
-                    <div className="text-center group-hover:scale-110 transition-transform duration-500">
-                      <MdImage className="text-4xl text-slate-400 dark:text-slate-500 mb-2 mx-auto group-hover:text-primary transition-colors" />
-                      <p className="text-[10px] font-black text-slate-500 dark:text-slate-400 group-hover:text-primary uppercase tracking-widest px-4 transition-colors">Upload 1920x1080</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 pl-1">Thumbnail (Square)</label>
-                  <div className="aspect-square w-1/2 rounded-2xl bg-slate-50 dark:bg-white/5 border-2 border-dashed border-slate-200 dark:border-white/10 flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all overflow-hidden group">
-                    <div className="text-center group-hover:scale-110 transition-transform duration-500">
-                      <MdImage className="text-4xl text-slate-400 dark:text-slate-500 mb-2 mx-auto group-hover:text-primary transition-colors" />
-                      <p className="text-[10px] font-black text-slate-500 dark:text-slate-400 group-hover:text-primary uppercase tracking-widest px-4 transition-colors">Upload 512x512</p>
-                    </div>
-                  </div>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 pl-1">Thumbnail URL</label>
+                  <Input className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 rounded-xl" placeholder="https://cdn.playza.com/games/velocity-gl.png" />
                 </div>
                 <div className="flex items-center justify-between p-6 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/10">
                   <div className="flex flex-col">
@@ -157,28 +161,39 @@ const CreateGame: React.FC = () => {
               </div>
             </div>
 
-            {/* Description & Rules Segment */}
-            <div className="border-t border-slate-200 dark:border-white/10 pt-8 mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* How To Play */}
+            <div className="border-t border-slate-200 dark:border-white/10 pt-8 mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="space-y-2">
                 <label className="text-[10px] items-center flex gap-2 font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 pl-1">
-                  <MdArticle className="text-lg text-primary" /> About / Description
+                  Controls
                 </label>
                 <textarea 
                   required 
-                  rows={6} 
+                  rows={4} 
                   className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none text-slate-900 dark:text-white" 
-                  placeholder="Describe the game's premise, mechanics, and objectives..." 
+                  placeholder="Use WASD or Arrow Keys..." 
                 />
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] items-center flex gap-2 font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 pl-1">
-                  <MdInfo className="text-lg text-rose-500" /> Rules & Conduct
+                  Rules
                 </label>
                 <textarea 
                   required 
-                  rows={6} 
+                  rows={4} 
                   className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none text-slate-900 dark:text-white" 
-                  placeholder="Win conditions, disqualification criteria, match duration..." 
+                  placeholder="Win conditions, disqualifications..." 
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] items-center flex gap-2 font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 pl-1">
+                  Scoring
+                </label>
+                <textarea 
+                  required 
+                  rows={4} 
+                  className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none text-slate-900 dark:text-white" 
+                  placeholder="How points are awarded..." 
                 />
               </div>
             </div>
@@ -203,29 +218,41 @@ const CreateGame: React.FC = () => {
               </button>
               <div className="grid grid-cols-1 md:grid-cols-12 gap-6 xl:gap-8 items-end">
                 <div className="md:col-span-4 space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Session Name</label>
-                  <Input className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 rounded-xl font-bold uppercase tracking-tight" placeholder="Pro Circuit Finals" />
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Session Title</label>
+                  <Input className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 rounded-xl font-bold uppercase tracking-tight" placeholder="Elite Tournament #1" defaultValue="Elite Tournament #1" />
                 </div>
                 <div className="col-span-12 md:col-span-2 space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Entry Fee (₦)</label>
-                  <Input type="number" className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 rounded-xl font-black text-emerald-600 dark:text-emerald-400" defaultValue={100} />
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Type</label>
+                  <Select defaultValue="tournament">
+                    <SelectTrigger className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 rounded-xl font-bold text-xs uppercase" >
+                      <SelectValue placeholder="Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="tournament">Tournament</SelectItem>
+                      <SelectItem value="daily">Daily</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="col-span-12 md:col-span-2 space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Platform Tax (%)</label>
-                  <Input type="number" className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 rounded-xl font-black text-primary" defaultValue={5} />
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Entry Fee</label>
+                  <Input type="number" className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 rounded-xl font-black text-emerald-600 dark:text-emerald-400" defaultValue={1500} />
                 </div>
                 <div className="md:col-span-12 lg:col-span-4 grid grid-cols-2 gap-4">
-                  <div className="space-y-2 col-span-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Player Limit</label>
-                    <Input type="number" className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 rounded-xl font-black" defaultValue={64} />
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Max Players</label>
+                    <Input type="number" className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 rounded-xl font-black" defaultValue={200} />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Start Time</label>
-                    <Input type="datetime-local" defaultValue={new Date().toISOString().slice(0, 16)} className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 rounded-xl font-bold text-[10px] uppercase" />
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Winners Count</label>
+                    <Input type="number" className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 rounded-xl font-black" defaultValue={20} />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">End Time</label>
-                    <Input type="datetime-local" className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 rounded-xl font-bold text-[10px] uppercase" />
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Scheduled Start</label>
+                    <Input type="datetime-local" defaultValue="2026-04-16T13:00" className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 rounded-xl font-bold text-[10px] uppercase" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Scheduled End</label>
+                    <Input type="datetime-local" defaultValue="2026-04-16T16:00" className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 rounded-xl font-bold text-[10px] uppercase" />
                   </div>
                 </div>
               </div>
@@ -233,20 +260,20 @@ const CreateGame: React.FC = () => {
               <div className="mt-8 pt-6 border-t border-slate-200 dark:border-white/10 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-6">
                 <div className="flex flex-wrap gap-8 xl:gap-12 w-full xl:w-auto">
                   <div className="flex flex-col">
-                    <span className="text-[9px] font-black uppercase text-slate-500 dark:text-slate-400 tracking-widest mb-1.5 underline underline-offset-4 decoration-emerald-500/30">Total Gross</span>
-                    <span className="text-xl font-black text-slate-900 dark:text-white tracking-tighter drop-shadow-sm">₦6,400</span>
+                    <span className="text-[9px] font-black uppercase text-slate-500 dark:text-slate-400 tracking-widest mb-1.5 underline underline-offset-4 decoration-emerald-500/30">Total Gross Expected</span>
+                    <span className="text-xl font-black text-slate-900 dark:text-white tracking-tighter drop-shadow-sm">300,000</span>
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-[9px] font-black uppercase text-slate-500 dark:text-slate-400 tracking-widest mb-1.5 underline underline-offset-4 decoration-primary/30">Platform Fee (5%)</span>
-                    <span className="text-xl font-black text-primary tracking-tighter drop-shadow-sm">₦320</span>
+                    <span className="text-[9px] font-black uppercase text-slate-500 dark:text-slate-400 tracking-widest mb-1.5 underline underline-offset-4 decoration-primary/30">Platform Fee (10%)</span>
+                    <span className="text-xl font-black text-primary tracking-tighter drop-shadow-sm">30,000</span>
                   </div>
                   <div className="flex flex-col">
                     <span className="text-[9px] font-black uppercase text-slate-500 dark:text-slate-400 tracking-widest mb-1.5 underline underline-offset-4 decoration-emerald-500/30">Prize Pool (Net)</span>
-                    <span className="text-xl font-black text-emerald-500 tracking-tighter drop-shadow-sm">₦6,080</span>
+                    <span className="text-xl font-black text-emerald-500 tracking-tighter drop-shadow-sm">270,000</span>
                   </div>
                 </div>
                 <p className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest w-full xl:w-auto xl:text-right mt-2 xl:mt-0 opacity-70">
-                  Estimates assume 100% capacity (64 players).
+                  Estimates assume 100% capacity (200 players).
                 </p>
               </div>
             </div>

@@ -1,540 +1,268 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState } from "react";
+import { Link } from "react-router";
+import { tournaments } from "@/data/tournaments";
+import { games } from "@/data/games";
 import {
+  Search,
   Trophy,
+  X,
+  ArrowRight,
   Clock,
   Users,
-  Play,
-  Shield,
-  ChevronRight,
-  Target,
-  Zap,
-  Award,
-  Info,
-  MapPin,
-  CheckCircle2,
-  Lock,
-  ArrowRight,
+  PlaySquare,
+  ChevronDown,
 } from "lucide-react";
-import { useTournamentStore } from "@/store/tournamentStore";
 import { ZASymbol } from "@/components/currency/ZASymbol";
-import { tournamentGames } from "@/data/tournamentGames";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
-const Tournaments: React.FC = () => {
-  const navigate = useNavigate();
-  const {
-    activeTournament,
-    userPlayer,
-    matches,
-    isLoading,
-    fetchActiveTournament,
-    joinTournament,
-    fetchMatches,
-  } = useTournamentStore();
+const PRIZE_OPTIONS = [
+  { value: "all", label: "All Prizes" },
+  { value: "high", label: "High Stakes (100k+)" },
+  { value: "low", label: "Standard" },
+];
 
-  const [timeLeft, setTimeLeft] = useState<{ h: number; m: number; s: number }>(
-    { h: 0, m: 34, s: 12 },
+const Tournaments = () => {
+  const [activeTab, setActiveTab] = useState<"live" | "upcoming" | "completed">(
+    "live",
   );
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterPrize, setFilterPrize] = useState<string>("all");
 
-  useEffect(() => {
-    // For MVP we fetch a hardcoded tournament ID
-    fetchActiveTournament("playza-speed-1");
-    fetchMatches("playza-speed-1");
-  }, [fetchActiveTournament, fetchMatches]);
+  const featuredTournament =
+    tournaments.find((t) => t.status === "live") || tournaments[0];
+  const featuredGame = games.find((g) => g.id === featuredTournament.gameId);
 
-  // Countdown timer simulation
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev.s > 0) return { ...prev, s: prev.s - 1 };
-        if (prev.m > 0) return { ...prev, m: prev.m - 1, s: 59 };
-        if (prev.h > 0) return { h: prev.h - 1, m: 59, s: 59 };
-        return prev;
-      });
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  if (isLoading || !activeTournament) {
-    return (
-      <div className="flex-1 flex items-center justify-center min-h-[60vh]">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-          <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 animate-pulse italic">
-            Synchronizing Arena Data...
-          </span>
-        </div>
-      </div>
-    );
-  }
-
-  const handleJoin = () => {
-    joinTournament("user_me");
-  };
-
-  const handlePlayMatch = (matchId: string) => {
-    navigate(
-      `/games/speed-tap-arena?matchId=${matchId}&seed=${Math.floor(Math.random() * 100000)}`,
-    );
-  };
+  const filteredTournaments = tournaments.filter((t) => {
+    const matchTab = t.status === activeTab;
+    const game = games.find((g) => g.id === t.gameId);
+    const matchSearch =
+      game?.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      t.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchPrize =
+      filterPrize === "all" ||
+      (filterPrize === "high" && t.prizePool >= 100000) ||
+      (filterPrize === "low" && t.prizePool < 100000);
+    return matchTab && matchSearch && matchPrize;
+  });
 
   return (
-    <div className="flex flex-col flex-1 pb-20 w-full overflow-hidden font-body text-slate-900 dark:text-white">
-      {/* 1. HERO SECTION */}
-      <section className="relative w-full rounded-xl overflow-hidden border border-white/5 bg-slate-950 p-8 md:p-12 mb-10 shadow-2xl">
-        <div className="absolute inset-0 z-0">
-          <div className="absolute inset-0 bg-linear-to-b from-primary/20 via-slate-950/90 to-slate-950 z-10" />
-          <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_70%_30%,rgba(var(--primary),0.15),transparent_50%)]" />
-          {/* Animated particles background could go here */}
+    <div className="flex flex-col flex-1 pb-2 md:pb-20 w-full overflow-x-hidden">
+      <div className="flex flex-col gap-2 md:gap-6 md:px-0">
+        <div className="flex flex-col gap-2 mt-4 px-2 md:px-0">
+          <h1 className="text-3xl md:text-5xl font-black font-headline tracking-tighter text-slate-900 dark:text-white uppercase flex items-center gap-2 md:gap-3">
+            X-<span className="text-primary">Tournaments</span>
+          </h1>
+          <p className="text-slate-500 dark:text-slate-400 text-xs md:text-sm font-bold uppercase tracking-widest">
+            Compete for glory and highest prizes
+          </p>
         </div>
 
-        <div className="relative z-20 flex flex-col md:flex-row justify-between items-start md:items-center gap-10">
-          <div className="flex-1">
-            <div className="inline-flex items-center gap-2 bg-primary/20 text-primary border border-primary/30 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-[0.2em] mb-6 animate-pulse">
-              <span className="w-2 h-2 rounded-full bg-primary" /> LIVE
-              TOURNAMENT
+        {/* Featured Tournament Hero */}
+        {featuredTournament && featuredGame && (
+          <section className="relative w-full h-87.5 md:h-112.5 rounded-xl overflow-hidden border border-white/5 bg-slate-950 select-none mx-1 md:mx-0">
+            <div className="absolute inset-0 z-0">
+              <div className="absolute inset-0 bg-linear-to-t from-slate-950 via-slate-950/80 to-transparent z-10" />
+              <div
+                className="absolute inset-0 w-full h-full bg-cover bg-center opacity-40"
+                style={{ backgroundImage: `url(${featuredGame.thumbnail})` }}
+              />
+              <div className="absolute inset-0 bg-linear-to-r from-primary/30 to-transparent z-10" />
             </div>
 
-            <h1 className="text-5xl md:text-7xl font-black font-headline text-white uppercase tracking-tighter mb-4 italic leading-none">
-              {activeTournament.name}
-            </h1>
+            <div className="relative z-20 h-full flex flex-col justify-end p-6 md:p-10">
+              <div className="inline-flex items-center gap-2 bg-red-500/20 text-red-500 border border-red-500/30 px-2 md:px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-4 w-max">
+                <span className="w-2 h-2 rounded-full bg-red-500" />{" "}
+                LIVE EVENT
+              </div>
 
-            <p className="text-slate-400 text-sm md:text-lg font-bold uppercase tracking-widest mb-8 max-w-xl">
-              Battle for supremacy in the ultimate reflex showdown. 16 players
-              enter, only 1 becomes the legend.
-            </p>
+              <h2 className="text-4xl md:text-6xl font-black font-headline text-white uppercase tracking-tighter mb-2 max-w-2xl">
+                {featuredTournament.name}
+              </h2>
 
-            <div className="flex flex-wrap items-center gap-6">
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-4 md:p-6 backdrop-blur-xl">
-                <span className="text-[10px] uppercase font-black tracking-widest text-slate-500 mb-1 block">
-                  Prize Pool
-                </span>
-                <div className="flex items-center gap-2">
-                  <ZASymbol className="text-primary size-6" />
-                  <span className="text-3xl md:text-5xl font-black font-headline italic tracking-tighter text-white">
-                    {activeTournament.prize_pool.toLocaleString()}
-                  </span>
+              <div className="flex flex-wrap items-center gap-4 md:gap-6 mb-8 text-slate-300 font-bold tracking-widest text-xs uppercase">
+                <div className="flex items-center gap-2 bg-black/40 backdrop-blur-sm px-2 md:px-4 py-2 rounded-lg border border-white/10">
+                  <Trophy className="text-yellow-500" size={16} />
+                  Prize Pool: <ZASymbol className="text-yellow-500 scale-90" />{" "}
+                  {featuredTournament.prizePool.toLocaleString()}
+                </div>
+                <div className="flex items-center gap-2 bg-black/40 backdrop-blur-sm px-2 md:px-4 py-2 rounded-lg border border-white/10">
+                  <Users className="text-primary" size={16} />
+                  {featuredGame.activePlayers} Participants
                 </div>
               </div>
 
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-4 md:p-6 backdrop-blur-xl min-w-50">
-                <span className="text-[10px] uppercase font-black tracking-widest text-slate-500 mb-1 block">
-                  Starts In
-                </span>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-3xl md:text-5xl font-black font-headline italic tracking-tighter text-primary">
-                    {timeLeft.h.toString().padStart(2, "0")}:
-                    {timeLeft.m.toString().padStart(2, "0")}:
-                    {timeLeft.s.toString().padStart(2, "0")}
-                  </span>
-                  <span className="text-xs font-black text-slate-500 uppercase tracking-widest">
-                    H:M:S
-                  </span>
+              <Link
+                to={`/tournaments/${featuredTournament.id}`}
+                className="inline-flex items-center justify-center gap-2 bg-primary md:hover:bg-primary/90 text-white font-black uppercase tracking-widest px-8 md:px-12 py-2 md:py-4 rounded-xl w-full md:w-auto"
+              >
+                Join Tournament <ArrowRight size={18} />
+              </Link>
+            </div>
+          </section>
+        )}
+
+        {/* Filters & Tabs */}
+        <section className="flex flex-col gap-2 md:gap-4 mt-4 px-2 md:px-0">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-4 bg-slate-50 border border-slate-200 dark:border-white/5 dark:bg-white/5 p-2 md:p-4 rounded-xl">
+            <div className="flex gap-2 w-full md:w-auto overflow-x-auto custom-scrollbar pb-1 md:pb-0">
+              {(["live", "upcoming", "completed"] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`px-5 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest whitespace-nowrap ${
+                    activeTab === tab
+                      ? "bg-primary text-white"
+                      : "bg-black/5 dark:bg-black/20 text-slate-500 md:hover:text-slate-900 md:dark:hover:text-white"
+                  }`}
+                >
+                  {tab === "live"
+                    ? "🔴 Live Now"
+                    : tab === "upcoming"
+                      ? "🟡 Upcoming"
+                      : "⚫ Completed"}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-2 md:gap-3 w-full md:w-auto">
+              <div className="relative flex-1 md:w-64">
+                <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                  <Search className="h-4 w-4 text-slate-400" />
                 </div>
+                <input
+                  type="text"
+                  placeholder="Search tournaments..."
+                  className="w-full bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg py-3 pl-9 pr-2 md:pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 text-slate-900 dark:text-white font-bold placeholder:opacity-50"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute inset-y-0 right-3 flex items-center text-slate-400 hover:text-white"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
               </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger className="bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg py-3 px-4 text-xs font-bold text-slate-900 dark:text-white uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-primary/50 hover:border-primary/50 transition-colors hidden sm:flex items-center justify-between gap-2 min-w-50">
+                  <span>
+                    {PRIZE_OPTIONS.find((opt) => opt.value === filterPrize)
+                      ?.label || "All Prizes"}
+                  </span>
+                  <ChevronDown size={14} className="opacity-50" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  className="w-50 bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl border border-slate-200 dark:border-white/10 p-2 rounded-xl"
+                  align="end"
+                >
+                  {PRIZE_OPTIONS.map((opt) => (
+                    <DropdownMenuItem
+                      key={opt.value}
+                      onClick={() => setFilterPrize(opt.value)}
+                      className={`text-xs font-bold uppercase tracking-widest cursor-pointer py-2 px-3 rounded-lg outline-none ${filterPrize === opt.value ? "bg-primary/10 text-primary" : "text-slate-600 dark:text-slate-400 md:hover:bg-slate-100 md:dark:hover:bg-white/5 md:hover:text-slate-900 md:dark:hover:text-white"}`}
+                    >
+                      {opt.label}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
 
-          <div className="w-full md:w-auto shrink-0 space-y-4">
-            {!userPlayer ? (
-              <button
-                onClick={handleJoin}
-                className="group relative w-full md:w-80 h-20 bg-primary text-slate-950 font-black uppercase text-xl tracking-widest rounded-2xl hover:scale-105 transition-all shadow-[0_0_40px_rgba(var(--primary),0.3)] flex items-center justify-center gap-3 overflow-hidden"
-              >
-                <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity" />
-                JOIN TOURNAMENT <ArrowRight size={24} />
-              </button>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 md:gap-6 mt-4">
+            {filteredTournaments.length > 0 ? (
+              filteredTournaments.map((t) => {
+                const g = games.find((game) => game.id === t.gameId);
+                if (!g) return null;
+
+                return (
+                  <div
+                    key={t.id}
+                    className="glass-card rounded-xl border border-slate-200 dark:border-white/5 overflow-hidden flex flex-col h-full"
+                  >
+                    <div className="h-32 bg-slate-900 relative overflow-hidden">
+                      <div
+                        className="absolute inset-0 bg-cover bg-center opacity-60"
+                        style={{ backgroundImage: `url(${g.thumbnail})` }}
+                      />
+                      <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-md px-2 md:px-3 py-1 rounded border border-white/10 text-[10px] font-black uppercase text-white flex items-center gap-1.5">
+                        <ZASymbol className="text-primary scale-75" />{" "}
+                        {t.prizePool.toLocaleString()}
+                      </div>
+                      <div className="absolute inset-0 bg-linear-to-t from-slate-900 to-transparent" />
+                      <div className="absolute bottom-3 left-4 right-3">
+                        <h3 className="font-headline font-black text-base md:text-xl text-white uppercase truncate">
+                          {t.name}
+                        </h3>
+                      </div>
+                    </div>
+
+                    <div className="p-2 md:p-5 flex flex-col flex-1 justify-between bg-white dark:bg-transparent">
+                      <div className="space-y-4 mb-6">
+                        <div className="flex items-center justify-between text-xs font-bold uppercase tracking-widest text-slate-500">
+                          <span className="flex items-center gap-1.5">
+                            <PlaySquare size={14} /> {g.title}
+                          </span>
+                          <span className="text-primary bg-primary/10 px-2 py-0.5 rounded flex items-center gap-1">
+                            Entry: <ZASymbol className="scale-75" />{" "}
+                            {t.entryFee}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2 md:gap-4 text-xs font-bold text-slate-600 dark:text-slate-400">
+                          <span className="flex items-center gap-1.5">
+                            <Clock size={14} className="opacity-50" />
+                            {new Date(t.startDate).toLocaleDateString()}
+                          </span>
+                          <span className="flex items-center gap-1.5">
+                            <Users size={14} className="opacity-50" />
+                            {t.status === "completed"
+                              ? "Ended"
+                              : `${g.activePlayers} registered`}
+                          </span>
+                        </div>
+                      </div>
+
+                      <Link
+                        to={`/tournaments/${t.id}`}
+                        className={`w-full py-3 rounded-xl font-black uppercase tracking-widest text-[10px] text-center ${
+                          t.status === "live"
+                            ? "bg-primary text-white md:hover:bg-primary/90"
+                            : t.status === "completed"
+                              ? "bg-slate-200 dark:bg-white/5 text-slate-500 md:hover:bg-slate-300 md:dark:hover:bg-white/10"
+                              : "bg-playza-yellow/10 text-playza-yellow md:hover:bg-playza-yellow/20"
+                        }`}
+                      >
+                        {t.status === "live"
+                          ? "ENTER TOURNAMENT"
+                          : t.status === "upcoming"
+                            ? "VIEW DETAILS"
+                            : "VIEW RESULTS"}
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })
             ) : (
-              <div className="w-full md:w-80 h-20 bg-green-500/10 border-2 border-green-500/30 rounded-2xl flex items-center justify-center gap-3 animate-in fade-in zoom-in duration-500">
-                <CheckCircle2 className="text-green-500" size={28} />
-                <span className="text-green-500 font-black uppercase text-xl tracking-widest">
-                  YOU'RE IN
-                </span>
+              <div className="col-span-full py-2 md:py-20 flex flex-col items-center justify-center text-center glass-card rounded-xl border border-white/5">
+                <Trophy className="text-slate-700 opacity-20 mb-4" size={64} />
+                <h3 className="font-headline font-black text-lg md:text-2xl text-slate-900 dark:text-white uppercase mb-2">
+                  No Tournaments Found
+                </h3>
+                <p className="text-xs md:text-sm font-bold tracking-widest text-slate-500 uppercase opacity-60">
+                  Try adjusting your filters or search query.
+                </p>
               </div>
             )}
-            <p className="text-[10px] text-center font-bold text-slate-500 uppercase tracking-widest italic opacity-60">
-              Entry Fee: <ZASymbol className="inline-block scale-75" />
-              {activeTournament.entry_fee} • Non-refundable
-            </p>
           </div>
-        </div>
-      </section>
-
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <div className="lg:col-span-8 space-y-10">
-          {/* 4. BRACKET SYSTEM */}
-          <section>
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-black font-headline uppercase tracking-tighter flex items-center gap-3">
-                <Shield className="text-primary" /> Tournament Bracket
-              </h2>
-              <div className="flex gap-2">
-                <span className="bg-primary/10 text-primary border border-primary/20 px-3 py-1 rounded text-[10px] font-black uppercase tracking-widest">
-                  ROUND 1: QUARTERFINALS
-                </span>
-              </div>
-            </div>
-
-            <div className="glass-card rounded-xl border border-white/5 p-8 overflow-x-auto custom-scrollbar">
-              <div className="flex items-center gap-12 min-w-200 py-10">
-                {/* Round 1 (Quarterfinals) */}
-                <div className="flex-1 space-y-12">
-                  {matches
-                    .filter((m) => m.round === 1)
-                    .map((match) => (
-                      <div key={match.id} className="relative">
-                        <div className="space-y-2">
-                          <div
-                            className={`bg-slate-900 border rounded-xl p-3 flex justify-between items-center transition-all ${
-                              match.winner_id === match.player1_id &&
-                              match.winner_id
-                                ? "border-primary bg-primary/5"
-                                : "border-white/5"
-                            }`}
-                          >
-                            <span
-                              className={`text-xs font-bold ${match.player1_id === userPlayer?.user_id ? "text-primary" : "text-slate-400"}`}
-                            >
-                              {match.player1_id
-                                ? `Player ${match.player1_id.slice(-4)}`
-                                : "TBD"}
-                            </span>
-                            <span className="text-xs font-black text-slate-600">
-                              {match.player1_score || "--"}
-                            </span>
-                          </div>
-                          <div
-                            className={`bg-slate-900 border rounded-xl p-3 flex justify-between items-center transition-all ${
-                              match.winner_id === match.player2_id &&
-                              match.winner_id
-                                ? "border-primary bg-primary/5"
-                                : "border-white/5"
-                            }`}
-                          >
-                            <span
-                              className={`text-xs font-bold ${match.player2_id === userPlayer?.user_id ? "text-primary" : "text-slate-400"}`}
-                            >
-                              {match.player2_id
-                                ? `Player ${match.player2_id.slice(-4)}`
-                                : "TBD"}
-                            </span>
-                            <span className="text-xs font-black text-slate-600">
-                              {match.player2_score || "--"}
-                            </span>
-                          </div>
-                        </div>
-                        {/* Connector Line */}
-                        <div className="absolute top-1/2 -right-12 w-12 h-0.5 bg-white/10" />
-                      </div>
-                    ))}
-                </div>
-
-                {/* Round 2 */}
-                <div className="flex-1 space-y-36 pb-10">
-                  {matches
-                    .filter((m) => m.round === 2)
-                    .map((match) => (
-                      <div key={match.id} className="relative">
-                        {/* Vertical Bracket Line */}
-                        <div className="absolute -left-6 -top-7.5 -bottom-7.5 w-0.5 bg-white/10" />
-                        <div className="space-y-2">
-                          <div className="bg-slate-900/50 border border-white/5 rounded-xl p-3 flex justify-between items-center border-dashed">
-                            <span className="text-xs font-bold text-slate-500">
-                              {match.player1_id
-                                ? `Player ${match.player1_id.slice(-4)}`
-                                : "TBD"}
-                            </span>
-                          </div>
-                          <div className="bg-slate-900/50 border border-white/5 rounded-xl p-3 flex justify-between items-center border-dashed">
-                            <span className="text-xs font-bold text-slate-500">
-                              {match.player2_id
-                                ? `Player ${match.player2_id.slice(-4)}`
-                                : "TBD"}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="absolute top-1/2 -right-12 w-12 h-0.5 bg-white/10" />
-                      </div>
-                    ))}
-                </div>
-
-                {/* Final */}
-                <div className="flex-1">
-                  <div className="relative">
-                    <div className="absolute -left-6 -top-7.5 -bottom-7.5 w-0.5 bg-white/10" />
-                    <div className="flex flex-col items-center">
-                      <Award
-                        className="text-yellow-500 mb-4 scale-150 animate-bounce"
-                        size={32}
-                      />
-                      <div className="w-full bg-linear-to-b from-yellow-500/20 to-transparent border-2 border-yellow-500/30 rounded-2xl p-6 text-center">
-                        <div className="text-[10px] font-black text-yellow-500 uppercase tracking-widest mb-1">
-                          Final Winner
-                        </div>
-                        <div className="text-xl font-black text-white italic">
-                          CHAMPION
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* 3. HOW IT WORKS */}
-          <section>
-            <h2 className="text-2xl font-black font-headline uppercase tracking-tighter flex items-center gap-3 mb-6">
-              <Info className="text-blue-400" /> Progression System
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              {[
-                {
-                  step: 1,
-                  title: "Join Arena",
-                  desc: "Secure your spot in the bracket",
-                },
-                {
-                  step: 2,
-                  title: "Matchmake",
-                  desc: "Get paired against your rival",
-                },
-                {
-                  step: 3,
-                  title: "Dominate",
-                  desc: "Win your 1v1 reaction battle",
-                },
-                {
-                  step: 4,
-                  title: "Claim Glory",
-                  desc: "Advance to win the grand prize",
-                },
-              ].map((s) => (
-                <div
-                  key={s.step}
-                  className="bg-slate-900/40 border border-white/5 rounded-2xl p-6 text-center relative overflow-hidden group"
-                >
-                  <div className="absolute top-0 right-0 p-2 text-white/5 font-black text-4xl">
-                    {s.step}
-                  </div>
-                  <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center mx-auto mb-4 text-primary font-black text-xs">
-                    {s.step}
-                  </div>
-                  <h4 className="text-sm font-black uppercase text-white mb-2 tracking-widest">
-                    {s.title}
-                  </h4>
-                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter leading-relaxed">
-                    {s.desc}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </section>
-        </div>
-
-        <div className="lg:col-span-4 space-y-8">
-          {/* 5. PLAYER STATE PANEL (DYNAMIC) */}
-          <section>
-            <h2 className="text-xl font-black font-headline uppercase tracking-tighter flex items-center gap-2 mb-4">
-              <Zap className="text-primary" /> Current Round
-            </h2>
-
-            <div className="glass-card rounded-xl border border-primary/20 bg-primary/5 p-8 text-center relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-full h-1 bg-primary" />
-              <AnimatePresence mode="wait">
-                {!userPlayer ? (
-                  <motion.div
-                    key="not-joined"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="flex flex-col items-center"
-                  >
-                    <Lock className="text-slate-500 mb-4" size={40} />
-                    <h3 className="text-lg font-black uppercase text-white mb-2 tracking-widest">
-                      Arena Locked
-                    </h3>
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6 leading-relaxed">
-                      You must join the tournament to view your live match
-                      status.
-                    </p>
-                    <button
-                      onClick={handleJoin}
-                      className="px-8 py-3 bg-white text-slate-950 font-black uppercase text-xs tracking-widest rounded-xl hover:bg-primary transition-all"
-                    >
-                      SECURE ENTRY
-                    </button>
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="joined"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="flex flex-col items-center"
-                  >
-                    <div className="flex items-center gap-6 mb-8 w-full">
-                      <div className="flex-1 flex flex-col items-center gap-2">
-                        <img
-                          src="https://i.pravatar.cc/150?u=me"
-                          className="w-16 h-16 rounded-2xl border-2 border-primary"
-                          alt="me"
-                        />
-                        <span className="text-[10px] font-black uppercase text-white tracking-widest">
-                          Me
-                        </span>
-                      </div>
-                      <div className="text-2xl font-black italic text-slate-700 font-headline">
-                        VS
-                      </div>
-                      <div className="flex-1 flex flex-col items-center gap-2 grayscale group hover:grayscale-0 transition-all">
-                        <div className="w-16 h-16 rounded-2xl border-2 border-white/10 bg-slate-800 flex items-center justify-center">
-                          <Users size={24} className="text-slate-600" />
-                        </div>
-                        <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest italic">
-                          Awaiting Rival
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="w-full space-y-4">
-                      <div className="bg-black/40 rounded-2xl p-4 border border-white/10 flex justify-between items-center text-left">
-                        <div>
-                          <span className="text-[10px] uppercase font-black text-slate-500 tracking-widest block">
-                            Qualification Round
-                          </span>
-                          <span className="text-sm font-black text-white italic tracking-widest uppercase">
-                            Quarterfinals
-                          </span>
-                        </div>
-                        <ChevronRight className="text-primary" />
-                      </div>
-
-                      <button
-                        onClick={() => handlePlayMatch("m1")}
-                        className="w-full py-5 bg-linear-to-r from-primary to-purple-600 text-white font-black uppercase tracking-[0.2em] rounded-2xl hover:scale-105 transition-all shadow-[0_10px_30px_rgba(var(--primary),0.3)] flex items-center justify-center gap-2"
-                      >
-                        PLAY MATCH <Play size={18} fill="currentColor" />
-                      </button>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          </section>
-
-          {/* 2. TOURNAMENT DETAILS CARD */}
-          <section className="bg-slate-900 border border-white/5 rounded-xl p-8">
-            <h3 className="text-xs uppercase font-black text-slate-500 tracking-[0.3em] mb-6">
-              Arena Metadata
-            </h3>
-            <div className="space-y-4">
-              {[
-                {
-                  icon: Target,
-                  label: "Game",
-                  val:
-                    tournamentGames.find(
-                      (g) => g.id === activeTournament.game_id,
-                    )?.title || "Speed Tap Arena",
-                },
-                { icon: Trophy, label: "Mode", val: "1v1 Elimination" },
-                {
-                  icon: Users,
-                  label: "Players",
-                  val: `${activeTournament.max_players} Slots / Full`,
-                },
-                {
-                  icon: Clock,
-                  label: "Match Time",
-                  val: `${activeTournament.match_duration} Seconds`,
-                },
-                {
-                  icon: MapPin,
-                  label: "Region",
-                  val: activeTournament.region || "Global",
-                },
-              ].map((item) => (
-                <div key={item.label} className="flex items-center gap-4 group">
-                  <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 group-hover:text-primary transition-colors">
-                    <item.icon size={18} />
-                  </div>
-                  <div>
-                    <span className="text-[10px] uppercase font-black text-slate-500 tracking-widest block">
-                      {item.label}
-                    </span>
-                    <span className="text-xs font-black text-white uppercase tracking-widest">
-                      {item.val}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* 6. REWARD BREAKDOWN */}
-          <section>
-            <h2 className="text-xl font-black font-headline uppercase tracking-tighter flex items-center gap-2 mb-4">
-              <Award className="text-yellow-500" /> Prize Hierarchy
-            </h2>
-            <div className="space-y-3">
-              {[
-                {
-                  rank: "1st",
-                  bg: "bg-yellow-500/10",
-                  border: "border-yellow-500/30",
-                  text: "text-yellow-400",
-                  label: "Grand Champion",
-                  pct: 0.6,
-                },
-                {
-                  rank: "2nd",
-                  bg: "bg-slate-300/10",
-                  border: "border-slate-300/30",
-                  text: "text-slate-200",
-                  label: "Silver Finalist",
-                  pct: 0.25,
-                },
-                {
-                  rank: "3rd",
-                  bg: "bg-orange-500/10",
-                  border: "border-orange-500/30",
-                  text: "text-orange-400",
-                  label: "Bronze Elite",
-                  pct: 0.15,
-                },
-              ].map((r) => (
-                <div
-                  key={r.rank}
-                  className={`${r.bg} ${r.border} border rounded-2xl p-4 flex justify-between items-center group hover:bg-white/5 transition-all`}
-                >
-                  <div className="flex items-center gap-4">
-                    <span
-                      className={`text-2xl font-black italic font-headline ${r.text}`}
-                    >
-                      {r.rank}
-                    </span>
-                    <div>
-                      <span className="text-[10px] uppercase font-black text-slate-500 tracking-widest block">
-                        Level
-                      </span>
-                      <span className="text-xs font-black text-white uppercase tracking-widest">
-                        {r.label}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="flex items-center gap-1.5 justify-end">
-                      <ZASymbol className={`scale-75 ${r.text}`} />
-                      <span className={`text-xl font-black ${r.text}`}>
-                        {(activeTournament.prize_pool * r.pct).toLocaleString()}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        </div>
+        </section>
       </div>
     </div>
   );
