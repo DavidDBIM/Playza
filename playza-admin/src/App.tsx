@@ -14,6 +14,7 @@ import Transactions from "./pages/Transactions";
 import TransactionDetails from "./pages/TransactionDetails";
 import Withdrawals from "./pages/Withdrawals";
 import Notifications from "./pages/Notifications";
+import Ambassadors from "./pages/Ambassadors";
 import SignIn from "./pages/SignIn";
 import { ThemeProvider } from "./components/theme/ThemeProvider";
 
@@ -54,6 +55,7 @@ const App: React.FC = () => {
               <Route path="transactions/:id" element={<TransactionDetails />} />
               <Route path="withdrawals" element={<Withdrawals />} />
               <Route path="rewards" element={<Placeholder name="Rewards" />} />
+              <Route path="ambassadors" element={<Ambassadors />} />
               <Route path="notifications" element={<Notifications />} />
               <Route path="content" element={<Placeholder name="Content" />} />
               <Route path="*" element={<Navigate to="/" replace />} />
