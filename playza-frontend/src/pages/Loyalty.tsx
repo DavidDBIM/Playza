@@ -163,7 +163,7 @@ function getStreakPtsForDay(absoluteDay: number): number {
 
 // Build a 7-cell window centred on the user's current streak position.
 // Cells 0-streakDays are "done", the next cell is "today", rest are locked.
-function buildStreakWindow(streakDays: number, canClaimToday: boolean) {
+function buildStreakWindow(streakDays: number) {
   // Show days (streakDays - 2) through (streakDays + 4), clamped to min 1
   const windowStart = Math.max(1, streakDays - 2);
   return Array.from({ length: 7 }, (_, i) => {
@@ -317,12 +317,11 @@ export default function Loyalty() {
             <span className="text-2xl font-black text-slate-900 dark:text-white">{streakDays}<span className="text-sm font-bold text-slate-500 ml-1">days</span></span>
           </div>
           <div className="grid grid-cols-7 gap-1 mb-4">
-            {buildStreakWindow(streakDays, canClaimStreak).map((s, i) => {
+            {buildStreakWindow(streakDays).map((s, i) => {
               // A cell is "done" if its absolute day number is <= streakDays
               // and the user has already claimed today (or it's a past day)
               const isDone = s.day < streakDays || (s.day === streakDays && !canClaimStreak);
               const isToday = s.day === streakDays && canClaimStreak;
-              const isNext  = s.day === streakDays + 1;
               return (
                 <div key={i} className={`flex flex-col items-center gap-1 p-1.5 rounded-lg text-center transition-all ${
                   isDone  ? 'bg-orange-100 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-800'
