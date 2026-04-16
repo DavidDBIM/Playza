@@ -174,7 +174,7 @@ function buildStreakWindow(streakDays: number) {
 
 export default function Loyalty() {
   const { user, isLoading: authLoading } = useAuth();
-  const { data: loyaltyData, isLoading: loyaltyLoading } = useLoyaltyMe();
+  const { data: loyaltyData, isLoading: loyaltyLoading, refetch: refetchLoyalty } = useLoyaltyMe();
   const { mutate: performClaimStreak, isPending: claimingStreak } = useClaimStreak();
   const { mutate: performClaimTask, isPending: isMutationPending, variables: mutationVariables } = useClaimTask();
   const [activeCategory, setActiveCategory] = useState("onboarding");
@@ -185,6 +185,7 @@ export default function Loyalty() {
   const totalPoints = loyaltyData?.total_points ?? 0;
   const streakDays = loyaltyData?.streak_days ?? 0;
   const canClaimStreak = loyaltyData?.can_claim_streak_today ?? false;
+  const spinsLeftToday = loyaltyData?.spins_left_today ?? 3;
   const claimedTaskIds = new Set((loyaltyData?.claimed_tasks ?? []).map((t: ClaimedTask) => t.task_id));
   const completedEventTypes = new Set((loyaltyData?.recent_events ?? []).map((e: PzaEvent) => e.event_type));
 
@@ -455,7 +456,7 @@ export default function Loyalty() {
       </div>
 
       {/* Rewards Hub */}
-      <RewardsSection totalPoints={totalPoints} />
+      <RewardsSection totalPoints={totalPoints} spinsLeftToday={spinsLeftToday} onPointsChanged={refetchLoyalty} />
 
       {/* Tier Modal */}
       {tierModal && (
