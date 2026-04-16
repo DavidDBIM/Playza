@@ -92,7 +92,7 @@ const AppContent = () => {
 
   const isGameSessionPage = pathname.includes("/session");
   const isGamePlayPage =
-    pathname.includes("/play") ||
+    pathname.endsWith("/play") ||
     (pathname.startsWith("/h2h") &&
       pathname.split("/").filter(Boolean).length >= 3);
   const isRegistrationPage = pathname.includes("/registration");

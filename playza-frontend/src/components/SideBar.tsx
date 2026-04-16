@@ -18,7 +18,7 @@ const SideBar = () => {
   });
 
   return (
-    <div className="flex flex-col h-[80vh] bg-background/60 backdrop-blur-xl py-4 ">
+    <div className="flex flex-col h-full bg-background/60 backdrop-blur-xl py-4">
       {/* Menu Area */}
       <div className="mb-4">
         <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest pl-4 mb-4 opacity-70">

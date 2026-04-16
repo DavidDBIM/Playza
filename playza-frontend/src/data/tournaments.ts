@@ -35,9 +35,9 @@ export const tournaments: Tournament[] = [
     gameId: "5", // Bullet Fury
     entryFee: 3000,
     prizePool: 150000,
-    status: "live",
-    startDate: "2026-03-27T00:00:00Z",
-    endDate: "2026-04-05T23:59:59Z",
+    status: "upcoming",
+    startDate: "2026-05-27T00:00:00Z",
+    endDate: "2026-06-05T23:59:59Z",
   },
   {
     id: "tour_2",
@@ -65,7 +65,7 @@ export const tournaments: Tournament[] = [
     gameId: "8", // StrikeForce
     entryFee: 2500,
     prizePool: 75000,
-    status: "live",
+    status: "completed",
     startDate: "2026-03-24T00:00:00Z",
     endDate: "2026-03-30T18:00:00Z",
   },
@@ -78,6 +78,16 @@ export const tournaments: Tournament[] = [
     status: "upcoming",
     startDate: "2026-05-01T00:00:00Z",
     endDate: "2026-05-15T23:59:59Z",
+  },
+  {
+    id: "playza-speed-1",
+    name: "Speed Tap Arena Championship",
+    gameId: "15",
+    entryFee: 100,
+    prizePool: 500000,
+    status: "live",
+    startDate: "2026-04-14T00:00:00Z",
+    endDate: "2026-04-20T23:59:59Z",
   },
 ];
 
