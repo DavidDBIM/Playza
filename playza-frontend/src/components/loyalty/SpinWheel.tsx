@@ -1,59 +1,39 @@
 import { useState, useRef, useEffect } from "react";
 import { MdClose, MdStars, MdAutorenew } from "react-icons/md";
-import { Sparkles, Zap } from "lucide-react";
+import { Sparkles, Zap, AlertCircle } from "lucide-react";
+import { spinWheelApi } from "@/api/loyalty.api";
 
-const SPIN_COST = 50; // PZA per spin
-
-interface SpinSegment {
-  label: string;
-  points: number;
-  color: string;
-  textColor: string;
-  probability: number;
-  isZero?: boolean;
-}
-
-const SEGMENTS: SpinSegment[] = [
-  { label: "0 PZA",    points: 0,    color: "#1e293b", textColor: "#64748b", probability: 0.15, isZero: true },
-  { label: "10 PZA",   points: 10,   color: "#EC4899", textColor: "#fff",    probability: 0.10 },
-  { label: "25 PZA",   points: 25,   color: "#10B981", textColor: "#fff",    probability: 0.20 },
-  { label: "50 PZA",   points: 50,   color: "#3B82F6", textColor: "#fff",    probability: 0.20 },
-  { label: "75 PZA",   points: 75,   color: "#06B6D4", textColor: "#fff",    probability: 0.10 },
-  { label: "100 PZA",  points: 100,  color: "#8B5CF6", textColor: "#fff",    probability: 0.12 },
-  { label: "200 PZA",  points: 200,  color: "#F59E0B", textColor: "#fff",    probability: 0.08 },
-  { label: "500 PZA",  points: 500,  color: "#EF4444", textColor: "#fff",    probability: 0.04 },
-  { label: "1000 PZA", points: 1000, color: "#F97316", textColor: "#fff",    probability: 0.01 },
+// Sharp, vivid colours — each segment is visually distinct
+const SEGMENTS = [
+  { label: "10 PZA",   points: 10,   bg: "#FF2D55", text: "#fff" },
+  { label: "25 PZA",   points: 25,   bg: "#FF9F0A", text: "#fff" },
+  { label: "50 PZA",   points: 50,   bg: "#30D158", text: "#fff" },
+  { label: "75 PZA",   points: 75,   bg: "#0A84FF", text: "#fff" },
+  { label: "100 PZA",  points: 100,  bg: "#BF5AF2", text: "#fff" },
+  { label: "200 PZA",  points: 200,  bg: "#FFD60A", text: "#1C1C1E" },
+  { label: "500 PZA",  points: 500,  bg: "#FF6B00", text: "#fff" },
+  { label: "1000 PZA", points: 1000, bg: "#00D4FF", text: "#1C1C1E" },
 ];
 
-function pickSegmentByProbability(): number {
-  const rand = Math.random();
-  let cumulative = 0;
-  for (let i = 0; i < SEGMENTS.length; i++) {
-    cumulative += SEGMENTS[i].probability;
-    if (rand <= cumulative) return i;
-  }
-  return SEGMENTS.length - 1;
-}
+const SEG_COUNT = SEGMENTS.length;
+const SEG_ANGLE = (2 * Math.PI) / SEG_COUNT;
 
 interface SpinWheelModalProps {
   onClose: () => void;
-  onEarnPoints: (delta: number) => void;
+  onSpinComplete: (result: { points_won: number; new_balance: number; spins_left_today: number; segment_index: number }) => void;
+  spinsLeft: number;
   totalPoints: number;
 }
 
-export function SpinWheelModal({ onClose, onEarnPoints, totalPoints }: SpinWheelModalProps) {
+export function SpinWheelModal({ onClose, onSpinComplete, spinsLeft: initialSpins, totalPoints }: SpinWheelModalProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isSpinning, setIsSpinning] = useState(false);
+  const [spinsLeft, setSpinsLeft] = useState(initialSpins);
   const [wonPoints, setWonPoints] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [currentAngle, setCurrentAngle] = useState(0);
   const animFrameRef = useRef<number>(0);
-  const startAngleRef = useRef(0);
-  const [spinsThisSession, setSpinsThisSession] = useState(0);
-  const [localBalance, setLocalBalance] = useState(totalPoints);
-
-  const segCount = SEGMENTS.length;
-  const segAngle = (2 * Math.PI) / segCount;
-  const canAfford = localBalance >= SPIN_COST;
+  const SPIN_COST = 30;
 
   function drawWheel(angle: number) {
     const canvas = canvasRef.current;
@@ -62,234 +42,264 @@ export function SpinWheelModal({ onClose, onEarnPoints, totalPoints }: SpinWheel
     if (!ctx) return;
     const cx = canvas.width / 2;
     const cy = canvas.height / 2;
-    const r = cx - 10;
+    const r = cx - 8;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    const outerGrad = ctx.createRadialGradient(cx, cy, r - 2, cx, cy, r + 12);
-    outerGrad.addColorStop(0, "rgba(99,102,241,0.5)");
-    outerGrad.addColorStop(1, "rgba(99,102,241,0)");
+    // Outer ring shadow
+    ctx.save();
+    ctx.shadowColor = "rgba(0,0,0,0.6)";
+    ctx.shadowBlur = 18;
     ctx.beginPath();
-    ctx.arc(cx, cy, r + 12, 0, 2 * Math.PI);
-    ctx.fillStyle = outerGrad;
-    ctx.fill();
+    ctx.arc(cx, cy, r + 4, 0, 2 * Math.PI);
+    ctx.strokeStyle = "rgba(255,255,255,0.08)";
+    ctx.lineWidth = 8;
+    ctx.stroke();
+    ctx.restore();
 
     SEGMENTS.forEach((seg, i) => {
-      const startA = angle + i * segAngle;
-      const endA = startA + segAngle;
+      const startA = angle + i * SEG_ANGLE;
+      const endA = startA + SEG_ANGLE;
+
+      // Segment fill
       ctx.beginPath();
       ctx.moveTo(cx, cy);
       ctx.arc(cx, cy, r, startA, endA);
       ctx.closePath();
-      ctx.fillStyle = seg.color;
+      ctx.fillStyle = seg.bg;
       ctx.fill();
-      ctx.strokeStyle = "rgba(255,255,255,0.07)";
-      ctx.lineWidth = 1.5;
+
+      // Inner lighter stripe for depth
+      ctx.save();
+      ctx.globalAlpha = 0.12;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.arc(cx, cy, r, startA, endA);
+      ctx.closePath();
+      const radialGrad = ctx.createRadialGradient(cx, cy, r * 0.3, cx, cy, r);
+      radialGrad.addColorStop(0, "#ffffff");
+      radialGrad.addColorStop(1, "transparent");
+      ctx.fillStyle = radialGrad;
+      ctx.fill();
+      ctx.restore();
+
+      // Divider line
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.arc(cx, cy, r, startA, endA);
+      ctx.closePath();
+      ctx.strokeStyle = "rgba(0,0,0,0.35)";
+      ctx.lineWidth = 2;
       ctx.stroke();
 
+      // Label text
       ctx.save();
       ctx.translate(cx, cy);
-      ctx.rotate(startA + segAngle / 2);
+      ctx.rotate(startA + SEG_ANGLE / 2);
       ctx.textAlign = "right";
-      ctx.fillStyle = seg.textColor;
-      ctx.font = `bold 11px 'Segoe UI', sans-serif`;
-      ctx.shadowColor = "rgba(0,0,0,0.7)";
-      ctx.shadowBlur = 5;
-      ctx.fillText(seg.label, r - 8, 4);
+      ctx.fillStyle = seg.text;
+      ctx.font = "bold 12px 'Segoe UI', system-ui, sans-serif";
+      ctx.shadowColor = "rgba(0,0,0,0.5)";
+      ctx.shadowBlur = 4;
+      ctx.fillText(seg.label, r - 12, 4.5);
       ctx.restore();
     });
 
+    // Center hub
+    const hubGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 32);
+    hubGrad.addColorStop(0, "#FFFFFF");
+    hubGrad.addColorStop(0.5, "#E0E0E0");
+    hubGrad.addColorStop(1, "#A0A0A0");
     ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, 2 * Math.PI);
-    ctx.strokeStyle = "rgba(255,255,255,0.1)";
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    const hubGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 26);
-    hubGrad.addColorStop(0, "#818CF8");
-    hubGrad.addColorStop(1, "#3730A3");
-    ctx.beginPath();
-    ctx.arc(cx, cy, 26, 0, 2 * Math.PI);
+    ctx.arc(cx, cy, 32, 0, 2 * Math.PI);
     ctx.fillStyle = hubGrad;
     ctx.fill();
-    ctx.strokeStyle = "rgba(255,255,255,0.25)";
+    ctx.strokeStyle = "rgba(255,255,255,0.6)";
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    // Hub inner ring
+    ctx.beginPath();
+    ctx.arc(cx, cy, 22, 0, 2 * Math.PI);
+    ctx.strokeStyle = "rgba(0,0,0,0.12)";
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    ctx.fillStyle = "#fff";
-    ctx.font = "bold 9px 'Segoe UI', sans-serif";
+    // Hub star icon (manual)
+    ctx.fillStyle = "#1C1C1E";
+    ctx.font = "bold 14px 'Segoe UI', sans-serif";
     ctx.textAlign = "center";
-    ctx.shadowColor = "transparent";
-    ctx.fillText("SPIN", cx, cy + 3);
+    ctx.fillText("★", cx, cy + 5);
   }
 
   useEffect(() => {
     drawWheel(currentAngle);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function spin() {
-    if (isSpinning || !canAfford) return;
-    const targetSegIndex = pickSegmentByProbability();
+  async function spin() {
+    if (isSpinning || spinsLeft <= 0 || totalPoints < SPIN_COST) return;
     setWonPoints(null);
+    setError(null);
     setIsSpinning(true);
-    setSpinsThisSession(s => s + 1);
-    setLocalBalance(b => b - SPIN_COST);
-    onEarnPoints(-SPIN_COST);
 
-    const extraRotations = (6 + Math.random() * 3) * 2 * Math.PI;
-    const pointerAngle = -Math.PI / 2;
-    const segCenter = targetSegIndex * segAngle + segAngle / 2;
-    const targetWheelAngle = pointerAngle - segCenter;
-    const currentNorm = ((currentAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
-    const targetNorm = ((targetWheelAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
-    let delta = targetNorm - currentNorm;
-    if (delta < 0) delta += 2 * Math.PI;
-    const totalRotation = extraRotations + delta;
+    try {
+      const result = await spinWheelApi();
+      const targetSegIndex = result.segment_index;
 
-    const duration = 4500;
-    const start = performance.now();
-    startAngleRef.current = currentAngle;
+      const minRotations = 6;
+      const extraRotations = (minRotations + Math.random() * 3) * 2 * Math.PI;
+      const pointerAngle = -Math.PI / 2;
+      const segCenter = targetSegIndex * SEG_ANGLE + SEG_ANGLE / 2;
+      const targetWheelAngle = pointerAngle - segCenter;
+      const currentNorm = ((currentAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+      const targetNorm = ((targetWheelAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+      let delta = targetNorm - currentNorm;
+      if (delta < 0) delta += 2 * Math.PI;
+      const totalRotation = extraRotations + delta;
+      const finalAngle = currentAngle + totalRotation;
 
-    function easeOut(t: number) { return 1 - Math.pow(1 - t, 4); }
+      const duration = 4800;
+      const start = performance.now();
+      const startAngle = currentAngle;
 
-    function animate(now: number) {
-      const elapsed = now - start;
-      const progress = Math.min(elapsed / duration, 1);
-      const angle = startAngleRef.current + easeOut(progress) * totalRotation;
-      setCurrentAngle(angle);
-      drawWheel(angle);
+      function easeOut(t: number) { return 1 - Math.pow(1 - t, 4); }
 
-      if (progress < 1) {
-        animFrameRef.current = requestAnimationFrame(animate);
-      } else {
-        const finalAngle = startAngleRef.current + totalRotation;
-        setCurrentAngle(finalAngle);
-        drawWheel(finalAngle);
-        setIsSpinning(false);
-        const pts = SEGMENTS[targetSegIndex].points;
-        setWonPoints(pts);
-        if (pts > 0) {
-          setLocalBalance(b => b + pts);
-          onEarnPoints(pts);
+      function animate(now: number) {
+        const progress = Math.min((now - start) / duration, 1);
+        const angle = startAngle + easeOut(progress) * totalRotation;
+        drawWheel(angle);
+
+        if (progress < 1) {
+          animFrameRef.current = requestAnimationFrame(animate);
+        } else {
+          setCurrentAngle(finalAngle);
+          drawWheel(finalAngle);
+          setIsSpinning(false);
+          setWonPoints(result.points_won);
+          setSpinsLeft(result.spins_left_today);
+          onSpinComplete(result);
         }
       }
+
+      animFrameRef.current = requestAnimationFrame(animate);
+    } catch (err: any) {
+      setIsSpinning(false);
+      setError(err?.response?.data?.message ?? "Spin failed. Please try again.");
     }
-    animFrameRef.current = requestAnimationFrame(animate);
   }
 
   useEffect(() => () => cancelAnimationFrame(animFrameRef.current), []);
 
-  const isZeroWin = wonPoints === 0;
-  const netGain = wonPoints !== null ? wonPoints - SPIN_COST : null;
+  const canSpin = spinsLeft > 0 && totalPoints >= SPIN_COST && !isSpinning;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md" onClick={onClose}>
       <div
-        className="relative w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl"
-        style={{ background: "linear-gradient(160deg, #0d0d1a 0%, #0a0a14 100%)", border: "1px solid rgba(99,102,241,0.2)" }}
+        className="relative w-full max-w-[360px] bg-[#0F0F14] rounded-3xl border border-white/10 shadow-2xl overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
-        {/* Top accent line */}
-        <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: "linear-gradient(90deg, #6366f1, #a855f7, #ec4899)" }} />
+        {/* Rainbow top strip */}
+        <div className="h-1 w-full" style={{ background: "linear-gradient(90deg,#FF2D55,#FF9F0A,#30D158,#0A84FF,#BF5AF2,#FFD60A)" }} />
 
         {/* Header */}
-        <div className="flex items-center justify-between px-5 pt-5 pb-2">
+        <div className="flex items-center justify-between px-5 pt-5 pb-3">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-indigo-400" />
-            <span className="text-white font-black text-[15px] tracking-tight">Spin & Earn</span>
+            <Sparkles className="w-4 h-4 text-yellow-400" />
+            <span className="text-white font-black text-base tracking-tight">Spin & Earn PZA</span>
           </div>
-          <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-500 hover:text-white transition-colors" style={{ background: "rgba(255,255,255,0.05)" }}>
-            <MdClose className="text-sm" />
+          <button onClick={onClose} className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/60 hover:text-white transition-all">
+            <MdClose />
           </button>
         </div>
 
-        {/* Cost chip + session count */}
-        <div className="px-5 mb-0 flex items-center gap-2">
-          <div className="flex items-center gap-1.5 rounded-lg px-2.5 py-1" style={{ background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.2)" }}>
-            <Zap className="w-3 h-3 text-indigo-400" />
-            <span className="text-indigo-300 text-[11px] font-bold">{SPIN_COST} PZA per spin · Unlimited</span>
+        {/* Cost + spins banner */}
+        <div className="px-5 flex gap-2 mb-3">
+          <div className="flex-1 flex items-center gap-2 bg-red-500/15 border border-red-500/30 rounded-xl px-3 py-2">
+            <MdStars className="text-red-400 text-base" />
+            <span className="text-red-300 text-xs font-bold">{SPIN_COST} PZA per spin</span>
           </div>
-          {spinsThisSession > 0 && (
-            <span className="text-slate-600 text-[11px] font-bold">{spinsThisSession} spin{spinsThisSession > 1 ? "s" : ""} this session</span>
-          )}
-        </div>
-
-        {/* Balance display */}
-        <div className="px-5 pt-2 pb-1 flex items-center gap-1">
-          <span className="text-slate-600 text-[11px] font-medium">Balance:</span>
-          <span className="text-slate-300 text-[11px] font-black">{localBalance.toLocaleString()} PZA</span>
+          <div className="flex-1 flex items-center gap-2 bg-indigo-500/15 border border-indigo-500/30 rounded-xl px-3 py-2">
+            <Zap className="w-3.5 h-3.5 text-indigo-400" />
+            <span className="text-indigo-300 text-xs font-bold">{spinsLeft}/3 spins left</span>
+          </div>
         </div>
 
         {/* Wheel */}
-        <div className="relative flex items-center justify-center py-2 px-4">
+        <div className="relative flex justify-center items-center py-2 px-4">
           {/* Pointer */}
-          <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10">
-            <div className="w-4 h-6 shadow-lg" style={{ background: "linear-gradient(to bottom, #fbbf24, #f97316)", clipPath: "polygon(50% 100%, 0% 0%, 100% 0%)", filter: "drop-shadow(0 2px 6px rgba(249,115,22,0.7))" }} />
+          <div className="absolute top-2 left-1/2 z-10" style={{ transform: "translateX(-50%)" }}>
+            <div style={{
+              width: 0, height: 0,
+              borderLeft: "10px solid transparent",
+              borderRight: "10px solid transparent",
+              borderTop: "22px solid #FFD60A",
+              filter: "drop-shadow(0 2px 6px rgba(255,214,10,0.8))",
+            }} />
           </div>
 
           <canvas
             ref={canvasRef}
-            width={270}
-            height={270}
-            className="rounded-full cursor-pointer select-none"
+            width={300}
+            height={300}
+            className="cursor-pointer rounded-full"
             onClick={spin}
             style={{
-              filter: isSpinning ? "drop-shadow(0 0 20px rgba(99,102,241,0.65))" : "drop-shadow(0 0 6px rgba(99,102,241,0.2))",
-              opacity: !canAfford && !isSpinning ? 0.45 : 1,
-              transition: "opacity 0.3s, filter 0.3s",
+              filter: isSpinning
+                ? "drop-shadow(0 0 24px rgba(99,102,241,0.9))"
+                : "drop-shadow(0 0 10px rgba(255,255,255,0.08))",
+              transition: "filter 0.3s",
             }}
           />
         </div>
 
-        {/* Result */}
-        <div className="px-5 pb-1 min-h-[52px] flex items-center justify-center">
-          {wonPoints !== null ? (
-            isZeroWin ? (
-              <div className="flex flex-col items-center gap-0.5 w-full">
-                <div className="flex items-center gap-2 w-full justify-center rounded-2xl px-4 py-2.5" style={{ background: "rgba(30,41,59,0.9)", border: "1px solid rgba(100,116,139,0.2)" }}>
-                  <span className="text-base">😬</span>
-                  <span className="text-slate-300 font-black text-sm">No win this time</span>
-                </div>
-                <p className="text-slate-700 text-[10px]">−{SPIN_COST} PZA spent</p>
+        {/* Result / error / hint */}
+        <div className="px-5 min-h-[52px] flex items-center justify-center mb-1">
+          {error ? (
+            <div className="flex items-center gap-2 bg-red-500/15 border border-red-500/30 rounded-xl px-4 py-2.5 w-full">
+              <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+              <span className="text-red-300 text-xs font-medium">{error}</span>
+            </div>
+          ) : wonPoints !== null ? (
+            <div className="flex flex-col items-center gap-1 animate-bounce">
+              <div className="flex items-center gap-2 bg-yellow-400/15 border border-yellow-400/40 rounded-2xl px-6 py-2.5">
+                <MdStars className="text-yellow-400 text-2xl" />
+                <span className="text-white font-black text-xl">+{wonPoints.toLocaleString()}</span>
+                <span className="text-yellow-400 font-bold text-sm">PZA</span>
               </div>
-            ) : (
-              <div className="flex flex-col items-center gap-0.5 w-full">
-                <div className="flex items-center gap-2 w-full justify-center rounded-2xl px-4 py-2.5" style={{ background: "rgba(234,179,8,0.08)", border: "1px solid rgba(234,179,8,0.25)" }}>
-                  <MdStars className="text-yellow-400 text-xl" />
-                  <span className="text-2xl font-black text-white">+{wonPoints.toLocaleString()}</span>
-                  <span className="text-yellow-400 font-bold text-sm">PZA</span>
-                </div>
-                <p className="text-slate-600 text-[10px]">
-                  {netGain !== null && netGain >= 0 ? `Net profit: +${netGain.toLocaleString()} PZA` : netGain !== null ? `Net: ${netGain.toLocaleString()} PZA` : ""}
-                </p>
-              </div>
-            )
+              <p className="text-white/40 text-[11px]">Points credited to your balance!</p>
+            </div>
           ) : isSpinning ? (
             <div className="flex items-center gap-2 text-indigo-400">
               <MdAutorenew className="animate-spin text-lg" />
-              <span className="text-xs font-bold tracking-widest uppercase">Spinning…</span>
+              <span className="text-sm font-bold">Spinning…</span>
             </div>
+          ) : totalPoints < SPIN_COST ? (
+            <p className="text-white/40 text-xs text-center">You need {SPIN_COST} PZA to spin. Earn more points first!</p>
           ) : (
-            <p className="text-slate-600 text-xs text-center">
-              {canAfford ? "Tap the wheel or button to spin" : `You need at least ${SPIN_COST} PZA to spin`}
-            </p>
+            <p className="text-white/40 text-xs text-center">Tap the wheel or button to spin!</p>
           )}
         </div>
 
-        {/* Button */}
-        <div className="px-5 pb-5 pt-2">
+        {/* Spin button */}
+        <div className="px-5 pb-5">
           <button
             onClick={spin}
-            disabled={isSpinning || !canAfford}
-            className="w-full py-3 rounded-2xl font-black text-sm tracking-wider transition-all active:scale-[0.98]"
-            style={
-              isSpinning || !canAfford
-                ? { background: "rgba(255,255,255,0.04)", color: "#475569", cursor: "not-allowed", border: "1px solid rgba(255,255,255,0.05)" }
-                : { background: "linear-gradient(135deg, #4f46e5, #7c3aed)", color: "#fff", boxShadow: "0 4px 20px rgba(79,70,229,0.3)" }
-            }
+            disabled={!canSpin}
+            className={`w-full py-3.5 rounded-2xl font-black text-sm tracking-wide transition-all ${
+              !canSpin
+                ? "bg-white/5 text-white/25 cursor-not-allowed"
+                : "text-white shadow-lg active:scale-95"
+            }`}
+            style={canSpin ? {
+              background: "linear-gradient(135deg,#6366F1,#8B5CF6)",
+              boxShadow: "0 4px 24px rgba(99,102,241,0.45)",
+            } : undefined}
           >
-            {isSpinning ? "Spinning…" : !canAfford ? `Need ${SPIN_COST} PZA to spin` : `🎰 SPIN — ${SPIN_COST} PZA`}
+            {isSpinning ? "Spinning…"
+              : spinsLeft <= 0 ? "No spins left today"
+              : totalPoints < SPIN_COST ? `Need ${SPIN_COST} PZA to spin`
+              : `🎰 SPIN  (-${SPIN_COST} PZA)`}
           </button>
         </div>
       </div>
