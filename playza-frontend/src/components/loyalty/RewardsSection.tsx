@@ -137,7 +137,7 @@ export function RewardsSection({ totalPoints, spinsLeftToday, onPointsChanged }:
 
         {/* ── Section header ── */}
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-sm shadow-indigo-500/30">
+          <div className="w-8 h-8 rounded-xl bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-sm shadow-indigo-500/30">
             <Sparkles className="w-4 h-4 text-white" />
           </div>
           <div>
@@ -148,10 +148,10 @@ export function RewardsSection({ totalPoints, spinsLeftToday, onPointsChanged }:
 
         {/* ── SPIN CARD ── */}
         <div className="relative overflow-hidden rounded-2xl p-6 shadow-xl"
-             style={{ background: "linear-gradient(135deg,#1A0533 0%,#0A0A2E 60%,#001F3F 100%)" }}>
+             style={{ background: "linear-linear(135deg,#1A0533 0%,#0A0A2E 60%,#001F3F 100%)" }}>
           {/* BG orbs */}
-          <div className="absolute -right-10 -top-10 w-44 h-44 rounded-full opacity-20" style={{ background: "radial-gradient(circle,#BF5AF2,transparent)" }} />
-          <div className="absolute -left-6 -bottom-8 w-36 h-36 rounded-full opacity-20" style={{ background: "radial-gradient(circle,#FF2D55,transparent)" }} />
+          <div className="absolute -right-10 -top-10 w-44 h-44 rounded-full opacity-20" style={{ background: "radial-linear(circle,#BF5AF2,transparent)" }} />
+          <div className="absolute -left-6 -bottom-8 w-36 h-36 rounded-full opacity-20" style={{ background: "radial-linear(circle,#FF2D55,transparent)" }} />
 
           <div className="relative flex items-center justify-between gap-4">
             <div className="flex-1">
@@ -195,9 +195,9 @@ export function RewardsSection({ totalPoints, spinsLeftToday, onPointsChanged }:
         </div>
 
         {/* ── AMBASSADOR CARD ── */}
-        <div className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/20 border border-amber-200 dark:border-amber-800/50 rounded-2xl p-5 shadow-sm">
+        <div className="bg-linear-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/20 border border-amber-200 dark:border-amber-800/50 rounded-2xl p-5 shadow-sm">
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shrink-0 shadow-md shadow-orange-400/30">
+            <div className="w-12 h-12 rounded-2xl bg-linear-to-br from-amber-400 to-orange-500 flex items-center justify-center shrink-0 shadow-md shadow-orange-400/30">
               <Crown className="w-6 h-6 text-white" />
             </div>
             <div className="flex-1 min-w-0">
@@ -252,7 +252,7 @@ export function RewardsSection({ totalPoints, spinsLeftToday, onPointsChanged }:
               ) : (
                 <button
                   onClick={() => setShowAmbassadorModal(true)}
-                  className="flex items-center gap-2 text-sm font-black px-5 py-2.5 rounded-xl transition-all active:scale-95 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white shadow-md shadow-orange-400/30"
+                  className="flex items-center gap-2 text-sm font-black px-5 py-2.5 rounded-xl transition-all active:scale-95 bg-linear-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white shadow-md shadow-orange-400/30"
                 >
                   <Crown className="w-4 h-4" />Apply Now <MdArrowForward className="text-base" />
                 </button>
@@ -281,7 +281,7 @@ export function RewardsSection({ totalPoints, spinsLeftToday, onPointsChanged }:
                   {product.badge && (
                     <span className={`absolute top-3 right-3 text-[9px] font-black text-white px-1.5 py-0.5 rounded-full ${product.badgeColor}`}>{product.badge}</span>
                   )}
-                  <div className="w-full h-24 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-750 rounded-xl flex items-center justify-center text-5xl group-hover:scale-105 transition-transform">{product.image}</div>
+                  <div className="w-full h-24 bg-linear-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-750 rounded-xl flex items-center justify-center text-5xl group-hover:scale-105 transition-transform">{product.image}</div>
                   <div className="flex-1">
                     <p className="font-black text-slate-900 dark:text-white text-sm">{product.name}</p>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">{product.desc}</p>
@@ -331,7 +331,7 @@ export function RewardsSection({ totalPoints, spinsLeftToday, onPointsChanged }:
             {/* Header */}
             <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-slate-100 dark:border-slate-800 sticky top-0 bg-white dark:bg-slate-900 z-10">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-sm shadow-orange-400/30">
+                <div className="w-9 h-9 rounded-xl bg-linear-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-sm shadow-orange-400/30">
                   <Crown className="w-4.5 h-4.5 text-white" />
                 </div>
                 <div>
@@ -346,7 +346,7 @@ export function RewardsSection({ totalPoints, spinsLeftToday, onPointsChanged }:
 
             {formSuccess ? (
               <div className="flex flex-col items-center gap-4 px-6 py-12">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center text-3xl shadow-lg shadow-green-400/30">✅</div>
+                <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-emerald-400 to-green-500 flex items-center justify-center text-3xl shadow-lg shadow-green-400/30">✅</div>
                 <h4 className="font-black text-slate-900 dark:text-white text-xl text-center">Application Submitted!</h4>
                 <p className="text-slate-500 dark:text-slate-400 text-sm text-center max-w-xs">
                   Your ambassador application is now under review. We'll get back to you within 3–5 business days.
@@ -493,7 +493,7 @@ export function RewardsSection({ totalPoints, spinsLeftToday, onPointsChanged }:
                     className={`flex-1 py-3 rounded-xl font-black text-sm transition-all active:scale-95 ${
                       formSubmitting
                         ? 'bg-amber-300 dark:bg-amber-800 text-amber-600 dark:text-amber-300 cursor-not-allowed'
-                        : 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white shadow-md shadow-orange-400/30'
+                        : 'bg-linear-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white shadow-md shadow-orange-400/30'
                     }`}>
                     {formSubmitting ? 'Submitting…' : 'Submit Application 🚀'}
                   </button>
@@ -508,7 +508,7 @@ export function RewardsSection({ totalPoints, spinsLeftToday, onPointsChanged }:
       {redeemModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setRedeemModal(null)}>
           <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 w-full max-w-sm shadow-2xl" onClick={e => e.stopPropagation()}>
-            <div className="w-16 h-16 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-750 rounded-2xl flex items-center justify-center mx-auto mb-4 text-4xl">{redeemModal.image}</div>
+            <div className="w-16 h-16 bg-linear-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-750 rounded-2xl flex items-center justify-center mx-auto mb-4 text-4xl">{redeemModal.image}</div>
             <h3 className="font-black text-slate-900 dark:text-white text-xl text-center mb-1">{redeemModal.name}</h3>
             <p className="text-sm text-slate-500 dark:text-slate-400 text-center mb-2">{redeemModal.desc}</p>
             <p className="text-center font-black text-indigo-600 dark:text-indigo-400 text-lg mb-5">
@@ -520,7 +520,7 @@ export function RewardsSection({ totalPoints, spinsLeftToday, onPointsChanged }:
                 Cancel
               </button>
               <button onClick={() => { alert(`Redemption for "${redeemModal.name}" submitted!`); setRedeemModal(null); }}
-                className="flex-1 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-black text-sm transition-all shadow-md shadow-indigo-500/30 active:scale-95">
+                className="flex-1 py-3 rounded-xl bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-black text-sm transition-all shadow-md shadow-indigo-500/30 active:scale-95">
                 Confirm Redeem
               </button>
             </div>
