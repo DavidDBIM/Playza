@@ -1,7 +1,14 @@
 var canvas = document.getElementById('game-canvas');
 var ctx = canvas.getContext('2d');
-var W = 300, H = 600;
+var W = canvas.width, H = canvas.height;
 var BLOCK_W = W / COLS, BLOCK_H = H / ROWS;
+
+function recalcDimensions() {
+    W = canvas.width;
+    H = canvas.height;
+    BLOCK_W = W / COLS;
+    BLOCK_H = H / ROWS;
+}
 
 function getGhostY() {
     var ghostY = currentY;
@@ -50,6 +57,7 @@ function drawBlock(context, x, y, colorIndex, glow, isGhost) {
 }
 
 function render() {
+    recalcDimensions();
     ctx.fillStyle = '#0a0a0f';
     ctx.fillRect(0, 0, W, H);
     
@@ -75,20 +83,31 @@ function render() {
             }
         }
     }
-    
-    var ghostY = getGhostY();
-    for ( var y = 0; y < 4; ++y ) {
-        for ( var x = 0; x < 4; ++x ) {
-            if ( current[ y ][ x ] ) {
-                drawBlock(ctx, currentX + x, ghostY + y, current[ y ][ x ] - 1, false, true);
+
+    var ghostEnabled = true;
+    try {
+        ghostEnabled = window.NeonTetris && window.NeonTetris.getSettings ? (window.NeonTetris.getSettings().ghostEnabled !== false) : true;
+    } catch (e) {
+        ghostEnabled = true;
+    }
+
+    if (ghostEnabled && current) {
+        var ghostY = getGhostY();
+        for ( var y = 0; y < 4; ++y ) {
+            for ( var x = 0; x < 4; ++x ) {
+                if ( current[ y ][ x ] ) {
+                    drawBlock(ctx, currentX + x, ghostY + y, current[ y ][ x ] - 1, false, true);
+                }
             }
         }
     }
     
-    for ( var y = 0; y < 4; ++y ) {
-        for ( var x = 0; x < 4; ++x ) {
-            if ( current[ y ][ x ] ) {
-                drawBlock(ctx, currentX + x, currentY + y, current[ y ][ x ] - 1, true, false);
+    if (current) {
+        for ( var y = 0; y < 4; ++y ) {
+            for ( var x = 0; x < 4; ++x ) {
+                if ( current[ y ][ x ] ) {
+                    drawBlock(ctx, currentX + x, currentY + y, current[ y ][ x ] - 1, true, false);
+                }
             }
         }
     }
