@@ -25,6 +25,9 @@ const MATCH_CLEAR_MS = 95;
 const REFILL_SETTLE_MS = 110;
 const STORM_THRESHOLD = 200;
 const MAX_CARRY_SPECIALS = 2;
+const TOUCH_SWIPE_THRESHOLD_RATIO = 0.35;
+const TOUCH_SWIPE_MIN_PX = 18;
+const TOUCH_CLICK_SUPPRESS_MS = 450;
 
 const PIECE_IMAGE_PATHS = {
   strawberry: "./assets/images/strawberry.webp",
@@ -315,6 +318,30 @@ const BOARD_SHAPES = [
 ];
 
 const SHAPE_POOL = [...BOARD_SHAPES];
+const FIXED_LEVEL_SHAPES = [
+  BOARD_SHAPES[0],
+  BOARD_SHAPES[1],
+  BOARD_SHAPES[2],
+  BOARD_SHAPES[3],
+  BOARD_SHAPES[4],
+  BOARD_SHAPES[0],
+  BOARD_SHAPES[5],
+  BOARD_SHAPES[6],
+  BOARD_SHAPES[7],
+  BOARD_SHAPES[8],
+  BOARD_SHAPES[9],
+  BOARD_SHAPES[10],
+  BOARD_SHAPES[11],
+  BOARD_SHAPES[0],
+  BOARD_SHAPES[12],
+  BOARD_SHAPES[13],
+  BOARD_SHAPES[14],
+  BOARD_SHAPES[15],
+  BOARD_SHAPES[16],
+  BOARD_SHAPES[17],
+  BOARD_SHAPES[18],
+  BOARD_SHAPES[19],
+];
 
 class SugarStormGame {
   constructor() {
@@ -368,6 +395,8 @@ class SugarStormGame {
     this.lastTimestamp = 0;
     this.shape = BOARD_SHAPES[0];
     this.chainMultiplier = 1;
+    this.activeTouch = null;
+    this.lastTouchAt = 0;
     this.jellyGrid = [];
     this.jellyRemaining = 0;
     this.blockerGrid = [];
@@ -385,6 +414,7 @@ class SugarStormGame {
     this.stormCharge = 0;
     this.screenShake = 0;
     this.lastShapeName = BOARD_SHAPES[0].name;
+    this.levelRandom = null;
     this.pieceImages = {};
 
     this.setupEvents();
@@ -412,13 +442,43 @@ class SugarStormGame {
   }
 
   setupEvents() {
-    this.canvas.addEventListener("click", (event) => this.handlePointer(event.clientX, event.clientY));
+    this.canvas.addEventListener("click", (event) => {
+      if (Date.now() - this.lastTouchAt < TOUCH_CLICK_SUPPRESS_MS) {
+        return;
+      }
+      this.handlePointer(event.clientX, event.clientY);
+    });
     this.canvas.addEventListener(
       "touchstart",
       (event) => {
         event.preventDefault();
         const touch = event.touches[0];
-        this.handlePointer(touch.clientX, touch.clientY);
+        this.handleTouchStart(touch.clientX, touch.clientY);
+      },
+      { passive: false },
+    );
+    this.canvas.addEventListener(
+      "touchmove",
+      (event) => {
+        event.preventDefault();
+        const touch = event.touches[0];
+        this.handleTouchMove(touch.clientX, touch.clientY);
+      },
+      { passive: false },
+    );
+    this.canvas.addEventListener(
+      "touchend",
+      (event) => {
+        event.preventDefault();
+        const touch = event.changedTouches[0];
+        this.handleTouchEnd(touch?.clientX, touch?.clientY);
+      },
+      { passive: false },
+    );
+    this.canvas.addEventListener(
+      "touchcancel",
+      () => {
+        this.activeTouch = null;
       },
       { passive: false },
     );
@@ -552,6 +612,7 @@ class SugarStormGame {
     this.shape = this.pickShape(index);
     this.stageMode = config.stageMode || "Standard";
     this.levelIndex = index;
+    this.levelRandom = this.usesFixedCompetitiveLayout() ? this.makeSeededRandom(`level-${index + 1}-run`) : null;
     this.movesLeft = config.moves + this.carryMoves;
     this.levelTarget = config.target;
     this.goalState = { ...config.goals };
@@ -639,6 +700,12 @@ class SugarStormGame {
       return BOARD_SHAPES[0];
     }
 
+    const fixedShape = FIXED_LEVEL_SHAPES[index - 3];
+    if (fixedShape) {
+      this.lastShapeName = fixedShape.name;
+      return fixedShape;
+    }
+
     const options =
       index < 6
         ? BOARD_SHAPES.slice(0, 4)
@@ -652,6 +719,39 @@ class SugarStormGame {
     return choice;
   }
 
+  usesFixedCompetitiveLayout() {
+    return this.levelIndex >= 0 && this.levelIndex < 25;
+  }
+
+  makeSeededRandom(seedKey) {
+    let seed = 2166136261;
+    const input = `${seedKey}`;
+    for (let i = 0; i < input.length; i += 1) {
+      seed ^= input.charCodeAt(i);
+      seed = Math.imul(seed, 16777619);
+    }
+
+    return () => {
+      seed = (seed + 0x6d2b79f5) | 0;
+      let value = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      value ^= value + Math.imul(value ^ (value >>> 7), 61 | value);
+      return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  shuffleCells(cells, seedKey = null) {
+    const random = seedKey ? this.makeSeededRandom(seedKey) : Math.random;
+    for (let i = cells.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(random() * (i + 1));
+      [cells[i], cells[j]] = [cells[j], cells[i]];
+    }
+    return cells;
+  }
+
+  randomFloat() {
+    return this.levelRandom ? this.levelRandom() : Math.random();
+  }
+
   isPlayableCell(row, col) {
     return this.shape.mask[row][col] === "1";
   }
@@ -659,10 +759,7 @@ class SugarStormGame {
   seedJelly(count) {
     this.jellyGrid = Array.from({ length: BOARD_SIZE }, () => Array(BOARD_SIZE).fill(0));
     const active = this.allCells();
-    for (let i = active.length - 1; i > 0; i -= 1) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [active[i], active[j]] = [active[j], active[i]];
-    }
+    this.shuffleCells(active, this.usesFixedCompetitiveLayout() ? `level-${this.levelIndex + 1}-jelly` : null);
     const selected = active.slice(0, Math.min(count, active.length));
     selected.forEach(({ row, col }) => {
       this.jellyGrid[row][col] = 1;
@@ -673,10 +770,7 @@ class SugarStormGame {
   seedBlockers(count) {
     this.blockerGrid = Array.from({ length: BOARD_SIZE }, () => Array(BOARD_SIZE).fill(0));
     const active = this.allCells().filter(({ row, col }) => !this.board[row][col]?.special);
-    for (let i = active.length - 1; i > 0; i -= 1) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [active[i], active[j]] = [active[j], active[i]];
-    }
+    this.shuffleCells(active, this.usesFixedCompetitiveLayout() ? `level-${this.levelIndex + 1}-blockers` : null);
     const selected = active.slice(0, Math.min(count, active.length));
     selected.forEach(({ row, col }, index) => {
       this.blockerGrid[row][col] = index % 3 === 0 ? 2 : 1;
@@ -687,10 +781,7 @@ class SugarStormGame {
   seedGlass(count) {
     this.glassGrid = Array.from({ length: BOARD_SIZE }, () => Array(BOARD_SIZE).fill(0));
     const active = this.allCells().filter(({ row, col }) => !this.blockerGrid[row]?.[col] && !this.jellyGrid[row]?.[col]);
-    for (let i = active.length - 1; i > 0; i -= 1) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [active[i], active[j]] = [active[j], active[i]];
-    }
+    this.shuffleCells(active, this.usesFixedCompetitiveLayout() ? `level-${this.levelIndex + 1}-glass` : null);
     const selected = active.slice(0, Math.min(count, active.length));
     selected.forEach(({ row, col }) => {
       this.glassGrid[row][col] = 1;
@@ -717,7 +808,7 @@ class SugarStormGame {
       return;
     }
 
-    const spawn = topCells[Math.floor(Math.random() * topCells.length)];
+    const spawn = topCells[Math.floor(this.randomFloat() * topCells.length)];
     const piece = this.createPiece("ingredient", spawn.row, spawn.col, SPECIALS.INGREDIENT);
     piece.drawRow = -1.2;
     this.board[spawn.row][spawn.col] = piece;
@@ -763,7 +854,7 @@ class SugarStormGame {
 
     const cells = this.allCells().filter(({ row, col }) => !this.isLockedCell(row, col));
     for (let i = cells.length - 1; i > 0; i -= 1) {
-      const j = Math.floor(Math.random() * (i + 1));
+      const j = Math.floor(this.randomFloat() * (i + 1));
       [cells[i], cells[j]] = [cells[j], cells[i]];
     }
 
@@ -819,13 +910,13 @@ class SugarStormGame {
       drawRow: row,
       drawCol: col,
       scale: 1,
-      pulse: Math.random() * Math.PI * 2,
+      pulse: this.randomFloat() * Math.PI * 2,
       special,
     };
   }
 
   randomCandyType() {
-    return CANDY_TYPES[Math.floor(Math.random() * CANDY_TYPES.length)];
+    return CANDY_TYPES[Math.floor(this.randomFloat() * CANDY_TYPES.length)];
   }
 
   wouldMatchOnSpawn(row, col, type) {
@@ -919,18 +1010,115 @@ class SugarStormGame {
   }
 
   handlePointer(clientX, clientY) {
+    const cell = this.getCellFromClientPoint(clientX, clientY);
+    if (!cell) {
+      return;
+    }
+
+    this.handleCellInput(cell.row, cell.col);
+  }
+
+  handleTouchStart(clientX, clientY) {
+    this.lastTouchAt = Date.now();
+    const cell = this.getCellFromClientPoint(clientX, clientY);
+    this.activeTouch = cell
+      ? {
+          startRow: cell.row,
+          startCol: cell.col,
+          startX: clientX,
+          startY: clientY,
+          swipeTriggered: false,
+        }
+      : null;
+  }
+
+  handleTouchMove(clientX, clientY) {
     if (this.isBusy || this.isGameOver) {
       return;
     }
 
+    if (!this.activeTouch || this.activeTouch.swipeTriggered) {
+      return;
+    }
+
+    const { startRow, startCol, startX, startY } = this.activeTouch;
+    if (!this.isInside(startRow, startCol) || !this.board[startRow][startCol] || this.isLockedCell(startRow, startCol)) {
+      return;
+    }
+
+    const rect = this.canvas.getBoundingClientRect();
+    const cellWidth = rect.width / BOARD_SIZE;
+    const cellHeight = rect.height / BOARD_SIZE;
+    const threshold = Math.max(TOUCH_SWIPE_MIN_PX, Math.min(cellWidth, cellHeight) * TOUCH_SWIPE_THRESHOLD_RATIO);
+    const deltaX = clientX - startX;
+    const deltaY = clientY - startY;
+
+    if (Math.max(Math.abs(deltaX), Math.abs(deltaY)) < threshold) {
+      return;
+    }
+
+    let targetRow = startRow;
+    let targetCol = startCol;
+    if (Math.abs(deltaX) > Math.abs(deltaY)) {
+      targetCol += deltaX > 0 ? 1 : -1;
+    } else {
+      targetRow += deltaY > 0 ? 1 : -1;
+    }
+
+    if (!this.isInside(targetRow, targetCol) || !this.board[targetRow][targetCol]) {
+      this.activeTouch.swipeTriggered = true;
+      this.selected = null;
+      return;
+    }
+
+    this.activeTouch.swipeTriggered = true;
+    this.selected = null;
+    this.hintTimer = 0;
+    this.hintCells = [];
+    this.attemptSwap(startRow, startCol, targetRow, targetCol);
+  }
+
+  handleTouchEnd(clientX, clientY) {
+    this.lastTouchAt = Date.now();
+
+    if (!this.activeTouch) {
+      return;
+    }
+
+    const touch = this.activeTouch;
+    this.activeTouch = null;
+
+    if (touch.swipeTriggered) {
+      return;
+    }
+
+    const cell = typeof clientX === "number" && typeof clientY === "number"
+      ? this.getCellFromClientPoint(clientX, clientY)
+      : null;
+
+    if (cell && cell.row === touch.startRow && cell.col === touch.startCol) {
+      this.handleCellInput(cell.row, cell.col);
+    }
+  }
+
+  getCellFromClientPoint(clientX, clientY) {
     const rect = this.canvas.getBoundingClientRect();
     const x = clientX - rect.left;
     const y = clientY - rect.top;
-    const cell = rect.width / BOARD_SIZE;
-    const col = Math.floor(x / cell);
-    const row = Math.floor(y / cell);
+    const cellWidth = rect.width / BOARD_SIZE;
+    const cellHeight = rect.height / BOARD_SIZE;
+    const col = Math.floor(x / cellWidth);
+    const row = Math.floor(y / cellHeight);
 
     if (!this.isInside(row, col)) {
+      return null;
+    }
+
+    return { row, col };
+  }
+
+  handleCellInput(row, col) {
+    if (this.isBusy || this.isGameOver) {
       return;
     }
 
@@ -1647,7 +1835,7 @@ class SugarStormGame {
           continue;
         }
         const piece = this.createPiece(this.randomCandyType(), row, col);
-        piece.drawRow = -1 - Math.random() * 2 - (col % 2) * 0.3;
+        piece.drawRow = -1 - this.randomFloat() * 2 - (col % 2) * 0.3;
         this.board[row][col] = piece;
       }
     }
@@ -1742,7 +1930,7 @@ class SugarStormGame {
     do {
       const pieces = [...basePieces];
       for (let i = pieces.length - 1; i > 0; i -= 1) {
-        const j = Math.floor(Math.random() * (i + 1));
+        const j = Math.floor(this.randomFloat() * (i + 1));
         [pieces[i], pieces[j]] = [pieces[j], pieces[i]];
       }
 
