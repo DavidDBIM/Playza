@@ -315,11 +315,102 @@ const BOARD_SHAPES = [
       "10111101",
     ],
   },
+  {
+    name: "Triangle Up",
+    mask: [
+      "00010000",
+      "00111000",
+      "01111100",
+      "11111110",
+      "11111111",
+      "11111111",
+      "11111111",
+      "11111111",
+    ],
+  },
+  {
+    name: "Triangle Down",
+    mask: [
+      "11111111",
+      "11111111",
+      "11111111",
+      "11111111",
+      "11111110",
+      "01111100",
+      "00111000",
+      "00010000",
+    ],
+  },
+  {
+    name: "Pentagon Point",
+    mask: [
+      "00111100",
+      "01111110",
+      "11111111",
+      "11111111",
+      "11111111",
+      "01111110",
+      "00111100",
+      "00011000",
+    ],
+  },
+  {
+    name: "Hexagon Plate",
+    mask: [
+      "01111110",
+      "11111111",
+      "11111111",
+      "11111111",
+      "11111111",
+      "11111111",
+      "11111111",
+      "01111110",
+    ],
+  },
+  {
+    name: "Heptagon Tilt",
+    mask: [
+      "00111110",
+      "01111110",
+      "11111111",
+      "11111111",
+      "11111111",
+      "11111111",
+      "01111110",
+      "00111100",
+    ],
+  },
+  {
+    name: "Hexagon Frame",
+    mask: [
+      "01111110",
+      "11000011",
+      "10000001",
+      "10000001",
+      "10000001",
+      "10000001",
+      "11000011",
+      "01111110",
+    ],
+  },
+  {
+    name: "Octagon Frame",
+    mask: [
+      "00111100",
+      "01000010",
+      "10000001",
+      "10000001",
+      "10000001",
+      "10000001",
+      "01000010",
+      "00111100",
+    ],
+  },
 ];
 
 const SHAPE_POOL = [...BOARD_SHAPES];
 const FIXED_LEVEL_SHAPES = [
-  BOARD_SHAPES[0],
+  BOARD_SHAPES[1],
   BOARD_SHAPES[1],
   BOARD_SHAPES[2],
   BOARD_SHAPES[3],
@@ -384,6 +475,10 @@ class SugarStormGame {
     this.hintTimer = 0;
     this.messageTimer = 0;
     this.particles = [];
+    this.effectLines = [];
+    this.effectBursts = [];
+    this.screenFlash = 0;
+    this.screenFlashColor = "rgba(255,255,255,1)";
     this.isBusy = false;
     this.isGameOver = false;
     this.levelComplete = false;
@@ -414,6 +509,7 @@ class SugarStormGame {
     this.stormCharge = 0;
     this.screenShake = 0;
     this.lastShapeName = BOARD_SHAPES[0].name;
+    this.shapeByLevel = new Map();
     this.levelRandom = null;
     this.pieceImages = {};
 
@@ -696,31 +792,48 @@ class SugarStormGame {
   }
 
   pickShape(index) {
-    if (index < 3) {
-      return BOARD_SHAPES[0];
+    if (this.shapeByLevel.has(index)) {
+      return this.shapeByLevel.get(index);
     }
 
-    const fixedShape = FIXED_LEVEL_SHAPES[index - 3];
-    if (fixedShape) {
-      this.lastShapeName = fixedShape.name;
-      return fixedShape;
+    for (let level = 0; level <= index; level += 1) {
+      if (this.shapeByLevel.has(level)) {
+        continue;
+      }
+
+      let choice = null;
+
+      if (level < 3) {
+        choice = BOARD_SHAPES[0];
+      } else {
+        const fixedShape = FIXED_LEVEL_SHAPES[level - 3];
+        if (fixedShape) {
+          choice = fixedShape;
+        }
+      }
+
+      if (!choice) {
+        const options =
+          level < 6
+            ? BOARD_SHAPES.slice(0, 4)
+            : level < 10
+              ? BOARD_SHAPES.slice(0, 10)
+              : SHAPE_POOL;
+        const previousName = this.shapeByLevel.get(level - 1)?.name || null;
+        const filtered = previousName ? options.filter((shape) => shape.name !== previousName) : options;
+        const pool = filtered.length ? filtered : options;
+        const random = this.makeSeededRandom(`level-${level + 1}-shape`);
+        choice = pool[Math.floor(random() * pool.length)];
+      }
+
+      this.shapeByLevel.set(level, choice);
     }
 
-    const options =
-      index < 6
-        ? BOARD_SHAPES.slice(0, 4)
-        : index < 10
-          ? BOARD_SHAPES.slice(0, 10)
-          : SHAPE_POOL;
-    const filtered = options.filter((shape) => shape.name !== this.lastShapeName);
-    const pool = filtered.length ? filtered : options;
-    const choice = pool[Math.floor(Math.random() * pool.length)];
-    this.lastShapeName = choice.name;
-    return choice;
+    return this.shapeByLevel.get(index);
   }
 
   usesFixedCompetitiveLayout() {
-    return this.levelIndex >= 0 && this.levelIndex < 25;
+    return this.levelIndex >= 0;
   }
 
   makeSeededRandom(seedKey) {
@@ -1129,7 +1242,7 @@ class SugarStormGame {
 
     if (this.isLockedCell(row, col)) {
       this.selected = null;
-      this.setMessage("That candy is locked under sugar glass, jelly, or crates.");
+      this.setMessage("That candy is locked under sugar glass or crates.");
       return;
     }
 
@@ -1164,7 +1277,7 @@ class SugarStormGame {
   }
 
   isLockedCell(row, col) {
-    return Boolean(this.jellyGrid[row]?.[col] > 0 || this.blockerGrid[row]?.[col] > 0 || this.glassGrid[row]?.[col] > 0);
+    return Boolean(this.blockerGrid[row]?.[col] > 0 || this.glassGrid[row]?.[col] > 0);
   }
 
   async attemptSwap(r1, c1, r2, c2) {
@@ -1174,7 +1287,7 @@ class SugarStormGame {
     const b = this.board[r2][c2];
 
     if (this.isLockedCell(r1, c1) || this.isLockedCell(r2, c2)) {
-      this.setMessage("Break the overlay first before moving that candy.");
+      this.setMessage("Break the sugar glass or crate first before moving that candy.");
       this.isBusy = false;
       return;
     }
@@ -1424,6 +1537,10 @@ class SugarStormGame {
     }
   }
 
+  isColorMatchable(piece) {
+    return Boolean(piece && piece.special !== SPECIALS.COLOR_BOMB && piece.special !== SPECIALS.INGREDIENT);
+  }
+
   findMatches() {
     const groups = [];
 
@@ -1432,7 +1549,7 @@ class SugarStormGame {
       for (let col = 1; col <= BOARD_SIZE; col += 1) {
         const current = col < BOARD_SIZE ? this.board[row][col] : null;
         const prev = this.board[row][col - 1];
-        const same = current && prev && current.type === prev.type && !current.special && !prev.special;
+        const same = this.isColorMatchable(current) && this.isColorMatchable(prev) && current.type === prev.type;
         if (same) {
           streak.push({ row, col });
         } else {
@@ -1449,7 +1566,7 @@ class SugarStormGame {
       for (let row = 1; row <= BOARD_SIZE; row += 1) {
         const current = row < BOARD_SIZE ? this.board[row][col] : null;
         const prev = this.board[row - 1][col];
-        const same = current && prev && current.type === prev.type && !current.special && !prev.special;
+        const same = this.isColorMatchable(current) && this.isColorMatchable(prev) && current.type === prev.type;
         if (same) {
           streak.push({ row, col });
         } else {
@@ -1536,6 +1653,11 @@ class SugarStormGame {
   }
 
   chooseSpecial(cluster, preferredPieces) {
+    const clusterHasSpecial = cluster.cells.some((cell) => Boolean(this.board[cell.row]?.[cell.col]?.special));
+    if (clusterHasSpecial) {
+      return null;
+    }
+
     const rowMax = Math.max(...cluster.rows.values());
     const colMax = Math.max(...cluster.cols.values());
     let special = null;
@@ -1606,6 +1728,28 @@ class SugarStormGame {
 
       if (piece.special === SPECIALS.INGREDIENT) {
         continue;
+      }
+
+      if (piece.special === SPECIALS.STRIPED_H) {
+        this.spawnEffectLine("h", cell.row, "#d7f7ff");
+        this.triggerScreenFlash(0.07, "rgba(215,247,255,1)");
+        this.playTone(680, 0.06, "square", 0.04);
+        this.playTone(170, 0.1, "sawtooth", 0.018);
+      } else if (piece.special === SPECIALS.STRIPED_V) {
+        this.spawnEffectLine("v", cell.col, "#d7f7ff");
+        this.triggerScreenFlash(0.07, "rgba(215,247,255,1)");
+        this.playTone(640, 0.06, "square", 0.04);
+        this.playTone(170, 0.1, "sawtooth", 0.018);
+      } else if (piece.special === SPECIALS.WRAPPED) {
+        this.spawnEffectBurst(cell, "#ffd2a3");
+        this.triggerScreenFlash(0.09, "rgba(255,210,163,1)");
+        this.playTone(250, 0.12, "triangle", 0.045);
+        this.playTone(95, 0.15, "sawtooth", 0.02);
+      } else if (piece.special === SPECIALS.COLOR_BOMB) {
+        this.spawnEffectBurst(cell, "#fff3a5");
+        this.triggerScreenFlash(0.16, "rgba(255,243,165,1)");
+        this.playTone(140, 0.18, "sawtooth", 0.04);
+        this.playTone(840, 0.09, "triangle", 0.03);
       }
 
       removals.set(key, cell);
@@ -1743,6 +1887,53 @@ class SugarStormGame {
         });
       }
     });
+  }
+
+  spawnEffectLine(orientation, index, color) {
+    const key = `${orientation}:${index}`;
+    const existing = this.effectLines.find((effect) => effect.key === key && effect.life > 0.08);
+    if (existing) {
+      existing.life = Math.max(existing.life, 0.24);
+      existing.color = color || existing.color;
+      return;
+    }
+    this.effectLines.push({
+      key,
+      orientation,
+      index,
+      life: 0.24,
+      maxLife: 0.24,
+      color: color || "#d7f7ff",
+    });
+  }
+
+  spawnEffectBurst(cell, color) {
+    if (!cell) {
+      return;
+    }
+    const key = `burst:${cell.row},${cell.col}`;
+    const existing = this.effectBursts.find((effect) => effect.key === key && effect.life > 0.1);
+    if (existing) {
+      existing.life = Math.max(existing.life, 0.32);
+      existing.color = color || existing.color;
+      return;
+    }
+    this.effectBursts.push({
+      key,
+      x: cell.col * CELL_SIZE + CELL_SIZE / 2,
+      y: cell.row * CELL_SIZE + CELL_SIZE / 2,
+      life: 0.32,
+      maxLife: 0.32,
+      maxRadius: CELL_SIZE * 2.2,
+      color: color || "#ffffff",
+    });
+  }
+
+  triggerScreenFlash(strength, color) {
+    this.screenFlash = Math.max(this.screenFlash, strength || 0.18);
+    if (color) {
+      this.screenFlashColor = color;
+    }
   }
 
   addStormCharge(amount) {
@@ -2025,6 +2216,20 @@ class SugarStormGame {
       particle.vy += 170 * delta;
     });
 
+    this.effectLines = this.effectLines.filter((effect) => effect.life > 0);
+    this.effectLines.forEach((effect) => {
+      effect.life -= delta;
+    });
+
+    this.effectBursts = this.effectBursts.filter((effect) => effect.life > 0);
+    this.effectBursts.forEach((effect) => {
+      effect.life -= delta;
+    });
+
+    if (this.screenFlash > 0) {
+      this.screenFlash = Math.max(0, this.screenFlash - delta * 2.6);
+    }
+
     this.popupTexts = this.popupTexts.filter((popup) => popup.life > 0);
     this.popupTexts.forEach((popup) => {
       popup.life -= delta;
@@ -2056,8 +2261,10 @@ class SugarStormGame {
     this.board.flat().filter(Boolean).forEach((piece) => this.drawPiece(ctx, piece));
     this.drawCellOverlays(ctx);
     this.drawInteractionOverlays(ctx);
+    this.drawSpecialEffects(ctx);
     this.drawParticles(ctx);
     ctx.restore();
+    this.drawScreenFlash(ctx);
     this.drawPopups(ctx);
   }
 
@@ -2118,15 +2325,15 @@ class SugarStormGame {
           const jellyImage = this.pieceImages.jelly;
           if (jellyImage?.complete && jellyImage.naturalWidth) {
             ctx.save();
-            ctx.globalAlpha = 0.88;
+            ctx.globalAlpha = 0.62;
             this.drawCellImage(ctx, jellyImage, row, col, 0.96);
             ctx.restore();
           } else {
             const x = col * CELL_SIZE + 7;
             const y = row * CELL_SIZE + 7;
             const jellyGradient = ctx.createLinearGradient(x, y, x + CELL_SIZE, y + CELL_SIZE);
-            jellyGradient.addColorStop(0, "rgba(214, 248, 255, 0.88)");
-            jellyGradient.addColorStop(1, "rgba(110, 201, 255, 0.45)");
+            jellyGradient.addColorStop(0, "rgba(214, 248, 255, 0.6)");
+            jellyGradient.addColorStop(1, "rgba(110, 201, 255, 0.28)");
             ctx.fillStyle = jellyGradient;
             this.roundRect(ctx, x, y, CELL_SIZE - 14, CELL_SIZE - 14, 18);
             ctx.fill();
@@ -2447,6 +2654,77 @@ class SugarStormGame {
     ctx.moveTo(0, -radius * 0.78);
     ctx.quadraticCurveTo(radius * 0.18, -radius * 1.08, radius * 0.38, -radius * 0.92);
     ctx.stroke();
+  }
+
+  drawSpecialEffects(ctx) {
+    this.effectLines.forEach((effect) => {
+      const alpha = Math.max(0, effect.life / effect.maxLife);
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.lineWidth = 10 + (1 - alpha) * 10;
+      ctx.lineCap = "round";
+      ctx.shadowBlur = 26;
+      ctx.shadowColor = effect.color;
+      ctx.strokeStyle = effect.color;
+      ctx.beginPath();
+      if (effect.orientation === "h") {
+        const y = effect.index * CELL_SIZE + CELL_SIZE / 2;
+        ctx.moveTo(14, y);
+        ctx.lineTo(BOARD_PIXELS - 14, y);
+      } else {
+        const x = effect.index * CELL_SIZE + CELL_SIZE / 2;
+        ctx.moveTo(x, 14);
+        ctx.lineTo(x, BOARD_PIXELS - 14);
+      }
+      ctx.stroke();
+      ctx.restore();
+    });
+
+    this.effectBursts.forEach((effect) => {
+      const alpha = Math.max(0, effect.life / effect.maxLife);
+      const t = 1 - alpha;
+      const radius = effect.maxRadius * t;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.shadowBlur = 30;
+      ctx.shadowColor = effect.color;
+      const gradient = ctx.createRadialGradient(effect.x, effect.y, 0, effect.x, effect.y, radius);
+      gradient.addColorStop(0, "rgba(255,255,255,0.0)");
+      gradient.addColorStop(0.25, this.toRgba(effect.color, 0.55 * alpha));
+      gradient.addColorStop(1, "rgba(255,255,255,0.0)");
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(effect.x, effect.y, radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    });
+  }
+
+  drawScreenFlash(ctx) {
+    if (this.screenFlash <= 0) {
+      return;
+    }
+    ctx.save();
+    ctx.globalAlpha = Math.min(0.65, this.screenFlash * 3.2);
+    ctx.fillStyle = this.screenFlashColor;
+    ctx.fillRect(0, 0, BOARD_PIXELS, BOARD_PIXELS);
+    ctx.restore();
+  }
+
+  toRgba(color, alpha) {
+    if (!color || typeof color !== "string") {
+      return `rgba(255,255,255,${alpha})`;
+    }
+    if (color.startsWith("rgba(") || color.startsWith("rgb(")) {
+      return color;
+    }
+    if (color.startsWith("#") && color.length === 7) {
+      const r = parseInt(color.slice(1, 3), 16);
+      const g = parseInt(color.slice(3, 5), 16);
+      const b = parseInt(color.slice(5, 7), 16);
+      return `rgba(${r},${g},${b},${alpha})`;
+    }
+    return `rgba(255,255,255,${alpha})`;
   }
 
   drawParticles(ctx) {
