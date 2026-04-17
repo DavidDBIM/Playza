@@ -1,7 +1,7 @@
 {
   "rewrites": [
     {
-      "source": "/((?!gameLib|assets|games|thumbnails|logoImage.png|hero.png).*)",
+      "source": "/((?!gameLib|assets|thumbnails|logoImage.png|hero.png).*)",
       "destination": "/"
     }
   ]
