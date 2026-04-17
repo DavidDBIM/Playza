@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Neon Tetris - Matrix Edition</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -45,6 +45,11 @@
                         <span class="timer-label">TIME</span>
                         <span class="timer-value" id="timer">00:00</span>
                     </div>
+                    <div class="header-actions">
+                        <button class="icon-btn" id="pause-btn" type="button" aria-label="Pause (P)">&#10074;&#10074;</button>
+                        <button class="icon-btn" id="help-btn" type="button" aria-label="How to play">?</button>
+                        <button class="icon-btn" id="settings-btn" type="button" aria-label="Settings">&#9881;</button>
+                    </div>
                 </div>
                 
                 <div class="stats-row">
@@ -63,6 +68,17 @@
                         <div class="stat-value" id="lines-mobile">0</div>
                     </div>
                 </div>
+
+                <div class="mini-panels" aria-label="Next and hold">
+                    <div class="mini-panel">
+                        <div class="panel-title">NEXT</div>
+                        <canvas id="next-canvas-main" width="80" height="80"></canvas>
+                    </div>
+                    <div class="mini-panel">
+                        <div class="panel-title">HOLD</div>
+                        <canvas id="hold-canvas-main" width="80" height="80"></canvas>
+                    </div>
+                </div>
                 
                 <div class="canvas-wrapper">
                     <canvas id="game-canvas" width="300" height="600"></canvas>
@@ -71,10 +87,19 @@
                         <div class="overlay-content">
                             <h2 class="overlay-title" id="overlay-title">READY?</h2>
                             <p class="overlay-subtitle">Press Start to Enter the Matrix</p>
+                            <div class="mode-select" id="mode-select" aria-label="Game mode">
+                                <button class="mode-btn active" id="mode-classic" type="button" data-mode="classic">CLASSIC</button>
+                                <button class="mode-btn" id="mode-sprint" type="button" data-mode="sprint40">SPRINT 40</button>
+                            </div>
+                            <p class="mode-hint" id="mode-hint">Classic mode: endless run.</p>
                             <div class="game-stats" id="game-stats" style="display: none;">
                                 <div class="game-stat-row">
                                     <span>FINAL SCORE</span>
                                     <span id="final-score">0</span>
+                                </div>
+                                <div class="game-stat-row">
+                                    <span>FINAL TIME</span>
+                                    <span id="final-time">00:00</span>
                                 </div>
                                 <div class="game-stat-row">
                                     <span>LINES CLEARED</span>
@@ -84,6 +109,10 @@
                                     <span>LEVEL REACHED</span>
                                     <span id="final-level">1</span>
                                 </div>
+                                <div class="game-stat-row" id="best-time-row" style="display:none;">
+                                    <span>BEST SPRINT</span>
+                                    <span id="best-time">--:--</span>
+                                </div>
                             </div>
                             <button class="start-btn" id="start-btn" onclick="playButtonClicked()">START MODULE</button>
                         </div>
@@ -92,26 +121,28 @@
                 
                 <div class="touch-controls">
                     <div class="control-group movement">
-                        <button class="touch-btn" id="btn-left">◀</button>
-                        <button class="touch-btn" id="btn-down">▼</button>
-                        <button class="touch-btn" id="btn-right">▶</button>
+                        <button class="touch-btn" id="btn-left" aria-label="Move left">&#9664;</button>
+                        <button class="touch-btn" id="btn-down" aria-label="Soft drop">&#9660;</button>
+                        <button class="touch-btn" id="btn-right" aria-label="Move right">&#9654;</button>
                     </div>
                     <div class="control-group actions">
-                        <button class="touch-btn action" id="btn-rotate">↻</button>
-                        <button class="touch-btn action drop" id="btn-drop">DROP</button>
+                        <button class="touch-btn action" id="btn-rotate" aria-label="Rotate">&#8635;</button>
+                        <button class="touch-btn action" id="btn-hold" aria-label="Hold">HOLD</button>
+                        <button class="touch-btn action drop" id="btn-drop" aria-label="Hard drop">DROP</button>
                     </div>
                 </div>
             </div>
             
             <div class="sidebar right-sidebar side-panels">
-                <div class="highscore-panel">
-                    <div class="panel-title">TOP RECORD</div>
-                    <div class="highscore-value" id="highscore">0</div>
-                </div>
-                
                 <div class="preview-panel">
                     <div class="panel-title">NEXT MODULE</div>
-                    <canvas id="next-canvas" width="80" height="80"></canvas>
+                    <div class="next-queue" id="next-queue" aria-label="Next pieces">
+                        <canvas class="next-canvas" id="next-canvas-0" width="80" height="80"></canvas>
+                        <canvas class="next-canvas" id="next-canvas-1" width="80" height="80"></canvas>
+                        <canvas class="next-canvas" id="next-canvas-2" width="80" height="80"></canvas>
+                        <canvas class="next-canvas" id="next-canvas-3" width="80" height="80"></canvas>
+                        <canvas class="next-canvas" id="next-canvas-4" width="80" height="80"></canvas>
+                    </div>
                 </div>
                 
                 <div class="hold-panel">
@@ -121,7 +152,7 @@
                 
                 <div class="sound-toggle">
                     <button class="sound-btn" id="sound-btn" onclick="toggleSound()">
-                        <span class="sound-icon">🔊</span>
+                        <span class="sound-icon" aria-hidden="true">&#128266;</span>
                     </button>
                 </div>
             </div>
@@ -130,14 +161,68 @@
     
     <!-- Rotate Overlay -->
     <div id="rotate-overlay">
-        <div class="rotate-icon">📱</div>
+        <div class="rotate-icon" aria-hidden="true">&#128241;</div>
         <p>PLEASE ROTATE YOUR DEVICE</p>
         <span>Landscape mode required for Matrix stability</span>
+    </div>
+
+    <!-- Help Modal -->
+    <div class="modal hidden" id="help-modal" role="dialog" aria-modal="true" aria-labelledby="help-title">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2 class="modal-title" id="help-title">HOW TO PLAY</h2>
+                <button class="icon-btn close-btn" id="help-close" type="button" aria-label="Close help">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-section-title">CONTROLS</div>
+                <ul class="help-list">
+                    <li><span class="key">←</span><span>Move</span><span class="key">→</span></li>
+                    <li><span class="key">↓</span><span>Soft drop</span></li>
+                    <li><span class="key">↑</span><span>Rotate</span></li>
+                    <li><span class="key">Z</span><span>Rotate CCW</span></li>
+                    <li><span class="key">Space</span><span>Hard drop</span></li>
+                    <li><span class="key">Shift / C</span><span>Hold</span></li>
+                    <li><span class="key">P / Esc</span><span>Pause</span></li>
+                    <li><span class="key">R</span><span>Restart</span></li>
+                </ul>
+                <div class="modal-section-title">TIPS</div>
+                <ul class="help-list tips">
+                    <li><span>Hard drop gives bonus points.</span></li>
+                    <li><span>Back-to-back TETRIS clears score more.</span></li>
+                    <li><span>Use HOLD to save a piece for later.</span></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal hidden" id="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2 class="modal-title" id="settings-title">SETTINGS</h2>
+                <button class="icon-btn close-btn" id="settings-close" type="button" aria-label="Close settings">&times;</button>
+            </div>
+            <div class="modal-body">
+                <label class="toggle-row">
+                    <input type="checkbox" id="setting-ghost" checked>
+                    <span>Ghost piece</span>
+                </label>
+                <label class="toggle-row">
+                    <input type="checkbox" id="setting-matrix" checked>
+                    <span>Matrix background</span>
+                </label>
+                <label class="toggle-row">
+                    <input type="checkbox" id="setting-sound" checked>
+                    <span>Sound</span>
+                </label>
+            </div>
+        </div>
     </div>
     
     <audio id="clearsound" src="sound/pop.ogg" preload="auto"></audio>
     <script src="js/sdk.js"></script>
     <script src="js/tetris.js"></script>
+    <script src="js/ui.js"></script>
     <script src="js/controller.js"></script>
     <script src="js/render.js"></script>
     <script src="js/matrix.js"></script>
