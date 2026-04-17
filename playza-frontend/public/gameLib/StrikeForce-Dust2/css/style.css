@@ -1,0 +1,486 @@
+@import url("https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Orbitron:wght@700;900&display=swap");
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  overflow: hidden;
+  background: #0a0a0a;
+  font-family: "Rajdhani", sans-serif;
+  user-select: none;
+}
+
+#game-container { width: 100vw; height: 100vh; position: relative; }
+canvas { display: block; }
+
+/* ── HUD ─────────────────────────────────────────────── */
+#hud {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none; z-index: 100;
+}
+
+/* ── Crosshair ───────────────────────────────────────── */
+#crosshair {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 20px; height: 20px;
+  transition: all 0.1s ease;
+}
+#crosshair.spread { width: 30px; height: 30px; }
+#crosshair.ads    { width: 4px;  height: 4px; }
+
+#crosshair::before,
+#crosshair::after {
+  content: "";
+  position: absolute;
+  background: rgba(0, 255, 100, 0.9);
+  box-shadow: 0 0 4px rgba(0, 255, 100, 0.5);
+}
+#crosshair::before {
+  width: 2px; height: 40%;
+  left: 50%; top: 0;
+  transform: translateX(-50%);
+  box-shadow: 0 10px 0 0 rgba(0, 255, 100, 0.9);
+}
+#crosshair::after {
+  width: 40%; height: 2px;
+  top: 50%; left: 0;
+  transform: translateY(-50%);
+  box-shadow: 10px 0 0 0 rgba(0, 255, 100, 0.9);
+}
+
+/* ── Scope overlay ───────────────────────────────────── */
+#scope-overlay {
+  position: fixed; inset: 0;
+  display: none;
+  pointer-events: none;
+  background: radial-gradient(circle 35vh at 50% 50%, transparent 35vh, rgba(0,0,0,0.97) 35.5vh);
+  z-index: 150;
+}
+#scope-overlay.visible { display: block; }
+#scope-overlay::before,
+#scope-overlay::after {
+  content: ""; position: absolute;
+  background: rgba(100, 255, 120, 0.5);
+}
+#scope-overlay::before { width: 1px; height: 100%; left: 50%; }
+#scope-overlay::after  { height: 1px; width: 100%; top: 50%; }
+
+/* ── Crouch indicator ────────────────────────────────── */
+#crouch-indicator {
+  position: absolute; bottom: 90px; left: 50%;
+  transform: translateX(-50%);
+  font-family: "Orbitron", monospace;
+  font-size: 11px; letter-spacing: 2px;
+  color: rgba(0, 255, 100, 0.7);
+  opacity: 0; transition: opacity 0.2s;
+}
+#crouch-indicator.visible { opacity: 1; }
+
+/* ── Health ──────────────────────────────────────────── */
+#health-container {
+  position: absolute; bottom: 30px; left: 30px;
+  display: flex; align-items: center; gap: 15px;
+}
+#health-icon {
+  width: 44px; height: 44px;
+  background: linear-gradient(135deg, #ff4444, #cc0000);
+  clip-path: polygon(50% 0%, 100% 35%, 82% 100%, 50% 75%, 18% 100%, 0% 35%);
+  animation: hbeat 1.5s ease-in-out infinite;
+}
+@keyframes hbeat {
+  0%,100% { transform: scale(1); }
+  50%      { transform: scale(1.08); }
+}
+#health-bar-bg {
+  width: 220px; height: 22px;
+  background: rgba(0,0,0,0.7);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 3px; overflow: hidden; position: relative;
+}
+#health-bar {
+  height: 100%; width: 100%;
+  background: linear-gradient(90deg, #00ff66, #00cc55);
+  transition: width 0.3s, background 0.3s;
+}
+#health-bar::after {
+  content: ""; position: absolute; top: 0; left: 0; right: 0;
+  height: 50%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.25), transparent);
+}
+#health-text {
+  font-family: "Orbitron", monospace;
+  font-size: 26px; font-weight: 900; color: #fff;
+  text-shadow: 0 0 10px rgba(0, 255, 100, 0.5);
+  min-width: 50px;
+}
+#armor-bar-bg {
+  width: 220px; height: 8px;
+  background: rgba(0,0,0,0.5);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 2px; overflow: hidden; margin-top: 4px;
+}
+#armor-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #5c9eff, #3a7fd5);
+  transition: width 0.3s;
+}
+#health-labels { display: flex; flex-direction: column; gap: 2px; }
+
+/* ── Ammo ────────────────────────────────────────────── */
+#ammo-container {
+  position: absolute; bottom: 30px; right: 30px; text-align: right;
+}
+#weapon-name {
+  font-family: "Orbitron", monospace; font-size: 13px;
+  color: rgba(255,255,255,0.55); text-transform: uppercase;
+  letter-spacing: 2px; margin-bottom: 4px;
+}
+#ammo-display {
+  font-family: "Orbitron", monospace;
+  font-size: 44px; font-weight: 900; color: #fff;
+  text-shadow: 0 0 15px rgba(255,200,0,0.4);
+  line-height: 1;
+}
+#ammo-display span { font-size: 26px; color: rgba(255,255,255,0.45); }
+#ammo-bar-bg {
+  width: 140px; height: 4px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 2px; overflow: hidden;
+  margin-left: auto; margin-top: 4px;
+}
+#ammo-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #ffcc00, #ff9900);
+  transition: width 0.15s;
+}
+
+/* ── Score ───────────────────────────────────────────── */
+#score-container {
+  position: absolute; top: 20px; left: 50%;
+  transform: translateX(-50%);
+  display: flex; gap: 40px;
+  background: rgba(0,0,0,0.75);
+  padding: 12px 28px; border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.08);
+  backdrop-filter: blur(4px);
+}
+.team-score { text-align: center; }
+.team-label { font-size: 11px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 4px; }
+.ct-label { color: #5c9eff; }
+.t-label  { color: #ffcc00; }
+.score-value { font-family: "Orbitron", monospace; font-size: 34px; font-weight: 900; }
+.ct-score { color: #5c9eff; }
+.t-score  { color: #ffcc00; }
+#round-timer {
+  font-family: "Orbitron", monospace; font-size: 20px;
+  color: rgba(255,255,255,0.7); text-align: center;
+  align-self: center; padding: 0 20px;
+  border-left: 1px solid rgba(255,255,255,0.15);
+  border-right: 1px solid rgba(255,255,255,0.15);
+}
+#round-timer.danger { color: #ff4444; animation: blink 0.5s infinite; }
+@keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+
+/* ── Kill Feed ───────────────────────────────────────── */
+#kill-feed {
+  position: absolute; top: 20px; right: 20px;
+  display: flex; flex-direction: column; gap: 5px;
+  max-width: 300px;
+}
+.kill-entry {
+  background: rgba(0,0,0,0.7); padding: 7px 14px;
+  border-radius: 3px; font-size: 13px; color: #fff;
+  display: flex; align-items: center; gap: 8px;
+  animation: slideIn 0.3s ease;
+  border-left: 3px solid #ff4444;
+}
+.kill-entry.player-kill { border-left-color: #00ff66; }
+.kill-weapon-icon { font-size: 16px; }
+@keyframes slideIn {
+  from { opacity:0; transform:translateX(40px); }
+  to   { opacity:1; transform:translateX(0); }
+}
+
+/* ── Minimap ─────────────────────────────────────────── */
+#minimap-container {
+  position: absolute; top: 80px; left: 20px;
+  width: 190px;
+  background: rgba(0,0,0,0.8);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 6px; overflow: hidden;
+}
+#minimap-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 5px 10px; border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+#minimap-title {
+  font-family: "Orbitron", monospace; font-size: 9px;
+  letter-spacing: 2px; color: rgba(255,255,255,0.4);
+}
+#minimap-zoom {
+  font-family: "Orbitron", monospace; font-size: 9px;
+  color: rgba(255,200,0,0.6); cursor: pointer; pointer-events: auto;
+}
+#minimap-canvas { width: 190px; height: 190px; display: block; }
+
+/* ── Grenade Slots ───────────────────────────────────── */
+#grenade-slots {
+  position: absolute; bottom: 100px; right: 30px;
+  display: flex; flex-direction: column; gap: 4px; align-items: flex-end;
+}
+.nade-slot {
+  background: rgba(0,0,0,0.6);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 4px; padding: 4px 10px;
+  font-size: 12px; color: rgba(255,255,255,0.5);
+  display: flex; align-items: center; gap: 6px;
+}
+.nade-slot.active { border-color: #ffcc00; color: #fff; }
+.nade-slot .nade-count { font-family: "Orbitron", monospace; font-size: 11px; }
+
+/* ── Weapon Slots ────────────────────────────────────── */
+#weapon-slots {
+  position: absolute; bottom: 78px; left: 50%;
+  transform: translateX(-50%);
+  display: flex; gap: 4px;
+}
+.weapon-slot {
+  width: 78px; height: 48px;
+  background: rgba(0,0,0,0.6);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 4px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  font-size: 10px; color: rgba(255,255,255,0.45);
+  text-transform: uppercase; gap: 2px; position: relative;
+}
+.weapon-slot.active { border-color: #ffcc00; background: rgba(255,200,0,0.18); color: #fff; }
+.weapon-slot .slot-num {
+  position: absolute; top: 3px; left: 6px;
+  font-size: 9px; color: rgba(255,255,255,0.3);
+  font-family: "Orbitron", monospace;
+}
+.weapon-slot .slot-icon { font-size: 18px; }
+
+/* ── Hit Marker ──────────────────────────────────────── */
+#hit-marker {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 28px; height: 28px;
+  opacity: 0; pointer-events: none;
+}
+#hit-marker::before, #hit-marker::after {
+  content: ""; position: absolute;
+  background: #ff3333;
+}
+#hit-marker::before {
+  width: 12px; height: 2px;
+  top: 50%; left: 50%;
+  transform: translate(-50%,-50%) rotate(45deg);
+}
+#hit-marker::after {
+  width: 12px; height: 2px;
+  top: 50%; left: 50%;
+  transform: translate(-50%,-50%) rotate(-45deg);
+}
+#hit-marker.active { animation: hitMarker 0.22s ease forwards; }
+#hit-marker.headshot::before,
+#hit-marker.headshot::after { background: #ffaa00; }
+@keyframes hitMarker {
+  0%  { opacity:0; transform:translate(-50%,-50%) scale(0.4); }
+  50% { opacity:1; transform:translate(-50%,-50%) scale(1.3); }
+  100%{ opacity:0; transform:translate(-50%,-50%) scale(1); }
+}
+
+/* ── Damage Overlay ──────────────────────────────────── */
+#damage-overlay {
+  position: fixed; inset: 0; pointer-events: none;
+  opacity: 0; transition: opacity 0.08s;
+}
+#damage-overlay.active {
+  background: radial-gradient(ellipse at center, transparent 25%, rgba(255,0,0,0.45) 100%);
+  opacity: 1;
+}
+
+/* ── Stamina / Sprint ────────────────────────────────── */
+#stamina-bar-bg {
+  position: absolute; bottom: 58px; left: 30px;
+  width: 120px; height: 3px;
+  background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden;
+}
+#stamina-bar {
+  height: 100%; width: 100%;
+  background: linear-gradient(90deg, #ffcc00, #ff9900);
+  transition: width 0.1s;
+}
+
+/* ── Objective Banner ────────────────────────────────── */
+#objective-banner {
+  position: absolute; top: 90px; left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.75); padding: 8px 24px;
+  border-radius: 4px; border-left: 3px solid #ffcc00;
+  font-family: "Orbitron", monospace; font-size: 12px;
+  color: rgba(255,255,255,0.8); letter-spacing: 1px;
+  opacity: 0; transition: opacity 0.5s;
+}
+#objective-banner.visible { opacity: 1; }
+
+/* ── Compass ─────────────────────────────────────────── */
+#compass {
+  position: absolute; top: 20px; left: 50%;
+  transform: translateX(-50%);
+  margin-top: 72px;
+  font-family: "Orbitron", monospace; font-size: 11px;
+  color: rgba(255,255,255,0.35); letter-spacing: 3px; text-align: center;
+  display: none;
+}
+
+/* ── Start Screen ────────────────────────────────────── */
+#start-screen {
+  position: fixed; inset: 0;
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #0a0a0a 100%);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  z-index: 1000;
+}
+#start-screen h1 {
+  font-family: "Orbitron", monospace; font-size: 62px; font-weight: 900;
+  color: #fff; text-transform: uppercase; letter-spacing: 10px;
+  margin-bottom: 8px; text-shadow: 0 0 30px rgba(255,200,0,0.5);
+}
+#start-screen h2 {
+  font-family: "Rajdhani", sans-serif; font-size: 24px;
+  color: #ffcc00; text-transform: uppercase; letter-spacing: 12px;
+  margin-bottom: 50px;
+}
+#start-btn {
+  padding: 18px 55px; font-family: "Orbitron", monospace;
+  font-size: 22px; font-weight: 700; color: #000;
+  background: linear-gradient(135deg, #ffcc00, #ff9900);
+  border: none; border-radius: 5px; cursor: pointer;
+  text-transform: uppercase; letter-spacing: 3px;
+  transition: all 0.3s; pointer-events: auto;
+}
+#start-btn:hover { transform: scale(1.06); box-shadow: 0 0 30px rgba(255,200,0,0.5); }
+#controls-info {
+  margin-top: 36px; color: rgba(255,255,255,0.45);
+  text-align: center; line-height: 2.2; font-size: 14px;
+}
+#controls-info span {
+  display: inline-block; background: rgba(255,255,255,0.1);
+  padding: 3px 12px; border-radius: 3px; margin: 0 4px;
+  font-family: "Orbitron", monospace; font-size: 11px; color: #fff;
+}
+#feature-list {
+  display: flex; gap: 20px; margin-top: 30px;
+  flex-wrap: wrap; justify-content: center; max-width: 700px;
+}
+.feature-badge {
+  background: rgba(0,255,100,0.08); border: 1px solid rgba(0,255,100,0.2);
+  padding: 6px 14px; border-radius: 20px; font-size: 12px;
+  color: rgba(0,255,100,0.8); letter-spacing: 1px;
+}
+
+/* ── Game Over ───────────────────────────────────────── */
+#game-over {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.92);
+  display: none; flex-direction: column;
+  align-items: center; justify-content: center; z-index: 1000;
+}
+#game-over h1 {
+  font-family: "Orbitron", monospace; font-size: 58px;
+  color: #ff4444; text-transform: uppercase; margin-bottom: 28px;
+}
+#final-stats {
+  display: flex; gap: 40px; margin-bottom: 40px;
+}
+.stat-box {
+  text-align: center;
+  background: rgba(255,255,255,0.05);
+  padding: 16px 28px; border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.stat-label { font-size: 12px; color: rgba(255,255,255,0.4); letter-spacing: 2px; text-transform: uppercase; }
+.stat-value { font-family: "Orbitron", monospace; font-size: 32px; color: #fff; }
+#restart-btn {
+  padding: 14px 38px; font-family: "Orbitron", monospace;
+  font-size: 17px; color: #000; background: #ffcc00;
+  border: none; border-radius: 5px; cursor: pointer;
+  text-transform: uppercase; pointer-events: auto;
+  transition: all 0.3s;
+}
+#restart-btn:hover { transform: scale(1.05); box-shadow: 0 0 20px rgba(255,200,0,0.4); }
+
+/* ── Announcement Banner ─────────────────────────────── */
+#announcement {
+  position: absolute; top: 35%; left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: "Orbitron", monospace; font-size: 28px; font-weight: 900;
+  color: #fff; text-transform: uppercase; letter-spacing: 4px;
+  text-Shadow: 0 0 20px rgba(255,200,0,0.7);
+  opacity: 0; transition: opacity 0.3s; pointer-events: none;
+  text-align: center;
+}
+#announcement.visible { opacity: 1; }
+
+/* ─── Orientation Lock Overlay ─────────────────────── */
+#rotate-overlay {
+  position: fixed; inset: 0; background: rgba(0, 0, 0, 0.98);
+  display: none; flex-direction: column; align-items: center; justify-content: center;
+  z-index: 10000; text-align: center; color: #fff; transform: translateZ(0); 
+  backdrop-filter: blur(10px);
+}
+@media screen and (orientation: portrait) {
+  #rotate-overlay { display: flex; }
+}
+.rotate-icon { font-size: 60px; margin-bottom: 25px; animation: rotateDevice 2s infinite ease-in-out; }
+@keyframes rotateDevice { 0% { transform: rotate(0deg); } 50% { transform: rotate(90deg); } 100% { transform: rotate(0deg); } }
+#rotate-overlay p { font-family: 'Orbitron', sans-serif; font-size: 22px; font-weight: 900; letter-spacing: 3px; text-shadow: 0 0 10px rgba(255,204,0,0.5); }
+#rotate-overlay span { font-size: 16px; opacity: 0.7; margin-top: 10px; }
+
+/* ─── Mobile Control Layout ───────────────────────────── */
+#mobile-controls {
+  position: absolute; inset: 0; pointer-events: none; z-index: 200; display: none;
+}
+@media (max-width: 1024px) {
+  #mobile-controls { display: block; }
+}
+
+#joystick-container {
+  position: absolute; bottom: 40px; left: 40px; width: 140px; height: 140px;
+  pointer-events: auto; touch-action: none; 
+}
+#joystick-base {
+  width: 100%; height: 100%; border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1); border: 2px solid rgba(255,255,255,0.2);
+}
+#joystick-knob {
+  position: absolute; top: 35px; left: 35px; width: 70px; height: 70px;
+  border-radius: 50%; background: rgba(255, 204, 0, 0.8);
+  box-shadow: 0 0 15px rgba(255, 204, 0, 0.4); pointer-events: none;
+}
+
+#action-buttons {
+  position: absolute; bottom: 40px; right: 40px; display: grid; gap: 15px; grid-template-columns: repeat(2, auto);
+  pointer-events: auto; align-items: flex-end;
+}
+.mobile-btn {
+  width: 70px; height: 70px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.3);
+  background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); color: #fff; font-size: 24px;
+  display: flex !important; align-items: center; justify-content: center; user-select: none;
+}
+#btn-shoot { width: 90px; height: 90px; border-color: rgba(255,0,0,0.5); background: rgba(255,0,0,0.2); }
+.side-buttons { display: flex; flex-direction: column; gap: 10px; }
+.mobile-btn:active { background: rgba(255,204,0,0.5); transform: scale(0.9); transition: 0.1s; }
+
+/* ── HUD Sizing for Small Screens ─────────────────── */
+@media (max-width: 768px) {
+  #minimap-container { width: 140px; height: 140px; }
+  #minimap-canvas { width: 140px; height: 140px; }
+  #health-container { bottom: 10px; left: 10px; scale: 0.8; transform-origin: left bottom; }
+  #ammo-container { bottom: 10px; right: 10px; scale: 0.8; transform-origin: right bottom; }
+  #score-container { padding: 6px 14px; top: 10px; scale: 0.8; }
+  #weapon-slots { display: none; } /* On mobile, only current weapon or cycle is shown */
+  #grenade-slots { display: none; }
+}

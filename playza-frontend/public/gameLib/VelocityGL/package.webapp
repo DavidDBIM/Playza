@@ -1,0 +1,10 @@
+{
+    "name": "Playza Racing",
+    "description": "Experience Playza Racing HQ, a futuristic high-speed warzone for champions.",
+    "package_path" : "package.zip",
+    "version": "1.0.1",
+    "developer": {
+        "name": "Playza Team",
+        "url": "https://playza.io"
+    }
+}

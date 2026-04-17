@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sugar Storm Smash</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Baloo+2:wght@600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <section class="hud-card">
+        <div class="brand-block">
+          <!-- <p class="eyebrow">Playza games</p> -->
+          <h1>Sugar Storm Smash</h1>
+          <p class="tagline">
+            Ride the candy tempest, trigger storm powers, and beat each sweet
+            objective before the sugar squall burns out.
+          </p>
+        </div>
+
+        <div class="info-cluster" id="infoPanel">
+          <div class="goal-panel">
+            <div>
+              <p class="goal-title">Guide</p>
+              <p class="goal-copy">
+                Match 3 to clear candies, match 4 or 5 to create power candies,
+                chain special combos, and build Sugar Rush charge for storm
+                clears.
+              </p>
+            </div>
+          </div>
+
+          <div class="goal-panel">
+            <div>
+              <p class="goal-title">Rules</p>
+              <p class="goal-copy">
+                Striped clears a line, wrapped blasts a zone, color bomb bends
+                the board, and deeper levels add jelly, crates, sugar glass,
+                and ingredient storms.
+              </p>
+            </div>
+          </div>
+
+          <div class="goal-panel">
+            <div>
+              <p class="goal-title">Progression</p>
+              <p class="goal-copy">
+                Early levels teach the basics, then the endless climb shifts to
+                random board shapes, storm modes, layered blockers, and
+                drop-objective levels.
+              </p>
+            </div>
+          </div>
+
+          <div class="goal-panel">
+            <div>
+              <p class="goal-title">Win Conditions</p>
+              <p class="goal-copy">
+                A level is complete only when you hit the target score and
+                finish every active objective: candy orders, jelly, crates,
+                sugar glass, and ingredient drops if they are present.
+              </p>
+            </div>
+          </div>
+
+          <div class="tip-card">
+            <p id="messageLine">
+              Swap neighboring candies to create matches of 3 or more.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="board-card">
+        <div class="board-head">
+          <div>
+            <p class="eyebrow">PLAYZA.games</p>
+            <h2>Sugar Storm Smash</h2>
+          </div>
+          <div class="board-head-actions">
+            <button
+              id="infoButton"
+              type="button"
+              class="icon-button"
+              aria-label="Open rules and info"
+            >
+              ⓘ
+            </button>
+            <button
+              id="shuffleButton"
+              type="button"
+              class="icon-button"
+              aria-label="Shuffle board"
+            >
+              ⟳
+            </button>
+            <span class="shuffle-count" id="shuffleCount">2</span>
+          </div>
+        </div>
+
+        <div class="mobile-info-panel hidden" id="mobileInfoPanel">
+          <div class="goal-panel mobile-info-card">
+            <p class="goal-title">Rules & Info</p>
+            <p class="goal-copy">
+              Match 3 to clear, match 4 or 5 to create power candies, and build
+              storm charge through chained clears and special combos.
+            </p>
+            <p class="goal-copy">
+              Objectives can include candy orders, jelly, crates, sugar glass,
+              and ingredient drops. You must finish all active objectives and
+              the score target to win.
+            </p>
+          </div>
+        </div>
+
+        <div class="board-stats" id="boardStats">
+          <article class="board-stat">
+            <span class="board-icon">★</span><strong id="scoreValue">0</strong
+            ><span class="board-label">Score</span>
+          </article>
+          <article class="board-stat">
+            <span class="board-icon">↔</span><strong id="movesValue">0</strong
+            ><span class="board-label">Moves</span>
+          </article>
+          <article class="board-stat">
+            <span class="board-icon">⬆</span><strong id="levelValue">1</strong
+            ><span class="board-label">Level</span>
+          </article>
+          <article class="board-stat">
+            <span class="board-icon">◎</span><strong id="targetValue">0</strong
+            ><span class="board-label">Target</span>
+          </article>
+          <article class="board-stat">
+            <span class="board-icon">✦</span><strong id="chainValue">x1</strong
+            ><span class="board-label">Chain</span>
+          </article>
+          <article class="board-stat">
+            <span class="board-icon">⬢</span
+            ><strong id="boardTypeValue">Classic</strong
+            ><span class="board-label">Board</span>
+          </article>
+          <article class="board-stat storm-stat">
+            <span class="board-icon">âš¡</span><strong id="stormValue">0%</strong
+            ><span class="board-label">Storm</span>
+          </article>
+        </div>
+
+        <div class="goal-panel board-orders">
+          <div>
+            <p class="goal-title">Candy Orders</p>
+          </div>
+          <div class="goal-list" id="goalList"></div>
+        </div>
+
+        <div class="canvas-wrap">
+          <canvas
+            id="gameCanvas"
+            width="720"
+            height="720"
+            aria-label="Candy match 3 game board"
+          ></canvas>
+          <div class="overlay hidden" id="overlay">
+            <div class="overlay-card">
+              <p class="overlay-kicker" id="overlayKicker">Sweet!</p>
+              <h3 id="overlayTitle">Level Complete</h3>
+              <p id="overlayText">You cleared the orders.</p>
+              <button id="overlayButton" type="button">Next Level</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="screen-overlay" id="screenOverlay">
+      <div class="screen-card">
+        <p class="overlay-kicker" id="screenKicker">Sugar Storm Smash</p>
+        <h3 id="screenTitle">Endless Sweet Run</h3>
+        <p id="screenText">
+          Beat the opening levels, then keep climbing forever through generated
+          targets, changing boards, jelly tiles, and extra pressure.
+        </p>
+        <div class="map-strip" id="mapStrip"></div>
+        <button id="screenButton" type="button">Start Run</button>
+      </div>
+    </div>
+
+    <script src="./game.js"></script>
+  </body>
+</html>

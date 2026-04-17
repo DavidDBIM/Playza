@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rubik's Cube 3D</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="game-canvas"></canvas>
+
+        <!-- Background grid effect -->
+        <div id="bg-grid"></div>
+
+        <!-- Top bar -->
+        <div id="top-bar">
+            <div id="title-area">
+                <div class="logo">
+                    <span class="logo-icon">&#9632;</span>
+                    <span class="logo-text">RUBIK'S</span>
+                </div>
+                <div id="difficulty-badge">3x3</div>
+            </div>
+
+            <div id="stats-bar">
+                <div class="stat-card">
+                    <div class="stat-label">TIME</div>
+                    <div class="stat-value" id="timer">00:00.0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">MOVES</div>
+                    <div class="stat-value" id="move-counter">0</div>
+                </div>
+                <div class="stat-card" id="best-time-card">
+                    <div class="stat-label">BEST</div>
+                    <div class="stat-value" id="best-time">--:--.--</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Left sidebar: controls -->
+        <div id="left-panel">
+            <div class="panel-section">
+                <div class="panel-title">CUBE</div>
+                <div id="size-buttons" class="button-group">
+                    <button class="size-btn" data-size="2">2x2</button>
+                    <button class="size-btn active" data-size="3">3x3</button>
+                    <button class="size-btn" data-size="4">4x4</button>
+                </div>
+            </div>
+
+            <div class="panel-section">
+                <div class="panel-title">ACTIONS</div>
+                <button id="btn-scramble" class="action-btn primary">
+                    <span class="btn-icon">&#9851;</span> Scramble
+                </button>
+                <button id="btn-reset" class="action-btn">
+                    <span class="btn-icon">&#8634;</span> Reset
+                </button>
+                <button id="btn-solve" class="action-btn">
+                    <span class="btn-icon">&#10003;</span> Auto Solve
+                </button>
+            </div>
+
+            <div class="panel-section">
+                <div class="panel-title">THEME</div>
+                <div id="theme-buttons" class="button-group">
+                    <button class="theme-btn active" data-theme="classic">Classic</button>
+                    <button class="theme-btn" data-theme="neon">Neon</button>
+                    <button class="theme-btn" data-theme="pastel">Pastel</button>
+                </div>
+            </div>
+
+            <div class="panel-section">
+                <div class="panel-title">SPEED</div>
+                <div class="slider-container">
+                    <input type="range" id="anim-speed" min="1" max="10" value="5" class="speed-slider">
+                    <div class="slider-labels">
+                        <span>Slow</span>
+                        <span id="speed-value">5</span>
+                        <span>Fast</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right panel: move history -->
+        <div id="right-panel">
+            <div class="panel-section">
+                <div class="panel-title">NOTATION</div>
+                <div id="notation-legend">
+                    <div class="notation-row"><span class="n-face n-R">R</span> Right CW</div>
+                    <div class="notation-row"><span class="n-face n-L">L</span> Left CW</div>
+                    <div class="notation-row"><span class="n-face n-U">U</span> Up CW</div>
+                    <div class="notation-row"><span class="n-face n-D">D</span> Down CW</div>
+                    <div class="notation-row"><span class="n-face n-F">F</span> Front CW</div>
+                    <div class="notation-row"><span class="n-face n-B">B</span> Back CW</div>
+                    <div class="notation-note">' = Counter-clockwise</div>
+                </div>
+            </div>
+            <div class="panel-section">
+                <div class="panel-title">MOVE HISTORY</div>
+                <div id="move-history"></div>
+            </div>
+        </div>
+
+        <!-- Scramble animation overlay -->
+        <div id="scramble-overlay" class="hidden">
+            <div class="scramble-text">Scrambling...</div>
+        </div>
+
+        <!-- Win screen -->
+        <div id="win-screen" class="hidden">
+            <div class="win-card">
+                <div class="win-badge">&#9733;</div>
+                <div class="win-title">CUBE SOLVED!</div>
+                <div class="win-stats">
+                    <div class="win-stat"><span class="ws-label">Time</span><span class="ws-value" id="win-time">00:00.0</span></div>
+                    <div class="win-stat"><span class="ws-label">Moves</span><span class="ws-value" id="win-moves">0</span></div>
+                </div>
+                <div id="win-best" class="win-best hidden">&#9733; NEW BEST TIME!</div>
+                <button id="btn-play-again" class="action-btn primary" style="margin-top: 20px;">Play Again</button>
+            </div>
+        </div>
+
+        <!-- Particles canvas -->
+        <canvas id="particles-canvas"></canvas>
+
+        <!-- Keyboard guide -->
+        <div id="keyboard-guide" class="hidden">
+            <div class="kg-section">
+                <div class="kg-title">FACE ROTATIONS</div>
+                <div class="kg-keys">
+                    <div class="kg-row"><span class="kg-key">R</span> Right &nbsp;<span class="kg-key">Shift+R</span> R'</div>
+                    <div class="kg-row"><span class="kg-key">L</span> Left &nbsp;<span class="kg-key">Shift+L</span> L'</div>
+                    <div class="kg-row"><span class="kg-key">U</span> Up &nbsp;<span class="kg-key">Shift+U</span> U'</div>
+                    <div class="kg-row"><span class="kg-key">D</span> Down &nbsp;<span class="kg-key">Shift+D</span> D'</div>
+                    <div class="kg-row"><span class="kg-key">F</span> Front &nbsp;<span class="kg-key">Shift+F</span> F'</div>
+                    <div class="kg-row"><span class="kg-key">B</span> Back &nbsp;<span class="kg-key">Shift+B</span> B'</div>
+                </div>
+            </div>
+            <div class="kg-section">
+                <div class="kg-title">MIDDLE LAYERS</div>
+                <div class="kg-keys">
+                    <div class="kg-row"><span class="kg-key">M</span> Middle &nbsp;<span class="kg-key">Shift+M</span> M'</div>
+                    <div class="kg-row"><span class="kg-key">E</span> Equator &nbsp;<span class="kg-key">Shift+E</span> E'</div>
+                </div>
+            </div>
+            <div class="kg-section">
+                <div class="kg-title">OTHER</div>
+                <div class="kg-keys">
+                    <div class="kg-row"><span class="kg-key">S</span> or <span class="kg-key">P</span> Scramble &nbsp;<span class="kg-key">H</span> Hide Guide</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom bar -->
+        <div id="bottom-bar">
+            <button id="btn-keyboard" class="icon-btn" title="Keyboard Shortcuts">&#9000;</button>
+            <div class="status-text" id="status-text">Drag faces to rotate layers &bull; Scroll to zoom &bull; Right-drag to orbit</div>
+        </div>
+    </div>
+
+    <!-- Three.js -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.141.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.141.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="js/Cube.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

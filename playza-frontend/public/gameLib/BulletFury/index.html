@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Bullet Fury</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<style>
+  :root {
+      --playza-purple: #9d50bb;
+      --playza-pink: #6e48aa;
+      --playza-gradient: linear-gradient(135deg, #9d50bb 0%, #6e48aa 100%);
+  }
+  
+  body {
+      margin: 0;
+      padding: 0;
+      background-color: #0d0d0d !important;
+      overflow: hidden;
+      font-family: 'Inter', -apple-system, sans-serif;
+  }
+
+  #animation_container, #_preload_div_ {
+	position:absolute;
+	margin:auto;
+	left:0;right:0;
+	top:0;bottom:0;
+	-webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    background: radial-gradient(circle at center, #1b1b2f 0%, #050505 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  /* ─── Premium Minimap Radar ──────────────────────────────── */
+  #minimapContainer {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 164px;
+    height: 200px;
+    pointer-events: none;
+    z-index: 200;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+
+  #minimapHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0 2px;
+  }
+
+  #minimapLabel {
+    font-family: 'Courier New', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: rgba(0, 255, 80, 0.8);
+    text-shadow: 0 0 8px rgba(0, 255, 80, 0.6);
+  }
+
+  #minimapEnemyCount {
+    font-family: 'Courier New', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    color: rgba(255, 60, 60, 0.9);
+    text-shadow: 0 0 6px rgba(255, 60, 60, 0.7);
+  }
+
+  #minimapRadarWrap {
+    position: relative;
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    box-shadow:
+      0 0 0 2px rgba(0, 200, 60, 0.4),
+      0 0 20px rgba(0, 200, 60, 0.25),
+      0 0 40px rgba(0, 200, 60, 0.1),
+      inset 0 0 20px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(2px);
+    overflow: hidden;
+  }
+
+  #minimap {
+    width: 160px !important;
+    height: 160px !important;
+    display: block;
+  }
+
+  #minimapFooter {
+    font-family: 'Courier New', monospace;
+    font-size: 9px;
+    color: rgba(0, 180, 60, 0.45);
+    letter-spacing: 1px;
+    text-align: center;
+  }
+
+  /* ─── Rest of original styles ─────────────────────────────── */
+
+  #centertext, .centertext {
+    position: relative;
+    width: 100%;
+	color: #ffffff;
+	text-align: center;
+	font-size: 20px;
+    font-weight: 600;
+    margin-top: 40px;
+    text-shadow: 0 0 15px rgba(157, 80, 187, 0.4);
+    letter-spacing: 1px;
+}
+
+.playza-spinner-orbit {
+    width: 100px;
+    height: 100px;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.spinner-outer {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border: 3px solid transparent;
+    border-top-color: #9d50bb;
+    border-radius: 50%;
+    animation: playza-spin 1s linear infinite;
+}
+
+.spinner-inner {
+    position: absolute;
+    width: 70%;
+    height: 70%;
+    border: 3px solid transparent;
+    border-bottom-color: #6e48aa;
+    border-radius: 50%;
+    animation: playza-spin 1.5s linear infinite reverse;
+}
+
+.spinner-logo {
+    width: 40px;
+    height: 40px;
+    background: white;
+    border-radius: 50%;
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+    animation: playza-pulse 2s ease-in-out infinite;
+}
+
+@keyframes playza-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes playza-pulse {
+    0%, 100% { transform: scale(1); opacity: 0.8; }
+    50% { transform: scale(1.1); opacity: 1; }
+}
+
+#renderCanvas {
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+    position: absolute;
+}
+#fpsLabel {
+    position: absolute;
+    right: 20px;
+    bottom: 20px;
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 11px;
+    cursor: default;
+}
+</style>
+<!-- Patch HTMLCanvasElement.getContext to suppress CreateJS warning about willReadFrequently -->
+<script>
+    var originalGetContext = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = function(type, options) {
+        if (type === '2d') {
+            options = options || {};
+            options.willReadFrequently = true;
+        }
+        return originalGetContext.call(this, type, options);
+    };
+</script>
+<script src="https://code.createjs.com/createjs-2015.11.26.min.js"></script>
+<script>
+  if (typeof createjs === 'undefined') {
+    document.write('<scr'+'ipt src="js/external/createjs-2015.11.26.min.js"><\/scr'+'ipt>');
+  }
+</script>
+<!-- jQuery: CDN primary, local fallback -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+<script>
+  if (typeof jQuery === 'undefined') {
+    document.write('<scr'+'ipt src="js/external/jquery.min.js"><\/scr'+'ipt>');
+  }
+</script>
+<script src="js/babylon.custom.js"></script>
+<script src='js/pleaserotate.js'></script>
+<script src="js/bulletfury-html5.js"></script>
+<script src='js/main.js'></script>
+<script src='js/enemy.js'></script>
+<script src='js/load.js'></script>
+
+</head>
+<body onload="init();">
+	<div id="animation_container" style="width:100%; height:100%">
+	<canvas id="renderCanvas" tabindex="1"></canvas>
+		<canvas id="canvas" width="640" height="360" style="position: absolute; display: none;pointer-events:auto;"></canvas>
+		<div id="dom_overlay_container" style="pointer-events:none; overflow:hidden; width:640px; height:360px; position: absolute; left: 0px; top: 0px; display: none;">
+		</div>
+		<div id="fpsLabel"></div>
+    
+	
+	</div>
+    <div id='_preload_div_'>
+        <div class="playza-spinner-orbit">
+            <div class="spinner-outer"></div>
+            <div class="spinner-inner"></div>
+            <div class="spinner-logo"></div>
+        </div>
+        <div id='centertext'>LOADING ASSETS... 0%</div>
+        <div class='centertext' style='margin-top: 20px; display: none;' id='stButContainer'>
+            <img src=images/start.jpg alt="Start Game" title="Start Game" onclick='startG()' style='width:180px; height:auto; cursor:pointer; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.5); border: 2px solid rgba(255,255,255,0.1);' id='stBut'/>
+        </div>
+    </div>
+    
+    <!-- Minimap UI -->
+    <div id="minimapContainer" style="display:none;">
+      <div id="minimapHeader">
+        <span id="minimapLabel">&#x25CF; RADAR</span>
+        <span id="minimapEnemyCount"></span>
+      </div>
+      <div id="minimapRadarWrap">
+        <canvas id="minimap" width="160" height="160"></canvas>
+      </div>
+      <div id="minimapFooter">PLAYER-CENTRIC &bull; NORTH UP</div>
+    </div>
+</body>
+</html>

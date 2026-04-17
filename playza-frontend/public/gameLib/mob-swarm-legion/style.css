@@ -1,0 +1,256 @@
+/* ═══════════════════════════════════════════
+   LEGION RUSH — style.css
+   All game styles consolidated here
+═══════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap');
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+    width: 100%; height: 100%;
+    overflow: hidden;
+    background: #000;
+    font-family: 'Rajdhani', 'Segoe UI', sans-serif;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+#game-canvas {
+    display: block;
+    position: fixed;
+    inset: 0;
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* ─── HUD ─── */
+#hud {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 20;
+    display: flex; justify-content: space-between; align-items: flex-start;
+    padding: 14px 20px; pointer-events: none;
+}
+.hud-card {
+    background: rgba(0,0,0,.55);
+    border: 1px solid rgba(255,255,255,.15);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    border-radius: 12px;
+    padding: 8px 16px;
+    text-align: center;
+    min-width: 80px;
+}
+.hud-label {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 9px; font-weight: 700;
+    letter-spacing: .15em; text-transform: uppercase;
+    color: rgba(255,255,255,.45);
+}
+.hud-value {
+    font-family: 'Orbitron', monospace;
+    font-size: 22px; font-weight: 900;
+    color: #fff; line-height: 1;
+}
+#squad-count { color: #00c8ff; }
+#score-value { color: #ffd700; }
+#wave-value  { color: #ff6b35; }
+
+/* ─── Troop strength bar ─── */
+#troop-bar-wrap {
+    position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+    width: 260px; z-index: 20; pointer-events: none; text-align: center;
+}
+#troop-bar-label {
+    font-family: 'Rajdhani'; font-size: 11px; letter-spacing: .12em;
+    color: rgba(255,255,255,.5); margin-bottom: 4px;
+}
+#troop-bar-bg {
+    height: 10px; background: rgba(255,255,255,.12);
+    border-radius: 8px; overflow: hidden;
+    border: 1px solid rgba(255,255,255,.2);
+}
+#troop-bar-fill {
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg, #00c8ff, #00ff88);
+    border-radius: 8px;
+    transition: width .3s;
+}
+
+/* ─── Lane dots ─── */
+#lane-indicators {
+    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 8px; z-index: 20; pointer-events: none;
+}
+.lane-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: rgba(255,255,255,.25);
+    border: 1px solid rgba(255,255,255,.4);
+    transition: background .2s, transform .2s;
+}
+.lane-dot.active          { background: #00c8ff; transform: scale(1.4); }
+.lane-dot.left-lane       { background: rgba(0,255,136,.25); }
+.lane-dot.right-lane      { background: rgba(255,200,0,.25); }
+.lane-dot.left-lane.active  { background: #00ff88; }
+.lane-dot.right-lane.active { background: #ffd700; }
+
+/* ─── Wave banner ─── */
+#wave-banner {
+    position: fixed; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Orbitron'; font-size: 36px; font-weight: 900;
+    color: #ff6b35; text-shadow: 0 0 40px rgba(255,80,0,.8);
+    pointer-events: none; z-index: 80; opacity: 0;
+}
+
+/* ─── Boss HP bar ─── */
+#boss-hp-wrap {
+    position: fixed; bottom: 110px; left: 50%; transform: translateX(-50%);
+    width: 280px; z-index: 25; text-align: center; display: none;
+}
+#boss-hp-title {
+    font-family: 'Rajdhani'; font-size: 11px; letter-spacing: .1em;
+    color: #ff4444; margin-bottom: 3px;
+}
+#boss-hp-bg {
+    height: 12px; background: rgba(255,255,255,.1);
+    border-radius: 6px; overflow: hidden;
+    border: 1px solid rgba(255,50,50,.4);
+}
+#boss-hp-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ff2222, #ff6600);
+    border-radius: 6px; transition: width .2s;
+}
+
+/* ─── Floating score popup ─── */
+.float-popup {
+    position: fixed; z-index: 50;
+    font-family: 'Orbitron', monospace; font-weight: 900; font-size: 28px;
+    color: #fff; text-shadow: 0 0 20px currentColor;
+    pointer-events: none;
+    animation: floatUp 1.2s ease-out forwards;
+}
+@keyframes floatUp {
+    0%   { opacity: 1; transform: translateY(0) scale(1); }
+    100% { opacity: 0; transform: translateY(-90px) scale(1.4); }
+}
+
+/* ─── Touch zones (mobile) ─── */
+#touch-left, #touch-right {
+    position: fixed; top: 0; bottom: 0; width: 40%; z-index: 15;
+    cursor: pointer;
+}
+#touch-left  { left: 0; }
+#touch-right { right: 0; }
+
+/* ─── Overlay screens ─── */
+.screen {
+    position: fixed; inset: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,.88);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    opacity: 0; pointer-events: none;
+    transition: opacity .4s;
+}
+.screen.active { opacity: 1; pointer-events: all; }
+
+/* ─── Menu card ─── */
+.menu-card {
+    background: linear-gradient(145deg, rgba(20,20,35,.97), rgba(10,10,20,.99));
+    border: 1px solid rgba(0,200,255,.3);
+    border-radius: 24px;
+    padding: 40px 36px;
+    max-width: 420px; width: 90%;
+    box-shadow: 0 0 60px rgba(0,200,255,.15), inset 0 1px 0 rgba(255,255,255,.05);
+    text-align: center;
+}
+
+.game-title {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(28px, 7vw, 44px);
+    font-weight: 900;
+    background: linear-gradient(135deg, #00c8ff, #00ff88, #ffd700);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.1; margin-bottom: 4px; letter-spacing: -.01em;
+}
+.game-sub {
+    font-family: 'Rajdhani'; font-size: 13px; font-weight: 600;
+    color: rgba(255,255,255,.4); letter-spacing: .18em; text-transform: uppercase;
+    margin-bottom: 24px;
+}
+
+/* ─── Lane info badges ─── */
+.lane-info {
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px; margin-bottom: 22px;
+}
+.lane-badge {
+    border-radius: 10px; padding: 10px 6px;
+    font-family: 'Rajdhani'; font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .06em; line-height: 1.4;
+}
+.lb-left  { background: rgba(0,255,136,.1);  border: 1px solid rgba(0,255,136,.3);  color: #00ff88; }
+.lb-mid   { background: rgba(255,100,50,.1); border: 1px solid rgba(255,100,50,.3); color: #ff6b35; }
+.lb-right { background: rgba(255,210,0,.1);  border: 1px solid rgba(255,210,0,.3);  color: #ffd700; }
+
+/* ─── Instruction list ─── */
+.inst-list { margin-bottom: 24px; display: flex; flex-direction: column; gap: 8px; }
+.inst-row {
+    display: flex; align-items: center; gap: 12px;
+    text-align: left; padding: 10px 14px;
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 10px;
+}
+.inst-icon { font-size: 18px; flex-shrink: 0; }
+.inst-text {
+    font-family: 'Rajdhani'; font-size: 13px; font-weight: 600;
+    color: rgba(255,255,255,.7); line-height: 1.35;
+}
+.inst-text strong { color: #00c8ff; }
+
+/* ─── CTA Button ─── */
+.btn-start {
+    width: 100%; padding: 16px;
+    font-family: 'Orbitron', monospace; font-weight: 700;
+    font-size: 15px; letter-spacing: .12em; text-transform: uppercase;
+    border: none; border-radius: 14px; cursor: pointer;
+    background: linear-gradient(135deg, #00c8ff, #00ff88);
+    color: #000; transition: transform .15s, box-shadow .15s;
+    box-shadow: 0 0 30px rgba(0,200,255,.35);
+}
+.btn-start:hover, .btn-start:active {
+    transform: scale(1.03);
+    box-shadow: 0 0 50px rgba(0,200,255,.55);
+}
+
+/* ─── Game Over screen ─── */
+.danger-title {
+    font-family: 'Orbitron'; font-size: 32px; font-weight: 900;
+    color: #ff3344; text-shadow: 0 0 30px rgba(255,50,70,.5);
+    margin-bottom: 6px;
+}
+.final-stats {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 12px; margin: 20px 0 24px;
+}
+.f-stat {
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 12px; padding: 14px 10px; text-align: center;
+}
+.f-stat.full-row { grid-column: 1 / -1; }
+.f-label {
+    font-family: 'Rajdhani'; font-size: 10px;
+    letter-spacing: .15em; color: rgba(255,255,255,.4);
+    text-transform: uppercase; margin-bottom: 4px;
+}
+.f-val { font-family: 'Orbitron'; font-size: 26px; font-weight: 900; color: #fff; }
+.f-stat.s-score .f-val  { color: #ffd700; }
+.f-stat.s-kills .f-val  { color: #ff6b35; }
+.f-stat.s-wave  .f-val  { color: #00c8ff; }

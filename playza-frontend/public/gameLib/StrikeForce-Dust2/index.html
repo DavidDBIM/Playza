@@ -1,0 +1,179 @@
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
+  <title>StrikeForce: Dust 2</title>
+  <meta name="description" content="StrikeForce: Dust 2 — High-octane FPS arcade action. Pro-grade mobile controls, expanded map, and smart bot AI."/>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+<div id="game-container">
+
+  <!-- HUD -->
+  <div id="hud">
+    <div id="crosshair"></div>
+
+    <!-- Health + Armor -->
+    <div id="health-container">
+      <div id="health-icon"></div>
+      <div id="health-labels">
+        <div id="health-bar-bg"><div id="health-bar"></div></div>
+        <div id="armor-bar-bg"><div id="armor-bar"></div></div>
+      </div>
+      <div id="health-text">100</div>
+    </div>
+
+    <!-- Ammo + ammo bar -->
+    <div id="ammo-container">
+      <div id="weapon-name">AK-47</div>
+      <div id="ammo-display">30 <span>/ 90</span></div>
+      <div id="ammo-bar-bg"><div id="ammo-bar"></div></div>
+    </div>
+
+    <!-- Score + Timer -->
+    <div id="score-container">
+      <div class="team-score">
+        <div class="team-label ct-label">CT</div>
+        <div class="score-value ct-score" id="ct-score">0</div>
+      </div>
+      <div id="round-timer">03:00</div>
+      <div class="team-score">
+        <div class="team-label t-label">T</div>
+        <div class="score-value t-score" id="t-score">0</div>
+      </div>
+    </div>
+
+    <!-- Kill Feed -->
+    <div id="kill-feed"></div>
+
+    <!-- Minimap -->
+    <div id="minimap-container">
+      <div id="minimap-header">
+        <span id="minimap-title">MINIMAP</span>
+        <span id="minimap-zoom" title="Toggle zoom">1×</span>
+      </div>
+      <canvas id="minimap-canvas" width="190" height="190"></canvas>
+    </div>
+
+    <!-- Grenade slots -->
+    <div id="grenade-slots">
+      <div class="nade-slot" data-type="frag">💣 Frag <span class="nade-count">×2</span></div>
+      <div class="nade-slot" data-type="smoke">💨 Smoke <span class="nade-count">×1</span></div>
+      <div class="nade-slot" data-type="flash">💥 Flash <span class="nade-count">×2</span></div>
+    </div>
+
+    <!-- Weapon slots -->
+    <div id="weapon-slots">
+      <div class="weapon-slot active" data-slot="1"><span class="slot-num">1</span><span class="slot-icon">🔫</span>AK-47</div>
+      <div class="weapon-slot" data-slot="2"><span class="slot-num">2</span><span class="slot-icon">🔫</span>M4A4</div>
+      <div class="weapon-slot" data-slot="3"><span class="slot-num">3</span><span class="slot-icon">🎯</span>AWP</div>
+      <div class="weapon-slot" data-slot="4"><span class="slot-num">4</span><span class="slot-icon">🔫</span>Glock</div>
+      <div class="weapon-slot" data-slot="5"><span class="slot-num">5</span><span class="slot-icon">🔪</span>Knife</div>
+    </div>
+
+    <!-- Stamina bar -->
+    <div id="stamina-bar-bg"><div id="stamina-bar"></div></div>
+
+    <!-- Crouch indicator -->
+    <div id="crouch-indicator">▼ CROUCHED</div>
+
+    <!-- Hit marker -->
+    <div id="hit-marker"></div>
+
+    <!-- Objective Banner -->
+    <div id="objective-banner"></div>
+
+    <!-- Announcement (kill streaks, round starts) -->
+    <div id="announcement"></div>
+
+    <!-- Mobile Controls -->
+    <div id="mobile-controls">
+      <div id="joystick-container">
+        <div id="joystick-base"></div>
+        <div id="joystick-knob"></div>
+      </div>
+      
+      <div id="action-buttons">
+        <button id="btn-shoot" class="mobile-btn">🔥</button>
+        <div class="side-buttons">
+          <button id="btn-jump" class="mobile-btn">▲</button>
+          <button id="btn-reload" class="mobile-btn">↻</button>
+        </div>
+        <button id="btn-next-weapon" class="mobile-btn">⇄</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rotate Overlay -->
+  <div id="rotate-overlay">
+    <div class="rotate-icon">📱</div>
+    <p>PLEASE ROTATE YOUR DEVICE</p>
+    <span>Horizontal mode required for combat</span>
+  </div>
+
+  <!-- Scope overlay (AWP / ADS) -->
+  <div id="scope-overlay"></div>
+
+  <!-- Damage vignette -->
+  <div id="damage-overlay"></div>
+
+  <!-- ══ START SCREEN ══════════════════════════════════════════ -->
+  <div id="start-screen">
+    <h1>CS2 Clone</h1>
+    <h2>Dust 2 — Extended</h2>
+    <button id="start-btn">▶ Play</button>
+    <div id="controls-info">
+      <p><span>WASD</span> Move &nbsp; <span>MOUSE</span> Look &nbsp; <span>CLICK</span> Shoot</p>
+      <p><span>RIGHT CLICK</span> ADS/Scope &nbsp; <span>R</span> Reload &nbsp; <span>SHIFT</span> Run</p>
+      <p><span>SPACE</span> Jump &nbsp; <span>C</span> Crouch &nbsp; <span>1-5</span> Weapons</p>
+      <p><span>G</span> Cycle Grenade &nbsp; <span>Q</span> Throw Grenade</p>
+    </div>
+    <div id="feature-list">
+      <div class="feature-badge">🗺 Expanded 400×400 Map</div>
+      <div class="feature-badge">🔫 5 Weapons</div>
+      <div class="feature-badge">💣 3 Grenade Types</div>
+      <div class="feature-badge">🤖 Bot AI</div>
+      <div class="feature-badge">🛡 Armor System</div>
+      <div class="feature-badge">⏱ Round Timer</div>
+      <div class="feature-badge">🎯 Headshot Detection</div>
+      <div class="feature-badge">🗺 Zoomable Minimap</div>
+    </div>
+  </div>
+
+  <!-- ══ GAME OVER ══════════════════════════════════════════════ -->
+  <div id="game-over">
+    <h1>Eliminated</h1>
+    <div id="final-stats">
+      <div class="stat-box">
+        <div class="stat-label">Kills</div>
+        <div class="stat-value" id="go-kills">0</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Headshots</div>
+        <div class="stat-value" id="go-headshots">0</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Deaths</div>
+        <div class="stat-value" id="go-deaths">1</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Round</div>
+        <div class="stat-value" id="go-round">1</div>
+      </div>
+    </div>
+    <button id="restart-btn">▶ Play Again</button>
+  </div>
+
+</div><!-- /game-container -->
+
+<!-- Three.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<!-- Load order: config → textures → map → weapons → bots → player → hud → game -->
+<script src="js/config.js"></script>
+<script src="js/textures.js"></script>
+<script src="js/map.js"></script>
+<script src="js/weapons.js"></script>
+<script src="js/bots.js"></script>
+<script src="js/player.js"></script>
+<script src="js/hud.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>

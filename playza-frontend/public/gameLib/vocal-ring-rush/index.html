@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ring Rush - Pronunciation</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <canvas id="game-canvas"></canvas>
+
+    <div id="ui-overlay">
+        <div id="hud">
+            <div class="score-container">
+                <span class="score-label">POINTS</span>
+                <span id="score-val" class="score-value">0</span>
+            </div>
+            <div id="mic-status">
+                <svg class="mic-icon" viewBox="0 0 24 24">
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                    <path d="M19 10v1a7 7 0 0 1-14 0v-1"/>
+                    <line x1="12" y1="19" x2="12" y2="23"/>
+                    <line x1="8" y1="23" x2="16" y2="23"/>
+                </svg>
+                <span id="mic-text">Thinking...</span>
+            </div>
+        </div>
+
+        <div id="game-ui">
+            <div id="transcript"></div>
+            <div id="word-display">READY?</div>
+            <div class="fallback-options" id="options"></div>
+        </div>
+    </div>
+
+    <!-- Start Screen -->
+    <div id="start-screen" class="screen active">
+        <div class="menu-card">
+            <h1>RING RUSH</h1>
+            <p class="subtitle">A competitive pronunciation challenge. Speak clearly to pass through the gates and climb the leaderboard!</p>
+            
+            <div id="browser-warning" class="unsupported-banner">
+                <b>Microphone Access Needed:</b> Speech recognition is not supported in this browser. You can still play using the buttons, but voice is recommended for maximum score.
+            </div>
+
+            <div class="instructions">
+                <div class="instruction-item">
+                    <div class="dot green"></div>
+                    <span><b>Pronounce:</b> Say the word shown on screen clearly.</span>
+                </div>
+                <div class="instruction-item">
+                    <div class="dot red"></div>
+                    <span><b>Avoid:</b> Don't let the ring hit the wall or you'll lose!</span>
+                </div>
+                <div class="instruction-item">
+                    <span>🔥 <b>Difficulty:</b> Words get harder and the speed increases.</span>
+                </div>
+            </div>
+
+            <button class="btn" onclick="game.start()">ENTER THE TUNNEL</button>
+        </div>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="game-over-screen" class="screen">
+        <div class="menu-card">
+            <h1 style="background: linear-gradient(135deg, #fff 0%, var(--danger) 100%); -webkit-background-clip: text;">RUN ENDED</h1>
+            
+            <div class="grading-summary">
+                <div class="stat-box">
+                    <span class="stat-label">FINAL SCORE</span>
+                    <span id="final-score" class="stat-val">0</span>
+                </div>
+                <div class="stat-box" style="border-top-color: var(--secondary)">
+                    <span class="stat-label">AVG ACCURACY</span>
+                    <span id="avg-accuracy" class="stat-val">0%</span>
+                </div>
+                <div class="stat-box" style="grid-column: span 2; border-top-color: #fff">
+                    <span class="stat-label">WORDS SURVIVED</span>
+                    <span id="total-words" class="stat-val">0</span>
+                </div>
+            </div>
+
+            <p id="death-reason" class="subtitle" style="color: var(--danger); margin-top: 0;">You crashed into the ring!</p>
+            
+            <div style="display: flex; gap: 1rem;">
+                <button class="btn" onclick="game.start()">TRY AGAIN</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Accuracy Grade Popup -->
+    <div id="grade-popup">
+        <span class="grade-label">ACCURACY</span>
+        <div class="grade-val">95%</div>
+    </div>
+
+    <div id="feedback">✅</div>
+    
+    <div id="progress-container">
+        <div id="progress-bar"></div>
+    </div>
+
+    <script type="module" src="game.js"></script>
+</body>
+</html>

@@ -1,0 +1,357 @@
+* {
+  box-sizing: border-box;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: linear-gradient(145deg, #1a2a3a 0%, #0f1a24 100%);
+  font-family: 'Segoe UI', 'Poppins', system-ui, -apple-system, 'Inter', sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 8px; /* reduced */
+}
+
+/* main game container — mobile-first card */
+.game-container {
+  max-width: 580px;
+  width: 100%;
+  margin: 0 auto;
+  background: rgba(255,255,240,0.08);
+  backdrop-filter: blur(2px);
+  border-radius: 24px; /* reduced from 56px */
+  padding: 16px 12px 20px; /* reduced */
+  box-shadow: 0 10px 30px rgba(0,0,0,0.4), inset 0 1px 1px rgba(255,255,255,0.1);
+  transition: all 0.2s;
+}
+
+/* header & stats */
+.stats {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 0 4px 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.score-box, .combo-box, .level-box {
+  background: #00000055;
+  backdrop-filter: blur(4px);
+  padding: 6px 12px; /* reduced */
+  border-radius: 16px; /* reduced */
+  font-weight: bold;
+  font-size: 1.1rem; /* reduced */
+  color: #FFE5B4;
+  letter-spacing: 0.5px;
+}
+.level-box {
+  background: #4caf5055;
+}
+.combo-box span, .score-box span, .level-box span {
+  font-size: 0.8rem;
+  color: #dddd99;
+  margin-right: 4px;
+}
+.combo-box {
+  background: #b5520e55;
+}
+
+/* word slots area */
+.slots-area {
+  background: rgba(0,0,0,0.3);
+  border-radius: 16px; /* reduced */
+  padding: 16px 8px; /* reduced */
+  margin: 8px 0 16px;
+}
+.global-forge-label {
+  font-size: 1rem;
+  text-align: center;
+  font-weight: bold;
+  color: #bbb088;
+  margin-bottom: 16px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+.word-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 12px; /* reduced */
+}
+.slot-item {
+  background: #1e2c34;
+  border-radius: 16px; /* reduced */
+  padding: 10px 12px; /* reduced */
+  box-shadow: inset 0 2px 3px #00000033, 0 4px 8px rgba(0,0,0,0.2);
+  transition: all 0.2s;
+  position: relative;
+}
+.slot-word {
+  display: flex;
+  justify-content: center;
+  gap: 8px; /* reduced */
+  flex-wrap: wrap;
+}
+.slot-letter {
+  width: 42px; /* reduced */
+  height: 50px; /* reduced */
+  background: #2e404c;
+  border-radius: 8px; /* reduced */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem; /* reduced */
+  font-weight: 800;
+  color: #ffdd99;
+  text-transform: uppercase;
+  box-shadow: inset 0 -2px 0 #0a1219, 0 4px 8px rgba(0,0,0,0.2);
+  transition: 0.1s linear;
+  font-family: monospace;
+}
+.slot-letter.filled {
+  background: #3c9e6d;
+  color: white;
+  text-shadow: 0 1px 2px black;
+  transform: scale(0.98);
+}
+.slot-completed-mark {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #4caf7f;
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+/* preview bar (current word builder) */
+.builder-preview {
+  background: #0e1a1fcc;
+  margin: 10px 0 16px;
+  border-radius: 16px; /* reduced */
+  padding: 10px 16px; /* reduced */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 8px;
+  backdrop-filter: blur(8px);
+}
+.current-word-wrapper {
+  flex: 2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.current-word {
+  background: #00000066;
+  padding: 8px 16px;
+  border-radius: 12px; /* reduced */
+  font-size: 1.6rem; /* reduced */
+  font-weight: bold;
+  letter-spacing: 2px;
+  color: #FFE484;
+  font-family: monospace;
+  min-width: 120px;
+  text-align: center;
+  cursor: pointer; /* make it clear you can click to pop */
+  display: flex;
+  gap: 4px;
+}
+.preview-char {
+  display: inline-block;
+  min-width: 20px;
+  text-align: center;
+  border-bottom: 2px solid rgba(255,228,132,0.3);
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  flex: 0;
+}
+.btn {
+  background: #2c3e2f;
+  border: none;
+  font-size: 1.4rem;
+  font-weight: bold;
+  height: 48px;
+  width: 48px;
+  border-radius: 12px; /* reduced */
+  color: #f9f3cf;
+  box-shadow: 0 4px 0 #0f1a0f;
+  cursor: pointer;
+  transition: 0.07s linear;
+  touch-action: manipulation;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #0f1a0f;
+}
+.btn-primary {
+  background: #3a7ca5;
+  box-shadow: 0 4px 0 #1e4057;
+}
+.btn-warning {
+  background: #b1622c;
+  box-shadow: 0 4px 0 #6e3a16;
+}
+
+/* letter pool grid */
+.letters-pool {
+  background: #07111766;
+  border-radius: 16px; /* reduced */
+  padding: 16px 8px; /* reduced */
+  margin-top: 10px;
+}
+.letter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(55px, 1fr));
+  gap: 8px;
+  justify-items: center;
+  align-items: center;
+}
+.letter-tile {
+  width: 55px; /* reduced */
+  height: 65px; /* reduced */
+  background: radial-gradient(circle at 30% 25%, #f9e0a0, #e0a82b);
+  border-radius: 12px; /* reduced */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem; /* reduced */
+  font-weight: 800;
+  color: #2c1a0a;
+  text-transform: uppercase;
+  box-shadow: 0 6px 0 #8b5a2b; /* reduced */
+  cursor: pointer;
+  transition: all 0.05s linear;
+  touch-action: manipulation;
+  will-change: transform;
+}
+.letter-tile.selected {
+  background: #ffe087;
+  box-shadow: 0 3px 0 #a5621a;
+  transform: translateY(3px);
+  filter: drop-shadow(0 0 5px gold);
+  opacity: 0.7;
+}
+.letter-tile:active {
+  transform: translateY(6px);
+  box-shadow: 0 0 0 #8b5a2b; /* fully pressed */
+}
+
+/* shuffle & hint row */
+.utils {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 16px 8px 8px;
+}
+.small-btn {
+  background: #2e4a3b;
+  color: white;
+  flex: 1;
+  text-align: center;
+  padding: 10px; /* reduced */
+  border-radius: 16px; /* reduced */
+  font-weight: bold;
+  font-size: 0.95rem; /* reduced */
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 4px 0 #1e3a2b;
+}
+.small-btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 #1e3a2b;
+}
+
+/* animations */
+@keyframes shake {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+  100% { transform: translateX(0); }
+}
+.shake-animation {
+  animation: shake 0.2s ease-in-out 0s 2;
+}
+@keyframes successPop {
+  0% { transform: scale(0.9); opacity: 0.7; }
+  100% { transform: scale(1); opacity: 1; background: #4caf7f; }
+}
+.slot-letter.success-flash {
+  animation: successPop 0.25s cubic-bezier(0.2, 1.3, 0.8, 1);
+}
+.combo-bonus {
+  position: fixed;
+  top: 30%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #ffb347;
+  color: #2a1e0c;
+  padding: 8px 16px;
+  border-radius: 30px; /* reduced */
+  font-weight: bold;
+  font-size: 1.4rem;
+  z-index: 200;
+  pointer-events: none;
+  animation: fadeUp 0.6s forwards;
+}
+@keyframes fadeUp {
+  0% { opacity: 1; transform: translate(-50%, 20px); }
+  100% { opacity: 0; transform: translate(-50%, -60px); }
+}
+
+/* completion screen */
+.completion-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: #000000cc;
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.completion-card {
+  background: #263b2e;
+  padding: 24px 20px; /* reduced */
+  border-radius: 24px; /* reduced */
+  text-align: center;
+  color: #ffeaac;
+  max-width: 280px;
+  width: 80%;
+}
+
+/* responsiveness */
+@media (max-width: 500px) {
+  .game-container {
+    border-radius: 12px;
+    padding: 12px 10px 16px;
+  }
+  .action-buttons {
+     gap: 6px;
+  }
+  .btn {
+     height: 40px;
+     width: 40px;
+     font-size: 1.2rem;
+  }
+  .letter-tile { width: 44px; height: 52px; font-size: 1.4rem; border-radius: 10px;}
+  .slot-letter { width: 32px; height: 42px; font-size: 1.1rem; border-radius: 6px;}
+  .current-word { font-size: 1.1rem; padding: 6px 12px; border-radius: 8px; }
+  .stats { font-size: 1rem; }
+  .score-box, .combo-box, .level-box { padding: 4px 10px; font-size: 1rem; border-radius: 12px;}
+  .small-btn { padding: 8px; font-size: 0.85rem; border-radius: 12px;}
+  .slots-area { border-radius: 12px; padding: 12px 6px; }
+  .slot-item { border-radius: 12px; padding: 8px; }
+  .letters-pool { border-radius: 12px; padding: 12px 6px; }
+  .builder-preview { border-radius: 12px; padding: 8px 12px; }
+}

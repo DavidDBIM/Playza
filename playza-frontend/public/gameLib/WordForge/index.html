@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <title>Word Forge — Forge the Words</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="game-container" id="gameRoot">
+      <div class="stats">
+        <div class="score-box">
+          <span>🔥 FORGE</span> <span id="scoreValue">0</span>
+        </div>
+        <div class="combo-box">
+          <span>⚡ COMBO</span> <span id="comboValue">x1</span>
+        </div>
+        <div class="level-box">
+          <span>🚩</span> <span id="levelIndicator">LEVEL 1</span>
+        </div>
+      </div>
+
+      <div class="slots-area">
+        <div class="word-slots" id="wordSlotsContainer"></div>
+      </div>
+
+      <div class="builder-preview">
+        <div class="current-word" id="previewWord">____</div>
+        <div class="action-buttons">
+          <button class="btn" id="clearBtn">✖</button>
+          <button class="btn btn-primary" id="submitBtn">✔</button>
+        </div>
+      </div>
+
+      <div class="letters-pool">
+        <div class="letter-grid" id="letterGrid"></div>
+      </div>
+
+      <div class="utils">
+        <button class="small-btn" id="shuffleBtn">🔄 SHUFFLE</button>
+        <button class="small-btn" id="hintBtn">💡 HINT</button>
+      </div>
+    </div>
+    <script src="script.js"></script>
+  </body>
+</html>

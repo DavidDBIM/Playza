@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <title>Tactical Maze — Playza</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Orbitron:wght@700;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="game-root">
+
+      <!-- ══ HUD ══════════════════════════════════════════════ -->
+      <div id="hud">
+        <!-- Left cluster: Level + Score -->
+        <div class="hud-cluster hud-left">
+          <div class="hud-pill" id="hud-level-box">
+            <span class="hud-label">LVL</span>
+            <span class="hud-val accent" id="hud-level">1</span>
+          </div>
+          <div class="hud-pill">
+            <span class="hud-label">SCORE</span>
+            <span class="hud-val" id="hud-score">0</span>
+          </div>
+          <div class="hud-pill">
+            <span class="hud-label">KILLS</span>
+            <span class="hud-val gold" id="hud-kills">0</span>
+          </div>
+        </div>
+
+        <!-- Centre: Health bar -->
+        <div class="hud-center">
+          <div class="hp-bar-wrap">
+            <div class="hp-header">
+              <span class="hud-label">❤ HEALTH</span>
+              <span class="hud-val hp-val" id="hud-hp">100</span>
+            </div>
+            <div class="hp-bar-outer">
+              <div class="hp-bar-inner" id="hp-bar"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right cluster: Enemies + Ammo + Lives + Gun tier + Fullscreen -->
+        <div class="hud-cluster hud-right">
+          <div class="hud-pill danger-pill">
+            <span class="hud-label">ENEMY</span>
+            <span class="hud-val danger" id="hud-enemies">0</span>
+          </div>
+          <div class="hud-pill">
+            <span class="hud-label">AMMO</span>
+            <span class="hud-val" id="hud-ammo">∞</span>
+          </div>
+          <div class="hud-pill">
+            <span class="hud-label">LIVES</span>
+            <span class="hud-val lives-val" id="hud-lives">❤❤❤</span>
+          </div>
+          <div class="hud-pill gun-pill" id="hud-gun-pill">
+            <span class="hud-label">GUN</span>
+            <span class="hud-val" id="hud-gun">▸</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Canvas -->
+      <canvas id="game-canvas"></canvas>
+
+      <!-- Joystick + shoot (mobile landscape) -->
+      <div id="mobile-controls">
+        <div id="joystick-zone">
+          <div id="joystick-base">
+            <div id="joystick-knob"></div>
+          </div>
+        </div>
+        <div id="action-zone">
+          <button id="btn-shoot" class="action-btn fire-btn" aria-label="Shoot">
+            <span>FIRE</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Aim indicator (desktop) -->
+      <div id="aim-indicator"></div>
+
+      <!-- ══ START SCREEN ══════════════════════════════════════ -->
+      <div id="screen-start" class="screen active">
+        <div class="screen-content">
+          <div class="game-logo">
+            <div class="logo-icon">⚔</div>
+            <h1 class="logo-title">TACTICAL MAZE</h1>
+            <p class="logo-sub">BREACH &amp; CLEAR</p>
+          </div>
+          <div class="instructions">
+            <div class="inst-row"><span class="key">WASD / ↑↓←→</span><span>Move</span></div>
+            <div class="inst-row"><span class="key">Mouse / Joystick</span><span>Aim</span></div>
+            <div class="inst-row"><span class="key">SPACE / Click / FIRE</span><span>Shoot</span></div>
+            <div class="inst-row"><span class="key">💊 Green Cross</span><span>Health +30</span></div>
+            <div class="inst-row"><span class="key">⚡ Yellow Bolt</span><span>Gun Upgrade</span></div>
+            <div class="inst-row"><span class="key">Reach Exit ↑</span><span>Next Level</span></div>
+          </div>
+          <div class="btn-group">
+            <button id="btn-start" class="btn-primary">DEPLOY OPERATIVE</button>
+          </div>
+          <p class="version-tag">3 LEVELS · HEALTH PACKS · GUN UPGRADES · REAL-TIME COMBAT</p>
+        </div>
+      </div>
+
+      <!-- ══ LEVEL COMPLETE ════════════════════════════════════ -->
+      <div id="screen-level" class="screen">
+        <div class="screen-content">
+          <div class="victory-icon">✓</div>
+          <h2 class="screen-title success-title">SECTOR CLEARED</h2>
+          <p class="screen-sub" id="level-complete-msg">Proceeding to next objective…</p>
+          <div class="stat-grid">
+            <div class="stat-item"><span class="s-label">Kills</span><span class="s-val" id="lc-kills">0</span></div>
+            <div class="stat-item"><span class="s-label">Score</span><span class="s-val" id="lc-score">0</span></div>
+            <div class="stat-item"><span class="s-label">HP Left</span><span class="s-val" id="lc-hp">100</span></div>
+          </div>
+          <button id="btn-next-level" class="btn-primary">ADVANCE ▶</button>
+        </div>
+      </div>
+
+      <!-- ══ VICTORY SCREEN ════════════════════════════════════ -->
+      <div id="screen-win" class="screen">
+        <div class="screen-content">
+          <div class="victory-icon medal">🏅</div>
+          <h2 class="screen-title success-title">MISSION COMPLETE</h2>
+          <p class="screen-sub">All sectors cleared. Operative, you are a legend.</p>
+          <div class="stat-grid">
+            <div class="stat-item"><span class="s-label">Final Score</span><span class="s-val gold" id="win-score">0</span></div>
+            <div class="stat-item"><span class="s-label">Total Kills</span><span class="s-val gold" id="win-kills">0</span></div>
+          </div>
+          <button id="btn-play-again" class="btn-primary">PLAY AGAIN</button>
+        </div>
+      </div>
+
+      <!-- ══ GAME OVER SCREEN ══════════════════════════════════ -->
+      <div id="screen-over" class="screen">
+        <div class="screen-content">
+          <div class="defeat-icon">☠</div>
+          <h2 class="screen-title fail-title">KIA</h2>
+          <p class="screen-sub">Operative down. Mission failed.</p>
+          <div class="stat-grid">
+            <div class="stat-item"><span class="s-label">Score</span><span class="s-val" id="over-score">0</span></div>
+            <div class="stat-item"><span class="s-label">Kills</span><span class="s-val" id="over-kills">0</span></div>
+          </div>
+          <button id="btn-retry" class="btn-primary fail-btn">RETRY MISSION</button>
+        </div>
+      </div>
+
+      <!-- Flash overlay -->
+      <div id="screen-flash"></div>
+
+      <!-- Pickup flash label -->
+      <div id="pickup-toast"></div>
+
+    </div>
+    <script src="games.js"></script>
+  </body>
+</html>

@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <title>Crossword Quest+ | Swipe Word Puzzle</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="game-container" id="gameRoot">
+      <div class="stats-bar">
+        <div class="score-box">
+          <span>⭐</span> <span id="scoreValue">0</span>
+        </div>
+        <div class="combo-box">
+          <span>🔥</span> <span id="comboValue">0</span>x
+        </div>
+        <div class="level-box">
+          <span>📌</span> <span id="levelValue">1</span>
+        </div>
+      </div>
+      <div class="progress-section">
+        <div class="progress-label">
+          <span>📖 Puzzle progress</span><span id="progressPercent">0%</span>
+        </div>
+        <div class="progress-bar-bg">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+      </div>
+      <div
+        id="crosswordGrid"
+        class="crossword-grid"
+        style="grid-template-columns: repeat(6, 1fr)"
+      ></div>
+      <div class="wheel-area">
+        <div class="wheel-wrapper">
+          <div id="lettersWheel" class="letters-wheel"></div>
+          <canvas id="wheelCanvas" width="300" height="300"></canvas>
+        </div>
+      </div>
+      <div class="action-bar">
+        <button class="action-btn hint-btn" id="hintBtn">💡 HINT</button>
+        <button class="action-btn shuffle-btn" id="shuffleBtn">
+          🔄 SHUFFLE
+        </button>
+      </div>
+      <div class="feedback-message" id="feedbackMsg">
+        ✨ SWIPE letters to form words!
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
