@@ -142,11 +142,11 @@
     @apply border-border outline-ring/50;
     }
   body {
-    @apply antialiased overflow-x-hidden bg-background text-foreground transition-colors duration-500;
+    @apply antialiased overflow-x-hidden bg-background text-foreground transition-colors duration-500 font-sans tracking-tight;
     }
-  html {
-    @apply font-sans;
-    }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading font-black tracking-tighter uppercase italic;
+  }
 }
 
 @layer utilities {
@@ -175,7 +175,11 @@
   }
 
   .font-body {
-    @apply font-sans;
+    @apply font-sans font-medium;
+  }
+
+  .font-number {
+    @apply font-heading font-black tracking-tighter;
   }
 
   .animate-float {

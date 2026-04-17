@@ -67,26 +67,31 @@ const LoyaltyLeaderboard = () => {
             return (
               <div 
                 key={player.user_id}
-                className={`relative overflow-hidden bg-linear-to-br ${config.bg} border ${config.border} ${config.shadow} rounded-2xl p-4 flex items-center gap-4 group hover:scale-[1.02] transition-all cursor-default shadow-xl`}
+                className={`relative overflow-hidden bg-linear-to-br ${config.bg} border ${config.border} ${config.shadow} rounded-2xl p-3 flex items-center justify-between gap-3 cursor-default shadow-xl`}
               >
-                <div className="relative">
-                  <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-white/10 shadow-lg">
-                    <img src={player.avatar_url || "/default-avatar.png"} alt={player.username} className="w-full h-full object-cover" />
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="relative shrink-0">
+                    <div className="w-12 h-12 rounded-2xl overflow-hidden border-2 border-white/10 shadow-lg">
+                      <img src={player.avatar_url || "/default-avatar.png"} alt={player.username} className="w-full h-full object-cover" />
+                    </div>
+                    <div className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-lg bg-white dark:bg-slate-900 border flex items-center justify-center shadow-md">
+                       {config.icon}
+                    </div>
                   </div>
-                  <div className="absolute -top-2 -right-2 w-8 h-8 rounded-lg bg-white dark:bg-slate-900 border flex items-center justify-center shadow-md">
-                     {config.icon}
+                  <div className="flex flex-col min-w-0">
+                    <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 mb-0.5">#{player.rank}</p>
+                    <h3 className="font-display font-black text-slate-900 dark:text-white text-base truncate uppercase italic leading-tight">
+                      {player.username}
+                    </h3>
                   </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-0.5">#{player.rank} Operative</p>
-                  <h3 className="font-display font-black text-slate-900 dark:text-white text-lg truncate uppercase italic leading-tight">
-                    {player.username}
-                  </h3>
-                  <div className="flex items-center gap-1.5 mt-1">
+
+                <div className="flex flex-col items-end shrink-0">
+                  <div className="flex items-center gap-1">
                     <Star className="w-3 h-3 text-primary fill-primary" />
                     <span className="text-sm font-black text-primary">{player.pza_points.toLocaleString()}</span>
-                    <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">PZA</span>
                   </div>
+                  <span className="text-[8px] text-slate-400 font-bold uppercase tracking-widest leading-none">PZA</span>
                 </div>
                 {isFirst && (
                   <div className="absolute -right-4 -bottom-4 opacity-10 rotate-12">
@@ -136,10 +141,10 @@ const LoyaltyLeaderboard = () => {
                 return (
                 <TableRow
                   key={entry.user_id}
-                  className={`group transition-all border-none ${
+                  className={`transition-all border-none ${
                     isMatch || isMe
                       ? "bg-primary/10 dark:bg-primary/10 border-l-[4px] border-l-primary"
-                      : "md:hover:bg-slate-100/50 md:dark:hover:bg-white/5"
+                      : ""
                   }`}
                 >
                   <TableCell className="px-6 py-5 text-center">

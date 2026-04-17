@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { MdClose, MdStars, MdAutorenew } from "react-icons/md";
 import { Sparkles, Zap, AlertCircle } from "lucide-react";
-import { spinWheelApi } from "@/api/loyalty.api";
+import { useSpinWheel } from "@/hooks/loyalty/useSpinWheel";
 
 // Sharp, vivid colours — each segment is visually distinct
 const SEGMENTS = [
@@ -26,6 +26,7 @@ interface SpinWheelModalProps {
 }
 
 export function SpinWheelModal({ onClose, onSpinComplete, spinsLeft: initialSpins, totalPoints }: SpinWheelModalProps) {
+  const { mutateAsync: performSpin } = useSpinWheel();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isSpinning, setIsSpinning] = useState(false);
   const [spinsLeft, setSpinsLeft] = useState(initialSpins);
@@ -144,7 +145,7 @@ export function SpinWheelModal({ onClose, onSpinComplete, spinsLeft: initialSpin
     setIsSpinning(true);
 
     try {
-      const result = await spinWheelApi();
+      const result = await performSpin();
       const targetSegIndex = result.segment_index;
 
       const minRotations = 6;
@@ -183,9 +184,10 @@ export function SpinWheelModal({ onClose, onSpinComplete, spinsLeft: initialSpin
       }
 
       animFrameRef.current = requestAnimationFrame(animate);
-    } catch (err: any) {
+    } catch (err) {
+      const error = err as { response?: { data?: { message?: string } } };
       setIsSpinning(false);
-      setError(err?.response?.data?.message ?? "Spin failed. Please try again.");
+      setError(error.response?.data?.message ?? "Spin failed. Please try again.");
     }
   }
 
@@ -196,7 +198,7 @@ export function SpinWheelModal({ onClose, onSpinComplete, spinsLeft: initialSpin
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md" onClick={onClose}>
       <div
-        className="relative w-full max-w-[360px] bg-[#0F0F14] rounded-3xl border border-white/10 shadow-2xl overflow-hidden"
+        className="relative w-full max-w-90 bg-[#0F0F14] rounded-3xl border border-white/10 shadow-2xl overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
         {/* Rainbow top strip */}

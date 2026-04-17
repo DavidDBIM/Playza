@@ -93,6 +93,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } else if (isError) {
       TokenStorage.clearTokens();
       setUser(null);
+      queryClient.clear();
     }
   }, [profile, isError, queryClient]);
 
@@ -124,8 +125,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       TokenStorage.clearTokens();
       setUser(null);
+      queryClient.clear();
     }
-  }, []);
+  }, [queryClient]);
 
   const updateProfile = useCallback((data: Partial<UserProfile>) => {
     setUser((prev) => (prev ? { ...prev, ...data } : null));

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { apiClient } from "../lib/api-client";
 import { MdSearch, MdRefresh, MdCheckCircle, MdCancel, MdPending, MdOpenInNew, MdVerified } from "react-icons/md";
-import { Crown, Filter, ChevronDown } from "lucide-react";
+import { Crown, ChevronDown } from "lucide-react";
 
 interface AmbassadorApp {
   id: string;
@@ -58,7 +58,6 @@ const Ambassadors: React.FC = () => {
   const [reviewNote, setReviewNote] = useState("");
   const [reviewLoading, setReviewLoading] = useState(false);
   const [reviewError, setReviewError] = useState("");
-  const [statsOpen, setStatsOpen] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -96,28 +95,20 @@ const Ambassadors: React.FC = () => {
       setSelectedApp(null);
       setReviewNote("");
       fetchData();
-    } catch (err: any) {
-      setReviewError(err?.response?.data?.message ?? "Action failed.");
+    } catch (err) {
+      const error = err as { response?: { data?: { message?: string } } };
+      setReviewError(error.response?.data?.message ?? "Action failed.");
     } finally {
       setReviewLoading(false);
     }
   }
-
-  const stats = data
-    ? {
-        total: data.total,
-        pending: (data.applications.filter(a => a.status === "pending").length),
-        approved: (data.applications.filter(a => a.status === "approved").length),
-        rejected: (data.applications.filter(a => a.status === "rejected").length),
-      }
-    : null;
 
   return (
     <div className="p-6 space-y-6">
       {/* ── Header ── */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-md shadow-orange-400/30">
+          <div className="w-10 h-10 rounded-2xl bg-linear-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-md shadow-orange-400/30">
             <Crown className="w-5 h-5 text-white" />
           </div>
           <div>
@@ -140,8 +131,8 @@ const Ambassadors: React.FC = () => {
             { label: "Rejected", value: data.applications.filter(a=>a.status==="rejected").length, color: "text-red-500 dark:text-red-400" },
           ].map(s => (
             <div key={s.label} className="bg-card border border-border rounded-2xl px-4 py-3 shadow-sm">
-              <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider">{s.label}</p>
-              <p className={`text-3xl font-black mt-1 ${s.color}`}>{s.value}</p>
+              <p className="text-xs text-muted-foreground font-black uppercase tracking-wider">{s.label}</p>
+              <p className={`text-3xl font-number mt-1 ${s.color}`}>{s.value}</p>
             </div>
           ))}
         </div>
@@ -149,7 +140,7 @@ const Ambassadors: React.FC = () => {
 
       {/* ── Filters ── */}
       <div className="bg-card border border-border rounded-2xl p-4 flex flex-wrap gap-3 items-center shadow-sm">
-        <form onSubmit={handleSearch} className="flex gap-2 flex-1 min-w-[200px]">
+        <form onSubmit={handleSearch} className="flex gap-2 flex-1 min-w-50">
           <div className="relative flex-1">
             <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-lg" />
             <input
@@ -234,12 +225,12 @@ const Ambassadors: React.FC = () => {
                           </span>
                         </td>
                         <td className="px-4 py-3.5">
-                          <span className="text-foreground font-bold text-sm">
+                          <span className="text-foreground font-number text-sm">
                             {app.follower_count ? app.follower_count.toLocaleString() : "—"}
                           </span>
                         </td>
                         <td className="px-4 py-3.5">
-                          <div className="flex flex-wrap gap-1 max-w-[140px]">
+                          <div className="flex flex-wrap gap-1 max-w-35">
                             {app.platforms?.map(p => (
                               <span key={p} className="text-[9px] font-black px-1.5 py-0.5 bg-muted rounded-md text-muted-foreground uppercase">{p}</span>
                             )) ?? <span className="text-muted-foreground text-xs">—</span>}
@@ -299,7 +290,7 @@ const Ambassadors: React.FC = () => {
             {/* Modal header */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-border sticky top-0 bg-card z-10">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
+                <div className="w-9 h-9 rounded-xl bg-linear-to-br from-amber-400 to-orange-500 flex items-center justify-center">
                   <Crown className="w-4 h-4 text-white" />
                 </div>
                 <div>
@@ -406,7 +397,7 @@ const Ambassadors: React.FC = () => {
                     {reviewLoading ? "…" : "Reject"}
                   </button>
                   <button onClick={() => handleReview("approve")} disabled={reviewLoading}
-                    className="flex-1 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-400 hover:to-green-400 text-white font-black text-sm transition-all shadow-md shadow-emerald-500/30 disabled:opacity-50 flex items-center justify-center gap-2 active:scale-95">
+                    className="flex-1 py-3 rounded-xl bg-linear-to-r from-emerald-500 to-green-500 hover:from-emerald-400 hover:to-green-400 text-white font-black text-sm transition-all shadow-md shadow-emerald-500/30 disabled:opacity-50 flex items-center justify-center gap-2 active:scale-95">
                     <MdCheckCircle className="text-lg" />
                     {reviewLoading ? "…" : "Approve"}
                   </button>

@@ -9,7 +9,8 @@ import {
   MdAccountBalanceWallet, 
   MdRedeem, 
   MdNotifications, 
-  MdLayers 
+  MdLayers, 
+  MdEmojiPeople
 } from 'react-icons/md';
 import { Link, useLocation } from 'react-router';
 

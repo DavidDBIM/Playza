@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   MdStars, MdArrowForward, MdCheckCircle, MdVerified,
   MdGroups, MdAutorenew, MdClose, MdWarning,
@@ -6,11 +6,10 @@ import {
 import { Sparkles, Crown, ShoppingBag, Zap, ChevronRight, AlertCircle } from "lucide-react";
 import { SpinWheelModal } from "./SpinWheel";
 import {
-  applyAmbassadorApi,
-  getAmbassadorStatusApi,
-  type AmbassadorStatus,
   type AmbassadorApplyPayload,
 } from "@/api/loyalty.api";
+import { useAmbassadorStatus } from "@/hooks/loyalty/useAmbassadorStatus";
+import { useApplyAmbassador } from "@/hooks/loyalty/useApplyAmbassador";
 
 const SPIN_COST = 30;
 
@@ -66,9 +65,9 @@ export function RewardsSection({ totalPoints, spinsLeftToday, onPointsChanged }:
   const [showAmbassadorModal, setShowAmbassadorModal] = useState(false);
   const [redeemModal, setRedeemModal] = useState<MerchProduct | null>(null);
 
-  // Ambassador state
-  const [ambassadorStatus, setAmbassadorStatus] = useState<AmbassadorStatus | null>(null);
-  const [ambassadorLoading, setAmbassadorLoading] = useState(true);
+  // Ambassador state from hooks
+  const { data: ambassadorStatus, isLoading: ambassadorLoading } = useAmbassadorStatus();
+  const { mutateAsync: applyAmbassador } = useApplyAmbassador();
 
   // Form state
   const [qualificationType, setQualificationType] = useState<'social_influencer' | 'gold_badge' | 'referral_100' | ''>('');
@@ -84,12 +83,7 @@ export function RewardsSection({ totalPoints, spinsLeftToday, onPointsChanged }:
   const [formSubmitting, setFormSubmitting] = useState(false);
   const [formSuccess, setFormSuccess] = useState(false);
 
-  useEffect(() => {
-    getAmbassadorStatusApi()
-      .then(setAmbassadorStatus)
-      .catch(() => setAmbassadorStatus(null))
-      .finally(() => setAmbassadorLoading(false));
-  }, []);
+
 
   function togglePlatform(id: string) {
     setSelectedPlatforms(prev =>
@@ -124,11 +118,11 @@ export function RewardsSection({ totalPoints, spinsLeftToday, onPointsChanged }:
         payload.social_handles = socialHandles;
         payload.content_niche = contentNiche.trim() || undefined;
       }
-      await applyAmbassadorApi(payload);
+      await applyAmbassador(payload);
       setFormSuccess(true);
-      setAmbassadorStatus({ id: '', status: 'pending', created_at: new Date().toISOString(), reviewed_at: null, admin_note: null });
-    } catch (err: any) {
-      setFormError(err?.response?.data?.message ?? 'Submission failed. Please try again.');
+    } catch (err) {
+      const error = err as { response?: { data?: { message?: string } } };
+      setFormError(error.response?.data?.message ?? 'Submission failed. Please try again.');
     } finally {
       setFormSubmitting(false);
     }
@@ -313,7 +307,7 @@ export function RewardsSection({ totalPoints, spinsLeftToday, onPointsChanged }:
       {showSpinModal && (
         <SpinWheelModal
           onClose={() => setShowSpinModal(false)}
-          onSpinComplete={(result) => {
+          onSpinComplete={() => {
             onPointsChanged();
             setTimeout(() => setShowSpinModal(false), 2400);
           }}

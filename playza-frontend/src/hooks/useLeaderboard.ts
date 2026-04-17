@@ -13,6 +13,7 @@ export const useLoyaltyLeaderboard = (
     queryKey: ["leaderboard", "loyalty", period, limit],
     queryFn: () => getLoyaltyLeaderboardApi(period, limit),
     staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchInterval: 60 * 1000, // Poll every minute for sync
   });
 };
 
@@ -24,5 +25,6 @@ export const useReferralLeaderboard = (
     queryKey: ["leaderboard", "referral", period, limit],
     queryFn: () => getReferralLeaderboardApi(period, limit),
     staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchInterval: 60 * 1000, // Poll every minute for sync
   });
 };

@@ -58,7 +58,7 @@ const LeaderBoard = () => {
                 setActiveTab(tab.id);
                 setSearchParams({ tab: tab.id });
               }}
-              className={`flex-1 md:flex-none flex flex-col md:flex-row items-center justify-center gap-1 md:gap-3 px-2 py-2 md:px-6 md:py-3 rounded-xl font-black uppercase tracking-widest text-[9px] md:text-xs relative overflow-hidden min-w-0 ${
+              className={`flex-1 md:flex-none flex flex-col md:flex-row items-center justify-center gap-1 md:gap-3 px-2 py-2 md:px-6 md:py-3 rounded-xl font-black uppercase tracking-widest text-[9px] md:text-xs relative overflow-hidden min-w-0 cursor-pointer ${
                 isActive 
                   ? "bg-primary text-white z-10" 
                   : "text-slate-500 md:hover:text-slate-900 md:dark:hover:text-white"
