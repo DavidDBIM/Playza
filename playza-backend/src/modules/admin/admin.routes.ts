@@ -8,6 +8,10 @@ import {
   updateUserStatus,
   getAllTransactionsAdmin,
 } from './admin.service'
+import {
+  getAllPayoutRequests,
+  reviewPayoutRequest,
+} from '../referral/referral.service'
 
 const router = Router()
 
@@ -69,11 +73,11 @@ router.get('/transactions', requireAuth, async (req: AuthRequest, res) => {
   }
 })
 
-// ──────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //  AMBASSADOR APPLICATIONS
-// ──────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-// GET /admin/ambassadors — list all applications with pagination & filter
+// GET /admin/ambassadors â€” list all applications with pagination & filter
 router.get('/ambassadors', requireAuth, async (req: AuthRequest, res) => {
   try {
     const page = parseInt(req.query.page as string) || 1
@@ -120,7 +124,7 @@ router.get('/ambassadors', requireAuth, async (req: AuthRequest, res) => {
   }
 })
 
-// GET /admin/ambassadors/:id — single application detail
+// GET /admin/ambassadors/:id â€” single application detail
 router.get('/ambassadors/:id', requireAuth, async (req: AuthRequest, res) => {
   try {
     const { data, error } = await supabaseAdmin
@@ -139,7 +143,7 @@ router.get('/ambassadors/:id', requireAuth, async (req: AuthRequest, res) => {
   }
 })
 
-// PATCH /admin/ambassadors/:id/review — approve or reject
+// PATCH /admin/ambassadors/:id/review â€” approve or reject
 router.patch('/ambassadors/:id/review', requireAuth, async (req: AuthRequest, res) => {
   try {
     const { action, admin_note } = req.body   // action: 'approve' | 'reject'
@@ -160,6 +164,42 @@ router.patch('/ambassadors/:id/review', requireAuth, async (req: AuthRequest, re
     if (error) throw error
 
     res.json({ success: true, data })
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message })
+  }
+})
+
+
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+//  REFERRAL PAYOUT REQUESTS
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+// GET /admin/referral-payouts â€” list all requests (paginated, filterable)
+router.get('/referral-payouts', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { status, page, limit, search } = req.query as Record<string, string>
+    const data = await getAllPayoutRequests({
+      status,
+      page: page ? parseInt(page) : 1,
+      limit: limit ? parseInt(limit) : 20,
+      search,
+    })
+    res.json({ success: true, data })
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message })
+  }
+})
+
+// PATCH /admin/referral-payouts/:id/review â€” approve or reject
+router.patch('/referral-payouts/:id/review', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { action, admin_note } = req.body as { action: 'approved' | 'rejected'; admin_note?: string }
+    if (!['approved', 'rejected'].includes(action)) {
+      res.status(400).json({ success: false, message: 'action must be approved or rejected' })
+      return
+    }
+    const result = await reviewPayoutRequest(req.params.id, action, admin_note, req.user!.id)
+    res.json({ success: true, data: result })
   } catch (err: any) {
     res.status(400).json({ success: false, message: err.message })
   }
