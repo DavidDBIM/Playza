@@ -1,7 +1,10 @@
 import { useState } from "react";
 import {
-  MdStars, MdArrowForward, MdCheckCircle, MdVerified,
-  MdGroups, MdAutorenew, MdClose, MdWarning,
+  MdArrowForward,
+  MdCheckCircle,
+  MdAutorenew,
+  MdClose,
+  MdWarning,
 } from "react-icons/md";
 import { Sparkles, Crown, ShoppingBag, Zap, ChevronRight, AlertCircle } from "lucide-react";
 import { SpinWheelModal } from "./SpinWheel";
