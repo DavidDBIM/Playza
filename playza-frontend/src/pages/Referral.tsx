@@ -16,8 +16,10 @@ import { FaWhatsapp, FaTwitter, FaTelegram } from "react-icons/fa";
 import { useAuth } from "@/context/auth";
 import { ZASymbol } from "@/components/currency/ZASymbol";
 import { useReferralStats } from "@/hooks/referral/useReferralStats";
+import { useRequestReferralPayout, useReferralPayoutRequests } from "@/hooks/referral/useRequestReferralPayout";
 import { ReferralSkeleton } from "@/components/skeletons/ReferralSkeleton";
 import { type ReferralRecord } from "@/api/referral.api";
+import { MdAccountBalanceWallet, MdHourglassEmpty, MdInfoOutline } from "react-icons/md";
 
 /* ─── Share Modal ──────────────────────────────────────────────────────────── */
 function ShareModal({ referralLink, onClose }: { referralLink: string; onClose: () => void }) {
@@ -86,7 +88,11 @@ function ShareModal({ referralLink, onClose }: { referralLink: string; onClose: 
 const Referral = () => {
   const { user, isLoading: authLoading } = useAuth();
   const { data: stats, isLoading: statsLoading } = useReferralStats();
+  const { mutateAsync: requestPayout, isPending: requestingPayout } = useRequestReferralPayout();
+  const { data: payoutRequests } = useReferralPayoutRequests();
   const [shareOpen, setShareOpen] = useState(false);
+  const [payoutError, setPayoutError] = useState<string | null>(null);
+  const [payoutSuccess, setPayoutSuccess] = useState(false);
   const [copied, setCopied] = useState(false);
   const [filter, setFilter] = useState("All");
   const [search, setSearch] = useState("");
@@ -126,8 +132,24 @@ const Referral = () => {
   const totalPages = Math.ceil(filtered.length / PER_PAGE);
   const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
-  const milestone = stats?.next_milestone;
-  const progress = milestone ? Math.min((stats!.total_referrals / milestone.target) * 100, 100) : 0;
+  const pendingZa = stats?.pending_za ?? 0;
+  const totalZaEarned = stats?.total_za_earned ?? 0;
+  // Check if there is already a pending payout request
+  const hasPendingRequest = (payoutRequests ?? []).some(r => r.status === "pending");
+
+  async function handleRequestPayout() {
+    if (pendingZa <= 0 || hasPendingRequest || requestingPayout) return;
+    setPayoutError(null);
+    setPayoutSuccess(false);
+    try {
+      await requestPayout();
+      setPayoutSuccess(true);
+      setTimeout(() => setPayoutSuccess(false), 5000);
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { message?: string } } };
+      setPayoutError(e.response?.data?.message ?? "Request failed. Please try again.");
+    }
+  }
 
   /* ── Unauthenticated view ── */
   if (!user) {
@@ -219,30 +241,106 @@ const Referral = () => {
         ))}
       </div>
 
-      {/* ── Milestone ── */}
-      {milestone && (
-        <div className="glass-card rounded-xl p-3 border-primary/20 bg-primary/5">
-          <div className="flex items-center justify-between mb-2">
-            <div>
-              <p className="text-[9px] text-primary font-black uppercase tracking-widest">Next milestone</p>
-              <p className="text-slate-900 dark:text-white font-black text-sm">{milestone.target} referrals</p>
-            </div>
-            <div className="text-right">
-              <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest">Reward</p>
-              <p className="text-primary font-black text-sm flex items-center gap-0.5 justify-end">
-                <ZASymbol className="text-[10px]" />{milestone.pza_reward}
-              </p>
-            </div>
-          </div>
-          <div className="w-full h-1.5 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
-            <div className="h-full bg-primary rounded-full transition-all duration-700" style={{ width: `${progress}%` }} />
-          </div>
-          <div className="flex justify-between mt-1">
-            <span className="text-[9px] text-slate-500 font-bold">{stats?.total_referrals}/{milestone.target}</span>
-            <span className="text-[9px] text-primary font-bold">{milestone.remaining} to go</span>
-          </div>
+      {/* ── Referral ZA Available ── */}
+      <div className="glass-card rounded-xl overflow-hidden border border-primary/20">
+        {/* Header strip */}
+        <div className="bg-primary/8 dark:bg-primary/10 px-4 py-3 border-b border-primary/10 flex items-center gap-2">
+          <MdAccountBalanceWallet className="text-primary text-base" />
+          <p className="text-[10px] font-black uppercase tracking-widest text-primary">Referral Earnings</p>
         </div>
-      )}
+
+        <div className="p-4 space-y-4">
+          {/* Balance row */}
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <p className="text-[9px] text-slate-500 dark:text-slate-400 font-black uppercase tracking-widest">Available to Request</p>
+              <p className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-1">
+                <ZASymbol className="text-lg" />{pendingZa.toLocaleString()}
+              </p>
+              <p className="text-[9px] text-slate-400 font-bold">All-time earned: <span className="text-primary"><ZASymbol className="inline text-[8px]" />{totalZaEarned.toLocaleString()}</span></p>
+            </div>
+            <div className="size-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+              <MdAccountBalanceWallet className="text-primary text-2xl" />
+            </div>
+          </div>
+
+          {/* Info note */}
+          <div className="flex items-start gap-2 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/40 rounded-lg px-3 py-2">
+            <MdInfoOutline className="text-amber-500 text-sm shrink-0 mt-0.5" />
+            <p className="text-[10px] text-amber-700 dark:text-amber-400 font-medium leading-relaxed">
+              Referral ZA is credited to your main wallet after admin review. Requests are usually processed within 24 hours.
+            </p>
+          </div>
+
+          {/* Error / success feedback */}
+          {payoutError && (
+            <div className="flex items-center gap-2 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800/40 rounded-lg px-3 py-2">
+              <MdCancel className="text-red-500 text-sm shrink-0" />
+              <p className="text-[10px] text-red-600 dark:text-red-400 font-medium">{payoutError}</p>
+            </div>
+          )}
+          {payoutSuccess && (
+            <div className="flex items-center gap-2 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800/40 rounded-lg px-3 py-2">
+              <MdCheckCircle className="text-green-500 text-sm shrink-0" />
+              <p className="text-[10px] text-green-600 dark:text-green-400 font-bold">Request submitted! We'll review and credit your wallet shortly.</p>
+            </div>
+          )}
+
+          {/* Request button */}
+          {hasPendingRequest ? (
+            <div className="flex items-center gap-2 h-11 px-4 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-700/40">
+              <MdHourglassEmpty className="text-amber-500 text-sm shrink-0" />
+              <p className="text-[10px] text-amber-700 dark:text-amber-400 font-black uppercase tracking-widest">Request pending review…</p>
+            </div>
+          ) : (
+            <button
+              onClick={handleRequestPayout}
+              disabled={pendingZa <= 0 || requestingPayout}
+              className={`w-full h-11 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${
+                pendingZa > 0 && !requestingPayout
+                  ? "bg-primary text-white hover:brightness-110 shadow-md glow-accent active:scale-95"
+                  : "bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-slate-600 cursor-not-allowed border border-slate-200 dark:border-white/10"
+              }`}
+            >
+              <MdAccountBalanceWallet className="text-sm" />
+              {requestingPayout
+                ? "Submitting…"
+                : pendingZa <= 0
+                ? "No ZA available yet"
+                : `Request ${pendingZa.toLocaleString()} ZA`}
+            </button>
+          )}
+
+          {/* Past payout requests mini-log */}
+          {(payoutRequests ?? []).length > 0 && (
+            <div className="space-y-1.5 pt-1">
+              <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest">Request History</p>
+              {(payoutRequests ?? []).slice(0, 3).map(r => (
+                <div key={r.id} className="flex items-center justify-between py-1.5 border-t border-slate-100 dark:border-white/5">
+                  <div className="flex items-center gap-2">
+                    {r.status === "approved" && <MdCheckCircle className="text-green-500 text-sm" />}
+                    {r.status === "pending"  && <MdHourglassEmpty className="text-amber-500 text-sm" />}
+                    {r.status === "rejected" && <MdCancel className="text-red-500 text-sm" />}
+                    <span className="text-[10px] text-slate-600 dark:text-slate-400 font-bold">
+                      {new Date(r.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "2-digit" })}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-black text-xs text-slate-900 dark:text-white flex items-center gap-0.5">
+                      <ZASymbol className="text-[9px]" />{r.amount.toLocaleString()}
+                    </span>
+                    <span className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md ${
+                      r.status === "approved" ? "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400"
+                      : r.status === "pending"  ? "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400"
+                      : "bg-red-100 dark:bg-red-900/30 text-red-500"
+                    }`}>{r.status}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* ── How it works ── (collapsed to 3 inline steps) ── */}
       <div className="grid grid-cols-3 gap-2">
