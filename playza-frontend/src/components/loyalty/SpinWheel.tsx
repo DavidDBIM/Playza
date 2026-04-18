@@ -3,7 +3,7 @@ import { MdClose, MdStars, MdAutorenew } from "react-icons/md";
 import { AlertCircle, Zap } from "lucide-react";
 import { useSpinWheel } from "@/hooks/loyalty/useSpinWheel";
 
-// 9 segments — zero included. Sharp neon palette.
+// 9 segments — matches backend segment_index 0..8
 const SEGMENTS = [
   { label: "0",    points: 0,    bg: "#1C1C2E", text: "#6B7280", accent: "#374151" },
   { label: "10",   points: 10,   bg: "#FF2D55", text: "#fff",    accent: "#FF6B84" },
@@ -18,6 +18,17 @@ const SEGMENTS = [
 
 const SEG_COUNT = SEGMENTS.length;
 const SEG_ANGLE = (2 * Math.PI) / SEG_COUNT;
+
+// The pointer sits at the TOP of the canvas, which is angle = -π/2 in canvas coords.
+// Segments are drawn starting from `angle` (the wheel's current rotation).
+// Segment[i] occupies the arc from (angle + i*SEG_ANGLE) to (angle + (i+1)*SEG_ANGLE).
+// Its visual centre is at: angle + i*SEG_ANGLE + SEG_ANGLE/2
+//
+// For segment[targetIdx] to land under the pointer (-π/2), we need:
+//   wheelAngle + targetIdx*SEG_ANGLE + SEG_ANGLE/2  ≡  -π/2  (mod 2π)
+//   wheelAngle  =  -π/2 - targetIdx*SEG_ANGLE - SEG_ANGLE/2
+//
+// We then add enough full rotations so the wheel spins visually before stopping.
 
 interface SpinResult {
   points_won: number;
@@ -43,7 +54,8 @@ export function SpinWheelModal({ onClose, onSpinComplete, spinsLeft: initialSpin
   const [result, setResult] = useState<SpinResult | null>(null);
   const [currentBalance, setCurrentBalance] = useState(totalPoints);
   const [error, setError] = useState<string | null>(null);
-  const [currentAngle, setCurrentAngle] = useState(0);
+  // wheelAngle tracks the wheel's total accumulated rotation (never reset, so easing works correctly)
+  const wheelAngleRef = useRef(0);
   const animFrameRef = useRef<number>(0);
   const SPIN_COST = 30;
 
@@ -179,7 +191,7 @@ export function SpinWheelModal({ onClose, onSpinComplete, spinsLeft: initialSpin
   }
 
   useEffect(() => {
-    drawWheel(currentAngle);
+    drawWheel(wheelAngleRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -196,29 +208,45 @@ export function SpinWheelModal({ onClose, onSpinComplete, spinsLeft: initialSpin
       const spinResult = await performSpin();
       const targetSegIndex = spinResult.segment_index;
 
-      const minRotations = 7;
-      const extraRotations = (minRotations + Math.random() * 4) * 2 * Math.PI;
-      const pointerAngle = -Math.PI / 2;
-      const segCenter = targetSegIndex * SEG_ANGLE + SEG_ANGLE / 2;
-      const targetWheelAngle = pointerAngle - segCenter;
-      const currentNorm = ((currentAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
-      const targetNorm = ((targetWheelAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
-      let delta = targetNorm - currentNorm;
-      if (delta < 0) delta += 2 * Math.PI;
-      const totalRotation = extraRotations + delta;
-      const finalAngle = currentAngle + totalRotation;
+      // --- ACCURATE LANDING MATH ---
+      // Pointer is at canvas top = angle -π/2.
+      // The wheel has accumulated `wheelAngleRef.current` total rotation.
+      //
+      // We want the final wheel angle F such that:
+      //   segment[targetSegIndex] centre sits exactly at -π/2:
+      //   F + targetSegIndex * SEG_ANGLE + SEG_ANGLE/2  ≡  -π/2  (mod 2π)
+      //   F_target  =  -π/2 - targetSegIndex * SEG_ANGLE - SEG_ANGLE/2
+      //
+      // Then we normalise to 0..2π and add enough full spins (≥ 5) so the
+      // wheel visually rotates before stopping.
 
-      const duration = 5200;
+      const POINTER_ANGLE = -Math.PI / 2;
+      const rawTarget = POINTER_ANGLE - targetSegIndex * SEG_ANGLE - SEG_ANGLE / 2;
+
+      // Normalise rawTarget to [0, 2π)
+      const twoPi = 2 * Math.PI;
+      const normTarget = ((rawTarget % twoPi) + twoPi) % twoPi;
+
+      // Current wheel angle normalised
+      const normCurrent = ((wheelAngleRef.current % twoPi) + twoPi) % twoPi;
+
+      // How far to rotate FROM normCurrent TO normTarget (always go forward = clockwise)
+      let delta = normTarget - normCurrent;
+      if (delta <= 0) delta += twoPi; // ensure forward spin
+
+      // Add at least 6 full rotations for visual drama
+      const minFullSpins = 6 + Math.floor(Math.random() * 3); // 6–8 full spins
+      const totalRotation = minFullSpins * twoPi + delta;
+      const finalAngle = wheelAngleRef.current + totalRotation;
+      // ---
+
+      const duration = 5400;
       const start = performance.now();
-      const startAngle = currentAngle;
+      const startAngle = wheelAngleRef.current;
 
       function easeOut(t: number) {
-        const base = 1 - Math.pow(1 - t, 4);
-        if (t > 0.88) {
-          const wobble = Math.sin((t - 0.88) * Math.PI * 18) * 0.0015 * (1 - t);
-          return base + wobble;
-        }
-        return base;
+        // Quartic ease-out — fast start, smooth deceleration
+        return 1 - Math.pow(1 - t, 4);
       }
 
       function animate(now: number) {
@@ -229,11 +257,12 @@ export function SpinWheelModal({ onClose, onSpinComplete, spinsLeft: initialSpin
         if (progress < 1) {
           animFrameRef.current = requestAnimationFrame(animate);
         } else {
-          setCurrentAngle(finalAngle);
+          // Lock exactly on target to eliminate any floating-point drift
+          wheelAngleRef.current = finalAngle;
           drawWheel(finalAngle);
           setIsSpinning(false);
           setResult(spinResult);
-          // Sync to real server balance (handles both win and zero)
+          // Sync to authoritative server balance
           setCurrentBalance(spinResult.new_balance);
           setSpinsLeft(spinResult.spins_left_today);
           onSpinComplete(spinResult);
@@ -256,9 +285,12 @@ export function SpinWheelModal({ onClose, onSpinComplete, spinsLeft: initialSpin
   const isWin = result !== null && result.points_won > 0;
   const isZero = result !== null && result.points_won === 0;
 
+  // Responsive canvas size
+  const canvasSize = 300;
+
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md"
       onClick={() => !isSpinning && onClose()}
     >
       <div
@@ -273,10 +305,10 @@ export function SpinWheelModal({ onClose, onSpinComplete, spinsLeft: initialSpin
         />
 
         {/* Header */}
-        <div className="flex items-center justify-between px-5 pt-5 pb-3">
+        <div className="flex items-center justify-between px-4 pt-4 pb-3">
           <div className="flex items-center gap-2.5">
             <div
-              className="w-8 h-8 rounded-xl flex items-center justify-center text-base"
+              className="w-8 h-8 rounded-xl flex items-center justify-center text-base shrink-0"
               style={{ background: "linear-gradient(135deg,#6366F1,#8B5CF6)", boxShadow: "0 0 12px rgba(99,102,241,0.5)" }}
             >
               🎰
@@ -288,7 +320,7 @@ export function SpinWheelModal({ onClose, onSpinComplete, spinsLeft: initialSpin
           </div>
           <button
             onClick={() => !isSpinning && onClose()}
-            className="w-8 h-8 rounded-xl flex items-center justify-center text-white/50 hover:text-white transition-all"
+            className="w-8 h-8 rounded-xl flex items-center justify-center text-white/50 hover:text-white transition-all shrink-0"
             style={{ background: "rgba(255,255,255,0.06)" }}
           >
             <MdClose />
@@ -296,9 +328,9 @@ export function SpinWheelModal({ onClose, onSpinComplete, spinsLeft: initialSpin
         </div>
 
         {/* Stats row */}
-        <div className="px-5 flex gap-2 mb-4">
+        <div className="px-4 flex gap-2 mb-3">
           <div
-            className="flex-1 flex items-center gap-2 rounded-xl px-3 py-2.5 border border-white/8"
+            className="flex-1 flex items-center gap-2 rounded-xl px-3 py-2 border border-white/8"
             style={{ background: "rgba(255,255,255,0.04)" }}
           >
             <Zap className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
@@ -310,7 +342,7 @@ export function SpinWheelModal({ onClose, onSpinComplete, spinsLeft: initialSpin
             </div>
           </div>
           <div
-            className="flex-1 flex items-center gap-2 rounded-xl px-3 py-2.5 border border-white/8"
+            className="flex-1 flex items-center gap-2 rounded-xl px-3 py-2 border border-white/8"
             style={{ background: "rgba(255,255,255,0.04)" }}
           >
             <MdStars className="text-yellow-400 text-base shrink-0" />
@@ -324,35 +356,37 @@ export function SpinWheelModal({ onClose, onSpinComplete, spinsLeft: initialSpin
         </div>
 
         {/* Wheel */}
-        <div className="relative flex justify-center items-center px-5 pb-2">
+        <div className="relative flex justify-center items-center px-4 pb-1">
           {/* Glow halo */}
           <div
             className="absolute rounded-full pointer-events-none"
             style={{
-              width: 270, height: 270,
+              width: canvasSize - 20, height: canvasSize - 20,
               background: "radial-gradient(circle,rgba(99,102,241,0.22) 0%,transparent 70%)",
               filter: "blur(16px)",
             }}
           />
 
-          {/* Pointer */}
-          <div className="absolute top-0 left-1/2 z-20" style={{ transform: "translateX(-50%) translateY(-2px)" }}>
+          {/* Pointer — sits exactly at top centre of the wheel */}
+          <div className="absolute z-20" style={{ top: 0, left: "50%", transform: "translateX(-50%) translateY(-2px)" }}>
             <div style={{
               width: 0, height: 0,
-              borderLeft: "11px solid transparent",
-              borderRight: "11px solid transparent",
-              borderTop: "26px solid #FFD60A",
+              borderLeft: "10px solid transparent",
+              borderRight: "10px solid transparent",
+              borderTop: "24px solid #FFD60A",
               filter: "drop-shadow(0 3px 8px rgba(255,214,10,0.9))",
             }} />
           </div>
 
           <canvas
             ref={canvasRef}
-            width={320}
-            height={320}
+            width={canvasSize}
+            height={canvasSize}
             className="cursor-pointer rounded-full select-none"
             onClick={canSpin ? spin : undefined}
             style={{
+              width: canvasSize,
+              height: canvasSize,
               filter: isSpinning
                 ? "drop-shadow(0 0 32px rgba(99,102,241,1)) drop-shadow(0 0 12px rgba(255,214,10,0.6))"
                 : canSpin
@@ -364,7 +398,7 @@ export function SpinWheelModal({ onClose, onSpinComplete, spinsLeft: initialSpin
         </div>
 
         {/* Result / status */}
-        <div className="px-5 min-h-[62px] flex items-center justify-center py-2">
+        <div className="px-4 min-h-[58px] flex items-center justify-center py-2">
           {error ? (
             <div className="flex items-center gap-2.5 rounded-2xl px-4 py-3 w-full border border-red-500/30"
                  style={{ background: "rgba(239,68,68,0.1)" }}>
@@ -372,18 +406,18 @@ export function SpinWheelModal({ onClose, onSpinComplete, spinsLeft: initialSpin
               <span className="text-red-300 text-xs font-medium">{error}</span>
             </div>
           ) : isWin ? (
-            <div className="flex flex-col items-center gap-1.5 w-full animate-bounce">
-              <div className="flex items-center gap-2.5 rounded-2xl px-6 py-3 border border-yellow-400/40"
+            <div className="flex flex-col items-center gap-1 w-full animate-bounce">
+              <div className="flex items-center gap-2 rounded-2xl px-5 py-2.5 border border-yellow-400/40"
                    style={{ background: "rgba(255,214,10,0.12)" }}>
-                <MdStars className="text-yellow-400 text-2xl" />
+                <MdStars className="text-yellow-400 text-xl" />
                 <span className="text-white font-black text-2xl">+{result!.points_won.toLocaleString()}</span>
                 <span className="text-yellow-400 font-bold text-sm">PZA</span>
               </div>
               <p className="text-emerald-400 text-[11px] font-bold">Added to your balance!</p>
             </div>
           ) : isZero ? (
-            <div className="flex flex-col items-center gap-1.5 w-full">
-              <div className="flex items-center gap-2 rounded-2xl px-6 py-3 border border-white/10"
+            <div className="flex flex-col items-center gap-1 w-full">
+              <div className="flex items-center gap-2 rounded-2xl px-5 py-2.5 border border-white/10"
                    style={{ background: "rgba(255,255,255,0.04)" }}>
                 <span className="text-white/50 font-black text-lg">Miss — 0 PZA</span>
                 <span className="text-lg">😬</span>
@@ -405,7 +439,7 @@ export function SpinWheelModal({ onClose, onSpinComplete, spinsLeft: initialSpin
         </div>
 
         {/* Spin button + dots */}
-        <div className="px-5 pb-5">
+        <div className="px-4 pb-5">
           <div className="flex items-center justify-center gap-2 mb-3">
             {Array.from({ length: 3 }).map((_, i) => (
               <div
@@ -426,7 +460,7 @@ export function SpinWheelModal({ onClose, onSpinComplete, spinsLeft: initialSpin
           <button
             onClick={spin}
             disabled={!canSpin}
-            className="w-full py-4 rounded-2xl font-black text-sm tracking-widest transition-all active:scale-95 uppercase"
+            className="w-full py-3.5 rounded-2xl font-black text-sm tracking-widest transition-all active:scale-95 uppercase"
             style={canSpin ? {
               background: "linear-gradient(135deg,#6366F1 0%,#8B5CF6 50%,#A855F7 100%)",
               boxShadow: "0 4px 28px rgba(99,102,241,0.55), inset 0 1px 0 rgba(255,255,255,0.15)",
