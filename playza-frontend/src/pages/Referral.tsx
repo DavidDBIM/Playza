@@ -113,7 +113,7 @@ const Referral = () => {
 
   const filtered = useMemo(() => {
     return rows.filter(r => {
-      const matchStatus = filter === "All" || (filter === "Done" ? r.status === "done" : r.status === "pending");
+      const matchStatus = filter === "All" || (filter === "Verified" ? r.status === "done" : filter === "Pending" ? r.status === "pending" : true);
       return matchStatus && r.name.toLowerCase().includes(search.toLowerCase());
     });
   }, [rows, filter, search]);
@@ -342,21 +342,53 @@ const Referral = () => {
         </div>
       </div>
 
-      {/* ── How it works ── (collapsed to 3 inline steps) ── */}
-      <div className="grid grid-cols-3 gap-2">
-        {[
-          { n: "1", title: "Share", sub: "Send your link" },
-          { n: "2", title: "Join", sub: "Friend signs up" },
-          { n: "3", title: "Earn", sub: "You get paid" },
-        ].map(s => (
-          <div key={s.n} className="glass-card rounded-xl p-3 flex items-center gap-2.5">
-            <span className="size-7 rounded-lg bg-primary/10 border border-primary/20 text-primary text-xs font-black flex items-center justify-center shrink-0">{s.n}</span>
-            <div>
-              <p className="text-slate-900 dark:text-white text-xs font-black">{s.title}</p>
-              <p className="text-slate-500 text-[10px] font-bold">{s.sub}</p>
+      {/* ── How it works ── vertical steps ── */}
+      <div className="glass-card rounded-xl overflow-hidden">
+        <div className="px-4 pt-4 pb-2">
+          <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">How it works</p>
+        </div>
+        <div className="divide-y divide-slate-100 dark:divide-white/5">
+          {[
+            {
+              n: "1",
+              emoji: "🔗",
+              title: "Share",
+              desc: "Send your unique referral link to friends and family via WhatsApp, Telegram, or any platform.",
+            },
+            {
+              n: "2",
+              emoji: "📲",
+              title: "Join",
+              desc: "They sign up using your referral link and make a minimum deposit of ₦1,000 ZA to activate their account.",
+            },
+            {
+              n: "3",
+              emoji: "💰",
+              title: "Earn",
+              desc: "You get paid once your referral plays 5 games in the Games section or Tournaments. Note: H2H duels do not count.",
+            },
+          ].map((s, i, arr) => (
+            <div key={s.n} className="flex items-start gap-4 px-4 py-4">
+              {/* Step number + connector line */}
+              <div className="flex flex-col items-center shrink-0" style={{ minWidth: 32 }}>
+                <span className="size-8 rounded-xl bg-primary/10 border border-primary/20 text-primary text-xs font-black flex items-center justify-center">
+                  {s.emoji}
+                </span>
+                {i < arr.length - 1 && (
+                  <div className="w-px flex-1 bg-primary/20 mt-1" style={{ minHeight: 20 }} />
+                )}
+              </div>
+              {/* Content */}
+              <div className="flex-1 pb-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-[9px] font-black text-primary uppercase tracking-widest">Step {s.n}</span>
+                </div>
+                <p className="text-slate-900 dark:text-white text-sm font-black mb-0.5">{s.title}</p>
+                <p className="text-slate-500 dark:text-slate-400 text-xs font-medium leading-relaxed">{s.desc}</p>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       {/* ── Referral history ── */}
@@ -364,10 +396,9 @@ const Referral = () => {
         <div className="glass-card rounded-xl overflow-hidden">
           {/* Toolbar */}
           <div className="flex items-center gap-2 p-3 border-b border-slate-100 dark:border-white/5">
-            <p className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-tight flex-1">Squad</p>
-            {/* Filter pills */}
-            <div className="flex gap-1">
-              {["All", "Done", "Pending"].map(f => (
+            {/* Filter pills — no heading */}
+            <div className="flex gap-1 flex-1">
+              {["All", "Verified", "Pending"].map(f => (
                 <button
                   key={f}
                   onClick={() => { setFilter(f); setPage(1); }}
