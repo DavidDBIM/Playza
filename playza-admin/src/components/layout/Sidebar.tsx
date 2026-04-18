@@ -10,7 +10,8 @@ import {
   MdRedeem, 
   MdNotifications, 
   MdLayers, 
-  MdEmojiPeople
+  MdEmojiPeople,
+  MdCurrencyExchange
 } from 'react-icons/md';
 import { Link, useLocation } from 'react-router';
 
@@ -34,6 +35,7 @@ const Sidebar: React.FC = () => {
           { path: '/withdrawals', pathMatch: '/withdrawals', icon: MdAccountBalanceWallet, label: 'Withdrawals' },
           { path: '/rewards', pathMatch: '/rewards', icon: MdRedeem, label: 'Rewards' },
           { path: '/ambassadors', pathMatch: '/ambassadors', icon: MdEmojiPeople, label: 'Ambassadors' },
+          { path: '/referral-payouts', pathMatch: '/referral-payouts', icon: MdCurrencyExchange, label: 'Referral Payouts' },
           { path: '/notifications', pathMatch: '/notifications', icon: MdNotifications, label: 'Notifications' },
           { path: '/content', pathMatch: '/content', icon: MdLayers, label: 'Content' },
         ].map((item) => {
