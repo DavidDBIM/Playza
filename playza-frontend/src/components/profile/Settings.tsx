@@ -507,105 +507,77 @@ const Settings = () => {
             </h2>
           </div>
 
-          <div className="bg-white dark:bg-white/5 p-2 md:p-8 rounded-xl border border-slate-200 dark:border-white/5 space-y-8 shadow-xl">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <p className="text-xs md:text-sm font-black text-slate-900 dark:text-white italic uppercase tracking-tighter">
+          <div className="bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/5 shadow-xl divide-y divide-slate-100 dark:divide-white/5 overflow-hidden">
+            {/* New Match Alerts */}
+            <div className="flex items-center justify-between px-4 py-3 gap-4">
+              <div className="min-w-0">
+                <p className="text-xs font-black text-slate-900 dark:text-white italic uppercase tracking-tighter truncate">
                   New Match Alerts
                 </p>
-                <p className="text-xs text-slate-500 dark:text-slate-500 font-bold max-w-sm">
-                  Receive notifications when a new tournament or challenge is
-                  available in your favorite games.
+                <p className="text-[10px] text-slate-500 font-bold leading-snug mt-0.5">
+                  Notify me when tournaments or challenges go live.
                 </p>
               </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  className="sr-only peer"
-                  {...register("showActivity")}
-                />
-                <div className="w-14 h-7 bg-slate-200 dark:bg-white/5 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-1 after:left-1 after:bg-white dark:after:bg-slate-700 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary shadow-inner transition-colors"></div>
+              <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                <input type="checkbox" className="sr-only peer" {...register("showActivity")} />
+                <div className="w-11 h-6 bg-slate-200 dark:bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white dark:after:bg-slate-700 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary transition-colors"></div>
               </label>
             </div>
-
-            <div className="h-px bg-slate-100 dark:bg-white/5"></div>
-
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <p className="text-xs md:text-sm font-black text-slate-900 dark:text-white italic uppercase tracking-tighter">
+            {/* Marketing Emails */}
+            <div className="flex items-center justify-between px-4 py-3 gap-4">
+              <div className="min-w-0">
+                <p className="text-xs font-black text-slate-900 dark:text-white italic uppercase tracking-tighter truncate">
                   Marketing Emails
                 </p>
-                <p className="text-xs text-slate-500 dark:text-slate-500 font-bold max-w-sm">
-                  Stay updated with Playza news, exclusive offers, and weekly
-                  gaming event summaries.
+                <p className="text-[10px] text-slate-500 font-bold leading-snug mt-0.5">
+                  News, offers and weekly gaming summaries.
                 </p>
               </div>
-              <label className="relative inline-flex items-center cursor-pointer">
+              <label className="relative inline-flex items-center cursor-pointer shrink-0">
                 <input type="checkbox" className="sr-only peer" />
-                <div className="w-14 h-7 bg-slate-200 dark:bg-white/5 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-1 after:left-1 after:bg-white dark:after:bg-slate-700 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary shadow-inner transition-colors"></div>
+                <div className="w-11 h-6 bg-slate-200 dark:bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white dark:after:bg-slate-700 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary transition-colors"></div>
               </label>
             </div>
-
-            <div className="h-px bg-slate-100 dark:bg-white/5"></div>
-
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <p className="text-xs md:text-sm font-black text-slate-900 dark:text-white italic uppercase tracking-tighter">
+            {/* Show Activity */}
+            <div className="flex items-center justify-between px-4 py-3 gap-4">
+              <div className="min-w-0">
+                <p className="text-xs font-black text-slate-900 dark:text-white italic uppercase tracking-tighter truncate">
                   Show Activity on Profile
                 </p>
-                <p className="text-xs text-slate-500 dark:text-slate-500 font-bold max-w-sm">
-                  Allow other players to see your recent matches and
-                  achievements on your public profile.
+                <p className="text-[10px] text-slate-500 font-bold leading-snug mt-0.5">
+                  Let other players see your matches and achievements.
                 </p>
               </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  className="sr-only peer"
-                  {...register("showActivity")}
-                />
-                <div className="w-14 h-7 bg-slate-200 dark:bg-white/5 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-1 after:left-1 after:bg-white dark:after:bg-slate-700 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary shadow-inner transition-colors"></div>
+              <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                <input type="checkbox" className="sr-only peer" {...register("showActivity")} />
+                <div className="w-11 h-6 bg-slate-200 dark:bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white dark:after:bg-slate-700 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary transition-colors"></div>
               </label>
             </div>
           </div>
         </section>
 
         {/* ── Final Actions ── */}
-        <div className="pt-2 md:pt-10 border-t border-slate-200 dark:border-white/5 flex flex-col sm:flex-row items-center justify-between gap-2 md:gap-6">
+        <div className="pt-2 md:pt-10 border-t border-slate-200 dark:border-white/5 flex justify-end gap-2 md:gap-4">
           <button
-            onClick={handleDeactivate}
-            disabled={isDeactivating}
-            className="text-xs font-black text-red-500/60 uppercase tracking-widest hover:text-red-500 transition-all group flex items-center gap-2 disabled:opacity-50"
+            onClick={() => reset()}
+            className="h-12 px-4 md:px-8 rounded-2xl text-xs font-black text-slate-500 uppercase tracking-widest hover:text-slate-900 dark:hover:text-white transition-all bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 shadow-sm"
           >
-            {isDeactivating ? (
-              <div className="size-3 border-2 border-red-500/20 border-t-red-500 rounded-full animate-spin"></div>
-            ) : (
-              <span className="size-2 bg-red-500/60 rounded-full group-hover:animate-pulse"></span>
-            )}
-            {isDeactivating ? "Deactivating..." : "Deactivate Gaming Account"}
+            Reset
           </button>
-          <div className="flex gap-2 md:gap-4 w-full sm:w-auto">
-            <button
-              onClick={() => reset()}
-              className="flex-1 sm:flex-none h-12 px-2 md:px-8 rounded-2xl text-xs font-black text-slate-500 uppercase tracking-widest hover:text-slate-900 dark:hover:text-white transition-all bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 shadow-sm"
-            >
-              Reset
-            </button>
-            <button
-              onClick={handleSubmit(onProfileSubmit)}
-              disabled={isPending || !isDirty}
-              className="flex-1 sm:flex-none min-w-40 h-12 px-2 md:px-10 rounded-2xl bg-primary text-white text-xs font-black uppercase tracking-[0.1em] hover:scale-105 hover:brightness-110 shadow-2xl glow-accent transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              {isPending ? (
-                <>
-                  <div className="size-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-                  <span>Saving...</span>
-                </>
-              ) : (
-                "Save Everything"
-              )}
-            </button>
-          </div>
+          <button
+            onClick={handleSubmit(onProfileSubmit)}
+            disabled={isPending || !isDirty}
+            className="min-w-32 h-12 px-4 md:px-10 rounded-2xl bg-primary text-white text-xs font-black uppercase tracking-[0.1em] hover:scale-105 hover:brightness-110 shadow-2xl glow-accent transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {isPending ? (
+              <>
+                <div className="size-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                <span>Saving...</span>
+              </>
+            ) : (
+              "Save Everything"
+            )}
+          </button>
         </div>
       </div>
     </>
