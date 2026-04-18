@@ -1,6 +1,37 @@
-import { supabase, supabaseAdmin } from '../../config/supabase'
+import { supabaseAdmin } from '../../config/supabase'
 import { awardPZA } from '../../lib/pzaEngine'
 
+// ── Supabase Storage: upload base64 avatar ──────────────────────────────────
+export async function uploadAvatarFromBase64(
+  userId: string,
+  base64Data: string,
+): Promise<string> {
+  // Strip the data URI prefix: "data:image/jpeg;base64,..."
+  const match = base64Data.match(/^data:(.+?);base64,(.+)$/)
+  if (!match) throw new Error('Invalid image format')
+
+  const mimeType = match[1]          // e.g. "image/jpeg"
+  const raw      = match[2]          // pure base64 string
+  const ext      = mimeType.split('/')[1]?.replace('jpeg', 'jpg') ?? 'jpg'
+  const path     = `avatars/${userId}.${ext}`
+
+  const buffer = Buffer.from(raw, 'base64')
+
+  const { error } = await supabaseAdmin.storage
+    .from('avatars')
+    .upload(path, buffer, {
+      contentType: mimeType,
+      upsert: true,   // overwrite on every update
+    })
+
+  if (error) throw new Error(`Storage upload failed: ${error.message}`)
+
+  const { data } = supabaseAdmin.storage.from('avatars').getPublicUrl(path)
+  // Bust CDN cache with a timestamp query param
+  return `${data.publicUrl}?t=${Date.now()}`
+}
+
+// ── Profile ──────────────────────────────────────────────────────────────────
 export async function getProfile(userId: string) {
   const { data: user, error } = await supabaseAdmin
     .from('users')
@@ -40,7 +71,7 @@ export async function updateProfile(userId: string, data: {
   first_name?: string
   last_name?: string
   phone?: string
-  avatar_url?: string
+  avatar_url?: string        // already a public URL at this point (resolved upstream)
   tagline?: string
   bio?: string
   show_activity?: boolean
