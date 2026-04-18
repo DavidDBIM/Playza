@@ -16,7 +16,7 @@ import { FaWhatsapp, FaTwitter, FaTelegram } from "react-icons/fa";
 import { useAuth } from "@/context/auth";
 import { ZASymbol } from "@/components/currency/ZASymbol";
 import { useReferralStats } from "@/hooks/referral/useReferralStats";
-import { useRequestReferralPayout, useReferralPayoutRequests } from "@/hooks/referral/useRequestReferralPayout";
+import { useRequestReferralPayout, useReferralPayoutRequests } from "../hooks/referral/useRequestReferralPayout";
 import { ReferralSkeleton } from "@/components/skeletons/ReferralSkeleton";
 import { type ReferralRecord } from "@/api/referral.api";
 import { MdAccountBalanceWallet, MdHourglassEmpty, MdInfoOutline } from "react-icons/md";

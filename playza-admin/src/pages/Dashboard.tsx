@@ -60,20 +60,25 @@ const Dashboard: React.FC = () => {
   ] : referralStats;
 
   return (
-    <main className="p-4 md:p-8 space-y-12 max-w-400 mx-auto w-full min-h-screen bg-background text-foreground transition-all duration-500">
+    <main className="p-6 space-y-6">
       {/* Header Section */}
-      <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-12">
-        <div className="space-y-2">
-          <h2 className="text-3xl md:text-5xl font-black font-headline text-primary shadow-sm uppercase italic tracking-widest">Empire Command</h2>
-          <p className="text-muted-foreground/80 font-black uppercase text-[10px] tracking-[0.4em]">Strategic Overview • Skill-Gaming Performance • Nigeria Region</p>
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-linear-to-br from-primary to-indigo-600 flex items-center justify-center shadow-md shadow-primary/30">
+            <span className="text-white text-xl font-black">D</span>
+          </div>
+          <div>
+            <h1 className="text-2xl font-black text-foreground tracking-tight">Empire Command</h1>
+            <p className="text-sm text-muted-foreground font-medium">Strategic Overview • Skill-Gaming Performance</p>
+          </div>
         </div>
         {isLoading && (
-          <div className="flex items-center gap-2 text-primary animate-pulse">
+          <div className="flex items-center gap-2 px-4 py-2 bg-muted rounded-xl text-primary animate-pulse transition-all">
             <div className="w-2 h-2 rounded-full bg-primary" />
-            <span className="text-[10px] font-black uppercase tracking-widest">Syncing Empire Data...</span>
+            <span className="text-xs font-bold uppercase tracking-wider">Syncing Data...</span>
           </div>
         )}
-      </header>
+      </div>
 
       {isError ? (
         <div className="glass-card p-12 text-center border-rose-500/20">

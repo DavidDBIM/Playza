@@ -78,7 +78,6 @@ const Profile = () => {
 
   return (
     <div className="flex-1 pb-16 md:pb-10 transition-all duration-500">
-
       {/* ── COMPACT PROFILE HEADER ── */}
       <div className="glass-card rounded-xl p-3 md:p-6 mb-3 md:mb-6 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 blur-[100px] rounded-full -mr-32 -mt-32 pointer-events-none" />
@@ -130,15 +129,20 @@ const Profile = () => {
               {/* PZA Points */}
               <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-primary/10 border border-primary/20">
                 <MdMilitaryTech className="text-primary text-sm" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">PZA</span>
-                <span className="text-xs font-black text-primary">{pts.toLocaleString()}</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                  PZA
+                </span>
+                <span className="text-xs font-black text-primary">
+                  {pts.toLocaleString()}
+                </span>
               </div>
 
               {/* ZA Wallet */}
               <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-green-500/10 border border-green-500/20">
                 <ZASymbol className="text-green-500 text-sm" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">ZA</span>
-                <span className="text-xs font-black text-green-500">{(profile?.wallet?.balance ?? 0).toLocaleString()}</span>
+                <span className="text-xs font-black text-green-500">
+                  {(profile?.wallet?.balance ?? 0).toLocaleString()}
+                </span>
               </div>
             </div>
           </div>
@@ -157,7 +161,10 @@ const Profile = () => {
             <button
               onClick={() => {
                 if (navigator.share) {
-                  navigator.share({ title: "Playza Profile", url: window.location.href });
+                  navigator.share({
+                    title: "Playza Profile",
+                    url: window.location.href,
+                  });
                 }
               }}
               className="flex items-center gap-1.5 px-3 py-2 bg-primary text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:brightness-110 transition-all shadow-md glow-accent"
@@ -170,7 +177,7 @@ const Profile = () => {
       </div>
 
       {/* ── MOBILE TAB BAR ── shown above content on mobile only */}
-      <div className="md:hidden overflow-x-auto no-scrollbar mb-3 -mx-1 px-1">
+      <div className="-mx-1 md:hidden overflow-x-auto no-scrollbar mb-3 px-1">
         <div className="flex gap-1.5 w-max">
           {menuItems.map((item) => (
             <NavLink
@@ -193,7 +200,6 @@ const Profile = () => {
 
       {/* ── MAIN LAYOUT: sidebar on desktop, content always ── */}
       <div className="flex flex-col md:flex-row gap-2 md:gap-6">
-
         {/* Desktop sidebar — hidden on mobile */}
         <div className="hidden md:flex flex-col gap-2 w-56 shrink-0">
           <div className="glass-card rounded-2xl p-2 space-y-0.5">

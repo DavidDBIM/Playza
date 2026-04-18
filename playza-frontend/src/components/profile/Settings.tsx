@@ -18,10 +18,8 @@ import {
   useSetPrimaryBankAccount,
   useRemoveBankAccount,
 } from "../../hooks/profile/useProfile";
-import { useDeactivateUser } from "../../hooks/users/useDeactivateUser";
 import { useAuth } from "../../context/auth";
 import type { BankAccount } from "../../api/profile.api";
-import { TokenStorage } from "../../api/axiosInstance";
 
 import {
   DropdownMenu,
@@ -34,12 +32,9 @@ import { AddPaymentMethodModal } from "./AddPaymentMethodModal";
 const Settings = () => {
   const { data: profile, isLoading } = useProfile();
   const { mutate: updateProfile, isPending } = useUpdateProfile();
-  const { mutate: deactivateUser, isPending: isDeactivating } =
-    useDeactivateUser();
   const { updateProfile: updateAuthState } = useAuth();
 
   const [showAddMethod, setShowAddMethod] = useState(false);
-
 
   const { data: bankAccounts = [], refetch: refetchBanks } = useBankAccounts();
   const { mutate: setPrimary } = useSetPrimaryBankAccount();
@@ -140,22 +135,6 @@ const Settings = () => {
       },
     );
   };
-  const handleDeactivate = () => {
-    if (
-      profile &&
-      confirm(
-        "Are you sure you want to deactivate your account? This action cannot be undone.",
-      )
-    ) {
-      deactivateUser(profile.id, {
-        onSuccess: () => {
-          TokenStorage.clearTokens();
-          window.location.href = "/";
-        },
-      });
-    }
-  };
-
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -259,7 +238,12 @@ const Settings = () => {
                   ref={fileInputRef}
                   onChange={handleFileChange}
                   accept="image/png, image/jpeg, image/jpg, image/webp"
-                  style={{ position: 'absolute', width: 0, height: 0, opacity: 0 }}
+                  style={{
+                    position: "absolute",
+                    width: 0,
+                    height: 0,
+                    opacity: 0,
+                  }}
                   tabIndex={-1}
                 />
                 <div className="absolute -bottom-2 -right-2 bg-primary text-white size-8 flex items-center justify-center rounded-full border-4 border-white dark:border-slate-900 shadow-xl glow-accent pointer-events-none">
@@ -519,7 +503,11 @@ const Settings = () => {
                 </p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer shrink-0">
-                <input type="checkbox" className="sr-only peer" {...register("showActivity")} />
+                <input
+                  type="checkbox"
+                  className="sr-only peer"
+                  {...register("showActivity")}
+                />
                 <div className="w-11 h-6 bg-slate-200 dark:bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white dark:after:bg-slate-700 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary transition-colors"></div>
               </label>
             </div>
@@ -549,7 +537,11 @@ const Settings = () => {
                 </p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer shrink-0">
-                <input type="checkbox" className="sr-only peer" {...register("showActivity")} />
+                <input
+                  type="checkbox"
+                  className="sr-only peer"
+                  {...register("showActivity")}
+                />
                 <div className="w-11 h-6 bg-slate-200 dark:bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white dark:after:bg-slate-700 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary transition-colors"></div>
               </label>
             </div>
