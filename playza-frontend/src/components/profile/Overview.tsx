@@ -1,17 +1,13 @@
 import {
-  MdAnalytics, MdCancel, MdCheckCircle, MdEmojiEvents, MdGrade, MdHistory, MdMilitaryTech, MdTrendingUp, MdLocalFireDepartment, MdGroupAdd
+  MdAnalytics, MdCancel, MdCheckCircle, MdEmojiEvents, MdGrade, MdHistory, MdMilitaryTech, MdTrendingUp
 } from "react-icons/md";
 import { ZASymbol } from "@/components/currency/ZASymbol";
 import { useProfile, useGameHistory } from "@/hooks/profile/useProfile";
-import { useLoyaltyMe } from "@/hooks/loyalty/useLoyaltyMe";
-import { useReferralStats } from "@/hooks/referral/useReferralStats";
 import type { GameHistoryItem } from "@/api/profile.api";
 
 const Overview = () => {
   const { data: profile } = useProfile();
   const { data: historyData } = useGameHistory(1, 3);
-  const { data: loyaltyData } = useLoyaltyMe();
-  const { data: referralData } = useReferralStats();
 
   const recentMatches = historyData?.history ?? [];
   const totalGames = historyData?.total ?? 0;
@@ -40,7 +36,8 @@ const Overview = () => {
           ))}
         </div>
 
-        <div className="grid grid-cols-2 2xl:grid-cols-4 gap-2 md:gap-4">
+        {/* PZA Points & Wallet only */}
+        <div className="grid grid-cols-2 gap-2 md:gap-4">
           <div className="glass-card p-2 md:p-4 rounded-xl flex items-center justify-between hover:bg-primary/5 transition-all">
             <div className="space-y-1">
               <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">PZA Points</p>
@@ -57,38 +54,17 @@ const Overview = () => {
             </div>
             <div className="size-10 flex-shrink-0 rounded-xl bg-green-500/10 flex items-center justify-center text-green-500 text-xl"><MdHistory /></div>
           </div>
-          <div className="glass-card p-2 md:p-4 rounded-xl flex items-center justify-between hover:bg-orange-500/5 transition-all">
-            <div className="space-y-1">
-              <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Daily Streak</p>
-              <p className="text-xs md:text-base text-slate-900 dark:text-white font-black">
-                {loyaltyData?.streak_days ?? 0}
-              </p>
-            </div>
-            <div className="size-10 flex-shrink-0 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-500 text-xl"><MdLocalFireDepartment /></div>
-          </div>
-          <div className="glass-card p-2 md:p-4 rounded-xl flex items-center justify-between hover:bg-purple-500/5 transition-all">
-            <div className="space-y-1">
-              <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Referrals</p>
-              <p className="text-xs md:text-base text-slate-900 dark:text-white font-black">
-                {referralData?.referrals?.length ?? 0}
-              </p>
-            </div>
-            <div className="size-10 flex-shrink-0 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-500 text-xl"><MdGroupAdd /></div>
-          </div>
         </div>
 
-        <section>
-          <h3 className="text-slate-900 dark:text-white text-base md:text-xl font-black mb-3 md:p-4 flex items-center gap-2">
-            <div className="size-8 rounded-lg bg-primary/20 flex items-center justify-center"><MdHistory className="text-primary" /></div>
-            Recent Activity
-          </h3>
-          <div className="space-y-3">
-            {recentMatches.length === 0 ? (
-              <div className="glass-card p-8 rounded-xl text-center text-slate-500 text-sm font-bold">
-                No game history yet. Play your first game!
-              </div>
-            ) : (
-              recentMatches.map((match: GameHistoryItem, i: number) => (
+        {/* Recent Activity — only shown when there is history */}
+        {recentMatches.length > 0 && (
+          <section>
+            <h3 className="text-slate-900 dark:text-white text-base md:text-xl font-black mb-3 md:p-4 flex items-center gap-2">
+              <div className="size-8 rounded-lg bg-primary/20 flex items-center justify-center"><MdHistory className="text-primary" /></div>
+              Recent Activity
+            </h3>
+            <div className="space-y-3">
+              {recentMatches.map((match: GameHistoryItem, i: number) => (
                 <div key={i} className="glass-card p-2 md:p-4 rounded-xl flex items-center justify-between group hover:border-slate-300 dark:hover:border-white/10 transition-all shadow-md">
                   <div className="flex items-center gap-2 md:gap-4">
                     <div className={`size-10 rounded-xl flex items-center justify-center text-xl ${match.winnings > 0 ? "bg-green-500/10" : "bg-red-500/10"}`}>
@@ -106,10 +82,10 @@ const Overview = () => {
                     <p className="text-slate-500 text-[9px] font-bold uppercase tracking-widest opacity-60">{match.status}</p>
                   </div>
                 </div>
-              ))
-            )}
-          </div>
-        </section>
+              ))}
+            </div>
+          </section>
+        )}
       </div>
     </div>
   );
