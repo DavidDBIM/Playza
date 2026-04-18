@@ -7,6 +7,7 @@ import {
   setPrimaryBankAccount,
   removeBankAccount,
   getGameHistory,
+  uploadAvatarFromBase64,
 } from './profile.service'
 
 const router = Router()
@@ -22,8 +23,28 @@ router.get('/', requireAuth, async (req: AuthRequest, res: Response) => {
 
 router.patch('/', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
-    const { first_name, last_name, phone, avatar_url, tagline, bio, show_activity } = req.body
-    const data = await updateProfile(req.user!.id, { first_name, last_name, phone, avatar_url, tagline, bio, show_activity })
+    const userId = req.user!.id
+    let { first_name, last_name, phone, avatar_url, tagline, bio, show_activity } = req.body
+
+    // If avatar_url is a base64 data URI, upload it to Supabase Storage first
+    if (avatar_url && avatar_url.startsWith('data:')) {
+      try {
+        avatar_url = await uploadAvatarFromBase64(userId, avatar_url)
+      } catch (uploadErr: any) {
+        res.status(400).json({ success: false, message: `Avatar upload failed: ${uploadErr.message}` })
+        return
+      }
+    }
+
+    const data = await updateProfile(userId, {
+      first_name,
+      last_name,
+      phone,
+      avatar_url,
+      tagline,
+      bio,
+      show_activity,
+    })
     res.json({ success: true, data })
   } catch (err: any) {
     res.status(400).json({ success: false, message: err.message })
