@@ -64,42 +64,35 @@ const Users: React.FC = () => {
   };
 
   return (
-    <main className="flex-1 mx-auto w-full pb-10 p-4 md:p-8 space-y-6 md:space-y-8 max-w-350">
+    <main className="p-6 space-y-6">
       {/* Header Container */}
-      <div className="glass-card rounded-3xl p-6 md:p-10 relative overflow-hidden group">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-primary/20 blur-[120px] rounded-full -mr-40 -mt-40 transition-all duration-700 group-hover:bg-primary/30"></div>
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-secondary/10 blur-[100px] rounded-full -ml-32 -mb-32"></div>
-        
-        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <h1 className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
-              <MdPeople className="text-primary hidden md:inline-block" />
-              Users
-            </h1>
-            <p className="text-slate-500 dark:text-slate-400 font-bold text-sm md:text-base">
-              Manage platform users, view their activities, and track engagement.
-            </p>
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md shadow-indigo-400/30">
+            <MdPeople className="w-5 h-5 text-white" />
           </div>
-          
-          <button 
-            onClick={() => refetch()}
-            className="p-4 rounded-2xl bg-white/50 dark:bg-white/5 hover:bg-primary hover:text-white transition-all border border-slate-200 dark:border-white/10 flex items-center gap-2 group/refresh"
-          >
-            <MdRefresh className={`text-xl ${isLoading ? 'animate-spin' : 'group-hover/refresh:rotate-180 transition-transform duration-700'}`} />
-            <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">Refresh Sync</span>
-          </button>
+          <div>
+            <h1 className="text-2xl font-black text-foreground tracking-tight uppercase">Users</h1>
+            <p className="text-xs text-muted-foreground font-medium">Manage platform users and track engagement</p>
+          </div>
         </div>
+        
+        <button 
+          onClick={() => refetch()}
+          className="flex items-center gap-2 px-4 py-2 bg-muted hover:bg-muted/80 rounded-xl text-xs font-black uppercase tracking-widest text-foreground transition-all border border-border"
+        >
+          <MdRefresh className={`text-lg ${isLoading ? 'animate-spin' : ''}`} />
+          <span>Refresh</span>
+        </button>
       </div>
 
       {/* Stats Cards */}
       <UsersStats stats={userStats} />
 
       {/* Table Section */}
-      <div className="glass-card rounded-3xl overflow-hidden relative">
-        <div className="absolute -right-20 -bottom-20 w-64 h-64 bg-primary/10 blur-[100px] rounded-full pointer-events-none"></div>
-        
+      <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden relative">
         {/* Toolbar */}
-        <div className="relative z-10">
+        <div className="relative z-10 border-b border-border">
           <UsersToolbar 
             searchQuery={searchQuery}
             setSearchQuery={(q) => { setSearchQuery(q); setPage(1); }}
@@ -110,12 +103,11 @@ const Users: React.FC = () => {
             clearFilters={clearFilters}
           />
         </div>
-
         {/* Table */}
         <div className="relative z-10">
           {isError ? (
             <div className="py-20 text-center text-rose-500">
-              <p className="font-headline font-black uppercase text-xl">Registry Link Failure</p>
+              <p className="font-heading font-black uppercase text-xl">Registry Link Failure</p>
               <p className="text-xs opacity-60 mt-2">Could not synchronize with the user database.</p>
             </div>
           ) : (
@@ -126,29 +118,29 @@ const Users: React.FC = () => {
         </div>
 
         {/* Info Footer */}
-        <div className="relative z-10 px-8 py-6 bg-slate-50/50 dark:bg-white/5 border-t border-slate-200 dark:border-white/10 flex items-center justify-between text-slate-500 dark:text-slate-400">
-          <p className="text-[10px] font-black uppercase tracking-[0.2em]">
+        <div className="relative z-10 px-6 py-4 bg-muted/50 border-t border-border flex items-center justify-between">
+          <p className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">
             Database Sync: <span className={isError ? 'text-rose-500' : 'text-emerald-500'}>
               {isError ? 'Disconnected' : isLoading ? 'Syncing...' : 'Connected'}
             </span>
           </p>
-          <div className="flex items-center gap-4">
-             <p className="text-[10px] font-black uppercase tracking-[0.2em]">
-               Displaying <span className="text-primary">{users.length}</span> Records
+          <div className="flex items-center gap-6">
+             <p className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">
+               Displaying <span className="text-primary font-number">{users.length}</span> Records
              </p>
-             {data && data.total_pages > 1 && (
-               <div className="flex items-center gap-2 border-l border-slate-200 dark:border-white/10 pl-4">
+             {data && data.pages > 1 && (
+               <div className="flex items-center gap-3">
                  <button 
                    disabled={page === 1}
                    onClick={() => setPage(p => p - 1)}
-                   className="text-[10px] font-black uppercase hover:text-primary disabled:opacity-30"
-                 >Prev</button>
-                 <span className="text-[10px] font-black uppercase">Page {page} of {data.total_pages}</span>
+                   className="px-3 py-1.5 rounded-lg text-xs font-bold bg-muted hover:bg-muted/80 text-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                 >← Prev</button>
+                 <span className="text-xs font-bold text-foreground">Page {page} of {data.pages}</span>
                  <button 
-                   disabled={page === data.total_pages}
+                   disabled={page === data.pages}
                    onClick={() => setPage(p => p + 1)}
-                   className="text-[10px] font-black uppercase hover:text-primary disabled:opacity-30"
-                 >Next</button>
+                   className="px-3 py-1.5 rounded-lg text-xs font-bold bg-muted hover:bg-muted/80 text-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                 >Next →</button>
                </div>
              )}
           </div>
