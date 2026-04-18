@@ -9,16 +9,23 @@ import {
   MdSmartphone,
   MdDesktopWindows,
   MdLogout,
+  MdWarning,
 } from "react-icons/md";
 import { PinModal } from "./PinModal";
 import { Link, useNavigate } from "react-router";
 import { ArrowRight } from "lucide-react";
 import { useAuth } from "@/context/auth";
 import { useSecurity } from "@/hooks/profile/useSecurity";
+import { useDeactivateUser } from "@/hooks/users/useDeactivateUser";
+import { useProfile } from "@/hooks/profile/useProfile";
+import { TokenStorage } from "@/api/axiosInstance";
 
 const Security = () => {
   const { pinStatus, changePassword, updatePreferences, isLoadingPinStatus } = useSecurity();
+  const { data: profile } = useProfile();
+  const { mutate: deactivateUser, isPending: isDeactivating } = useDeactivateUser();
   const [isFingerprintEnabled, setIsFingerprintEnabled] = useState(true);
+  const [showDeactivateConfirm, setShowDeactivateConfirm] = useState(false);
   const [isFaceIDEnabled] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -30,6 +37,17 @@ const Security = () => {
   const handleLogout = () => {
     logout();
     navigate("/");
+  };
+
+  const handleDeactivate = () => {
+    if (profile) {
+      deactivateUser(profile.id, {
+        onSuccess: () => {
+          TokenStorage.clearTokens();
+          window.location.href = "/";
+        },
+      });
+    }
   };
 
   const handlePasswordUpdate = () => {
@@ -401,6 +419,82 @@ const Security = () => {
             immediately or use the 'Terminate All' function above.
           </p>
         </div>
+
+        {/* ── Danger Zone ── */}
+        <section className="space-y-3">
+          <div className="flex items-center gap-2 md:gap-3 mb-3">
+            <div className="size-10 rounded-2xl bg-red-500/10 flex items-center justify-center text-red-500 text-base md:text-xl shadow-inner">
+              <MdWarning />
+            </div>
+            <div>
+              <h2 className="text-lg md:text-2xl font-black text-red-500 italic tracking-tight">
+                Danger Zone
+              </h2>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                Irreversible actions
+              </p>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border-2 border-red-200 dark:border-red-900/50 bg-red-50/50 dark:bg-red-950/10 overflow-hidden">
+            {/* Warning banner */}
+            <div className="bg-red-500/10 dark:bg-red-900/20 px-4 py-3 border-b border-red-200 dark:border-red-900/40 flex items-start gap-2">
+              <MdWarning className="text-red-500 text-base shrink-0 mt-0.5" />
+              <p className="text-[10px] text-red-700 dark:text-red-400 font-bold leading-relaxed">
+                Deactivating your account will immediately suspend access, freeze your wallet, and remove you from all active games and tournaments. This action <span className="font-black underline">cannot be undone</span> without contacting support.
+              </p>
+            </div>
+
+            <div className="px-4 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">
+                  Deactivate Gaming Account
+                </p>
+                <p className="text-[10px] text-slate-500 font-bold mt-0.5">
+                  Your data will be retained for 90 days before permanent deletion.
+                </p>
+              </div>
+
+              {!showDeactivateConfirm ? (
+                <button
+                  onClick={() => setShowDeactivateConfirm(true)}
+                  className="shrink-0 h-11 px-6 rounded-xl border-2 border-red-300 dark:border-red-800 text-red-600 dark:text-red-400 text-xs font-black uppercase tracking-widest hover:bg-red-500 hover:text-white hover:border-red-500 transition-all"
+                >
+                  Deactivate Account
+                </button>
+              ) : (
+                <div className="flex flex-col gap-2 shrink-0 w-full sm:w-auto">
+                  <p className="text-[10px] text-red-600 dark:text-red-400 font-black uppercase tracking-widest text-center">
+                    Are you sure? This cannot be undone.
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setShowDeactivateConfirm(false)}
+                      className="flex-1 h-10 px-4 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-white/10 transition-all"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleDeactivate}
+                      disabled={isDeactivating}
+                      className="flex-1 h-10 px-4 rounded-xl bg-red-500 hover:bg-red-600 text-white text-xs font-black uppercase tracking-widest transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-md shadow-red-500/30 active:scale-95"
+                    >
+                      {isDeactivating ? (
+                        <>
+                          <div className="size-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          Deactivating…
+                        </>
+                      ) : (
+                        "Yes, Deactivate"
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+
       </div>
     </>
   );
