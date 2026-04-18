@@ -24,9 +24,9 @@ interface MerchProduct {
 }
 
 const MERCH_PRODUCTS: MerchProduct[] = [
-  { id: "cap",   name: "Playza Cap",    desc: "Snapback cap with embroidered Playza logo.", cost: 8000,  image: "🧢", badge: "Popular",   badgeColor: "bg-blue-500" },
-  { id: "shirt", name: "Playza T-Shirt",desc: "Premium cotton tee, gamer edition print.",   cost: 12000, image: "👕", badge: "Best Value", badgeColor: "bg-emerald-500" },
-  { id: "bag",   name: "Playza Bag",    desc: "Limited edition gaming-ready backpack.",      cost: 20000, image: "🎒", badge: "Limited",   badgeColor: "bg-orange-500" },
+  { id: "cap",   name: "Playza Cap",    desc: "Snapback cap with embroidered Playza logo.", cost: 8000,  image: "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=400&q=80", badge: "Popular",   badgeColor: "bg-blue-500" },
+  { id: "shirt", name: "Playza T-Shirt",desc: "Premium cotton tee, gamer edition print.",   cost: 12000, image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&q=80", badge: "Best Value", badgeColor: "bg-emerald-500" },
+  { id: "bag",   name: "Playza Bag",    desc: "Limited edition gaming-ready backpack.",      cost: 20000, image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&q=80", badge: "Limited",   badgeColor: "bg-orange-500" },
 ];
 
 const PLATFORMS = [
@@ -78,6 +78,7 @@ export function RewardsSection({ totalPoints, spinsLeftToday, onPointsChanged }:
   const [followerCount, setFollowerCount] = useState('');
   const [socialHandles, setSocialHandles] = useState<Record<string, string>>({});
   const [contentNiche, setContentNiche] = useState('');
+  const [socialProfileLink, setSocialProfileLink] = useState('');
   const [motivation, setMotivation] = useState('');
   const [formError, setFormError] = useState('');
   const [formSubmitting, setFormSubmitting] = useState(false);
@@ -195,19 +196,22 @@ export function RewardsSection({ totalPoints, spinsLeftToday, onPointsChanged }:
         </div>
 
         {/* ── AMBASSADOR CARD ── */}
-        <div className="bg-linear-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/20 border border-amber-200 dark:border-amber-800/50 rounded-2xl p-5 shadow-sm">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-linear-to-br from-amber-400 to-orange-500 flex items-center justify-center shrink-0 shadow-md shadow-orange-400/30">
+        <div className="relative overflow-hidden bg-gradient-to-br from-amber-500 via-orange-500 to-red-500 dark:from-amber-600 dark:via-orange-600 dark:to-red-600 border border-orange-400/50 rounded-2xl p-5 shadow-lg shadow-orange-500/30">
+          {/* BG orbs */}
+          <div className="absolute -right-8 -top-8 w-36 h-36 rounded-full bg-yellow-300/20 blur-xl" />
+          <div className="absolute -left-4 -bottom-6 w-28 h-28 rounded-full bg-red-400/20 blur-xl" />
+          <div className="relative flex items-start gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center shrink-0 shadow-md shadow-black/20 border border-white/30">
               <Crown className="w-6 h-6 text-white" />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
-                <h3 className="font-black text-slate-900 dark:text-white text-base">Become an Ambassador</h3>
+                <h3 className="font-black text-white text-base">Become an Ambassador</h3>
                 {!ambassadorLoading && hasApplied && (
                   <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border flex items-center gap-1 ${
-                    appStatus === 'approved' ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-700'
-                    : appStatus === 'rejected' ? 'bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 border-red-200 dark:border-red-700'
-                    : 'bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-700'
+                    appStatus === 'approved' ? 'bg-emerald-100/90 text-emerald-700 border-emerald-200'
+                    : appStatus === 'rejected' ? 'bg-red-100/90 text-red-700 border-red-200'
+                    : 'bg-white/20 text-white border-white/30'
                   }`}>
                     {appStatus === 'approved' ? <><MdCheckCircle className="text-xs" /> Approved!</>
                       : appStatus === 'rejected' ? <><MdWarning className="text-xs" /> Not approved</>
@@ -215,44 +219,28 @@ export function RewardsSection({ totalPoints, spinsLeftToday, onPointsChanged }:
                   </span>
                 )}
               </div>
-              <p className="text-sm text-slate-600 dark:text-slate-400 mb-3 font-medium">
-                Represent Playza, grow the community, earn exclusive perks and double your PZA rewards.
-              </p>
-              <div className="grid grid-cols-2 gap-1.5 mb-4">
-                {[
-                  { icon: <MdStars className="text-yellow-500" />, label: "2x PZA on every game" },
-                  { icon: <MdVerified className="text-blue-500" />, label: "Verified ambassador badge" },
-                  { icon: <MdGroups className="text-purple-500" />, label: "Exclusive community access" },
-                  { icon: "🎁", label: "Monthly merch drops" },
-                ].map((p, i) => (
-                  <div key={i} className="flex items-center gap-1.5 text-xs text-slate-700 dark:text-slate-300 font-medium">
-                    <span>{p.icon}</span>{p.label}
-                  </div>
-                ))}
-              </div>
-
               {ambassadorLoading ? (
-                <div className="h-9 w-32 bg-amber-200 dark:bg-amber-900/30 rounded-xl animate-pulse" />
+                <div className="h-9 w-32 bg-white/20 rounded-xl animate-pulse" />
               ) : hasApplied ? (
                 appStatus === 'approved' ? (
-                  <div className="inline-flex items-center gap-2 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-sm font-black px-4 py-2 rounded-xl border border-emerald-200 dark:border-emerald-700">
+                  <div className="inline-flex items-center gap-2 bg-white/20 text-white text-sm font-black px-4 py-2 rounded-xl border border-white/30">
                     <MdCheckCircle /> Ambassador Active 🎉
                   </div>
                 ) : appStatus === 'rejected' ? (
                   <div className="flex flex-col gap-2">
-                    <div className="text-xs text-red-600 dark:text-red-400 font-medium bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-3 py-2">
+                    <div className="text-xs text-white/90 font-medium bg-red-600/30 border border-red-300/40 rounded-xl px-3 py-2">
                       {ambassadorStatus?.admin_note || 'Your application was not approved this time.'}
                     </div>
                   </div>
                 ) : (
-                  <div className="inline-flex items-center gap-2 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-xs font-black px-4 py-2 rounded-xl border border-amber-200 dark:border-amber-700">
+                  <div className="inline-flex items-center gap-2 bg-white/20 text-white text-xs font-black px-4 py-2 rounded-xl border border-white/30">
                     <MdAutorenew className="animate-spin" /> Application under review…
                   </div>
                 )
               ) : (
                 <button
                   onClick={() => setShowAmbassadorModal(true)}
-                  className="flex items-center gap-2 text-sm font-black px-5 py-2.5 rounded-xl transition-all active:scale-95 bg-linear-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white shadow-md shadow-orange-400/30"
+                  className="flex items-center gap-2 text-sm font-black px-5 py-2.5 rounded-xl transition-all active:scale-95 bg-white text-orange-600 hover:bg-yellow-50 shadow-md shadow-black/20"
                 >
                   <Crown className="w-4 h-4" />Apply Now <MdArrowForward className="text-base" />
                 </button>
@@ -281,7 +269,9 @@ export function RewardsSection({ totalPoints, spinsLeftToday, onPointsChanged }:
                   {product.badge && (
                     <span className={`absolute top-3 right-3 text-[9px] font-black text-white px-1.5 py-0.5 rounded-full ${product.badgeColor}`}>{product.badge}</span>
                   )}
-                  <div className="w-full h-24 bg-linear-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-750 rounded-xl flex items-center justify-center text-5xl group-hover:scale-105 transition-transform">{product.image}</div>
+                  <div className="w-full h-28 bg-linear-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-750 rounded-xl overflow-hidden group-hover:scale-105 transition-transform">
+                    <img src={product.image} alt={product.name} className="w-full h-full object-cover object-center" loading="lazy" />
+                  </div>
                   <div className="flex-1">
                     <p className="font-black text-slate-900 dark:text-white text-sm">{product.name}</p>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">{product.desc}</p>
@@ -404,6 +394,10 @@ export function RewardsSection({ totalPoints, spinsLeftToday, onPointsChanged }:
                     type="tel" placeholder="Phone Number (optional)" value={phone} onChange={e => setPhone(e.target.value)}
                     className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all"
                   />
+                  <input
+                    type="url" placeholder="Social Media Profile Link (e.g. https://instagram.com/yourhandle)" value={socialProfileLink} onChange={e => setSocialProfileLink(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all"
+                  />
                 </div>
 
                 {/* ── Step 3: Social Influencer fields ── */}
@@ -508,7 +502,9 @@ export function RewardsSection({ totalPoints, spinsLeftToday, onPointsChanged }:
       {redeemModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setRedeemModal(null)}>
           <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 w-full max-w-sm shadow-2xl" onClick={e => e.stopPropagation()}>
-            <div className="w-16 h-16 bg-linear-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-750 rounded-2xl flex items-center justify-center mx-auto mb-4 text-4xl">{redeemModal.image}</div>
+            <div className="w-full h-40 bg-linear-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-750 rounded-2xl overflow-hidden mx-auto mb-4">
+              <img src={redeemModal.image} alt={redeemModal.name} className="w-full h-full object-cover object-center" />
+            </div>
             <h3 className="font-black text-slate-900 dark:text-white text-xl text-center mb-1">{redeemModal.name}</h3>
             <p className="text-sm text-slate-500 dark:text-slate-400 text-center mb-2">{redeemModal.desc}</p>
             <p className="text-center font-black text-indigo-600 dark:text-indigo-400 text-lg mb-5">
