@@ -26,28 +26,26 @@ export const GrowthInsights: React.FC<{
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Referral Performance */}
-      <div className="glass-card p-8 rounded-2xl border border-slate-200 dark:border-white/5 bg-white/50 dark:bg-white/2 shadow-xl">
-        <h3 className="text-xl font-black font-headline text-slate-900 dark:text-[#E5E2E3] mb-8 flex items-center gap-3 uppercase tracking-widest text-[10px]">
-          <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/10">
-            <MdLink className="text-amber-600 dark:text-[#ffd700] text-xl" />
-          </div>
+      <div className="bg-card border border-border p-6 rounded-2xl shadow-sm">
+        <h3 className="text-xs font-black text-foreground mb-8 flex items-center gap-3 uppercase tracking-wider border-b border-border pb-4">
+          <MdLink className="text-amber-500 text-lg" />
           Referral Performance
         </h3>
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-2 gap-4">
           {referralStats.map((stat) => {
             const Icon = getRefIcon(stat.icon);
             return (
-              <div key={stat.id} className="bg-white/50 dark:bg-white/3 p-5 rounded-2xl border border-slate-100 dark:border-white/5 shadow-inner hover:bg-white/80 dark:hover:bg-white/5 transition-all group">
-                <div className="flex items-center gap-3 mb-3">
+              <div key={stat.id} className="bg-muted/30 p-4 rounded-xl border border-border transition-all group hover:bg-muted/50">
+                <div className="flex items-center gap-2 mb-2">
                   <Icon 
-                    className={`text-xl group-hover:scale-110 transition-transform ${stat.color === '#ffd700' ? 'text-amber-600 dark:text-[#ffd700]' : ''}`} 
-                    style={{ color: stat.color === '#ffd700' ? undefined : stat.color }} 
+                    className="text-lg group-hover:scale-110 transition-transform" 
+                    style={{ color: stat.color === '#ffd700' ? 'oklch(0.85 0.15 90)' : stat.color }} 
                   />
-                  <span className="text-[10px] font-black text-slate-400 dark:text-[#E5E2E3]/20 uppercase tracking-[0.2em] leading-none">{stat.label}</span>
+                  <span className="text-[9px] font-black text-muted-foreground uppercase tracking-wider leading-none">{stat.label}</span>
                 </div>
-                <p className="text-2xl font-black font-headline text-slate-900 dark:text-[#E5E2E3] tracking-tighter">{stat.value}</p>
+                <p className="text-xl font-black font-number text-foreground tracking-tight">{stat.value}</p>
               </div>
             );
           })}
@@ -55,26 +53,24 @@ export const GrowthInsights: React.FC<{
       </div>
 
       {/* Loyalty Pulse */}
-      <div className="glass-card p-8 rounded-2xl border border-slate-200 dark:border-white/5 bg-white/50 dark:bg-white/2 shadow-xl">
-        <h3 className="text-xl font-black font-headline text-slate-900 dark:text-[#E5E2E3] mb-8 flex items-center gap-3 uppercase tracking-widest text-[10px]">
-          <div className="p-2 rounded-xl bg-primary/10 border border-primary/10">
-            <MdStar className="text-primary text-xl" />
-          </div>
+      <div className="bg-card border border-border p-6 rounded-2xl shadow-sm">
+        <h3 className="text-xs font-black text-foreground mb-8 flex items-center gap-3 uppercase tracking-wider border-b border-border pb-4">
+          <MdStar className="text-primary text-lg" />
           Loyalty Program Pulse
         </h3>
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-2 gap-4">
           {loyaltyPulse.map((stat) => {
             const Icon = getLoyaltyIcon(stat.icon);
             return (
-              <div key={stat.id} className="bg-white/50 dark:bg-white/3 p-5 rounded-2xl border border-slate-100 dark:border-white/5 shadow-inner hover:bg-white/80 dark:hover:bg-white/5 transition-all group">
-                <div className="flex items-center gap-3 mb-3">
+              <div key={stat.id} className="bg-muted/30 p-4 rounded-xl border border-border transition-all group hover:bg-muted/50">
+                <div className="flex items-center gap-2 mb-2">
                   <Icon 
-                    className={`text-xl group-hover:rotate-12 transition-transform ${stat.color === '#ffd700' ? 'text-amber-600 dark:text-[#ffd700]' : ''}`} 
-                    style={{ color: stat.color === '#ffd700' ? undefined : stat.color }} 
+                    className="text-lg group-hover:rotate-12 transition-transform" 
+                    style={{ color: stat.color === '#ffd700' ? 'oklch(0.85 0.15 90)' : stat.color }} 
                   />
-                  <span className="text-[10px] font-black text-slate-400 dark:text-[#E5E2E3]/20 uppercase tracking-[0.2em] leading-none">{stat.tier} Users</span>
+                  <span className="text-[9px] font-black text-muted-foreground uppercase tracking-wider leading-none">{stat.tier} Users</span>
                 </div>
-                <p className="text-2xl font-black font-headline text-slate-900 dark:text-[#E5E2E3] tracking-tighter">{stat.users.toLocaleString()}</p>
+                <p className="text-xl font-black font-number text-foreground tracking-tight">{stat.users.toLocaleString()}</p>
               </div>
             );
           })}

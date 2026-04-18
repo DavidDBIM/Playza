@@ -27,18 +27,20 @@ export const EmpireMetrics: React.FC<{ metrics: MetricData[] }> = ({ metrics }) 
         const Icon = getIcon(metric.icon);
         
         return (
-          <div key={metric.id} className="glass-card p-6 rounded-xl relative overflow-hidden group hover:scale-[1.02] transition-all cursor-default border border-slate-200 dark:border-white/5 bg-white/50 dark:bg-white/2">
-            <div className="flex justify-between items-start mb-4">
-              <Icon className="text-2xl" style={{ color: metric.color }} />
-              <span className={`text-[10px] font-black flex items-center gap-1 uppercase tracking-widest ${metric.trend === 'up' ? 'text-emerald-500' : 'text-rose-500'}`}>
+          <div key={metric.id} className="bg-card border border-border p-5 rounded-2xl relative overflow-hidden group transition-all cursor-default shadow-sm hover:shadow-md">
+            <div className="flex justify-between items-start mb-4 relative z-10">
+              <div className="p-2 rounded-xl bg-muted" style={{ color: metric.color }}>
+                <Icon className="text-xl" />
+              </div>
+              <span className={`text-[9px] font-black flex items-center gap-1 uppercase tracking-wider ${metric.trend === 'up' ? 'text-emerald-500' : 'text-rose-500'}`}>
                 {metric.trend === 'up' ? '↑' : '↓'} {metric.change}
               </span>
             </div>
-            <h3 className="text-[10px] font-headline font-black uppercase tracking-widest text-slate-500 dark:text-[#E5E2E3]/40 mb-1">{metric.title}</h3>
-            <p className={`text-2xl font-black font-headline tracking-tighter ${metric.color === '#ffd700' ? 'text-amber-600 dark:text-[#ffd700]' : 'text-primary'}`}>{metric.value}</p>
-            <div className="absolute -bottom-2 -right-2 opacity-5 group-hover:opacity-10 transition-opacity">
-              <Icon className="text-8xl" />
+            <div className="relative z-10">
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">{metric.title}</h3>
+              <p className={`text-xl font-black font-number tracking-tighter ${metric.color === '#ffd700' ? 'text-amber-600 dark:text-amber-500' : 'text-primary'}`}>{metric.value}</p>
             </div>
+            <Icon className="absolute -bottom-6 -right-6 text-8xl opacity-[0.03] group-hover:opacity-[0.06] transition-opacity pointer-events-none" />
           </div>
         );
       })}

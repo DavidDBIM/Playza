@@ -15,9 +15,10 @@ import TransactionDetails from "./pages/TransactionDetails";
 import Withdrawals from "./pages/Withdrawals";
 import Notifications from "./pages/Notifications";
 import Ambassadors from "./pages/Ambassadors";
-import ReferralPayouts from "./pages/ReferralPayouts";
 import SignIn from "./pages/SignIn";
 import { ThemeProvider } from "./components/theme/ThemeProvider";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
+import ReferralPayouts from "./pages/ReferralPayouts";
 
 // Placeholder components for routes
 const Placeholder = ({ name }: { name: string }) => (
@@ -29,7 +30,6 @@ const Placeholder = ({ name }: { name: string }) => (
   </div>
 );
 
-import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 const App: React.FC = () => {
   return (

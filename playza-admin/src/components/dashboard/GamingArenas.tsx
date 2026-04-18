@@ -23,31 +23,59 @@ export const GamingArenas: React.FC<{
   };
 
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-4 gap-8 mb-8">
-      <div className="xl:col-span-3">
-        <div className="flex justify-between items-center mb-8">
-          <h3 className="font-black font-headline text-slate-900 dark:text-[#E5E2E3] uppercase text-sm tracking-widest">Active Gaming Arenas</h3>
-          <Link className="text-primary text-[10px] uppercase font-black tracking-widest hover:underline shadow-sm" to="/sessions">View All Systems</Link>
+    <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+      <div className="xl:col-span-9">
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-xs font-black text-foreground uppercase tracking-wider">
+            Active Gaming Arenas
+          </h3>
+          <Link
+            className="text-primary text-[10px] uppercase font-black tracking-widest hover:underline"
+            to="/sessions"
+          >
+            View All Systems
+          </Link>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {sessions.map((session) => (
-            <div key={session.id} className="glass-card bg-white/50 dark:bg-card rounded-3xl p-6 border border-slate-200 dark:border-white/5 border-l-4 border-l-primary hover:-translate-y-2 transition-all relative overflow-hidden group shadow-xl">
-              <div className="flex justify-between items-start mb-8">
-                <MdMilitaryTech className="text-4xl text-primary animate-pulse" />
-                <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[9px] font-black tracking-widest uppercase border border-emerald-500/10 shadow-sm">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> {session.status}
+            <div
+              key={session.id}
+              className="bg-card border border-border rounded-2xl p-6 shadow-sm hover:shadow-md transition-all group relative overflow-hidden"
+            >
+              <div className="flex justify-between items-start mb-6">
+                <div className="p-2 rounded-xl bg-primary/10 text-primary">
+                  <MdMilitaryTech className="text-2xl animate-pulse" />
+                </div>
+                <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[9px] font-black tracking-widest uppercase border border-emerald-500/10">
+                  <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse"></span>{" "}
+                  {session.status}
                 </span>
               </div>
-              <h4 className="text-2xl font-black font-headline text-foreground mb-1 tracking-tight">{session.name}</h4>
-              <p className="text-[10px] text-slate-500 dark:text-muted-foreground/40 font-black uppercase tracking-widest mb-8">League: {session.league}</p>
-              <div className="flex justify-between items-end border-t border-slate-200 dark:border-white/5 pt-6">
+              <h4 className="text-lg font-black text-foreground mb-1 tracking-tight uppercase">
+                {session.name}
+              </h4>
+              <p className="text-[9px] text-muted-foreground font-black uppercase tracking-wider mb-8">
+                League: {session.league}
+              </p>
+              <div className="flex justify-between items-end border-t border-border pt-6">
                 <div>
-                  <p className="text-[9px] font-black uppercase text-slate-500 dark:text-muted-foreground/40 tracking-widest">Prize Pool</p>
-                  <p className="text-xl font-black font-headline text-primary">₦{session.prize}</p>
+                  <p className="text-[8px] font-black uppercase text-muted-foreground tracking-widest mb-1">
+                    Prize Pool
+                  </p>
+                  <p className="text-lg font-black text-primary font-number">
+                    ₦{session.prize}
+                  </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-[9px] font-black uppercase text-slate-500 dark:text-muted-foreground/40 tracking-widest">Occupancy</p>
-                  <p className="text-xl font-black font-headline text-foreground">{session.players} <span className="text-[10px] font-black text-muted-foreground uppercase">WARRIORS</span></p>
+                  <p className="text-[8px] font-black uppercase text-muted-foreground tracking-widest mb-1">
+                    Occupancy
+                  </p>
+                  <p className="text-lg font-black text-foreground font-number">
+                    {session.players}{" "}
+                    <span className="text-[10px] font-black text-muted-foreground">
+                      / 100
+                    </span>
+                  </p>
                 </div>
               </div>
             </div>
@@ -55,24 +83,35 @@ export const GamingArenas: React.FC<{
         </div>
       </div>
 
-      <div className="xl:col-span-1 space-y-8">
+      <div className="xl:col-span-3 space-y-6">
         <div>
-          <h3 className="text-xl font-black font-headline text-slate-900 dark:text-[#E5E2E3] mb-8 uppercase tracking-widest text-[10px]">Popular Games Feed</h3>
-          <div className="space-y-4">
+          <h3 className="text-[10px] font-black text-muted-foreground mb-6 uppercase tracking-widest border-b border-border pb-4">
+            Popular Games Feed
+          </h3>
+          <div className="space-y-3">
             {popularGames.map((game) => {
               const Icon = getGameIcon(game.icon);
               return (
-                <div key={game.id} className="p-4 rounded-2xl bg-white/50 dark:bg-white/3 border border-slate-200 dark:border-white/5 hover:bg-white/80 dark:hover:bg-white/6 transition-all group border-l-2 border-l-transparent hover:border-l-primary cursor-pointer shadow-sm">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary group-hover:scale-110 transition-transform shadow-inner">
-                      <Icon className="text-2xl" />
+                <div
+                  key={game.id}
+                  className="p-3 rounded-xl bg-card border border-border hover:bg-muted/50 transition-all group cursor-pointer shadow-sm"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-muted border border-border flex items-center justify-center text-muted-foreground group-hover:text-primary transition-colors">
+                      <Icon className="text-xl" />
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm font-black text-slate-900 dark:text-[#E5E2E3] uppercase tracking-wide">{game.name}</p>
-                      <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-[#E5E2E3]/20 mt-1">{game.plays} PLAYS</p>
+                      <p className="text-xs font-black text-foreground uppercase tracking-tight">
+                        {game.name}
+                      </p>
+                      <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mt-0.5 font-number">
+                        {game.plays} PLAYS
+                      </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 font-headline uppercase">{game.revenue}</p>
+                      <p className="text-[10px] font-black text-emerald-500 font-number uppercase">
+                        {game.revenue}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -80,19 +119,31 @@ export const GamingArenas: React.FC<{
             })}
           </div>
         </div>
-        
-        {/* Security Alerts (Relocated here) */}
-        <div className="glass-card p-6 rounded-3xl bg-rose-50/50 dark:bg-destructive/5 border border-rose-200 dark:border-destructive/20 relative overflow-hidden group shadow-lg">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-destructive/10 blur-3xl -mr-12 -mt-12 rounded-full pointer-events-none group-hover:bg-destructive/20 transition-all duration-700"></div>
-          <div className="flex items-center gap-3 mb-4 text-rose-600 dark:text-destructive">
-            <MdWarning className="text-2xl animate-bounce" />
-            <span className="text-[10px] font-black font-headline uppercase tracking-widest">High Severity Alert</span>
+
+        {/* Security Alerts */}
+        <div className="bg-destructive/5 border border-destructive/20 p-5 rounded-2xl shadow-sm relative overflow-hidden group">
+          <div className="flex items-center gap-2 mb-4 text-destructive">
+            <MdWarning className="text-xl animate-bounce" />
+            <span className="text-[9px] font-black uppercase tracking-widest">
+              Security Alert
+            </span>
           </div>
-          <p className="text-base font-black text-slate-900 dark:text-foreground tracking-tight leading-none mb-1">Suspicious activity detected</p>
-          <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-muted-foreground/40 mt-2">Target Node: <Link to="/users" className="text-rose-600 dark:text-destructive hover:underline">Olanrewaju_77</Link></p>
-          <div className="mt-6 flex gap-3">
-            <button className="flex-1 py-3 text-[10px] font-black uppercase tracking-widest bg-rose-600 text-white border border-rose-600 dark:bg-destructive/20 dark:text-destructive dark:border-destructive/20 rounded-xl hover:bg-rose-700 dark:hover:bg-destructive shadow-lg dark:hover:text-white transition-all cursor-pointer">Freeze</button>
-            <button className="flex-1 py-3 text-[10px] font-black uppercase tracking-widest bg-slate-100 text-slate-600 border border-slate-200 dark:bg-white/5 dark:text-muted-foreground/60 dark:border-white/5 rounded-xl hover:bg-slate-200 dark:hover:bg-white/10 transition-all cursor-pointer">Ignore</button>
+          <p className="text-sm font-black text-foreground tracking-tight leading-tight mb-1">
+            Suspicious Activity
+          </p>
+          <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 mt-2">
+            Node:{" "}
+            <Link to="/users" className="text-destructive hover:underline">
+              Olanrewaju_77
+            </Link>
+          </p>
+          <div className="mt-4 flex gap-2">
+            <button className="flex-1 py-1.5 text-[9px] font-black uppercase tracking-widest bg-destructive text-white rounded-lg hover:brightness-110 transition-all">
+              Freeze
+            </button>
+            <button className="flex-1 py-1.5 text-[9px] font-black uppercase tracking-widest bg-muted text-muted-foreground rounded-lg hover:bg-muted/80 transition-all border border-border">
+              Ignore
+            </button>
           </div>
         </div>
       </div>
