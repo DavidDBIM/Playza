@@ -64,6 +64,14 @@ export function RewardsSection({ totalPoints, spinsLeftToday, onPointsChanged }:
   const [showSpinModal, setShowSpinModal] = useState(false);
   const [showAmbassadorModal, setShowAmbassadorModal] = useState(false);
   const [redeemModal, setRedeemModal] = useState<MerchProduct | null>(null);
+  const [localPoints, setLocalPoints] = useState(totalPoints);
+  const [localSpins, setLocalSpins] = useState(spinsLeftToday);
+
+  // Sync local state when parent props change (e.g. after background refetch), but not while modal is open
+  if (!showSpinModal) {
+    if (localPoints !== totalPoints) setLocalPoints(totalPoints);
+    if (localSpins !== spinsLeftToday) setLocalSpins(spinsLeftToday);
+  }
 
   // Ambassador state from hooks
   const { data: ambassadorStatus, isLoading: ambassadorLoading } = useAmbassadorStatus();
@@ -149,10 +157,10 @@ export function RewardsSection({ totalPoints, spinsLeftToday, onPointsChanged }:
 
         {/* ── SPIN CARD ── */}
         <div className="relative overflow-hidden rounded-2xl p-6 shadow-xl"
-             style={{ background: "linear-linear(135deg,#1A0533 0%,#0A0A2E 60%,#001F3F 100%)" }}>
+             style={{ background: "linear-gradient(135deg,#1A0533 0%,#0A0A2E 60%,#001F3F 100%)" }}>
           {/* BG orbs */}
-          <div className="absolute -right-10 -top-10 w-44 h-44 rounded-full opacity-20" style={{ background: "radial-linear(circle,#BF5AF2,transparent)" }} />
-          <div className="absolute -left-6 -bottom-8 w-36 h-36 rounded-full opacity-20" style={{ background: "radial-linear(circle,#FF2D55,transparent)" }} />
+          <div className="absolute -right-10 -top-10 w-44 h-44 rounded-full opacity-20" style={{ background: "radial-gradient(circle,#BF5AF2,transparent)" }} />
+          <div className="absolute -left-6 -bottom-8 w-36 h-36 rounded-full opacity-20" style={{ background: "radial-gradient(circle,#FF2D55,transparent)" }} />
 
           <div className="relative flex items-center justify-between gap-4">
             <div className="flex-1">
@@ -164,20 +172,20 @@ export function RewardsSection({ totalPoints, spinsLeftToday, onPointsChanged }:
               <p className="text-white/60 text-sm mb-4">
                 Win up to <span className="text-yellow-300 font-black">1,000 PZA</span>.
                 Costs <span className="text-red-400 font-black">{SPIN_COST} PZA</span> per spin.
-                {spinsLeftToday} spin{spinsLeftToday !== 1 ? 's' : ''} left today!
+                {localSpins} spin{localSpins !== 1 ? 's' : ''} left today!
               </p>
               <button
                 onClick={() => setShowSpinModal(true)}
-                disabled={totalPoints < SPIN_COST || spinsLeftToday <= 0}
+                disabled={localPoints < SPIN_COST || localSpins <= 0}
                 className={`flex items-center gap-2 font-black text-sm px-5 py-2.5 rounded-xl transition-all active:scale-95 ${
-                  totalPoints < SPIN_COST || spinsLeftToday <= 0
+                  localPoints < SPIN_COST || localSpins <= 0
                     ? 'bg-white/10 text-white/30 cursor-not-allowed'
                     : 'bg-white text-indigo-700 shadow-lg shadow-black/30 hover:bg-yellow-50'
                 }`}
               >
                 <MdAutorenew className="text-lg" />
-                {spinsLeftToday <= 0 ? 'No spins left' : totalPoints < SPIN_COST ? `Need ${SPIN_COST} PZA` : 'Spin Now'}
-                {spinsLeftToday > 0 && totalPoints >= SPIN_COST && <ChevronRight className="w-4 h-4" />}
+                {localSpins <= 0 ? 'No spins left' : localPoints < SPIN_COST ? `Need ${SPIN_COST} PZA` : 'Spin Now'}
+                {localSpins > 0 && localPoints >= SPIN_COST && <ChevronRight className="w-4 h-4" />}
               </button>
             </div>
             <div className="shrink-0 w-24 h-24 rounded-full flex items-center justify-center text-5xl cursor-pointer hover:scale-105 transition-transform border-2 border-white/10 bg-white/5"
@@ -186,12 +194,12 @@ export function RewardsSection({ totalPoints, spinsLeftToday, onPointsChanged }:
             </div>
           </div>
 
-          {/* Spins bar */}
+          {/* Spins bar — 3 dots */}
           <div className="relative mt-4 flex items-center gap-2">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className={`h-1.5 flex-1 rounded-full transition-all ${i < spinsLeftToday ? 'bg-yellow-400' : 'bg-white/15'}`} />
+              <div key={i} className={`h-1.5 flex-1 rounded-full transition-all ${i < localSpins ? 'bg-yellow-400' : 'bg-white/15'}`} />
             ))}
-            <span className="text-white/40 text-[10px] font-bold ml-1">{spinsLeftToday}/3</span>
+            <span className="text-white/40 text-[10px] font-bold ml-1">{localSpins}/3</span>
           </div>
         </div>
 
@@ -297,12 +305,14 @@ export function RewardsSection({ totalPoints, spinsLeftToday, onPointsChanged }:
       {showSpinModal && (
         <SpinWheelModal
           onClose={() => setShowSpinModal(false)}
-          onSpinComplete={() => {
+          onSpinComplete={(res) => {
+            setLocalPoints(res.new_balance);
+            setLocalSpins(res.spins_left_today);
             onPointsChanged();
-            setTimeout(() => setShowSpinModal(false), 2400);
+            setTimeout(() => setShowSpinModal(false), 2800);
           }}
-          spinsLeft={spinsLeftToday}
-          totalPoints={totalPoints}
+          spinsLeft={localSpins}
+          totalPoints={localPoints}
         />
       )}
 
