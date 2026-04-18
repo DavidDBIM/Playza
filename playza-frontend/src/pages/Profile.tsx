@@ -67,21 +67,13 @@ const Profile = () => {
       }
     : (user as User | null);
 
-  const rankLabel =
-    (profile?.pza_points ?? 0) < 1000
-      ? "TRAINEE"
-      : (profile?.pza_points ?? 0) < 5000
-        ? "ELITE"
-        : "LEGEND";
-
-  const tierLabel =
-    (profile?.pza_points ?? 0) < 1000
-      ? "BRONZE VANGUARD"
-      : (profile?.pza_points ?? 0) < 5000
-        ? "SILVER GUARDIAN"
-        : (profile?.pza_points ?? 0) < 10000
-          ? "GOLDEN HERO"
-          : "ASCENDED MASTER";
+  const pts = profile?.pza_points ?? 0;
+  const tier =
+    pts < 1000  ? { label: "BRONZE",   color: "bg-amber-700/20 text-amber-700 dark:bg-amber-700/30 dark:text-amber-400 border-amber-700/30" } :
+    pts < 5000  ? { label: "SILVER",   color: "bg-slate-400/20 text-slate-500 dark:bg-slate-400/20 dark:text-slate-300 border-slate-400/30" } :
+    pts < 10000 ? { label: "GOLD",     color: "bg-yellow-400/20 text-yellow-600 dark:bg-yellow-400/20 dark:text-yellow-300 border-yellow-400/30" } :
+    pts < 25000 ? { label: "PLATINUM", color: "bg-cyan-400/20 text-cyan-600 dark:bg-cyan-400/20 dark:text-cyan-300 border-cyan-400/30" } :
+                  { label: "LEGEND",   color: "bg-primary/15 text-primary border-primary/30" };
 
   return (
     <div className="flex-1 pb-16 md:pb-10 transition-all duration-500">
@@ -107,9 +99,9 @@ const Profile = () => {
             </div>
             <button
               onClick={() => setIsBadgeModalOpen(true)}
-              className="absolute -bottom-1.5 -right-1.5 bg-primary text-white text-[8px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-widest shadow-md border border-white/20 glow-accent"
+              className={`absolute -bottom-1.5 -right-1.5 text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest shadow-md border ${tier.color}`}
             >
-              {rankLabel}
+              {tier.label}
             </button>
           </div>
 
@@ -119,9 +111,6 @@ const Profile = () => {
               <h1 className="text-slate-900 dark:text-white text-base md:text-2xl font-black tracking-tight uppercase italic leading-none truncate">
                 {profile?.username}
               </h1>
-              <span className="text-primary text-[9px] font-black uppercase tracking-widest bg-primary/10 border border-primary/20 px-1.5 py-0.5 rounded-full italic shrink-0">
-                {tierLabel}
-              </span>
             </div>
 
             {(profile?.first_name || profile?.last_name) && (
