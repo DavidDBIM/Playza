@@ -322,34 +322,37 @@ export function RewardsSection({ totalPoints, spinsLeftToday, onPointsChanged }:
       {/* ── AMBASSADOR MODAL ── */}
       {showAmbassadorModal && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/65 backdrop-blur-sm" onClick={() => !formSubmitting && setShowAmbassadorModal(false)}>
+          {/* flex-col: header fixed top, body scrolls, footer pinned bottom */}
           <div
-            className="relative bg-white dark:bg-slate-900 w-full sm:max-w-lg rounded-t-3xl sm:rounded-2xl border-t sm:border border-slate-200 dark:border-slate-700 shadow-2xl max-h-[92vh] overflow-y-auto"
+            className="relative bg-white dark:bg-slate-900 w-full sm:max-w-lg flex flex-col rounded-t-3xl sm:rounded-2xl border-t sm:border border-slate-200 dark:border-slate-700 shadow-2xl"
+            style={{ maxHeight: "92dvh" }}
             onClick={e => e.stopPropagation()}
           >
-            {/* Handle bar (mobile) */}
-            <div className="flex justify-center pt-3 pb-1 sm:hidden">
+            {/* Handle bar — mobile only */}
+            <div className="flex justify-center pt-3 pb-1 sm:hidden shrink-0">
               <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
             </div>
 
-            {/* Header */}
-            <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-slate-100 dark:border-slate-800 sticky top-0 bg-white dark:bg-slate-900 z-10">
+            {/* ── Fixed header ── */}
+            <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-slate-100 dark:border-slate-800 shrink-0 bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-t-2xl z-10">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-linear-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-sm shadow-orange-400/30">
-                  <Crown className="w-4.5 h-4.5 text-white" />
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-sm shadow-orange-400/30">
+                  <Crown className="w-4 h-4 text-white" />
                 </div>
                 <div>
                   <h3 className="font-black text-slate-900 dark:text-white text-base leading-tight">Ambassador Application</h3>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Fill in your details below</p>
                 </div>
               </div>
-              <button onClick={() => setShowAmbassadorModal(false)} className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors">
+              <button onClick={() => !formSubmitting && setShowAmbassadorModal(false)} className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors shrink-0">
                 <MdClose />
               </button>
             </div>
 
             {formSuccess ? (
-              <div className="flex flex-col items-center gap-4 px-6 py-12">
-                <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-emerald-400 to-green-500 flex items-center justify-center text-3xl shadow-lg shadow-green-400/30">✅</div>
+              /* ── Success screen ── */
+              <div className="flex flex-col items-center gap-4 px-6 py-12 flex-1 overflow-y-auto">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center text-3xl shadow-lg shadow-green-400/30">✅</div>
                 <h4 className="font-black text-slate-900 dark:text-white text-xl text-center">Application Submitted!</h4>
                 <p className="text-slate-500 dark:text-slate-400 text-sm text-center max-w-xs">
                   Your ambassador application is now under review. We'll get back to you within 3–5 business days.
@@ -360,158 +363,140 @@ export function RewardsSection({ totalPoints, spinsLeftToday, onPointsChanged }:
                 </button>
               </div>
             ) : (
-              <div className="px-5 py-5 space-y-5">
+              <>
+                {/* ── Scrollable form body ── */}
+                <div className="flex-1 overflow-y-auto overscroll-contain">
+                  <div className="px-5 pt-5 pb-4 space-y-5">
 
-                {/* ── Step 1: Qualification route ── */}
-                <div>
-                  <label className="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2.5">
-                    Qualification Route <span className="text-red-500">*</span>
-                  </label>
-                  <div className="space-y-2">
-                    {QUALIFICATION_TYPES.map((q) => (
-                      <button key={q.id} type="button"
-                        onClick={() => setQualificationType(q.id as typeof qualificationType)}
-                        className={`w-full flex items-start gap-3 p-3.5 rounded-xl border-2 text-left transition-all ${
-                          qualificationType === q.id
-                            ? 'border-amber-400 bg-amber-50 dark:bg-amber-950/30'
-                            : 'border-slate-200 dark:border-slate-700 hover:border-amber-200 dark:hover:border-amber-800 bg-slate-50 dark:bg-slate-800/50'
-                        }`}
-                      >
-                        <span className="text-2xl leading-none mt-0.5">{q.icon}</span>
-                        <div className="flex-1 min-w-0">
-                          <p className={`font-black text-sm ${qualificationType === q.id ? 'text-amber-700 dark:text-amber-400' : 'text-slate-800 dark:text-slate-200'}`}>{q.label}</p>
-                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">{q.desc}</p>
-                        </div>
-                        <div className={`w-4 h-4 rounded-full border-2 shrink-0 mt-1 flex items-center justify-center transition-all ${qualificationType === q.id ? 'border-amber-500 bg-amber-500' : 'border-slate-300 dark:border-slate-600'}`}>
-                          {qualificationType === q.id && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* ── Step 2: Personal info ── */}
-                <div className="space-y-3">
-                  <label className="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                    Personal Information
-                  </label>
-                  <input
-                    type="text" placeholder="Full Name *" value={fullName} onChange={e => setFullName(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all"
-                  />
-                  <input
-                    type="email" placeholder="Email Address *" value={email} onChange={e => setEmail(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all"
-                  />
-                  <input
-                    type="tel" placeholder="Phone Number (optional)" value={phone} onChange={e => setPhone(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all"
-                  />
-                  <input
-                    type="url" placeholder="Social Media Profile Link (e.g. https://instagram.com/yourhandle)" value={socialProfileLink} onChange={e => setSocialProfileLink(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all"
-                  />
-                </div>
-
-                {/* ── Step 3: Social Influencer fields ── */}
-                {qualificationType === 'social_influencer' && (
-                  <div className="space-y-3 border border-dashed border-amber-300 dark:border-amber-700 rounded-xl p-4 bg-amber-50/50 dark:bg-amber-950/10">
-                    <p className="text-xs font-black text-amber-700 dark:text-amber-400 uppercase tracking-wider">Social Influencer Details</p>
-
-                    {/* Platforms */}
+                    {/* Step 1: Qualification route */}
                     <div>
-                      <p className="text-xs font-bold text-slate-600 dark:text-slate-400 mb-2">Select your platforms <span className="text-red-500">*</span></p>
-                      <div className="flex flex-wrap gap-2">
-                        {PLATFORMS.map(p => (
-                          <button key={p.id} type="button" onClick={() => togglePlatform(p.id)}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
-                              selectedPlatforms.includes(p.id)
-                                ? 'bg-amber-500 border-amber-500 text-white'
-                                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-amber-400'
+                      <label className="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2.5">
+                        Qualification Route <span className="text-red-500">*</span>
+                      </label>
+                      <div className="space-y-2">
+                        {QUALIFICATION_TYPES.map((q) => (
+                          <button key={q.id} type="button"
+                            onClick={() => setQualificationType(q.id as typeof qualificationType)}
+                            className={`w-full flex items-start gap-3 p-3.5 rounded-xl border-2 text-left transition-all ${
+                              qualificationType === q.id
+                                ? "border-amber-400 bg-amber-50 dark:bg-amber-950/30"
+                                : "border-slate-200 dark:border-slate-700 hover:border-amber-200 dark:hover:border-amber-800 bg-slate-50 dark:bg-slate-800/50"
                             }`}
                           >
-                            {p.label}
+                            <span className="text-2xl leading-none mt-0.5">{q.icon}</span>
+                            <div className="flex-1 min-w-0">
+                              <p className={`font-black text-sm ${qualificationType === q.id ? "text-amber-700 dark:text-amber-400" : "text-slate-800 dark:text-slate-200"}`}>{q.label}</p>
+                              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">{q.desc}</p>
+                            </div>
+                            <div className={`w-4 h-4 rounded-full border-2 shrink-0 mt-1 flex items-center justify-center transition-all ${qualificationType === q.id ? "border-amber-500 bg-amber-500" : "border-slate-300 dark:border-slate-600"}`}>
+                              {qualificationType === q.id && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                            </div>
                           </button>
                         ))}
                       </div>
                     </div>
 
-                    <input
-                      type="number" placeholder="Total Follower Count (across all platforms) *"
-                      value={followerCount} onChange={e => setFollowerCount(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all"
-                    />
+                    {/* Step 2: Personal info */}
+                    <div className="space-y-3">
+                      <label className="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                        Personal Information
+                      </label>
+                      <input type="text" placeholder="Full Name *" value={fullName} onChange={e => setFullName(e.target.value)}
+                        className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all" />
+                      <input type="email" placeholder="Email Address *" value={email} onChange={e => setEmail(e.target.value)}
+                        className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all" />
+                      <input type="tel" placeholder="Phone Number (optional)" value={phone} onChange={e => setPhone(e.target.value)}
+                        className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all" />
+                      <input type="url" placeholder="Social Media Profile Link (e.g. https://instagram.com/yourhandle)" value={socialProfileLink} onChange={e => setSocialProfileLink(e.target.value)}
+                        className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all" />
+                    </div>
 
-                    {/* Social handles per selected platform */}
-                    {selectedPlatforms.length > 0 && (
-                      <div className="space-y-2">
-                        <p className="text-xs font-bold text-slate-600 dark:text-slate-400">Your handles / usernames</p>
-                        {selectedPlatforms.map(pid => {
-                          const plat = PLATFORMS.find(p => p.id === pid)!;
-                          return (
-                            <input key={pid}
-                              type="text" placeholder={`${plat.label} handle (e.g. @username)`}
-                              value={socialHandles[pid] ?? ''}
-                              onChange={e => setSocialHandles(prev => ({ ...prev, [pid]: e.target.value }))}
-                              className="w-full px-4 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all"
-                            />
-                          );
-                        })}
+                    {/* Step 3: Social Influencer extra fields */}
+                    {qualificationType === "social_influencer" && (
+                      <div className="space-y-3 border border-dashed border-amber-300 dark:border-amber-700 rounded-xl p-4 bg-amber-50/50 dark:bg-amber-950/10">
+                        <p className="text-xs font-black text-amber-700 dark:text-amber-400 uppercase tracking-wider">Social Influencer Details</p>
+                        <div>
+                          <p className="text-xs font-bold text-slate-600 dark:text-slate-400 mb-2">Select your platforms <span className="text-red-500">*</span></p>
+                          <div className="flex flex-wrap gap-2">
+                            {PLATFORMS.map(p => (
+                              <button key={p.id} type="button" onClick={() => togglePlatform(p.id)}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                                  selectedPlatforms.includes(p.id)
+                                    ? "bg-amber-500 border-amber-500 text-white"
+                                    : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-amber-400"
+                                }`}
+                              >{p.label}</button>
+                            ))}
+                          </div>
+                        </div>
+                        <input type="number" placeholder="Total Follower Count (across all platforms) *"
+                          value={followerCount} onChange={e => setFollowerCount(e.target.value)}
+                          className="w-full px-4 py-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all" />
+                        {selectedPlatforms.length > 0 && (
+                          <div className="space-y-2">
+                            <p className="text-xs font-bold text-slate-600 dark:text-slate-400">Your handles / usernames</p>
+                            {selectedPlatforms.map(pid => {
+                              const plat = PLATFORMS.find(p => p.id === pid)!;
+                              return (
+                                <input key={pid} type="text" placeholder={`${plat.label} handle (e.g. @username)`}
+                                  value={socialHandles[pid] ?? ""}
+                                  onChange={e => setSocialHandles(prev => ({ ...prev, [pid]: e.target.value }))}
+                                  className="w-full px-4 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all" />
+                              );
+                            })}
+                          </div>
+                        )}
+                        <input type="text" placeholder="Content Niche (e.g. Gaming, Lifestyle, Comedy)"
+                          value={contentNiche} onChange={e => setContentNiche(e.target.value)}
+                          className="w-full px-4 py-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all" />
                       </div>
                     )}
 
-                    <input
-                      type="text" placeholder="Content Niche (e.g. Gaming, Lifestyle, Comedy)"
-                      value={contentNiche} onChange={e => setContentNiche(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all"
-                    />
-                  </div>
-                )}
+                    {/* Step 4: Motivation */}
+                    <div>
+                      <label className="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
+                        Why do you want to be an ambassador? <span className="text-red-500">*</span>
+                      </label>
+                      <textarea placeholder="Tell us about yourself and why you'd be a great Playza Ambassador…"
+                        rows={4} value={motivation} onChange={e => setMotivation(e.target.value)}
+                        className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all resize-none" />
+                    </div>
 
-                {/* ── Step 4: Motivation ── */}
-                <div>
-                  <label className="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
-                    Why do you want to be an ambassador? <span className="text-red-500">*</span>
-                  </label>
-                  <textarea
-                    placeholder="Tell us about yourself and why you'd be a great Playza Ambassador…"
-                    rows={4}
-                    value={motivation}
-                    onChange={e => setMotivation(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all resize-none"
-                  />
+                    {/* Inline error */}
+                    {formError && (
+                      <div className="flex items-center gap-2.5 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3">
+                        <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
+                        <p className="text-red-600 dark:text-red-400 text-xs font-medium">{formError}</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                {/* Error */}
-                {formError && (
-                  <div className="flex items-center gap-2.5 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3">
-                    <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
-                    <p className="text-red-600 dark:text-red-400 text-xs font-medium">{formError}</p>
+                {/* ── Pinned footer — always visible ── */}
+                <div className="shrink-0 px-5 pt-3 pb-5 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900"
+                     style={{ paddingBottom: "max(1.25rem, env(safe-area-inset-bottom, 1.25rem))" }}>
+                  <div className="flex gap-3">
+                    <button type="button" onClick={() => !formSubmitting && setShowAmbassadorModal(false)}
+                      className="flex-1 py-3.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                      Cancel
+                    </button>
+                    <button type="button" onClick={handleAmbassadorSubmit} disabled={formSubmitting}
+                      className={`flex-1 py-3.5 rounded-xl font-black text-sm transition-all active:scale-95 ${
+                        formSubmitting
+                          ? "bg-amber-300 dark:bg-amber-800 text-amber-600 dark:text-amber-300 cursor-not-allowed"
+                          : "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white shadow-md shadow-orange-400/30"
+                      }`}>
+                      {formSubmitting ? "Submitting…" : "Submit Application 🚀"}
+                    </button>
                   </div>
-                )}
-
-                {/* Submit */}
-                <div className="flex gap-3 pb-2">
-                  <button type="button" onClick={() => setShowAmbassadorModal(false)}
-                    className="flex-1 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-                    Cancel
-                  </button>
-                  <button type="button" onClick={handleAmbassadorSubmit} disabled={formSubmitting}
-                    className={`flex-1 py-3 rounded-xl font-black text-sm transition-all active:scale-95 ${
-                      formSubmitting
-                        ? 'bg-amber-300 dark:bg-amber-800 text-amber-600 dark:text-amber-300 cursor-not-allowed'
-                        : 'bg-linear-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white shadow-md shadow-orange-400/30'
-                    }`}>
-                    {formSubmitting ? 'Submitting…' : 'Submit Application 🚀'}
-                  </button>
                 </div>
-              </div>
+              </>
             )}
           </div>
         </div>
       )}
 
-      {/* ── REDEEM CONFIRM MODAL ── */}
+            {/* ── REDEEM CONFIRM MODAL ── */}
       {redeemModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setRedeemModal(null)}>
           <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 w-full max-w-sm shadow-2xl" onClick={e => e.stopPropagation()}>
