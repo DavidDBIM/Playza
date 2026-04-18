@@ -93,18 +93,7 @@ const Referral = () => {
   const [page, setPage] = useState(1);
   const PER_PAGE = 6;
 
-  if (authLoading || (user && statsLoading)) return <ReferralSkeleton />;
-
-  const referralLink = `${window.location.origin}/registration?referral_code=${stats?.referral_code || user?.referralCode || ""}`;
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(referralLink);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
   /* ── Referral list processing ── */
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const rows = useMemo(() => {
     return (stats?.referrals ?? []).map((r: ReferralRecord) => ({
       id: r.id,
@@ -116,13 +105,23 @@ const Referral = () => {
     }));
   }, [stats?.referrals]);
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const filtered = useMemo(() => {
     return rows.filter(r => {
       const matchStatus = filter === "All" || (filter === "Done" ? r.status === "done" : r.status === "pending");
       return matchStatus && r.name.toLowerCase().includes(search.toLowerCase());
     });
   }, [rows, filter, search]);
+
+  if (authLoading || (user && statsLoading)) return <ReferralSkeleton />;
+
+  const referralLink = `${window.location.origin}/registration?referral_code=${stats?.referral_code || user?.referralCode || ""}`;
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(referralLink);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
 
   const totalPages = Math.ceil(filtered.length / PER_PAGE);
   const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
