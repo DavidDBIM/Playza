@@ -8,6 +8,7 @@ import {
   MdSettings,
   MdSecurity,
   MdCardGiftcard,
+  MdMilitaryTech,
 } from "react-icons/md";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router";
 import BadgeModal from "../components/profile/BadgeModal";
@@ -83,7 +84,7 @@ const Profile = () => {
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 blur-[100px] rounded-full -mr-32 -mt-32 pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-48 h-48 bg-secondary/10 blur-[80px] rounded-full -ml-24 -mb-24 pointer-events-none" />
 
-        <div className="relative z-10 flex items-center gap-3 md:gap-6">
+        <div className="relative z-10 flex items-start gap-3 md:gap-6">
           {/* Avatar */}
           <div className="relative shrink-0">
             <div className="size-16 md:size-24 rounded-xl border-2 border-white/10 shadow-xl overflow-hidden bg-slate-100 dark:bg-white/5 flex items-center justify-center">
@@ -105,30 +106,40 @@ const Profile = () => {
             </button>
           </div>
 
-          {/* Info */}
+          {/* Info + PZA & ZA inline */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-slate-900 dark:text-white text-base md:text-2xl font-black tracking-tight uppercase italic leading-none truncate">
-                {profile?.username}
-              </h1>
-            </div>
+            {/* Username */}
+            <h1 className="text-slate-900 dark:text-white text-base md:text-2xl font-black tracking-tight uppercase italic leading-none truncate">
+              {profile?.username}
+            </h1>
 
+            {/* Full name */}
             {(profile?.first_name || profile?.last_name) && (
               <p className="text-slate-600 dark:text-slate-400 text-xs font-bold mt-0.5 truncate">
                 {profile?.first_name} {profile?.last_name}
               </p>
             )}
+
+            {/* Email */}
             <p className="text-slate-500 dark:text-slate-500 text-[10px] font-medium mt-0.5 truncate">
               {profile?.email}
             </p>
 
-            {/* Wallet pill — mobile */}
-            <div className="flex items-center gap-1 mt-1.5 md:hidden">
-              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Bal:</span>
-              <span className="text-primary text-[11px] font-black flex items-center gap-0.5">
-                <ZASymbol className="text-[10px]" />
-                {(profile?.wallet?.balance ?? 0).toLocaleString()}
-              </span>
+            {/* PZA Points & ZA Balance — shown right below identity info */}
+            <div className="flex items-center gap-3 mt-2 flex-wrap">
+              {/* PZA Points */}
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-primary/10 border border-primary/20">
+                <MdMilitaryTech className="text-primary text-sm" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">PZA</span>
+                <span className="text-xs font-black text-primary">{pts.toLocaleString()}</span>
+              </div>
+
+              {/* ZA Wallet */}
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-green-500/10 border border-green-500/20">
+                <ZASymbol className="text-green-500 text-sm" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">ZA</span>
+                <span className="text-xs font-black text-green-500">{(profile?.wallet?.balance ?? 0).toLocaleString()}</span>
+              </div>
             </div>
           </div>
 
