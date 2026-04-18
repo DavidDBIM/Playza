@@ -5,48 +5,49 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: oklch(0.97 0.005 260); /* Soft off-white — not harsh pure white */
-  --foreground: oklch(0.2 0.03 260);
+  /* ── Light mode: cool blue-grey tinted base so cards pop ── */
+  --background: oklch(0.93 0.008 255);   /* medium-cool grey — cards will stand out */
+  --foreground: oklch(0.15 0.03 260);    /* near-black text */
 
-  --card: oklch(0.99 0.002 260);
-  --card-foreground: oklch(0.2 0.03 260);
+  --card: oklch(0.99 0.002 255);         /* bright white cards on grey bg */
+  --card-foreground: oklch(0.15 0.03 260);
 
-  --popover: oklch(0.99 0.002 260);
-  --popover-foreground: oklch(0.2 0.03 260);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.15 0.03 260);
 
-  --primary: oklch(0.62 0.21 259);
+  --primary: oklch(0.55 0.22 259);       /* slightly deeper blue in light mode */
   --primary-foreground: oklch(0.98 0 0);
 
-  --secondary: oklch(0.83 0.23 142);
-  --secondary-foreground: oklch(0.18 0.02 142);
+  --secondary: oklch(0.75 0.22 142);
+  --secondary-foreground: oklch(0.15 0.02 142);
 
-  --muted: oklch(0.93 0.01 250);
-  --muted-foreground: oklch(0.45 0.03 250);
+  --muted: oklch(0.88 0.012 255);        /* clearly darker than bg */
+  --muted-foreground: oklch(0.40 0.04 255);
 
-  --accent: oklch(0.9 0.17 95);
-  --accent-foreground: oklch(0.25 0.03 95);
+  --accent: oklch(0.85 0.16 95);
+  --accent-foreground: oklch(0.22 0.03 95);
 
-  --destructive: oklch(0.63 0.25 25);
+  --destructive: oklch(0.58 0.24 25);
   --destructive-foreground: oklch(0.98 0 0);
 
-  --border: oklch(0.9 0.01 250);
-  --input: oklch(0.9 0.01 250);
-  --ring: oklch(0.62 0.21 259);
+  --border: oklch(0.82 0.014 255);       /* visible grey borders */
+  --input: oklch(0.96 0.006 255);
+  --ring: oklch(0.55 0.22 259);
 
-  --chart-1: oklch(0.62 0.21 259);
-  --chart-2: oklch(0.83 0.23 142);
-  --chart-3: oklch(0.9 0.17 95);
-  --chart-4: oklch(0.63 0.25 25);
-  --chart-5: oklch(0.7 0.19 210);
+  --chart-1: oklch(0.55 0.22 259);
+  --chart-2: oklch(0.75 0.22 142);
+  --chart-3: oklch(0.85 0.16 95);
+  --chart-4: oklch(0.58 0.24 25);
+  --chart-5: oklch(0.65 0.18 210);
 
-  --sidebar: oklch(0.95 0.01 250);
-  --sidebar-foreground: oklch(0.22 0.03 250);
-  --sidebar-primary: oklch(0.62 0.21 259);
+  --sidebar: oklch(0.96 0.006 255);      /* white sidebar on grey bg */
+  --sidebar-foreground: oklch(0.20 0.03 255);
+  --sidebar-primary: oklch(0.55 0.22 259);
   --sidebar-primary-foreground: oklch(0.98 0 0);
-  --sidebar-accent: oklch(0.9 0.17 95);
-  --sidebar-accent-foreground: oklch(0.25 0.03 95);
-  --sidebar-border: oklch(0.9 0.01 250);
-  --sidebar-ring: oklch(0.62 0.21 259);
+  --sidebar-accent: oklch(0.88 0.014 255);
+  --sidebar-accent-foreground: oklch(0.22 0.03 95);
+  --sidebar-border: oklch(0.82 0.014 255);
+  --sidebar-ring: oklch(0.55 0.22 259);
 
   --font-sans: Inter, sans-serif;
   --font-serif: Georgia, serif;
@@ -61,14 +62,14 @@
   --shadow-opacity: 0.08;
   --shadow-color: hsl(220 40% 10%);
 
-  --shadow-2xs: 0px 4px 12px 0px hsl(220 40% 10% / 0.04);
-  --shadow-xs: 0px 4px 12px 0px hsl(220 40% 10% / 0.04);
-  --shadow-sm: 0px 4px 12px 0px hsl(220 40% 10% / 0.08), 0px 1px 2px -1px hsl(220 40% 10% / 0.08);
-  --shadow: 0px 4px 12px 0px hsl(220 40% 10% / 0.08), 0px 1px 2px -1px hsl(220 40% 10% / 0.08);
-  --shadow-md: 0px 4px 12px 0px hsl(220 40% 10% / 0.08), 0px 2px 4px -1px hsl(220 40% 10% / 0.08);
-  --shadow-lg: 0px 4px 12px 0px hsl(220 40% 10% / 0.08), 0px 4px 6px -1px hsl(220 40% 10% / 0.08);
-  --shadow-xl: 0px 4px 12px 0px hsl(220 40% 10% / 0.08), 0px 8px 10px -1px hsl(220 40% 10% / 0.08);
-  --shadow-2xl: 0px 4px 12px 0px hsl(220 40% 10% / 0.20);
+  --shadow-2xs: 0px 1px 3px 0px hsl(220 30% 20% / 0.10);
+  --shadow-xs:  0px 2px 6px 0px hsl(220 30% 20% / 0.12);
+  --shadow-sm:  0px 2px 8px 0px hsl(220 30% 20% / 0.14), 0px 1px 2px -1px hsl(220 30% 20% / 0.10);
+  --shadow:     0px 4px 14px 0px hsl(220 30% 20% / 0.14), 0px 2px 4px -1px hsl(220 30% 20% / 0.10);
+  --shadow-md:  0px 6px 18px 0px hsl(220 30% 20% / 0.16), 0px 3px 6px -1px hsl(220 30% 20% / 0.10);
+  --shadow-lg:  0px 8px 24px 0px hsl(220 30% 20% / 0.18), 0px 4px 8px -2px hsl(220 30% 20% / 0.12);
+  --shadow-xl:  0px 12px 32px 0px hsl(220 30% 20% / 0.20), 0px 6px 12px -2px hsl(220 30% 20% / 0.12);
+  --shadow-2xl: 0px 20px 48px 0px hsl(220 30% 20% / 0.24);
 
   --tracking-normal: -0.01em;
   --spacing: 0.25rem;
@@ -215,8 +216,14 @@
 }
 
 .light {
-  --session-card-bg: rgba(255, 255, 255, 0.9);
+  --session-card-bg: rgba(255, 255, 255, 0.97);
   --hero-text-shadow: none;
+}
+
+/* In dark mode, replace dot grid with the gradient */
+.dark body {
+  background-image: linear-gradient(to bottom right, var(--background) 0%, rgba(139, 92, 246, 0.04) 100%) !important;
+  background-size: auto !important;
 }
 
 @layer base {
@@ -251,14 +258,14 @@ h1,h2,h3 {
 
 
 .glass {
-  background: rgba(255, 255, 255, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(30, 50, 100, 0.10), 0 1px 2px rgba(30, 50, 100, 0.08);
   transform: translateZ(0);
 }
 
 .dark .glass {
-  background: rgba(28, 38, 60, 0.78);   /* noticeably above dark bg */
+  background: rgba(28, 38, 60, 0.78);
   border: 1px solid rgba(255, 255, 255, 0.10);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
   transform: translateZ(0);
@@ -287,8 +294,17 @@ h1,h2,h3 {
   body {
     font-family: 'Inter', sans-serif;
     background-color: var(--background);
-    background-image: linear-gradient(to bottom right, var(--background) 0%, rgba(139, 92, 246, 0.03) 100%);
+    /* light: subtle dot grid on cool grey gives depth without being busy */
+    background-image:
+      radial-gradient(circle at 1px 1px, rgba(30, 60, 140, 0.06) 1px, transparent 0);
+    background-size: 24px 24px;
     -webkit-overflow-scrolling: touch;
+  }
+
+  .dark body,
+  body:is(.dark *),
+  .dark body {
+    background-image: linear-gradient(to bottom right, var(--background) 0%, rgba(139, 92, 246, 0.03) 100%);
   }
 
   .neon-gold {
@@ -347,30 +363,30 @@ body.modal-open {
 
 
 .glass-panel {
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.97);
   -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 10px rgba(30, 50, 100, 0.10), 0 1px 3px rgba(30, 50, 100, 0.08);
   transform: translateZ(0);
 }
 
 .dark .glass-panel {
-  background: rgba(32, 44, 68, 0.85);   /* slate-800 equivalent, elevated */
+  background: rgba(32, 44, 68, 0.85);
   border: 1px solid rgba(255, 255, 255, 0.12);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.40);
   transform: translateZ(0);
 }
 
 .glass-card {
-  background: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.03);
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 12px rgba(30, 50, 100, 0.10), 0 1px 3px rgba(30, 50, 100, 0.07);
   transform: translateZ(0);
 }
 
 .dark .glass-card {
-  background: rgba(30, 41, 64, 0.92);   /* clearly elevated above dark bg */
+  background: rgba(30, 41, 64, 0.92);
   border: 1px solid rgba(255, 255, 255, 0.10);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
   transform: translateZ(0);
@@ -507,3 +523,39 @@ body.modal-open {
   animation: click-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
+
+/* ── Light mode sharpness overrides ──────────────────────────────────────── */
+
+/* glow-accent: tone down the glow in light mode so it doesn't look garish */
+.glow-accent {
+  box-shadow: 0 0 16px rgba(var(--primary), 0.35);
+}
+
+/* Slate text in light mode: boost contrast so it's not washed out */
+:root .text-slate-500 {
+  --tw-text-opacity: 1;
+  color: oklch(0.42 0.025 255 / var(--tw-text-opacity));
+}
+:root .text-slate-400 {
+  --tw-text-opacity: 1;
+  color: oklch(0.50 0.022 255 / var(--tw-text-opacity));
+}
+
+/* Borders: in light mode, white/10 borders are invisible — boost them */
+:root .border-white\/10 { border-color: rgba(0,0,0,0.09); }
+:root .border-white\/5  { border-color: rgba(0,0,0,0.06); }
+:root .border-white\/20 { border-color: rgba(0,0,0,0.12); }
+
+/* bg-white/5 and bg-white/10 surface backgrounds — give them actual tint */
+:root .bg-white\/5  { background-color: rgba(30, 50, 120, 0.04); }
+:root .bg-white\/10 { background-color: rgba(30, 50, 120, 0.07); }
+
+/* Header border in light mode */
+:root header.glass {
+  border-bottom-color: rgba(0,0,0,0.09);
+}
+
+/* Sidebar: solid white surface in light mode */
+:root .bg-background\/60 {
+  background-color: rgba(255, 255, 255, 0.92);
+}
