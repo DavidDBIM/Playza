@@ -75,13 +75,58 @@ export interface TransactionAdmin {
   };
 }
 
-export interface PaginatedResponse<T> {
+export interface PaginatedResponse<T, K extends string = string> {
   success: boolean;
   data: {
-    [key: string]: T[] | number | string | boolean | undefined;
+    [key in K]: T[];
+  } & {
     total: number;
     page: number;
     limit: number;
-    total_pages: number;
+    pages: number;
+  };
+}
+
+export interface PayoutRequestAdmin {
+  id: string;
+  user_id: string;
+  amount: number;
+  status: 'pending' | 'approved' | 'rejected';
+  admin_note: string | null;
+  created_at: string;
+  reviewed_at: string | null;
+  reviewed_by: string | null;
+  users: {
+    id: string;
+    username: string;
+    email: string;
+    wallet: {
+      balance: number;
+    } | null;
+  };
+}
+
+export interface AmbassadorApplicationAdmin {
+  id: string;
+  user_id: string;
+  full_name: string;
+  email: string;
+  phone: string | null;
+  qualification_type: 'social_influencer' | 'gold_badge' | 'referral_100';
+  platforms: string[] | null;
+  follower_count: number | null;
+  social_handles: Record<string, string> | null;
+  content_niche: string | null;
+  motivation: string;
+  status: 'pending' | 'approved' | 'rejected';
+  admin_note: string | null;
+  created_at: string;
+  reviewed_at: string | null;
+  users: {
+    username: string;
+    avatar_url: string | null;
+  };
+  pza?: {
+    total_points: number;
   };
 }
