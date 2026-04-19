@@ -108,8 +108,8 @@ const Profile = () => {
           {/* Info + PZA & ZA inline */}
           <div className="flex-1 min-w-0">
             {/* Username */}
-            <h1 className="text-slate-900 dark:text-white text-base md:text-2xl font-black tracking-tight uppercase italic leading-none truncate">
-              {profile?.username}
+            <h1 className="text-slate-900 dark:text-white text-base md:text-2xl font-black tracking-tight italic leading-none truncate">
+              {profile?.username?.toLowerCase()}
             </h1>
 
             {/* Full name */}
