@@ -64,10 +64,12 @@ export function SpinWheelModal({ onClose, onSpinComplete, spinsLeft: initialSpin
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    const size = canvas.width;
-    const cx = size / 2;
-    const cy = size / 2;
-    const r = cx - 6;
+    const w = canvas.width;
+    const h = canvas.height;
+    const pointerHeight = 30;          // pixels reserved at top for pointer
+    const cx = w / 2;
+    const cy = pointerHeight + (h - pointerHeight) / 2;  // wheel centre shifted down
+    const r = Math.min(cx, cy - pointerHeight / 2) - 6;
     const innerR = r * 0.18;
 
     ctx.clearRect(0, 0, size, size);
@@ -165,6 +167,28 @@ export function SpinWheelModal({ onClose, onSpinComplete, spinsLeft: initialSpin
     ctx.strokeStyle = "rgba(255,255,255,0.12)";
     ctx.lineWidth = 2;
     ctx.stroke();
+
+    // ── Pointer arrow drawn ON the canvas at exact top-centre ──
+    // This guarantees it always aligns with angle = -π/2 regardless of CSS layout.
+    const pW = 11;  // half-width of the triangle base
+    const pH = 26;  // height of the triangle
+    const pX = cx;
+    const pY = cy - r - 2; // tip sits just outside the wheel edge
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(pX,      pY);          // tip pointing down into the wheel
+    ctx.lineTo(pX - pW, pY - pH);     // top-left
+    ctx.lineTo(pX + pW, pY - pH);     // top-right
+    ctx.closePath();
+    ctx.fillStyle = "#FFD60A";
+    ctx.shadowColor = "rgba(255,214,10,0.95)";
+    ctx.shadowBlur = 14;
+    ctx.fill();
+    // thin white outline for contrast
+    ctx.strokeStyle = "rgba(255,255,255,0.6)";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.restore();
 
     // Hub
     const hubGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, innerR);
@@ -285,8 +309,8 @@ export function SpinWheelModal({ onClose, onSpinComplete, spinsLeft: initialSpin
   const isWin = result !== null && result.points_won > 0;
   const isZero = result !== null && result.points_won === 0;
 
-  // Responsive canvas size
-  const canvasSize = 300;
+  const canvasWidth  = 300;
+  const canvasHeight = 330;  // extra 30px at top for the pointer arrow
 
   return (
     <div
@@ -357,36 +381,26 @@ export function SpinWheelModal({ onClose, onSpinComplete, spinsLeft: initialSpin
 
         {/* Wheel */}
         <div className="relative flex justify-center items-center px-4 pb-1">
-          {/* Glow halo */}
+          {/* Glow halo — aligned with wheel (offset 30px for pointer space) */}
           <div
             className="absolute rounded-full pointer-events-none"
             style={{
-              width: canvasSize - 20, height: canvasSize - 20,
+              width: canvasWidth - 20, height: canvasWidth - 20,
+              top: 30, left: 10,
               background: "radial-gradient(circle,rgba(99,102,241,0.22) 0%,transparent 70%)",
               filter: "blur(16px)",
             }}
           />
 
-          {/* Pointer — sits exactly at top centre of the wheel */}
-          <div className="absolute z-20" style={{ top: 0, left: "50%", transform: "translateX(-50%) translateY(-2px)" }}>
-            <div style={{
-              width: 0, height: 0,
-              borderLeft: "10px solid transparent",
-              borderRight: "10px solid transparent",
-              borderTop: "24px solid #FFD60A",
-              filter: "drop-shadow(0 3px 8px rgba(255,214,10,0.9))",
-            }} />
-          </div>
-
           <canvas
             ref={canvasRef}
-            width={canvasSize}
-            height={canvasSize}
-            className="cursor-pointer rounded-full select-none"
+            width={canvasWidth}
+            height={canvasHeight}
+            className="cursor-pointer select-none"
             onClick={canSpin ? spin : undefined}
             style={{
-              width: canvasSize,
-              height: canvasSize,
+              width: canvasWidth,
+              height: canvasHeight,
               filter: isSpinning
                 ? "drop-shadow(0 0 32px rgba(99,102,241,1)) drop-shadow(0 0 12px rgba(255,214,10,0.6))"
                 : canSpin
