@@ -1,7 +1,6 @@
 import {
-  MdAnalytics, MdCancel, MdCheckCircle, MdEmojiEvents, MdGrade, MdHistory, MdMilitaryTech, MdTrendingUp
+  MdAnalytics, MdCancel, MdCheckCircle, MdEmojiEvents, MdGrade, MdHistory, MdTrendingUp
 } from "react-icons/md";
-import { ZASymbol } from "@/components/currency/ZASymbol";
 import { useProfile, useGameHistory } from "@/hooks/profile/useProfile";
 import type { GameHistoryItem } from "@/api/profile.api";
 
@@ -14,8 +13,6 @@ const Overview = () => {
   const wins = recentMatches.filter((m: GameHistoryItem) => m.status === "completed" && m.winnings > 0).length;
   const winRate = totalGames > 0 ? Math.round((wins / totalGames) * 100) : 0;
   const highestScore = recentMatches.reduce((max: number, m: GameHistoryItem) => Math.max(max, m.score || 0), 0);
-  const pzaPoints = profile?.pza_points ?? 0;
-
   return (
     <div className="grid grid-cols-1 xl:grid-cols-2 gap-2 md:gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700 overflow-hidden">
       <h2 className="md:hidden text-lg font-black text-slate-900 dark:text-white tracking-tight col-span-full">Overview</h2>
@@ -34,26 +31,6 @@ const Overview = () => {
               <div className="mt-2 text-primary text-[10px] flex items-center gap-1 font-black">{stat.icon} {stat.sub}</div>
             </div>
           ))}
-        </div>
-
-        {/* PZA Points & Wallet only */}
-        <div className="grid grid-cols-2 gap-2 md:gap-4">
-          <div className="glass-card p-2 md:p-4 rounded-xl flex items-center justify-between hover:bg-primary/5 transition-all">
-            <div className="space-y-1">
-              <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">PZA Points</p>
-              <p className="text-xs md:text-base text-slate-900 dark:text-white font-black">{pzaPoints.toLocaleString()}</p>
-            </div>
-            <div className="size-10 flex-shrink-0 rounded-xl bg-primary/10 flex items-center justify-center text-primary text-xl"><MdMilitaryTech /></div>
-          </div>
-          <div className="glass-card p-2 md:p-4 rounded-xl flex items-center justify-between hover:bg-secondary/5 transition-all">
-            <div className="space-y-1">
-              <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Wallet</p>
-              <p className="text-xs md:text-base text-slate-900 dark:text-white font-black flex items-center gap-1">
-                <ZASymbol className="text-xs" />{(profile?.wallet?.balance ?? 0).toLocaleString()}
-              </p>
-            </div>
-            <div className="size-10 flex-shrink-0 rounded-xl bg-green-500/10 flex items-center justify-center text-green-500 text-xl"><MdHistory /></div>
-          </div>
         </div>
 
         {/* Recent Activity — only shown when there is history */}
