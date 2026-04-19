@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aim Trainer Pro</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-wrapper">
+        <div class="container" id="game-container">
+            <div class="header">
+                <div class="title-container">
+                    <h1>AIM TRAINER PRO</h1>
+                    <p class="tagline">Precision. Speed. Dominance.</p>
+                </div>
+                <div class="scores-container">
+                    <div class="score-box">
+                        <span class="score-label">Score</span>
+                        <span id="score" class="score-value">0</span>
+                    </div>
+                    <div class="score-box">
+                        <span class="score-label">Time</span>
+                        <span id="time" class="score-value">60</span>
+                    </div>
+                    <div class="score-box">
+                        <span class="score-label">XP</span>
+                        <span id="xp" class="score-value">0</span>
+                    </div>
+                    <div class="score-box best">
+                        <span class="score-label">Best</span>
+                        <span id="best-score" class="score-value">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stats-bar">
+                <div class="stat">
+                    <span class="stat-label">Combo</span>
+                    <span id="combo" class="stat-value">x1</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Accuracy</span>
+                    <span id="accuracy" class="stat-value">100%</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Hits</span>
+                    <span id="hits" class="stat-value">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Streak</span>
+                    <span id="streak" class="stat-value">0</span>
+                </div>
+            </div>
+
+            <div class="mode-bar">
+                <button class="mode-btn active" data-mode="classic" onclick="selectMode('classic')">Classic</button>
+                <button class="mode-btn" data-mode="speed" onclick="selectMode('speed')">Speed</button>
+                <button class="mode-btn" data-mode="precision" onclick="selectMode('precision')">Precision</button>
+                <button class="mode-btn" data-mode="endless" onclick="selectMode('endless')">Endless</button>
+                <button class="mode-btn streak" data-mode="streak" onclick="selectMode('streak')">Streak</button>
+            </div>
+
+            <div class="difficulty-bar">
+                <span class="diff-label">Difficulty:</span>
+                <button class="diff-btn active" data-diff="easy" onclick="selectDifficulty('easy')">Easy</button>
+                <button class="diff-btn" data-diff="medium" onclick="selectDifficulty('medium')">Medium</button>
+                <button class="diff-btn" data-diff="hard" onclick="selectDifficulty('hard')">Hard</button>
+                <button class="diff-btn" data-diff="insane" onclick="selectDifficulty('insane')">Insane</button>
+            </div>
+
+            <div class="skin-bar">
+                <span class="skin-label">Target:</span>
+                <button class="skin-btn active" data-skin="classic" onclick="selectSkin('classic')">Classic</button>
+                <button class="skin-btn" data-skin="bullseye" onclick="selectSkin('bullseye')">Bullseye</button>
+                <button class="skin-btn" data-skin="star" onclick="selectSkin('star')">Star</button>
+                <button class="skin-btn" data-skin="diamond" onclick="selectSkin('diamond')">Diamond</button>
+                <button class="skin-btn" data-skin="galaxy" onclick="selectSkin('galaxy')">Galaxy</button>
+            </div>
+
+            <div class="game-area" id="game-area">
+                <div class="crosshair" id="crosshair"></div>
+                <div class="combo-fire" id="combo-fire"></div>
+                <div class="heatmap" id="heatmap"></div>
+            </div>
+
+            <div class="start-screen" id="start-screen">
+                <div class="start-content">
+                    <div class="mode-info" id="mode-info">
+                        <h2>CLASSIC MODE</h2>
+                        <p class="mode-desc">Standard 60-second round. Build combos for bonus points!</p>
+                    </div>
+                    <div class="stats-preview">
+                        <div class="preview-stat">
+                            <span>Total Games</span>
+                            <span id="total-games">0</span>
+                        </div>
+                        <div class="preview-stat">
+                            <span>Total XP</span>
+                            <span id="total-xp">0</span>
+                        </div>
+                        <div class="preview-stat">
+                            <span>Level</span>
+                            <span id="player-level">1</span>
+                        </div>
+                    </div>
+                    <button class="start-btn" onclick="startGame()">START GAME</button>
+                </div>
+            </div>
+
+            <div class="overlay" id="game-over-overlay">
+                <div class="popup">
+                    <h2 id="game-over-title">TIME'S UP!</h2>
+                    <div class="final-stats">
+                        <div class="final-stat">
+                            <span>Score</span>
+                            <span id="final-score">0</span>
+                        </div>
+                        <div class="final-stat">
+                            <span>Targets Hit</span>
+                            <span id="final-hits">0</span>
+                        </div>
+                        <div class="final-stat">
+                            <span>Accuracy</span>
+                            <span id="final-accuracy">0%</span>
+                        </div>
+                        <div class="final-stat">
+                            <span>Best Combo</span>
+                            <span id="final-combo">x1</span>
+                        </div>
+                        <div class="final-stat xp-gain">
+                            <span>XP Earned</span>
+                            <span id="xp-gained">+0</span>
+                        </div>
+                    </div>
+                    <div class="session-stats">
+                        <h3>Session Stats</h3>
+                        <div class="session-row">
+                            <span>Avg Accuracy</span>
+                            <span id="session-accuracy">0%</span>
+                        </div>
+                        <div class="session-row">
+                            <span>Avg Reaction</span>
+                            <span id="session-reaction">0ms</span>
+                        </div>
+                    </div>
+                    <div class="new-records" id="new-records">
+                        <span class="new-record">NEW PERSONAL BEST!</span>
+                    </div>
+                    <p style="color:var(--text-muted); font-size:11px; font-weight:bold; letter-spacing:1px; margin-top:15px; animation: pulse 1.5s infinite;">SYNCING LEADERBOARD...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <audio id="hit-sound" src="data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU"></audio>
+    <audio id="combo-sound" src="data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU"></audio>
+
+    <script src="game.js"></script>
+</body>
+</html>

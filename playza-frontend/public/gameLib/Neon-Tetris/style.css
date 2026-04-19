@@ -262,7 +262,6 @@ body {
     background: var(--bg-dark);
     image-rendering: pixelated;
     image-rendering: -webkit-optimize-contrast;
-    image-rendering: crisp-edges;
 }
 
 .game-overlay {
