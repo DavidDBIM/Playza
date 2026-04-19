@@ -41,7 +41,7 @@ const Game: React.FC = () => {
   }
 
   return (
-    <main className="p-6 space-y-6">
+    <main className="p-4 space-y-4">
       {/* Game Header Section */}
       <div className="bg-card border border-border rounded-2xl p-6 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div className="flex flex-col sm:flex-row items-center gap-6">

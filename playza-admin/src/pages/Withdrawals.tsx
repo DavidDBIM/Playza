@@ -53,7 +53,7 @@ const Withdrawals: React.FC = () => {
   }, [data, searchQuery, statusFilter]);
 
   return (
-    <main className="p-6 space-y-6">
+    <main className="p-4 space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-2xl bg-linear-to-br from-primary to-blue-600 flex items-center justify-center shadow-md shadow-primary/30">

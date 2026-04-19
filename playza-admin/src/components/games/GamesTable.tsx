@@ -39,13 +39,13 @@ export const GamesTable: React.FC<GamesTableProps> = ({ games, clearFilters }) =
       <Table className="border-collapse w-full">
         <TableHeader className="bg-muted/30 border-b border-border/30">
           <TableRow className="hover:bg-transparent border-none">
-            <TableHead className="py-6 px-4 md:px-8 font-black uppercase text-[10px] tracking-[0.2em] text-muted-foreground/70">Game Details</TableHead>
-            <TableHead className="py-6 px-4 font-black uppercase text-[10px] tracking-[0.2em] text-muted-foreground/70">Category</TableHead>
-            <TableHead className="py-6 px-4 font-black uppercase text-[10px] tracking-[0.2em] text-muted-foreground/70 text-right">Entry Fee</TableHead>
-            <TableHead className="py-6 px-4 font-black uppercase text-[10px] tracking-[0.2em] text-muted-foreground/70 text-center">Difficulty</TableHead>
-            <TableHead className="py-6 px-4 font-black uppercase text-[10px] tracking-[0.2em] text-muted-foreground/70 text-center">Status</TableHead>
-            <TableHead className="py-6 px-4 font-black uppercase text-[10px] tracking-[0.2em] text-muted-foreground/70 text-center">Players</TableHead>
-            <TableHead className="py-6 px-4 md:px-8 font-black uppercase text-[10px] tracking-[0.2em] text-muted-foreground/70 text-right"></TableHead>
+            <TableHead className="py-3 px-4 md:px-6 font-black uppercase text-[10px] tracking-[0.2em] text-muted-foreground/70">Game Details</TableHead>
+            <TableHead className="py-3 px-4 font-black uppercase text-[10px] tracking-[0.2em] text-muted-foreground/70">Category</TableHead>
+            <TableHead className="py-3 px-4 font-black uppercase text-[10px] tracking-[0.2em] text-muted-foreground/70 text-right">Entry Fee</TableHead>
+            <TableHead className="py-3 px-4 font-black uppercase text-[10px] tracking-[0.2em] text-muted-foreground/70 text-center">Difficulty</TableHead>
+            <TableHead className="py-3 px-4 font-black uppercase text-[10px] tracking-[0.2em] text-muted-foreground/70 text-center">Status</TableHead>
+            <TableHead className="py-3 px-4 font-black uppercase text-[10px] tracking-[0.2em] text-muted-foreground/70 text-center">Players</TableHead>
+            <TableHead className="py-3 px-4 md:px-6 font-black uppercase text-[10px] tracking-[0.2em] text-muted-foreground/70 text-right"></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -56,7 +56,7 @@ export const GamesTable: React.FC<GamesTableProps> = ({ games, clearFilters }) =
                 className="group border-b border-border/20 hover:bg-muted/10 transition-colors duration-200 cursor-pointer"
                 onClick={() => navigate(`/games/${game.slug}`)}
               >
-                <TableCell className="py-5 px-4 md:px-8">
+                <TableCell className="py-3.5 px-4 md:px-6">
                   <div className="flex items-center gap-4">
                     <div className="relative w-12 h-12 rounded-xl overflow-hidden border border-border/40 shadow-sm shrink-0 group-hover:scale-105 transition-transform duration-300">
                       <img 
@@ -80,16 +80,16 @@ export const GamesTable: React.FC<GamesTableProps> = ({ games, clearFilters }) =
                     </div>
                   </div>
                 </TableCell>
-                <TableCell className="py-5 px-4 font-body font-bold text-sm">
-                  <span className="px-4 py-2 rounded-2xl bg-primary/10 text-primary font-black text-[11px] uppercase border border-primary/20 tracking-widest shadow-[0_0_15px_rgba(var(--primary-rgb),0.1)] group-hover:bg-primary group-hover:text-white transition-all duration-300 flex items-center gap-2 w-max">
+                <TableCell className="py-3.5 px-4 font-body font-bold text-sm">
+                  <span className="px-3 py-1.5 rounded-xl bg-primary/10 text-primary font-black text-[11px] uppercase border border-primary/20 tracking-widest shadow-[0_0_15px_rgba(var(--primary-rgb),0.1)] group-hover:bg-primary group-hover:text-white transition-all duration-300 flex items-center gap-2 w-max">
                     <MdShield className="text-xs opacity-60" />
                     {game.category}
                   </span>
                 </TableCell>
-                <TableCell className="py-5 px-4 text-right font-headline font-black text-sm text-foreground">
+                <TableCell className="py-3.5 px-4 text-right font-headline font-black text-sm text-foreground">
                   ₦{game.entryFee.toLocaleString()}
                 </TableCell>
-                <TableCell className="py-5 px-4 text-center">
+                <TableCell className="py-3.5 px-4 text-center">
                   <div className={`text-[10px] font-black px-3 py-1 rounded-full border inline-block tracking-widest ${
                     game.difficulty === 'Easy' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/10' :
                     game.difficulty === 'Medium' ? 'bg-amber-500/10 text-amber-500 border-amber-500/10' :
@@ -98,7 +98,7 @@ export const GamesTable: React.FC<GamesTableProps> = ({ games, clearFilters }) =
                     {game.difficulty.toUpperCase()}
                   </div>
                 </TableCell>
-                <TableCell className="py-5 px-4 text-center">
+                <TableCell className="py-3.5 px-4 text-center">
                   <div className="flex items-center justify-center gap-2">
                     {game.isActive ? (
                       <MdCheckCircle className="text-emerald-500 text-lg" title="Live" />
@@ -110,13 +110,13 @@ export const GamesTable: React.FC<GamesTableProps> = ({ games, clearFilters }) =
                     </span>
                   </div>
                 </TableCell>
-                <TableCell className="py-5 px-4 text-center">
+                <TableCell className="py-3.5 px-4 text-center">
                   <div className="flex flex-col items-center">
                     <span className="font-headline font-black text-sm text-primary">{game.activePlayers}</span>
                     <span className="text-[9px] text-muted-foreground/50 font-black uppercase tracking-tighter">ActiveNow</span>
                   </div>
                 </TableCell>
-                <TableCell className="py-5 px-4 md:px-8 text-right">
+                <TableCell className="py-3.5 px-4 md:px-6 text-right">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button 
@@ -131,7 +131,7 @@ export const GamesTable: React.FC<GamesTableProps> = ({ games, clearFilters }) =
                         <MdEdit className="text-lg group-hover:rotate-12 transition-transform" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48 rounded-2xl p-2 bg-popover/95 backdrop-blur-xl border-border/50">
+                    <DropdownMenuContent align="end" className="w-48 rounded-xl p-2 bg-popover/95 backdrop-blur-xl border-border/50">
                       <DropdownMenuItem 
                         className="rounded-xl px-4 py-3 font-bold text-sm cursor-pointer gap-3"
                         onClick={(e) => {

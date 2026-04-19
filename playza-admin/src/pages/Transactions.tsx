@@ -52,24 +52,24 @@ const Transactions: React.FC = () => {
   const transactions = (data?.transactions as TransactionAdmin[]) || [];
 
   return (
-    <main className="p-6 space-y-6">
+    <main className="p-4 space-y-4">
       {/* Header Section */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-linear-to-br from-primary to-blue-600 flex items-center justify-center shadow-md shadow-primary/30">
-            <MdReceiptLong className="w-5 h-5 text-white text-xl" />
+          <div className="w-9 h-9 rounded-xl bg-linear-to-br from-primary to-blue-600 flex items-center justify-center shadow-md shadow-primary/30">
+            <MdReceiptLong className="w-4 h-4 text-white text-lg" />
           </div>
           <div>
-            <h1 className="text-2xl font-black text-foreground tracking-tight">
+            <h1 className="text-xl font-black text-foreground tracking-tight">
               Transactions
             </h1>
-            <p className="text-sm text-muted-foreground font-medium">
+            <p className="text-xs text-muted-foreground font-medium">
               Monitor network transactions and deposit flows
             </p>
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <div className="bg-card border border-border px-4 py-2 rounded-xl shadow-sm hidden sm:block">
+          <div className="bg-card border border-border px-3 py-1.5 rounded-xl shadow-sm hidden sm:block">
             <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest leading-tight">
               Total Volume
             </p>
@@ -87,7 +87,7 @@ const Transactions: React.FC = () => {
           </div>
           <button
             onClick={() => refetch()}
-            className="flex items-center gap-2 px-4 py-2 bg-muted hover:bg-muted/80 rounded-xl text-sm font-bold text-foreground transition-all"
+            className="flex items-center gap-2 px-3 py-1.5 bg-muted hover:bg-muted/80 rounded-xl text-xs font-bold text-foreground transition-all"
           >
             <MdRefresh
               className={`text-lg ${isLoading ? "animate-spin" : ""}`}
@@ -98,7 +98,7 @@ const Transactions: React.FC = () => {
       </div>
 
       {/* Toolbar */}
-      <div className="bg-card border border-border rounded-2xl p-4 flex flex-wrap items-center gap-3 shadow-sm">
+      <div className="bg-card border border-border rounded-xl p-3 flex flex-wrap items-center gap-3 shadow-sm">
         <div className="flex-1 min-w-50 relative">
           <MdSearch className="-translate-y-1/2 absolute left-3 top-1/2 text-muted-foreground text-lg" />
           <input
@@ -222,13 +222,13 @@ const Transactions: React.FC = () => {
                       className="group hover:bg-muted/30 transition-all duration-200 border-border cursor-pointer"
                       onClick={() => navigate(`/transactions/${txn.id}`)}
                     >
-                      <TableCell className="px-4 py-3.5 font-mono text-xs font-bold text-primary truncate max-w-32">
+                      <TableCell className="px-4 py-2.5 font-mono text-xs font-bold text-primary truncate max-w-32">
                         {txn.id}
                       </TableCell>
-                      <TableCell className="px-4 py-3.5 text-sm font-bold text-foreground">
+                      <TableCell className="px-4 py-2.5 text-sm font-bold text-foreground">
                         @{txn.users?.username || "unknown"}
                       </TableCell>
-                      <TableCell className="px-4 py-3.5">
+                      <TableCell className="px-4 py-2.5">
                         <span
                           className={`text-[10px] font-black uppercase px-2 py-1 rounded-lg ${
                             txn.type === "withdrawal"
@@ -243,10 +243,10 @@ const Transactions: React.FC = () => {
                           {txn.type}
                         </span>
                       </TableCell>
-                      <TableCell className="px-4 py-3.5 text-right font-black text-lg text-foreground tracking-tight font-number">
+                      <TableCell className="px-4 py-2.5 text-right font-black text-base text-foreground tracking-tight font-number">
                         {formatNaira(txn.amount)}
                       </TableCell>
-                      <TableCell className="px-4 py-3.5 text-center">
+                      <TableCell className="px-4 py-2.5 text-center">
                         <span
                           className={`inline-flex items-center gap-1 text-[10px] font-black px-2 py-1 rounded-lg border border-transparent shadow-sm ${
                             txn.status === "success" ||
@@ -260,13 +260,13 @@ const Transactions: React.FC = () => {
                           {(txn.status || "unknown").toUpperCase()}
                         </span>
                       </TableCell>
-                      <TableCell className="px-4 py-3.5 text-[10px] font-black uppercase text-muted-foreground truncate max-w-32">
+                      <TableCell className="px-4 py-2.5 text-[10px] font-black uppercase text-muted-foreground truncate max-w-32">
                         {txn.reference || "N/A"}
                       </TableCell>
-                      <TableCell className="px-4 py-3.5 text-xs font-bold text-muted-foreground uppercase">
+                      <TableCell className="px-4 py-2.5 text-xs font-bold text-muted-foreground uppercase">
                         {new Date(txn.created_at).toLocaleDateString()}
                       </TableCell>
-                      <TableCell className="px-4 py-3.5 text-right">
+                      <TableCell className="px-4 py-2.5 text-right">
                         <Button
                           variant="ghost"
                           onClick={(e) => {

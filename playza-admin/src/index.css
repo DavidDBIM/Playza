@@ -89,7 +89,7 @@
     --input: oklch(0.9 0.02 240);
     --ring: oklch(0.55 0.2 260 / 50%);
     
-    --radius: 1rem;
+    --radius: 0.5rem;
     
     --sidebar: oklch(0.99 0.01 240);
     --sidebar-foreground: oklch(0.25 0.05 240);
@@ -142,7 +142,7 @@
     @apply border-border outline-ring/50;
     }
   body {
-    @apply antialiased overflow-x-hidden bg-background text-foreground transition-colors duration-500 font-sans tracking-tight;
+    @apply antialiased overflow-x-hidden bg-background text-foreground transition-colors duration-500 font-sans tracking-tight text-sm leading-snug;
     }
   h1, h2, h3, h4, h5, h6 {
     @apply font-heading font-black tracking-tighter uppercase italic;

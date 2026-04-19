@@ -32,7 +32,7 @@ const Session: React.FC = () => {
   const statuses = ['Live', 'Ongoing', 'Upcoming', 'Ended'];
 
   return (
-    <main className="p-6 space-y-6">
+    <main className="p-4 space-y-4">
       <div className="space-y-8">
         {/* Hero Session Header */}
         <div className="flex items-center justify-between flex-wrap gap-4">

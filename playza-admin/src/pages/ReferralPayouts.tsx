@@ -75,7 +75,7 @@ const ReferralPayouts: React.FC = () => {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 space-y-4">
       {/* ── Header Section ── */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-3">
@@ -281,7 +281,7 @@ const ReferralPayouts: React.FC = () => {
               </button>
             </div>
 
-            <div className="p-6 space-y-6">
+            <div className="p-4 space-y-4">
               <div className="space-y-4">
                 <div className="flex items-center justify-between p-4 bg-muted/30 rounded-2xl border border-border/50">
                   <div>

@@ -20,9 +20,9 @@ const Header: React.FC = () => {
   const { theme, setTheme } = useTheme();
 
   return (
-    <header className="fixed top-0 right-0 lg:w-[calc(100%-16rem)] w-full h-16 z-40 bg-background/80 backdrop-blur-xl flex justify-end items-center px-4 md:px-8 border-b border-border transition-all duration-300">
-      <div className="flex items-center gap-6">
-        <div className="flex items-center gap-4">
+    <header className="fixed top-0 right-0 lg:w-[calc(100%-16rem)] w-full h-16 z-40 bg-background/80 backdrop-blur-xl flex justify-end items-center px-4 md:px-6 border-b border-border transition-all duration-300">
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="text-muted-foreground hover:text-primary transition-colors cursor-pointer active:opacity-80 text-xl outline-none">

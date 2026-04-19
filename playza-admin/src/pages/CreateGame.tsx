@@ -33,7 +33,7 @@ const CreateGame: React.FC = () => {
   const difficulties = ["Beginner", "Intermediate", "Advanced", "Pro Circuit", "Legendary"];
 
   return (
-    <main className="p-6 space-y-6">
+    <main className="p-4 space-y-4">
       <div className="space-y-8">
         {/* Page Header */}
         <div className="flex items-center justify-between flex-wrap gap-4">
@@ -61,7 +61,7 @@ const CreateGame: React.FC = () => {
 
         <form className="space-y-8 pb-20">
           {/* Section 1: Game Details */}
-          <section className="bg-card border border-border rounded-2xl shadow-sm p-6 space-y-6">
+          <section className="bg-card border border-border rounded-xl shadow-sm p-4 space-y-4">
             <div className="flex items-center gap-2 border-b border-border pb-3">
               <MdInfo className="text-primary text-lg" />
               <h3 className="text-sm font-black text-foreground uppercase tracking-wider">Core Metadata</h3>

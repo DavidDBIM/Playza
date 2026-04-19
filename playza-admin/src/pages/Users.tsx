@@ -64,22 +64,22 @@ const Users: React.FC = () => {
   };
 
   return (
-    <main className="p-6 space-y-6">
+    <main className="p-4 space-y-4">
       {/* Header Container */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md shadow-indigo-400/30">
-            <MdPeople className="w-5 h-5 text-white" />
+          <div className="w-9 h-9 rounded-xl bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md shadow-indigo-400/30">
+            <MdPeople className="w-4 h-4 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-black text-foreground tracking-tight uppercase">Users</h1>
+            <h1 className="text-xl font-black text-foreground tracking-tight uppercase">Users</h1>
             <p className="text-xs text-muted-foreground font-medium">Manage platform users and track engagement</p>
           </div>
         </div>
         
         <button 
           onClick={() => refetch()}
-          className="flex items-center gap-2 px-4 py-2 bg-muted hover:bg-muted/80 rounded-xl text-xs font-black uppercase tracking-widest text-foreground transition-all border border-border"
+          className="flex items-center gap-2 px-3 py-1.5 bg-muted hover:bg-muted/80 rounded-xl text-xs font-black uppercase tracking-widest text-foreground transition-all border border-border"
         >
           <MdRefresh className={`text-lg ${isLoading ? 'animate-spin' : ''}`} />
           <span>Refresh</span>
@@ -90,7 +90,7 @@ const Users: React.FC = () => {
       <UsersStats stats={userStats} />
 
       {/* Table Section */}
-      <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden relative">
+      <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden relative">
         {/* Toolbar */}
         <div className="relative z-10 border-b border-border">
           <UsersToolbar 
@@ -118,13 +118,13 @@ const Users: React.FC = () => {
         </div>
 
         {/* Info Footer */}
-        <div className="relative z-10 px-6 py-4 bg-muted/50 border-t border-border flex items-center justify-between">
+        <div className="relative z-10 px-4 py-3 bg-muted/50 border-t border-border flex items-center justify-between">
           <p className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">
             Database Sync: <span className={isError ? 'text-rose-500' : 'text-emerald-500'}>
               {isError ? 'Disconnected' : isLoading ? 'Syncing...' : 'Connected'}
             </span>
           </p>
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-4">
              <p className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">
                Displaying <span className="text-primary font-number">{users.length}</span> Records
              </p>

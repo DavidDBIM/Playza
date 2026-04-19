@@ -36,7 +36,7 @@ const SessionLeaderboard: React.FC = () => {
   const filteredPlayers = allPlayers.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
   return (
-    <main className="p-6 space-y-6">
+    <main className="p-4 space-y-4">
       <div className="flex items-center gap-4">
         <Button 
           variant="ghost" 

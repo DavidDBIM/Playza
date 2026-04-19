@@ -195,7 +195,7 @@ const User: React.FC = () => {
     );
 
   return (
-    <main className="p-6 space-y-6">
+    <main className="p-4 space-y-4">
       {/* Identity Hero */}
       <UserIdentityHero
         user={mappedUser}

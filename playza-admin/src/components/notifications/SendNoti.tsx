@@ -22,36 +22,36 @@ const SendNoti: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [priority, setPriority] = useState('High');
 
   return (
-    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Page Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-4">
           <button 
             onClick={onBack}
-            className="w-12 h-12 rounded-full flex items-center justify-center bg-slate-100 dark:bg-zinc-800 text-primary hover:bg-primary/10 transition-all group active:scale-95 shadow-lg border border-slate-200 dark:border-white/5"
+            className="w-10 h-10 rounded-full flex items-center justify-center bg-slate-100 dark:bg-zinc-800 text-primary hover:bg-primary/10 transition-all group active:scale-95 shadow-lg border border-slate-200 dark:border-white/5"
           >
             <MdArrowBack className="text-xl group-hover:-translate-x-1 transition-transform" />
           </button>
           <div>
-            <h2 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">Send Notification</h2>
+            <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter">Send Notification</h2>
             <p className="text-slate-500 dark:text-zinc-500 mt-1 font-bold text-xs uppercase tracking-widest">Compose and target messages for your global player base</p>
           </div>
         </div>
       </div>
 
       {/* Editor Grid */}
-      <div className="grid grid-cols-12 gap-12">
+      <div className="grid grid-cols-12 gap-6">
         {/* Left: Form */}
-        <div className="col-span-12 lg:col-span-7 space-y-8">
+        <div className="col-span-12 lg:col-span-7 space-y-5">
           {/* Basic Info & Type */}
-          <div className="glass-card rounded-[2rem] p-8 space-y-8 border border-slate-200 dark:border-white/5 bg-white/30 dark:bg-white/5 shadow-xl">
-            <div className="grid grid-cols-2 gap-8">
+          <div className="glass-card rounded-xl p-5 space-y-5 border border-slate-200 dark:border-white/5 bg-white/30 dark:bg-white/5 shadow-xl">
+            <div className="grid grid-cols-2 gap-5">
               <div className="col-span-1">
                 <label className="block text-[10px] font-black text-slate-500 dark:text-zinc-500 uppercase tracking-widest mb-3 ml-2">Notification Type</label>
                 <div className="relative group">
                   <select 
                     title="Notification Type"
-                    className="w-full bg-slate-100/50 dark:bg-zinc-900 border border-slate-200 dark:border-white/5 text-slate-900 dark:text-white rounded-2xl px-5 py-4 focus:outline-none focus:border-primary transition-all appearance-none font-black text-xs uppercase tracking-widest cursor-pointer shadow-inner"
+                    className="w-full bg-slate-100/50 dark:bg-zinc-900 border border-slate-200 dark:border-white/5 text-slate-900 dark:text-white rounded-xl px-4 py-3 focus:outline-none focus:border-primary transition-all appearance-none font-black text-xs uppercase tracking-widest cursor-pointer shadow-inner"
                   >
                     <option>System Update</option>
                     <option>Transactional</option>
@@ -66,13 +66,13 @@ const SendNoti: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 <div className="flex gap-3">
                   <button 
                     onClick={() => setPriority('Normal')}
-                    className={`flex-1 py-4 px-4 rounded-2xl border transition-all font-black text-[10px] uppercase tracking-widest shadow-lg ${priority === 'Normal' ? 'bg-slate-900 dark:bg-primary text-white dark:text-black border-transparent' : 'bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-zinc-500 border-slate-200 dark:border-white/5 hover:border-primary/50'}`}
+                    className={`flex-1 py-3 px-4 rounded-xl border transition-all font-black text-[10px] uppercase tracking-widest shadow-lg ${priority === 'Normal' ? 'bg-slate-900 dark:bg-primary text-white dark:text-black border-transparent' : 'bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-zinc-500 border-slate-200 dark:border-white/5 hover:border-primary/50'}`}
                   >
                     Normal
                   </button>
                   <button 
                     onClick={() => setPriority('High')}
-                    className={`flex-1 py-4 px-4 rounded-2xl border transition-all font-black text-[10px] uppercase tracking-widest shadow-lg ${priority === 'High' ? 'bg-slate-900 dark:bg-primary text-white dark:text-black border-transparent shadow-primary/20' : 'bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-zinc-500 border-slate-200 dark:border-white/5 hover:border-primary/50'}`}
+                    className={`flex-1 py-3 px-4 rounded-xl border transition-all font-black text-[10px] uppercase tracking-widest shadow-lg ${priority === 'High' ? 'bg-slate-900 dark:bg-primary text-white dark:text-black border-transparent shadow-primary/20' : 'bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-zinc-500 border-slate-200 dark:border-white/5 hover:border-primary/50'}`}
                   >
                     High Priority
                   </button>
@@ -86,7 +86,7 @@ const SendNoti: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full bg-slate-100/50 dark:bg-zinc-900 border border-slate-200 dark:border-white/5 text-slate-900 dark:text-white rounded-2xl px-6 py-5 focus:outline-none focus:border-primary placeholder-slate-300 dark:placeholder-zinc-700 transition-all font-black text-xl tracking-tighter shadow-inner" 
+                className="w-full bg-slate-100/50 dark:bg-zinc-900 border border-slate-200 dark:border-white/5 text-slate-900 dark:text-white rounded-xl px-4 py-3 focus:outline-none focus:border-primary placeholder-slate-300 dark:placeholder-zinc-700 transition-all font-black text-base tracking-tight shadow-inner" 
                 placeholder="e.g. Rare Chest Unlocked!" 
               />
             </div>
@@ -96,15 +96,15 @@ const SendNoti: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               <textarea 
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                className="w-full bg-slate-100/50 dark:bg-zinc-900 border border-slate-200 dark:border-white/5 text-slate-900 dark:text-white rounded-2xl px-6 py-5 focus:outline-none focus:border-primary placeholder-slate-300 dark:placeholder-zinc-700 transition-all resize-none min-h-40 font-bold text-sm leading-relaxed shadow-inner" 
+                className="w-full bg-slate-100/50 dark:bg-zinc-900 border border-slate-200 dark:border-white/5 text-slate-900 dark:text-white rounded-xl px-4 py-3 focus:outline-none focus:border-primary placeholder-slate-300 dark:placeholder-zinc-700 transition-all resize-none min-h-32 font-bold text-sm leading-relaxed shadow-inner" 
                 placeholder="Enter the message detail here..."
               />
             </div>
           </div>
 
           {/* Audience Targeting */}
-          <div className="glass-card rounded-[2rem] p-8 border border-slate-200 dark:border-white/5 bg-white/30 dark:bg-white/5 shadow-xl">
-            <h3 className="text-slate-900 dark:text-white font-black  mb-8 uppercase tracking-widest text-xs">Audience Targeting</h3>
+          <div className="glass-card rounded-xl p-5 border border-slate-200 dark:border-white/5 bg-white/30 dark:bg-white/5 shadow-xl">
+            <h3 className="text-slate-900 dark:text-white font-black mb-5 uppercase tracking-widest text-xs">Audience Targeting</h3>
             <div className="grid grid-cols-2 gap-4">
               {[
                 { label: 'Active Players', sub: '12,450 Users', icon: MdStars, color: 'text-emerald-500' },
@@ -112,7 +112,7 @@ const SendNoti: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 { label: 'Inactive (30d)', sub: '5,670 Users', icon: MdPersonOff, color: 'text-slate-400' },
                 { label: 'Top Ranked', sub: '500 Users', icon: MdLeaderboard, color: 'text-indigo-500' },
               ].map((seg, i) => (
-                <div key={i} className="p-5 rounded-2xl border border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-white/5 flex items-center justify-between cursor-pointer hover:border-primary/50 group transition-all shadow-md">
+                <div key={i} className="p-4 rounded-xl border border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-white/5 flex items-center justify-between cursor-pointer hover:border-primary/50 group transition-all shadow-md">
                   <div className="flex items-center gap-4">
                     <seg.icon className={`${seg.color} text-2xl group-hover:scale-110 transition-transform`} />
                     <div>

@@ -28,29 +28,29 @@ const Templates: React.FC = () => {
   };
 
   return (
-    <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Header Section */}
       <div className="flex items-end justify-between">
         <div>
-          <h2 className="text-5xl font-black font-headline tracking-tighter text-slate-900 dark:text-white mb-2">Notification Templates</h2>
+          <h2 className="text-2xl font-black font-headline tracking-tighter text-slate-900 dark:text-white mb-2">Notification Templates</h2>
           <p className="text-slate-500 dark:text-zinc-500 max-w-lg font-bold text-[10px] uppercase tracking-[0.2em] leading-relaxed">Manage and curate your obsidian-tier communication assets. High-impact messaging starts here.</p>
         </div>
-        <button className="flex items-center gap-3 bg-primary text-white font-black uppercase tracking-widest text-xs px-8 py-5 rounded-2xl hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-primary/20">
-          <MdAddCircle className="text-xl" />
+        <button className="flex items-center gap-2 bg-primary text-white font-black uppercase tracking-widest text-xs px-4 py-2.5 rounded-xl hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-primary/20">
+          <MdAddCircle className="text-lg" />
           Create Template
         </button>
       </div>
 
       {/* Bento Grid Template List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {templates.map((temp, i) => (
-          <div key={i} className="glass-card p-10 rounded-[2.5rem] group hover:bg-white/40 dark:hover:bg-zinc-800/40 transition-all duration-500 relative overflow-hidden border border-slate-200 dark:border-white/5 bg-white/30 dark:bg-white/3 shadow-xl h-full flex flex-col justify-between">
-            <div className="absolute top-0 right-0 p-8">
+          <div key={i} className="glass-card p-6 rounded-xl group hover:bg-white/40 dark:hover:bg-zinc-800/40 transition-all duration-500 relative overflow-hidden border border-slate-200 dark:border-white/5 bg-white/30 dark:bg-white/3 shadow-xl h-full flex flex-col justify-between">
+            <div className="absolute top-0 right-0 p-5">
               <div className={`w-2.5 h-2.5 rounded-full ${getStatusColor(temp.status)} animate-pulse`}></div>
             </div>
             
-            <div className="flex items-center gap-4 mb-8">
-              <div className="p-4 rounded-2xl bg-primary/10 text-primary border border-primary/20 shadow-lg">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="p-3 rounded-xl bg-primary/10 text-primary border border-primary/20 shadow-lg">
                 <temp.icon className="text-2xl" />
               </div>
               <div className="flex-1">
@@ -59,18 +59,18 @@ const Templates: React.FC = () => {
               </div>
             </div>
 
-            <p className="text-slate-500 dark:text-zinc-400 text-sm font-bold leading-relaxed mb-10 min-h-15">"{temp.content}"</p>
+            <p className="text-slate-500 dark:text-zinc-400 text-sm font-bold leading-relaxed mb-6 min-h-15">"{temp.content}"</p>
             
-            <div className="flex items-center justify-between pt-8 border-t border-slate-200 dark:border-zinc-800/50 mt-auto">
+            <div className="flex items-center justify-between pt-5 border-t border-slate-200 dark:border-zinc-800/50 mt-auto">
               <div className="flex flex-col">
                 <span className="text-[9px] text-slate-400 dark:text-zinc-500 uppercase tracking-widest font-black">Last Used</span>
                 <span className="text-[10px] font-black font-mono text-slate-900 dark:text-zinc-300">{temp.date}</span>
               </div>
               <div className="flex gap-2">
-                <button className="p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 dark:text-zinc-500 hover:text-primary transition-all shadow-sm">
-                  <MdEdit className="text-xl" />
+                <button className="p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 dark:text-zinc-500 hover:text-primary transition-all shadow-sm">
+                  <MdEdit className="text-lg" />
                 </button>
-                <button className="flex items-center gap-3 px-6 py-3 rounded-xl bg-slate-900 dark:bg-zinc-700/50 hover:bg-primary text-white dark:hover:text-black text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-black/10 dark:shadow-none translate-y-0 hover:-translate-y-1">
+                <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 dark:bg-zinc-700/50 hover:bg-primary text-white dark:hover:text-black text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-black/10 dark:shadow-none translate-y-0 hover:-translate-y-1">
                   Use Template
                   <MdArrowForward className="text-sm" />
                 </button>
@@ -80,7 +80,7 @@ const Templates: React.FC = () => {
         ))}
 
         {/* Empty State / Add New Card */}
-        <div className="border-4 border-dashed border-slate-200 dark:border-zinc-800/50 p-10 rounded-[2.5rem] flex flex-col items-center justify-center text-center group hover:border-primary/40 hover:bg-primary/5 transition-all cursor-pointer bg-slate-50/50 dark:bg-transparent min-h-75">
+        <div className="border-4 border-dashed border-slate-200 dark:border-zinc-800/50 p-6 rounded-xl flex flex-col items-center justify-center text-center group hover:border-primary/40 hover:bg-primary/5 transition-all cursor-pointer bg-slate-50/50 dark:bg-transparent min-h-75">
           <div className="w-16 h-16 rounded-full bg-slate-200 dark:bg-zinc-800/50 flex items-center justify-center text-slate-400 dark:text-zinc-500 group-hover:bg-primary group-hover:text-white transition-all mb-6 shadow-inner ring-8 ring-slate-100/50 dark:ring-white/5">
             <MdAdd className="text-3xl" />
           </div>

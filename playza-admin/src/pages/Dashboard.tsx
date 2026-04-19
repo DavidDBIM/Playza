@@ -60,20 +60,20 @@ const Dashboard: React.FC = () => {
   ] : referralStats;
 
   return (
-    <main className="p-6 space-y-6">
+    <main className="p-4 space-y-4">
       {/* Header Section */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-linear-to-br from-primary to-indigo-600 flex items-center justify-center shadow-md shadow-primary/30">
-            <span className="text-white text-xl font-black">D</span>
+          <div className="w-9 h-9 rounded-xl bg-linear-to-br from-primary to-indigo-600 flex items-center justify-center shadow-md shadow-primary/30">
+            <span className="text-white text-lg font-black">D</span>
           </div>
           <div>
-            <h1 className="text-2xl font-black text-foreground tracking-tight">Empire Command</h1>
-            <p className="text-sm text-muted-foreground font-medium">Strategic Overview • Skill-Gaming Performance</p>
+            <h1 className="text-xl font-black text-foreground tracking-tight">Empire Command</h1>
+            <p className="text-xs text-muted-foreground font-medium">Strategic Overview • Skill-Gaming Performance</p>
           </div>
         </div>
         {isLoading && (
-          <div className="flex items-center gap-2 px-4 py-2 bg-muted rounded-xl text-primary animate-pulse transition-all">
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-muted rounded-xl text-primary animate-pulse transition-all">
             <div className="w-2 h-2 rounded-full bg-primary" />
             <span className="text-xs font-bold uppercase tracking-wider">Syncing Data...</span>
           </div>

@@ -45,7 +45,7 @@ const Leaderboards: React.FC = () => {
   };
 
   return (
-    <main className="p-6 space-y-6">
+    <main className="p-4 space-y-4">
       {/* Header Section */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-3">

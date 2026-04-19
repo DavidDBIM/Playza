@@ -23,9 +23,9 @@ export const GamingArenas: React.FC<{
   };
 
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+    <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
       <div className="xl:col-span-9">
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center mb-4">
           <h3 className="text-xs font-black text-foreground uppercase tracking-wider">
             Active Gaming Arenas
           </h3>
@@ -36,13 +36,13 @@ export const GamingArenas: React.FC<{
             View All Systems
           </Link>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {sessions.map((session) => (
             <div
               key={session.id}
-              className="bg-card border border-border rounded-2xl p-6 shadow-sm hover:shadow-md transition-all group relative overflow-hidden"
+              className="bg-card border border-border rounded-xl p-4 shadow-sm hover:shadow-md transition-all group relative overflow-hidden"
             >
-              <div className="flex justify-between items-start mb-6">
+              <div className="flex justify-between items-start mb-4">
                 <div className="p-2 rounded-xl bg-primary/10 text-primary">
                   <MdMilitaryTech className="text-2xl animate-pulse" />
                 </div>
@@ -51,13 +51,13 @@ export const GamingArenas: React.FC<{
                   {session.status}
                 </span>
               </div>
-              <h4 className="text-lg font-black text-foreground mb-1 tracking-tight uppercase">
+              <h4 className="text-base font-black text-foreground mb-1 tracking-tight uppercase">
                 {session.name}
               </h4>
-              <p className="text-[9px] text-muted-foreground font-black uppercase tracking-wider mb-8">
+              <p className="text-[9px] text-muted-foreground font-black uppercase tracking-wider mb-6">
                 League: {session.league}
               </p>
-              <div className="flex justify-between items-end border-t border-border pt-6">
+              <div className="flex justify-between items-end border-t border-border pt-4">
                 <div>
                   <p className="text-[8px] font-black uppercase text-muted-foreground tracking-widest mb-1">
                     Prize Pool
@@ -83,9 +83,9 @@ export const GamingArenas: React.FC<{
         </div>
       </div>
 
-      <div className="xl:col-span-3 space-y-6">
+      <div className="xl:col-span-3 space-y-4">
         <div>
-          <h3 className="text-[10px] font-black text-muted-foreground mb-6 uppercase tracking-widest border-b border-border pb-4">
+          <h3 className="text-[10px] font-black text-muted-foreground mb-4 uppercase tracking-widest border-b border-border pb-3">
             Popular Games Feed
           </h3>
           <div className="space-y-3">
@@ -121,7 +121,7 @@ export const GamingArenas: React.FC<{
         </div>
 
         {/* Security Alerts */}
-        <div className="bg-destructive/5 border border-destructive/20 p-5 rounded-2xl shadow-sm relative overflow-hidden group">
+        <div className="bg-destructive/5 border border-destructive/20 p-4 rounded-xl shadow-sm relative overflow-hidden group">
           <div className="flex items-center gap-2 mb-4 text-destructive">
             <MdWarning className="text-xl animate-bounce" />
             <span className="text-[9px] font-black uppercase tracking-widest">

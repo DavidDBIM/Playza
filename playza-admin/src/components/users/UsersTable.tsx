@@ -32,13 +32,13 @@ export const UsersTable: React.FC<UsersTableProps> = ({ users, clearFilters }) =
       <Table>
         <TableHeader className="bg-muted/30">
           <TableRow className="hover:bg-transparent border-none">
-            <TableHead className="px-8 py-6 text-[10px] uppercase tracking-[0.2em] font-black text-muted-foreground/60">Citizen Identity</TableHead>
-            <TableHead className="px-6 py-6 text-[10px] uppercase tracking-[0.2em] font-black text-muted-foreground/60">Marketing Intel</TableHead>
-            <TableHead className="px-6 py-6 text-[10px] uppercase tracking-[0.2em] font-black text-muted-foreground/60 text-center">Status</TableHead>
-            <TableHead className="px-6 py-6 text-[10px] uppercase tracking-[0.2em] font-black text-muted-foreground/60 text-right">Wallet Capital</TableHead>
-            <TableHead className="px-6 py-6 text-[10px] uppercase tracking-[0.2em] font-black text-muted-foreground/60 text-center">Citizenship</TableHead>
-            <TableHead className="px-6 py-6 text-[10px] uppercase tracking-[0.2em] font-black text-muted-foreground/60">Enlistment</TableHead>
-            <TableHead className="px-8 py-6 text-[10px] uppercase tracking-[0.2em] font-black text-muted-foreground/60 text-right">Operation</TableHead>
+            <TableHead className="px-5 py-3 text-[10px] uppercase tracking-[0.2em] font-black text-muted-foreground/60">Citizen Identity</TableHead>
+            <TableHead className="px-5 py-3 text-[10px] uppercase tracking-[0.2em] font-black text-muted-foreground/60">Marketing Intel</TableHead>
+            <TableHead className="px-5 py-3 text-[10px] uppercase tracking-[0.2em] font-black text-muted-foreground/60 text-center">Status</TableHead>
+            <TableHead className="px-5 py-3 text-[10px] uppercase tracking-[0.2em] font-black text-muted-foreground/60 text-right">Wallet Capital</TableHead>
+            <TableHead className="px-5 py-3 text-[10px] uppercase tracking-[0.2em] font-black text-muted-foreground/60 text-center">Citizenship</TableHead>
+            <TableHead className="px-5 py-3 text-[10px] uppercase tracking-[0.2em] font-black text-muted-foreground/60">Enlistment</TableHead>
+            <TableHead className="px-5 py-3 text-[10px] uppercase tracking-[0.2em] font-black text-muted-foreground/60 text-right">Operation</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -49,9 +49,9 @@ export const UsersTable: React.FC<UsersTableProps> = ({ users, clearFilters }) =
                 className="group hover:bg-primary/5 transition-all border-border/20 cursor-pointer relative overflow-hidden"
                 onClick={() => navigate(`/users/${user.id}`)}
               >
-                <TableCell className="px-8 py-5 relative z-10 transition-transform group-hover:translate-x-1">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-primary/10 group-hover:border-primary/40 transition-all shadow-md">
+                <TableCell className="px-5 py-3.5 relative z-10 transition-transform group-hover:translate-x-1">
+                  <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-xl overflow-hidden border-2 border-primary/10 group-hover:border-primary/40 transition-all shadow-md">
                       <img src={user.avatar} alt={user.username} className="w-full h-full object-cover grayscale-[0.5] group-hover:grayscale-0 transition-all duration-500 scale-110 group-hover:scale-100 font-bold" />
                     </div>
                     <div className="space-y-0.5">
@@ -60,7 +60,7 @@ export const UsersTable: React.FC<UsersTableProps> = ({ users, clearFilters }) =
                     </div>
                   </div>
                 </TableCell>
-                <TableCell className="px-6 py-5">
+                <TableCell className="px-5 py-3.5">
                   <div className="flex flex-col gap-1 group/email relative">
                     <div className="flex items-center gap-2">
                        <span className="text-xs font-bold text-foreground/80">{user.email}</span>
@@ -78,7 +78,7 @@ export const UsersTable: React.FC<UsersTableProps> = ({ users, clearFilters }) =
                     <span className="text-[9px] font-black text-primary uppercase tracking-widest">{user.phoneNumber || 'NO PHONE'}</span>
                   </div>
                 </TableCell>
-                <TableCell className="px-6 py-5">
+                <TableCell className="px-5 py-3.5">
                   <div className="flex justify-center">
                     <span className={`px-4 py-1.5 rounded-full text-[9px] font-black flex items-center gap-2 shadow-sm border ${
                       user.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' : 
@@ -91,13 +91,13 @@ export const UsersTable: React.FC<UsersTableProps> = ({ users, clearFilters }) =
                     </span>
                   </div>
                 </TableCell>
-                <TableCell className="px-6 py-5 text-right">
+                <TableCell className="px-5 py-3.5 text-right">
                    <div className="flex flex-col items-end">
                      <span className="font-headline font-black text-primary text-base">₦{user.walletBalance.toLocaleString()}</span>
                      <span className="text-[9px] font-black text-muted-foreground/40 uppercase tracking-widest">Available Credit</span>
                    </div>
                 </TableCell>
-                <TableCell className="px-6 py-5">
+                <TableCell className="px-5 py-3.5">
                   <div className={`flex flex-col items-center gap-1 font-black text-[9px] tracking-widest ${
                     user.kycStatus === 'Verified' ? 'text-emerald-600 dark:text-emerald-400' : 
                     user.kycStatus === 'Pending' ? 'text-amber-500' : 
@@ -111,16 +111,16 @@ export const UsersTable: React.FC<UsersTableProps> = ({ users, clearFilters }) =
                     </div>
                   </div>
                 </TableCell>
-                <TableCell className="px-6 py-5">
+                <TableCell className="px-5 py-3.5">
                   <div className="flex flex-col">
                     <span className="text-xs font-bold text-foreground/80">{user.joinedDate}</span>
                     <span className="text-[9px] font-black text-muted-foreground/40 uppercase tracking-widest">Active {user.lastActive}</span>
                   </div>
                 </TableCell>
-                <TableCell className="px-8 py-5 text-right">
+                <TableCell className="px-5 py-3.5 text-right">
                   <Button 
                     variant="ghost" 
-                    className="group-hover:bg-primary group-hover:text-primary-foreground transition-all px-8 h-10 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] border border-primary/10 hover:border-primary/40 shadow-sm"
+                    className="group-hover:bg-primary group-hover:text-primary-foreground transition-all px-6 h-9 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] border border-primary/10 hover:border-primary/40 shadow-sm"
                     onClick={(e) => {
                       e.stopPropagation();
                       navigate(`/users/${user.username}`);
