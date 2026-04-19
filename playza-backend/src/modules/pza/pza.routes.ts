@@ -5,9 +5,9 @@ import { awardPZA, PZAEvent } from '../../lib/pzaEngine'
 
 const router = Router()
 
-// ──────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //  GET /pza/me
-// ──────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 router.get('/me', requireAuth, async (req: AuthRequest, res) => {
   try {
     const userId = req.user!.id
@@ -75,9 +75,9 @@ router.get('/me', requireAuth, async (req: AuthRequest, res) => {
   }
 })
 
-// ──────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //  POST /pza/streak/claim
-// ──────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 router.post('/streak/claim', requireAuth, async (req: AuthRequest, res) => {
   try {
     const userId = req.user!.id
@@ -126,9 +126,9 @@ router.post('/streak/claim', requireAuth, async (req: AuthRequest, res) => {
   }
 })
 
-// ──────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //  POST /pza/task/claim
-// ──────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 router.post('/task/claim', requireAuth, async (req: AuthRequest, res) => {
   try {
     const userId = req.user!.id
@@ -155,21 +155,23 @@ router.post('/task/claim', requireAuth, async (req: AuthRequest, res) => {
   }
 })
 
-// ──────────────────────────────────────────────
-//  POST /pza/spin  — costs 30 PZA, max 3/day
-// ──────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+//  POST /pza/spin  â€” costs 30 PZA, max 3/day
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const SPIN_COST = 30
 const DAILY_SPIN_LIMIT = 3
 
+// Segment indices MUST match frontend SEGMENTS array exactly (index 0 = MISS/0 PZA)
 const SPIN_SEGMENTS = [
-  { label: '10 PZA',   points: 10,   weight: 28 },
-  { label: '25 PZA',   points: 25,   weight: 25 },
-  { label: '50 PZA',   points: 50,   weight: 20 },
-  { label: '75 PZA',   points: 75,   weight: 12 },
-  { label: '100 PZA',  points: 100,  weight: 8  },
-  { label: '200 PZA',  points: 200,  weight: 5  },
-  { label: '500 PZA',  points: 500,  weight: 2  },
-  { label: '1000 PZA', points: 1000, weight: 1  },
+  { label: '0 PZA',    points: 0,    weight: 9  }, // index 0 â€” MISS
+  { label: '10 PZA',   points: 10,   weight: 28 }, // index 1
+  { label: '25 PZA',   points: 25,   weight: 25 }, // index 2
+  { label: '50 PZA',   points: 50,   weight: 20 }, // index 3
+  { label: '75 PZA',   points: 75,   weight: 12 }, // index 4
+  { label: '100 PZA',  points: 100,  weight: 8  }, // index 5
+  { label: '200 PZA',  points: 200,  weight: 5  }, // index 6
+  { label: '500 PZA',  points: 500,  weight: 2  }, // index 7
+  { label: '1000 PZA', points: 1000, weight: 1  }, // index 8
 ]
 const TOTAL_WEIGHT = SPIN_SEGMENTS.reduce((s, seg) => s + seg.weight, 0)
 
@@ -179,7 +181,7 @@ function pickReward() {
     rand -= SPIN_SEGMENTS[i].weight
     if (rand <= 0) return { ...SPIN_SEGMENTS[i], segmentIndex: i }
   }
-  return { ...SPIN_SEGMENTS[0], segmentIndex: 0 }
+  return { ...SPIN_SEGMENTS[0], segmentIndex: 0 } // fallback: MISS
 }
 
 router.post('/spin', requireAuth, async (req: AuthRequest, res) => {
@@ -253,9 +255,9 @@ router.post('/spin', requireAuth, async (req: AuthRequest, res) => {
   }
 })
 
-// ──────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //  POST /pza/ambassador/apply
-// ──────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 router.post('/ambassador/apply', requireAuth, async (req: AuthRequest, res) => {
   try {
     const userId = req.user!.id
@@ -309,9 +311,9 @@ router.post('/ambassador/apply', requireAuth, async (req: AuthRequest, res) => {
   }
 })
 
-// ──────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //  GET /pza/ambassador/status
-// ──────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 router.get('/ambassador/status', requireAuth, async (req: AuthRequest, res) => {
   try {
     const userId = req.user!.id
