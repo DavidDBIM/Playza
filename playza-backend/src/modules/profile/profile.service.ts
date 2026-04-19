@@ -12,21 +12,54 @@ export async function uploadAvatarFromBase64(
 
   const mimeType = match[1]          // e.g. "image/jpeg"
   const raw      = match[2]          // pure base64 string
-  const ext      = mimeType.split('/')[1]?.replace('jpeg', 'jpg') ?? 'jpg'
-  const path     = `avatars/${userId}.${ext}`
+  const ext = mimeType.split('/')[1]?.replace('jpeg', 'jpg') ?? 'jpg'
+  const objectPath = `avatars/${userId}.${ext}`
+  const bucketId = process.env.SUPABASE_AVATARS_BUCKET || 'avatars'
 
   const buffer = Buffer.from(raw, 'base64')
 
-  const { error } = await supabaseAdmin.storage
-    .from('avatars')
-    .upload(path, buffer, {
+  const ensureBucket = async () => {
+    const { data: buckets, error: listError } = await supabaseAdmin.storage.listBuckets()
+    if (listError) throw new Error(`Storage bucket check failed: ${listError.message}`)
+
+    const exists = buckets?.some((b: any) => b?.id === bucketId || b?.name === bucketId)
+    if (exists) return
+
+    const { error: bucketError } = await supabaseAdmin.storage.createBucket(bucketId, {
+      public: true,
+      allowedMimeTypes: ['image/png', 'image/jpeg', 'image/gif', 'image/webp'],
+    })
+    if (bucketError && !/already exists/i.test(bucketError.message)) {
+      throw new Error(`Failed to create avatar bucket: ${bucketError.message}`)
+    }
+  }
+
+  const isBucketNotFound = (err: any) => {
+    if (!err) return false
+    const message = String(err.message || '')
+    const errorText = String(err.error || '')
+    const combined = `${message} ${errorText}`.toLowerCase()
+    const status = Number(err.statusCode || err.status || 0)
+    return combined.includes('bucket not found') || status === 404
+  }
+
+  // Ensure bucket exists up-front (then still retry once if storage reports missing bucket).
+  await ensureBucket()
+
+  const uploadOnce = async () =>
+    supabaseAdmin.storage.from(bucketId).upload(objectPath, buffer, {
       contentType: mimeType,
-      upsert: true,   // overwrite on every update
+      upsert: true,
     })
 
+  let { error } = await uploadOnce()
+  if (isBucketNotFound(error)) {
+    await ensureBucket()
+    ;({ error } = await uploadOnce())
+  }
   if (error) throw new Error(`Storage upload failed: ${error.message}`)
 
-  const { data } = supabaseAdmin.storage.from('avatars').getPublicUrl(path)
+  const { data } = supabaseAdmin.storage.from(bucketId).getPublicUrl(objectPath)
   // Bust CDN cache with a timestamp query param
   return `${data.publicUrl}?t=${Date.now()}`
 }
