@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, type ChangeEvent } from "react";
+import { useState, useEffect } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { profileSchema, type ProfileFormValues } from "@/schemas/user.schema";
@@ -8,8 +8,9 @@ import {
   MdNotifications,
   MdPayments,
   MdWarning,
-  MdDelete,
   MdLock,
+  MdCheck,
+  MdDelete,
 } from "react-icons/md";
 import {
   useProfile,
@@ -21,12 +22,6 @@ import {
 import { useAuth } from "../../context/auth";
 import type { BankAccount } from "../../api/profile.api";
 
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { AddPaymentMethodModal } from "./AddPaymentMethodModal";
 
 const Settings = () => {
@@ -70,7 +65,7 @@ const Settings = () => {
   });
 
   const avatarUrl = useWatch({ control, name: "avatarUrl" });
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
 
   const initialized = useRef(false);
 
@@ -123,29 +118,8 @@ const Settings = () => {
     );
   };
 
-  const deleteAvatar = () => {
-    setValue("avatarUrl", "", { shouldDirty: true });
-    updateAuthState({ avatarUrl: "" });
-    updateProfile(
-      { avatar_url: "" },
-      {
-        onSuccess: (result) => {
-          console.log("[Settings] Avatar deleted successfully:", result);
-        },
-      },
-    );
-  };
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
-        setValue("avatarUrl", base64String, { shouldDirty: true });
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+
+
 
   if (isLoading) {
     return (
@@ -185,72 +159,129 @@ const Settings = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-[160px_1fr] gap-2 md:gap-12 items-start glass-card px-2 py-2 md:py-4 md:p-8 rounded-xl border-white/5">
-            {/* Avatar */}
-            <div className="flex flex-col items-center gap-2 md:gap-4">
-              <div className="relative group/avatar">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <div className="size-32 rounded-xl bg-slate-100 dark:bg-white/5 border-2 border-slate-200 dark:border-white/10 overflow-hidden shadow-2xl transition-transform duration-500 group-hover/avatar:scale-105 cursor-pointer relative">
-                      {avatarUrl || profile?.avatar_url ? (
-                        <img
-                          alt="Avatar"
-                          className="w-full h-full object-cover opacity-90 group-hover/avatar:opacity-100 transition-opacity"
-                          src={avatarUrl || profile?.avatar_url}
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <span className="size-12 text-primary/50 text-4xl flex items-center justify-center">
-                            <MdPhotoCamera />
-                          </span>
-                        </div>
-                      )}
-                      <div className="absolute inset-0 bg-primary/60 opacity-0 group-hover/avatar:opacity-100 flex items-center justify-center transition-all backdrop-blur-sm">
-                        <MdPhotoCamera className="text-xl md:text-3xl text-white" />
-                      </div>
-                    </div>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent
-                    align="center"
-                    sideOffset={5}
-                    className="w-48 glass bg-white/90 dark:bg-slate-900/90 border-primary/20 p-2 z-50 relative"
-                  >
-                    <DropdownMenuItem
-                      onSelect={() => {
-                        setTimeout(() => fileInputRef.current?.click(), 10);
-                      }}
-                      className="cursor-pointer gap-2 py-2 md:py-2.5 px-2 md:px-3 rounded-xl focus:bg-primary/10 data-highlighted:bg-primary/10 transition-colors"
-                    >
-                      <MdPhotoCamera className="text-sm md:text-lg" />
-                      <span className="font-medium text-sm">Change Image</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onSelect={deleteAvatar}
-                      className="cursor-pointer gap-2 py-2 md:py-2.5 px-2 md:px-3 rounded-xl text-red-500 focus:bg-red-50/50 dark:focus:bg-red-900/20 transition-colors"
-                    >
-                      <MdDelete className="text-sm md:text-lg" />
-                      <span className="font-medium text-sm">Delete Image</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileChange}
-                  accept="image/png, image/jpeg, image/jpg, image/webp"
-                  style={{
-                    position: "absolute",
-                    width: 0,
-                    height: 0,
-                    opacity: 0,
-                  }}
-                  tabIndex={-1}
-                />
-                <div className="absolute -bottom-2 -right-2 bg-primary text-white size-8 flex items-center justify-center rounded-full border-4 border-white dark:border-slate-900 shadow-xl glow-accent pointer-events-none">
-                  <MdAdd className="text-base md:text-xl" />
+            {/* Avatar Picker */}
+            <div className="flex flex-col items-center gap-3">
+              {/* Current avatar preview */}
+              <div
+                className="relative size-28 rounded-2xl border-2 border-primary/30 overflow-hidden shadow-xl cursor-pointer group/av bg-slate-100 dark:bg-white/5"
+                onClick={() => setShowAvatarPicker(true)}
+              >
+                {avatarUrl || profile?.avatar_url ? (
+                  <img
+                    alt="Avatar"
+                    className="w-full h-full object-cover"
+                    src={avatarUrl || profile?.avatar_url}
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-4xl">
+                    🎮
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover/av:opacity-100 flex items-center justify-center transition-all">
+                  <MdPhotoCamera className="text-white text-2xl" />
                 </div>
               </div>
+              <button
+                type="button"
+                onClick={() => setShowAvatarPicker(true)}
+                className="text-[10px] font-black uppercase tracking-widest text-primary hover:underline"
+              >
+                Change Avatar
+              </button>
             </div>
+
+            {/* Avatar Picker Modal */}
+            {showAvatarPicker && (
+              <div
+                className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm"
+                onClick={() => setShowAvatarPicker(false)}
+              >
+                <div
+                  className="bg-white dark:bg-slate-900 w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl border-t sm:border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden"
+                  onClick={e => e.stopPropagation()}
+                >
+                  {/* Handle */}
+                  <div className="flex justify-center pt-3 pb-1 sm:hidden">
+                    <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
+                  </div>
+                  <div className="px-5 pt-4 pb-3 border-b border-slate-100 dark:border-slate-800">
+                    <h3 className="font-black text-slate-900 dark:text-white text-base">Choose Your Avatar</h3>
+                    <p className="text-[10px] text-slate-500 font-bold mt-0.5 uppercase tracking-widest">Select one to use as your profile picture</p>
+                  </div>
+                  <div className="p-4 grid grid-cols-5 sm:grid-cols-6 gap-2.5 max-h-[60vh] overflow-y-auto">
+                    {[
+                      "https://api.dicebear.com/7.x/bottts/svg?seed=playza1&backgroundColor=b6e3f4",
+                      "https://api.dicebear.com/7.x/bottts/svg?seed=playza2&backgroundColor=c0aede",
+                      "https://api.dicebear.com/7.x/bottts/svg?seed=playza3&backgroundColor=d1f4d0",
+                      "https://api.dicebear.com/7.x/bottts/svg?seed=playza4&backgroundColor=ffd6a5",
+                      "https://api.dicebear.com/7.x/bottts/svg?seed=playza5&backgroundColor=ffccd5",
+                      "https://api.dicebear.com/7.x/bottts/svg?seed=playza6&backgroundColor=b6e3f4",
+                      "https://api.dicebear.com/7.x/adventurer/svg?seed=felix&backgroundColor=b6e3f4",
+                      "https://api.dicebear.com/7.x/adventurer/svg?seed=aneka&backgroundColor=c0aede",
+                      "https://api.dicebear.com/7.x/adventurer/svg?seed=liam&backgroundColor=d1f4d0",
+                      "https://api.dicebear.com/7.x/adventurer/svg?seed=jade&backgroundColor=ffd6a5",
+                      "https://api.dicebear.com/7.x/adventurer/svg?seed=zara&backgroundColor=ffccd5",
+                      "https://api.dicebear.com/7.x/adventurer/svg?seed=kobe&backgroundColor=b6e3f4",
+                      "https://api.dicebear.com/7.x/pixel-art/svg?seed=gamer1&backgroundColor=1a1a2e",
+                      "https://api.dicebear.com/7.x/pixel-art/svg?seed=gamer2&backgroundColor=16213e",
+                      "https://api.dicebear.com/7.x/pixel-art/svg?seed=gamer3&backgroundColor=0f3460",
+                      "https://api.dicebear.com/7.x/pixel-art/svg?seed=gamer4&backgroundColor=533483",
+                      "https://api.dicebear.com/7.x/pixel-art/svg?seed=gamer5&backgroundColor=e94560",
+                      "https://api.dicebear.com/7.x/pixel-art/svg?seed=gamer6&backgroundColor=1a1a2e",
+                      "https://api.dicebear.com/7.x/fun-emoji/svg?seed=joy",
+                      "https://api.dicebear.com/7.x/fun-emoji/svg?seed=zap",
+                      "https://api.dicebear.com/7.x/fun-emoji/svg?seed=fire",
+                      "https://api.dicebear.com/7.x/fun-emoji/svg?seed=king",
+                      "https://api.dicebear.com/7.x/fun-emoji/svg?seed=wolf",
+                      "https://api.dicebear.com/7.x/fun-emoji/svg?seed=lion",
+                      "https://api.dicebear.com/7.x/lorelei/svg?seed=ace&backgroundColor=b6e3f4",
+                      "https://api.dicebear.com/7.x/lorelei/svg?seed=nova&backgroundColor=c0aede",
+                      "https://api.dicebear.com/7.x/lorelei/svg?seed=lyra&backgroundColor=d1f4d0",
+                      "https://api.dicebear.com/7.x/lorelei/svg?seed=orion&backgroundColor=ffd6a5",
+                      "https://api.dicebear.com/7.x/micah/svg?seed=zeus&backgroundColor=b6e3f4",
+                      "https://api.dicebear.com/7.x/micah/svg?seed=ares&backgroundColor=c0aede",
+                    ].map((url) => {
+                      const isSelected = (avatarUrl || profile?.avatar_url) === url;
+                      return (
+                        <button
+                          key={url}
+                          type="button"
+                          onClick={() => {
+                            setValue("avatarUrl", url, { shouldDirty: true });
+                            updateAuthState({ avatarUrl: url });
+                            updateProfile({ avatar_url: url });
+                            setShowAvatarPicker(false);
+                          }}
+                          className={`relative rounded-xl overflow-hidden border-2 transition-all hover:scale-105 active:scale-95 aspect-square ${
+                            isSelected
+                              ? "border-primary shadow-lg shadow-primary/30 scale-105"
+                              : "border-slate-200 dark:border-white/10 hover:border-primary/50"
+                          }`}
+                        >
+                          <img src={url} alt="avatar" className="w-full h-full object-cover bg-slate-100 dark:bg-slate-800" loading="lazy" />
+                          {isSelected && (
+                            <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
+                              <div className="size-5 rounded-full bg-primary flex items-center justify-center">
+                                <MdCheck className="text-white text-xs" />
+                              </div>
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div className="px-5 py-4 border-t border-slate-100 dark:border-slate-800">
+                    <button
+                      type="button"
+                      onClick={() => setShowAvatarPicker(false)}
+                      className="w-full py-3 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 font-black text-xs uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-white/10 transition-all"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Form Fields */}
             <form
