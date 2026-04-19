@@ -63,7 +63,7 @@ const LudoBoard: React.FC<LudoBoardProps> = ({ gameState, onPieceClick, myColors
   };
 
   return (
-    <div className="relative w-full aspect-square mx-auto bg-white rounded-[1rem] md:rounded-[2rem] shadow-2xl overflow-hidden border-4 md:border-8 border-slate-100">
+    <div className="relative w-full max-w-[500px] aspect-square mx-auto bg-white rounded-[1rem] md:rounded-[2rem] shadow-2xl overflow-hidden border-4 md:border-8 border-slate-100 min-h-[300px] md:min-h-[450px]">
       <svg className="absolute inset-0 w-full h-full" viewBox="0 0 15 15">
         <rect x="0" y="0" width="6" height="6" fill="#fca5a5" /> 
         <rect x="9" y="0" width="6" height="6" fill="#6ee7b7" /> 

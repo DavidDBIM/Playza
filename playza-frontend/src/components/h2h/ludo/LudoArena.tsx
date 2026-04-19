@@ -159,7 +159,7 @@ const LudoArena: React.FC<LudoArenaProps> = ({ room, user }) => {
         </div>
 
         {/* Center: Ludo Board */}
-        <div className="flex-1 w-full flex justify-center items-center -mx-2 md:mx-0 py-2 md:py-0 px-4 md:px-0 relative z-10">
+        <div className="flex-1 w-full min-h-[350px] md:min-h-[500px] flex justify-center items-center -mx-2 md:mx-0 py-2 md:py-0 px-4 md:px-0 relative z-10">
           <LudoBoard
             gameState={gameState}
             onPieceClick={movePiece}
