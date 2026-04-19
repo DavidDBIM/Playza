@@ -321,13 +321,18 @@ export async function makeMove(roomId: string, userId: string | null, pieceId: s
     return (p + offsets[c]) % 52;
   };
 
+  const hostColors = ["red", "yellow"];
+  const guestColors = ["green", "blue"];
+  const friendlyColors = hostColors.includes(piece.color) ? hostColors : guestColors;
+
   const globalPos = getGlobalPos(piece.color, nextPos);
   let captured = false;
   const isSafe = [0, 8, 13, 21, 26, 34, 39, 47].includes(globalPos || -1);
 
   if (globalPos !== null && !isSafe) {
     state.pieces.forEach((other: any) => {
-      if (other.color !== piece.color) {
+      // Only capture if it's NOT a friendly color
+      if (!friendlyColors.includes(other.color)) {
         if (getGlobalPos(other.color, other.position) === globalPos) {
           other.position = -1;
           captured = true;
