@@ -312,7 +312,7 @@ export function RewardsSection({ totalPoints, spinsLeftToday, onPointsChanged }:
             setLocalPoints(res.new_balance);
             setLocalSpins(res.spins_left_today);
             onPointsChanged();
-            setTimeout(() => setShowSpinModal(false), 2800);
+            // Modal stays open — user must click X or backdrop to close
           }}
           spinsLeft={localSpins}
           totalPoints={localPoints}
