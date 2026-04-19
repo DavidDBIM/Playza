@@ -66,15 +66,32 @@ async function handleGameOver(roomId: string, winnerId: string | null, stake: nu
 }
 
 export async function listWaitingRooms() {
-  const { data, error } = await supabaseAdmin
+  const { data: rooms, error } = await supabaseAdmin
     .from("ludo_rooms")
-    .select(`id, code, stake, created_at, host_id, host:users!host_id(id, username, avatar_url)`)
+    .select(`id, code, stake, created_at, host_id`)
     .eq("status", "waiting")
     .order("created_at", { ascending: false })
     .limit(20);
 
   if (error) throw error;
-  return data;
+  if (!rooms) return [];
+
+  // Manually fetch host info for each room
+  const hostIds = rooms.map(r => r.host_id).filter(Boolean);
+  const { data: users } = await supabaseAdmin
+    .from("users")
+    .select("id, username, avatar_url")
+    .in("id", hostIds);
+  
+  const userMap = (users || []).reduce((acc: any, u: any) => {
+    acc[u.id] = u;
+    return acc;
+  }, {});
+
+  return rooms.map(r => ({
+    ...r,
+    host: userMap[r.host_id] || null
+  }));
 }
 
 export async function createLudoRoom(userId: string, stakeValue: number) {
@@ -155,16 +172,11 @@ export async function createBotRoom(userId: string, stakeValue: number) {
 }
 
 export async function getRoom(roomId: string, userId: string) {
-  // Try UUID first
+  // Try UUID first without joins to avoid 'relationship not found' errors
   let query = supabaseAdmin
     .from("ludo_rooms")
-    .select(`
-      id, code, status, board_state, current_turn, stake, winner_id, created_at, host_id, guest_id,
-      host:users!host_id(id, username, avatar_url),
-      guest:users!guest_id(id, username, avatar_url)
-    `);
+    .select(`id, code, status, board_state, current_turn, stake, winner_id, created_at, host_id, guest_id`);
 
-  // Simple heuristic: UUIDs have hyphens, codes are 6 chars hex
   const isUuid = roomId.includes('-');
   
   if (isUuid) {
@@ -173,31 +185,45 @@ export async function getRoom(roomId: string, userId: string) {
     query = query.eq("code", roomId.toUpperCase());
   }
 
-  const { data: room, error } = await query.single();
+  let { data: room, error } = await query.single();
 
   if (error) {
-    // If UUID lookup failed, try code lookup as fallback
-    if (isUuid) {
+     if (isUuid) {
        const { data: fallbackRoom, error: fallbackError } = await supabaseAdmin
         .from("ludo_rooms")
-        .select(`
-          id, code, status, board_state, current_turn, stake, winner_id, created_at, host_id, guest_id,
-          host:users!host_id(id, username, avatar_url),
-          guest:users!guest_id(id, username, avatar_url)
-        `)
+        .select(`id, code, status, board_state, current_turn, stake, winner_id, created_at, host_id, guest_id`)
         .eq("code", roomId.toUpperCase())
         .single();
        
-       if (!fallbackError && fallbackRoom) return fallbackRoom;
+       if (!fallbackError && fallbackRoom) {
+         room = fallbackRoom;
+         error = null;
+       }
     }
-    
-    console.error(`[LudoService] getRoom Error for ${roomId}:`, error);
-    throw new Error(error.message || "Room not found");
   }
-  
-  if (!room) throw new Error("Room not found");
-  
-  return room;
+
+  if (error || !room) {
+    console.error(`[LudoService] getRoom Error for ${roomId}:`, error);
+    throw new Error("Room not found");
+  }
+
+  // Manually fetch host & guest info
+  const userIds = [room.host_id, room.guest_id].filter(Boolean);
+  const { data: users } = await supabaseAdmin
+    .from("users")
+    .select("id, username, avatar_url")
+    .in("id", userIds);
+
+  const userMap = (users || []).reduce((acc: any, u: any) => {
+    acc[u.id] = u;
+    return acc;
+  }, {});
+
+  return {
+    ...room,
+    host: userMap[room.host_id] || null,
+    guest: userMap[room.guest_id] || null
+  };
 }
 
 export async function findQuickMatch(userId: string, stakeValue: number) {
