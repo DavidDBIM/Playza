@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Bubble Shooter Blitz</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Baloo+2:wght@600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="page">
+      <header class="topbar">
+        <div class="brand">
+          <p class="eyebrow">PLAYZA.games</p>
+          <h1>Bubble Shooter Blitz</h1>
+          <p class="tagline">60-second runs. Chain drops. Ride the combo storm.</p>
+        </div>
+
+        <div class="stats">
+          <div class="stat">
+            <p class="label">Score</p>
+            <p class="value" id="scoreValue">0</p>
+          </div>
+          <div class="stat">
+            <p class="label">Time</p>
+            <p class="value"><span id="timeValue">60.0</span><span class="unit">s</span></p>
+          </div>
+          <div class="stat">
+            <p class="label">Combo</p>
+            <p class="value" id="comboValue">x1</p>
+          </div>
+          <div class="stat">
+            <p class="label">Best</p>
+            <p class="value" id="bestValue">0</p>
+          </div>
+        </div>
+      </header>
+
+      <main class="shell">
+        <section class="canvas-card">
+          <div class="canvas-head">
+            <div class="mode-line">
+              <span class="pill" id="modePill">Daily Seed</span>
+              <span class="pill subtle" id="seedPill">—</span>
+            </div>
+            <div class="actions">
+              <button class="icon-btn" id="soundButton" type="button" aria-label="Toggle sound">🔊</button>
+              <button class="icon-btn" id="helpButton" type="button" aria-label="How to play">ⓘ</button>
+            </div>
+          </div>
+
+          <div class="canvas-wrap">
+            <canvas id="gameCanvas" width="900" height="1200" aria-label="Bubble Shooter Blitz canvas"></canvas>
+            <div class="hint" id="hintLine">Drag to aim, release to shoot. Press <b>S</b> to swap.</div>
+          </div>
+
+          <div class="bottom-panel">
+            <div class="queue">
+              <div class="queue-item">
+                <p class="queue-label">Now</p>
+                <div class="bubble-preview" id="nowPreview"></div>
+              </div>
+              <div class="queue-item">
+                <p class="queue-label">Next</p>
+                <div class="bubble-preview" id="nextPreview"></div>
+              </div>
+            </div>
+
+            <div class="powers">
+              <button class="power-btn" id="swapButton" type="button">
+                <span class="power-title">Swap</span>
+                <span class="power-sub" id="swapCount">2</span>
+              </button>
+              <button class="power-btn" id="bombButton" type="button" disabled>
+                <span class="power-title">Bomb</span>
+                <span class="power-sub" id="bombCount">0</span>
+              </button>
+              <button class="power-btn" id="aimButton" type="button">
+                <span class="power-title">Aim</span>
+                <span class="power-sub" id="aimState">On</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <aside class="side-card" id="sideCard">
+          <div class="panel">
+            <h2>How it works</h2>
+            <ul>
+              <li>Match <b>3+</b> same-color bubbles to pop.</li>
+              <li>Drop hanging clusters for huge points.</li>
+              <li>Keep popping every shot to build <b>combo</b>.</li>
+              <li>Big clears charge <b>Bombs</b>.</li>
+              <li>Daily mode is the same seed for everyone.</li>
+            </ul>
+          </div>
+
+          <div class="panel">
+            <h2>Controls</h2>
+            <ul>
+              <li><b>Mouse / Touch</b>: drag to aim, release to shoot</li>
+              <li><b>S</b>: swap bubbles</li>
+              <li><b>B</b>: use bomb (if available)</li>
+              <li><b>A</b>: toggle aim guide</li>
+              <li><b>R</b>: restart</li>
+            </ul>
+          </div>
+
+          <div class="panel subtle">
+            <p class="micro" id="messageLine">Chain drops feel like cheating. That’s the point.</p>
+          </div>
+        </aside>
+      </main>
+    </div>
+
+    <div class="overlay hidden" id="overlay">
+      <div class="modal">
+        <p class="kicker" id="overlayKicker">Bubble Shooter Blitz</p>
+        <h3 id="overlayTitle">Ready?</h3>
+        <p class="copy" id="overlayText">
+          You have 60 seconds. Pop fast, drop clusters, and keep the combo alive.
+        </p>
+
+        <div class="overlay-actions">
+          <button class="primary" id="startDaily" type="button">Daily Blitz</button>
+          <button class="secondary" id="startEndless" type="button">Endless Warmup</button>
+        </div>
+
+        <div class="overlay-actions secondary-row">
+          <button class="ghost" id="closeOverlay" type="button">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="./game.js"></script>
+  </body>
+</html>
+

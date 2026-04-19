@@ -1,0 +1,437 @@
+:root {
+  --bg0: #060a18;
+  --bg1: #0b1630;
+  --card: rgba(255, 255, 255, 0.08);
+  --card2: rgba(255, 255, 255, 0.12);
+  --stroke: rgba(255, 255, 255, 0.12);
+  --text: rgba(255, 255, 255, 0.92);
+  --muted: rgba(255, 255, 255, 0.68);
+  --muted2: rgba(255, 255, 255, 0.52);
+  --glow: rgba(120, 245, 255, 0.38);
+  --accent: #79f5ff;
+  --accent2: #ffdd7a;
+  --danger: #ff5b86;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: "Fredoka", system-ui, -apple-system, Segoe UI, sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(1200px 800px at 20% 10%, rgba(121, 245, 255, 0.14), rgba(0, 0, 0, 0)),
+    radial-gradient(900px 700px at 80% 30%, rgba(255, 221, 122, 0.12), rgba(0, 0, 0, 0)),
+    radial-gradient(1100px 700px at 55% 85%, rgba(255, 91, 134, 0.1), rgba(0, 0, 0, 0)),
+    linear-gradient(180deg, var(--bg1), var(--bg0));
+}
+
+.page {
+  max-width: 1180px;
+  padding: 18px 16px 28px;
+  margin: 0 auto;
+}
+
+.topbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 12px 12px 16px;
+  border-radius: 22px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--stroke);
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.35);
+}
+
+.brand h1 {
+  margin: 2px 0 0;
+  font-size: 28px;
+  letter-spacing: 0.2px;
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 0.16em;
+}
+
+.tagline {
+  margin: 8px 0 0;
+  max-width: 540px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.stats {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.stat {
+  min-width: 132px;
+  padding: 10px 12px;
+  border-radius: 18px;
+  background: rgba(7, 14, 33, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25);
+}
+
+.label {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted2);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.value {
+  margin: 6px 0 0;
+  font-family: "Baloo 2", "Fredoka", system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 22px;
+}
+
+.unit {
+  font-size: 14px;
+  color: var(--muted2);
+  margin-left: 4px;
+}
+
+.shell {
+  display: grid;
+  grid-template-columns: 1.25fr 0.75fr;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.canvas-card {
+  border-radius: 26px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--stroke);
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+}
+
+.canvas-head {
+  padding: 14px 16px 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.mode-line {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pill {
+  padding: 7px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(5, 10, 22, 0.52);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.pill.subtle {
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.icon-btn {
+  height: 38px;
+  width: 44px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(7, 14, 33, 0.55);
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 16px;
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.12s ease;
+}
+
+.icon-btn:hover {
+  transform: translateY(-1px);
+  background: rgba(20, 34, 64, 0.65);
+}
+
+.canvas-wrap {
+  position: relative;
+  padding: 12px 14px 4px;
+}
+
+canvas {
+  width: 100%;
+  height: auto;
+  max-height: 74vh;
+  border-radius: 22px;
+  background: radial-gradient(900px 700px at 50% 20%, rgba(121, 245, 255, 0.11), rgba(0, 0, 0, 0));
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.26);
+  touch-action: none;
+}
+
+.hint {
+  position: absolute;
+  left: 28px;
+  right: 28px;
+  bottom: 16px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  background: rgba(5, 10, 22, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 13px;
+  line-height: 1.2;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  pointer-events: none;
+}
+
+.hint b {
+  color: rgba(255, 255, 255, 0.94);
+}
+
+.bottom-panel {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 14px 14px;
+  flex-wrap: wrap;
+}
+
+.queue {
+  display: flex;
+  gap: 12px;
+}
+
+.queue-item {
+  padding: 10px 12px;
+  border-radius: 18px;
+  background: rgba(7, 14, 33, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  min-width: 112px;
+}
+
+.queue-label {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted2);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.bubble-preview {
+  height: 42px;
+  width: 42px;
+  border-radius: 999px;
+  margin-top: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35), inset 0 0 0 1px rgba(0, 0, 0, 0.25);
+  background: radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.65), rgba(255, 255, 255, 0.08) 40%, rgba(0, 0, 0, 0));
+}
+
+.powers {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.power-btn {
+  min-width: 118px;
+  padding: 10px 12px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(7, 14, 33, 0.55);
+  color: rgba(255, 255, 255, 0.9);
+  cursor: pointer;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  transition: transform 0.12s ease, background 0.12s ease, opacity 0.12s ease;
+}
+
+.power-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.power-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: rgba(20, 34, 64, 0.65);
+}
+
+.power-title {
+  font-weight: 600;
+}
+
+.power-sub {
+  font-family: "Baloo 2", "Fredoka", system-ui, sans-serif;
+  font-weight: 700;
+}
+
+.side-card {
+  border-radius: 26px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--stroke);
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.35);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.panel {
+  border-radius: 22px;
+  background: rgba(7, 14, 33, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 14px 14px 12px;
+}
+
+.panel h2 {
+  margin: 0;
+  font-size: 16px;
+  letter-spacing: 0.2px;
+}
+
+.panel ul {
+  margin: 10px 0 0;
+  padding-left: 18px;
+  color: rgba(255, 255, 255, 0.75);
+  line-height: 1.4;
+  font-size: 14px;
+}
+
+.panel.subtle {
+  background: rgba(5, 10, 22, 0.55);
+}
+
+.micro {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.66);
+  line-height: 1.35;
+  font-size: 13px;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 6, 14, 0.72);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  z-index: 50;
+}
+
+.overlay.hidden {
+  display: none;
+}
+
+.modal {
+  width: min(560px, 96vw);
+  border-radius: 26px;
+  background: linear-gradient(180deg, rgba(14, 24, 56, 0.96), rgba(7, 12, 28, 0.96));
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 40px 120px rgba(0, 0, 0, 0.55);
+  padding: 18px 18px 16px;
+}
+
+.kicker {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.modal h3 {
+  margin: 8px 0 0;
+  font-size: 26px;
+  letter-spacing: 0.2px;
+}
+
+.copy {
+  margin: 10px 0 0;
+  color: rgba(255, 255, 255, 0.74);
+  line-height: 1.45;
+}
+
+.overlay-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.overlay-actions.secondary-row {
+  margin-top: 10px;
+  justify-content: flex-end;
+}
+
+.primary,
+.secondary,
+.ghost {
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  padding: 12px 14px;
+  cursor: pointer;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  transition: transform 0.12s ease, background 0.12s ease;
+}
+
+.primary {
+  background: linear-gradient(135deg, rgba(121, 245, 255, 0.95), rgba(255, 221, 122, 0.9));
+  color: rgba(7, 12, 28, 0.95);
+}
+
+.secondary {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.ghost {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.74);
+}
+
+.primary:hover,
+.secondary:hover,
+.ghost:hover {
+  transform: translateY(-1px);
+}
+
+@media (max-width: 980px) {
+  .shell {
+    grid-template-columns: 1fr;
+  }
+  .side-card {
+    order: 2;
+  }
+  .canvas-card {
+    order: 1;
+  }
+  .stat {
+    min-width: 124px;
+  }
+}
+

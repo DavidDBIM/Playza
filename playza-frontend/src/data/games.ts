@@ -371,4 +371,31 @@ export const games: Game[] = [
     createdAt: "2026-04-15T00:00:00Z",
     updatedAt: "2026-04-15T00:00:00Z",
   },
+  {
+    id: "16",
+    title: "Bubble Shooter Blitz",
+    slug: "bubble-shooter-blitz",
+    thumbnail: "/games/high-stakes-blitz.jpeg",
+    iframeUrl: "/gameLib/Bubble-Shooter-Blitz/index.html",
+    category: "Arcade",
+    mode: "Quick Match",
+    entryFee: 600,
+    difficulty: "Medium",
+    durationInSeconds: 90,
+    status: "live",
+    activePlayers: 520,
+    ctaLabel: "Pop & Drop",
+    badge: "NEW",
+    platformFeePercentage: 10,
+    howToPlay: {
+      controls:
+        "Drag to aim and release to shoot. Press S to swap bubbles. Press B to use a bomb when charged.",
+      rules:
+        "Match 3+ bubbles to pop them. Dropped clusters score huge. In Daily Blitz you have 60 seconds and everyone plays the same seed.",
+      scoring:
+        "Points for pops and big bonuses for dropped clusters. Keep clearing every shot to build combo multipliers and charge bombs.",
+    },
+    createdAt: "2026-04-19T00:00:00Z",
+    updatedAt: "2026-04-19T00:00:00Z",
+  },
 ];
