@@ -106,7 +106,9 @@ export async function joinLudoRoom(userId: string, code: string) {
     .eq("code", code.toUpperCase())
     .single();
 
-  if (error || !room) throw new Error("Room not found");
+  if (error || !room) {
+    throw new Error("Room not found");
+  }
   if (room.status !== "waiting") throw new Error("Room no longer available");
   if (room.host_id === userId) throw new Error("You cannot join your own room");
 
@@ -124,14 +126,14 @@ export async function joinLudoRoom(userId: string, code: string) {
     .eq("id", room.id);
 
   if (updateError) throw updateError;
-  return { room_id: room.id, code: room.code, stake: room.stake, status: "active", board_state: initialBoard };
+  return { room_id: room.id, room_code: room.code, stake: room.stake, status: "active", board_state: initialBoard };
 }
 
 export async function createBotRoom(userId: string, stakeValue: number) {
   const code = generateRoomCode();
   const stake = Number(stakeValue);
 
-  await handleEntryFee(userId, stake, "BOT");
+  await handleEntryFee(userId, stake, `BOT-${code}`);
   const initialBoard = getInitialBoard();
 
   const { data, error } = await supabaseAdmin
@@ -153,13 +155,48 @@ export async function createBotRoom(userId: string, stakeValue: number) {
 }
 
 export async function getRoom(roomId: string, userId: string) {
-  const { data: room, error } = await supabaseAdmin
+  // Try UUID first
+  let query = supabaseAdmin
     .from("ludo_rooms")
-    .select(`id, code, status, board_state, current_turn, stake, winner_id, created_at, host_id, guest_id, host:users!host_id(id, username, avatar_url), guest:users!guest_id(id, username, avatar_url)`)
-    .eq("id", roomId)
-    .single();
+    .select(`
+      id, code, status, board_state, current_turn, stake, winner_id, created_at, host_id, guest_id,
+      host:users!host_id(id, username, avatar_url),
+      guest:users!guest_id(id, username, avatar_url)
+    `);
 
-  if (error || !room) throw new Error("Room not found");
+  // Simple heuristic: UUIDs have hyphens, codes are 6 chars hex
+  const isUuid = roomId.includes('-');
+  
+  if (isUuid) {
+    query = query.eq("id", roomId);
+  } else {
+    query = query.eq("code", roomId.toUpperCase());
+  }
+
+  const { data: room, error } = await query.single();
+
+  if (error) {
+    // If UUID lookup failed, try code lookup as fallback
+    if (isUuid) {
+       const { data: fallbackRoom, error: fallbackError } = await supabaseAdmin
+        .from("ludo_rooms")
+        .select(`
+          id, code, status, board_state, current_turn, stake, winner_id, created_at, host_id, guest_id,
+          host:users!host_id(id, username, avatar_url),
+          guest:users!guest_id(id, username, avatar_url)
+        `)
+        .eq("code", roomId.toUpperCase())
+        .single();
+       
+       if (!fallbackError && fallbackRoom) return fallbackRoom;
+    }
+    
+    console.error(`[LudoService] getRoom Error for ${roomId}:`, error);
+    throw new Error(error.message || "Room not found");
+  }
+  
+  if (!room) throw new Error("Room not found");
+  
   return room;
 }
 
@@ -323,7 +360,8 @@ export async function resignGame(roomId: string, userId: string) {
 // Helpers
 async function getAndValidateActiveRoom(roomId: string, userId: string | null) {
   const { data: room, error } = await supabaseAdmin.from("ludo_rooms").select("*").eq("id", roomId).single();
-  if (error || !room) throw new Error("Room not found");
+  if (error) throw error;
+  if (!room) throw new Error("Room not found");
   if (room.status !== "active") throw new Error("Game is not active");
   if (userId !== null && room.current_turn !== userId) throw new Error("Not your overall turn");
   return room;
