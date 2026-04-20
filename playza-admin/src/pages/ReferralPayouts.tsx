@@ -112,7 +112,7 @@ const ReferralPayouts: React.FC = () => {
 
       {/* ── Filter Bar ── */}
       <div className="bg-card border border-border rounded-2xl p-4 flex flex-wrap gap-3 items-center shadow-sm">
-        <form onSubmit={handleSearch} className="relative flex-1 min-w-50">
+        <form onSubmit={handleSearch} className="relative flex-1 min-w-0">
           <MdSearch className="-translate-y-1/2 absolute left-3 top-1/2 text-muted-foreground text-lg" />
           <input 
             type="text" 
@@ -125,7 +125,7 @@ const ReferralPayouts: React.FC = () => {
         
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="h-10 px-4 bg-muted border border-border rounded-xl flex items-center justify-between gap-3 text-xs font-black uppercase tracking-wider text-foreground hover:bg-muted/80 transition-all shadow-sm min-w-44">
+            <button className="h-10 px-4 bg-muted border border-border rounded-xl flex items-center justify-between gap-3 text-xs font-black uppercase tracking-wider text-foreground hover:bg-muted/80 transition-all shadow-sm">
               <span className="flex items-center gap-2">
                 <MdFilterList className="text-primary text-base" />
                 {statusFilter}
@@ -285,17 +285,17 @@ const ReferralPayouts: React.FC = () => {
               <div className="space-y-4">
                 <div className="flex items-center justify-between p-4 bg-muted/30 rounded-2xl border border-border/50">
                   <div>
-                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Amount to Pay</p>
+                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Amount to Pay</p>
                     <p className="text-2xl font-black text-primary tracking-tight">₦{selectedRequest.amount.toLocaleString()}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">User Balance</p>
+                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">User Balance</p>
                     <p className="text-sm font-black text-foreground">₦{(selectedRequest.users?.wallet?.balance ?? 0).toLocaleString()}</p>
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Admin Note (Internal)</label>
+                  <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Admin Note (Internal)</label>
                   <textarea 
                     value={adminNote}
                     onChange={(e) => setAdminNote(e.target.value)}
