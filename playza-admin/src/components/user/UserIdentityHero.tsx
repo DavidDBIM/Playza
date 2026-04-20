@@ -113,13 +113,13 @@ export const UserIdentityHero: React.FC<UserIdentityHeroProps> = ({
                 </p>
                 <div className="hidden sm:block w-px h-6 bg-border/50"></div>
                 <div className="flex items-center gap-2">
-                  <span className="text-slate-500 font-bold">
+                  <span className="text-muted-foreground font-bold">
                     Referral Code:
                   </span>
                   <span className="text-primary font-black uppercase tracking-widest">
                     {user.referralCode || "REF-N/A"}
                   </span>
-                  <button className="text-slate-400 hover:text-primary transition-colors">
+                  <button className="text-muted-foreground/70 hover:text-primary transition-colors">
                     <MdContentCopy className="text-lg" />
                   </button>
                 </div>
@@ -157,7 +157,7 @@ export const UserIdentityHero: React.FC<UserIdentityHeroProps> = ({
                 disabled={isUpdating}
                 onClick={() => onUpdateStatus?.("deactivate")}
                 variant="outline"
-                className="flex-1 sm:flex-none bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 font-black px-4 h-10 rounded-xl flex items-center justify-center gap-2 border border-slate-200 dark:border-white/10 uppercase text-[10px] tracking-widest transition-all"
+                className="flex-1 sm:flex-none bg-muted/30 dark:bg-white/5 hover:bg-muted/50 dark:hover:bg-white/10 text-muted-foreground font-black px-4 h-10 rounded-xl flex items-center justify-center gap-2 border border-border uppercase text-[10px] tracking-widest transition-all"
               >
                 <MdBlock className="text-base" />
                 {isUpdating ? "Processing..." : "Deactivate"}
