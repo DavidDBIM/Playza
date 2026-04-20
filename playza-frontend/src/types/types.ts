@@ -113,11 +113,21 @@ export interface Player {
 }
 
 export type GameName =
-  | "Mystic Quest"
-  | "StormRider"
-  | "Battle Arena X"
-  | "Speed Drift Pro"
-  | "Treasure Hunt Royale";
+  | "Crystal Match"
+  | "2048 Premium"
+  | "Zelda Maze Shooter"
+  | "VelocityGL"
+  | "Bullet Fury"
+  | "Rubik\'s Cube"
+  | "Neon Tetris"
+  | "StrikeForce: Dust 2"
+  | "Cyber Surge"
+  | "Vocal Ring Rush"
+  | "Mob Swarm: Legion"
+  | "Word Forge"
+  | "Crossword Quest+"
+  | "Sugar Storm Smash"
+  | "Bubble Shooter Blitz";
 
 export type GameLeaderboard = Record<GameName, LeaderboardPlayer[]>;
 
