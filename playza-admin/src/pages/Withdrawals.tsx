@@ -95,7 +95,7 @@ const Withdrawals: React.FC = () => {
 
       <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
         <div className="p-4 border-b border-border flex flex-wrap items-center justify-between gap-3 bg-muted/30">
-          <div className="relative flex-1 min-w-50">
+          <div className="relative flex-1 min-w-0">
             <MdSearch className="-translate-y-1/2 absolute left-3 top-1/2 text-muted-foreground text-lg" />
             <input
               type="text"
