@@ -22,9 +22,9 @@ import ReferralPayouts from "./pages/ReferralPayouts";
 
 // Placeholder components for routes
 const Placeholder = ({ name }: { name: string }) => (
-  <div className="p-10 text-[#E5E2E3]">
+  <div className="p-10 text-foreground">
     <h1 className="text-3xl font-headline font-black mb-4">{name} Console</h1>
-    <p className="text-[#E5E2E3]/60 font-body">
+    <p className="text-muted-foreground font-body">
       This module is currently being calibrated in the Playza Empire system.
     </p>
   </div>
