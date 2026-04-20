@@ -19,18 +19,18 @@ const SessionLeaderboard: React.FC = () => {
   // mock 20 players for the full leaderboard
   const allPlayers = [
     { name: 'player1', userId: 'user_1', score: '89,420', rank: '#01', status: 'FINISHED', color: 'text-primary' },
-    { name: 'player2', userId: 'user_2', score: '88,100', rank: '#02', status: 'PLAYING', color: 'text-slate-600 dark:text-slate-400' },
-    { name: 'Loxley_Prime', userId: 'user_3', score: '82,100', rank: '#03', status: 'FINISHED', color: 'text-slate-600 dark:text-slate-400' },
-    { name: 'Quantum_Gabe', userId: 'user_4', score: '81,540', rank: '#04', status: 'FINISHED', color: 'text-slate-600 dark:text-slate-400' },
-    { name: 'Redux_Master', userId: 'user_5', score: '81,400', rank: '#05', status: 'FINISHED', color: 'text-slate-600 dark:text-slate-400' },
-    { name: 'Echo_Shift', userId: 'user_6', score: '70,950', rank: '#06', status: 'PLAYING', color: 'text-slate-600 dark:text-slate-400' },
-    { name: 'Frost_Bite', userId: 'user_7', score: '70,800', rank: '#07', status: 'FINISHED', color: 'text-slate-600 dark:text-slate-400' },
-    { name: 'Titan_Fall', userId: 'user_8', score: '70,500', rank: '#08', status: 'FINISHED', color: 'text-slate-600 dark:text-slate-400' },
-    { name: 'Viper_Strike', userId: 'user_9', score: '60,200', rank: '#09', status: 'PLAYING', color: 'text-slate-600 dark:text-slate-400' },
-    { name: 'Nova_Burst', userId: 'user_10', score: '59,980', rank: '#10', status: 'FINISHED', color: 'text-slate-600 dark:text-slate-400' },
-    { name: 'Cyber_Punk22', userId: 'user_11', score: '59,500', rank: '#11', status: 'FINISHED', color: 'text-slate-600 dark:text-slate-400' },
-    { name: 'currentUser', userId: 'user_12', score: '54,000', rank: '#12', status: 'PLAYING', color: 'text-slate-600 dark:text-slate-400' },
-    { name: 'Jett_Lag', userId: 'user_13', score: '53,200', rank: '#13', status: 'FINISHED', color: 'text-slate-600 dark:text-slate-400' }
+    { name: 'player2', userId: 'user_2', score: '88,100', rank: '#02', status: 'PLAYING', color: 'text-muted-foreground' },
+    { name: 'Loxley_Prime', userId: 'user_3', score: '82,100', rank: '#03', status: 'FINISHED', color: 'text-muted-foreground' },
+    { name: 'Quantum_Gabe', userId: 'user_4', score: '81,540', rank: '#04', status: 'FINISHED', color: 'text-muted-foreground' },
+    { name: 'Redux_Master', userId: 'user_5', score: '81,400', rank: '#05', status: 'FINISHED', color: 'text-muted-foreground' },
+    { name: 'Echo_Shift', userId: 'user_6', score: '70,950', rank: '#06', status: 'PLAYING', color: 'text-muted-foreground' },
+    { name: 'Frost_Bite', userId: 'user_7', score: '70,800', rank: '#07', status: 'FINISHED', color: 'text-muted-foreground' },
+    { name: 'Titan_Fall', userId: 'user_8', score: '70,500', rank: '#08', status: 'FINISHED', color: 'text-muted-foreground' },
+    { name: 'Viper_Strike', userId: 'user_9', score: '60,200', rank: '#09', status: 'PLAYING', color: 'text-muted-foreground' },
+    { name: 'Nova_Burst', userId: 'user_10', score: '59,980', rank: '#10', status: 'FINISHED', color: 'text-muted-foreground' },
+    { name: 'Cyber_Punk22', userId: 'user_11', score: '59,500', rank: '#11', status: 'FINISHED', color: 'text-muted-foreground' },
+    { name: 'currentUser', userId: 'user_12', score: '54,000', rank: '#12', status: 'PLAYING', color: 'text-muted-foreground' },
+    { name: 'Jett_Lag', userId: 'user_13', score: '53,200', rank: '#13', status: 'FINISHED', color: 'text-muted-foreground' }
   ];
 
   const filteredPlayers = allPlayers.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -41,7 +41,7 @@ const SessionLeaderboard: React.FC = () => {
         <Button 
           variant="ghost" 
           onClick={() => navigate(`/sessions/${id || 'PX-992-ALPHA'}`)}
-          className="group flex items-center gap-3 text-slate-500 hover:text-primary transition-all font-black px-6 h-12 rounded-2xl hover:bg-primary/5 uppercase text-xs tracking-widest"
+          className="group flex items-center gap-3 text-muted-foreground hover:text-primary transition-all font-black px-6 h-12 rounded-2xl hover:bg-primary/5 uppercase text-xs tracking-widest"
         >
           <MdArrowBack className="text-xl group-hover:-translate-x-1 transition-transform" />
           Back to Session
