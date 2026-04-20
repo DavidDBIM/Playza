@@ -99,7 +99,7 @@ const Transactions: React.FC = () => {
 
       {/* Toolbar */}
       <div className="bg-card border border-border rounded-xl p-3 flex flex-wrap items-center gap-3 shadow-sm">
-        <div className="flex-1 min-w-50 relative">
+        <div className="flex-1 min-w-0 relative">
           <MdSearch className="-translate-y-1/2 absolute left-3 top-1/2 text-muted-foreground text-lg" />
           <input
             type="text"
