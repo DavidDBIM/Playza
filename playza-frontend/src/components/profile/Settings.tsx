@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { profileSchema, type ProfileFormValues } from "@/schemas/user.schema";
@@ -118,9 +118,6 @@ const Settings = () => {
     );
   };
 
-
-
-
   if (isLoading) {
     return (
       <div className="flex-1 mx-auto w-full pb-2 md:pb-10 flex flex-col items-center justify-center min-h-[50vh]">
@@ -198,15 +195,19 @@ const Settings = () => {
               >
                 <div
                   className="bg-white dark:bg-slate-900 w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl border-t sm:border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden"
-                  onClick={e => e.stopPropagation()}
+                  onClick={(e) => e.stopPropagation()}
                 >
                   {/* Handle */}
                   <div className="flex justify-center pt-3 pb-1 sm:hidden">
                     <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
                   </div>
                   <div className="px-5 pt-4 pb-3 border-b border-slate-100 dark:border-slate-800">
-                    <h3 className="font-black text-slate-900 dark:text-white text-base">Choose Your Avatar</h3>
-                    <p className="text-[10px] text-slate-500 font-bold mt-0.5 uppercase tracking-widest">Select one to use as your profile picture</p>
+                    <h3 className="font-black text-slate-900 dark:text-white text-base">
+                      Choose Your Avatar
+                    </h3>
+                    <p className="text-[10px] text-slate-500 font-bold mt-0.5 uppercase tracking-widest">
+                      Select one to use as your profile picture
+                    </p>
                   </div>
                   <div className="p-4 grid grid-cols-5 sm:grid-cols-6 gap-2.5 max-h-[60vh] overflow-y-auto">
                     {[
@@ -241,7 +242,8 @@ const Settings = () => {
                       "https://api.dicebear.com/7.x/micah/svg?seed=zeus&backgroundColor=b6e3f4",
                       "https://api.dicebear.com/7.x/micah/svg?seed=ares&backgroundColor=c0aede",
                     ].map((url) => {
-                      const isSelected = (avatarUrl || profile?.avatar_url) === url;
+                      const isSelected =
+                        (avatarUrl || profile?.avatar_url) === url;
                       return (
                         <button
                           key={url}
@@ -258,7 +260,12 @@ const Settings = () => {
                               : "border-slate-200 dark:border-white/10 hover:border-primary/50"
                           }`}
                         >
-                          <img src={url} alt="avatar" className="w-full h-full object-cover bg-slate-100 dark:bg-slate-800" loading="lazy" />
+                          <img
+                            src={url}
+                            alt="avatar"
+                            className="w-full h-full object-cover bg-slate-100 dark:bg-slate-800"
+                            loading="lazy"
+                          />
                           {isSelected && (
                             <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
                               <div className="size-5 rounded-full bg-primary flex items-center justify-center">

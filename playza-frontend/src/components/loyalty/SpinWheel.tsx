@@ -72,7 +72,7 @@ export function SpinWheelModal({ onClose, onSpinComplete, spinsLeft: initialSpin
     const r = Math.min(cx, cy - pointerHeight / 2) - 6;
     const innerR = r * 0.18;
 
-    ctx.clearRect(0, 0, size, size);
+    ctx.clearRect(0, 0, w, h);
 
     // Outer glow ring
     ctx.save();
