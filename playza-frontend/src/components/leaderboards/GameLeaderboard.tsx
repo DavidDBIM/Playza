@@ -18,7 +18,7 @@ const GameLeaderboard = () => {
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const gameNames = Object.keys(leaderboard);
-  const [activeGame, setActiveGame] = useState<GameName>("Mystic Quest");
+  const [activeGame, setActiveGame] = useState<GameName>("Crystal Match");
 
   const visibleGames = useMemo(() => {
     if (!searchQuery) return gameNames;
