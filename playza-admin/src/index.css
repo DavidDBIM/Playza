@@ -103,12 +103,12 @@
 
 .dark {
     /* Ultra Modern Deep Universe - Dark Mode */
-    --background: oklch(0.12 0.02 240);
-    --foreground: oklch(0.95 0.02 240);
-    --card: oklch(0.18 0.03 240 / 40%);
-    --card-foreground: oklch(0.95 0.02 240);
-    --popover: oklch(0.15 0.03 240 / 90%);
-    --popover-foreground: oklch(0.95 0.02 240);
+    --background: oklch(0.10 0.02 240);
+    --foreground: oklch(0.98 0.01 240);
+    --card: oklch(0.15 0.025 240 / 80%);
+    --card-foreground: oklch(0.98 0.01 240);
+    --popover: oklch(0.13 0.025 240 / 95%);
+    --popover-foreground: oklch(0.98 0.01 240);
     
     --primary: oklch(0.65 0.22 260); /* Brighter Indigo for Dark */
     --primary-foreground: oklch(0.98 0.01 240);
@@ -116,24 +116,24 @@
     --secondary: oklch(0.75 0.18 160); /* Glowing Emerald */
     --secondary-foreground: oklch(0.1 0.05 160);
     
-    --muted: oklch(0.22 0.03 240);
-    --muted-foreground: oklch(0.7 0.05 240);
+    --muted: oklch(0.18 0.025 240);
+    --muted-foreground: oklch(0.82 0.03 240);
     
-    --accent: oklch(0.25 0.05 260);
-    --accent-foreground: oklch(0.85 0.1 260);
+    --accent: oklch(0.22 0.04 260);
+    --accent-foreground: oklch(0.92 0.08 260);
     
     --destructive: oklch(0.55 0.2 25);
-    --border: oklch(1 0 0 / 8%);
-    --input: oklch(1 0 0 / 10%);
+    --border: oklch(1 0 0 / 10%);
+    --input: oklch(1 0 0 / 12%);
     --ring: oklch(0.65 0.22 260 / 50%);
     
-    --sidebar: oklch(0.15 0.03 240);
-    --sidebar-foreground: oklch(0.95 0.02 240);
+    --sidebar: oklch(0.13 0.025 240);
+    --sidebar-foreground: oklch(0.98 0.01 240);
     --sidebar-primary: var(--primary);
     --sidebar-primary-foreground: var(--primary-foreground);
     --sidebar-accent: var(--accent);
     --sidebar-accent-foreground: var(--accent-foreground);
-    --sidebar-border: oklch(1 0 0 / 8%);
+    --sidebar-border: oklch(1 0 0 / 10%);
     --sidebar-ring: var(--ring);
 }
 
@@ -150,6 +150,14 @@
 }
 
 @layer utilities {
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
   .glass-card {
     background: var(--card);
     -webkit-backdrop-filter: blur(20px);
