@@ -172,7 +172,7 @@ const Ambassadors: React.FC = () => {
 
       {/* ── Filters ── */}
       <div className="bg-card border border-border rounded-2xl p-4 flex flex-wrap gap-3 items-center shadow-sm">
-        <form onSubmit={handleSearch} className="flex gap-2 flex-1 min-w-50">
+        <form onSubmit={handleSearch} className="flex gap-2 flex-1 min-w-0">
           <div className="relative flex-1">
             <MdSearch className="-translate-y-1/2 absolute left-3 top-1/2 text-muted-foreground text-lg" />
             <input
