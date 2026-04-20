@@ -275,4 +275,22 @@ export const leaderboard: GameLeaderboard = {
     { id: "bb-14", rank: 14, avatar: avatar(54), username: "SphereSmasher",  points: 64500,  prizeWon: "450"   },
     { id: "bb-15", rank: 15, avatar: avatar(55), username: "GlobeGunner",    points: 54200,  prizeWon: "300"   },
   ],
+
+  "Aim Trainer Pro": [
+    { id: "cq-1",  rank: 1,  avatar: avatar(11), username: "ClueHunter",     points: 98700, prizeWon: "22000" },
+    { id: "cq-2",  rank: 2,  avatar: avatar(12), username: "GridSolver",     points: 93400, prizeWon: "13000" },
+    { id: "cq-3",  rank: 3,  avatar: avatar(13), username: "WordWeb",        points: 88100, prizeWon: "8500"  },
+    { id: "cq-4",  rank: 4,  avatar: avatar(14), username: "PuzzleQueen",    points: 82800, prizeWon: "5500"  },
+    { id: "cq-5",  rank: 5,  avatar: avatar(15), username: "DownAcross",     points: 77500, prizeWon: "3500"  },
+    { id: "cq-6",  rank: 6,  avatar: avatar(16), username: "BlankFiller",    points: 72200, prizeWon: "2800"  },
+    { id: "cq-7",  rank: 7,  avatar: avatar(17), username: "ClueMaster",     points: 66900, prizeWon: "2200"  },
+    { id: "cq-8",  rank: 8,  avatar: avatar(18), username: "BoxComplete",    points: 61600, prizeWon: "1700"  },
+    { id: "cq-9",  rank: 9,  avatar: avatar(19), username: "WordCross",      points: 56300, prizeWon: "1300"  },
+    { id: "cq-10", rank: 10, avatar: avatar(20), username: "SquareRoot",     points: 51000, prizeWon: "1000"  },
+    { id: "cq-11", rank: 11, avatar: avatar(21), username: "HintSeeker",     points: 45700, prizeWon: "750"   },
+    { id: "cq-12", rank: 12, avatar: avatar(22), username: "LetterGrid",     points: 40400, prizeWon: "550"   },
+    { id: "cq-13", rank: 13, avatar: avatar(23), username: "RowAce",         points: 35100, prizeWon: "400"   },
+    { id: "cq-14", rank: 14, avatar: avatar(24), username: "ColKing",        points: 29800, prizeWon: "300"   },
+    { id: "cq-15", rank: 15, avatar: avatar(25), username: "FillEmIn",       points: 24500, prizeWon: "200"   },
+  ],
 };

@@ -127,7 +127,8 @@ export type GameName =
   | "Word Forge"
   | "Crossword Quest+"
   | "Sugar Storm Smash"
-  | "Bubble Shooter Blitz";
+  | "Bubble Shooter Blitz"
+  | "Aim Trainer Pro";
 
 export type GameLeaderboard = Record<GameName, LeaderboardPlayer[]>;
 
