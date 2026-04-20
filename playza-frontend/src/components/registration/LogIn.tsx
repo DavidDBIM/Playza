@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { User, Lock, Loader2, Eye, EyeOff } from "lucide-react";
+import { User, Lock, Loader2, Eye, EyeOff, ArrowRight } from "lucide-react";
 import { useLogin } from "@/hooks/auth/useLogin";
 import { useNavigate, useSearchParams } from "react-router";
 
@@ -63,9 +63,8 @@ const LogIn = ({ onClick }: LogInProps) => {
   };
 
   return (
-    <div className="w-full max-w-md">
-      <div className="p-4 md:p-10 relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-transparent via-primary to-transparent opacity-30"></div>
+    <div className="w-full max-w-lg mx-auto px-6">
+      <div className="relative">
 
         <div className="text-center mb-10">
           <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-3 tracking-tighter uppercase font-display">
@@ -90,8 +89,8 @@ const LogIn = ({ onClick }: LogInProps) => {
                 required
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
-                className="w-full bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-white/10 rounded-xl py-3.5 pl-12 pr-4 focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 transition-all font-medium"
-                placeholder="AnthonyGamer"
+                className="w-full bg-slate-900/[0.03] dark:bg-white/[0.03] border border-slate-200/50 dark:border-white/5 rounded-2xl py-4 pl-12 pr-4 focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700 transition-all font-bold"
+                placeholder="Gaming handle or email"
                 type="text"
                 autoComplete="username"
               />
@@ -120,7 +119,7 @@ const LogIn = ({ onClick }: LogInProps) => {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-white/10 rounded-xl py-3.5 pl-12 pr-12 focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 transition-all font-medium"
+                className="w-full bg-slate-900/[0.03] dark:bg-white/[0.03] border border-slate-200/50 dark:border-white/5 rounded-2xl py-4 pl-12 pr-12 focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700 transition-all font-bold"
                 type={showPassword ? "text" : "password"}
                 placeholder="••••••••"
                 autoComplete="current-password"
@@ -145,7 +144,7 @@ const LogIn = ({ onClick }: LogInProps) => {
             <button
               type="submit"
               disabled={isPending}
-              className="w-full bg-primary hover:bg-primary/90 text-slate-950 font-black py-4 rounded-xl transition-all shadow-sm active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 uppercase tracking-widest text-sm"
+              className="w-full bg-primary hover:bg-primary/90 text-slate-950 font-black py-4.5 rounded-2xl transition-all shadow-lg shadow-primary/10 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 uppercase tracking-[0.2em] text-sm group"
             >
               {isPending ? (
                 <>
@@ -153,18 +152,21 @@ const LogIn = ({ onClick }: LogInProps) => {
                   Authenticating...
                 </>
               ) : (
-                "Launch Arena"
+                <>
+                  Launch Arena
+                  <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                </>
               )}
             </button>
           </div>
         </form>
 
-        <div className="pt-8 mt-6 border-t border-slate-200 dark:border-white/5 text-center">
-          <p className="text-slate-500 dark:text-slate-400 text-xs md:text-sm">
+        <div className="pt-8 mt-10 border-t border-slate-200/50 dark:border-white/5 text-center">
+          <p className="text-slate-500 dark:text-slate-400 text-xs font-medium tracking-tight">
             New to the platform?
             <button
               onClick={() => onClick("signup")}
-              className="text-primary font-black hover:underline ml-2"
+              className="text-primary font-black hover:text-slate-900 dark:hover:text-white ml-2 transition-colors uppercase tracking-widest text-[10px] underline underline-offset-4"
             >
               CREATE ACCOUNT
             </button>

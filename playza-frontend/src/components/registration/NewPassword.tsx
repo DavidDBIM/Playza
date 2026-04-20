@@ -81,26 +81,25 @@ const NewPassword = ({ onClick }: { onClick: (value: string) => void }) => {
 
   if (success) {
     return (
-      <div className="w-full max-w-lg text-center space-y-6 p-8">
-        <div className="inline-flex items-center justify-center w-20 h-20 bg-green-500/10 rounded-full border border-green-500/20">
-          <CheckCircle2 className="text-green-500 w-10 h-10" />
+      <div className="w-full max-w-lg mx-auto text-center px-6">
+        <div className="bg-green-500/10 w-24 h-24 rounded-3xl flex items-center justify-center mx-auto mb-10 border border-green-500/20 shadow-inner animate-in zoom-in duration-500">
+          <CheckCircle2 className="text-green-500 w-12 h-12" />
         </div>
         <div>
-          <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Password Updated!</h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-2">Your password has been changed. Redirecting to login…</p>
+          <h2 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tight mb-4">Identity Reclaimed!</h2>
+          <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Your credentials have been updated. Redirecting to Arena access…</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="w-full max-w-lg">
-      <div className="p-4 md:p-10 relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-transparent via-primary to-transparent opacity-30"></div>
+    <div className="w-full max-w-lg mx-auto px-6">
+      <div className="relative">
 
         <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center p-4 bg-primary/10 rounded-full mb-4">
-            <MdLockReset className="text-primary text-3xl" />
+          <div className="bg-primary/5 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-10 border border-primary/20 shadow-inner group transition-all duration-500 hover:scale-110">
+            <MdLockReset className="text-primary text-4xl group-hover:drop-shadow-[0_0_8px_rgba(var(--primary),0.5)]" />
           </div>
           <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-2 tracking-tight uppercase">
             Set New Password
@@ -118,9 +117,9 @@ const NewPassword = ({ onClick }: { onClick: (value: string) => void }) => {
             </div>
             <button
               onClick={() => onClick("forgot")}
-              className="w-full bg-primary text-slate-950 font-black py-4 rounded-xl uppercase tracking-widest text-sm hover:brightness-110 transition-all"
+              className="w-full bg-primary text-slate-950 font-black py-4.5 rounded-2xl uppercase tracking-[0.2em] text-sm hover:brightness-110 active:scale-[0.98] transition-all shadow-xl shadow-primary/10"
             >
-              Request New Link
+              Request New Secure Link
             </button>
           </div>
         ) : (
@@ -133,8 +132,8 @@ const NewPassword = ({ onClick }: { onClick: (value: string) => void }) => {
                 <input
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full bg-slate-100 dark:bg-slate-950/80 border border-slate-200 dark:border-white/10 rounded-xl py-3.5 px-4 pr-12 text-slate-900 dark:text-white focus:ring-4 focus:ring-primary/20 outline-none transition-all font-medium text-sm"
-                  placeholder="••••••••••••"
+                  className="w-full bg-slate-900/[0.03] dark:bg-white/[0.03] border border-slate-200/50 dark:border-white/5 rounded-2xl py-4 px-6 pr-14 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all font-bold text-sm"
+                  placeholder="New secure password"
                   type={showNew ? "text" : "password"}
                   required
                 />
@@ -145,7 +144,7 @@ const NewPassword = ({ onClick }: { onClick: (value: string) => void }) => {
               {newPassword && (
                 <div className="flex items-center gap-2 px-1 mt-2">
                   <div className="flex-1 h-1 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
-                    <div className={`h-full transition-all duration-500 ${strengthColor}`} style={{ width: `${strength}%` }} />
+                    <div className={`h-full transition-all duration-700 ${strengthColor}`} style={{ width: `${strength}%` }} />
                   </div>
                   <span className={`text-[9px] font-black uppercase tracking-tighter ${strengthColor.replace("bg-", "text-")}`}>{strengthLabel}</span>
                 </div>
@@ -160,12 +159,12 @@ const NewPassword = ({ onClick }: { onClick: (value: string) => void }) => {
                 <input
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className={`w-full bg-slate-100 dark:bg-slate-950/80 border rounded-xl py-3.5 px-4 pr-12 text-slate-900 dark:text-white focus:ring-4 outline-none transition-all font-medium text-sm ${
+                  className={`w-full bg-slate-900/[0.03] dark:bg-white/[0.03] border rounded-2xl py-4 px-6 pr-14 text-slate-900 dark:text-white focus:ring-2 outline-none transition-all font-bold text-sm ${
                     confirmPassword && newPassword !== confirmPassword
-                      ? "border-red-500/50 focus:ring-red-500/20"
-                      : "border-slate-200 dark:border-white/10 focus:ring-primary/20"
+                      ? "border-red-500/50 focus:ring-red-500/10"
+                      : "border-slate-200/50 dark:border-white/5 focus:ring-primary/20 focus:border-primary/50"
                   }`}
-                  placeholder="••••••••••••"
+                  placeholder="Verify new password"
                   type={showConfirm ? "text" : "password"}
                   required
                 />
@@ -191,26 +190,26 @@ const NewPassword = ({ onClick }: { onClick: (value: string) => void }) => {
 
             <button
               disabled={loading || !newPassword || newPassword !== confirmPassword || strength < 25}
-              className="w-full bg-primary text-slate-950 font-black py-4 rounded-xl flex items-center justify-center gap-2 hover:brightness-110 active:scale-[0.98] transition-all uppercase tracking-widest text-sm shadow-lg shadow-primary/10 disabled:opacity-50"
+              className="w-full bg-primary text-slate-950 font-black py-4.5 rounded-2xl flex items-center justify-center gap-2 hover:brightness-110 active:scale-[0.98] transition-all uppercase tracking-[0.2em] text-sm shadow-xl shadow-primary/10 disabled:opacity-50 group"
               type="submit"
             >
               {loading ? (
                 <div className="flex items-center gap-2">
                   <div className="size-4 border-2 border-black/20 border-t-black rounded-full animate-spin" />
-                  <span>Updating…</span>
+                  <span>Calibrating…</span>
                 </div>
               ) : (
                 <>
-                  <LockOpen size={18} />
-                  Update Password
+                  Confirm New Identity
+                  <LockOpen size={18} className="group-hover:scale-110 transition-transform" />
                 </>
               )}
             </button>
 
-            <p className="text-center text-xs text-slate-500 dark:text-slate-400">
-              Remembered your password?{" "}
-              <button type="button" onClick={() => onClick("login")} className="text-primary font-bold hover:underline">
-                Log in
+            <p className="text-center text-xs text-slate-500 dark:text-slate-400 font-medium pt-4">
+              Remembered your identity?{" "}
+              <button type="button" onClick={() => onClick("login")} className="text-primary font-black hover:text-slate-900 dark:hover:text-white transition-colors underline underline-offset-4 uppercase tracking-widest text-[10px]">
+                Arena Log In
               </button>
             </p>
           </form>

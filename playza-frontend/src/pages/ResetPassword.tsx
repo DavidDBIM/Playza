@@ -13,8 +13,8 @@ const ResetPassword = () => {
   };
 
   return (
-    <div className="flex-1 min-h-[calc(100vh-12rem)] flex flex-col items-center justify-center py-8">
-      <div className="w-full max-w-xl flex justify-center items-center">
+    <div className="flex-1 flex flex-col items-center py-12 md:py-20">
+      <div className="w-full relative z-10">
         <NewPassword onClick={handleClick} />
       </div>
     </div>

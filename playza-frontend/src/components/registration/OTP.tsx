@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Edit, ShieldCheck } from "lucide-react";
+import { ArrowRight, Edit, ShieldCheck } from "lucide-react";
 import { Button } from "../ui/button";
 import { useVerifyOtp } from "@/hooks/auth/useVerifyOtp";
 import { useResendOtp } from "@/hooks/auth/useResendOtp";
@@ -170,13 +170,11 @@ const OTP = ({ onClick }: OtpProps) => {
     : "your email";
 
   return (
-    <div className="w-full max-w-xl">
-      <div className="p-4 md:p-10 relative overflow-hidden text-center">
-        {/* Decorative accent line */}
-        <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-transparent via-primary to-transparent opacity-30"></div>
+    <div className="w-full max-w-xl mx-auto px-6">
+      <div className="relative text-center">
 
-        <div className="bg-primary/10 w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center mx-auto mb-8 border border-primary/20 shadow-inner">
-          <ShieldCheck className="text-primary" size={32} />
+        <div className="bg-primary/5 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-10 border border-primary/20 shadow-inner group transition-all duration-500 hover:scale-110">
+          <ShieldCheck className="text-primary group-hover:drop-shadow-[0_0_8px_rgba(var(--primary),0.5)]" size={32} />
         </div>
 
         <div className="mb-10">
@@ -213,9 +211,9 @@ const OTP = ({ onClick }: OtpProps) => {
                 onKeyDown={(e) => handleKeyDown(i, e)}
                 required
                 inputMode="numeric"
-                className="w-11.5 h-14 md:w-14 md:h-16 text-center bg-slate-100 dark:bg-slate-950/80 border-2 border-slate-200 dark:border-white/10 rounded-xl focus:border-primary focus:ring-4 focus:ring-primary/20 text-xl md:text-2xl font-black text-primary transition-all outline-none"
+                className="w-11.5 h-16 md:w-16 md:h-20 text-center bg-slate-900/[0.03] dark:bg-white/[0.03] border-2 border-slate-200/50 dark:border-white/5 rounded-2xl focus:border-primary focus:ring-4 focus:ring-primary/10 text-xl md:text-3xl font-black text-primary transition-all outline-none placeholder:opacity-20"
                 aria-label={`Digit ${i + 1}`}
-                placeholder="•"
+                placeholder="0"
                 maxLength={1}
                 type="text"
               />
@@ -227,7 +225,7 @@ const OTP = ({ onClick }: OtpProps) => {
           <Button
             onClick={handleVerify}
             disabled={!isComplete || isVerifying}
-            className="w-full h-14 bg-primary text-slate-950 text-sm md:text-base font-black uppercase tracking-widest rounded-xl shadow-lg shadow-primary/10 hover:shadow-primary/30 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:translate-y-0"
+            className="w-full h-15 bg-primary text-slate-950 text-sm md:text-base font-black uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-primary/10 hover:shadow-primary/30 hover:-translate-y-1 transition-all disabled:opacity-50 disabled:translate-y-0 group"
           >
             {isVerifying ? (
               <div className="flex items-center gap-2">
@@ -235,7 +233,10 @@ const OTP = ({ onClick }: OtpProps) => {
                 <span>Authenticating...</span>
               </div>
             ) : (
-              "VERIFY ACCOUNT"
+              <div className="flex items-center justify-center gap-2">
+                <span>Verify Arena Auth</span>
+                <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+              </div>
             )}
           </Button>
 
@@ -260,11 +261,11 @@ const OTP = ({ onClick }: OtpProps) => {
 
             <button
               onClick={() => onClick("signup")}
-              className="flex items-center gap-2 text-slate-400 hover:text-slate-900 dark:hover:text-white text-[10px] font-black uppercase tracking-widest transition-all p-4 border-t border-slate-200 dark:border-white/5 w-full justify-center group"
+              className="flex items-center gap-2 text-slate-400 hover:text-slate-900 dark:hover:text-white text-[10px] font-black uppercase tracking-[0.2em] transition-all pt-10 border-t border-slate-200/50 dark:border-white/5 w-full justify-center group"
             >
               <Edit
                 size={14}
-                className="group-hover:text-primary transition-colors"
+                className="group-hover:text-primary transition-colors group-hover:scale-110"
               />
               Modify Credentials
             </button>

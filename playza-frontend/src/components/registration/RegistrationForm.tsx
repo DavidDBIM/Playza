@@ -160,17 +160,17 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
   };
 
   return (
-    <div className="w-full max-w-xl">
+    <div className="w-full max-w-2xl mx-auto px-4 md:px-6">
       <Link
         to="/"
-        className="mb-6 flex items-center gap-2 text-slate-500 hover:text-primary transition-colors font-bold uppercase tracking-widest text-[10px]"
+        className="mb-10 flex items-center gap-2 text-slate-500 hover:text-primary transition-all font-black uppercase tracking-[0.2em] text-[10px] group"
       >
-        <ArrowLeft size={14} />
-        Back to Home
+        <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" />
+        Back to Arena
       </Link>
 
-      <div className="p-4 md:p-10 relative overflow-hidden">
-        <div className="absolute -top-24 -left-24 w-64 h-64 bg-primary/10 blur-[100px] rounded-full pointer-events-none opacity-40"></div>
+      <div className="relative">
+        <div className="absolute -top-40 -left-40 w-96 h-96 bg-primary/5 blur-[120px] rounded-full pointer-events-none opacity-50"></div>
 
         <div className="text-center mb-8 relative z-10">
           <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-2 tracking-tight uppercase">
@@ -206,10 +206,10 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
                 />
                 <input
                   {...register("username")}
-                  className={`w-full bg-slate-900/5 dark:bg-white/5 border rounded-xl py-3.5 pl-12 pr-4 focus:ring-2 outline-none text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 transition-all font-medium text-sm ${
+                  className={`w-full bg-slate-900/[0.03] dark:bg-white/[0.03] border rounded-2xl py-4 pl-12 pr-4 focus:ring-2 outline-none text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700 transition-all font-bold text-sm ${
                     errors.username
-                      ? "border-red-500/50 focus:ring-red-500/20"
-                      : "border-slate-200 dark:border-white/10 focus:ring-primary/30 focus:border-primary"
+                      ? "border-red-500/50 focus:ring-red-500/10"
+                      : "border-slate-200/50 dark:border-white/5 focus:ring-primary/20 focus:border-primary/50"
                   }`}
                   placeholder="AnthonyGamer"
                   type="text"
@@ -234,10 +234,10 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
                 />
                 <input
                   {...register("email")}
-                  className={`w-full bg-slate-900/5 dark:bg-white/5 border rounded-xl py-3.5 pl-12 pr-4 focus:ring-2 outline-none text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 transition-all font-medium text-sm ${
+                  className={`w-full bg-slate-900/[0.03] dark:bg-white/[0.03] border rounded-2xl py-4 pl-12 pr-4 focus:ring-2 outline-none text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700 transition-all font-bold text-sm ${
                     errors.email
-                      ? "border-red-500/50 focus:ring-red-500/20"
-                      : "border-slate-200 dark:border-white/10 focus:ring-primary/30 focus:border-primary"
+                      ? "border-red-500/50 focus:ring-red-500/10"
+                      : "border-slate-200/50 dark:border-white/5 focus:ring-primary/20 focus:border-primary/50"
                   }`}
                   placeholder="gamer@example.com"
                   type="email"
@@ -263,10 +263,10 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
               />
               <input
                 {...register("phone")}
-                className={`w-full bg-slate-900/5 dark:bg-white/5 border rounded-xl py-3.5 pl-12 pr-4 focus:ring-2 outline-none text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 transition-all font-medium text-sm ${
+                className={`w-full bg-slate-900/[0.03] dark:bg-white/[0.03] border rounded-2xl py-4 pl-12 pr-4 focus:ring-2 outline-none text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700 transition-all font-bold text-sm ${
                   errors.phone
-                    ? "border-red-500/50 focus:ring-red-500/20"
-                    : "border-slate-200 dark:border-white/10 focus:ring-primary/30 focus:border-primary"
+                    ? "border-red-500/50 focus:ring-red-500/10"
+                    : "border-slate-200/50 dark:border-white/5 focus:ring-primary/20 focus:border-primary/50"
                 }`}
                 placeholder="080 000 0000"
                 type="tel"
@@ -292,10 +292,10 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
                 />
                 <input
                   {...register("password")}
-                  className={`w-full bg-slate-900/5 dark:bg-white/5 border rounded-xl py-3.5 pl-12 pr-12 focus:ring-2 outline-none text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 transition-all font-medium text-sm ${
+                  className={`w-full bg-slate-900/[0.03] dark:bg-white/[0.03] border rounded-2xl py-4 pl-12 pr-12 focus:ring-2 outline-none text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700 transition-all font-bold text-sm ${
                     errors.password
-                      ? "border-red-500/50 focus:ring-red-500/20"
-                      : "border-slate-200 dark:border-white/10 focus:ring-primary/30 focus:border-primary"
+                      ? "border-red-500/50 focus:ring-red-500/10"
+                      : "border-slate-200/50 dark:border-white/5 focus:ring-primary/20 focus:border-primary/50"
                   }`}
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
@@ -341,10 +341,10 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
                 />
                 <input
                   {...register("confirmPassword")}
-                  className={`w-full bg-slate-900/5 dark:bg-white/5 border rounded-xl py-3.5 pl-12 pr-4 focus:ring-2 outline-none text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 transition-all font-medium text-sm ${
+                  className={`w-full bg-slate-900/[0.03] dark:bg-white/[0.03] border rounded-2xl py-4 pl-12 pr-4 focus:ring-2 outline-none text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700 transition-all font-bold text-sm ${
                     confirmPassword && password !== confirmPassword
-                      ? "border-red-500/50 focus:ring-red-500/20"
-                      : "border-slate-200 dark:border-white/10 focus:ring-primary/30 focus:border-primary"
+                      ? "border-red-500/50 focus:ring-red-500/10"
+                      : "border-slate-200/50 dark:border-white/5 focus:ring-primary/20 focus:border-primary/50"
                   }`}
                   type="password"
                   placeholder="••••••••"
@@ -376,12 +376,12 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
             <div className="relative group">
               <input
                 {...register("referralCode")}
-                className={`w-full bg-slate-900/5 dark:bg-white/5 border rounded-xl py-3.5 px-4 focus:ring-2 outline-none text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 transition-all font-medium text-sm ${
+                className={`w-full bg-slate-900/[0.03] dark:bg-white/[0.03] border rounded-2xl py-4 px-4 focus:ring-2 outline-none text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700 transition-all font-bold text-sm ${
                   referralCodeValue && referralCodeValue.length >= 6
                     ? validationData?.valid
-                      ? "border-green-500/50 focus:ring-green-500/20"
-                      : "border-red-500/50 focus:ring-red-500/20"
-                    : "border-slate-200 dark:border-white/10 focus:ring-primary/30 focus:border-primary"
+                      ? "border-green-500/50 focus:ring-green-500/10"
+                      : "border-red-500/50 focus:ring-red-500/10"
+                    : "border-slate-200/50 dark:border-white/5 focus:ring-primary/20 focus:border-primary/50"
                 }`}
                 type="text"
                 placeholder="PLAYZA-XXXX"
