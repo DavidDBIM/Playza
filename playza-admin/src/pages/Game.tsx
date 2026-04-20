@@ -32,9 +32,9 @@ const Game: React.FC = () => {
 
   if (!game) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center p-10 text-center text-slate-900 dark:text-white min-h-[50vh]">
+      <div className="flex-1 flex flex-col items-center justify-center p-10 text-center text-foreground min-h-[50vh]">
         <h2 className="text-2xl font-black text-primary">Game Not Found</h2>
-        <p className="text-slate-500 mt-2 font-medium">The requested game details could not be found.</p>
+        <p className="text-muted-foreground mt-2 font-medium">The requested game details could not be found.</p>
         <Button onClick={() => navigate('/games')} className="mt-4 bg-primary text-white rounded-xl shadow-lg hover:brightness-110 uppercase tracking-widest text-[10px] font-black px-6">Back to Games</Button>
       </div>
     );
