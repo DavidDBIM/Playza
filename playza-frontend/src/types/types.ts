@@ -118,7 +118,7 @@ export type GameName =
   | "Zelda Maze Shooter"
   | "VelocityGL"
   | "Bullet Fury"
-  | "Rubik\'s Cube"
+  | "Rubik's Cube"
   | "Neon Tetris"
   | "StrikeForce: Dust 2"
   | "Cyber Surge"
