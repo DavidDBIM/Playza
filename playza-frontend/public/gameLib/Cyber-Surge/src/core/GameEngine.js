@@ -10,6 +10,7 @@ import { CameraSystem } from '../systems/CameraSystem.js';
 import { AudioManager } from '../systems/AudioManager.js';
 import { EffectSystem } from '../systems/EffectSystem.js';
 import { UIManager } from '../ui/UIManager.js';
+import { AssetLibrary } from './AssetLibrary.js';
 
 export class GameEngine {
     constructor(container) {
@@ -37,13 +38,15 @@ export class GameEngine {
             hitRecoveryDuration: 1.45
         };
 
-        this.init();
+        this.ready = this.init();
     }
 
-    init() {
+    async init() {
         this.setupRenderer();
         this.setupScene();
         this.setupLighting();
+        this.assets = new AssetLibrary(this);
+        await this.assets.loadAll();
         this.setupSystems();
         this.setupEventListeners();
         this.resize();
@@ -223,7 +226,9 @@ export class GameEngine {
         return multiplier;
     }
 
-    start() {
+    async start() {
+        await this.ready;
+
         if (this.isRunning && this.gameState === 'playing') {
             return;
         }

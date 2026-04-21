@@ -53,14 +53,21 @@ export class ProceduralGenerator {
 
         if (indexInChunk === 0) {
             const middleLane = 1;
-            this.engine.obstacles.spawn(laneX(middleLane), 0, z, this.currentBiome, 'blocker');
+            const openerType = Math.random() < 0.35 ? 'drone' : 'blocker';
+            this.engine.obstacles.spawn(laneX(middleLane), 0, z, this.currentBiome, openerType);
             [0, 2].forEach((lane) => this.spawnCoinsInLane(lane, z, 9, 1.28));
             return;
         }
 
         if (forceActionPattern || roll < 0.24 - difficultyBias * 0.2) {
             const blocked = this.getRandomLane();
-            this.engine.obstacles.spawn(laneX(blocked), 0, z, this.currentBiome, 'blocker');
+            this.engine.obstacles.spawn(
+                laneX(blocked),
+                0,
+                z,
+                this.currentBiome,
+                Math.random() < 0.25 ? 'drone' : 'blocker'
+            );
             [0, 1, 2].filter((lane) => lane !== blocked).forEach((lane) => this.spawnCoinsInLane(lane, z, 9, 1.28));
         } else if (roll < 0.44) {
             const slideLane = this.getRandomLane();
@@ -73,13 +80,25 @@ export class ProceduralGenerator {
                 if (lane === freeLane) {
                     this.spawnCoinsInLane(lane, z, 11, 1.15);
                 } else {
-                    this.engine.obstacles.spawn(laneX(lane), 0, z, this.currentBiome, 'blocker');
+                    this.engine.obstacles.spawn(
+                        laneX(lane),
+                        0,
+                        z,
+                        this.currentBiome,
+                        Math.random() < 0.2 ? 'drone' : 'blocker'
+                    );
                 }
             });
         } else if (roll < 0.88 + difficultyBias) {
             const first = this.getRandomLane();
             const second = this.getOtherLane(first);
-            this.engine.obstacles.spawn(laneX(first), 0, z, this.currentBiome, 'blocker');
+            this.engine.obstacles.spawn(
+                laneX(first),
+                0,
+                z,
+                this.currentBiome,
+                Math.random() < 0.3 ? 'drone' : 'blocker'
+            );
             this.engine.obstacles.spawn(
                 laneX(second),
                 0,
@@ -93,7 +112,13 @@ export class ProceduralGenerator {
         } else {
             const firstBlocked = this.getRandomLane();
             const secondBlocked = this.getOtherLane(firstBlocked);
-            this.engine.obstacles.spawn(laneX(firstBlocked), 0, z, this.currentBiome, 'blocker');
+            this.engine.obstacles.spawn(
+                laneX(firstBlocked),
+                0,
+                z,
+                this.currentBiome,
+                Math.random() < 0.25 ? 'drone' : 'blocker'
+            );
             this.engine.obstacles.spawn(laneX(secondBlocked), 0, z, this.currentBiome, 'slideGate');
             const freeLane = [0, 1, 2].find((lane) => lane !== firstBlocked && lane !== secondBlocked) ?? 1;
             this.spawnCoinsInLane(freeLane, z, 12, 1.08);
@@ -116,7 +141,7 @@ export class ProceduralGenerator {
         for (let z = startZ; z >= endZ; z -= step) {
             if (!this.hasObstacleNear(z, 8)) {
                 const lane = this.getRandomLane();
-                const type = (z / step) % 3 === 0 ? 'slideGate' : 'blocker';
+                const type = (z / step) % 5 === 0 ? 'drone' : (z / step) % 3 === 0 ? 'slideGate' : 'blocker';
                 this.engine.obstacles.spawn((lane - 1) * this.engine.config.laneWidth, 0, z, this.currentBiome, type);
             }
 

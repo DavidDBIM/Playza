@@ -215,7 +215,7 @@ canvas {
 .hud {
     position: absolute;
     inset: 0 0 auto 0;
-    padding: 18px;
+    padding: 14px;
     z-index: 10;
     pointer-events: none;
 }
@@ -227,14 +227,14 @@ canvas {
 .hud-top {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 12px;
+    gap: 10px;
 }
 
 .hud-bottom {
-    margin-top: 12px;
+    margin-top: 10px;
     display: grid;
     grid-template-columns: 1fr 1.4fr 1fr;
-    gap: 12px;
+    gap: 10px;
 }
 
 .hud-card,
@@ -248,9 +248,9 @@ canvas {
 }
 
 .hud-card {
-    padding: 12px 16px;
-    border-radius: 18px;
-    min-height: 82px;
+    padding: 10px 12px;
+    border-radius: 16px;
+    min-height: 68px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -272,8 +272,8 @@ canvas {
 .lives-card::after { background: linear-gradient(90deg, #fb7185, #fda4af); }
 
 .mini-panel {
-    border-radius: 16px;
-    padding: 10px 14px;
+    border-radius: 14px;
+    padding: 9px 12px;
     display: flex;
     flex-direction: column;
     gap: 4px;
@@ -287,7 +287,7 @@ canvas {
 .mini-label,
 .pu-hud-label,
 .stat-label {
-    font-size: 0.72rem;
+    font-size: 0.66rem;
     letter-spacing: 0.18em;
     text-transform: uppercase;
     color: rgba(226, 232, 240, 0.55);
@@ -297,11 +297,11 @@ canvas {
 .mini-value,
 .stat-val {
     font-family: 'Orbitron', sans-serif;
-    font-size: clamp(1.1rem, 3vw, 1.65rem);
+    font-size: clamp(1rem, 2.6vw, 1.45rem);
 }
 
 .mini-value {
-    font-size: clamp(0.95rem, 2.2vw, 1.1rem);
+    font-size: clamp(0.84rem, 2vw, 1rem);
 }
 
 .coin-val {
@@ -310,7 +310,7 @@ canvas {
 
 .combo-badge {
     font-family: 'Orbitron', sans-serif;
-    font-size: clamp(1.2rem, 2.2vw, 1.65rem);
+    font-size: clamp(1rem, 2vw, 1.45rem);
     color: var(--accent-2);
     opacity: 0.7;
 }
@@ -345,17 +345,17 @@ canvas {
 .powerups-row {
     display: flex;
     justify-content: center;
-    gap: 10px;
+    gap: 8px;
     flex-wrap: wrap;
-    margin-top: 14px;
+    margin-top: 10px;
 }
 
 .pu-hud-item {
     display: flex;
     align-items: center;
     gap: 10px;
-    border-radius: 14px;
-    padding: 10px 12px;
+    border-radius: 12px;
+    padding: 8px 10px;
 }
 
 .pu-hud-info {
@@ -486,6 +486,68 @@ canvas {
 }
 
 @media (max-width: 720px) {
+    .hud {
+        padding: 8px;
+    }
+
+    .hud-top {
+        gap: 6px;
+    }
+
+    .hud-bottom {
+        margin-top: 6px;
+        gap: 6px;
+    }
+
+    .hud-card {
+        min-height: 54px;
+        padding: 8px 9px;
+        border-radius: 12px;
+    }
+
+    .mini-panel {
+        padding: 7px 9px;
+        border-radius: 12px;
+    }
+
+    .hud-label,
+    .mini-label,
+    .pu-hud-label {
+        font-size: 0.56rem;
+        letter-spacing: 0.12em;
+    }
+
+    .hud-value,
+    .combo-badge {
+        font-size: 0.98rem;
+    }
+
+    .mini-value {
+        font-size: 0.8rem;
+    }
+
+    .powerups-row {
+        justify-content: flex-start;
+        gap: 6px;
+        margin-top: 6px;
+    }
+
+    .pu-hud-item {
+        padding: 6px 8px;
+        gap: 8px;
+    }
+
+    .pu-icon {
+        width: 24px;
+        height: 24px;
+        border-radius: 8px;
+        font-size: 0.72rem;
+    }
+
+    .pu-hud-bar-bg {
+        width: 64px;
+    }
+
     .powerup-legend,
     .stats-grid {
         grid-template-columns: 1fr;
@@ -493,6 +555,42 @@ canvas {
 
     .screen-inner,
     .pause-content {
-        padding: 22px 18px;
+        padding: 18px 14px;
+        gap: 14px;
+    }
+
+    .game-logo {
+        font-size: clamp(2rem, 12vw, 3rem);
+    }
+
+    .subtitle {
+        font-size: 0.92rem;
+    }
+
+    .ctrl-row,
+    .pu-item {
+        padding: 10px 11px;
+        gap: 10px;
+    }
+
+    .kbd {
+        min-width: 78px;
+        padding: 6px 8px;
+        font-size: 0.62rem;
+    }
+
+    .start-btn,
+    .restart-btn,
+    .resume-btn {
+        padding: 13px 16px;
+        font-size: 0.82rem;
+    }
+
+    .flash-banner {
+        width: calc(100vw - 32px);
+        max-width: 320px;
+        padding: 10px 12px;
+        font-size: 0.86rem;
+        border-radius: 14px;
     }
 }

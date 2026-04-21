@@ -17,6 +17,13 @@ export class EnvironmentManager {
             air: { road: 0x0d1a2b, glow: 0xa78bfa, fog: 0x0b1220, accent: 0xc084fc, label: 'Cloud Route' },
             snow: { road: 0x142235, glow: 0xe0f2fe, fog: 0x0e1728, accent: 0xe0f2fe, label: 'Frost Ring' }
         };
+        this.roadVariantByBiome = {
+            road: ['straight', 'damaged', 'straight', 'curveLeft', 'curveRight'],
+            railway: ['straight', 'curveLeft', 'straight', 'curveRight'],
+            bridge: ['bridge', 'straight', 'bridge'],
+            snow: ['straight', 'damaged', 'straight'],
+            air: ['bridge', 'curveLeft', 'curveRight']
+        };
 
         this.createFloor();
         this.createAmbientTraffic();
@@ -33,6 +40,61 @@ export class EnvironmentManager {
     }
 
     createFloorSegment(z) {
+        const assetSegment = this.createAssetRoadSegment(z);
+        if (assetSegment) {
+            return assetSegment;
+        }
+
+        return this.createFallbackFloorSegment(z);
+    }
+
+    createAssetRoadSegment(z) {
+        const roadType = this.pickRoadVariant(this.currentBiome);
+        const roadAsset = this.engine.assets?.createRoadVariant?.(roadType);
+        if (!roadAsset) {
+            return null;
+        }
+
+        const group = new THREE.Group();
+        const roadWrapper = new THREE.Group();
+        roadWrapper.add(roadAsset);
+        group.add(roadWrapper);
+
+        const roadLightMaterial = new THREE.MeshStandardMaterial({
+            color: 0x1f2937,
+            roughness: 0.18,
+            metalness: 0.82,
+            emissive: 0x0ea5e9,
+            emissiveIntensity: 0.55
+        });
+
+        const leftRail = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.12, 10), roadLightMaterial);
+        leftRail.position.set(-4.05, 0.18, 0);
+        const rightRail = leftRail.clone();
+        rightRail.position.x = 4.05;
+        group.add(leftRail);
+        group.add(rightRail);
+
+        [-1.5, 1.5].forEach((x) => {
+            const line = new THREE.Mesh(
+                new THREE.PlaneGeometry(0.1, 10),
+                new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.45 })
+            );
+            line.rotation.x = -Math.PI / 2;
+            line.position.set(x, 0.04, 0);
+            group.add(line);
+        });
+
+        group.position.z = z;
+        group.userData.z = z;
+        group.userData.road = roadWrapper;
+        group.userData.leftRail = leftRail;
+        group.userData.rightRail = rightRail;
+        group.userData.roadType = roadType;
+        return group;
+    }
+
+    createFallbackFloorSegment(z) {
         const group = new THREE.Group();
 
         const base = new THREE.Mesh(
@@ -227,7 +289,20 @@ export class EnvironmentManager {
         this.scene.fog.color = new THREE.Color(colors.fog);
 
         this.floorMeshes.forEach((segment) => {
-            segment.userData.road.material.color.setHex(colors.road);
+            if (segment.userData.road?.material?.color) {
+                segment.userData.road.material.color.setHex(colors.road);
+            }
+            segment.traverse((child) => {
+                if (!child.isMesh || !child.material) {
+                    return;
+                }
+                const materials = Array.isArray(child.material) ? child.material : [child.material];
+                materials.forEach((material) => {
+                    if ('emissive' in material && material.emissive) {
+                        material.emissive.lerp(new THREE.Color(colors.glow), 0.18);
+                    }
+                });
+            });
             segment.userData.leftRail.material.emissive.setHex(colors.glow);
             segment.userData.rightRail.material.emissive.setHex(colors.glow);
         });
@@ -261,5 +336,10 @@ export class EnvironmentManager {
         });
 
         this.setBiome('road');
+    }
+
+    pickRoadVariant(biome) {
+        const variants = this.roadVariantByBiome[biome] || this.roadVariantByBiome.road;
+        return variants[Math.floor(Math.random() * variants.length)];
     }
 }

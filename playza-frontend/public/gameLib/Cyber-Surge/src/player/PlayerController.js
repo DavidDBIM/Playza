@@ -22,6 +22,9 @@ export class PlayerController {
         this.trailPositions = [];
         this.damageFlashTimer = 0;
         this.stumbleTimer = 0;
+        this.animationMixer = null;
+        this.animationActions = {};
+        this.currentAction = null;
 
         this.createPlayer();
         this.createTrail();
@@ -29,6 +32,49 @@ export class PlayerController {
     }
 
     createPlayer() {
+        const assetRunner = this.engine.assets?.createRunner?.();
+        if (assetRunner?.model) {
+            this.createAssetPlayer(assetRunner);
+            return;
+        }
+
+        this.createFallbackPlayer();
+    }
+
+    createAssetPlayer(assetRunner) {
+        const group = new THREE.Group();
+        group.add(assetRunner.model);
+        group.position.set(this.getLaneX(1), this.config.groundY, 0);
+        this.scene.add(group);
+
+        this.player = group;
+        this.visualRoot = assetRunner.model;
+        this.animationMixer = assetRunner.mixer;
+        this.animationActions = assetRunner.actions || {};
+        this.damageReactiveMaterials = [];
+
+        this.visualRoot.traverse((child) => {
+            if (!child.isMesh || !child.material) {
+                return;
+            }
+            const materials = Array.isArray(child.material) ? child.material : [child.material];
+            materials.forEach((material) => {
+                if ('emissiveIntensity' in material) {
+                    this.damageReactiveMaterials.push(material);
+                }
+            });
+        });
+
+        Object.values(this.animationActions).forEach((action) => {
+            action.setLoop(THREE.LoopRepeat);
+        });
+        if (this.animationActions.jump) this.animationActions.jump.setLoop(THREE.LoopOnce);
+        if (this.animationActions.slide) this.animationActions.slide.setLoop(THREE.LoopOnce);
+
+        this.playAction(this.animationActions.run ? 'run' : 'idle', true);
+    }
+
+    createFallbackPlayer() {
         const group = new THREE.Group();
 
         const suitMaterial = new THREE.MeshStandardMaterial({
@@ -223,6 +269,9 @@ export class PlayerController {
         this.nearMissCooldown = Math.max(0, this.nearMissCooldown - dt);
         this.damageFlashTimer = Math.max(0, this.damageFlashTimer - dt);
         this.stumbleTimer = Math.max(0, this.stumbleTimer - dt);
+        if (this.animationMixer) {
+            this.animationMixer.update(dt);
+        }
 
         this.updateLaneSwitch(dt);
         this.updateJump(dt);
@@ -279,6 +328,27 @@ export class PlayerController {
     }
 
     updateAnimation() {
+        if (this.animationMixer) {
+            const nextAction = this.state.isSliding
+                ? 'slide'
+                : this.state.isJumping
+                    ? 'jump'
+                    : 'run';
+            this.playAction(nextAction);
+
+            this.visualRoot.rotation.x = THREE.MathUtils.lerp(
+                this.visualRoot.rotation.x,
+                this.state.isSliding ? 0.08 : 0,
+                0.12
+            );
+            this.visualRoot.position.y = THREE.MathUtils.lerp(
+                this.visualRoot.position.y,
+                this.state.isSliding ? -0.08 : 0,
+                0.18
+            );
+            return;
+        }
+
         const speed = this.engine.currentSpeed || this.engine.config.baseSpeed;
         const stride = this.engine.elapsedTime * (4.8 + speed * 0.24);
         const runSwing = Math.sin(stride);
@@ -310,8 +380,29 @@ export class PlayerController {
         const blink = this.damageFlashTimer > 0 ? 0.2 + Math.sin(this.engine.elapsedTime * 35) * 0.35 : 0;
         const turboGlow = this.engine.powerups.activeEffects.speed ? 0.2 : 0;
         this.damageReactiveMaterials.forEach((material, index) => {
-            material.emissiveIntensity = Math.max(index === 0 ? blink * 0.5 : 0.28 + blink + turboGlow, 0);
+            material.emissiveIntensity = Math.max((material.emissiveIntensity || 0) * 0.4, index === 0 ? blink * 0.5 : 0.18 + blink + turboGlow);
         });
+    }
+
+    playAction(name, force = false) {
+        const action = this.animationActions[name];
+        if (!action) {
+            return;
+        }
+
+        if (this.currentAction === name && !force) {
+            return;
+        }
+
+        const previous = this.currentAction ? this.animationActions[this.currentAction] : null;
+        if (previous && previous !== action) {
+            previous.fadeOut(0.18);
+        }
+
+        action.reset();
+        action.fadeIn(0.18);
+        action.play();
+        this.currentAction = name;
     }
 
     updateTrail() {
@@ -456,14 +547,21 @@ export class PlayerController {
 
         this.player.position.set(this.getLaneX(1), this.config.groundY, 0);
         this.player.rotation.set(0, 0, 0);
-        this.head.rotation.set(0, 0, 0);
+        if (this.head) this.head.rotation.set(0, 0, 0);
         this.player.scale.set(1, 1, 1);
+        if (this.visualRoot) {
+            this.visualRoot.position.set(0, 0, 0);
+            this.visualRoot.rotation.set(0, Math.PI, 0);
+        }
         this.trailPositions = [];
         this.nearMissCooldown = 0;
         this.damageFlashTimer = 0;
         this.stumbleTimer = 0;
         this.damageReactiveMaterials.forEach((material, index) => {
-            material.emissiveIntensity = index === 0 ? 0 : 0.28;
+            material.emissiveIntensity = index === 0 ? 0 : 0.18;
         });
+        if (this.animationMixer) {
+            this.playAction(this.animationActions.run ? 'run' : 'idle', true);
+        }
     }
 }

@@ -25,10 +25,9 @@ export class UIManager {
                 <h1 class="game-logo">CYBER <span>SURGE</span></h1>
                 <p class="subtitle">Sprint the neon highway, read the city, and stay alive long enough to own the grid.</p>
                 <div class="controls-info">
-                    <div class="ctrl-row"><span class="kbd">A / Left</span><span>Cut across to the left lane</span></div>
-                    <div class="ctrl-row"><span class="kbd">D / Right</span><span>Cut across to the right lane</span></div>
-                    <div class="ctrl-row"><span class="kbd">W / Space</span><span>Jump solid blockers cleanly</span></div>
-                    <div class="ctrl-row"><span class="kbd">S / Down</span><span>Slide under low shock gates</span></div>
+                    <div class="ctrl-row"><span class="kbd">Swipe / A D</span><span>Shift lanes fast</span></div>
+                    <div class="ctrl-row"><span class="kbd">Up / Space</span><span>Jump blockers and wrecks</span></div>
+                    <div class="ctrl-row"><span class="kbd">Down / S</span><span>Slide under low barriers</span></div>
                 </div>
                 <div class="powerup-legend">
                     <div class="pu-item"><span class="pu-icon magnet">M</span><span>Magnet vacuums nearby coins</span></div>
@@ -70,11 +69,11 @@ export class UIManager {
             </div>
             <div class="hud-bottom">
                 <div class="mini-panel">
-                    <span class="mini-label">Distance</span>
+                    <span class="mini-label">Dist</span>
                     <span class="mini-value" id="distance-value">0m</span>
                 </div>
                 <div class="mini-panel district-panel">
-                    <span class="mini-label">District</span>
+                    <span class="mini-label">Zone</span>
                     <span class="mini-value" id="district-value">Core Grid</span>
                 </div>
                 <div class="mini-panel">

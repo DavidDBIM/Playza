@@ -87,42 +87,60 @@ export class ObstacleSystem {
         });
 
         if (config.type === 'slideGate') {
-            const beam = new THREE.Mesh(new THREE.BoxGeometry(config.width, 0.28, config.depth), shellMaterial);
-            beam.position.y = 1.1;
-            beam.castShadow = true;
-            group.add(beam);
+            const asset = this.engine.assets?.createObstacle?.(config.type, config);
+            if (asset) {
+                asset.position.y = 0;
+                group.add(asset);
+            } else {
+                const beam = new THREE.Mesh(new THREE.BoxGeometry(config.width, 0.28, config.depth), shellMaterial);
+                beam.position.y = 1.1;
+                beam.castShadow = true;
+                group.add(beam);
 
-            const leftPillar = new THREE.Mesh(new THREE.BoxGeometry(0.28, 1.8, 0.28), trimMaterial);
-            leftPillar.position.set(-1.02, 0.9, 0);
-            leftPillar.castShadow = true;
-            group.add(leftPillar);
+                const leftPillar = new THREE.Mesh(new THREE.BoxGeometry(0.28, 1.8, 0.28), trimMaterial);
+                leftPillar.position.set(-1.02, 0.9, 0);
+                leftPillar.castShadow = true;
+                group.add(leftPillar);
 
-            const rightPillar = leftPillar.clone();
-            rightPillar.position.x = 1.02;
-            group.add(rightPillar);
+                const rightPillar = leftPillar.clone();
+                rightPillar.position.x = 1.02;
+                group.add(rightPillar);
 
-            const glowStrip = new THREE.Mesh(new THREE.BoxGeometry(config.width - 0.2, 0.06, 0.05), trimMaterial);
-            glowStrip.position.set(0, 1.08, config.depth / 2 + 0.03);
-            group.add(glowStrip);
+                const glowStrip = new THREE.Mesh(new THREE.BoxGeometry(config.width - 0.2, 0.06, 0.05), trimMaterial);
+                glowStrip.position.set(0, 1.08, config.depth / 2 + 0.03);
+                group.add(glowStrip);
+            }
         } else if (config.type === 'drone') {
-            const body = new THREE.Mesh(new THREE.OctahedronGeometry(0.65), shellMaterial);
-            body.position.y = 1.3;
-            body.castShadow = true;
-            group.add(body);
+            const asset = this.engine.assets?.createObstacle?.(config.type, config);
+            if (asset) {
+                asset.position.y = 0;
+                group.add(asset);
+            } else {
+                const body = new THREE.Mesh(new THREE.OctahedronGeometry(0.65), shellMaterial);
+                body.position.y = 1.3;
+                body.castShadow = true;
+                group.add(body);
 
-            const core = new THREE.Mesh(new THREE.SphereGeometry(0.18, 12, 12), trimMaterial);
-            core.position.y = 1.3;
-            group.add(core);
+                const core = new THREE.Mesh(new THREE.SphereGeometry(0.18, 12, 12), trimMaterial);
+                core.position.y = 1.3;
+                group.add(core);
+            }
         } else {
-            const base = new THREE.Mesh(new THREE.BoxGeometry(config.width, config.height, config.depth), shellMaterial);
-            base.position.y = config.height / 2;
-            base.castShadow = true;
-            base.receiveShadow = true;
-            group.add(base);
+            const asset = this.engine.assets?.createObstacle?.(config.type, config);
+            if (asset) {
+                asset.position.y = 0;
+                group.add(asset);
+            } else {
+                const base = new THREE.Mesh(new THREE.BoxGeometry(config.width, config.height, config.depth), shellMaterial);
+                base.position.y = config.height / 2;
+                base.castShadow = true;
+                base.receiveShadow = true;
+                group.add(base);
 
-            const topLight = new THREE.Mesh(new THREE.BoxGeometry(config.width - 0.25, 0.08, config.depth + 0.06), trimMaterial);
-            topLight.position.set(0, config.height + 0.08, 0);
-            group.add(topLight);
+                const topLight = new THREE.Mesh(new THREE.BoxGeometry(config.width - 0.25, 0.08, config.depth + 0.06), trimMaterial);
+                topLight.position.set(0, config.height + 0.08, 0);
+                group.add(topLight);
+            }
         }
     }
 
