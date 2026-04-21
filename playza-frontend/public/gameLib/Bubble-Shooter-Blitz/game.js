@@ -14,6 +14,8 @@ const MODES = {
   ENDLESS: "endless",
 };
 
+const STRUCTURES = ["full", "diamond", "hourglass", "split", "chevron", "rings", "funnel"];
+
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
@@ -99,6 +101,7 @@ class BubbleShooterBlitz {
     this.timeValue = document.getElementById("timeValue");
     this.comboValue = document.getElementById("comboValue");
     this.bestValue = document.getElementById("bestValue");
+    this.levelValue = document.getElementById("levelValue");
     this.modePill = document.getElementById("modePill");
     this.seedPill = document.getElementById("seedPill");
     this.messageLine = document.getElementById("messageLine");
@@ -159,6 +162,8 @@ class BubbleShooterBlitz {
     this.ceilingSpeed = 6;
     this.shotsTaken = 0;
     this.misses = 0;
+    this.level = 1;
+    this.structureName = STRUCTURES[0];
 
     this.swapsLeft = 2;
     this.bombs = 0;
@@ -213,9 +218,10 @@ class BubbleShooterBlitz {
 
     const onUp = () => {
       if (!this.isAiming) return;
+      const releasePoint = { ...this.aimPoint };
       this.isAiming = false;
       if (!this.activeShot) {
-        this.fireShot();
+        this.fireShot(releasePoint);
       }
     };
 
@@ -278,14 +284,14 @@ class BubbleShooterBlitz {
     const dailyKey = getDailyKey();
     if (isHelp) {
       this.overlayKicker.textContent = "How to play";
-      this.overlayTitle.textContent = "Pop, Drop, Blitz";
+      this.overlayTitle.textContent = "Pop, Drop, Climb";
       this.overlayText.textContent =
-        "Match 3+ to pop. Dropped clusters score huge. Keep popping every shot to build combo. Daily mode uses the same seed for everyone.";
+        "Match 3+ to pop. Dropped clusters score huge. Endless mode climbs through fresh layouts with a new structure each level.";
     } else {
       this.overlayKicker.textContent = "Bubble Shooter Blitz";
       this.overlayTitle.textContent = "Ready?";
       this.overlayText.textContent =
-        "You have 60 seconds. Pop fast, drop clusters, and keep the combo alive. Big clears charge bombs.";
+        "Daily mode is a short sprint. Endless mode keeps going with larger, changing formations and more pressure.";
     }
     this.seedPill.textContent = `Seed ${dailyKey}`;
   }
@@ -300,7 +306,7 @@ class BubbleShooterBlitz {
     this.seedKey = mode === MODES.DAILY ? getDailyKey() : `${Date.now()}`;
     this.bestKey = mode === MODES.DAILY ? "bubbleShooterBlitz.best.daily" : "bubbleShooterBlitz.best.endless";
     this.gameRng = mulberry32(hashStringToSeed(`bubble-blitz:${this.seedKey}`));
-    this.modePill.textContent = mode === MODES.DAILY ? "Daily Seed" : "Endless Warmup";
+    this.modePill.textContent = mode === MODES.DAILY ? "Daily Seed" : "Endless";
     this.seedPill.textContent = mode === MODES.DAILY ? `Seed ${this.seedKey}` : "Procedural";
 
     this.playing = true;
@@ -314,6 +320,8 @@ class BubbleShooterBlitz {
     this.ceilingSpeed = mode === MODES.DAILY ? 8 : 10;
     this.shotsTaken = 0;
     this.misses = 0;
+    this.level = 1;
+    this.structureName = STRUCTURES[0];
     this.flash = 0;
     this.shake = 0;
     this.particles = [];
@@ -373,15 +381,41 @@ class BubbleShooterBlitz {
 
   buildGrid() {
     this.grid = Array.from({ length: this.maxRows }, () => Array(this.cols).fill(null));
-    const startRows = clamp(6 + Math.floor(this.gameRng() * 2), 6, 8);
-    const palette = COLORS.slice(0, clamp(4 + Math.floor(this.gameRng() * 2), 4, 6)).map((c) => c.id);
+    const startRows = clamp(6 + Math.floor(this.gameRng() * 2) + Math.floor((this.level - 1) / 3), 6, 9);
+    const palette = COLORS.slice(0, clamp(4 + Math.floor(this.gameRng() * 2) + Math.floor((this.level - 1) / 4), 4, 6)).map((c) => c.id);
+    this.structureName = STRUCTURES[(this.level - 1) % STRUCTURES.length];
 
     for (let row = 0; row < startRows; row += 1) {
       for (let col = 0; col < this.cols; col += 1) {
-        if (this.gameRng() < 0.08 && row > 1) continue;
+        if (!this.isStructureCell(row, col, startRows, this.cols, this.structureName)) continue;
+        if (this.gameRng() < 0.06 && row > 1 && this.structureName === "full") continue;
         const color = palette[Math.floor(this.gameRng() * palette.length)];
         this.grid[row][col] = { color, row, col };
       }
+    }
+  }
+
+  isStructureCell(row, col, rows, cols, structure) {
+    const center = (cols - 1) / 2;
+    const dx = Math.abs(col - center);
+    const rowProgress = rows <= 1 ? 0 : row / (rows - 1);
+
+    switch (structure) {
+      case "diamond":
+        return dx <= Math.max(1, Math.round((cols * 0.42) - Math.abs(rowProgress - 0.5) * cols * 0.75));
+      case "hourglass":
+        return dx <= Math.max(1, Math.round((cols * 0.22) + Math.abs(rowProgress - 0.5) * cols * 0.42));
+      case "split":
+        return dx >= 1 || row >= Math.floor(rows * 0.55);
+      case "chevron":
+        return dx <= Math.max(1, Math.round(rowProgress * cols * 0.52)) || row < 2;
+      case "rings":
+        return row === 0 || row === rows - 1 || col === 0 || col === cols - 1 || (row > 1 && row < rows - 2 && col > 1 && col < cols - 2 && (row < 3 || row > rows - 4 || col < 3 || col > cols - 4));
+      case "funnel":
+        return dx <= Math.max(1, Math.round((1 - rowProgress * 0.78) * cols * 0.46));
+      case "full":
+      default:
+        return true;
     }
   }
 
@@ -410,7 +444,7 @@ class BubbleShooterBlitz {
     this.flash = Math.max(this.flash, 0.06);
     this.shake = Math.min(16, this.shake + 4);
     this.tone.tone(220, 0.06, "sawtooth", 0.02);
-    this.message("Ceiling pressure rising.");
+    this.message(this.mode === MODES.ENDLESS ? `Level ${this.level} pressure rising.` : "Ceiling pressure rising.");
   }
 
   worldPosForCell(row, col) {
@@ -450,13 +484,13 @@ class BubbleShooterBlitz {
     return result;
   }
 
-  fireShot() {
+  fireShot(targetPoint = null) {
     if (!this.playing || this.gameOver) return;
     if (this.activeShot) return;
     const shot = this.queue.now;
     if (!shot) return;
 
-    const aim = this.getAimVector();
+    const aim = this.getAimVector(targetPoint);
     const speed = 920;
     this.activeShot = {
       x: this.launcher.x,
@@ -475,8 +509,8 @@ class BubbleShooterBlitz {
     this.syncHud();
   }
 
-  getAimVector() {
-    const p = this.isAiming ? this.aimPoint : { x: this.launcher.x, y: this.launcher.y - 240 };
+  getAimVector(targetPoint = null) {
+    const p = targetPoint || (this.isAiming ? this.aimPoint : { x: this.launcher.x, y: this.launcher.y - 240 });
     let dx = p.x - this.launcher.x;
     let dy = p.y - this.launcher.y;
     if (Math.abs(dx) < 0.001 && Math.abs(dy) < 0.001) dy = -1;
@@ -529,6 +563,7 @@ class BubbleShooterBlitz {
   syncHud() {
     this.scoreValue.textContent = `${Math.max(0, Math.floor(this.score))}`;
     this.comboValue.textContent = `x${this.combo}`;
+    if (this.levelValue) this.levelValue.textContent = `${this.level}`;
     if (this.mode === MODES.DAILY) {
       this.timeValue.textContent = `${Math.max(0, this.timer).toFixed(1)}`;
     } else {
@@ -613,11 +648,14 @@ class BubbleShooterBlitz {
     this.updateParticles(dt);
 
     if (this.isGridEmpty()) {
-      this.message("Clean sweep! Fresh wave incoming.");
+      if (this.mode === MODES.ENDLESS) {
+        this.level += 1;
+      }
       if (this.mode === MODES.DAILY) {
         this.timer = Math.min(90, this.timer + 3.5);
       }
       this.buildGrid();
+      this.message(this.mode === MODES.ENDLESS ? `Level ${this.level}! ${this.structureName} structure.` : "Clean sweep! Fresh wave incoming.");
       this.queue.now = this.rollBubble();
       this.queue.next = this.rollBubble();
       this.flash = Math.max(this.flash, 0.14);

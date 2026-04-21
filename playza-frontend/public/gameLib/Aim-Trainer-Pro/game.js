@@ -1,567 +1,457 @@
-const AudioManager = {
-    ctx: null,
-    init() {
-        this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-    },
-    playHit() {
-        if (!this.ctx) this.init();
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        osc.connect(gain);
-        gain.connect(this.ctx.destination);
-        osc.frequency.setValueAtTime(800, this.ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(400, this.ctx.currentTime + 0.1);
-        gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.1);
-        osc.start();
-        osc.stop(this.ctx.currentTime + 0.1);
-    },
-    playCombo() {
-        if (!this.ctx) this.init();
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        osc.connect(gain);
-        gain.connect(this.ctx.destination);
-        osc.frequency.setValueAtTime(600, this.ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(1200, this.ctx.currentTime + 0.15);
-        gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
-        osc.start();
-        osc.stop(this.ctx.currentTime + 0.15);
-    },
-    playMiss() {
-        if (!this.ctx) this.init();
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        osc.connect(gain);
-        gain.connect(this.ctx.destination);
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(200, this.ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(100, this.ctx.currentTime + 0.15);
-        gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
-        osc.start();
-        osc.stop(this.ctx.currentTime + 0.15);
-    },
-    playLevelUp() {
-        if (!this.ctx) this.init();
-        const notes = [523, 659, 784, 1047];
-        notes.forEach((freq, i) => {
-            const osc = this.ctx.createOscillator();
-            const gain = this.ctx.createGain();
-            osc.connect(gain);
-            gain.connect(this.ctx.destination);
-            osc.frequency.setValueAtTime(freq, this.ctx.currentTime + i * 0.1);
-            gain.gain.setValueAtTime(0.2, this.ctx.currentTime + i * 0.1);
-            gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + i * 0.1 + 0.2);
-            osc.start(this.ctx.currentTime + i * 0.1);
-            osc.stop(this.ctx.currentTime + i * 0.1 + 0.2);
-        });
-    }
+const WEAPONS = {
+    pistol: { name: "Pistol", mag: 10, reserve: 40, fireDelay: 220, reloadMs: 900, power: 1, spread: 0 },
+    rifle: { name: "Rifle", mag: 18, reserve: 72, fireDelay: 110, reloadMs: 1200, power: 1, spread: 0 },
+    scatter: { name: "Scatter", mag: 6, reserve: 30, fireDelay: 480, reloadMs: 1400, power: 2, spread: 24 }
 };
 
-document.addEventListener('DOMContentLoaded', () => {
-    const gameArea = document.getElementById('game-area');
-    const scoreDisplay = document.getElementById('score');
-    const timeDisplay = document.getElementById('time');
-    const xpDisplay = document.getElementById('xp');
-    const bestScoreDisplay = document.getElementById('best-score');
-    const comboDisplay = document.getElementById('combo');
-    const accuracyDisplay = document.getElementById('accuracy');
-    const hitsDisplay = document.getElementById('hits');
-    const streakDisplay = document.getElementById('streak');
-    const startScreen = document.getElementById('start-screen');
-    const gameOverOverlay = document.getElementById('game-over-overlay');
-    const comboFire = document.getElementById('combo-fire');
-    const heatmap = document.getElementById('heatmap');
+const TARGET_TEMPLATES = [
+    { icon: "🦆", label: "DUCK", points: 100, hp: 1, className: "hostile" },
+    { icon: "🦊", label: "FOX", points: 120, hp: 1, className: "hostile" },
+    { icon: "🎯", label: "TARGET", points: 90, hp: 1, className: "hostile" },
+    { icon: "📦", label: "CRATE", points: 140, hp: 2, className: "bonus" },
+    { icon: "🚁", label: "DRONE", points: 170, hp: 1, className: "fast" }
+];
 
-    let gameState = {
+document.addEventListener("DOMContentLoaded", () => {
+    const gameArea = document.getElementById("game-area");
+    const overlay = document.getElementById("overlay");
+    const overlayTitle = document.getElementById("overlay-title");
+    const overlayText = document.getElementById("overlay-text");
+    const overlayAction = document.getElementById("overlay-action");
+    const startBtn = document.getElementById("start-btn");
+    const pauseBtn = document.getElementById("pause-btn");
+    const reloadBtn = document.getElementById("reload-btn");
+    const crosshair = document.getElementById("crosshair");
+    const muzzleFlash = document.getElementById("muzzle-flash");
+    const impactLayer = document.getElementById("impact-layer");
+
+    const scoreEl = document.getElementById("score");
+    const levelEl = document.getElementById("level");
+    const waveEl = document.getElementById("wave");
+    const accuracyEl = document.getElementById("accuracy");
+    const bestScoreEl = document.getElementById("best-score");
+    const ammoEl = document.getElementById("ammo");
+    const livesEl = document.getElementById("lives");
+    const objectiveEl = document.getElementById("objective");
+    const weaponNameEl = document.getElementById("weapon-name");
+    const missionTitleEl = document.getElementById("mission-title");
+    const missionTextEl = document.getElementById("mission-text");
+    const arenaStatusEl = document.getElementById("arena-status");
+    const levelProgressEl = document.getElementById("level-progress");
+    const comboReadoutEl = document.getElementById("combo-readout");
+
+    const weaponButtons = [...document.querySelectorAll(".weapon-btn")];
+
+    const bestScore = parseInt(localStorage.getItem("target-hunt-best") || "0", 10);
+    bestScoreEl.textContent = bestScore;
+
+    const state = {
+        running: false,
+        paused: false,
+        weaponKey: "pistol",
         score: 0,
-        timeLeft: 60,
-        xp: 0,
-        totalXp: parseInt(localStorage.getItem('aim-trainer-total-xp')) || 0,
+        bestScore,
         level: 1,
-        bestScore: parseInt(localStorage.getItem('aim-trainer-best')) || 0,
-        combo: 0,
-        maxCombo: 0,
+        wave: 1,
+        lives: 3,
+        shots: 0,
         hits: 0,
-        clicks: 0,
-        misses: 0,
-        isPlaying: false,
-        currentMode: 'classic',
-        currentDifficulty: 'easy',
-        currentSkin: 'classic',
-        targetSize: 50,
-        spawnInterval: 1500,
-        basePoints: 100,
-        currentStreak: 0,
-        bestStreak: parseInt(localStorage.getItem('aim-trainer-best-streak')) || 0,
-        reactionTimes: [],
-        totalGames: parseInt(localStorage.getItem('aim-trainer-total-games')) || 0,
-        sessionHits: 0,
-        sessionClicks: 0
+        combo: 0,
+        objectiveHits: 0,
+        objectiveGoal: 12,
+        levelMessage: "",
+        isReloading: false,
+        currentAmmo: WEAPONS.pistol.mag,
+        reserveAmmo: WEAPONS.pistol.reserve,
+        lastShotAt: 0,
+        targets: [],
+        lastTick: 0,
+        spawnTimer: 0,
+        spawnInterval: 1100,
+        maxTargets: 3,
+        levelAdvanceQueued: false,
+        rafId: 0
     };
 
-    let gameTimer = null;
-    let targetInterval = null;
-    let currentTarget = null;
-    let targetSpawnTime = 0;
-    let dailyChallenge = null;
-
-    const modeConfigs = {
-        classic: { time: 60, spawnInterval: 1500, desc: 'Standard 60-second round. Build combos for bonus points!' },
-        speed: { time: 30, spawnInterval: 800, desc: 'Fast-paced 30-second blitz. Quick reflexes needed!' },
-        precision: { time: 60, spawnInterval: 2000, desc: 'Smaller targets, more points. Focus on accuracy!' },
-        endless: { time: Infinity, spawnInterval: 1500, desc: 'No time limit. How long can you survive?' },
-        streak: { time: Infinity, spawnInterval: 1200, desc: 'One miss = game over! Can you handle the pressure?' }
-    };
-
-    const difficultySettings = {
-        easy: { sizeMultiplier: 1.3, pointsMultiplier: 0.8 },
-        medium: { sizeMultiplier: 1, pointsMultiplier: 1 },
-        hard: { sizeMultiplier: 0.75, pointsMultiplier: 1.5 },
-        insane: { sizeMultiplier: 0.5, pointsMultiplier: 2.5 }
-    };
-
-    bestScoreDisplay.textContent = gameState.bestScore;
-    updatePlayerStats();
-
-    window.selectMode = function(mode) {
-        if (gameState.isPlaying) return;
-        gameState.currentMode = mode;
-        document.querySelectorAll('.mode-btn').forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.mode === mode);
-        });
-        updateModeInfo();
-    };
-
-    window.selectDifficulty = function(diff) {
-        if (gameState.isPlaying) return;
-        gameState.currentDifficulty = diff;
-        document.querySelectorAll('.diff-btn').forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.diff === diff);
-        });
-    };
-
-    window.selectSkin = function(skin) {
-        if (gameState.isPlaying) return;
-        gameState.currentSkin = skin;
-        document.querySelectorAll('.skin-btn').forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.skin === skin);
-        });
-    };
-
-    function updateModeInfo() {
-        const config = modeConfigs[gameState.currentMode];
-        const titleEl = document.querySelector('#mode-info h2');
-        const descEl = document.querySelector('.mode-desc');
-        titleEl.textContent = config.time === Infinity ? 
-            (gameState.currentMode === 'streak' ? 'STREAK MODE' : 'ENDLESS MODE') : 
-            `${config.time} SECONDS`;
-        descEl.textContent = config.desc;
-    }
-
-    function updatePlayerStats() {
-        const xpForLevel = gameState.level * 500;
-        const currentLevelXp = gameState.totalXp - ((gameState.level - 1) * 500);
-        xpDisplay.textContent = `${currentLevelXp}/${xpForLevel}`;
-        document.getElementById('total-games').textContent = gameState.totalGames;
-        document.getElementById('total-xp').textContent = gameState.totalXp;
-        document.getElementById('player-level').textContent = gameState.level;
-    }
-
-    function checkLevelUp() {
-        const xpForLevel = gameState.level * 500;
-        if (gameState.totalXp >= xpForLevel) {
-            gameState.level++;
-            localStorage.setItem('aim-trainer-level', gameState.level);
-            AudioManager.playLevelUp();
-            showLevelUp();
+    function selectWeapon(key) {
+        if (!WEAPONS[key]) return;
+        state.weaponKey = key;
+        weaponButtons.forEach((btn) => btn.classList.toggle("active", btn.dataset.weapon === key));
+        if (!state.running) {
+            const weapon = WEAPONS[key];
+            state.currentAmmo = weapon.mag;
+            state.reserveAmmo = weapon.reserve;
         }
+        updateHUD();
     }
 
-    function showLevelUp() {
-        const levelUp = document.createElement('div');
-        levelUp.className = 'level-up';
-        levelUp.textContent = `LEVEL ${gameState.level}!`;
-        document.body.appendChild(levelUp);
-        setTimeout(() => levelUp.remove(), 2000);
+    function resetState() {
+        const weapon = WEAPONS[state.weaponKey];
+        clearTargets();
+        state.running = true;
+        state.paused = false;
+        state.score = 0;
+        state.level = 1;
+        state.wave = 1;
+        state.lives = 3;
+        state.shots = 0;
+        state.hits = 0;
+        state.combo = 0;
+        state.objectiveHits = 0;
+        state.objectiveGoal = 12;
+        state.currentAmmo = weapon.mag;
+        state.reserveAmmo = weapon.reserve;
+        state.spawnInterval = 1100;
+        state.maxTargets = 3;
+        state.isReloading = false;
+        state.levelAdvanceQueued = false;
+        state.lastShotAt = 0;
+        missionTitleEl.textContent = "Level 1: Warm Up";
+        missionTextEl.textContent = "Hit 12 targets to clear the opening range. Moving prey will get faster after every level.";
+        arenaStatusEl.textContent = "Hunt in Progress";
+        closeOverlay();
+        updateHUD();
     }
 
-    window.startGame = function() {
-        startScreen.style.display = 'none';
-        
-        const config = modeConfigs[gameState.currentMode];
-        const diff = difficultySettings[gameState.currentDifficulty];
-        
-        gameState.score = 0;
-        gameState.timeLeft = config.time;
-        gameState.combo = 0;
-        gameState.maxCombo = 0;
-        gameState.hits = 0;
-        gameState.clicks = 0;
-        gameState.misses = 0;
-        gameState.currentStreak = 0;
-        gameState.reactionTimes = [];
-        gameState.targetSize = 50 * diff.sizeMultiplier;
-        gameState.spawnInterval = config.spawnInterval;
-        gameState.basePoints = 100 * diff.pointsMultiplier;
-        gameState.sessionHits = 0;
-        gameState.sessionClicks = 0;
-        
-        scoreDisplay.textContent = '0';
-        timeDisplay.textContent = config.time === Infinity ? '∞' : config.time;
-        timeDisplay.style.color = '';
-        comboDisplay.textContent = 'x1';
-        comboDisplay.style.color = '#ff3366';
-        accuracyDisplay.textContent = '100%';
-        hitsDisplay.textContent = '0';
-        streakDisplay.textContent = '0';
-        
-        comboFire.classList.remove('active');
-        heatmap.innerHTML = '';
-        
-        gameState.isPlaying = true;
-        
-        if (config.time !== Infinity) {
-            gameTimer = setInterval(() => {
-                gameState.timeLeft--;
-                timeDisplay.textContent = gameState.timeLeft;
-                
-                if (gameState.timeLeft <= 10) {
-                    timeDisplay.style.color = '#ff3366';
-                }
-                
-                if (gameState.timeLeft <= 0) {
-                    endGame(false);
-                }
-            }, 1000);
-        }
+    function openOverlay(title, text, actionText) {
+        overlayTitle.textContent = title;
+        overlayText.textContent = text;
+        overlayAction.textContent = actionText || "Continue";
+        overlay.classList.add("active");
+    }
 
-        spawnTarget();
-        
-        targetInterval = setInterval(() => {
-            if (currentTarget && !currentTarget.classList.contains('hit')) {
-                const isMiss = gameState.currentMode === 'streak';
-                missTarget();
-                if (isMiss && gameState.currentMode === 'streak') {
-                    endGame(true);
-                }
-            }
-            spawnTarget();
-        }, gameState.spawnInterval);
-    };
+    function closeOverlay() {
+        overlay.classList.remove("active");
+    }
+
+    function updateHUD() {
+        scoreEl.textContent = state.score;
+        levelEl.textContent = state.level;
+        waveEl.textContent = state.wave;
+        livesEl.textContent = state.lives;
+        accuracyEl.textContent =
+            state.shots === 0 ? "100%" : `${Math.round((state.hits / state.shots) * 100)}%`;
+        ammoEl.textContent = `${state.currentAmmo} / ${state.reserveAmmo}`;
+        objectiveEl.textContent = `${state.objectiveHits} / ${state.objectiveGoal}`;
+        weaponNameEl.textContent = WEAPONS[state.weaponKey].name + (state.isReloading ? " (Reloading)" : "");
+        levelProgressEl.style.width = `${Math.min(100, (state.objectiveHits / state.objectiveGoal) * 100)}%`;
+        comboReadoutEl.textContent = `Combo x${Math.max(1, state.combo)}`;
+        bestScoreEl.textContent = state.bestScore;
+    }
+
+    function clearTargets() {
+        state.targets.forEach((target) => target.el.remove());
+        state.targets = [];
+    }
+
+    function buildLevelSettings() {
+        return {
+            spawnInterval: Math.max(360, 1100 - (state.level - 1) * 80),
+            maxTargets: Math.min(7, 3 + Math.floor((state.level - 1) / 2)),
+            baseSpeed: 36 + state.level * 8,
+            targetSize: Math.max(58, 108 - state.level * 4)
+        };
+    }
 
     function spawnTarget() {
-        if (currentTarget) {
-            currentTarget.remove();
-        }
+        if (!state.running || state.paused) return;
+        if (state.targets.length >= state.maxTargets) return;
 
-        const gameAreaRect = gameArea.getBoundingClientRect();
-        const padding = 25;
-        
-        const maxX = gameAreaRect.width - gameState.targetSize - padding * 2;
-        const maxY = gameAreaRect.height - gameState.targetSize - padding * 2;
-        
-        const x = padding + Math.random() * maxX;
-        const y = padding + Math.random() * maxY;
+        const settings = buildLevelSettings();
+        const rect = gameArea.getBoundingClientRect();
+        const template = TARGET_TEMPLATES[Math.floor(Math.random() * TARGET_TEMPLATES.length)];
+        const size = settings.targetSize + Math.random() * 24;
+        const x = 70 + Math.random() * Math.max(80, rect.width - 140);
+        const y = 70 + Math.random() * Math.max(80, rect.height - 140);
+        const angle = Math.random() * Math.PI * 2;
+        const speed = settings.baseSpeed + Math.random() * (16 + state.level * 2);
 
-        const target = document.createElement('div');
-        target.className = `target ${gameState.currentSkin}`;
-        target.style.width = gameState.targetSize + 'px';
-        target.style.height = gameState.targetSize + 'px';
-        target.style.left = x + 'px';
-        target.style.top = y + 'px';
-        
-        target.addEventListener('click', (e) => {
-            e.stopPropagation();
-            hitTarget(target, e);
+        const el = document.createElement("button");
+        el.className = `gallery-target ${template.className}`;
+        el.style.width = `${size}px`;
+        el.style.height = `${Math.max(64, size * 0.72)}px`;
+        el.style.left = `${x}px`;
+        el.style.top = `${y}px`;
+        el.innerHTML = `<span class="icon">${template.icon}</span><span class="tag">${template.label}</span>`;
+        gameArea.appendChild(el);
+
+        const target = {
+            id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`,
+            el,
+            x,
+            y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed * 0.55,
+            size,
+            hp: template.hp,
+            points: template.points,
+            bornAt: performance.now()
+        };
+
+        el.addEventListener("click", (event) => {
+            event.stopPropagation();
+            fireShot(event, target);
         });
 
-        gameArea.appendChild(target);
-        currentTarget = target;
-        targetSpawnTime = Date.now();
+        state.targets.push(target);
     }
 
-    function hitTarget(target, event) {
-        if (!gameState.isPlaying) return;
-        
-        gameState.sessionClicks++;
-        gameState.clicks++;
-        gameState.hits++;
-        
-        const reactionTime = Date.now() - targetSpawnTime;
-        gameState.reactionTimes.push(reactionTime);
-        
-        target.classList.add('hit');
-        
-        gameState.combo++;
-        gameState.currentStreak++;
-        if (gameState.combo > gameState.maxCombo) gameState.maxCombo = gameState.combo;
-        
-        const comboMultiplier = Math.min(gameState.combo, 15);
-        const points = Math.floor(gameState.basePoints * comboMultiplier);
-        
-        gameState.score += points;
-        scoreDisplay.textContent = gameState.score;
-        
-        comboDisplay.textContent = 'x' + comboMultiplier;
-        
-        if (gameState.combo >= 5) {
-            comboDisplay.style.color = '#ffd700';
-            AudioManager.playCombo();
-        } else {
-            AudioManager.playHit();
+    function removeTarget(target) {
+        state.targets = state.targets.filter((item) => item.id !== target.id);
+        target.el.remove();
+    }
+
+    function fireShot(event, forcedTarget = null) {
+        if (!state.running || state.paused || state.isReloading) return;
+        const weapon = WEAPONS[state.weaponKey];
+        const now = performance.now();
+        if (now - state.lastShotAt < weapon.fireDelay) return;
+
+        if (state.currentAmmo <= 0) {
+            beginReload();
+            return;
         }
-        
-        if (gameState.combo >= 8) {
-            comboFire.classList.add('active');
-        }
-        
-        updateAccuracy();
-        streakDisplay.textContent = gameState.currentStreak;
-        
-        showComboPopup(event.clientX, event.clientY, comboMultiplier);
-        createParticles(event.clientX, event.clientY);
-        addHeatmapDot(event.clientX, event.clientY);
-        
-        setTimeout(() => {
-            target.remove();
-            currentTarget = null;
-            spawnTarget();
-        }, 120);
-    }
 
-    function missTarget() {
-        if (!gameState.isPlaying) return;
-        
-        gameState.sessionClicks++;
-        gameState.clicks++;
-        gameState.misses++;
-        gameState.combo = 0;
-        
-        comboDisplay.textContent = 'x1';
-        comboDisplay.style.color = '#ff3366';
-        comboFire.classList.remove('active');
-        
-        if (gameState.currentMode === 'streak') {
-            AudioManager.playMiss();
-            showStreakWarning();
-        }
-        
-        updateAccuracy();
-    }
+        state.lastShotAt = now;
+        state.currentAmmo--;
+        state.shots++;
 
-    function updateAccuracy() {
-        if (gameState.clicks === 0) {
-            accuracyDisplay.textContent = '100%';
-        } else {
-            const acc = Math.round((gameState.hits / gameState.clicks) * 100);
-            accuracyDisplay.textContent = acc + '%';
-        }
-        
-        hitsDisplay.textContent = gameState.hits;
-    }
-
-    function showComboPopup(x, y, multiplier) {
-        if (multiplier < 3) return;
-        
-        const popup = document.createElement('div');
-        popup.className = 'combo-popup';
-        popup.textContent = multiplier + 'x!';
-        popup.style.left = (x - gameArea.getBoundingClientRect().left) + 'px';
-        popup.style.top = (y - gameArea.getBoundingClientRect().top) + 'px';
-        
-        gameArea.appendChild(popup);
-        
-        setTimeout(() => popup.remove(), 700);
-    }
-
-    function createParticles(x, y) {
-        const colors = ['#ff3366', '#00ffaa', '#ffd700', '#00aaff'];
-        const count = 8;
-        
-        for (let i = 0; i < count; i++) {
-            const particle = document.createElement('div');
-            particle.className = 'particle';
-            particle.style.left = (x - gameArea.getBoundingClientRect().left) + 'px';
-            particle.style.top = (y - gameArea.getBoundingClientRect().top) + 'px';
-            particle.style.background = colors[Math.floor(Math.random() * colors.length)];
-            
-            const angle = (i / count) * Math.PI * 2;
-            const distance = 40 + Math.random() * 30;
-            particle.style.setProperty('--px', Math.cos(angle) * distance + 'px');
-            particle.style.setProperty('--py', Math.sin(angle) * distance + 'px');
-            
-            gameArea.appendChild(particle);
-            setTimeout(() => particle.remove(), 600);
-        }
-    }
-
-    function addHeatmapDot(x, y) {
         const rect = gameArea.getBoundingClientRect();
-        const dot = document.createElement('div');
-        dot.className = 'heatmap-dot';
-        dot.style.left = (x - rect.left) + 'px';
-        dot.style.top = (y - rect.top) + 'px';
-        dot.style.opacity = 0.3 + Math.random() * 0.3;
-        heatmap.appendChild(dot);
-    }
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        showShotFeedback(x, y);
 
-    function showStreakWarning() {
-        const warning = document.createElement('div');
-        warning.className = 'streak-warning';
-        warning.textContent = 'MISS!';
-        gameArea.appendChild(warning);
-        setTimeout(() => warning.remove(), 500);
-    }
-
-    function endGame(streakOver = false) {
-        gameState.isPlaying = false;
-        
-        clearInterval(gameTimer);
-        clearInterval(targetInterval);
-        
-        if (currentTarget) {
-            currentTarget.remove();
-            currentTarget = null;
-        }
-
-        comboFire.classList.remove('active');
-        
-        const xpEarned = calculateXp();
-        gameState.xp = xpEarned;
-        gameState.totalXp += xpEarned;
-        gameState.totalGames++;
-        
-        localStorage.setItem('aim-trainer-total-xp', gameState.totalXp);
-        localStorage.setItem('aim-trainer-total-games', gameState.totalGames);
-        
-        checkLevelUp();
-
-        if (gameState.score > gameState.bestScore) {
-            gameState.bestScore = gameState.score;
-            bestScoreDisplay.textContent = gameState.bestScore;
-            localStorage.setItem('aim-trainer-best', gameState.bestScore);
-        }
-
-        if (gameState.currentStreak > gameState.bestStreak) {
-            gameState.bestStreak = gameState.currentStreak;
-            localStorage.setItem('aim-trainer-best-streak', gameState.bestStreak);
-        }
-
-        document.getElementById('final-score').textContent = gameState.score;
-        document.getElementById('final-hits').textContent = gameState.hits;
-        document.getElementById('final-accuracy').textContent = 
-            gameState.clicks > 0 ? Math.round((gameState.hits / gameState.clicks) * 100) + '%' : '0%';
-        document.getElementById('final-combo').textContent = 'x' + gameState.maxCombo;
-        document.getElementById('xp-gained').textContent = '+' + xpEarned;
-
-        const avgReaction = gameState.reactionTimes.length > 0
-            ? Math.round(gameState.reactionTimes.reduce((a, b) => a + b, 0) / gameState.reactionTimes.length)
-            : 0;
-        document.getElementById('session-accuracy').textContent = 
-            gameState.sessionClicks > 0 ? Math.round((gameState.sessionHits / gameState.sessionClicks) * 100) + '%' : '0%';
-        document.getElementById('session-reaction').textContent = avgReaction + 'ms';
-
-        const titleEl = document.getElementById('game-over-title');
-        if (streakOver) {
-            titleEl.textContent = 'STREAK OVER!';
-            titleEl.classList.add('streak-over');
-        } else if (gameState.currentMode === 'endless') {
-            titleEl.textContent = 'GAME OVER';
-            titleEl.classList.remove('streak-over');
+        if (forcedTarget) {
+            hitTarget(forcedTarget);
         } else {
-            titleEl.textContent = "TIME'S UP!";
-            titleEl.classList.remove('streak-over');
+            state.combo = 0;
+            loseLife("Missed shot. Stay steady.");
         }
 
-        const isNewBest = gameState.score >= gameState.bestScore && gameState.score > 0;
-        document.getElementById('new-records').classList.toggle('show', isNewBest);
+        if (state.currentAmmo === 0 && state.reserveAmmo > 0) {
+            beginReload();
+        }
 
-        gameOverOverlay.style.display = 'flex';
-        updatePlayerStats();
+        updateHUD();
+    }
 
-        if (window.parent !== window) {
+    function hitTarget(target) {
+        state.hits++;
+        state.combo++;
+        const comboBonus = Math.max(0, state.combo - 1) * 20;
+        target.hp -= WEAPONS[state.weaponKey].power;
+
+        if (target.hp > 0) {
+            target.el.style.transform = "translate(-50%, -50%) scale(0.92)";
             setTimeout(() => {
-                window.parent.postMessage({
-                    type: 'PLAYZA_SCORE_SUBMISSION',
-                    payload: {
-                        game_id: 'Aim-Trainer-Pro',
-                        session_id: new URLSearchParams(window.location.search).get('session_id'),
-                        score: gameState.score,
-                        metadata: { 
-                            category: 'Reflex',
-                            mode: gameState.currentMode,
-                            difficulty: gameState.currentDifficulty,
-                            hits: gameState.hits,
-                            accuracy: gameState.clicks > 0 ? Math.round((gameState.hits / gameState.clicks) * 100) : 0,
-                            maxCombo: gameState.maxCombo,
-                            xpEarned: xpEarned,
-                            avgReaction: avgReaction
-                        }
-                    }
-                }, 2500);
-            });
+                target.el.style.transform = "translate(-50%, -50%) scale(1)";
+            }, 90);
+            updateHUD();
+            return;
+        }
+
+        state.score += target.points + comboBonus;
+        state.objectiveHits++;
+        target.el.classList.add("target-hit");
+        setTimeout(() => removeTarget(target), 140);
+
+        if (state.score > state.bestScore) {
+            state.bestScore = state.score;
+            localStorage.setItem("target-hunt-best", String(state.bestScore));
+        }
+
+        if (!state.levelAdvanceQueued && state.objectiveHits >= state.objectiveGoal) {
+            advanceLevel();
+        }
+
+        updateHUD();
+    }
+
+    function advanceLevel() {
+        state.levelAdvanceQueued = true;
+        state.running = false;
+        clearTargets();
+        state.level++;
+        state.wave++;
+        state.objectiveHits = 0;
+        state.objectiveGoal = 10 + state.level * 4;
+        state.spawnInterval = Math.max(360, 1100 - (state.level - 1) * 80);
+        state.maxTargets = Math.min(7, 3 + Math.floor((state.level - 1) / 2));
+        missionTitleEl.textContent = `Level ${state.level}: Pressure Up`;
+        missionTextEl.textContent = `Clear ${state.objectiveGoal} targets. Faster movement, shorter reaction windows, and denser waves are now active.`;
+        arenaStatusEl.textContent = "Level Cleared";
+        updateHUD();
+        openOverlay(`Level ${state.level - 1} Cleared`, `Next wave unlocked. Level ${state.level} now demands ${state.objectiveGoal} hits with faster targets and less room for mistakes.`, "Start Next Level");
+    }
+
+    function loseLife(reason) {
+        state.lives--;
+        arenaStatusEl.textContent = reason;
+        if (state.lives <= 0) {
+            endRun();
         }
     }
 
-    function calculateXp() {
-        const baseXp = gameState.hits * 10;
-        const accuracyBonus = gameState.clicks > 0 
-            ? Math.round((gameState.hits / gameState.clicks) * baseXp * 0.5) 
-            : 0;
-        const comboBonus = gameState.maxCombo * 25;
-        const difficultyBonus = {
-            easy: 1,
-            medium: 1.5,
-            hard: 2,
-            insane: 3
-        }[gameState.currentDifficulty];
-        
-        return Math.floor((baseXp + accuracyBonus + comboBonus) * difficultyBonus);
+    function endRun() {
+        state.running = false;
+        state.paused = false;
+        clearTargets();
+        arenaStatusEl.textContent = "Run Over";
+        openOverlay(
+            "Run Over",
+            `Final score ${state.score}. Accuracy ${state.shots === 0 ? 100 : Math.round((state.hits / state.shots) * 100)}%. Best streak reached level ${state.level}.`,
+            "Play Again"
+        );
+        updateHUD();
     }
 
-    gameArea.addEventListener('click', (e) => {
-        if (!gameState.isPlaying) return;
-        if (e.target === gameArea) {
-            gameState.sessionClicks++;
-            gameState.clicks++;
-            gameState.combo = 0;
-            gameState.currentStreak = 0;
-            comboDisplay.textContent = 'x1';
-            comboDisplay.style.color = '#ff3366';
-            comboFire.classList.remove('active');
-            updateAccuracy();
-            streakDisplay.textContent = '0';
-            
-            AudioManager.playMiss();
-            
-            if (gameState.currentMode === 'streak') {
-                endGame(true);
-                return;
+    function beginReload() {
+        if (state.isReloading || state.reserveAmmo <= 0) return;
+        state.isReloading = true;
+        arenaStatusEl.textContent = "Reloading";
+        updateHUD();
+        setTimeout(() => {
+            const weapon = WEAPONS[state.weaponKey];
+            const need = weapon.mag - state.currentAmmo;
+            const load = Math.min(need, state.reserveAmmo);
+            state.currentAmmo += load;
+            state.reserveAmmo -= load;
+            state.isReloading = false;
+            arenaStatusEl.textContent = state.running ? "Hunt in Progress" : "Ready to Hunt";
+            updateHUD();
+        }, weapon.reloadMs);
+    }
+
+    function updateTargets(dt) {
+        const rect = gameArea.getBoundingClientRect();
+        state.targets.forEach((target) => {
+            target.x += target.vx * dt;
+            target.y += target.vy * dt;
+
+            const halfW = target.el.offsetWidth / 2;
+            const halfH = target.el.offsetHeight / 2;
+
+            if (target.x <= halfW || target.x >= rect.width - halfW) {
+                target.vx *= -1;
+                target.x = Math.max(halfW, Math.min(rect.width - halfW, target.x));
             }
-            
-            const rect = gameArea.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            
-            const missIndicator = document.createElement('div');
-            missIndicator.className = 'miss-indicator';
-            missIndicator.style.left = x + 'px';
-            missIndicator.style.top = y + 'px';
-            gameArea.appendChild(missIndicator);
-            
-            setTimeout(() => missIndicator.remove(), 400);
+
+            if (target.y <= halfH || target.y >= rect.height - halfH) {
+                target.vy *= -1;
+                target.y = Math.max(halfH, Math.min(rect.height - halfH, target.y));
+            }
+
+            target.el.style.left = `${target.x}px`;
+            target.el.style.top = `${target.y}px`;
+
+            if (performance.now() - target.bornAt > Math.max(3400, 5200 - state.level * 110)) {
+                removeTarget(target);
+                state.combo = 0;
+                loseLife("A target escaped.");
+                updateHUD();
+            }
+        });
+    }
+
+    function tick(ts) {
+        if (!state.lastTick) state.lastTick = ts;
+        const dt = (ts - state.lastTick) / 1000;
+        state.lastTick = ts;
+
+        if (state.running && !state.paused) {
+            state.spawnTimer += dt * 1000;
+            while (state.spawnTimer >= state.spawnInterval) {
+                state.spawnTimer -= state.spawnInterval;
+                spawnTarget();
+            }
+            updateTargets(dt);
+        }
+
+        state.rafId = requestAnimationFrame(tick);
+    }
+
+    function showShotFeedback(x, y) {
+        muzzleFlash.style.opacity = "1";
+        muzzleFlash.style.left = `${x - 60}px`;
+        muzzleFlash.style.top = `${y - 60}px`;
+        setTimeout(() => {
+            muzzleFlash.style.opacity = "0";
+        }, 80);
+
+        const impact = document.createElement("div");
+        impact.className = "impact";
+        impact.style.left = `${x}px`;
+        impact.style.top = `${y}px`;
+        impactLayer.appendChild(impact);
+        setTimeout(() => impact.remove(), 350);
+    }
+
+    function moveCrosshair(event) {
+        const rect = gameArea.getBoundingClientRect();
+        crosshair.style.opacity = "1";
+        crosshair.style.left = `${event.clientX - rect.left}px`;
+        crosshair.style.top = `${event.clientY - rect.top}px`;
+    }
+
+    function startOrResumeRun() {
+        if (!state.running && !state.levelAdvanceQueued) {
+            resetState();
+            return;
+        }
+
+        if (state.levelAdvanceQueued) {
+            state.levelAdvanceQueued = false;
+            state.running = true;
+            state.paused = false;
+            arenaStatusEl.textContent = "Hunt in Progress";
+            closeOverlay();
+            updateHUD();
+            return;
+        }
+
+        state.paused = false;
+        closeOverlay();
+        arenaStatusEl.textContent = "Hunt in Progress";
+    }
+
+    weaponButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+            if (state.running && !state.levelAdvanceQueued) return;
+            selectWeapon(button.dataset.weapon);
+        });
+    });
+
+    reloadBtn.addEventListener("click", beginReload);
+
+    pauseBtn.addEventListener("click", () => {
+        if (!state.running) return;
+        state.paused = !state.paused;
+        if (state.paused) {
+            openOverlay("Paused", "Catch your breath, then resume the hunt.", "Resume");
+            arenaStatusEl.textContent = "Paused";
+        } else {
+            closeOverlay();
+            arenaStatusEl.textContent = "Hunt in Progress";
         }
     });
 
-    document.addEventListener('keydown', (e) => {
-        if (e.code === 'Space' && startScreen.style.display !== 'none') {
-            e.preventDefault();
-            startGame();
-        }
+    startBtn.addEventListener("click", startOrResumeRun);
+    overlayAction.addEventListener("click", startOrResumeRun);
+
+    gameArea.addEventListener("mousemove", moveCrosshair);
+    gameArea.addEventListener("mouseenter", () => {
+        crosshair.style.opacity = "1";
+    });
+    gameArea.addEventListener("mouseleave", () => {
+        crosshair.style.opacity = "0";
     });
 
-    updateModeInfo();
+    gameArea.addEventListener("click", (event) => {
+        if (event.target.closest(".gallery-target")) return;
+        fireShot(event);
+    });
+
+    selectWeapon("pistol");
+    updateHUD();
+    state.rafId = requestAnimationFrame(tick);
 });
