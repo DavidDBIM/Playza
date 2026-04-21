@@ -10,7 +10,7 @@ const WORD_DICT = new Set([
   "joyful", "knight", "lovely", "magic", "night", "other", "power", "quite", "river",
   "storm", "truth", "under", "voice", "world", "xenon", "youth", "zebra", "action",
   "bridge", "coffee", "design", "escape", "flight", "guitar", "humble", "intense",
-  "object", "player", "rocket", "silent", "target", "unique", "vessel", "window",
+  "object", "player", "rocket", "silent", "target", "unique", "vessel", "window", "enter",
   "aurora", "blast", "crisp", "delta", "echo", "frost", "glare", "house", "allege",
   "change", "glean", "angel", "leach", "clean", "tenure", "tread", "trade", "advent"
 ]);
@@ -123,6 +123,61 @@ function buildGridFromLevel(level) {
   return grid;
 }
 
+function normalizeLevelTemplate(level) {
+  const rows = level.gridRows;
+  const cols = level.gridCols;
+  const occupancy = Array.from({ length: rows }, () => Array(cols).fill(""));
+  const validPlacements = [];
+  const validRequired = [];
+
+  level.placements.forEach((pl) => {
+    const word = pl.word.toLowerCase();
+    if (!WORD_DICT.has(word)) {
+      return;
+    }
+
+    let fits = true;
+    for (let i = 0; i < word.length; i++) {
+      let r = pl.row;
+      let c = pl.col;
+      if (pl.dir === "H") c += i;
+      else r += i;
+
+      if (r < 0 || r >= rows || c < 0 || c >= cols) {
+        fits = false;
+        break;
+      }
+
+      const existing = occupancy[r][c];
+      if (existing && existing !== word[i]) {
+        fits = false;
+        break;
+      }
+    }
+
+    if (!fits) {
+      return;
+    }
+
+    for (let i = 0; i < word.length; i++) {
+      let r = pl.row;
+      let c = pl.col;
+      if (pl.dir === "H") c += i;
+      else r += i;
+      occupancy[r][c] = word[i];
+    }
+
+    validPlacements.push({ ...pl, word });
+    validRequired.push(word);
+  });
+
+  return {
+    ...level,
+    placements: validPlacements,
+    required: validRequired,
+  };
+}
+
 function renderGridUI() {
   const gridContainer = document.getElementById("crosswordGrid");
   const rows = currentLevel.gridRows;
@@ -212,10 +267,12 @@ function submitWord(word) {
     return false;
   }
   const lowerWord = word.toLowerCase();
-  const targetReq = currentLevel.required[currentWordSolvingIdx].toLowerCase();
-  
-  if (lowerWord === targetReq) {
-      const placement = currentLevel.placements[currentWordSolvingIdx];
+  const placementIndex = currentLevel.placements.findIndex(
+    (placement) => placement.word.toLowerCase() === lowerWord && !solvedWordsSet.has(placement.word),
+  );
+
+  if (placementIndex !== -1) {
+      const placement = currentLevel.placements[placementIndex];
       const wordChars = placement.word.split("");
       for (let i = 0; i < wordChars.length; i++) {
         let r = placement.row, c = placement.col;
@@ -231,10 +288,9 @@ function submitWord(word) {
       updateScoreUI();
       resetSelection();
       
-      if (currentWordSolvingIdx + 1 < currentLevel.required.length) {
-          currentWordSolvingIdx++;
-          setTimeout(() => prepareWheelForWord(), 800);
-      }
+      const nextIndex = currentLevel.required.findIndex((requiredWord) => !solvedWordsSet.has(requiredWord));
+      currentWordSolvingIdx = nextIndex === -1 ? currentLevel.required.length - 1 : nextIndex;
+      if (nextIndex !== -1) setTimeout(() => prepareWheelForWord(), 800);
       updateProgressBar();
       return true;
   }
@@ -384,6 +440,12 @@ function hintAction() {
 }
 
 function prepareWheelForWord() {
+    if (!currentLevel.required.length) {
+      wheelLetters = getRandomSubset(ALPHABET, 6);
+      buildWheel(wheelLetters);
+      showFeedback("No valid words left in this puzzle", true);
+      return;
+    }
     const targetWord = currentLevel.required[currentWordSolvingIdx];
     let pool = targetWord.split("");
     const noiseCount = Math.max(2, 6 - pool.length);
@@ -395,6 +457,9 @@ function prepareWheelForWord() {
 
 function loadLevel(levelIndex) {
   currentLevel = LEVELS[levelIndex];
+  if (!currentLevel || !currentLevel.required.length) {
+    return;
+  }
   currentWordSolvingIdx = 0;
   totalRequiredWords = currentLevel.required.length;
   solvedWordsSet.clear();
@@ -411,7 +476,9 @@ window.addEventListener("DOMContentLoaded", () => {
   const canvas = document.getElementById("wheelCanvas");
   canvasCtx = canvas.getContext("2d");
   // Only use verified templates
-  LEVELS = LEVEL_TEMPLATES.sort(() => Math.random() - 0.5);
+  LEVELS = LEVEL_TEMPLATES.map(normalizeLevelTemplate)
+    .filter((level) => level.required.length > 0)
+    .sort(() => Math.random() - 0.5);
   loadLevel(currentLevelIdx);
   document.getElementById("shuffleBtn").onclick = shuffleWheel;
   document.getElementById("hintBtn").onclick = hintAction;

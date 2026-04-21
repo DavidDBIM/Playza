@@ -854,3 +854,131 @@ body {
 .stat-value.updated {
     animation: pulse 0.3s ease;
 }
+
+@media (max-width: 720px) {
+    body {
+        align-items: flex-start;
+        overflow-y: auto;
+    }
+
+    .game-container {
+        max-width: 100%;
+        padding: 8px;
+    }
+
+    .game-wrapper {
+        gap: 8px;
+    }
+
+    .left-sidebar,
+    .right-sidebar {
+        width: 100%;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: space-between;
+    }
+
+    .logo {
+        width: 100%;
+        text-align: center;
+        margin-bottom: 2px;
+    }
+
+    .stats-panel,
+    .stats-row {
+        gap: 6px;
+    }
+
+    .stat-box {
+        padding: 8px 6px;
+    }
+
+    .stat-value {
+        font-size: 16px;
+    }
+
+    .game-main {
+        width: 100%;
+        gap: 8px;
+    }
+
+    .game-header {
+        padding: 8px 10px;
+        border-radius: 10px;
+    }
+
+    .logo-mini {
+        font-size: 11px;
+        letter-spacing: 2px;
+    }
+
+    .header-actions {
+        gap: 6px;
+    }
+
+    .icon-btn {
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+    }
+
+    .mini-panels {
+        gap: 8px;
+    }
+
+    .mini-panel {
+        padding: 6px;
+    }
+
+    .canvas-wrapper,
+    #game-canvas {
+        max-width: 240px;
+    }
+
+    .canvas-wrapper {
+        border-radius: 10px;
+    }
+
+    #game-canvas {
+        margin: 0 auto;
+    }
+
+    .touch-controls {
+        gap: 8px;
+    }
+
+    .touch-btn {
+        min-height: 44px;
+        font-size: 16px;
+        border-radius: 12px;
+    }
+
+    .preview-panel,
+    .hold-panel,
+    .sound-toggle,
+    .rules-panel,
+    .highscore-panel {
+        flex: 1 1 calc(50% - 6px);
+        min-width: 0;
+    }
+
+    .next-queue {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 6px;
+    }
+
+    .next-canvas,
+    .preview-panel canvas,
+    .hold-panel canvas,
+    .mini-panel canvas {
+        width: 52px;
+        height: 52px;
+    }
+
+    .start-btn {
+        padding: 12px 16px;
+        font-size: 15px;
+    }
+}

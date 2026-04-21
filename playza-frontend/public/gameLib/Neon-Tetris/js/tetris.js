@@ -718,7 +718,7 @@ function showGameOver() {
         overlay.classList.add('game-over');
     }
 
-    showOverlay('GAME OVER', 'Mission Complete', 'RESTART MODULE', true);
+    showOverlay('GAME OVER', 'Stack reached the ceiling', 'PLAY AGAIN', true);
 
     document.getElementById('final-score').textContent = score;
     document.getElementById('final-time').textContent = formatTime(gameTime);

@@ -40,7 +40,7 @@
             
             <div class="game-main">
                 <div class="game-header">
-                    <span class="logo-mini">PLAYZA</span>
+                    <span class="logo-mini">TETRIS</span>
                     <div class="timer-box">
                         <span class="timer-label">TIME</span>
                         <span class="timer-value" id="timer">00:00</span>
@@ -86,7 +86,7 @@
                     <div class="game-overlay" id="overlay">
                         <div class="overlay-content">
                             <h2 class="overlay-title" id="overlay-title">READY?</h2>
-                            <p class="overlay-subtitle">Press Start to Enter the Matrix</p>
+                            <p class="overlay-subtitle">Press Start to begin a clean classic run.</p>
                             <div class="mode-select" id="mode-select" aria-label="Game mode">
                                 <button class="mode-btn active" id="mode-classic" type="button" data-mode="classic">CLASSIC</button>
                                 <button class="mode-btn" id="mode-sprint" type="button" data-mode="sprint40">SPRINT 40</button>
@@ -114,7 +114,7 @@
                                     <span id="best-time">--:--</span>
                                 </div>
                             </div>
-                            <button class="start-btn" id="start-btn" onclick="playButtonClicked()">START MODULE</button>
+                            <button class="start-btn" id="start-btn" onclick="playButtonClicked()">START GAME</button>
                         </div>
                     </div>
                 </div>
@@ -135,7 +135,7 @@
             
             <div class="sidebar right-sidebar side-panels">
                 <div class="preview-panel">
-                    <div class="panel-title">NEXT MODULE</div>
+                    <div class="panel-title">NEXT</div>
                     <div class="next-queue" id="next-queue" aria-label="Next pieces">
                         <canvas class="next-canvas" id="next-canvas-0" width="80" height="80"></canvas>
                         <canvas class="next-canvas" id="next-canvas-1" width="80" height="80"></canvas>
@@ -146,7 +146,7 @@
                 </div>
                 
                 <div class="hold-panel">
-                    <div class="panel-title">HELD DATA</div>
+                    <div class="panel-title">HOLD</div>
                     <canvas id="hold-canvas" width="80" height="80"></canvas>
                 </div>
                 
@@ -162,8 +162,8 @@
     <!-- Rotate Overlay -->
     <div id="rotate-overlay">
         <div class="rotate-icon" aria-hidden="true">&#128241;</div>
-        <p>PLEASE ROTATE YOUR DEVICE</p>
-        <span>Landscape mode required for Matrix stability</span>
+        <p>ROTATE YOUR DEVICE</p>
+        <span>Landscape works best for the full playfield</span>
     </div>
 
     <!-- Help Modal -->

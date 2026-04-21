@@ -32,6 +32,10 @@ const WORD_SETS = [
 ];
 
 const EXTRA_LETTERS = ["A", "E", "S", "R", "N", "L", "T"];
+const BONUS_WORDS = new Set([
+  "ART", "BAT", "BEAT", "COP", "DOG", "FORGE", "GOLD", "HAT", "ICE", "IRON",
+  "RUN", "SON", "SUN", "TEA", "THE", "WATER", "WIND",
+]);
 
 // generate level configs
 const levels = WORD_SETS.map((words) => {
@@ -66,6 +70,7 @@ let gameData = {
   lastCorrectTimestamp: 0,
   activeLevel: 0,
   bonusWordCooldown: false,
+  usedBonusWords: new Set(),
 };
 
 function loadLevel(levelIdx) {
@@ -90,6 +95,7 @@ function loadLevel(levelIdx) {
   gameData.combo = 1;
   gameData.lettersRemaining = lettersArray;
   gameData.activeLevel = levelIdx;
+  gameData.usedBonusWords.clear();
   
   document.getElementById("levelIndicator").innerText = `LEVEL ${levelIdx + 1}`;
   updateScoreUI();
@@ -201,9 +207,9 @@ function validateAndSubmit() {
       showCompletionAndNext();
     }
   } else {
-    // Check bonus word locally - mock dictionary for simplicity
-    const validBonusBase = ["THE", "AND", "ART", "SON", "SUN", "DOG", "BAT", "COP"];
-    if (word.length >= 3 && !gameData.solvedWords.has(word)) { // any unrecognized 3+ word gives small points for fun
+    const normalizedWord = word.toUpperCase();
+    if (word.length >= 3 && !gameData.solvedWords.has(word) && !gameData.usedBonusWords.has(normalizedWord) && BONUS_WORDS.has(normalizedWord)) {
+      gameData.usedBonusWords.add(normalizedWord);
       addPoints(25);
       playSound("success");
       showFloatingText("✨ NICE! +25 ✨", "#FFB347");
