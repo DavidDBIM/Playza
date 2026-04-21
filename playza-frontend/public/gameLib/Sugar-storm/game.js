@@ -24,7 +24,7 @@ const INVALID_SWAP_MS = 95;
 const MATCH_CLEAR_MS = 95;
 const REFILL_SETTLE_MS = 110;
 const STORM_THRESHOLD = 200;
-const MAX_CARRY_SPECIALS = 2;
+const MAX_CARRY_SPECIALS = Number.POSITIVE_INFINITY;
 const TOUCH_SWIPE_THRESHOLD_RATIO = 0.35;
 const TOUCH_SWIPE_MIN_PX = 18;
 const TOUCH_CLICK_SUPPRESS_MS = 450;
@@ -38,20 +38,78 @@ const PIECE_IMAGE_PATHS = {
   orange: "./assets/images/orange.webp",
   jelly: "./assets/images/jelly.webp",
   crate: "./assets/images/crate.webp",
-  stripedH: "./assets/images/overlat-striped-h.webp",
-  stripedV: "./assets/images/overlay-striped-v.webp",
+  // stripedH: "./assets/images/overlat-striped-h.webp",
+  // stripedV: "./assets/images/overlay-striped-v.webp",
   wrapped: "./assets/images/overlay-wrapped.webp",
   colorBomb: "./assets/images/special-color-bomb.webp",
   ingredient: "./assets/images/special-ingredients.webp",
   sparkle: "./assets/images/overlay-sparkle.webp",
 };
 
+const SPECIAL_IMAGE_PATHS = {
+  strawberry: {
+    [SPECIALS.STRIPED_H]: "./assets/images/strawberry-striped-h.webp",
+    [SPECIALS.STRIPED_V]: "./assets/images/strawberry-striped-v.webp",
+    [SPECIALS.WRAPPED]: "./assets/images/strawberry_wrapped.webp",
+  },
+  blueberry: {
+    [SPECIALS.STRIPED_H]: "./assets/images/blueberry-striped-h.webp",
+    [SPECIALS.STRIPED_V]: "./assets/images/blueberry-striped-v.webp",
+    [SPECIALS.WRAPPED]: "./assets/images/blueberry_wrapped.webp",
+  },
+  lemon: {
+    [SPECIALS.STRIPED_H]: "./assets/images/lemon-striped-h.webp",
+    [SPECIALS.STRIPED_V]: "./assets/images/lemon-striped-v.webp",
+    [SPECIALS.WRAPPED]: "./assets/images/lemon_wrapped.webp",
+  },
+  mint: {
+    [SPECIALS.STRIPED_H]: "./assets/images/mint-striped-h.webp",
+    [SPECIALS.STRIPED_V]: "./assets/images/mint-striped-v.webp",
+    [SPECIALS.WRAPPED]: "./assets/images/mint_wrapped.webp",
+  },
+  grape: {
+    [SPECIALS.STRIPED_H]: "./assets/images/grape-striped-h.webp",
+    [SPECIALS.STRIPED_V]: "./assets/images/grape-striped-v.webp",
+    [SPECIALS.WRAPPED]: "./assets/images/grape_wrapped.webp",
+  },
+  orange: {
+    [SPECIALS.STRIPED_H]: "./assets/images/orange-striped-h.webp",
+    [SPECIALS.STRIPED_V]: "./assets/images/orange-striped-v.webp",
+    [SPECIALS.WRAPPED]: "./assets/images/orange_wrapped.webp",
+  },
+};
+
 const LEVELS = [
-  { moves: 24, target: 4200, goals: { strawberry: 14, lemon: 12 }, jellyTargets: 0 },
-  { moves: 22, target: 6500, goals: { blueberry: 15, mint: 14 }, jellyTargets: 0 },
-  { moves: 20, target: 8800, goals: { grape: 16, orange: 16 }, jellyTargets: 0 },
-  { moves: 19, target: 10200, goals: { strawberry: 15, blueberry: 15 }, jellyTargets: 0 },
-  { moves: 18, target: 11800, goals: { lemon: 16, grape: 16 }, jellyTargets: 8 },
+  {
+    moves: 24,
+    target: 4200,
+    goals: { strawberry: 14, lemon: 12 },
+    jellyTargets: 0,
+  },
+  {
+    moves: 22,
+    target: 6500,
+    goals: { blueberry: 15, mint: 14 },
+    jellyTargets: 0,
+  },
+  {
+    moves: 20,
+    target: 8800,
+    goals: { grape: 16, orange: 16 },
+    jellyTargets: 0,
+  },
+  {
+    moves: 19,
+    target: 10200,
+    goals: { strawberry: 15, blueberry: 15 },
+    jellyTargets: 0,
+  },
+  {
+    moves: 18,
+    target: 11800,
+    goals: { lemon: 16, grape: 16 },
+    jellyTargets: 8,
+  },
 ];
 
 const BOARD_SHAPES = [
@@ -517,14 +575,31 @@ class SugarStormGame {
     this.loadPieceImages();
     this.buildBoardPreview();
     this.renderMapStrip();
-    this.showScreen("Sugar Storm Smash", "Endless Sweet Run", "Beat the opening stages, then continue forever through generated levels with storm charge, random board shapes, sugar glass, crates, jelly tides, and deeper candy chaos.", "Start Run");
+    this.showScreen(
+      "Sugar Storm Smash",
+      "Endless Sweet Run",
+      "Beat the opening stages, then continue forever through generated levels with storm charge, random board shapes, sugar glass, crates, jelly tides, and deeper candy chaos.",
+      "Start Run",
+    );
     this.resizeCanvas();
     window.addEventListener("resize", () => this.resizeCanvas());
     requestAnimationFrame((timestamp) => this.tick(timestamp));
   }
 
   loadPieceImages() {
-    Object.entries(PIECE_IMAGE_PATHS).forEach(([key, src]) => {
+    const imageSources = {
+      ...PIECE_IMAGE_PATHS,
+      ...Object.fromEntries(
+        Object.entries(SPECIAL_IMAGE_PATHS).flatMap(([type, variants]) =>
+          Object.entries(variants).map(([special, src]) => [
+            `${type}-${special}`,
+            src,
+          ]),
+        ),
+      ),
+    };
+
+    Object.entries(imageSources).forEach(([key, src]) => {
       const image = new Image();
       image.decoding = "async";
       image.src = src;
@@ -607,15 +682,27 @@ class SugarStormGame {
 
   buildBoardPreview() {
     this.shape = BOARD_SHAPES[0];
-    this.board = Array.from({ length: BOARD_SIZE }, () => Array(BOARD_SIZE).fill(null));
+    this.board = Array.from({ length: BOARD_SIZE }, () =>
+      Array(BOARD_SIZE).fill(null),
+    );
     for (let row = 0; row < BOARD_SIZE; row += 1) {
       for (let col = 0; col < BOARD_SIZE; col += 1) {
-        this.board[row][col] = this.createPiece(this.randomCandyType(), row, col);
+        this.board[row][col] = this.createPiece(
+          this.randomCandyType(),
+          row,
+          col,
+        );
       }
     }
-    this.jellyGrid = Array.from({ length: BOARD_SIZE }, () => Array(BOARD_SIZE).fill(0));
-    this.blockerGrid = Array.from({ length: BOARD_SIZE }, () => Array(BOARD_SIZE).fill(0));
-    this.glassGrid = Array.from({ length: BOARD_SIZE }, () => Array(BOARD_SIZE).fill(0));
+    this.jellyGrid = Array.from({ length: BOARD_SIZE }, () =>
+      Array(BOARD_SIZE).fill(0),
+    );
+    this.blockerGrid = Array.from({ length: BOARD_SIZE }, () =>
+      Array(BOARD_SIZE).fill(0),
+    );
+    this.glassGrid = Array.from({ length: BOARD_SIZE }, () =>
+      Array(BOARD_SIZE).fill(0),
+    );
   }
 
   renderMapStrip() {
@@ -708,7 +795,9 @@ class SugarStormGame {
     this.shape = this.pickShape(index);
     this.stageMode = config.stageMode || "Standard";
     this.levelIndex = index;
-    this.levelRandom = this.usesFixedCompetitiveLayout() ? this.makeSeededRandom(`level-${index + 1}-run`) : null;
+    this.levelRandom = this.usesFixedCompetitiveLayout()
+      ? this.makeSeededRandom(`level-${index + 1}-run`)
+      : null;
     this.movesLeft = config.moves + this.carryMoves;
     this.levelTarget = config.target;
     this.goalState = { ...config.goals };
@@ -740,20 +829,28 @@ class SugarStormGame {
     }
     this.renderMapStrip();
     this.carryMoves = 0;
-    this.setMessage(`Level ${index + 1}: ${this.stageMode} over ${this.shape.name}. Reach ${config.target.toLocaleString()} and clear the storm goals.`);
+    this.setMessage(
+      `Level ${index + 1}: ${this.stageMode} over ${this.shape.name}. Reach ${config.target.toLocaleString()} and clear the storm goals.`,
+    );
     this.syncHud();
   }
 
   makeGeneratedLevel(index) {
     const goalCount = index >= 16 ? 4 : index >= 8 ? 3 : 2;
-    const goalTypes = Array.from({ length: goalCount }, (_, offset) => CANDY_TYPES[(index + offset * 2) % CANDY_TYPES.length]);
+    const goalTypes = Array.from(
+      { length: goalCount },
+      (_, offset) => CANDY_TYPES[(index + offset * 2) % CANDY_TYPES.length],
+    );
     let stageMode = "Storm Calm";
     let moves = Math.max(16, 24 - Math.min(index, 8));
     let target = 4200 + index * 2200;
     let jellyTargets = index >= 4 ? Math.min(18, 4 + index) : 0;
     let blockerCount = index >= 6 ? Math.min(16, 4 + index) : 0;
     let glassCount = index >= 5 ? Math.min(16, 2 + Math.floor(index * 0.8)) : 0;
-    let ingredientGoal = index >= 7 && (index + 1) % 6 === 0 ? Math.min(3, 1 + Math.floor(index / 10)) : 0;
+    let ingredientGoal =
+      index >= 7 && (index + 1) % 6 === 0
+        ? Math.min(3, 1 + Math.floor(index / 10))
+        : 0;
     const goals = {};
     goalTypes.forEach((type, offset) => {
       goals[type] = Math.max(10, 14 + Math.min(index, 8) - offset * 2);
@@ -820,7 +917,9 @@ class SugarStormGame {
               ? BOARD_SHAPES.slice(0, 10)
               : SHAPE_POOL;
         const previousName = this.shapeByLevel.get(level - 1)?.name || null;
-        const filtered = previousName ? options.filter((shape) => shape.name !== previousName) : options;
+        const filtered = previousName
+          ? options.filter((shape) => shape.name !== previousName)
+          : options;
         const pool = filtered.length ? filtered : options;
         const random = this.makeSeededRandom(`level-${level + 1}-shape`);
         choice = pool[Math.floor(random() * pool.length)];
@@ -870,9 +969,16 @@ class SugarStormGame {
   }
 
   seedJelly(count) {
-    this.jellyGrid = Array.from({ length: BOARD_SIZE }, () => Array(BOARD_SIZE).fill(0));
+    this.jellyGrid = Array.from({ length: BOARD_SIZE }, () =>
+      Array(BOARD_SIZE).fill(0),
+    );
     const active = this.allCells();
-    this.shuffleCells(active, this.usesFixedCompetitiveLayout() ? `level-${this.levelIndex + 1}-jelly` : null);
+    this.shuffleCells(
+      active,
+      this.usesFixedCompetitiveLayout()
+        ? `level-${this.levelIndex + 1}-jelly`
+        : null,
+    );
     const selected = active.slice(0, Math.min(count, active.length));
     selected.forEach(({ row, col }) => {
       this.jellyGrid[row][col] = 1;
@@ -881,9 +987,18 @@ class SugarStormGame {
   }
 
   seedBlockers(count) {
-    this.blockerGrid = Array.from({ length: BOARD_SIZE }, () => Array(BOARD_SIZE).fill(0));
-    const active = this.allCells().filter(({ row, col }) => !this.board[row][col]?.special);
-    this.shuffleCells(active, this.usesFixedCompetitiveLayout() ? `level-${this.levelIndex + 1}-blockers` : null);
+    this.blockerGrid = Array.from({ length: BOARD_SIZE }, () =>
+      Array(BOARD_SIZE).fill(0),
+    );
+    const active = this.allCells().filter(
+      ({ row, col }) => !this.board[row][col]?.special,
+    );
+    this.shuffleCells(
+      active,
+      this.usesFixedCompetitiveLayout()
+        ? `level-${this.levelIndex + 1}-blockers`
+        : null,
+    );
     const selected = active.slice(0, Math.min(count, active.length));
     selected.forEach(({ row, col }, index) => {
       this.blockerGrid[row][col] = index % 3 === 0 ? 2 : 1;
@@ -892,9 +1007,19 @@ class SugarStormGame {
   }
 
   seedGlass(count) {
-    this.glassGrid = Array.from({ length: BOARD_SIZE }, () => Array(BOARD_SIZE).fill(0));
-    const active = this.allCells().filter(({ row, col }) => !this.blockerGrid[row]?.[col] && !this.jellyGrid[row]?.[col]);
-    this.shuffleCells(active, this.usesFixedCompetitiveLayout() ? `level-${this.levelIndex + 1}-glass` : null);
+    this.glassGrid = Array.from({ length: BOARD_SIZE }, () =>
+      Array(BOARD_SIZE).fill(0),
+    );
+    const active = this.allCells().filter(
+      ({ row, col }) =>
+        !this.blockerGrid[row]?.[col] && !this.jellyGrid[row]?.[col],
+    );
+    this.shuffleCells(
+      active,
+      this.usesFixedCompetitiveLayout()
+        ? `level-${this.levelIndex + 1}-glass`
+        : null,
+    );
     const selected = active.slice(0, Math.min(count, active.length));
     selected.forEach(({ row, col }) => {
       this.glassGrid[row][col] = 1;
@@ -903,7 +1028,10 @@ class SugarStormGame {
   }
 
   ensureIngredientOnBoard() {
-    if (this.ingredientRemaining <= 0 || this.board.flat().some((piece) => piece?.special === SPECIALS.INGREDIENT)) {
+    if (
+      this.ingredientRemaining <= 0 ||
+      this.board.flat().some((piece) => piece?.special === SPECIALS.INGREDIENT)
+    ) {
       return;
     }
 
@@ -922,7 +1050,12 @@ class SugarStormGame {
     }
 
     const spawn = topCells[Math.floor(this.randomFloat() * topCells.length)];
-    const piece = this.createPiece("ingredient", spawn.row, spawn.col, SPECIALS.INGREDIENT);
+    const piece = this.createPiece(
+      "ingredient",
+      spawn.row,
+      spawn.col,
+      SPECIALS.INGREDIENT,
+    );
     piece.drawRow = -1.2;
     this.board[spawn.row][spawn.col] = piece;
   }
@@ -965,7 +1098,9 @@ class SugarStormGame {
       return;
     }
 
-    const cells = this.allCells().filter(({ row, col }) => !this.isLockedCell(row, col));
+    const cells = this.allCells().filter(
+      ({ row, col }) => !this.isLockedCell(row, col),
+    );
     for (let i = cells.length - 1; i > 0; i -= 1) {
       const j = Math.floor(this.randomFloat() * (i + 1));
       [cells[i], cells[j]] = [cells[j], cells[i]];
@@ -978,7 +1113,8 @@ class SugarStormGame {
       }
       const piece = this.board[cell.row][cell.col];
       piece.special = carry.special;
-      piece.type = carry.special === SPECIALS.COLOR_BOMB ? "colorBomb" : carry.type;
+      piece.type =
+        carry.special === SPECIALS.COLOR_BOMB ? "colorBomb" : carry.type;
       piece.scale = 1.2;
     });
 
@@ -995,7 +1131,9 @@ class SugarStormGame {
   }
 
   buildBoard() {
-    this.board = Array.from({ length: BOARD_SIZE }, () => Array(BOARD_SIZE).fill(null));
+    this.board = Array.from({ length: BOARD_SIZE }, () =>
+      Array(BOARD_SIZE).fill(null),
+    );
 
     for (let row = 0; row < BOARD_SIZE; row += 1) {
       for (let col = 0; col < BOARD_SIZE; col += 1) {
@@ -1155,14 +1293,21 @@ class SugarStormGame {
     }
 
     const { startRow, startCol, startX, startY } = this.activeTouch;
-    if (!this.isInside(startRow, startCol) || !this.board[startRow][startCol] || this.isLockedCell(startRow, startCol)) {
+    if (
+      !this.isInside(startRow, startCol) ||
+      !this.board[startRow][startCol] ||
+      this.isLockedCell(startRow, startCol)
+    ) {
       return;
     }
 
     const rect = this.canvas.getBoundingClientRect();
     const cellWidth = rect.width / BOARD_SIZE;
     const cellHeight = rect.height / BOARD_SIZE;
-    const threshold = Math.max(TOUCH_SWIPE_MIN_PX, Math.min(cellWidth, cellHeight) * TOUCH_SWIPE_THRESHOLD_RATIO);
+    const threshold = Math.max(
+      TOUCH_SWIPE_MIN_PX,
+      Math.min(cellWidth, cellHeight) * TOUCH_SWIPE_THRESHOLD_RATIO,
+    );
     const deltaX = clientX - startX;
     const deltaY = clientY - startY;
 
@@ -1178,7 +1323,10 @@ class SugarStormGame {
       targetRow += deltaY > 0 ? 1 : -1;
     }
 
-    if (!this.isInside(targetRow, targetCol) || !this.board[targetRow][targetCol]) {
+    if (
+      !this.isInside(targetRow, targetCol) ||
+      !this.board[targetRow][targetCol]
+    ) {
       this.activeTouch.swipeTriggered = true;
       this.selected = null;
       return;
@@ -1205,9 +1353,10 @@ class SugarStormGame {
       return;
     }
 
-    const cell = typeof clientX === "number" && typeof clientY === "number"
-      ? this.getCellFromClientPoint(clientX, clientY)
-      : null;
+    const cell =
+      typeof clientX === "number" && typeof clientY === "number"
+        ? this.getCellFromClientPoint(clientX, clientY)
+        : null;
 
     if (cell && cell.row === touch.startRow && cell.col === touch.startCol) {
       this.handleCellInput(cell.row, cell.col);
@@ -1277,7 +1426,9 @@ class SugarStormGame {
   }
 
   isLockedCell(row, col) {
-    return Boolean(this.blockerGrid[row]?.[col] > 0 || this.glassGrid[row]?.[col] > 0);
+    return Boolean(
+      this.blockerGrid[row]?.[col] > 0 || this.glassGrid[row]?.[col] > 0,
+    );
   }
 
   async attemptSwap(r1, c1, r2, c2) {
@@ -1287,7 +1438,9 @@ class SugarStormGame {
     const b = this.board[r2][c2];
 
     if (this.isLockedCell(r1, c1) || this.isLockedCell(r2, c2)) {
-      this.setMessage("Break the sugar glass or crate first before moving that candy.");
+      this.setMessage(
+        "Break the sugar glass or crate first before moving that candy.",
+      );
       this.isBusy = false;
       return;
     }
@@ -1325,7 +1478,11 @@ class SugarStormGame {
   resolveDirectCombo(a, b) {
     const bothSpecial = this.isPowerSpecial(a) && this.isPowerSpecial(b);
 
-    if (bothSpecial && a.special === SPECIALS.COLOR_BOMB && b.special === SPECIALS.COLOR_BOMB) {
+    if (
+      bothSpecial &&
+      a.special === SPECIALS.COLOR_BOMB &&
+      b.special === SPECIALS.COLOR_BOMB
+    ) {
       return {
         cells: this.allCells(),
         popup: "Storm Nova!",
@@ -1335,10 +1492,19 @@ class SugarStormGame {
       };
     }
 
-    const colorBomb = a.special === SPECIALS.COLOR_BOMB ? a : b.special === SPECIALS.COLOR_BOMB ? b : null;
+    const colorBomb =
+      a.special === SPECIALS.COLOR_BOMB
+        ? a
+        : b.special === SPECIALS.COLOR_BOMB
+          ? b
+          : null;
     const partner = colorBomb === a ? b : a;
 
-    if (colorBomb && (partner.special === SPECIALS.STRIPED_H || partner.special === SPECIALS.STRIPED_V)) {
+    if (
+      colorBomb &&
+      (partner.special === SPECIALS.STRIPED_H ||
+        partner.special === SPECIALS.STRIPED_V)
+    ) {
       const targets = this.collectTypeCells(partner.type, false);
       return {
         cells: targets,
@@ -1350,7 +1516,8 @@ class SugarStormGame {
           targets.forEach((cell, index) => {
             const piece = this.board[cell.row][cell.col];
             if (piece) {
-              piece.special = index % 2 === 0 ? SPECIALS.STRIPED_H : SPECIALS.STRIPED_V;
+              piece.special =
+                index % 2 === 0 ? SPECIALS.STRIPED_H : SPECIALS.STRIPED_V;
               piece.scale = 1.18;
             }
           });
@@ -1388,7 +1555,11 @@ class SugarStormGame {
       };
     }
 
-    if (bothSpecial && ((a.special === SPECIALS.STRIPED_H || a.special === SPECIALS.STRIPED_V) && (b.special === SPECIALS.STRIPED_H || b.special === SPECIALS.STRIPED_V))) {
+    if (
+      bothSpecial &&
+      (a.special === SPECIALS.STRIPED_H || a.special === SPECIALS.STRIPED_V) &&
+      (b.special === SPECIALS.STRIPED_H || b.special === SPECIALS.STRIPED_V)
+    ) {
       return {
         cells: this.collectLinesAndRows([a.row, b.row], [a.col, b.col]),
         popup: "Crosscurrent!",
@@ -1398,7 +1569,15 @@ class SugarStormGame {
       };
     }
 
-    if (bothSpecial && (((a.special === SPECIALS.STRIPED_H || a.special === SPECIALS.STRIPED_V) && b.special === SPECIALS.WRAPPED) || ((b.special === SPECIALS.STRIPED_H || b.special === SPECIALS.STRIPED_V) && a.special === SPECIALS.WRAPPED))) {
+    if (
+      bothSpecial &&
+      (((a.special === SPECIALS.STRIPED_H ||
+        a.special === SPECIALS.STRIPED_V) &&
+        b.special === SPECIALS.WRAPPED) ||
+        ((b.special === SPECIALS.STRIPED_H ||
+          b.special === SPECIALS.STRIPED_V) &&
+          a.special === SPECIALS.WRAPPED))
+    ) {
       return {
         cells: this.collectStormBandCells([a, b]),
         popup: "Storm Band!",
@@ -1408,7 +1587,11 @@ class SugarStormGame {
       };
     }
 
-    if (bothSpecial && a.special === SPECIALS.WRAPPED && b.special === SPECIALS.WRAPPED) {
+    if (
+      bothSpecial &&
+      a.special === SPECIALS.WRAPPED &&
+      b.special === SPECIALS.WRAPPED
+    ) {
       return {
         cells: this.collectBlastCells([a, b], 2),
         popup: "Sugar Quake!",
@@ -1418,26 +1601,14 @@ class SugarStormGame {
       };
     }
 
-    if (this.isPowerSpecial(a) || this.isPowerSpecial(b)) {
-      return {
-        cells: [
-          { row: a.row, col: a.col },
-          { row: b.row, col: b.col },
-        ],
-        popup: "Power Clash!",
-        color: "#ffffff",
-        shake: 8,
-        charge: 6,
-      };
-    }
-
     return null;
   }
 
   async executeDirectCombo(combo) {
     combo.prepare?.();
     if (combo.popup) {
-      const anchor = combo.cells[Math.floor(combo.cells.length / 2)] || combo.cells[0];
+      const anchor =
+        combo.cells[Math.floor(combo.cells.length / 2)] || combo.cells[0];
       this.spawnPopup(combo.popup, anchor, combo.color || "#ffffff");
       this.setMessage(combo.popup);
     }
@@ -1482,7 +1653,11 @@ class SugarStormGame {
     const cells = [];
     pieces.forEach((piece) => {
       for (let row = piece.row - radius; row <= piece.row + radius; row += 1) {
-        for (let col = piece.col - radius; col <= piece.col + radius; col += 1) {
+        for (
+          let col = piece.col - radius;
+          col <= piece.col + radius;
+          col += 1
+        ) {
           cells.push({ row, col });
         }
       }
@@ -1493,7 +1668,10 @@ class SugarStormGame {
   uniqueCells(cells) {
     const unique = new Map();
     cells.forEach((cell) => {
-      if (this.isInside(cell.row, cell.col) && this.isPlayableCell(cell.row, cell.col)) {
+      if (
+        this.isInside(cell.row, cell.col) &&
+        this.isPlayableCell(cell.row, cell.col)
+      ) {
         unique.set(`${cell.row},${cell.col}`, cell);
       }
     });
@@ -1508,7 +1686,10 @@ class SugarStormGame {
         if (!piece) {
           continue;
         }
-        if (piece.type === type || (includeBombs && piece.special === SPECIALS.COLOR_BOMB)) {
+        if (
+          piece.type === type ||
+          (includeBombs && piece.special === SPECIALS.COLOR_BOMB)
+        ) {
           result.push({ row, col });
         }
       }
@@ -1517,12 +1698,15 @@ class SugarStormGame {
   }
 
   isPowerSpecial(piece) {
-    return piece && [
-      SPECIALS.STRIPED_H,
-      SPECIALS.STRIPED_V,
-      SPECIALS.WRAPPED,
-      SPECIALS.COLOR_BOMB,
-    ].includes(piece.special);
+    return (
+      piece &&
+      [
+        SPECIALS.STRIPED_H,
+        SPECIALS.STRIPED_V,
+        SPECIALS.WRAPPED,
+        SPECIALS.COLOR_BOMB,
+      ].includes(piece.special)
+    );
   }
 
   async runCascadeLoop() {
@@ -1538,7 +1722,11 @@ class SugarStormGame {
   }
 
   isColorMatchable(piece) {
-    return Boolean(piece && piece.special !== SPECIALS.COLOR_BOMB && piece.special !== SPECIALS.INGREDIENT);
+    return Boolean(
+      piece &&
+      piece.special !== SPECIALS.COLOR_BOMB &&
+      piece.special !== SPECIALS.INGREDIENT,
+    );
   }
 
   findMatches() {
@@ -1549,7 +1737,10 @@ class SugarStormGame {
       for (let col = 1; col <= BOARD_SIZE; col += 1) {
         const current = col < BOARD_SIZE ? this.board[row][col] : null;
         const prev = this.board[row][col - 1];
-        const same = this.isColorMatchable(current) && this.isColorMatchable(prev) && current.type === prev.type;
+        const same =
+          this.isColorMatchable(current) &&
+          this.isColorMatchable(prev) &&
+          current.type === prev.type;
         if (same) {
           streak.push({ row, col });
         } else {
@@ -1566,7 +1757,10 @@ class SugarStormGame {
       for (let row = 1; row <= BOARD_SIZE; row += 1) {
         const current = row < BOARD_SIZE ? this.board[row][col] : null;
         const prev = this.board[row - 1][col];
-        const same = this.isColorMatchable(current) && this.isColorMatchable(prev) && current.type === prev.type;
+        const same =
+          this.isColorMatchable(current) &&
+          this.isColorMatchable(prev) &&
+          current.type === prev.type;
         if (same) {
           streak.push({ row, col });
         } else {
@@ -1587,7 +1781,9 @@ class SugarStormGame {
     const upgrades = [];
 
     for (const cluster of clusters) {
-      cluster.cells.forEach((cell) => removals.set(`${cell.row},${cell.col}`, cell));
+      cluster.cells.forEach((cell) =>
+        removals.set(`${cell.row},${cell.col}`, cell),
+      );
       const upgrade = this.chooseSpecial(cluster, preferredPieces);
       if (upgrade) {
         removals.delete(`${upgrade.row},${upgrade.col}`);
@@ -1639,7 +1835,9 @@ class SugarStormGame {
           if (used.has(j)) {
             continue;
           }
-          const intersects = groups[j].some((cell) => cells.has(`${cell.row},${cell.col}`));
+          const intersects = groups[j].some((cell) =>
+            cells.has(`${cell.row},${cell.col}`),
+          );
           if (intersects) {
             stack.push(j);
           }
@@ -1653,7 +1851,9 @@ class SugarStormGame {
   }
 
   chooseSpecial(cluster, preferredPieces) {
-    const clusterHasSpecial = cluster.cells.some((cell) => Boolean(this.board[cell.row]?.[cell.col]?.special));
+    const clusterHasSpecial = cluster.cells.some((cell) =>
+      Boolean(this.board[cell.row]?.[cell.col]?.special),
+    );
     if (clusterHasSpecial) {
       return null;
     }
@@ -1664,7 +1864,11 @@ class SugarStormGame {
 
     if (rowMax >= 5 || colMax >= 5) {
       special = SPECIALS.COLOR_BOMB;
-    } else if (rowMax >= 3 && colMax >= 3 && cluster.cells.length >= 5) {
+    } else if (
+      cluster.cells.length >= 5 &&
+      rowMax >= 3 &&
+      colMax >= 3
+    ) {
       special = SPECIALS.WRAPPED;
     } else if (rowMax === 4) {
       special = SPECIALS.STRIPED_H;
@@ -1678,7 +1882,11 @@ class SugarStormGame {
 
     let anchor = null;
     if (preferredPieces) {
-      anchor = preferredPieces.find((piece) => cluster.cells.some((cell) => cell.row === piece.row && cell.col === piece.col));
+      anchor = preferredPieces.find((piece) =>
+        cluster.cells.some(
+          (cell) => cell.row === piece.row && cell.col === piece.col,
+        ),
+      );
     }
 
     if (!anchor) {
@@ -1706,7 +1914,10 @@ class SugarStormGame {
         continue;
       }
 
-      if (piece.special !== SPECIALS.INGREDIENT && this.blockerGrid[cell.row]?.[cell.col] > 0) {
+      if (
+        piece.special !== SPECIALS.INGREDIENT &&
+        this.blockerGrid[cell.row]?.[cell.col] > 0
+      ) {
         this.blockerGrid[cell.row][cell.col] -= 1;
         if (this.blockerGrid[cell.row][cell.col] === 0) {
           this.blockerRemaining = Math.max(0, this.blockerRemaining - 1);
@@ -1717,7 +1928,10 @@ class SugarStormGame {
         continue;
       }
 
-      if (piece.special !== SPECIALS.INGREDIENT && this.glassGrid[cell.row]?.[cell.col] > 0) {
+      if (
+        piece.special !== SPECIALS.INGREDIENT &&
+        this.glassGrid[cell.row]?.[cell.col] > 0
+      ) {
         this.glassGrid[cell.row][cell.col] = 0;
         this.glassRemaining = Math.max(0, this.glassRemaining - 1);
         this.spawnPopup("Shatter!", cell, "#dff8ff");
@@ -1769,7 +1983,9 @@ class SugarStormGame {
           }
         }
       } else if (piece.special === SPECIALS.COLOR_BOMB) {
-        this.collectTypeCells(this.pickDominantType(), false).forEach((target) => pending.push(target));
+        this.collectTypeCells(this.pickDominantType(), false).forEach(
+          (target) => pending.push(target),
+        );
       }
     }
 
@@ -1793,7 +2009,12 @@ class SugarStormGame {
   breakAdjacentGlass(cells) {
     const cracked = new Map();
     cells.forEach((cell) => {
-      for (const [dr, dc] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) {
+      for (const [dr, dc] of [
+        [-1, 0],
+        [1, 0],
+        [0, -1],
+        [0, 1],
+      ]) {
         const row = cell.row + dr;
         const col = cell.col + dc;
         if (!this.isInside(row, col) || !this.glassGrid[row]?.[col]) {
@@ -1835,7 +2056,10 @@ class SugarStormGame {
         return;
       }
       this.totalScore += Math.round((120 + comboBonus) * chainBonus);
-      if (this.goalState[piece.type] !== undefined && this.goalState[piece.type] > 0) {
+      if (
+        this.goalState[piece.type] !== undefined &&
+        this.goalState[piece.type] > 0
+      ) {
         this.goalState[piece.type] -= 1;
       }
       if (this.jellyGrid[row]?.[col] > 0) {
@@ -1845,13 +2069,22 @@ class SugarStormGame {
     });
 
     if (cells.length) {
-      this.playTone(420 + cells.length * 16, 0.12 + Math.min(0.18, cells.length * 0.01), "triangle", 0.03);
+      this.playTone(
+        420 + cells.length * 16,
+        0.12 + Math.min(0.18, cells.length * 0.01),
+        "triangle",
+        0.03,
+      );
       const baseCharge =
-        cells.length >= 6 ? 18 :
-        cells.length === 5 ? 12 :
-        cells.length === 4 ? 8 :
-        3;
-      const chainCharge = this.chainMultiplier >= 2 ? (this.chainMultiplier - 1) * 5 : 0;
+        cells.length >= 6
+          ? 18
+          : cells.length === 5
+            ? 12
+            : cells.length === 4
+              ? 8
+              : 3;
+      const chainCharge =
+        this.chainMultiplier >= 2 ? (this.chainMultiplier - 1) * 5 : 0;
       this.addStormCharge(baseCharge + chainCharge);
     }
     if (cells.length >= 4) {
@@ -1863,7 +2096,9 @@ class SugarStormGame {
       this.addScreenShake(Math.min(14, 4 + cells.length));
     }
     if (cells.length >= 6) {
-      this.setMessage(`Sweet storm. You crushed ${cells.length} candies at x${this.chainMultiplier}.`);
+      this.setMessage(
+        `Sweet storm. You crushed ${cells.length} candies at x${this.chainMultiplier}.`,
+      );
     }
 
     this.syncHud();
@@ -1891,7 +2126,9 @@ class SugarStormGame {
 
   spawnEffectLine(orientation, index, color) {
     const key = `${orientation}:${index}`;
-    const existing = this.effectLines.find((effect) => effect.key === key && effect.life > 0.08);
+    const existing = this.effectLines.find(
+      (effect) => effect.key === key && effect.life > 0.08,
+    );
     if (existing) {
       existing.life = Math.max(existing.life, 0.24);
       existing.color = color || existing.color;
@@ -1912,7 +2149,9 @@ class SugarStormGame {
       return;
     }
     const key = `burst:${cell.row},${cell.col}`;
-    const existing = this.effectBursts.find((effect) => effect.key === key && effect.life > 0.1);
+    const existing = this.effectBursts.find(
+      (effect) => effect.key === key && effect.life > 0.1,
+    );
     if (existing) {
       existing.life = Math.max(existing.life, 0.32);
       existing.color = color || existing.color;
@@ -1949,9 +2188,14 @@ class SugarStormGame {
   }
 
   triggerSugarRush() {
-    const center = this.allCells()[Math.floor(this.allCells().length / 2)] || { row: 3, col: 3 };
+    const center = this.allCells()[Math.floor(this.allCells().length / 2)] || {
+      row: 3,
+      col: 3,
+    };
     this.spawnPopup("Sugar Rush!", center, "#fff3a5");
-    this.setMessage("Sugar Rush! The storm powers up a few candies for a harder-earned payoff.");
+    this.setMessage(
+      "Sugar Rush! The storm powers up a few candies for a harder-earned payoff.",
+    );
     this.addScreenShake(14);
     const dominantType = this.pickDominantType();
     const targets = this.collectTypeCells(dominantType, false);
@@ -1962,7 +2206,12 @@ class SugarStormGame {
     targets.slice(0, 4).forEach((cell, index) => {
       const piece = this.board[cell.row][cell.col];
       if (piece && !this.isPowerSpecial(piece)) {
-        piece.special = index === 3 ? SPECIALS.WRAPPED : index % 2 === 0 ? SPECIALS.STRIPED_H : SPECIALS.STRIPED_V;
+        piece.special =
+          index === 3
+            ? SPECIALS.WRAPPED
+            : index % 2 === 0
+              ? SPECIALS.STRIPED_H
+              : SPECIALS.STRIPED_V;
         piece.scale = 1.2;
       }
     });
@@ -2044,14 +2293,26 @@ class SugarStormGame {
       this.levelComplete = true;
       this.isGameOver = true;
       this.captureCarryover();
-      this.showOverlay("Eye Of The Storm", this.levelIndex + 1 >= 4 ? "Level Complete" : "Stage Clear", this.levelIndex + 1 >= 4 ? "You cleared the board. The storm run keeps rolling with a fresh board and new pressure." : "You cleared the objectives and smashed through the opening squall.", "Next Level");
+      this.showOverlay(
+        "Eye Of The Storm",
+        this.levelIndex + 1 >= 4 ? "Level Complete" : "Stage Clear",
+        this.levelIndex + 1 >= 4
+          ? "You cleared the board. The storm run keeps rolling with a fresh board and new pressure."
+          : "You cleared the objectives and smashed through the opening squall.",
+        "Next Level",
+      );
       return;
     }
 
     if (this.movesLeft <= 0) {
       this.levelComplete = false;
       this.isGameOver = true;
-      this.showOverlay("Storm Faded", "Out of Moves", "Restart and build a stronger storm chain.", "Play Again");
+      this.showOverlay(
+        "Storm Faded",
+        "Out of Moves",
+        "Restart and build a stronger storm chain.",
+        "Play Again",
+      );
       return;
     }
 
@@ -2080,7 +2341,10 @@ class SugarStormGame {
           continue;
         }
 
-        for (const [dr, dc] of [[0, 1], [1, 0]]) {
+        for (const [dr, dc] of [
+          [0, 1],
+          [1, 0],
+        ]) {
           const nextRow = row + dr;
           const nextCol = col + dc;
           if (!this.isInside(nextRow, nextCol)) {
@@ -2092,7 +2356,10 @@ class SugarStormGame {
             continue;
           }
           if (this.isPowerSpecial(piece) || this.isPowerSpecial(target)) {
-            this.hintCells = [{ row, col }, { row: nextRow, col: nextCol }];
+            this.hintCells = [
+              { row, col },
+              { row: nextRow, col: nextCol },
+            ];
             return true;
           }
 
@@ -2101,7 +2368,10 @@ class SugarStormGame {
           this.swapPieces(piece, target);
 
           if (works) {
-            this.hintCells = [{ row, col }, { row: nextRow, col: nextCol }];
+            this.hintCells = [
+              { row, col },
+              { row: nextRow, col: nextCol },
+            ];
             return true;
           }
         }
@@ -2113,8 +2383,12 @@ class SugarStormGame {
   }
 
   shuffleBoard(showMessage) {
-    const movableCells = this.allCells().filter(({ row, col }) => !this.isLockedCell(row, col));
-    const basePieces = movableCells.map(({ row, col }) => this.board[row][col]).filter(Boolean);
+    const movableCells = this.allCells().filter(
+      ({ row, col }) => !this.isLockedCell(row, col),
+    );
+    const basePieces = movableCells
+      .map(({ row, col }) => this.board[row][col])
+      .filter(Boolean);
     if (!movableCells.length || !basePieces.length) {
       return;
     }
@@ -2174,7 +2448,10 @@ class SugarStormGame {
   }
 
   tick(timestamp) {
-    const delta = Math.min(0.033, (timestamp - this.lastTimestamp) / 1000 || 0.016);
+    const delta = Math.min(
+      0.033,
+      (timestamp - this.lastTimestamp) / 1000 || 0.016,
+    );
     this.lastTimestamp = timestamp;
     this.update(delta);
     this.draw();
@@ -2192,21 +2469,24 @@ class SugarStormGame {
           : "Match 4 or 5 to create special candy powers.";
     }
 
-    this.board.flat().filter(Boolean).forEach((piece) => {
-      piece.drawRow += (piece.row - piece.drawRow) * Math.min(1, delta * 22);
-      piece.drawCol += (piece.col - piece.drawCol) * Math.min(1, delta * 22);
-      piece.scale += (1 - piece.scale) * Math.min(1, delta * 16);
-      piece.pulse += delta * 2;
-      if (Math.abs(piece.row - piece.drawRow) < 0.002) {
-        piece.drawRow = piece.row;
-      }
-      if (Math.abs(piece.col - piece.drawCol) < 0.002) {
-        piece.drawCol = piece.col;
-      }
-      if (Math.abs(1 - piece.scale) < 0.003) {
-        piece.scale = 1;
-      }
-    });
+    this.board
+      .flat()
+      .filter(Boolean)
+      .forEach((piece) => {
+        piece.drawRow += (piece.row - piece.drawRow) * Math.min(1, delta * 22);
+        piece.drawCol += (piece.col - piece.drawCol) * Math.min(1, delta * 22);
+        piece.scale += (1 - piece.scale) * Math.min(1, delta * 16);
+        piece.pulse += delta * 2;
+        if (Math.abs(piece.row - piece.drawRow) < 0.002) {
+          piece.drawRow = piece.row;
+        }
+        if (Math.abs(piece.col - piece.drawCol) < 0.002) {
+          piece.drawCol = piece.col;
+        }
+        if (Math.abs(1 - piece.scale) < 0.003) {
+          piece.scale = 1;
+        }
+      });
 
     this.particles = this.particles.filter((particle) => particle.life > 0);
     this.particles.forEach((particle) => {
@@ -2258,7 +2538,10 @@ class SugarStormGame {
     }
     this.drawBoardBackground(ctx);
     this.drawGrid(ctx);
-    this.board.flat().filter(Boolean).forEach((piece) => this.drawPiece(ctx, piece));
+    this.board
+      .flat()
+      .filter(Boolean)
+      .forEach((piece) => this.drawPiece(ctx, piece));
     this.drawCellOverlays(ctx);
     this.drawInteractionOverlays(ctx);
     this.drawSpecialEffects(ctx);
@@ -2270,9 +2553,9 @@ class SugarStormGame {
 
   drawBoardBackground(ctx) {
     const gradient = ctx.createLinearGradient(0, 0, 0, BOARD_PIXELS);
-    gradient.addColorStop(0, "#173262");
-    gradient.addColorStop(0.55, "#20498c");
-    gradient.addColorStop(1, "#10284f");
+    gradient.addColorStop(0, "#071225");
+    gradient.addColorStop(0.55, "#0b1d39");
+    gradient.addColorStop(1, "#040c18");
     ctx.fillStyle = gradient;
     this.roundRect(ctx, 0, 0, BOARD_PIXELS, BOARD_PIXELS, 24);
     ctx.fill();
@@ -2285,7 +2568,7 @@ class SugarStormGame {
       BOARD_PIXELS * 0.18,
       BOARD_PIXELS * 0.62,
     );
-    highlight.addColorStop(0, "rgba(255,255,255,0.18)");
+    highlight.addColorStop(0, "rgba(118, 208, 255, 0.12)");
     highlight.addColorStop(1, "rgba(255,255,255,0)");
     ctx.fillStyle = highlight;
     this.roundRect(ctx, 0, 0, BOARD_PIXELS, BOARD_PIXELS, 24);
@@ -2298,15 +2581,18 @@ class SugarStormGame {
         const x = col * CELL_SIZE + 5;
         const y = row * CELL_SIZE + 5;
         if (!this.isPlayableCell(row, col)) {
-          ctx.fillStyle = "rgba(8, 16, 36, 0.52)";
+          ctx.fillStyle = "rgba(1, 6, 15, 0.7)";
           this.roundRect(ctx, x + 4, y + 4, CELL_SIZE - 18, CELL_SIZE - 18, 16);
           ctx.fill();
           continue;
         }
-        ctx.fillStyle = (row + col) % 2 === 0 ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.07)";
+        ctx.fillStyle =
+          (row + col) % 2 === 0
+            ? "rgba(255,255,255,0.08)"
+            : "rgba(110,160,255,0.05)";
         this.roundRect(ctx, x, y, CELL_SIZE - 10, CELL_SIZE - 10, 18);
         ctx.fill();
-        ctx.strokeStyle = "rgba(255,255,255,0.08)";
+        ctx.strokeStyle = "rgba(148, 207, 255, 0.1)";
         ctx.lineWidth = 1.2;
         this.roundRect(ctx, x, y, CELL_SIZE - 10, CELL_SIZE - 10, 18);
         ctx.stroke();
@@ -2331,7 +2617,12 @@ class SugarStormGame {
           } else {
             const x = col * CELL_SIZE + 7;
             const y = row * CELL_SIZE + 7;
-            const jellyGradient = ctx.createLinearGradient(x, y, x + CELL_SIZE, y + CELL_SIZE);
+            const jellyGradient = ctx.createLinearGradient(
+              x,
+              y,
+              x + CELL_SIZE,
+              y + CELL_SIZE,
+            );
             jellyGradient.addColorStop(0, "rgba(214, 248, 255, 0.6)");
             jellyGradient.addColorStop(1, "rgba(110, 201, 255, 0.28)");
             ctx.fillStyle = jellyGradient;
@@ -2349,7 +2640,10 @@ class SugarStormGame {
             ctx.restore();
           }
           ctx.save();
-          ctx.strokeStyle = this.blockerGrid[row][col] > 1 ? "rgba(84, 47, 23, 0.58)" : "rgba(255,255,255,0.52)";
+          ctx.strokeStyle =
+            this.blockerGrid[row][col] > 1
+              ? "rgba(84, 47, 23, 0.58)"
+              : "rgba(255,255,255,0.52)";
           ctx.lineWidth = this.blockerGrid[row][col] > 1 ? 4 : 2.5;
           const startX = col * CELL_SIZE + 18;
           const startY = row * CELL_SIZE + 18;
@@ -2375,7 +2669,14 @@ class SugarStormGame {
     if (this.selected && this.board[this.selected.row]?.[this.selected.col]) {
       ctx.strokeStyle = "#fff7d8";
       ctx.lineWidth = 4;
-      this.roundRect(ctx, this.selected.col * CELL_SIZE + 6, this.selected.row * CELL_SIZE + 6, CELL_SIZE - 12, CELL_SIZE - 12, 18);
+      this.roundRect(
+        ctx,
+        this.selected.col * CELL_SIZE + 6,
+        this.selected.row * CELL_SIZE + 6,
+        CELL_SIZE - 12,
+        CELL_SIZE - 12,
+        18,
+      );
       ctx.stroke();
     }
 
@@ -2384,8 +2685,16 @@ class SugarStormGame {
       ctx.strokeStyle = "rgba(255,245,157,0.85)";
       ctx.lineWidth = 4;
       this.hintCells.forEach((cell, index) => {
-        ctx.globalAlpha = 0.55 + Math.sin(performance.now() / 180 + index) * 0.25;
-        this.roundRect(ctx, cell.col * CELL_SIZE + 8, cell.row * CELL_SIZE + 8, CELL_SIZE - 16, CELL_SIZE - 16, 16);
+        ctx.globalAlpha =
+          0.55 + Math.sin(performance.now() / 180 + index) * 0.25;
+        this.roundRect(
+          ctx,
+          cell.col * CELL_SIZE + 8,
+          cell.row * CELL_SIZE + 8,
+          CELL_SIZE - 16,
+          CELL_SIZE - 16,
+          16,
+        );
         ctx.stroke();
       });
       ctx.restore();
@@ -2430,11 +2739,45 @@ class SugarStormGame {
   drawPiece(ctx, piece) {
     const x = piece.drawCol * CELL_SIZE + CELL_SIZE / 2;
     const y = piece.drawRow * CELL_SIZE + CELL_SIZE / 2;
-    const radius = 25 * piece.scale;
-    const color = piece.special === SPECIALS.COLOR_BOMB ? "#2b2b36" : CANDY_COLORS[piece.type];
+    const radiusMultiplier =
+      piece.special === SPECIALS.COLOR_BOMB ||
+      piece.special === SPECIALS.INGREDIENT
+        ? 1.18
+        : 1;
+    const radius = 25 * piece.scale * radiusMultiplier;
+    const color =
+      piece.special === SPECIALS.COLOR_BOMB
+        ? "#2b2b36"
+        : CANDY_COLORS[piece.type];
 
     ctx.save();
     ctx.translate(x, y);
+
+    if (piece.special) {
+      const glowColor =
+        piece.special === SPECIALS.COLOR_BOMB
+          ? "#fff0a8"
+          : piece.special === SPECIALS.INGREDIENT
+            ? "#ffd27a"
+            : CANDY_COLORS[piece.type] || "#ffffff";
+      ctx.save();
+      ctx.shadowBlur =
+        piece.special === SPECIALS.COLOR_BOMB ||
+        piece.special === SPECIALS.INGREDIENT
+          ? 34
+          : 20;
+      ctx.shadowColor = this.toRgba(glowColor, 0.8);
+      ctx.globalAlpha =
+        piece.special === SPECIALS.COLOR_BOMB ||
+        piece.special === SPECIALS.INGREDIENT
+          ? 0.85
+          : 0.45;
+      ctx.fillStyle = this.toRgba(glowColor, 0.55);
+      ctx.beginPath();
+      ctx.arc(0, 0, radius * 1.08, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
 
     const baseImage = this.getBasePieceImage(piece);
     const overlayImage = this.getOverlayPieceImage(piece);
@@ -2450,17 +2793,34 @@ class SugarStormGame {
       this.drawCandyShape(ctx, piece.type, color, radius);
     }
 
+    const usesDedicatedSpecialArt = Boolean(
+      piece.special && SPECIAL_IMAGE_PATHS[piece.type]?.[piece.special],
+    );
+
     if (overlayImage) {
       this.drawPieceImage(ctx, overlayImage, radius);
-    } else if (piece.special === SPECIALS.STRIPED_H || piece.special === SPECIALS.STRIPED_V) {
-      this.drawStripedOverlay(ctx, radius, piece.special === SPECIALS.STRIPED_H);
-    } else if (piece.special === SPECIALS.WRAPPED) {
+    } else if (
+      !usesDedicatedSpecialArt &&
+      (piece.special === SPECIALS.STRIPED_H ||
+        piece.special === SPECIALS.STRIPED_V)
+    ) {
+      this.drawStripedOverlay(
+        ctx,
+        radius,
+        piece.special === SPECIALS.STRIPED_H,
+      );
+    } else if (!usesDedicatedSpecialArt && piece.special === SPECIALS.WRAPPED) {
       this.drawWrappedOverlay(ctx, radius);
     }
 
-    if (sparkleImage && piece.special !== SPECIALS.COLOR_BOMB && piece.special !== SPECIALS.INGREDIENT) {
+    if (
+      sparkleImage &&
+      piece.special &&
+      piece.special !== SPECIALS.COLOR_BOMB &&
+      piece.special !== SPECIALS.INGREDIENT
+    ) {
       ctx.save();
-      ctx.globalAlpha = 0.45;
+      ctx.globalAlpha = 0.38;
       this.drawPieceImage(ctx, sparkleImage, radius * 1.02);
       ctx.restore();
     }
@@ -2477,17 +2837,29 @@ class SugarStormGame {
       return this.pieceImages.ingredient || null;
     }
 
+    if (piece.special && SPECIAL_IMAGE_PATHS[piece.type]?.[piece.special]) {
+      return (
+        this.pieceImages[`${piece.type}-${piece.special}`] ||
+        this.pieceImages[piece.type] ||
+        null
+      );
+    }
+
     return this.pieceImages[piece.type] || null;
   }
 
   getOverlayPieceImage(piece) {
-    if (piece.special === SPECIALS.STRIPED_H) {
-      return this.pieceImages.stripedH || null;
+    if (SPECIAL_IMAGE_PATHS[piece.type]?.[piece.special]) {
+      return null;
     }
 
-    if (piece.special === SPECIALS.STRIPED_V) {
-      return this.pieceImages.stripedV || null;
-    }
+    // if (piece.special === SPECIALS.STRIPED_H) {
+    //   return this.pieceImages.stripedH || null;
+    // }
+
+    // if (piece.special === SPECIALS.STRIPED_V) {
+    //   return this.pieceImages.stripedV || null;
+    // }
 
     if (piece.special === SPECIALS.WRAPPED) {
       return this.pieceImages.wrapped || null;
@@ -2512,11 +2884,24 @@ class SugarStormGame {
       drawWidth = drawHeight * aspectRatio;
     }
 
-    ctx.drawImage(image, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
+    ctx.drawImage(
+      image,
+      -drawWidth / 2,
+      -drawHeight / 2,
+      drawWidth,
+      drawHeight,
+    );
   }
 
   drawCandyShape(ctx, type, color, radius) {
-    const gradient = ctx.createRadialGradient(-radius * 0.35, -radius * 0.45, radius * 0.2, 0, 0, radius * 1.1);
+    const gradient = ctx.createRadialGradient(
+      -radius * 0.35,
+      -radius * 0.45,
+      radius * 0.2,
+      0,
+      0,
+      radius * 1.1,
+    );
     gradient.addColorStop(0, "#fff7ef");
     gradient.addColorStop(0.2, color);
     gradient.addColorStop(1, this.shade(color, -20));
@@ -2528,8 +2913,22 @@ class SugarStormGame {
     if (type === "strawberry") {
       ctx.beginPath();
       ctx.moveTo(0, -radius);
-      ctx.bezierCurveTo(radius, -radius * 0.8, radius * 0.95, radius * 0.5, 0, radius * 1.05);
-      ctx.bezierCurveTo(-radius * 0.95, radius * 0.5, -radius, -radius * 0.8, 0, -radius);
+      ctx.bezierCurveTo(
+        radius,
+        -radius * 0.8,
+        radius * 0.95,
+        radius * 0.5,
+        0,
+        radius * 1.05,
+      );
+      ctx.bezierCurveTo(
+        -radius * 0.95,
+        radius * 0.5,
+        -radius,
+        -radius * 0.8,
+        0,
+        -radius,
+      );
       ctx.fill();
       ctx.stroke();
     } else if (type === "blueberry") {
@@ -2552,7 +2951,13 @@ class SugarStormGame {
       ctx.fill();
       ctx.stroke();
     } else if (type === "grape") {
-      for (const [dx, dy, r] of [[-10, -8, 11], [10, -8, 11], [0, 6, 12], [-12, 12, 10], [12, 12, 10]]) {
+      for (const [dx, dy, r] of [
+        [-10, -8, 11],
+        [10, -8, 11],
+        [0, 6, 12],
+        [-12, 12, 10],
+        [12, 12, 10],
+      ]) {
         ctx.beginPath();
         ctx.arc(dx, dy, r, 0, Math.PI * 2);
         ctx.fill();
@@ -2567,11 +2972,27 @@ class SugarStormGame {
 
     ctx.fillStyle = "rgba(255,255,255,0.38)";
     ctx.beginPath();
-    ctx.ellipse(-radius * 0.24, -radius * 0.4, radius * 0.26, radius * 0.12, -0.4, 0, Math.PI * 2);
+    ctx.ellipse(
+      -radius * 0.24,
+      -radius * 0.4,
+      radius * 0.26,
+      radius * 0.12,
+      -0.4,
+      0,
+      Math.PI * 2,
+    );
     ctx.fill();
     ctx.fillStyle = "rgba(255,255,255,0.2)";
     ctx.beginPath();
-    ctx.ellipse(radius * 0.1, radius * 0.18, radius * 0.36, radius * 0.18, 0.25, 0, Math.PI * 2);
+    ctx.ellipse(
+      radius * 0.1,
+      radius * 0.18,
+      radius * 0.36,
+      radius * 0.18,
+      0.25,
+      0,
+      Math.PI * 2,
+    );
     ctx.fill();
   }
 
@@ -2618,12 +3039,25 @@ class SugarStormGame {
     ctx.fill();
     ctx.stroke();
 
-    const dots = ["#ff5d8f", "#ffd33d", "#4fb3ff", "#53d98d", "#ff9c3d", "#8f6fff"];
+    const dots = [
+      "#ff5d8f",
+      "#ffd33d",
+      "#4fb3ff",
+      "#53d98d",
+      "#ff9c3d",
+      "#8f6fff",
+    ];
     dots.forEach((dot, index) => {
       const angle = (Math.PI * 2 * index) / dots.length;
       ctx.fillStyle = dot;
       ctx.beginPath();
-      ctx.arc(Math.cos(angle) * radius * 0.55, Math.sin(angle) * radius * 0.55, radius * 0.2, 0, Math.PI * 2);
+      ctx.arc(
+        Math.cos(angle) * radius * 0.55,
+        Math.sin(angle) * radius * 0.55,
+        radius * 0.2,
+        0,
+        Math.PI * 2,
+      );
       ctx.fill();
       ctx.strokeStyle = "rgba(255,255,255,0.35)";
       ctx.lineWidth = 1;
@@ -2652,7 +3086,12 @@ class SugarStormGame {
     ctx.lineWidth = 4;
     ctx.beginPath();
     ctx.moveTo(0, -radius * 0.78);
-    ctx.quadraticCurveTo(radius * 0.18, -radius * 1.08, radius * 0.38, -radius * 0.92);
+    ctx.quadraticCurveTo(
+      radius * 0.18,
+      -radius * 1.08,
+      radius * 0.38,
+      -radius * 0.92,
+    );
     ctx.stroke();
   }
 
@@ -2688,7 +3127,14 @@ class SugarStormGame {
       ctx.globalAlpha = alpha;
       ctx.shadowBlur = 30;
       ctx.shadowColor = effect.color;
-      const gradient = ctx.createRadialGradient(effect.x, effect.y, 0, effect.x, effect.y, radius);
+      const gradient = ctx.createRadialGradient(
+        effect.x,
+        effect.y,
+        0,
+        effect.x,
+        effect.y,
+        radius,
+      );
       gradient.addColorStop(0, "rgba(255,255,255,0.0)");
       gradient.addColorStop(0.25, this.toRgba(effect.color, 0.55 * alpha));
       gradient.addColorStop(1, "rgba(255,255,255,0.0)");

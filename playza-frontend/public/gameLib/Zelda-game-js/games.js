@@ -20,6 +20,10 @@ const ENEMY_SHOOT_RANGE = 340;
 
 // Target total enemies per level (after redistribution) - reduced for playability
 const LEVEL_ENEMY_TARGETS = [25, 60, 90];
+const TOTAL_LEVELS = 9;
+const DASH_DISTANCE = TS * 2.2;
+const DASH_COOLDOWN = 4.5;
+const SHIELD_DURATION = 8;
 
 // ─── MAP DEFINITIONS ─────────────────────────────────
 // Characters: W=wall, ' '=floor, E=enemy, P=player start, X=exit door
@@ -131,6 +135,27 @@ const LEVEL_MAPS = [
   ],
 ];
 
+function getMapData(lvl) {
+  return LEVEL_MAPS[lvl % LEVEL_MAPS.length];
+}
+
+function getSectorConfig(lvl) {
+  const cycle = Math.floor(lvl / LEVEL_MAPS.length);
+  const templateIndex = lvl % LEVEL_MAPS.length;
+  return {
+    levelIndex: lvl,
+    templateIndex,
+    cycle,
+    enemyTarget: LEVEL_ENEMY_TARGETS[templateIndex] + cycle * 18,
+    healthPickups: 2 + Math.min(2, cycle),
+    gunPickups: 1 + (lvl >= 2 ? 1 : 0),
+    shieldPickups: 1 + (cycle > 0 ? 1 : 0),
+    coresRequired: Math.min(4, 2 + cycle),
+    reinforcementCount: 4 + cycle * 2,
+    exitEnemyThreshold: Math.min(3, cycle),
+  };
+}
+
 // ─── STATE ──────────────────────────────────────────
 let canvas, ctx;
 let gameState = "start"; // start | playing | levelComplete | win | over
@@ -159,6 +184,15 @@ let mouseMoved = false;
 
 // Player stats & powerups
 let gunLevel = 1;
+let shieldTime = 0;
+let dashCooldown = 0;
+let dashQueued = false;
+let coresCollected = 0;
+let coresRequired = 0;
+let sectorConfig = null;
+let reinforcementTriggered = false;
+let killChain = 0;
+let killChainTimer = 0;
 
 // Joystick state
 let joystick = { active: false, startX: 0, startY: 0, dx: 0, dy: 0 };
@@ -368,15 +402,27 @@ function updateHUD() {
   document.getElementById("hud-score").textContent = score;
   document.getElementById("hud-enemies").textContent = enemies.length;
   document.getElementById("hud-kills").textContent = totalKills;
+  document.getElementById("hud-cores").textContent =
+    `${coresCollected}/${coresRequired}`;
   document.getElementById("hud-ammo").textContent =
     gunLevel > 1 ? "ELITE" : "STD";
   document.getElementById("hud-gun").textContent = gunLevel > 1 ? "★ ★" : "▸";
+
+  document.getElementById("hud-gun").textContent = gunLevel > 1 ? "II" : "I";
+  document.getElementById("hud-dash").textContent =
+    dashCooldown <= 0 ? "READY" : `${dashCooldown.toFixed(1)}s`;
+  document.getElementById("hud-shield").textContent =
+    shieldTime > 0 ? `${shieldTime.toFixed(1)}s` : "OFF";
 
   const livesEl = document.getElementById("hud-lives");
   if (livesEl) {
     let hearts = "";
     for (let i = 0; i < lives; i++) hearts += "❤";
     livesEl.textContent = hearts || "RIP";
+  }
+
+  if (livesEl) {
+    livesEl.textContent = lives > 0 ? "+".repeat(lives) : "RIP";
   }
 
   const hpPct = Math.max(0, (player.hp / PLAYER_HP) * 100);
@@ -415,6 +461,10 @@ function startGame(lvl) {
     totalKills = 0;
     lives = 3;
     gunLevel = 1;
+    shieldTime = 0;
+    dashCooldown = 0;
+    killChain = 0;
+    killChainTimer = 0;
   }
   gameState = "playing";
   showScreen(null);
@@ -433,8 +483,14 @@ function loadLevel(lvl) {
   pickups = [];
   exitDoor = null;
   exitOpen = false;
+  sectorConfig = getSectorConfig(lvl);
+  coresCollected = 0;
+  coresRequired = sectorConfig.coresRequired;
+  reinforcementTriggered = false;
+  shieldTime = Math.max(0, shieldTime - 1.5);
+  dashCooldown = 0;
 
-  const mapData = LEVEL_MAPS[lvl];
+  const mapData = getMapData(lvl);
   mapPixelW = COLS * TS;
   mapPixelH = ROWS * TS;
 
@@ -476,13 +532,17 @@ function loadLevel(lvl) {
 }
 
 function spawnPickups(lvl) {
-  // 2 Health patches
-  for (let i = 0; i < 2; i++) {
+  for (let i = 0; i < sectorConfig.healthPickups; i++) {
     placePickup("health");
   }
-  // 2 Gun upgrades
-  for (let i = 0; i < 2; i++) {
+  for (let i = 0; i < sectorConfig.gunPickups; i++) {
     placePickup("gun");
+  }
+  for (let i = 0; i < sectorConfig.shieldPickups; i++) {
+    placePickup("shield");
+  }
+  for (let i = 0; i < sectorConfig.coresRequired; i++) {
+    placePickup("core");
   }
 }
 
@@ -554,8 +614,10 @@ function playerStartAt(wx, wy) {
 
 // Spawn enemies in corners instead of map positions
 function spawnEnemiesScattered(lvl) {
-  const mapData = LEVEL_MAPS[lvl];
-  const targetCount = LEVEL_ENEMY_TARGETS[lvl];
+  const mapData = getMapData(lvl);
+  const targetCount = sectorConfig
+    ? sectorConfig.enemyTarget
+    : LEVEL_ENEMY_TARGETS[lvl % LEVEL_ENEMY_TARGETS.length];
 
   // Safety radius from player spawn (approx 5-6 tiles)
   const minPlayerDist = TS * 6;
@@ -835,11 +897,17 @@ function mainLoop(ts) {
 
 // ─── UPDATE ───────────────────────────────────────────
 function update(dt, ts) {
+  dashCooldown = Math.max(0, dashCooldown - dt);
+  shieldTime = Math.max(0, shieldTime - dt);
+  killChainTimer = Math.max(0, killChainTimer - dt);
+  if (killChainTimer === 0) killChain = 0;
+
   updatePlayer(dt, ts);
   updateEnemies(dt, ts);
   updateBullets(dt);
   updateParticles(dt);
   updatePickups(dt);
+  maybeSpawnReinforcements();
   checkDoor();
 
   // Smooth camera follow
@@ -874,6 +942,14 @@ function updatePlayer(dt, ts) {
   if (spd > 0) {
     vx /= spd;
     vy /= spd;
+  }
+
+  if ((keys["ShiftLeft"] || keys["ShiftRight"]) && !dashQueued && dashCooldown <= 0) {
+    dashQueued = true;
+    triggerDash(vx, vy);
+  }
+  if (!keys["ShiftLeft"] && !keys["ShiftRight"]) {
+    dashQueued = false;
   }
 
   // Move X
@@ -945,6 +1021,34 @@ function updatePlayer(dt, ts) {
 
   // Damage flash decay
   if (player.damageFlash > 0) player.damageFlash -= dt * 4;
+}
+
+function triggerDash(vx, vy) {
+  if (player.dead || dashCooldown > 0) return;
+
+  let dirX = vx;
+  let dirY = vy;
+  if (dirX === 0 && dirY === 0) {
+    dirX = player.dirX;
+    dirY = player.dirY;
+  }
+
+  const len = Math.hypot(dirX, dirY) || 1;
+  const stepX = dirX / len;
+  const stepY = dirY / len;
+  const slices = 6;
+
+  for (let i = 0; i < slices; i++) {
+    const nx = player.x + (stepX * DASH_DISTANCE * (i + 1)) / slices;
+    const ny = player.y + (stepY * DASH_DISTANCE * (i + 1)) / slices;
+    if (wallHit(nx, ny, player.w, player.h)) break;
+    player.x = nx;
+    player.y = ny;
+    spawnParticles(player.x, player.y, "#7bdbff", 2);
+  }
+
+  dashCooldown = DASH_COOLDOWN;
+  flashScreen("next");
 }
 
 function updateEnemies(dt, ts) {
@@ -1128,11 +1232,16 @@ function updateBullets(dt) {
           spawnParticles(b.x, b.y, "#ff4444", 8);
           if (e.hp <= 0) {
             e.dead = true;
-            score += e.isElite ? 150 : 100;
+            killChain++;
+            killChainTimer = 4;
+            const comboBonus = Math.max(0, killChain - 1) * 25;
+            score += (e.isElite ? 150 : 100) + comboBonus;
             totalKills++;
             spawnDeathParticles(e.x, e.y);
             showFloatingMsg(
-              e.isElite ? "+150 ELITE DOWN" : "+100 KILL",
+              e.isElite
+                ? `+${150 + comboBonus} ELITE DOWN`
+                : `+${100 + comboBonus} KILL`,
               e.isElite ? "#ffd60a" : "#ff4444",
             );
             playSound("death");
@@ -1164,6 +1273,15 @@ function updatePickups(dt) {
         showFloatingMsg("GUN UPGRADED!", "#ffd60a");
         playSound("pickup-gun");
         flashScreen("gun-up");
+      } else if (p.type === "shield") {
+        shieldTime = SHIELD_DURATION;
+        showFloatingMsg("SHIELD ONLINE", "#bf5fff");
+        flashScreen("heal");
+      } else if (p.type === "core") {
+        coresCollected++;
+        score += 120;
+        showFloatingMsg(`CORE ${coresCollected}/${coresRequired}`, "#7bdbff");
+        flashScreen("next");
       }
       pickups.splice(i, 1);
     }
@@ -1176,7 +1294,7 @@ function respawnPlayer() {
   player.hp = PLAYER_HP;
 
   // Find player start position from current level map
-  const mapData = LEVEL_MAPS[currentLevel];
+  const mapData = getMapData(currentLevel);
   for (let r = 0; r < ROWS; r++) {
     const row = mapData[r] || "";
     for (let c = 0; c < COLS; c++) {
@@ -1196,6 +1314,11 @@ function respawnPlayer() {
 
 function applyPlayerDamage(amount) {
   if (player.dead) return;
+  if (shieldTime > 0) {
+    shieldTime = Math.max(0, shieldTime - amount * 0.08);
+    spawnParticles(player.x, player.y, "#bf5fff", 4);
+    return;
+  }
   player.hp -= amount;
   player.damageFlash = 1;
   flashScreen("damage");
@@ -1214,8 +1337,37 @@ function applyPlayerDamage(amount) {
   }
 }
 
+function maybeSpawnReinforcements() {
+  if (!sectorConfig || reinforcementTriggered) return;
+  if (coresCollected < coresRequired) return;
+  if (enemies.length > sectorConfig.exitEnemyThreshold + 5) return;
+
+  reinforcementTriggered = true;
+  showFloatingMsg("REINFORCEMENTS INBOUND", "#ff9f0a");
+  for (let i = 0; i < sectorConfig.reinforcementCount; i++) {
+    let attempts = 0;
+    while (attempts < 80) {
+      const c = Math.floor(Math.random() * COLS);
+      const r = Math.floor(Math.random() * ROWS);
+      const wx = c * TS + TS / 2;
+      const wy = r * TS + TS / 2;
+      if (
+        !isWall(wx, wy) &&
+        Math.hypot(wx - player.x, wy - player.y) > TS * 7 &&
+        !enemiesSomeAt(c * TS, r * TS)
+      ) {
+        spawnEnemy(wx, wy, currentLevel, i % 3 === 0 ? "aggressor" : null);
+        break;
+      }
+      attempts++;
+    }
+  }
+}
+
 function checkDoor() {
   if (!exitDoor) return;
+  const exitReady = coresCollected >= coresRequired;
+  if (!exitOpen && enemies.length === 0 && !exitReady) return;
   if (!exitOpen && enemies.length === 0) {
     exitOpen = true;
     showFloatingMsg("EXIT UNLOCKED — REACH THE TOP!", "#00e5ff");
@@ -1244,7 +1396,7 @@ function showLevelComplete() {
   document.getElementById("lc-score").textContent = score;
   document.getElementById("lc-hp").textContent = Math.ceil(player.hp);
 
-  if (currentLevel + 1 >= LEVEL_MAPS.length) {
+  if (currentLevel + 1 >= TOTAL_LEVELS) {
     showWin();
     return;
   }

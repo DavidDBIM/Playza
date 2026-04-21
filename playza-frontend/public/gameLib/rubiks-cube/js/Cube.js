@@ -219,11 +219,15 @@ class RubiksCube {
     _finishRotation(arr, axis, resolve) {
         this._detachFromPivot(arr);
         this.pivot.rotation[axis] = 0;
-        // Snap positions to nearest 0.5 to handle floating point drift
+        // Snap positions and rotations to quarter turns to avoid floating point drift.
         for (const c of arr) {
             c.position.x = Math.round(c.position.x * 2) / 2;
             c.position.y = Math.round(c.position.y * 2) / 2;
             c.position.z = Math.round(c.position.z * 2) / 2;
+            c.rotation.x = Math.round(c.rotation.x / (Math.PI / 2)) * (Math.PI / 2);
+            c.rotation.y = Math.round(c.rotation.y / (Math.PI / 2)) * (Math.PI / 2);
+            c.rotation.z = Math.round(c.rotation.z / (Math.PI / 2)) * (Math.PI / 2);
+            c.updateMatrixWorld(true);
         }
         this.isAnimating = false;
         this._isInMiddleOfMove = false;

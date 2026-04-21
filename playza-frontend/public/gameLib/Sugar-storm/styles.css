@@ -1,12 +1,12 @@
 :root {
-  --bg-top: #fff7d8;
-  --bg-bottom: #ffcad4;
-  --panel: rgba(255, 255, 255, 0.76);
-  --panel-strong: rgba(255, 255, 255, 0.92);
-  --ink: #55304a;
-  --ink-soft: #7c5d71;
+  --bg-top: #0b1730;
+  --bg-bottom: #050913;
+  --panel: rgba(10, 20, 39, 0.82);
+  --panel-strong: rgba(14, 27, 52, 0.92);
+  --ink: #eef6ff;
+  --ink-soft: #aec3de;
   --rose: #ff5d8f;
-  --shadow: 0 20px 50px rgba(127, 63, 97, 0.18);
+  --shadow: 0 24px 60px rgba(1, 7, 20, 0.48);
 }
 
 * { box-sizing: border-box; }
@@ -21,8 +21,8 @@ body {
   justify-content: center;
   overflow: hidden;
   background:
-    radial-gradient(circle at top left, rgba(255, 255, 255, 0.85), transparent 30%),
-    radial-gradient(circle at bottom right, rgba(255, 255, 255, 0.6), transparent 28%),
+    radial-gradient(circle at top left, rgba(92, 175, 255, 0.22), transparent 30%),
+    radial-gradient(circle at bottom right, rgba(255, 109, 160, 0.14), transparent 28%),
     linear-gradient(160deg, var(--bg-top), var(--bg-bottom));
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -44,7 +44,7 @@ body::-webkit-scrollbar {
 
 .hud-card, .board-card {
   background: var(--panel);
-  border: 1px solid rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(166, 206, 255, 0.14);
   backdrop-filter: blur(18px);
   border-radius: 28px;
   box-shadow: var(--shadow);
@@ -76,7 +76,7 @@ h1 { font-size: clamp(2rem, 3vw, 2.7rem); line-height: 0.95; }
   background: var(--panel-strong);
   border-radius: 22px;
   padding: 16px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 .goal-panel, .tip-card { margin-top: 18px; }
 .power-panel { margin-top: 18px; }
@@ -92,7 +92,7 @@ h1 { font-size: clamp(2rem, 3vw, 2.7rem); line-height: 0.95; }
   gap: 12px;
   padding: 12px 14px;
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.88);
+  background: rgba(20, 35, 62, 0.9);
 }
 
 .goal-left { display: flex; align-items: center; gap: 12px; }
@@ -166,7 +166,7 @@ button.secondary { background: linear-gradient(135deg, #41b8ff, #4ad9a0); box-sh
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.88);
+  background: rgba(18, 34, 60, 0.88);
   color: var(--ink);
   font-family: "Baloo 2", "Fredoka", sans-serif;
   font-size: 0.9rem;
@@ -189,7 +189,7 @@ button.secondary { background: linear-gradient(135deg, #41b8ff, #4ad9a0); box-sh
 }
 
 .board-stat {
-  background: rgba(255, 255, 255, 0.86);
+  background: rgba(16, 31, 56, 0.92);
   border-radius: 18px;
   padding: 10px 8px;
   text-align: center;
@@ -216,7 +216,7 @@ button.secondary { background: linear-gradient(135deg, #41b8ff, #4ad9a0); box-sh
 }
 
 .storm-stat {
-  background: linear-gradient(180deg, rgba(255, 246, 196, 0.95), rgba(255, 229, 144, 0.92));
+  background: linear-gradient(180deg, rgba(88, 62, 15, 0.95), rgba(153, 114, 26, 0.92));
 }
 
 .board-orders {
@@ -238,13 +238,13 @@ button.secondary { background: linear-gradient(135deg, #41b8ff, #4ad9a0); box-sh
   border-radius: 28px;
   overflow: hidden;
   background:
-    radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.2), transparent 22%),
-    radial-gradient(circle at 82% 12%, rgba(125, 202, 255, 0.18), transparent 24%),
-    linear-gradient(180deg, #17376d, #1a4282 58%, #10284f);
+    radial-gradient(circle at 18% 18%, rgba(83, 192, 255, 0.18), transparent 22%),
+    radial-gradient(circle at 82% 12%, rgba(255, 204, 115, 0.12), transparent 24%),
+    linear-gradient(180deg, #09172e, #0a1c35 58%, #040c18);
   padding: 14px;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.18),
-    inset 0 -24px 40px rgba(3, 10, 26, 0.24);
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -24px 40px rgba(0, 0, 0, 0.42);
 }
 
 canvas {
@@ -257,8 +257,8 @@ canvas {
   border-radius: 24px;
   image-rendering: auto;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.01)),
-    linear-gradient(180deg, #173262, #10284f);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01)),
+    linear-gradient(180deg, #071225, #040c18);
 }
 
 .overlay {
@@ -266,8 +266,10 @@ canvas {
   inset: 14px;
   display: grid;
   place-items: center;
-  background: rgba(57, 41, 88, 0.34);
-  backdrop-filter: blur(10px);
+  background:
+    linear-gradient(180deg, rgba(10, 16, 29, 0.84), rgba(8, 12, 24, 0.78)),
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.08), transparent 38%);
+  backdrop-filter: blur(4px);
 }
 
 .overlay.hidden { display: none; }
@@ -299,8 +301,10 @@ canvas {
   display: grid;
   place-items: center;
   padding: 16px;
-  background: rgba(63, 31, 83, 0.42);
-  backdrop-filter: blur(16px);
+  background:
+    linear-gradient(180deg, rgba(7, 12, 22, 0.9), rgba(7, 12, 22, 0.82)),
+    radial-gradient(circle at 50% 20%, rgba(255, 255, 255, 0.08), transparent 30%);
+  backdrop-filter: blur(6px);
   z-index: 20;
 }
 
@@ -310,10 +314,12 @@ canvas {
 
 .screen-card {
   width: min(520px, 100%);
-  background: rgba(255, 255, 255, 0.96);
+  background: rgba(255, 255, 255, 0.985);
   border-radius: 30px;
   padding: 28px;
-  box-shadow: 0 24px 60px rgba(68, 38, 86, 0.26);
+  box-shadow:
+    0 24px 60px rgba(10, 16, 29, 0.32),
+    0 0 0 1px rgba(255, 255, 255, 0.55);
   text-align: center;
 }
 
