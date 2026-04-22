@@ -2,13 +2,8 @@ export class AudioManager {
     constructor(engine) {
         this.engine = engine;
         this.context = null;
-        this.musicGain = null;
+        this.masterGain = null;
         this.sfxGain = null;
-        this.musicPlaying = false;
-        this.baseDrone = null;
-        this.baseDroneGain = null;
-        this.topDrone = null;
-        this.topDroneGain = null;
     }
 
     async init() {
@@ -18,175 +13,122 @@ export class AudioManager {
             }
 
             this.context = new (window.AudioContext || window.webkitAudioContext)();
-            this.musicGain = this.context.createGain();
-            this.musicGain.gain.value = 0.22;
-            this.musicGain.connect(this.context.destination);
+
+            const compressor = this.context.createDynamicsCompressor();
+            compressor.threshold.value = -18;
+            compressor.knee.value = 18;
+            compressor.ratio.value = 8;
+            compressor.attack.value = 0.003;
+            compressor.release.value = 0.18;
+
+            this.masterGain = this.context.createGain();
+            this.masterGain.gain.value = 0.34;
 
             this.sfxGain = this.context.createGain();
-            this.sfxGain.gain.value = 0.52;
-            this.sfxGain.connect(this.context.destination);
+            this.sfxGain.gain.value = 0.72;
+
+            this.sfxGain.connect(compressor);
+            compressor.connect(this.masterGain);
+            this.masterGain.connect(this.context.destination);
         } catch (error) {
             console.log('Audio not supported');
         }
     }
 
-    async playMusic() {
+    async ensureContext() {
         await this.init();
         if (!this.context) {
-            return;
+            return false;
         }
+
         if (this.context.state === 'suspended') {
             await this.context.resume();
         }
-        if (this.musicPlaying) {
-            return;
-        }
 
-        this.baseDrone = this.context.createOscillator();
-        this.baseDrone.type = 'sawtooth';
-        this.baseDrone.frequency.value = 90;
-        this.baseDroneGain = this.context.createGain();
-        this.baseDroneGain.gain.value = 0.02;
-
-        this.topDrone = this.context.createOscillator();
-        this.topDrone.type = 'triangle';
-        this.topDrone.frequency.value = 180;
-        this.topDroneGain = this.context.createGain();
-        this.topDroneGain.gain.value = 0.01;
-
-        this.baseDrone.connect(this.baseDroneGain);
-        this.topDrone.connect(this.topDroneGain);
-        this.baseDroneGain.connect(this.musicGain);
-        this.topDroneGain.connect(this.musicGain);
-
-        this.baseDrone.start();
-        this.topDrone.start();
-        this.musicPlaying = true;
+        return true;
     }
 
-    update() {
-        if (!this.context || !this.musicPlaying || !this.baseDrone || !this.topDrone) {
+    async playMusic() {
+        await this.ensureContext();
+    }
+
+    update() {}
+
+    playTone(freq, duration, type = 'sine', volume = 0.18, options = {}) {
+        if (!this.context || !this.sfxGain) {
             return;
         }
 
         const now = this.context.currentTime;
-        const speedRatio = this.engine.currentSpeed / this.engine.config.maxSpeed;
-        const turboBoost = this.engine.powerups.activeEffects.speed ? 1 : 0;
-
-        this.baseDrone.frequency.linearRampToValueAtTime(88 + speedRatio * 48 + turboBoost * 15, now + 0.1);
-        this.topDrone.frequency.linearRampToValueAtTime(174 + speedRatio * 92 + turboBoost * 28, now + 0.1);
-        this.baseDroneGain.gain.linearRampToValueAtTime(0.025 + speedRatio * 0.03 + turboBoost * 0.015, now + 0.1);
-        this.topDroneGain.gain.linearRampToValueAtTime(0.01 + speedRatio * 0.02 + turboBoost * 0.02, now + 0.1);
-    }
-
-    playTone(freq, duration, type = 'sine', volume = 0.3) {
-        if (!this.context) {
-            return;
-        }
+        const attack = options.attack ?? 0.012;
+        const release = options.release ?? Math.min(0.08, duration * 0.55);
+        const endTime = now + duration;
+        const sustainUntil = Math.max(now + attack, endTime - release);
 
         const osc = this.context.createOscillator();
         const gain = this.context.createGain();
-        osc.type = type;
-        osc.frequency.value = freq;
 
-        gain.gain.setValueAtTime(volume, this.context.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, this.context.currentTime + duration);
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, now);
+
+        if (options.endFreq) {
+            osc.frequency.exponentialRampToValueAtTime(Math.max(1, options.endFreq), endTime);
+        }
+
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.linearRampToValueAtTime(volume, now + attack);
+        gain.gain.setValueAtTime(volume, sustainUntil);
+        gain.gain.exponentialRampToValueAtTime(0.0001, endTime);
 
         osc.connect(gain);
         gain.connect(this.sfxGain);
 
-        osc.start();
-        osc.stop(this.context.currentTime + duration);
-    }
-
-    playNoise(duration, volume = 0.3) {
-        if (!this.context) {
-            return;
-        }
-
-        const bufferSize = this.context.sampleRate * duration;
-        const buffer = this.context.createBuffer(1, bufferSize, this.context.sampleRate);
-        const data = buffer.getChannelData(0);
-
-        for (let i = 0; i < bufferSize; i += 1) {
-            data[i] = Math.random() * 2 - 1;
-        }
-
-        const source = this.context.createBufferSource();
-        source.buffer = buffer;
-
-        const gain = this.context.createGain();
-        gain.gain.setValueAtTime(volume, this.context.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, this.context.currentTime + duration);
-
-        source.connect(gain);
-        gain.connect(this.sfxGain);
-        source.start();
+        osc.start(now);
+        osc.stop(endTime + 0.02);
     }
 
     playJump() {
-        this.playTone(430, 0.12, 'sine', 0.25);
-        setTimeout(() => this.playTone(540, 0.08, 'triangle', 0.18), 40);
+        this.playTone(420, 0.12, 'sine', 0.12, { endFreq: 560 });
+        this.playTone(620, 0.08, 'triangle', 0.08, { attack: 0.008 });
     }
 
     playSlide() {
-        this.playTone(180, 0.16, 'sawtooth', 0.24);
+        this.playTone(240, 0.16, 'triangle', 0.1, { endFreq: 180 });
     }
 
     playWhoosh() {
-        this.playNoise(0.08, 0.28);
+        this.playTone(310, 0.07, 'triangle', 0.07, { endFreq: 230, attack: 0.005, release: 0.045 });
     }
 
     playCoin() {
-        this.playTone(880, 0.08, 'sine', 0.28);
-        setTimeout(() => this.playTone(1180, 0.08, 'triangle', 0.22), 45);
+        this.playTone(880, 0.07, 'sine', 0.11);
+        this.playTone(1180, 0.08, 'triangle', 0.08, { attack: 0.006 });
     }
 
     playPowerUp() {
-        this.playTone(523, 0.12, 'sine', 0.34);
-        setTimeout(() => this.playTone(659, 0.14, 'sine', 0.32), 80);
-        setTimeout(() => this.playTone(784, 0.18, 'triangle', 0.34), 170);
+        this.playTone(523, 0.11, 'sine', 0.12);
+        this.playTone(659, 0.14, 'triangle', 0.1);
+        this.playTone(784, 0.16, 'sine', 0.12);
     }
 
     playShield() {
-        this.playTone(410, 0.22, 'square', 0.24);
+        this.playTone(410, 0.18, 'triangle', 0.11, { endFreq: 520 });
     }
 
     playCrashPulse() {
-        this.playNoise(0.12, 0.22);
-        this.playTone(160, 0.18, 'square', 0.18);
+        this.playTone(180, 0.14, 'triangle', 0.09, { endFreq: 120 });
     }
 
     playCrash() {
-        this.playNoise(0.55, 0.55);
-        this.playTone(100, 0.34, 'sawtooth', 0.42);
+        this.playTone(140, 0.22, 'triangle', 0.12, { endFreq: 90, release: 0.1 });
+        this.playTone(92, 0.28, 'sine', 0.08, { attack: 0.01, release: 0.12 });
     }
 
     playNearMiss() {
-        this.playTone(680, 0.05, 'square', 0.17);
+        this.playTone(680, 0.05, 'triangle', 0.08);
     }
 
-    stop() {
-        if (this.baseDrone) {
-            this.baseDrone.stop();
-            this.baseDrone.disconnect();
-            this.baseDrone = null;
-        }
-        if (this.topDrone) {
-            this.topDrone.stop();
-            this.topDrone.disconnect();
-            this.topDrone = null;
-        }
-        if (this.baseDroneGain) {
-            this.baseDroneGain.disconnect();
-            this.baseDroneGain = null;
-        }
-        if (this.topDroneGain) {
-            this.topDroneGain.disconnect();
-            this.topDroneGain = null;
-        }
-        this.musicPlaying = false;
-    }
+    stop() {}
 
     reset() {
         this.stop();

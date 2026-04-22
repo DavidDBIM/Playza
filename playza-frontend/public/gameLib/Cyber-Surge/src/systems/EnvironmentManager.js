@@ -188,25 +188,7 @@ export class EnvironmentManager {
     }
 
     createAmbientTraffic() {
-        for (let i = 0; i < 16; i += 1) {
-            const body = new THREE.Mesh(
-                new THREE.BoxGeometry(1.1, 0.34, 2.2),
-                new THREE.MeshStandardMaterial({
-                    color: 0x111827,
-                    roughness: 0.24,
-                    metalness: 0.86,
-                    emissive: i % 2 === 0 ? 0x22d3ee : 0xf97316,
-                    emissiveIntensity: 0.55
-                })
-            );
-
-            body.position.set((i % 2 === 0 ? -11.5 : 11.5), 1 + Math.random() * 3, -20 - i * 24);
-            body.rotation.y = i % 2 === 0 ? Math.PI : 0;
-            body.userData.side = i % 2 === 0 ? -1 : 1;
-            body.userData.speed = 12 + Math.random() * 12;
-            this.scene.add(body);
-            this.ambientTraffic.push(body);
-        }
+        this.ambientTraffic = [];
     }
 
     createBillboards() {
@@ -303,8 +285,11 @@ export class EnvironmentManager {
                     }
                 });
             });
-            segment.userData.leftRail.material.emissive.setHex(colors.glow);
-            segment.userData.rightRail.material.emissive.setHex(colors.glow);
+            // Guard: asset-based rail segments may be Mesh with emissive materials
+            const leftRail = segment.userData.leftRail;
+            const rightRail = segment.userData.rightRail;
+            if (leftRail?.material?.emissive) leftRail.material.emissive.setHex(colors.glow);
+            if (rightRail?.material?.emissive) rightRail.material.emissive.setHex(colors.glow);
         });
 
         this.glowPanels.forEach((panel) => {
