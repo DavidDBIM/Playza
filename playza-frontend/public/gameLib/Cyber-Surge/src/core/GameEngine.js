@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
 import { PlayerController } from '../player/PlayerController.js';
-import { ProceduralGenerator } from '../systems/ProceduralGenerator.js';
+import { ObstacleSpawner } from '../systems/ObstacleSpawner.js';
 import { EnvironmentManager } from '../systems/EnvironmentManager.js';
 import { ObstacleSystem } from '../systems/ObstacleSystem.js';
 import { PowerUpSystem } from '../systems/PowerUpSystem.js';
@@ -105,9 +105,9 @@ export class GameEngine {
 
     setupSystems() {
         this.player = new PlayerController(this);
-        this.generator = new ProceduralGenerator(this);
         this.environment = new EnvironmentManager(this);
         this.obstacles = new ObstacleSystem(this);
+        this.generator = new ObstacleSpawner(this);
         this.powerups = new PowerUpSystem(this);
         this.scoring = new ScoringSystem(this);
         this.cameraSystem = new CameraSystem(this);
@@ -285,9 +285,19 @@ export class GameEngine {
     update() {
         const baseProgression = 1 + (this.gameTime / 70) * 0.34;
         this.speedMultiplier = this.getSpeedMultiplier();
-        this.currentSpeed = Math.min(this.config.baseSpeed * baseProgression * this.speedMultiplier, this.config.maxSpeed);
+        let targetSpeed = Math.min(this.config.baseSpeed * baseProgression * this.speedMultiplier, this.config.maxSpeed);
 
         this.hitRecoveryTimer = Math.max(0, this.hitRecoveryTimer - this.deltaTime);
+
+        // Mimic falling logic by dropping speed
+        if (this.hitRecoveryTimer > this.config.hitRecoveryDuration - 0.55) {
+            targetSpeed = 0;
+        } else if (this.hitRecoveryTimer > 0) {
+            const recoveryProgress = 1 - (this.hitRecoveryTimer / (this.config.hitRecoveryDuration - 0.55));
+            targetSpeed *= Math.max(0.1, recoveryProgress);
+        }
+
+        this.currentSpeed = targetSpeed;
 
         this.player.update(this.deltaTime);
         this.environment.update(this.deltaTime);
