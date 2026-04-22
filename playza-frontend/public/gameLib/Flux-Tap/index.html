@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flux Tap</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  
+  <div class="page" id="page">
+    
+    <!-- Top HUD (playing) -->
+    <header class="topbar hidden" id="gameHud">
+      <div class="hud-box">
+        <span class="hud-label">ROUND</span>
+        <span class="hud-val" id="hudRound">1</span>
+      </div>
+      
+      <div class="hud-box rule-display" id="hudRule">
+        <span class="rule-title">CURRENT RULE</span>
+        <span class="rule-desc" id="hudRuleDesc">Match All Colors! Taps affect neighbors!</span>  
+      </div>
+      
+      <div class="hud-box right alert-box" id="hudTimerBox">
+        <span class="hud-label">TIME LIMIT</span>
+        <span class="hud-val" id="hudTimer">30s</span>
+      </div>
+    </header>
+
+    <!-- Game Arena -->
+    <main class="arena" id="arena">
+      <div class="grid-bg"></div>
+
+      <div class="game-board hidden" id="gameBoard">
+        <div class="board-inner"></div>
+        <div class="nodes-grid" id="nodesGrid">
+          <!-- Rendered via JS -->
+        </div>
+      </div>
+
+      <!-- Start Screen -->
+      <div class="overlay" id="overlayStart">
+        <div class="modal">
+          <div class="icon-wrap">⚡</div>
+          <h1 class="title">Flux Tap</h1>
+          <p class="desc">A dynamic state puzzle. Tap nodes to cycle their colors. BUT every tap triggers a chain reaction on neighbors. Make the entire grid a single color before time runs out!</p>
+          
+          <button class="btn-primary" id="btnStartGame">INITIALIZE LINK</button>
+        </div>
+      </div>
+
+      <!-- Result Screen -->
+      <div class="overlay hidden" id="overlayResult">
+        <div class="modal result-modal">
+          <div class="modal-decor"></div>
+          <p class="kicker" id="resKicker">Simulation Ended</p>
+          <h1 class="final-score" id="resRounds">Rounds: 0</h1>
+          
+          <div class="stats-grid">
+            <div class="stat-card">
+              <span class="label">MISTAKES / CLICKS</span>
+              <span class="val" id="resClicks">0</span>
+            </div>
+            <div class="stat-card">
+              <span class="label">PERFORMANCE TIER</span>
+              <span class="val tier-color" id="resTier">C</span>
+            </div>
+            <div class="stat-card full-width">
+              <span class="label">MULTIPLIER ACHIEVED</span>
+              <span class="val" id="resMult">x1.0</span>
+            </div>
+          </div>
+          
+          <button class="btn-primary" id="btnPlayAgain">RESTART SEOUENCE</button>
+        </div>
+      </div>
+      
+    </main>
+  </div>
+
+  <script src="./game.js" type="module"></script>
+</body>
+</html>
