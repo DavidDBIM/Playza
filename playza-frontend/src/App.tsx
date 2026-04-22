@@ -37,6 +37,7 @@ const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const Loyalty = lazy(() => import("./pages/Loyalty"));
 const CategoryPage = lazy(() => import("./pages/CategoryPage"));
 const SpeedTapArena = lazy(() => import("./pages/games/SpeedTapArena"));
+const SoloEarn = lazy(() => import("./pages/SoloEarn"));
 
 
 // Profile sub-pages
@@ -183,6 +184,7 @@ const AppContent = () => {
                 element={<Wallet onWithdrawClick={handleWithdrawClick} />}
               />
               <Route path="/games" element={<Games />} />
+              <Route path="/solo-earn" element={<SoloEarn />} />
               <Route path="/my-games" element={<MyGames />} />
               <Route
                 path="/games/category/:category"

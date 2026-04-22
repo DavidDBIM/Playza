@@ -8,6 +8,7 @@ import {
   Gamepad2,
   Swords,
   Medal,
+  Coins,
 } from "lucide-react";
 
 interface NavItem {
@@ -117,6 +118,7 @@ const NavFooter = () => {
     { label: "Games", icon: Gamepad2, path: "/games", desc: "Browse all games" },
     { label: "Tournaments", icon: Medal, path: "/tournaments", desc: "Compete in tournaments" },
     { label: "H2H Battles", icon: Swords, path: "/h2h", desc: "1v1 head-to-head" },
+    { label: "Solo Earn", icon: Coins, path: "/solo-earn", desc: "Skill challenges" },
   ];
 
   const morePanelItems = isMoreOpen ? (window.innerWidth >= 768 ? tabletMoreItems : mobileMoreItems) : [];
