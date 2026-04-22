@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Path Nav Maze</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  
+  <div class="page" id="page">
+    
+    <!-- Top HUD (playing) -->
+    <header class="topbar hidden" id="gameHud">
+      <div class="hud-box">
+        <span class="hud-label">DISTANCE</span>
+        <span class="hud-val" id="hudDistance">0m</span>
+      </div>
+      
+      <div class="hud-box">
+        <span class="hud-label">JUNCTIONS</span>
+        <span class="hud-val combo-val" id="hudJunctions">0</span>
+      </div>
+      
+      <div class="hud-box right alert-box" id="hudTimerBox">
+        <span class="hud-label">COMBO</span>
+        <span class="hud-val" id="hudCombo">x1.0</span>
+      </div>
+    </header>
+
+    <!-- Game Arena Canvas Workspace -->
+    <main class="arena" id="arena">
+      <!-- Simulated 3D / Perspective Arena -->
+      <div class="perspective-container">
+        <div class="ground-grid" id="groundGrid"></div>
+        <div id="pathContainer"></div>
+        
+        <!-- Player Object -->
+        <div class="player-character" id="player">
+          <div class="player-core"></div>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="controls-overlay hidden" id="controlsOverlay">
+        <button class="ctrl-btn" id="btnLeft">← LEFT</button>
+        <button class="ctrl-btn straight" id="btnStraight">↑ STRAIGHT</button>
+        <button class="ctrl-btn" id="btnRight">RIGHT →</button>
+      </div>
+
+      <!-- Start Screen -->
+      <div class="overlay" id="overlayStart">
+        <div class="modal">
+          <div class="icon-wrap">🛣️</div>
+          <h1 class="title">Path Nav Maze</h1>
+          <p class="desc">Auto-run forward. At each junction, quickly choose the correct path. One wrong turn ends the run. Build combos for massive multipliers.</p>
+          
+          <button class="btn-primary" id="btnStartGame">START RUN</button>
+        </div>
+      </div>
+
+      <!-- Result Screen -->
+      <div class="overlay hidden" id="overlayResult">
+        <div class="modal result-modal">
+          <div class="modal-decor"></div>
+          <p class="kicker">Run Terminated</p>
+          <h1 class="final-score" id="resDistance">0m</h1>
+          
+          <div class="stats-grid">
+            <div class="stat-card">
+              <span class="label">JUNCTIONS</span>
+              <span class="val" id="resJunctions">0</span>
+            </div>
+            <div class="stat-card">
+              <span class="label">PERFORMANCE</span>
+              <span class="val tier-color" id="resTier">C</span>
+            </div>
+            <div class="stat-card full-width">
+              <span class="label">MULTIPLIER ACHIEVED</span>
+              <span class="val" id="resMult">x1.0</span>
+            </div>
+          </div>
+          
+          <button class="btn-primary" id="btnPlayAgain">RUN AGAIN</button>
+        </div>
+      </div>
+      
+    </main>
+  </div>
+
+  <script src="./game.js" type="module"></script>
+</body>
+</html>
