@@ -4,11 +4,11 @@ import { PatternManager } from './PatternManager.js';
 export class ObstacleSpawner {
     constructor(engine) {
         this.engine = engine;
-        this.renderDistance = 340;
-        this.spawnLead = 26;
-        this.currentBiome = 'road';
-        this.biomes = ['road', 'railway', 'bridge', 'snow'];
-        this.biomeTimer = 26;
+        this.renderDistance = 400;   // how far ahead patterns are pre-spawned
+        this.spawnLead      = 12;    // first obstacle at ~12 units (< 1s at base speed)
+        this.currentBiome   = 'road';
+        this.biomes         = ['road', 'railway', 'bridge', 'snow'];
+        this.biomeTimer     = 32;    // stay in 'road' for a full 32s before switching
 
         this.difficulty = new DifficultyController(engine);
         this.patternManager = new PatternManager(engine);
@@ -55,7 +55,11 @@ export class ObstacleSpawner {
         });
 
         if (pattern.powerup) {
-            this.engine.powerups.spawn(this.getLaneX(pattern.powerup.lane), 0, pattern.powerup.z);
+            this.engine.powerups.spawn(
+                this.getLaneX(pattern.powerup.lane),
+                pattern.powerup.height ?? 0,
+                pattern.powerup.z
+            );
         }
 
         this.nextPatternZ -= pattern.length;
@@ -79,9 +83,9 @@ export class ObstacleSpawner {
     }
 
     reset() {
-        this.nextPatternZ = -this.spawnLead;
-        this.currentBiome = 'road';
-        this.biomeTimer = 26;
+        this.nextPatternZ   = -this.spawnLead;
+        this.currentBiome   = 'road';
+        this.biomeTimer     = 32;
         this.difficulty.reset();
         this.patternManager.lastPatternId = null;
     }

@@ -14,7 +14,8 @@ const RUNNER_PATHS = [
 ];
 
 const ROAD_PATH = './src/assets/roads/roads-collection.glb';
-const ROAD_VARIANT_KEYS = ['straight', 'curveLeft', 'curveRight', 'bridge', 'damaged'];
+// All variant slots — the collection GLB will fill as many as it has children
+const ROAD_VARIANT_KEYS = ['straight', 'curveLeft', 'curveRight', 'bridge', 'damaged', 'straight2', 'curveLeft2', 'curveRight2'];
 
 const OBSTACLE_PATHS = {
     blocker: [
@@ -24,21 +25,14 @@ const OBSTACLE_PATHS = {
         './src/assets/obstacles/road-bloackage/road_block.glb',
         './src/assets/obstacles/road-bloackage/redblockade.glb'
     ],
-    slideGate: [
-        './src/assets/obstacles/road-bloackage/road-closed.glb',
-        './src/assets/obstacles/road-bloackage/brickblock.glb',
-        './src/assets/obstacles/road-bloackage/obstacles.glb'
-    ],
     drone: [
         './src/assets/obstacles/car/car-pack-1.glb',
         './src/assets/obstacles/car/car-Pack-2.glb',
         './src/assets/obstacles/car/car-pack.glb',
         './src/assets/obstacles/car/car-wreck.glb',
-        './src/assets/obstacles/car/2003_chevrolet_express_gmc_savana_2500_cargo_van.glb',
         './src/assets/obstacles/car/freesmart_van.glb',
         './src/assets/obstacles/car/free_zuk_3d_model.glb',
         './src/assets/obstacles/car/graffiti_van_challenge.glb',
-        './src/assets/obstacles/car/graffiti_van_template.glb',
         './src/assets/obstacles/car/retro_anime_vintage_volkswagen_van.glb',
         './src/assets/obstacles/car/sci-fi_van.glb',
         './src/assets/obstacles/car/van_shell.glb'
@@ -133,14 +127,24 @@ export class AssetLibrary {
         const result = new Map();
         try {
             const gltf = await this.loadGLTF(ROAD_PATH);
-            const variants = this.extractRenderableVariants(gltf.scene, { includeSceneFallback: true });
 
+            // ── Extract every top-level renderable child as a separate road variant ──
+            // The collection GLB contains multiple road pieces as scene children.
+            const topLevel = gltf.scene.children.filter((child) => this.hasMesh(child));
+            const variants = topLevel.length > 0
+                ? topLevel.map((child) => ({ name: child.name.toLowerCase(), object: child }))
+                : this.extractRenderableVariants(gltf.scene, { includeSceneFallback: true });
+
+            console.log(`[AssetLibrary] roads-collection: found ${variants.length} road piece(s):`,
+                variants.map((v) => v.name).join(', '));
+
+            // ── Keyword-based matching first ─────────────────────────────────────
             const keywordGroups = {
-                straight:   ['straight', 'road', 'segment', 'flat', 'main'],
-                curveLeft:  ['curveleft', 'curve_left', 'left'],
-                curveRight: ['curveright', 'curve_right', 'right'],
-                bridge:     ['bridge'],
-                damaged:    ['damage', 'damaged', 'broken']
+                straight:    ['straight', 'road', 'segment', 'flat', 'main', 'default'],
+                curveLeft:   ['curveleft', 'curve_left', 'left', 'turn_l', 'bend_l'],
+                curveRight:  ['curveright', 'curve_right', 'right', 'turn_r', 'bend_r'],
+                bridge:      ['bridge', 'overpass', 'elevated'],
+                damaged:     ['damage', 'damaged', 'broken', 'crack']
             };
 
             Object.entries(keywordGroups).forEach(([type, keywords]) => {
@@ -150,14 +154,23 @@ export class AssetLibrary {
                 if (matched) result.set(type, matched.object);
             });
 
-            const unusedVariants = variants.filter((variant) => ![...result.values()].includes(variant.object));
-            ROAD_VARIANT_KEYS.forEach((type, index) => {
-                if (!result.has(type)) {
-                    result.set(type, unusedVariants[index]?.object || unusedVariants[0]?.object || gltf.scene);
+            // ── Assign remaining variants round-robin to unfilled slots ──────────
+            const unused = variants.filter((v) => ![...result.values()].includes(v.object));
+            let unusedIdx = 0;
+            ROAD_VARIANT_KEYS.forEach((type) => {
+                if (!result.has(type) && unused.length > 0) {
+                    result.set(type, unused[unusedIdx % unused.length].object);
+                    unusedIdx += 1;
                 }
             });
 
-            console.log('[AssetLibrary] road variants:', [...result.keys()].join(', '));
+            // ── Last resort: fill any still-empty slots with the scene root ──────
+            const fallback = variants[0]?.object || gltf.scene;
+            ROAD_VARIANT_KEYS.forEach((type) => {
+                if (!result.has(type)) result.set(type, fallback);
+            });
+
+            console.log('[AssetLibrary] road variant slots:', [...result.keys()].join(', '));
         } catch (err) {
             console.warn('[AssetLibrary] road asset failed — fallback geometry will be used.', err.message ?? err);
         }
@@ -237,7 +250,12 @@ export class AssetLibrary {
             if (clip && mixer) {
                 actions[key] = mixer.clipAction(clip);
                 actions[key].enabled          = true;
+                // run/idle must NEVER clamp — they loop forever.
+                // jump/slide play once and hold the last frame until we fade out.
                 actions[key].clampWhenFinished = key === 'jump' || key === 'slide';
+                actions[key].loop = (key === 'run' || key === 'idle')
+                    ? THREE.LoopRepeat
+                    : THREE.LoopOnce;
             }
         });
 
@@ -255,13 +273,16 @@ export class AssetLibrary {
         console.log('[AssetLibrary] runner ready. Clips:', clips.map(c => c.name).join(', ') || 'none');
 
         // Bottom of model at y=0 (ground level). normalizeToSize alignY:0.
+        // Rotate 180° so the runner faces forward (toward negative Z = direction of travel).
+        cloned.rotation.y = Math.PI;
+        cloned.updateMatrixWorld(true);
+
         const normalized = this.normalizeToSize(
             cloned,
             { width: 1.1, height: 2.2, depth: 1.1 },
             { alignY: 0, centerX: true, centerZ: true }
         );
-        normalized.rotation.y = 0;
-        normalized.visible    = true;
+        normalized.visible = true;
 
         return { model: normalized, mixer, actions };
     }
@@ -285,7 +306,7 @@ export class AssetLibrary {
 
         return this.normalizeToSize(
             clone,
-            { width: 10, height: 100, depth: 10 },
+            { width: 8, height: 100, depth: 10 },
             { alignYTop: 0, centerX: true, centerZ: true }
         );
     }
@@ -316,11 +337,11 @@ export class AssetLibrary {
         this.applyAccentColor(clone, palette[idx], type);
 
         // ── Visual size targets ───────────────────────────────────────────────
-        // Cars get extra depth room so they aren't squished to a cube.
-        // We use a larger target than the collision config to keep proportions.
+        // Cars sit within 1 lane (2.5 wide) and have natural vehicle depth.
+        // Blockers fill lane width exactly so they visually close the road gap.
         const targets = type === 'drone'
-            ? { width: 2.2, height: 1.6, depth: 4.5 }
-            : { width: config.width, height: Math.max(config.height, 1.2), depth: config.depth };
+            ? { width: 2.0, height: 1.6, depth: 4.0 }
+            : { width: 2.5, height: Math.max(config.height, 1.2), depth: config.depth };
 
         return this.normalizeToSize(clone, targets, { alignY: 0, centerX: true, centerZ: true });
     }
@@ -370,18 +391,31 @@ export class AssetLibrary {
      * Cars (drone) should be long along Z (facing the player).
      */
     autoOrientObstacle(clone, type) {
+        // First snap any arbitrary GLB rotation to the nearest 90° step on Y
+        // so road-blocks are never displayed at a slant.
+        clone.rotation.set(0, Math.round(clone.rotation.y / (Math.PI / 2)) * (Math.PI / 2), 0);
+        clone.updateMatrixWorld(true);
+
         const box  = new THREE.Box3().setFromObject(clone);
         const size = new THREE.Vector3();
         box.getSize(size);
 
-        if ((type === 'blocker' || type === 'slideGate') && size.z > size.x * 1.4) {
+        if (type === 'blocker' && size.z > size.x * 1.4) {
             // Model is oriented along Z but should span X → rotate 90° around Y
             clone.rotation.y = Math.PI / 2;
             clone.updateMatrixWorld(true);
+        } else if (type === 'blocker') {
+            // Ensure straight (no slant) — keep rotation.y = 0
+            clone.rotation.y = 0;
+            clone.updateMatrixWorld(true);
         }
+
         if (type === 'drone' && size.x > size.z * 1.4) {
             // Car oriented along X but should be long along Z → rotate 90° around Y
             clone.rotation.y = Math.PI / 2;
+            clone.updateMatrixWorld(true);
+        } else if (type === 'drone') {
+            clone.rotation.y = 0;
             clone.updateMatrixWorld(true);
         }
     }

@@ -30,7 +30,7 @@ export class GameEngine {
         this.config = {
             baseSpeed: 15,
             maxSpeed: 58,
-            laneWidth: 3,
+            laneWidth: 2.5,
             laneCount: 3,
             gravity: 33,
             jumpForce: 15.5,
@@ -70,9 +70,9 @@ export class GameEngine {
         this.scene.fog = new THREE.Fog(0x07111f, 42, 250);
         this.scene.background = new THREE.Color(0x07111f);
 
-        this.camera = new THREE.PerspectiveCamera(72, window.innerWidth / window.innerHeight, 0.1, 500);
-        this.camera.position.set(0, 5.5, 11);
-        this.camera.lookAt(0, 1.5, -10);
+        this.camera = new THREE.PerspectiveCamera(62, window.innerWidth / window.innerHeight, 0.1, 500);
+        this.camera.position.set(0, 3.8, 7.0);
+        this.camera.lookAt(0, 1.0, -10);
     }
 
     setupLighting() {
@@ -121,12 +121,14 @@ export class GameEngine {
         this.keyDownHandler = (event) => this.handleKeyDown(event);
         this.keyUpHandler = (event) => this.handleKeyUp(event);
         this.touchStartHandler = (event) => this.handleTouchStart(event);
+        this.touchMoveHandler = (event) => this.handleTouchMove(event);
         this.touchEndHandler = (event) => this.handleTouchEnd(event);
 
         window.addEventListener('resize', this.resizeHandler);
         window.addEventListener('keydown', this.keyDownHandler);
         window.addEventListener('keyup', this.keyUpHandler);
         window.addEventListener('touchstart', this.touchStartHandler, { passive: false });
+        window.addEventListener('touchmove', this.touchMoveHandler, { passive: false });
         window.addEventListener('touchend', this.touchEndHandler);
     }
 
@@ -179,11 +181,20 @@ export class GameEngine {
             return;
         }
 
-        event.preventDefault();
+        // preventDefault() on touchstart is sometimes needed, but can break quick taps.
+        // The main scroll blocking is done in touchmove.
         const touch = event.touches[0];
         this.touchStartX = touch.clientX;
         this.touchStartY = touch.clientY;
         this.touchStarted = true;
+    }
+
+    handleTouchMove(event) {
+        if (!this.isRunning || this.isPaused || this.gameState !== 'playing') {
+            return;
+        }
+        // Prevent default scrolling and pull-to-refresh while playing
+        event.preventDefault();
     }
 
     handleTouchEnd(event) {
@@ -195,16 +206,23 @@ export class GameEngine {
         const deltaX = touch.clientX - this.touchStartX;
         const deltaY = touch.clientY - this.touchStartY;
 
-        if (Math.abs(deltaX) > Math.abs(deltaY)) {
-            if (deltaX < -25) {
+        // Require a minimum swipe distance to activate to avoid accidental taps
+        const minSwipeDistance = 30;
+
+        if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > minSwipeDistance) {
+            if (deltaX < 0) {
                 this.player.moveLeft();
-            } else if (deltaX > 25) {
+            } else {
                 this.player.moveRight();
             }
-        } else if (deltaY < -25) {
-            this.player.jump();
-        } else if (deltaY > 25) {
-            this.player.slide();
+        } else if (Math.abs(deltaY) > minSwipeDistance) {
+            if (deltaY < 0) {
+                // Swipe up (negative Y)
+                this.player.jump();
+            } else {
+                // Swipe down (positive Y)
+                this.player.slide();
+            }
         }
 
         this.touchStarted = false;

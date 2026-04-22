@@ -87,6 +87,7 @@ canvas {
     border-radius: 26px;
     background: var(--panel);
     border: 1px solid var(--panel-border);
+    -webkit-backdrop-filter: blur(18px);
     backdrop-filter: blur(18px);
     box-shadow: var(--shadow);
 }
@@ -243,6 +244,7 @@ canvas {
 .flash-banner {
     background: linear-gradient(180deg, rgba(8, 15, 30, 0.93), rgba(8, 15, 30, 0.72));
     border: 1px solid rgba(148, 163, 184, 0.18);
+    -webkit-backdrop-filter: blur(16px);
     backdrop-filter: blur(16px);
     box-shadow: 0 18px 36px rgba(0, 0, 0, 0.18);
 }
@@ -500,30 +502,30 @@ canvas {
     }
 
     .hud-card {
-        min-height: 54px;
-        padding: 8px 9px;
-        border-radius: 12px;
+        min-height: 42px;
+        padding: 6px 6px;
+        border-radius: 8px;
     }
 
     .mini-panel {
-        padding: 7px 9px;
-        border-radius: 12px;
+        padding: 5px 6px;
+        border-radius: 8px;
     }
 
     .hud-label,
     .mini-label,
     .pu-hud-label {
-        font-size: 0.56rem;
-        letter-spacing: 0.12em;
+        font-size: 0.45rem;
+        letter-spacing: 0.08em;
     }
 
     .hud-value,
     .combo-badge {
-        font-size: 0.98rem;
+        font-size: 0.8rem;
     }
 
     .mini-value {
-        font-size: 0.8rem;
+        font-size: 0.65rem;
     }
 
     .powerups-row {
@@ -533,57 +535,66 @@ canvas {
     }
 
     .pu-hud-item {
-        padding: 6px 8px;
-        gap: 8px;
+        padding: 4px 6px;
+        gap: 6px;
+        border-radius: 8px;
     }
 
     .pu-icon {
-        width: 24px;
-        height: 24px;
-        border-radius: 8px;
-        font-size: 0.72rem;
+        width: 18px;
+        height: 18px;
+        border-radius: 6px;
+        font-size: 0.55rem;
     }
 
     .pu-hud-bar-bg {
-        width: 64px;
+        width: 40px;
+        height: 4px;
+    }
+
+    .pu-hud-secs {
+        font-size: 0.6rem;
     }
 
     .powerup-legend,
     .stats-grid {
         grid-template-columns: 1fr;
+        gap: 6px;
     }
 
     .screen-inner,
     .pause-content {
-        padding: 18px 14px;
-        gap: 14px;
+        padding: 12px 10px;
+        gap: 8px;
+        border-radius: 16px;
     }
 
     .game-logo {
-        font-size: clamp(2rem, 12vw, 3rem);
+        font-size: clamp(1.4rem, 8vw, 2.2rem);
     }
 
     .subtitle {
-        font-size: 0.92rem;
+        font-size: 0.75rem;
     }
 
     .ctrl-row,
     .pu-item {
-        padding: 10px 11px;
-        gap: 10px;
+        padding: 6px 8px;
+        gap: 6px;
+        font-size: 0.7rem;
     }
 
     .kbd {
-        min-width: 78px;
-        padding: 6px 8px;
-        font-size: 0.62rem;
+        min-width: 50px;
+        padding: 4px 6px;
+        font-size: 0.55rem;
     }
 
     .start-btn,
     .restart-btn,
     .resume-btn {
-        padding: 13px 16px;
-        font-size: 0.82rem;
+        padding: 10px 14px;
+        font-size: 0.75rem;
     }
 
     .flash-banner {

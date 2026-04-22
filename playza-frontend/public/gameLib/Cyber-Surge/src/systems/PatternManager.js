@@ -189,11 +189,12 @@ export class PatternManager {
 
         safeLanes.forEach((lane, index) => {
             const z = anchorZ - index * difficulty.rowSpacing;
-            coins.push(...this.createCoinLine(lane, z - 1.4, 6, 1.05, 1.05));
+            // 8 coins per safe lane at 1.3 units apart, at y=1.3 (clearly visible)
+            coins.push(...this.createCoinLine(lane, z - 1.2, 8, 1.3, 1.3));
         });
 
         const powerup = Math.random() < difficulty.powerupChance
-            ? { lane: primarySafeLane, z: anchorZ - difficulty.rowSpacing * 0.5 }
+            ? { lane: primarySafeLane, z: anchorZ - difficulty.rowSpacing * 0.5, height: 1.5 }
             : null;
 
         return {
@@ -207,7 +208,10 @@ export class PatternManager {
             }))),
             coins,
             powerup,
-            length: Math.max(difficulty.spawnSpacing, Math.abs(lastRow?.zOffset || 0) + difficulty.spawnSpacing)
+            // Cap length to spawnSpacing so multi-row patterns don’t leave huge dead gaps.
+            // The rows themselves overlap within the pattern — only the gap BETWEEN
+            // patterns is controlled here.
+            length: difficulty.spawnSpacing
         };
     }
 

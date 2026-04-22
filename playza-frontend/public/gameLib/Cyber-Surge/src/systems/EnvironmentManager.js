@@ -18,11 +18,11 @@ export class EnvironmentManager {
             snow: { road: 0x142235, glow: 0xe0f2fe, fog: 0x0e1728, accent: 0xe0f2fe, label: 'Frost Ring' }
         };
         this.roadVariantByBiome = {
-            road: ['straight', 'damaged', 'straight', 'curveLeft', 'curveRight'],
-            railway: ['straight', 'curveLeft', 'straight', 'curveRight'],
-            bridge: ['bridge', 'straight', 'bridge'],
-            snow: ['straight', 'damaged', 'straight'],
-            air: ['bridge', 'curveLeft', 'curveRight']
+            road:    ['straight', 'straight2', 'damaged', 'straight', 'curveLeft', 'curveRight', 'curveLeft2', 'curveRight2'],
+            railway: ['straight', 'straight2', 'curveLeft', 'straight', 'curveRight', 'curveLeft2'],
+            bridge:  ['bridge', 'straight', 'bridge', 'straight2'],
+            snow:    ['straight', 'damaged', 'straight2', 'straight'],
+            air:     ['bridge', 'curveLeft', 'curveRight', 'curveLeft2', 'curveRight2']
         };
 
         this.createFloor();
@@ -69,13 +69,14 @@ export class EnvironmentManager {
         });
 
         const leftRail = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.12, 10), roadLightMaterial);
-        leftRail.position.set(-4.05, 0.18, 0);
+        leftRail.position.set(-3.9, 0.18, 0);
         const rightRail = leftRail.clone();
-        rightRail.position.x = 4.05;
+        rightRail.position.x = 3.9;
         group.add(leftRail);
         group.add(rightRail);
 
-        [-1.5, 1.5].forEach((x) => {
+        // Lane dividers at ±1.25 (midpoints between lanes of width 2.5)
+        [-1.25, 1.25].forEach((x) => {
             const line = new THREE.Mesh(
                 new THREE.PlaneGeometry(0.1, 10),
                 new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.45 })
@@ -98,7 +99,7 @@ export class EnvironmentManager {
         const group = new THREE.Group();
 
         const base = new THREE.Mesh(
-            new THREE.BoxGeometry(10, 1.6, 10),
+            new THREE.BoxGeometry(8, 1.6, 10),
             new THREE.MeshStandardMaterial({ color: 0x060b14, roughness: 0.95, metalness: 0.18 })
         );
         base.position.set(0, -0.8, 0);
@@ -106,7 +107,7 @@ export class EnvironmentManager {
         group.add(base);
 
         const road = new THREE.Mesh(
-            new THREE.PlaneGeometry(9.2, 10),
+            new THREE.PlaneGeometry(7.8, 10),
             new THREE.MeshStandardMaterial({ color: 0x131c31, roughness: 0.75, metalness: 0.3 })
         );
         road.rotation.x = -Math.PI / 2;
@@ -123,15 +124,16 @@ export class EnvironmentManager {
         });
 
         const leftRail = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.2, 10), edgeMaterial);
-        leftRail.position.set(-4.1, 0.2, 0);
+        leftRail.position.set(-3.9, 0.2, 0);
         group.add(leftRail);
 
         const rightRail = leftRail.clone();
-        rightRail.position.x = 4.1;
+        rightRail.position.x = 3.9;
         group.add(rightRail);
 
         const laneLineMaterial = new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.75 });
-        [-1.5, 1.5].forEach((x) => {
+        // Lane dividers at ±1.25 (midpoints between 2.5-wide lanes)
+        [-1.25, 1.25].forEach((x) => {
             const line = new THREE.Mesh(new THREE.PlaneGeometry(0.12, 10), laneLineMaterial);
             line.rotation.x = -Math.PI / 2;
             line.position.set(x, 0.04, 0);
@@ -164,7 +166,7 @@ export class EnvironmentManager {
         if (Math.random() > 0.18) {
             const leftTower = new THREE.Mesh(new THREE.BoxGeometry(2.4, 8 + Math.random() * 8, 2.4), towerMaterial);
             leftTower.name = 'leftTower';
-            leftTower.position.set(-8.5, leftTower.geometry.parameters.height / 2 - 0.6, 0);
+            leftTower.position.set(-7, leftTower.geometry.parameters.height / 2 - 0.6, 0);
             leftTower.castShadow = true;
             leftTower.receiveShadow = true;
             group.add(leftTower);
@@ -173,7 +175,7 @@ export class EnvironmentManager {
         if (Math.random() > 0.18) {
             const rightTower = new THREE.Mesh(new THREE.BoxGeometry(2.4, 8 + Math.random() * 8, 2.4), towerMaterial);
             rightTower.name = 'rightTower';
-            rightTower.position.set(8.5, rightTower.geometry.parameters.height / 2 - 0.6, 0);
+            rightTower.position.set(7, rightTower.geometry.parameters.height / 2 - 0.6, 0);
             rightTower.castShadow = true;
             rightTower.receiveShadow = true;
             group.add(rightTower);
@@ -232,6 +234,7 @@ export class EnvironmentManager {
                 segment.position.z = newZ;
                 segment.userData.z = newZ;
 
+                // Randomise building heights for visual variety
                 segment.children.forEach((child) => {
                     if (child.name === 'leftTower' || child.name === 'rightTower') {
                         child.scale.y = 0.75 + Math.random() * 1.5;
@@ -239,6 +242,7 @@ export class EnvironmentManager {
                 });
             }
         });
+
 
         this.ambientTraffic.forEach((car, index) => {
             car.position.z += car.userData.speed * this.engine.deltaTime * car.userData.side * 0.35;

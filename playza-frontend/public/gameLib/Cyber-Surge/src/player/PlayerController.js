@@ -81,11 +81,19 @@ export class PlayerController {
             });
         });
 
+        // Enforce loop types (AssetLibrary may have set them, but enforce here as source of truth)
         Object.values(this.animationActions).forEach((action) => {
             action.setLoop(THREE.LoopRepeat);
+            action.clampWhenFinished = false;
         });
-        if (this.animationActions.jump)  this.animationActions.jump.setLoop(THREE.LoopOnce);
-        if (this.animationActions.slide) this.animationActions.slide.setLoop(THREE.LoopOnce);
+        if (this.animationActions.jump) {
+            this.animationActions.jump.setLoop(THREE.LoopOnce);
+            this.animationActions.jump.clampWhenFinished = true;
+        }
+        if (this.animationActions.slide) {
+            this.animationActions.slide.setLoop(THREE.LoopOnce);
+            this.animationActions.slide.clampWhenFinished = true;
+        }
 
         this.playAction(this.animationActions.run ? 'run' : 'idle', true);
     }
@@ -450,7 +458,14 @@ export class PlayerController {
         const previous = this.currentAction ? this.animationActions[this.currentAction] : null;
         if (previous && previous !== action) previous.fadeOut(0.18);
 
-        action.reset();
+        // For continuous looping actions (run/idle): avoid resetting time to 0 if the
+        // action is already mid-play — just ensure it's enabled and fading in.
+        // For one-shot actions (jump/slide): always reset so they play from the start.
+        const isLooping = action.loop === THREE.LoopRepeat;
+        if (force || !isLooping || !action.isRunning()) {
+            action.reset();
+        }
+        action.enabled = true;
         action.fadeIn(0.18);
         action.play();
         this.currentAction = name;
@@ -548,15 +563,19 @@ export class PlayerController {
 
             if (this.intersects(playerBounds, obstacleBounds)) {
                 if (this.engine.powerups.activeShield) {
+                    // Shield DESTROYS the obstacle
                     this.engine.powerups.consumeShield();
                     this.engine.effects.addShieldBreak(obstacle.mesh.position.clone());
                     this.engine.obstacles.removeObstacle(obstacle);
                     this.engine.audio.playShield();
-                } else {
+                } else if (this.engine.canTakeHit()) {
+                    // Obstacle STAYS — player is bounced to the nearest empty lane
+                    this.bounceToSafeLane(obstacle);
                     const isGameOver = this.engine.registerHit(obstacle.mesh.position);
-                    this.engine.obstacles.removeObstacle(obstacle);
                     if (isGameOver) return;
                 }
+                // If canTakeHit() is false (still in recovery) we pass through —
+                // obstacle stays, no repeated damage during invincibility window.
             }
         }
 
@@ -571,6 +590,43 @@ export class PlayerController {
             const coinBox = new THREE.Box3().setFromObject(coin.mesh);
             if (playerBox.intersectsBox(coinBox)) this.engine.powerups.collectCoin(coin);
         }
+    }
+
+    /**
+     * Bounce the player away from the colliding obstacle lane.
+     * Finds the closest obstacle-free lane and snaps the player there.
+     */
+    bounceToSafeLane(obstacle) {
+        const laneCount    = this.engine.config.laneCount;
+        const obstacleLane = obstacle.lane;
+
+        // Collect all lanes currently blocked by active obstacles near this Z
+        const nearZ    = obstacle.mesh.position.z;
+        const blocked  = new Set();
+        for (const obs of this.engine.obstacles.obstacles) {
+            if (!obs.active || !obs.mesh) continue;
+            if (Math.abs(obs.mesh.position.z - nearZ) < 2.5) {
+                blocked.add(obs.lane);
+            }
+        }
+
+        // Find the open lane nearest to the current lane
+        const currentLane = this.state.lane;
+        let bestLane = -1;
+        let bestDist = Infinity;
+        for (let l = 0; l < laneCount; l++) {
+            if (blocked.has(l)) continue;
+            const dist = Math.abs(l - currentLane);
+            if (dist < bestDist) { bestDist = dist; bestLane = l; }
+        }
+
+        // If no completely open lane, just go to the lane opposite the obstacle
+        if (bestLane === -1) {
+            bestLane = obstacleLane === 0 ? laneCount - 1 : 0;
+        }
+
+        this.state.targetLane = bestLane;
+        this.state.lane       = bestLane;
     }
 
     // -----------------------------------------------------------------------
