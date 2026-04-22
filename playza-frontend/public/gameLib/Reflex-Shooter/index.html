@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reflex Shooter</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  
+  <div class="page" id="page">
+    
+    <!-- Top HUD (playing) -->
+    <header class="topbar hidden" id="gameHud">
+      <div class="hud-box">
+        <span class="hud-label">SCORE</span>
+        <span class="hud-val" id="hudScore">0</span>
+      </div>
+      
+      <div class="hud-box">
+        <span class="hud-label">COMBO</span>
+        <span class="hud-val combo-val" id="hudCombo">x1.0 <small id="hudComboCount">(0)</small></span>
+      </div>
+      
+      <div class="hud-box right alert-box" id="hudTimerBox">
+        <span class="hud-label">TIME</span>
+        <span class="hud-val" id="hudTimer">45s</span>
+      </div>
+      
+      <div class="hud-box right alert-box" id="hudAmmoBox">
+        <span class="hud-label">AMMO</span>
+        <span class="hud-val" id="hudAmmo">30</span>
+      </div>
+    </header>
+
+    <!-- Game Arena Canvas Workspace -->
+    <main class="arena" id="arena">
+      <!-- Grid Background -->
+      <div class="grid-bg"></div>
+
+      <!-- Targets will be injected here -->
+      <div id="targetContainer"></div>
+
+      <!-- Overlays -->
+      
+      <!-- Start Screen -->
+      <div class="overlay" id="overlayStart">
+        <div class="modal">
+          <div class="icon-wrap">🎯</div>
+          <h1 class="title">Reflex Shooter</h1>
+          <p class="desc">Shoot moving targets. Small & fast targets yield extra points. Don't waste your ammo. Build your combo to multiply your score.</p>
+          
+          <div class="info-row">
+            <div class="info-box">
+              <span class="label">TIME</span>
+              <span class="val">45s</span>
+            </div>
+            <div class="info-box">
+              <span class="label">AMMO</span>
+              <span class="val">30</span>
+            </div>
+          </div>
+          
+          <button class="btn-primary" id="btnStartGame">START SIMULATION</button>
+        </div>
+      </div>
+
+      <!-- Game Over Result Screen -->
+      <div class="overlay hidden" id="overlayResult">
+        <div class="modal result-modal">
+          <div class="modal-decor"></div>
+          <p class="kicker">Simulation Complete</p>
+          <h1 class="final-score" id="resScore">0</h1>
+          
+          <div class="stats-grid">
+            <div class="stat-card">
+              <span class="label">ACCURACY</span>
+              <span class="val" id="resAccuracy">0%</span>
+            </div>
+            <div class="stat-card">
+              <span class="label">PERFORMANCE TIER</span>
+              <span class="val tier-color" id="resTier">C</span>
+            </div>
+          </div>
+          
+          <button class="btn-primary" id="btnPlayAgain">PLAY AGAIN</button>
+          <p class="hint">Multiplier Potential: 1.2x - 2.0x (Simulated)</p>
+        </div>
+      </div>
+      
+    </main>
+  </div>
+
+  <script src="./game.js" type="module"></script>
+</body>
+</html>
