@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Memory Rush – Pattern Recall Challenge</title>
+    <meta name="description" content="Memorize the pattern, then recall it perfectly. Fast-paced memory challenge with dynamic difficulty." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="page" id="page">
+
+      <!-- ═══════════════ TOP HUD ═══════════════ -->
+      <header class="topbar">
+        <div class="topbar-header">
+            <div class="brand">
+              <p class="eyebrow">PLAYZA.games</p>
+              <h1>Memory Rush</h1>
+            </div>
+            
+            <div class="hud-controls">
+              <button class="icon-btn" id="btnSound" aria-label="Toggle sound">🔊</button>
+              <button class="icon-btn" id="btnHelp" aria-label="How to play">ⓘ</button>
+            </div>
+        </div>
+
+        <div class="hud-stats">
+          <div class="stat-chip">
+            <span class="stat-label">Round</span>
+            <span class="stat-value" id="statRound">1</span>
+          </div>
+          <div class="stat-chip">
+            <span class="stat-label">Score</span>
+            <span class="stat-value" id="statScore">0</span>
+          </div>
+          <div class="stat-chip streak-chip">
+            <span class="stat-label">Streak</span>
+            <span class="stat-value" id="statStreak">0</span>
+            <span class="streak-fire" id="streakFire">🔥</span>
+          </div>
+          <div class="stat-chip timer-chip">
+            <span class="stat-label">Time</span>
+            <span class="stat-value" id="statTimer">—</span>
+          </div>
+          <div class="stat-chip">
+            <span class="stat-label">Multiplier</span>
+            <span class="stat-value" id="statMultiplier">×1.0</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- ═══════════════ MAIN AREA ═══════════════ -->
+      <main class="shell">
+
+        <!-- Phase label -->
+        <div class="phase-banner" id="phaseBanner">
+          <span class="phase-label" id="phaseLabel">GET READY</span>
+          <div class="phase-progress-bar" id="phaseProgressBar">
+            <div class="phase-progress-fill" id="phaseProgressFill"></div>
+          </div>
+        </div>
+
+        <!-- Pattern display area -->
+        <section class="pattern-arena" id="patternArena" aria-label="Pattern display">
+          <div class="pattern-grid" id="patternGrid"></div>
+          <div class="recall-prompt hidden" id="recallPrompt">
+            <p class="recall-tagline">RECALL NOW</p>
+            <p class="recall-sub" id="recallSub">Reproduce the sequence in order</p>
+          </div>
+        </section>
+
+        <!-- Input grid -->
+        <section class="input-arena" id="inputArena" aria-label="Your input">
+          <div class="input-sequence" id="inputSequence"></div>
+          <div class="tile-grid" id="tileGrid"></div>
+
+          <div class="input-controls">
+            <button class="ctrl-btn danger" id="btnUndo" disabled>⌫ Undo</button>
+            <button class="ctrl-btn" id="btnClear" disabled>✕ Clear</button>
+            <button class="ctrl-btn confirm" id="btnSubmit" disabled>✔ Submit</button>
+          </div>
+        </section>
+
+        <!-- Difficulty selector (visible on start screen) -->
+        <div class="difficulty-row" id="difficultyRow">
+          <button class="diff-btn active" id="diffEasy" data-diff="easy">Easy</button>
+          <button class="diff-btn" id="diffMedium" data-diff="medium">Medium</button>
+          <button class="diff-btn" id="diffHard" data-diff="hard">Hard</button>
+        </div>
+
+      </main>
+    </div>
+
+    <!-- ═══════════════ OVERLAYS ═══════════════ -->
+
+    <!-- Start overlay -->
+    <div class="overlay" id="overlayStart">
+      <div class="modal">
+        <p class="kicker">PLAYZA.games</p>
+        <h2 class="modal-title">Memory Rush</h2>
+        <p class="modal-body">
+          A pattern flashes on screen. Memorize it. Then reproduce it perfectly
+          from the tile grid — in the exact order. Miss too many and it's over.
+        </p>
+
+        <div class="diff-select-row">
+          <button class="diff-pill active" data-diff="easy">🟢 Easy</button>
+          <button class="diff-pill" data-diff="medium">🟡 Medium</button>
+          <button class="diff-pill" data-diff="hard">🔴 Hard</button>
+        </div>
+
+        <button class="btn-primary" id="btnStart">Start Game</button>
+        <p class="modal-hint">Pattern length grows each round. Memorize fast!</p>
+      </div>
+    </div>
+
+    <!-- Result panel overlay -->
+    <div class="overlay hidden" id="overlayResult">
+      <div class="modal result-modal">
+        <div class="tier-badge" id="tierBadge">S</div>
+        <h2 class="result-title" id="resultTitle">Perfect Recall!</h2>
+
+        <div class="result-stats">
+          <div class="result-stat">
+            <span class="rs-label">Accuracy</span>
+            <span class="rs-value" id="resAccuracy">100%</span>
+          </div>
+          <div class="result-stat">
+            <span class="rs-label">Time</span>
+            <span class="rs-value" id="resTime">3.2s</span>
+          </div>
+          <div class="result-stat">
+            <span class="rs-label">Length</span>
+            <span class="rs-value" id="resLength">5</span>
+          </div>
+          <div class="result-stat">
+            <span class="rs-label">Round Score</span>
+            <span class="rs-value" id="resRoundScore">+350</span>
+          </div>
+        </div>
+
+        <div class="multiplier-panel">
+          <p class="mp-label">Potential Multiplier</p>
+          <div class="mp-bar">
+            <div class="mp-fill" id="mpFill"></div>
+          </div>
+          <p class="mp-value" id="mpValue">×1.5</p>
+          <p class="mp-range">Range: 1.2× – 2.0×</p>
+        </div>
+
+        <div class="result-actions">
+          <button class="btn-primary" id="btnNextRound">Next Round →</button>
+          <button class="btn-ghost" id="btnRestart">Restart</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Game over overlay -->
+    <div class="overlay hidden" id="overlayGameOver">
+      <div class="modal">
+        <p class="kicker">Game Over</p>
+        <h2 class="modal-title" id="goTitle">Round Failed</h2>
+        <p class="modal-body" id="goBody">You ran out of time or made too many mistakes.</p>
+
+        <div class="result-stats">
+          <div class="result-stat">
+            <span class="rs-label">Final Score</span>
+            <span class="rs-value" id="goScore">0</span>
+          </div>
+          <div class="result-stat">
+            <span class="rs-label">Rounds</span>
+            <span class="rs-value" id="goRounds">0</span>
+          </div>
+          <div class="result-stat">
+            <span class="rs-label">Best Streak</span>
+            <span class="rs-value" id="goStreak">0</span>
+          </div>
+        </div>
+
+        <div class="result-actions">
+          <button class="btn-primary" id="btnPlayAgain">Play Again</button>
+          <button class="btn-ghost" id="btnQuit">Quit</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Help overlay -->
+    <div class="overlay hidden" id="overlayHelp">
+      <div class="modal">
+        <h2 class="modal-title">How to Play</h2>
+        <ul class="help-list">
+          <li>A pattern of <b>coloured tiles</b> or <b>symbols</b> flashes on screen.</li>
+          <li>Memorize the <b>sequence</b> and <b>order</b> — both matter.</li>
+          <li>After it disappears, tap the tiles in the <b>exact same order</b>.</li>
+          <li>Wrong tap? You lose a life. Three lives per game.</li>
+          <li>Complete rounds to increase <b>pattern length</b> and earn more points.</li>
+          <li>Build a streak for a <b>multiplier bonus</b>!</li>
+        </ul>
+        <p class="modal-hint">Pattern types: 🎨 Colors · 🔷 Shapes · 🎭 Mixed</p>
+        <button class="btn-ghost" id="btnCloseHelp">Got it!</button>
+      </div>
+    </div>
+
+    <!-- Feedback toast -->
+    <div class="toast hidden" id="toast"></div>
+
+    <script src="./game.js" type="module"></script>
+  </body>
+</html>
