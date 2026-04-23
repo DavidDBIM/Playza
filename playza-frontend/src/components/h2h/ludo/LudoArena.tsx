@@ -9,6 +9,8 @@ import LudoBoard from "./LudoBoard";
 import H2HWinner from "../H2HWinner";
 import ResignConfirmationModal from "../chess/ResignConfirmationModal";
 import type { ChessRoom } from "@/types/chess";
+import { resignLudoGame } from "@/api/ludo.api";
+import { AlertTriangle } from "lucide-react";
 
 interface LudoArenaProps {
   room: ChessRoom;
@@ -46,6 +48,72 @@ const LudoArena: React.FC<LudoArenaProps> = ({ room, user }) => {
   const [showResignModal, setShowResignModal] = useState(false);
   const [isResigning, setIsResigning] = useState(false);
 
+  // ── Battle Sentinel States (Network & Inactivity) ──────────────────────────
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [inactivityCounter, setInactivityCounter] = useState(0);
+  const [showInactivityWarning, setShowInactivityWarning] = useState(false);
+  const INACTIVITY_LIMIT = 180; // 3 minutes total
+  const WARNING_THRESHOLD = 120; // Warn after 2 minutes
+
+  const confirmResign = async () => {
+    setIsResigning(true);
+    try {
+      await resignLudoGame(room.id);
+      toast.success("You resigned the game!");
+      setShowResignModal(false);
+    } catch (err: unknown) {
+      const error = err as { message?: string };
+      toast.error(error.message || "Failed to resign");
+    } finally {
+      setIsResigning(false);
+    }
+  };
+
+  // ── Network Monitoring ──────────────────────────────────────────────────────
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      toast.success("Back online! Syncing game state...");
+    };
+    const handleOffline = () => {
+      setIsOnline(false);
+      toast.error("Network disconnected! Stay on this page.");
+    };
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, [toast]);
+
+  // ── Inactivity Detection ────────────────────────────────────────────────────
+  useEffect(() => {
+    // If it's your turn (and you haven't rolled or you have pieces to move)
+    // For simplicity, we check isMyTurn which covers the basic turn cycle
+    if (!isMyTurn || gameState.winner) {
+      setInactivityCounter(0);
+      setShowInactivityWarning(false);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setInactivityCounter((prev) => {
+        const next = prev + 1;
+        if (next === WARNING_THRESHOLD) setShowInactivityWarning(true);
+        if (next >= INACTIVITY_LIMIT) {
+          clearInterval(interval);
+          confirmResign(); 
+          toast.error("Match forfeited due to inactivity.");
+        }
+        return next;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isMyTurn, gameState.winner, toast]);
+
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen().catch(() => {});
@@ -61,14 +129,6 @@ const LudoArena: React.FC<LudoArenaProps> = ({ room, user }) => {
   }, []);
 
   const handleResign = () => setShowResignModal(true);
-  const confirmResign = async () => {
-    setIsResigning(true);
-    setTimeout(() => {
-      toast.success("You resigned the game!");
-      setIsResigning(false);
-      setShowResignModal(false);
-    }, 500);
-  };
 
   const oppUsername = isHost
     ? (room.guest?.username || "ROBOT")
@@ -259,6 +319,61 @@ const LudoArena: React.FC<LudoArenaProps> = ({ room, user }) => {
           </button>
         </div>
       </div>
+
+      {/* ── Network Offline Overlay ── */}
+      {!isOnline && (
+        <div className="fixed inset-0 z-500 flex items-center justify-center bg-slate-950/90 backdrop-blur-sm">
+          <div className="text-center space-y-4 p-8 bg-white dark:bg-slate-900 rounded-3xl border border-red-500/50 shadow-2xl max-w-sm">
+            <div className="w-20 h-20 bg-red-500/20 rounded-full flex items-center justify-center mx-auto">
+              <AlertTriangle className="text-red-500 animate-pulse" size={40} />
+            </div>
+            <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter italic">Connection Lost</h3>
+            <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest leading-relaxed">
+              We've lost your signal. Reconnecting... <br/>
+              Leaving now will count as a forfeit.
+            </p>
+            <div className="pt-4">
+              <div className="h-1 w-full bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden">
+                <motion.div 
+                  initial={{ x: "-100%" }}
+                  animate={{ x: "100%" }}
+                  transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
+                  className="h-full w-1/3 bg-red-500"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Inactivity Warning Overlay ── */}
+      <AnimatePresence>
+        {showInactivityWarning && isMyTurn && isOnline && !gameState.winner && (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9, y: 50 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 50 }}
+            className="fixed bottom-32 left-1/2 -translate-x-1/2 z-400 w-[90%] max-w-md"
+          >
+            <div className="bg-amber-500 text-slate-950 p-6 rounded-3xl shadow-2xl border-4 border-slate-950 flex flex-col items-center text-center">
+              <Clock size={40} className="mb-2 animate-bounce" />
+              <h4 className="font-black text-xl uppercase tracking-tighter italic">Are you still there?</h4>
+              <p className="font-bold text-[10px] uppercase tracking-widest opacity-80 mt-1">
+                Roll or move now or you will forfeit in {INACTIVITY_LIMIT - inactivityCounter}s
+              </p>
+              <button 
+                onClick={() => {
+                  setInactivityCounter(0);
+                  setShowInactivityWarning(false);
+                }}
+                className="mt-4 px-8 py-3 bg-slate-950 text-white rounded-xl font-black uppercase text-xs tracking-widest active:scale-95 transition-transform"
+              >
+                I'M BACK
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {showResignModal && (
         <ResignConfirmationModal

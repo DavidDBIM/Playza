@@ -137,6 +137,13 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [phase, setPhase] = useState<"prep" | "playing">("prep");
 
+  // ── Battle Sentinel States (Network & Inactivity) ──────────────────────────
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [inactivityCounter, setInactivityCounter] = useState(0);
+  const [showInactivityWarning, setShowInactivityWarning] = useState(false);
+  const INACTIVITY_LIMIT = 180; // 3 minutes total
+  const WARNING_THRESHOLD = 120; // Warn after 2 minutes
+
   const toggleFullscreen = useCallback(() => {
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen().catch((err) => {
@@ -148,6 +155,77 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
       }
     }
   }, []);
+
+  const serverSaysMyTurn = room.current_turn === user?.id;
+  const isYourTurn = serverSaysMyTurn && !pendingMoveRef.current;
+
+  const confirmResign = async () => {
+    setIsResigning(true);
+    try {
+      await resignChessGame(room.id);
+      toast.success("You resigned the game.");
+      const winnerId: string =
+        user && room.host_id === user.id
+          ? room.guest_id || "00000000-0000-0000-0000-000000000000"
+          : room.host_id || "HOST_WIN";
+      setResignationWinnerId(winnerId);
+      
+      setShowResignModal(false);
+      
+      // Delay slightly then show winner screen (Resigner loses)
+      setTimeout(() => {
+        setShowWinnerDelayed(true);
+      }, 2000);
+    } catch (err: unknown) {
+      const error = err as { message?: string };
+      toast.error(error.message || "Failed to resign");
+    } finally {
+      setIsResigning(false);
+    }
+  };
+
+  // ── Network Monitoring ──────────────────────────────────────────────────────
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      toast.success("Back online! Resyncing...");
+    };
+    const handleOffline = () => {
+      setIsOnline(false);
+      toast.error("Network disconnected! Check your connection.");
+    };
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, [toast]);
+
+  // ── Inactivity Detection ────────────────────────────────────────────────────
+  useEffect(() => {
+    if (phase !== "playing" || room.status !== "active" || game.isGameOver() || !isYourTurn) {
+      setInactivityCounter(0);
+      setShowInactivityWarning(false);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setInactivityCounter((prev) => {
+        const next = prev + 1;
+        if (next === WARNING_THRESHOLD) setShowInactivityWarning(true);
+        if (next >= INACTIVITY_LIMIT) {
+          clearInterval(interval);
+          confirmResign(); // Auto-resign if inactive
+          toast.error("Match forfeited due to inactivity.");
+        }
+        return next;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [phase, room.status, game, isYourTurn, confirmResign, toast]);
   
   // ── Navigation Blocking (Back Button) ───────────────────────────────────────
   useEffect(() => {
@@ -342,8 +420,6 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [room.board_state?.last_move, room.current_turn]);
 
-  const serverSaysMyTurn = room.current_turn === user?.id;
-  const isYourTurn = serverSaysMyTurn && !pendingMoveRef.current;
   const boardOrientation = room.host_id === user?.id ? "white" : "black";
   const oppUsername =
     user?.id === room.host_id
@@ -464,31 +540,6 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
   // ── Resign
   const handleResign = async () => {
     setShowResignModal(true);
-  };
-
-  const confirmResign = async () => {
-    setIsResigning(true);
-    try {
-      await resignChessGame(room.id);
-      toast.success("You resigned the game.");
-      const winnerId: string =
-        user && room.host_id === user.id
-          ? room.guest_id || "00000000-0000-0000-0000-000000000000"
-          : room.host_id || "HOST_WIN";
-      setResignationWinnerId(winnerId);
-      
-      setShowResignModal(false);
-      
-      // Delay slightly then show winner screen (Resigner loses)
-      setTimeout(() => {
-        setShowWinnerDelayed(true);
-      }, 2000);
-    } catch (err: unknown) {
-      const error = err as { message?: string };
-      toast.error(error.message || "Failed to resign");
-    } finally {
-      setIsResigning(false);
-    }
   };
 
   const cancelResign = () => {
@@ -625,6 +676,61 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
   // ── Render
   return (
     <div className="flex flex-col gap-1.5 w-full max-w-full mx-auto p-2 box-border md:grid md:grid-cols-[1fr_360px] md:grid-rows-[auto_auto_auto_auto_1fr] md:gap-4 md:p-4 lg:p-6 min-h-screen bg-slate-50 dark:bg-slate-950 overflow-y-auto">
+      {/* ── Network Offline Overlay ── */}
+      {!isOnline && (
+        <div className="fixed inset-0 z-500 flex items-center justify-center bg-slate-950/90 backdrop-blur-sm">
+          <div className="text-center space-y-4 p-8 bg-white dark:bg-slate-900 rounded-3xl border border-red-500/50 shadow-2xl max-w-sm">
+            <div className="w-20 h-20 bg-red-500/20 rounded-full flex items-center justify-center mx-auto">
+              <AlertTriangle className="text-red-500 animate-pulse" size={40} />
+            </div>
+            <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter italic">Connection Lost</h3>
+            <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest leading-relaxed">
+              We've lost your signal. Reconnecting... <br/>
+              Leaving now will count as a forfeit.
+            </p>
+            <div className="pt-4">
+              <div className="h-1 w-full bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden">
+                <motion.div 
+                  initial={{ x: "-100%" }}
+                  animate={{ x: "100%" }}
+                  transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
+                  className="h-full w-1/3 bg-red-500"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Inactivity Warning Overlay ── */}
+      <AnimatePresence>
+        {showInactivityWarning && isYourTurn && isOnline && (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9, y: 50 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 50 }}
+            className="fixed bottom-32 left-1/2 -translate-x-1/2 z-400 w-[90%] max-w-md"
+          >
+            <div className="bg-amber-500 text-slate-950 p-6 rounded-3xl shadow-2xl border-4 border-slate-950 flex flex-col items-center text-center">
+              <Clock size={40} className="mb-2 animate-bounce" />
+              <h4 className="font-black text-xl uppercase tracking-tighter italic">Are you still there?</h4>
+              <p className="font-bold text-[10px] uppercase tracking-widest opacity-80 mt-1">
+                Move now or you will forfeit in {INACTIVITY_LIMIT - inactivityCounter}s
+              </p>
+              <button 
+                onClick={() => {
+                  setInactivityCounter(0);
+                  setShowInactivityWarning(false);
+                }}
+                className="mt-4 px-8 py-3 bg-slate-950 text-white rounded-xl font-black uppercase text-xs tracking-widest active:scale-95 transition-transform"
+              >
+                I'M BACK
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {showResignModal && (
         <ResignConfirmationModal
           stake={room.stake}
