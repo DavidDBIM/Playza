@@ -352,15 +352,21 @@ export async function resignGame(roomId: string, userId: string) {
   return { winner_id: winnerId, message: 'Resigned' }
 }
 
-async function handleGameOver(roomId: string, winnerId: string, stake: number) {
-  await supabaseAdmin
+async function handleGameOver(roomId: string, winnerId: string | null, stake: number) {
+  // 1. Update room status
+  const { data: room } = await supabaseAdmin
     .from('pool_rooms')
-    .update({
-      status: 'finished',
-      winner_id: winnerId,
+    .update({ 
+      status: 'finished', 
+      winner_id: winnerId 
     })
     .eq('id', roomId)
+    .select('host_id, guest_id')
+    .single()
 
+  if (!room) return
+
+  // 2. Handle Prize & Transactions for Winner
   if (stake > 0 && winnerId) {
     const totalPrize = stake * 2
     const platformCut = totalPrize * 0.1
@@ -378,5 +384,33 @@ async function handleGameOver(roomId: string, winnerId: string, stake: number) {
       status: 'successful',
       reference: `PLZ-POOL-WIN-${roomId}`,
     })
+  }
+
+  // 3. Record Game History for both players
+  const players = [room.host_id, room.guest_id].filter(id => id)
+  
+  for (const uid of players) {
+    const isWinner = uid === winnerId
+    const isDraw = winnerId === null
+    
+    await supabaseAdmin.from('game_history').insert({
+      user_id: uid,
+      game_name: '8-Ball Pool',
+      status: isDraw ? 'draw' : (isWinner ? 'win' : 'loss'),
+      winnings: isWinner ? (stake * 1.8) : (isDraw ? stake : 0),
+      played_at: new Date().toISOString()
+    })
+  }
+
+  // 4. If draw, return stakes to wallet
+  if (stake > 0 && !winnerId) {
+    for (const uid of [room.host_id, room.guest_id]) {
+      if (uid) {
+        await supabaseAdmin.rpc('increment_wallet_balance', {
+          p_user_id: uid,
+          p_amount: stake,
+        })
+      }
+    }
   }
 }

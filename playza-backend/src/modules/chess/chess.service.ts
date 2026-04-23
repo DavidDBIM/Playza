@@ -8,14 +8,20 @@ function generateRoomCode(): string {
 }
 
 async function handleGameOver(roomId: string, winnerId: string | null, stake: number) {
-  await supabaseAdmin
+  // 1. Update room status
+  const { data: room } = await supabaseAdmin
     .from('chess_rooms')
     .update({ 
       status: 'finished', 
       winner_id: winnerId 
     })
     .eq('id', roomId)
+    .select('host_id, guest_id')
+    .single()
 
+  if (!room) return
+
+  // 2. Handle Prize & Transactions for Winner
   if (stake > 0 && winnerId && winnerId !== SYSTEM_BOT_ID) {
     const totalPrize = stake * 2
     const platformCut = totalPrize * 0.1
@@ -35,22 +41,30 @@ async function handleGameOver(roomId: string, winnerId: string | null, stake: nu
     })
   }
 
-  // If draw, return stakes
-  if (stake > 0 && !winnerId) {
-    const players = await supabaseAdmin
-      .from('chess_rooms')
-      .select('host_id, guest_id')
-      .eq('id', roomId)
-      .single()
+  // 3. Record Game History for both players
+  const players = [room.host_id, room.guest_id].filter(id => id && id !== SYSTEM_BOT_ID)
+  
+  for (const uid of players) {
+    const isWinner = uid === winnerId
+    const isDraw = winnerId === null
+    
+    await supabaseAdmin.from('game_history').insert({
+      user_id: uid,
+      game_name: 'Chess',
+      status: isDraw ? 'draw' : (isWinner ? 'win' : 'loss'),
+      winnings: isWinner ? (stake * 1.8) : (isDraw ? stake : 0),
+      played_at: new Date().toISOString()
+    })
+  }
 
-    if (players.data) {
-      for (const uid of [players.data.host_id, players.data.guest_id]) {
-        if (uid) {
-          await supabaseAdmin.rpc('increment_wallet_balance', {
-            p_user_id: uid,
-            p_amount: stake,
-          })
-        }
+  // 4. If draw, return stakes to wallet
+  if (stake > 0 && !winnerId) {
+    for (const uid of [room.host_id, room.guest_id]) {
+      if (uid && uid !== SYSTEM_BOT_ID) {
+        await supabaseAdmin.rpc('increment_wallet_balance', {
+          p_user_id: uid,
+          p_amount: stake,
+        })
       }
     }
   }
