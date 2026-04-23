@@ -69,8 +69,8 @@ const History = () => {
               {filtered.map((match: GameHistoryItem) => (
                 <div key={match.id} className="glass-card p-3 rounded-xl border-white/5 flex items-center justify-between hover:border-primary/20 transition-all">
                   <div className="flex items-center gap-3">
-                    <div className={`size-10 rounded-xl flex items-center justify-center ${match.winnings > 0 ? "bg-green-500/10" : "bg-red-500/10"}`}>
-                      {match.winnings > 0 ? <MdTrendingUp className="text-green-500" /> : <MdTrendingDown className="text-red-500" />}
+                    <div className={`size-10 rounded-xl flex items-center justify-center ${match.status === 'win' ? "bg-green-500/10" : match.status === 'draw' ? "bg-amber-500/10" : "bg-red-500/10"}`}>
+                      {match.status === 'win' ? <MdTrendingUp className="text-green-500" /> : match.status === 'draw' ? <MdFilterList className="text-amber-500" /> : <MdTrendingDown className="text-red-500" />}
                     </div>
                     <div>
                       <h4 className="text-slate-900 dark:text-white font-black text-sm italic">{match.game_name}</h4>
@@ -78,7 +78,7 @@ const History = () => {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className={`font-black text-sm italic flex items-center justify-end gap-1 ${match.winnings > 0 ? "text-primary" : "text-slate-500"}`}>
+                    <div className={`font-black text-sm italic flex items-center justify-end gap-1 ${match.status === 'win' ? "text-primary" : match.status === 'draw' ? "text-amber-500" : "text-slate-500"}`}>
                       {match.winnings > 0 ? <><span>+</span><ZASymbol className="text-[10px]" /><span>{match.winnings.toLocaleString()}</span></> : "—"}
                     </div>
                     {match.position && <p className="text-slate-500 text-[8px] font-black uppercase tracking-[0.2em] mt-0.5">{match.position}</p>}
@@ -103,19 +103,19 @@ const History = () => {
                       <TableCell className="px-4 py-3"><span className="text-slate-400 font-bold text-xs">{new Date(match.played_at).toLocaleDateString()}</span></TableCell>
                       <TableCell className="px-4 py-3">
                         <div className="flex items-center gap-3">
-                          <div className={`size-8 rounded-xl flex items-center justify-center ${match.winnings > 0 ? "bg-green-500/10" : "bg-red-500/10"}`}>
-                            {match.winnings > 0 ? <MdTrendingUp className="text-green-500" /> : <MdTrendingDown className="text-red-500" />}
+                          <div className={`size-8 rounded-xl flex items-center justify-center ${match.status === 'win' ? "bg-green-500/10" : match.status === 'draw' ? "bg-amber-500/10" : "bg-red-500/10"}`}>
+                            {match.status === 'win' ? <MdTrendingUp className="text-green-500" /> : match.status === 'draw' ? <MdFilterList className="text-amber-500" /> : <MdTrendingDown className="text-red-500" />}
                           </div>
                           <span className="text-slate-900 dark:text-white font-black italic group-hover:text-primary transition-colors">{match.game_name}</span>
                         </div>
                       </TableCell>
                       <TableCell className="px-4 py-3"><span className="text-slate-500 font-bold text-sm">{match.score?.toLocaleString() || "—"}</span></TableCell>
                       <TableCell className="px-4 py-3 text-right">
-                        <div className={`text-lg font-black tracking-tighter flex items-center justify-end gap-1.5 ${match.winnings > 0 ? "text-primary italic" : "text-slate-400 font-bold"}`}>
+                        <div className={`text-lg font-black tracking-tighter flex items-center justify-end gap-1.5 ${match.status === 'win' ? "text-primary italic" : match.status === 'draw' ? "text-amber-500" : "text-slate-400 font-bold"}`}>
                           {match.winnings > 0 ? <><span>+</span><ZASymbol className="text-xs" /><span>{match.winnings.toLocaleString()}</span></> : "—"}
                         </div>
-                        <span className={`px-3 py-1 text-[9px] font-black rounded-lg border uppercase tracking-widest ${match.winnings > 0 ? "bg-green-500/10 text-green-500 border-green-500/20" : "bg-red-500/10 text-red-500 border-red-500/20"}`}>
-                          {match.winnings > 0 ? "WIN" : "LOSS"}
+                        <span className={`px-3 py-1 text-[9px] font-black rounded-lg border uppercase tracking-widest ${match.status === 'win' ? "bg-green-500/10 text-green-500 border-green-500/20" : match.status === 'draw' ? "bg-amber-500/10 text-amber-500 border-amber-500/20" : "bg-red-500/10 text-red-500 border-red-500/20"}`}>
+                          {match.status.toUpperCase()}
                         </span>
                       </TableCell>
                     </TableRow>

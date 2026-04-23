@@ -126,6 +126,7 @@ const H2HZone = () => {
                 case "waiting":
                   return (
                     <H2HWaitingRoom
+                      gameType={currentType}
                       room={
                         room as unknown as React.ComponentProps<
                           typeof H2HWaitingRoom

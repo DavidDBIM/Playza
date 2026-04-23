@@ -16,6 +16,7 @@ export interface GameApi {
   findQuickMatch?: (stake: number) => Promise<unknown>;
   getWaitingRooms?: () => Promise<unknown[]>;
   listRooms?: () => Promise<unknown[]>;
+  cancelRoom?: (roomId: string) => Promise<unknown>;
 }
 
 export const getApiForGame = (gameType: GameType): GameApi => {
@@ -23,7 +24,8 @@ export const getApiForGame = (gameType: GameType): GameApi => {
   if (gameType === "word-scramble") return wordScrambleApi as unknown as GameApi;
   if (gameType === "pool") return poolApi as unknown as GameApi;
   if (gameType === "ludo") return ludoApi as unknown as GameApi;
-  return chessApi as unknown as GameApi; // Fallback to chess for unified interface
+  if (gameType === "chess") return chessApi as unknown as GameApi;
+  return chessApi as unknown as GameApi; // Fallback
 };
 
 export const useWaitingRooms = (gameType: GameType) => {
@@ -133,10 +135,19 @@ export const useH2HMutations = (gameType: GameType) => {
     },
   });
 
+  const cancelRoom = useMutation({
+    mutationFn: (roomId: string) => {
+      const api = getApiForGame(gameType);
+      if (!api.cancelRoom) throw new Error("Cancellation not supported");
+      return api.cancelRoom(roomId);
+    },
+  });
+
   return {
     createRoom,
     createBotRoom,
     joinRoom,
     quickMatch,
+    cancelRoom,
   };
 };
