@@ -1,6 +1,6 @@
 import { Router, Response } from 'express'
 import { requireAuth, AuthRequest } from '../../middleware/auth'
-import { createChessRoom, joinChessRoom, getRoom, makeMove, resignGame, createBotRoom, findQuickMatch, listWaitingRooms } from './chess.service'
+import { createChessRoom, joinChessRoom, getRoom, makeMove, resignGame, createBotRoom, findQuickMatch, listWaitingRooms, cancelChessRoom } from './chess.service'
 
 const router = Router()
 
@@ -77,6 +77,15 @@ router.post('/room/:roomId/resign', requireAuth, async (req: AuthRequest, res: R
   try {
     const data = await resignGame(req.params.roomId, req.user!.id)
     res.json({ success: true, data })
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message })
+  }
+})
+
+router.post('/room/:roomId/cancel', requireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    await cancelChessRoom(req.params.roomId, req.user!.id)
+    res.json({ success: true, message: 'Room cancelled' })
   } catch (err: any) {
     res.status(400).json({ success: false, message: err.message })
   }

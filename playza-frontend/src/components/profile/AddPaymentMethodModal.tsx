@@ -100,7 +100,7 @@ export const AddPaymentMethodModal = ({ onClose, onSuccess }: AddPaymentMethodMo
 
   return (
     <div ref={backdropRef} onClick={e => { if (e.target === backdropRef.current) onClose(); }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 dark:bg-black/70 backdrop-blur-sm px-4 animate-in fade-in duration-200">
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/95 backdrop-blur-2xl px-4 animate-in fade-in duration-200">
       <div className="w-full max-w-md bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-white/10 rounded-xl shadow-2xl p-4 md:p-8 animate-in slide-in-from-bottom-4 duration-300 backdrop-blur-3xl">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">

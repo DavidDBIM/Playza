@@ -107,6 +107,7 @@ export async function createChessRoom(userId: string, stakeValue: number) {
   if (error) throw error;
 
   if (stake > 0) {
+    // Just check host balance, don't deduct yet.
     const { data: wallet } = await supabaseAdmin
       .from("wallets")
       .select("balance")
@@ -115,19 +116,6 @@ export async function createChessRoom(userId: string, stakeValue: number) {
 
     if (!wallet || wallet.balance < stake)
       throw new Error("Insufficient balance to create this game");
-
-    await supabaseAdmin.rpc("decrement_wallet_balance", {
-      p_user_id: userId,
-      p_amount: stake,
-    });
-
-    await supabaseAdmin.from("transactions").insert({
-      user_id: userId,
-      type: "game_entry",
-      amount: stake,
-      status: "successful",
-      reference: `PLZ-CHESS-${data.id}`,
-    });
   }
 
   return { room_code: code, room_id: data.id, stake, status: "waiting" };
@@ -145,26 +133,32 @@ export async function joinChessRoom(userId: string, code: string) {
   if (room.host_id === userId) throw new Error("You cannot join your own room");
 
   if (room.stake > 0) {
-    const { data: wallet } = await supabaseAdmin
-      .from("wallets")
-      .select("balance")
-      .eq("user_id", userId)
-      .single();
+    // 1. Check & Deduct Host
+    const { data: hostWallet } = await supabaseAdmin.from('wallets').select('balance').eq('user_id', room.host_id).single();
+    if (!hostWallet || hostWallet.balance < room.stake) throw new Error("Host no longer has sufficient balance");
 
-    if (!wallet || wallet.balance < room.stake)
-      throw new Error("Insufficient balance to join this game");
+    // 2. Check & Deduct Guest
+    const { data: guestWallet } = await supabaseAdmin.from('wallets').select('balance').eq('user_id', userId).single();
+    if (!guestWallet || guestWallet.balance < room.stake) throw new Error("Insufficient balance to join this game");
 
-    await supabaseAdmin.rpc("decrement_wallet_balance", {
-      p_user_id: userId,
-      p_amount: room.stake,
+    // Deduct Host
+    await supabaseAdmin.rpc("decrement_wallet_balance", { p_user_id: room.host_id, p_amount: room.stake });
+    await supabaseAdmin.from("transactions").insert({
+      user_id: room.host_id,
+      type: "game_entry",
+      amount: room.stake,
+      status: "successful",
+      reference: `PLZ-CHESS-HOST-${room.id}`,
     });
 
+    // Deduct Guest
+    await supabaseAdmin.rpc("decrement_wallet_balance", { p_user_id: userId, p_amount: room.stake });
     await supabaseAdmin.from("transactions").insert({
       user_id: userId,
       type: "game_entry",
       amount: room.stake,
       status: "successful",
-      reference: `PLZ-CHESS-JOIN-${room.id}-${userId}`,
+      reference: `PLZ-CHESS-JOIN-${room.id}`,
     });
   }
 
@@ -228,6 +222,16 @@ export async function createBotRoom(userId: string, stakeValue: number) {
     .single();
 
   if (error) throw error;
+
+  if (stake > 0) {
+    await supabaseAdmin.from("transactions").insert({
+      user_id: userId,
+      type: "game_entry",
+      amount: stake,
+      status: "successful",
+      reference: `PLZ-CHESS-BOT-${data.id}`,
+    });
+  }
 
   return {
     room_id: data.id,
@@ -353,18 +357,22 @@ export async function findQuickMatch(userId: string, stakeValue: number) {
 }
 
 export async function resignGame(roomId: string, userId: string) {
-  const { data: room } = await supabaseAdmin
-    .from('chess_rooms')
-    .select('*')
-    .eq('id', roomId)
-    .single()
-
+  const { data: room } = await supabaseAdmin.from('chess_rooms').select('*').eq('id', roomId).single()
   if (!room || room.status !== 'active') throw new Error('Invalid game state')
 
-  const winnerId = room.host_id === userId ? room.guest_id : room.host_id
+  const winnerId = room.host_id === userId ? (room.guest_id || SYSTEM_BOT_ID) : room.host_id
   await handleGameOver(roomId, winnerId, room.stake)
 
   return { winner_id: winnerId, message: 'Resigned' }
+}
+
+export async function cancelChessRoom(roomId: string, userId: string) {
+  const { data: room } = await supabaseAdmin.from('chess_rooms').select('*').eq('id', roomId).single()
+  if (!room) throw new Error('Room not found')
+  if (room.host_id !== userId) throw new Error('Unauthorized')
+  if (room.status !== 'waiting') throw new Error('Cannot cancel active or finished game')
+
+  await supabaseAdmin.from('chess_rooms').delete().eq('id', roomId)
 }
 
 function getInitialBoard() {

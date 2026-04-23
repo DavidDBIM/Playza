@@ -39,3 +39,8 @@ export const getWaitingRooms = async () => {
   const { data } = await axiosInstance.get("/chess/waiting");
   return data.data;
 };
+
+export const cancelRoom = async (roomId: string) => {
+  const { data } = await axiosInstance.post(`/chess/room/${roomId}/cancel`);
+  return data;
+};

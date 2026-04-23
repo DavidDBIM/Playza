@@ -4,7 +4,8 @@ import {
   MdVideogameAsset, 
   MdShield,
   MdPayments,
-  MdGroup
+  MdGroup,
+  MdMilitaryTech
 } from 'react-icons/md';
 import { 
   Table, 
@@ -15,6 +16,7 @@ import {
   TableRow 
 } from '../ui/table';
 import type { MatchRecord, TransactionRecord, ReferralRecord } from '../../data/usersData';
+import type { UserHistoryItem } from '../../types/admin';
 
 // Combat Log Component
 export const CombatLog = ({ data }: { data: MatchRecord[] }) => (
@@ -23,8 +25,8 @@ export const CombatLog = ({ data }: { data: MatchRecord[] }) => (
       <TableHeader>
         <TableRow className="border-none hover:bg-transparent">
           <TableHead className="px-5 py-3 text-[10px] uppercase tracking-[0.3em] font-black text-muted-foreground/40">Battle Arena</TableHead>
-          <TableHead className="px-5 py-3 text-[10px] uppercase tracking-[0.3em] font-black text-muted-foreground/40 text-center">Protocol Score</TableHead>
-          <TableHead className="px-5 py-3 text-[10px] uppercase tracking-[0.3em] font-black text-muted-foreground/40 text-center">Ranking</TableHead>
+          <TableHead className="px-5 py-3 text-[10px] uppercase tracking-[0.3em] font-black text-muted-foreground/40 text-center">Outcome Status</TableHead>
+          <TableHead className="px-5 py-3 text-[10px] uppercase tracking-[0.3em] font-black text-muted-foreground/40 text-center">Session ID</TableHead>
           <TableHead className="px-5 py-3 text-[10px] uppercase tracking-[0.3em] font-black text-muted-foreground/40 text-right">Loot Won</TableHead>
           <TableHead className="px-5 py-3 text-[10px] uppercase tracking-[0.3em] font-black text-muted-foreground/40">Timestamp</TableHead>
           <TableHead className="px-5 py-3 text-[10px] uppercase tracking-[0.3em] font-black text-muted-foreground/40 text-center">Status</TableHead>
@@ -50,8 +52,8 @@ export const CombatLog = ({ data }: { data: MatchRecord[] }) => (
               </div>
             </TableCell>
             <TableCell className="px-5 py-3.5 text-center">
-              <span className="font-headline font-black text-primary text-base">{match.score}</span>
-              <p className="text-[9px] font-black text-muted-foreground/40 uppercase tracking-widest mt-1">Efficiency Index</p>
+              <span className="font-headline font-black text-primary text-base uppercase">{match.score}</span>
+              <p className="text-[9px] font-black text-muted-foreground/40 uppercase tracking-widest mt-1">Final Result</p>
             </TableCell>
             <TableCell className="px-5 py-3.5 text-center">
               <span className="font-black text-xs text-foreground uppercase tracking-widest bg-muted px-4 py-1.5 rounded-xl border border-border/50 group-hover:bg-primary/5 group-hover:text-primary group-hover:border-primary/20 transition-all">{match.position}</span>
@@ -175,6 +177,44 @@ export const DownlineNetwork = ({ data }: { data: ReferralRecord[] }) => (
                   {ref.status?.toUpperCase() || 'PENDING'}
                 </span>
               </div>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  </div>
+);
+// Loyalty Log Component
+export const LoyaltyLog = ({ data }: { data: UserHistoryItem[] }) => (
+  <div className="p-3 md:p-6 animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-x-auto no-scrollbar">
+    <Table>
+      <TableHeader>
+        <TableRow className="border-none hover:bg-transparent">
+          <TableHead className="px-5 py-3 text-[10px] uppercase tracking-[0.3em] font-black text-muted-foreground/40">Event Type</TableHead>
+          <TableHead className="px-5 py-3 text-[10px] uppercase tracking-[0.3em] font-black text-muted-foreground/40 text-center">PZA Points</TableHead>
+          <TableHead className="px-5 py-3 text-[10px] uppercase tracking-[0.3em] font-black text-muted-foreground/40 text-right">Details</TableHead>
+          <TableHead className="px-5 py-3 text-[10px] uppercase tracking-[0.3em] font-black text-muted-foreground/40">Timestamp</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {data.map((event) => (
+          <TableRow key={event.id} className="group hover:bg-amber-500/5 transition-all border-border/10">
+            <TableCell className="px-5 py-3.5">
+              <div className="flex items-center gap-3">
+                <div className="size-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
+                  <MdMilitaryTech className="text-xl" />
+                </div>
+                <span className="font-black text-xs uppercase tracking-widest text-foreground">{event.event_type}</span>
+              </div>
+            </TableCell>
+            <TableCell className="px-5 py-3.5 text-center">
+              <span className="font-black text-base text-amber-500">+{event.points_awarded}</span>
+            </TableCell>
+            <TableCell className="px-5 py-3.5 text-right">
+              <span className="text-[10px] font-black uppercase text-muted-foreground">{JSON.stringify(event.details || {})}</span>
+            </TableCell>
+            <TableCell className="px-5 py-3.5 text-muted-foreground text-[10px] font-black uppercase tracking-widest">
+              {new Date(event.created_at).toLocaleDateString()}
             </TableCell>
           </TableRow>
         ))}

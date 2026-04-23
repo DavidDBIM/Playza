@@ -48,4 +48,9 @@ export const poolApi = {
     const { data } = await axiosInstance.post(`/pool/place-ball`, { roomId, position })
     return data
   },
+
+  cancelRoom: async (roomId: string): Promise<{ success: boolean }> => {
+    const { data } = await axiosInstance.post(`/pool/cancel`, { roomId })
+    return data
+  },
 }

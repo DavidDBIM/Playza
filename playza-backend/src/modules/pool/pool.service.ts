@@ -4,6 +4,8 @@ import { PoolPhysics } from './physics'
 import { PoolRules, GameState, PlayerType } from './rules'
 import { getPoolBotMove } from './bot'
 
+export const SYSTEM_BOT_ID = "00000000-0000-0000-0000-000000000000";
+
 const TABLE_WIDTH = 2540
 const TABLE_HEIGHT = 1270
 
@@ -69,79 +71,40 @@ export async function createPoolRoom(userId: string, stakeValue: number) {
       await supabaseAdmin.from('pool_rooms').delete().eq('id', data.id)
       throw new Error('Insufficient balance to create this game')
     }
-
-    await supabaseAdmin.rpc('decrement_wallet_balance', {
-      p_user_id: userId,
-      p_amount: stake,
-    })
-
-    await supabaseAdmin.from('transactions').insert({
-      user_id: userId,
-      type: 'game_entry',
-      amount: stake,
-      status: 'successful',
-      reference: `PLZ-POOL-${data.id}`,
-    })
   }
 
   return { room_code: code, room_id: data.id, stake, status: 'waiting' }
 }
 
 export async function joinPoolRoom(userId: string, code: string) {
-  const { data: room, error } = await supabaseAdmin
-    .from('pool_rooms')
-    .select('*')
-    .eq('code', code.toUpperCase())
-    .single()
-
-  if (error || !room) throw new Error('Room not found')
-  if (room.status !== 'waiting') throw new Error('Room is no longer available')
-  if (room.host_id === userId) throw new Error('You cannot join your own room')
+  const { data: room, error } = await supabaseAdmin.from('pool_rooms').select('*').eq('code', code.toUpperCase()).single();
+  if (error || !room) throw new Error('Room not found');
+  if (room.status !== 'waiting') throw new Error('Room is no longer available');
+  if (room.host_id === userId) throw new Error('You cannot join your own room');
 
   if (room.stake > 0) {
-    const { data: wallet } = await supabaseAdmin
-      .from('wallets')
-      .select('balance')
-      .eq('user_id', userId)
-      .single()
+    // Deduct Host
+    const { data: hostWallet } = await supabaseAdmin.from('wallets').select('balance').eq('user_id', room.host_id).single();
+    if (!hostWallet || hostWallet.balance < room.stake) throw new Error("Host no longer has sufficient balance");
+    await supabaseAdmin.rpc("decrement_wallet_balance", { p_user_id: room.host_id, p_amount: room.stake });
+    await supabaseAdmin.from("transactions").insert({ user_id: room.host_id, type: "game_entry", amount: room.stake, status: "successful", reference: `PLZ-POOL-HOST-${room.id}` });
 
-    if (!wallet || wallet.balance < room.stake)
-      throw new Error('Insufficient balance to join this game')
-
-    await supabaseAdmin.rpc('decrement_wallet_balance', {
-      p_user_id: userId,
-      p_amount: room.stake,
-    })
-
-    await supabaseAdmin.from('transactions').insert({
-      user_id: userId,
-      type: 'game_entry',
-      amount: room.stake,
-      status: 'successful',
-      reference: `PLZ-POOL-JOIN-${room.id}-${userId}`,
-    })
+    // Deduct Guest
+    const { data: guestWallet } = await supabaseAdmin.from('wallets').select('balance').eq('user_id', userId).single();
+    if (!guestWallet || guestWallet.balance < room.stake) throw new Error("Insufficient balance to join this game");
+    await supabaseAdmin.rpc("decrement_wallet_balance", { p_user_id: userId, p_amount: room.stake });
+    await supabaseAdmin.from("transactions").insert({ user_id: userId, type: "game_entry", amount: room.stake, status: "successful", reference: `PLZ-POOL-JOIN-${room.id}` });
   }
 
   const initialState = PoolRules.createInitialState()
-
-  const { error: updateError } = await supabaseAdmin
-    .from('pool_rooms')
-    .update({
-      guest_id: userId,
-      status: 'active',
-      game_state: initialState,
-    })
-    .eq('id', room.id)
-
-  if (updateError) throw updateError
-
-  return {
-    room_id: room.id,
-    code: room.code,
-    stake: room.stake,
+  const { error: updateError } = await supabaseAdmin.from('pool_rooms').update({
+    guest_id: userId,
     status: 'active',
     game_state: initialState,
-  }
+  }).eq('id', room.id)
+
+  if (updateError) throw updateError;
+  return { room_id: room.id, code: room.code, stake: room.stake, status: 'active', game_state: initialState };
 }
 
 export async function getRoom(roomId: string, userId: string) {
@@ -202,7 +165,8 @@ export async function executeShot(
     .eq('id', roomId)
 
   if (newState.status === 'finished') {
-    await handleGameOver(roomId, newState.winner === 'host' ? room.host_id : room.guest_id, room.stake)
+    const winnerId = newState.winner === 'host' ? room.host_id : (room.guest_id || SYSTEM_BOT_ID)
+    await handleGameOver(roomId, winnerId, room.stake)
     return {
       game_state: newState,
       pocketed_balls: pocketedBalls,
@@ -303,6 +267,16 @@ export async function createBotRoom(userId: string, stakeValue: number) {
 
   if (error) throw error
 
+  if (stake > 0) {
+    await supabaseAdmin.from('transactions').insert({
+      user_id: userId,
+      type: 'game_entry',
+      amount: stake,
+      status: 'successful',
+      reference: `PLZ-POOL-BOT-${data.id}`,
+    })
+  }
+
   return {
     room_id: data.id,
     code,
@@ -337,19 +311,23 @@ export async function findQuickMatch(userId: string, stakeValue: number) {
 }
 
 export async function resignGame(roomId: string, userId: string) {
-  const { data: room } = await supabaseAdmin
-    .from('pool_rooms')
-    .select('*')
-    .eq('id', roomId)
-    .single()
-
+  const { data: room } = await supabaseAdmin.from('pool_rooms').select('*').eq('id', roomId).single()
   if (!room || room.status !== 'active') throw new Error('Invalid game state')
 
   const winner = room.host_id === userId ? 'guest' : 'host'
-  const winnerId = winner === 'host' ? room.host_id : room.guest_id
+  const winnerId = winner === 'host' ? room.host_id : (room.guest_id || SYSTEM_BOT_ID)
   await handleGameOver(roomId, winnerId, room.stake)
 
   return { winner_id: winnerId, message: 'Resigned' }
+}
+
+export async function cancelPoolRoom(roomId: string, userId: string) {
+  const { data: room } = await supabaseAdmin.from('pool_rooms').select('*').eq('id', roomId).single()
+  if (!room) throw new Error('Room not found')
+  if (room.host_id !== userId) throw new Error('Unauthorized')
+  if (room.status !== 'waiting') throw new Error('Cannot cancel active or finished game')
+
+  await supabaseAdmin.from('pool_rooms').delete().eq('id', roomId)
 }
 
 async function handleGameOver(roomId: string, winnerId: string | null, stake: number) {
@@ -387,7 +365,7 @@ async function handleGameOver(roomId: string, winnerId: string | null, stake: nu
   }
 
   // 3. Record Game History for both players
-  const players = [room.host_id, room.guest_id].filter(id => id)
+  const players = [room.host_id, room.guest_id].filter(id => id && id !== SYSTEM_BOT_ID)
   
   for (const uid of players) {
     const isWinner = uid === winnerId

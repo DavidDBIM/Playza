@@ -2,9 +2,12 @@ import { useLocation, useNavigate } from 'react-router';
 import { useToast } from '@/context/toast';
 import { Share2, Radar, ShieldCheck } from 'lucide-react';
 import { ZASymbol } from '@/components/currency/ZASymbol';
+import { useH2HMutations, type GameType } from '@/hooks/h2h/useH2H';
 
 interface WaitingRoomProps {
+  gameType: GameType;
   room: {
+    id?: string;
     code?: string;
     stake?: number | string;
     host?: {
@@ -16,11 +19,12 @@ interface WaitingRoomProps {
   };
 }
 
-const H2HWaitingRoom = ({ room }: WaitingRoomProps) => {
+const H2HWaitingRoom = ({ room, gameType }: WaitingRoomProps) => {
   const toast = useToast();
   const navigate = useNavigate();
   const location = useLocation();
   const isQuickMatch = location.state?.quickMatch;
+  const { cancelRoom } = useH2HMutations(gameType);
 
   const handleShare = () => {
     const text = `Join my H2H battle on Playza! Room Code: ${room.code} \nLink: ${window.location.href}`;
@@ -33,6 +37,19 @@ const H2HWaitingRoom = ({ room }: WaitingRoomProps) => {
     } else {
       navigator.clipboard.writeText(text);
       toast.success("Link copied to clipboard!");
+    }
+  };
+
+  const handleAbort = async () => {
+    try {
+      if (room.id) {
+        await cancelRoom.mutateAsync(room.id);
+        toast.success("Match cancelled. Stake preserved.");
+      }
+      navigate('/h2h');
+    } catch (err) {
+      console.error("Cancel error:", err);
+      navigate('/h2h');
     }
   };
 
@@ -145,11 +162,12 @@ const H2HWaitingRoom = ({ room }: WaitingRoomProps) => {
         {/* Footer Actions */}
         <div className="flex flex-col items-center pt-4">
              <button 
-                onClick={() => navigate('/h2h')}
-                className="text-slate-500 hover:text-red-500 font-black text-[10px] uppercase tracking-[0.5em] italic flex items-center gap-4 group"
+                onClick={handleAbort}
+                disabled={cancelRoom.isPending}
+                className="text-slate-500 hover:text-red-500 font-black text-[10px] uppercase tracking-[0.5em] italic flex items-center gap-4 group disabled:opacity-50"
             >
                 <div className="w-8 h-px bg-black/10 dark:bg-white/10 group-hover:bg-red-500/50"></div>
-                Abort Match
+                {cancelRoom.isPending ? 'Aborting...' : 'Abort Match'}
                 <div className="w-8 h-px bg-black/10 dark:bg-white/10 group-hover:bg-red-500/50"></div>
             </button>
             <p className="mt-8 text-slate-400 dark:text-slate-500 text-[10px] font-medium tracking-widest uppercase italic text-center">

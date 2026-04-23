@@ -1,4 +1,4 @@
-export const SYSTEM_BOT_ID = 'SYSTEM_BOT'
+export const SYSTEM_BOT_ID = "00000000-0000-0000-0000-000000000000";
 
 // The bot logic here is basic, just taking the first available valid move when prompted.
 // Real game logic dictates move validity in service, so we don't need complex AST here.

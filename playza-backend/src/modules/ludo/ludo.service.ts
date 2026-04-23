@@ -138,45 +138,51 @@ export async function createLudoRoom(userId: string, stakeValue: number) {
       stake,
       status: "waiting",
       board_state: null,
-      current_turn: null, // assigned when guest joins
+      current_turn: null,
     })
     .select()
     .single();
 
   if (error) throw error;
-  await handleEntryFee(userId, stake, data.id);
+
+  if (stake > 0) {
+    const { data: wallet } = await supabaseAdmin.from("wallets").select("balance").eq("user_id", userId).single();
+    if (!wallet || wallet.balance < stake) throw new Error("Insufficient balance to create this game");
+  }
+
   return { room_code: code, room_id: data.id, stake, status: "waiting" };
 }
 
 export async function joinLudoRoom(userId: string, code: string) {
-  const { data: room, error } = await supabaseAdmin
-    .from("ludo_rooms")
-    .select("*")
-    .eq("code", code.toUpperCase())
-    .single();
-
-  if (error || !room) {
-    throw new Error("Room not found");
-  }
+  const { data: room, error } = await supabaseAdmin.from("ludo_rooms").select("*").eq("code", code.toUpperCase()).single();
+  if (error || !room) throw new Error("Room not found");
   if (room.status !== "waiting") throw new Error("Room no longer available");
   if (room.host_id === userId) throw new Error("You cannot join your own room");
 
-  await handleEntryFee(userId, room.stake, room.id);
-  const initialBoard = getInitialBoard();
+  if (room.stake > 0) {
+    // Deduct Host
+    const { data: hostWallet } = await supabaseAdmin.from('wallets').select('balance').eq('user_id', room.host_id).single();
+    if (!hostWallet || hostWallet.balance < room.stake) throw new Error("Host no longer has sufficient balance");
+    await handleEntryFee(room.host_id, room.stake, `HOST-${room.id}`);
 
-  const { error: updateError } = await supabaseAdmin
-    .from("ludo_rooms")
-    .update({
-      guest_id: userId,
-      status: "active",
-      board_state: initialBoard,
-      current_turn: room.host_id, // Host starts with red string
-    })
-    .eq("id", room.id);
+    // Deduct Guest
+    const { data: guestWallet } = await supabaseAdmin.from('wallets').select('balance').eq('user_id', userId).single();
+    if (!guestWallet || guestWallet.balance < room.stake) throw new Error("Insufficient balance to join this game");
+    await handleEntryFee(userId, room.stake, `JOIN-${room.id}`);
+  }
+
+  const initialBoard = getInitialBoard();
+  const { error: updateError } = await supabaseAdmin.from("ludo_rooms").update({
+    guest_id: userId,
+    status: "active",
+    board_state: initialBoard,
+    current_turn: room.host_id,
+  }).eq("id", room.id);
 
   if (updateError) throw updateError;
   return { room_id: room.id, room_code: room.code, stake: room.stake, status: "active", board_state: initialBoard };
 }
+
 
 export async function createBotRoom(userId: string, stakeValue: number) {
   const code = generateRoomCode();
@@ -258,17 +264,21 @@ export async function getRoom(roomId: string, userId: string) {
   };
 }
 
+
+
 export async function findQuickMatch(userId: string, stakeValue: number) {
   const stake = Number(stakeValue);
-  const { data: rooms } = await supabaseAdmin
-    .from("ludo_rooms")
-    .select("*")
-    .eq("status", "waiting")
-    .eq("stake", stake)
-    .neq("host_id", userId)
-    .limit(1);
 
-  if (rooms && rooms.length > 0) return await joinLudoRoom(userId, rooms[0].code);
+  const { data: rooms } = await supabaseAdmin.from("ludo_rooms").select("id, code, stake, status, host_id").eq("status", "waiting").eq("stake", stake).neq("host_id", userId).order("created_at", { ascending: true }).limit(1);
+
+  if (rooms && rooms.length > 0) {
+    try {
+      return await joinLudoRoom(userId, rooms[0].code);
+    } catch (e) {
+      console.error("Quick Match join failed:", e);
+    }
+  }
+
   return await createLudoRoom(userId, stake);
 }
 
@@ -397,7 +407,8 @@ export async function makeMove(roomId: string, userId: string | null, pieceId: s
   state.sixCount = nextSixCount;
 
   if (isWin) {
-    await handleGameOver(roomId, userId, room.stake);
+    const winnerId = userId || SYSTEM_BOT_ID;
+    await handleGameOver(roomId, winnerId, room.stake);
     return { status: "finished", board_state: state };
   }
 
@@ -415,7 +426,7 @@ export async function resignGame(roomId: string, userId: string) {
   const { data: room, error } = await supabaseAdmin.from('ludo_rooms').select('*').eq('id', roomId).single();
   if (error || !room || room.status !== 'active') throw new Error('Invalid room');
   
-  const winnerId = room.host_id === userId ? room.guest_id : room.host_id;
+  const winnerId = room.host_id === userId ? (room.guest_id || SYSTEM_BOT_ID) : room.host_id;
   await handleGameOver(roomId, winnerId, room.stake);
   return { winner_id: winnerId, message: 'Resigned' };
 }
@@ -428,6 +439,15 @@ async function getAndValidateActiveRoom(roomId: string, userId: string | null) {
   if (room.status !== "active") throw new Error("Game is not active");
   if (userId !== null && room.current_turn !== userId) throw new Error("Not your overall turn");
   return room;
+}
+
+export async function cancelLudoRoom(roomId: string, userId: string) {
+  const { data: room } = await supabaseAdmin.from('ludo_rooms').select('*').eq('id', roomId).single()
+  if (!room) throw new Error('Room not found')
+  if (room.host_id !== userId) throw new Error('Unauthorized')
+  if (room.status !== 'waiting') throw new Error('Cannot cancel active or finished game')
+
+  await supabaseAdmin.from('ludo_rooms').delete().eq('id', roomId)
 }
 
 async function handleEntryFee(userId: string, stake: number, ref: string) {

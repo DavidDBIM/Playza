@@ -44,3 +44,8 @@ export const getWaitingRooms = async () => {
   const { data } = await axiosInstance.get("/ludo/waiting");
   return data.data;
 };
+
+export const cancelRoom = async (roomId: string) => {
+  const { data } = await axiosInstance.post(`/ludo/room/${roomId}/cancel`);
+  return data;
+};

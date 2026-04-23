@@ -77,6 +77,17 @@ router.post('/resign', requireAuth, async (req: AuthRequest, res: Response) => {
   }
 })
 
+router.post('/cancel', requireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    const { roomId } = req.body
+    if (!roomId) throw new Error('Room ID is required')
+    await PoolService.cancelPoolRoom(roomId, req.user!.id)
+    res.json({ success: true, message: 'Room cancelled' })
+  } catch (error: any) {
+    res.status(400).json({ success: false, message: error.message })
+  }
+})
+
 router.post('/place-ball', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
     const { roomId, position } = req.body

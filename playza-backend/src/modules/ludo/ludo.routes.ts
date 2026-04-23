@@ -91,4 +91,13 @@ router.post('/room/:roomId/resign', requireAuth, async (req: AuthRequest, res: R
   }
 })
 
+router.post('/room/:roomId/cancel', requireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    await ludoService.cancelLudoRoom(req.params.roomId, req.user!.id)
+    res.json({ success: true, message: 'Room cancelled' })
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message })
+  }
+})
+
 export default router

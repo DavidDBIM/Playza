@@ -30,7 +30,7 @@ export const CompleteProfileModal = ({ onClose, onSuccess }: CompleteProfileModa
   };
 
   return (
-    <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/80 p-2 md:p-4">
+    <div className="fixed inset-0 z-60 flex items-center justify-center bg-slate-950/95 backdrop-blur-2xl p-2 md:p-4">
       <div className="relative w-full max-w-md glass-card rounded-xl border border-white/10 overflow-hidden">
 
         <button
