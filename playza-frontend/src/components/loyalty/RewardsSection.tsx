@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate, useLocation } from "react-router";
 import {
   MdArrowForward,
   MdCheckCircle,
@@ -20,6 +21,7 @@ interface RewardsSectionProps {
   totalPoints: number;
   spinsLeftToday: number;
   onPointsChanged: () => void; // refetch loyalty data after spin
+  autoOpenSpin?: boolean;
 }
 
 interface MerchProduct {
@@ -63,12 +65,26 @@ const QUALIFICATION_TYPES = [
   },
 ];
 
-export function RewardsSection({ totalPoints, spinsLeftToday, onPointsChanged }: RewardsSectionProps) {
-  const [showSpinModal, setShowSpinModal] = useState(false);
+export function RewardsSection({ totalPoints, spinsLeftToday, onPointsChanged, autoOpenSpin }: RewardsSectionProps) {
+  const [showSpinModal, setShowSpinModal] = useState(!!autoOpenSpin);
   const [showAmbassadorModal, setShowAmbassadorModal] = useState(false);
   const [redeemModal, setRedeemModal] = useState<MerchProduct | null>(null);
   const [localPoints, setLocalPoints] = useState(totalPoints);
   const [localSpins, setLocalSpins] = useState(spinsLeftToday);
+
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleCloseSpin = () => {
+    setShowSpinModal(false);
+    // Remove ?spin=true from URL
+    const searchParams = new URLSearchParams(location.search);
+    if (searchParams.get('spin')) {
+      searchParams.delete('spin');
+      const newSearch = searchParams.toString();
+      navigate(location.pathname + (newSearch ? `?${newSearch}` : ''), { replace: true });
+    }
+  };
 
   // Sync local state when parent props change (e.g. after background refetch), but not while modal is open
   if (!showSpinModal) {
@@ -207,7 +223,7 @@ export function RewardsSection({ totalPoints, spinsLeftToday, onPointsChanged }:
         </div>
 
         {/* ── AMBASSADOR CARD ── */}
-        <div className="relative overflow-hidden bg-gradient-to-br from-amber-500 via-orange-500 to-red-500 dark:from-amber-600 dark:via-orange-600 dark:to-red-600 border border-orange-400/50 rounded-2xl p-5 shadow-lg shadow-orange-500/30">
+        <div className="relative overflow-hidden bg-linear-to-br from-amber-500 via-orange-500 to-red-500 dark:from-amber-600 dark:via-orange-600 dark:to-red-600 border border-orange-400/50 rounded-2xl p-5 shadow-lg shadow-orange-500/30">
           {/* BG orbs */}
           <div className="absolute -right-8 -top-8 w-36 h-36 rounded-full bg-yellow-300/20 blur-xl" />
           <div className="absolute -left-4 -bottom-6 w-28 h-28 rounded-full bg-red-400/20 blur-xl" />
@@ -307,7 +323,7 @@ export function RewardsSection({ totalPoints, spinsLeftToday, onPointsChanged }:
       {/* ── SPIN WHEEL MODAL ── */}
       {showSpinModal && (
         <SpinWheelModal
-          onClose={() => setShowSpinModal(false)}
+          onClose={handleCloseSpin}
           onSpinComplete={(res) => {
             setLocalPoints(res.new_balance);
             setLocalSpins(res.spins_left_today);
@@ -336,7 +352,7 @@ export function RewardsSection({ totalPoints, spinsLeftToday, onPointsChanged }:
             {/* ── Fixed header ── */}
             <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-slate-100 dark:border-slate-800 shrink-0 bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-t-2xl z-10">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-sm shadow-orange-400/30">
+                <div className="w-9 h-9 rounded-xl bg-linear-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-sm shadow-orange-400/30">
                   <Crown className="w-4 h-4 text-white" />
                 </div>
                 <div>
@@ -352,7 +368,7 @@ export function RewardsSection({ totalPoints, spinsLeftToday, onPointsChanged }:
             {formSuccess ? (
               /* ── Success screen ── */
               <div className="flex flex-col items-center gap-4 px-6 py-12 flex-1 overflow-y-auto">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center text-3xl shadow-lg shadow-green-400/30">✅</div>
+                <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-emerald-400 to-green-500 flex items-center justify-center text-3xl shadow-lg shadow-green-400/30">✅</div>
                 <h4 className="font-black text-slate-900 dark:text-white text-xl text-center">Application Submitted!</h4>
                 <p className="text-slate-500 dark:text-slate-400 text-sm text-center max-w-xs">
                   Your ambassador application is now under review. We'll get back to you within 3–5 business days.
@@ -484,7 +500,7 @@ export function RewardsSection({ totalPoints, spinsLeftToday, onPointsChanged }:
                       className={`flex-1 py-3.5 rounded-xl font-black text-sm transition-all active:scale-95 ${
                         formSubmitting
                           ? "bg-amber-300 dark:bg-amber-800 text-amber-600 dark:text-amber-300 cursor-not-allowed"
-                          : "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white shadow-md shadow-orange-400/30"
+                          : "bg-linear-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white shadow-md shadow-orange-400/30"
                       }`}>
                       {formSubmitting ? "Submitting…" : "Submit Application 🚀"}
                     </button>

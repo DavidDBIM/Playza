@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, type ReactElement } from "react";
 import { useLoyaltyMe } from "@/hooks/loyalty/useLoyaltyMe";
 import { useAuth } from "@/context/auth";
-import { Link } from "react-router";
+import { Link, useLocation } from "react-router";
 import { Button } from "@/components/ui/button";
 import { LoyaltySkeleton } from "@/components/skeletons/LoyaltySkeleton";
 import {
@@ -180,6 +180,10 @@ export default function Loyalty() {
   const [activeCategory, setActiveCategory] = useState("onboarding");
   const [tierModal, setTierModal] = useState(false);
   const [countdown, setCountdown] = useState<string>('');
+  
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const autoOpenSpin = searchParams.get('spin') === 'true';
 
   const lastClaimedAt = loyaltyData?.last_claimed_at ?? null;
   const totalPoints = loyaltyData?.total_points ?? 0;
@@ -571,12 +575,13 @@ export default function Loyalty() {
         totalPoints={totalPoints}
         spinsLeftToday={spinsLeftToday}
         onPointsChanged={refetchLoyalty}
+        autoOpenSpin={autoOpenSpin}
       />
 
       {/* Tier Modal */}
       {tierModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/95 backdrop-blur-2xl"
           onClick={() => setTierModal(false)}
         >
           <div
