@@ -7,7 +7,8 @@ import {
   MdSearch,
   MdFilterList,
   MdOutlineClear,
-  MdRefresh
+  MdRefresh,
+  MdMilitaryTech
 } from 'react-icons/md';
 import { UserIdentityHero } from '../components/user/UserIdentityHero';
 import { UserAdvancedMetrics } from '../components/user/UserAdvancedMetrics';
@@ -15,6 +16,7 @@ import {
   CombatLog,
   FinancialFlow,
   DownlineNetwork,
+  LoyaltyLog,
 } from "../components/user/UserActivityTables";
 import {
   Select,
@@ -35,7 +37,7 @@ import type {
 const User: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [activeTab, setActiveTab] = useState<
-    "matches" | "transactions" | "referrals"
+    "matches" | "transactions" | "referrals" | "loyalty"
   >("matches");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
@@ -72,10 +74,10 @@ const User: React.FC = () => {
       referralCode: userDetails.referral_code,
       referrals: userDetails.total_referrals,
       pzaPoints: userDetails.pza_points?.total_points || 0,
-      totalGames: userDetails.pza_history?.length || 0,
+      totalGames: userDetails.game_history?.length || 0,
       totalWinnings:
-        userDetails.pza_history?.reduce(
-          (acc, match) => acc + (match.amount || 0),
+        userDetails.game_history?.reduce(
+          (acc, match) => acc + (match.winnings || 0),
           0,
         ) || 0,
     };
@@ -83,26 +85,34 @@ const User: React.FC = () => {
 
   const tabs = [
     { id: "matches", icon: MdHistory, label: "Game History" },
+    { id: "loyalty", icon: MdMilitaryTech, label: "Loyalty Events" },
     { id: "transactions", icon: MdReceiptLong, label: "Transactions" },
     { id: "referrals", icon: MdAccountTree, label: "Referrals" },
   ] as const;
 
-  // Filtered Data Logic (using live transactions/referrals from backend)
+  // Filtered Data Logic
   const filteredMatches = useMemo((): MatchRecord[] => {
-    if (!userDetails?.pza_history) return [];
-    return userDetails.pza_history
+    if (!userDetails?.game_history) return [];
+    return userDetails.game_history
       .filter((match) =>
-        match.event_type.toLowerCase().includes(searchQuery.toLowerCase()),
+        match.game_name.toLowerCase().includes(searchQuery.toLowerCase()),
       )
       .map((match) => ({
         id: match.id,
-        game: match.event_type,
-        score: String(match.details?.score || "0"),
-        position: "N/A",
-        winnings: match.amount || 0,
-        date: new Date(match.created_at).toLocaleDateString(),
+        game: match.game_name,
+        score: match.status.toUpperCase(),
+        position: match.id.slice(0, 8),
+        winnings: match.winnings || 0,
+        date: new Date(match.played_at).toLocaleDateString(),
         status: "COMPLETED",
       }));
+  }, [userDetails, searchQuery]);
+
+  const filteredLoyalty = useMemo(() => {
+    if (!userDetails?.pza_history) return [];
+    return userDetails.pza_history.filter((event) =>
+      event.event_type.toLowerCase().includes(searchQuery.toLowerCase()),
+    );
   }, [userDetails, searchQuery]);
 
   const filteredTransactions = useMemo((): TransactionRecord[] => {
@@ -113,20 +123,20 @@ const User: React.FC = () => {
           tx.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
           tx.type.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesStatus =
-          statusFilter === "All" || tx.status === statusFilter;
+          statusFilter === "All" || tx.status.toLowerCase() === statusFilter.toLowerCase();
         return matchesSearch && matchesStatus;
       })
       .map((tx) => ({
         id: tx.id,
         username: userDetails.username,
-        type: tx.type === "deposit" ? "Deposit" : "Withdrawal",
+        type: tx.type.charAt(0).toUpperCase() + tx.type.slice(1).replace("_", " "),
         amount: tx.amount,
-        method: tx.reference || "Manual",
+        method: tx.reference || "System",
         date: new Date(tx.created_at).toLocaleDateString(),
         status:
-          tx.status === "success"
+          tx.status.toLowerCase() === "success" || tx.status.toLowerCase() === "successful"
             ? "Successful"
-            : tx.status === "pending"
+            : tx.status.toLowerCase() === "pending"
               ? "Pending"
               : "Failed",
       }));
@@ -148,7 +158,7 @@ const User: React.FC = () => {
         username: ref.users?.username || "unknown",
         date: new Date(ref.created_at).toLocaleDateString(),
         reward: 0,
-        status: ref.status === "completed" ? "Qualified" : "Pending",
+        status: ref.status === "email_verified" ? "Qualified" : "Pending",
       }));
   }, [userDetails, searchQuery, statusFilter]);
 
@@ -301,7 +311,7 @@ const User: React.FC = () => {
                   {activeTab === "referrals" && (
                     <>
                       <SelectItem
-                        value="completed"
+                        value="email_verified"
                         className="font-black text-[10px] uppercase tracking-widest p-2"
                       >
                         Qualified
@@ -322,6 +332,7 @@ const User: React.FC = () => {
 
         <div className="min-h-100">
           {activeTab === "matches" && <CombatLog data={filteredMatches} />}
+          {activeTab === "loyalty" && <LoyaltyLog data={filteredLoyalty} />}
           {activeTab === "transactions" && (
             <FinancialFlow data={filteredTransactions} />
           )}
@@ -330,6 +341,7 @@ const User: React.FC = () => {
           )}
 
           {((activeTab === "matches" && filteredMatches.length === 0) ||
+            (activeTab === "loyalty" && filteredLoyalty.length === 0) ||
             (activeTab === "transactions" &&
               filteredTransactions.length === 0) ||
             (activeTab === "referrals" && filteredReferrals.length === 0)) && (

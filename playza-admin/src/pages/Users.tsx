@@ -3,18 +3,20 @@ import {
   MdPeople,
   MdRefresh
 } from 'react-icons/md';
-import { userStats } from '../data/usersData';
 import { UsersStats } from '../components/users/UsersStats';
 import { UsersToolbar } from '../components/users/UsersToolbar';
 import { UsersTable } from '../components/users/UsersTable';
-import { useAdminUsers } from '../hooks/use-admin';
+import { useAdminUsers, useDashboardMetrics } from '../hooks/use-admin';
 import type { UserRecord } from '../data/usersData';
 import type { UserAdmin } from '../types/admin';
+
 const Users: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All Status');
   const [joinedFilter, setJoinedFilter] = useState('All Time');
   const [page, setPage] = useState(1);
+
+  const { data: metrics } = useDashboardMetrics();
 
   // Map UI status filter to API status values
   const apiStatus = useMemo(() => {
@@ -45,7 +47,7 @@ const Users: React.FC = () => {
       status: u.is_active ? 'Active' : 'Suspended',
       joinedDate: new Date(u.created_at).toLocaleDateString(),
       joinedTimestamp: new Date(u.created_at).getTime(),
-      lastActive: 'Just now', // Not available in current endpoint
+      lastActive: 'Just now',
       avatar: u.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200',
       kycStatus: u.is_email_verified ? 'Verified' : 'Pending',
       pzaPoints: u.pza_points?.total_points || 0,
@@ -56,6 +58,16 @@ const Users: React.FC = () => {
     }));
   }, [data]);
 
+  const stats = useMemo(() => {
+    if (!metrics) return [];
+    return [
+      { label: 'Total Players', value: metrics.total_users.toLocaleString(), change: '+12%', trend: 'up' as const },
+      { label: 'Active Today', value: metrics.active_users.toLocaleString(), change: '+5%', trend: 'up' as const },
+      { label: 'New This Week', value: metrics.new_users_week.toLocaleString(), change: '+18%', trend: 'up' as const },
+      { label: 'KYC Verified', value: metrics.verified_users.toLocaleString(), change: '+3%', trend: 'up' as const },
+    ];
+  }, [metrics]);
+
   const clearFilters = () => {
     setSearchQuery('');
     setStatusFilter('All Status');
@@ -65,7 +77,6 @@ const Users: React.FC = () => {
 
   return (
     <main className="p-4 space-y-4">
-      {/* Header Container */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md shadow-indigo-400/30">
@@ -86,12 +97,9 @@ const Users: React.FC = () => {
         </button>
       </div>
 
-      {/* Stats Cards */}
-      <UsersStats stats={userStats} />
+      <UsersStats stats={stats} />
 
-      {/* Table Section */}
       <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden relative">
-        {/* Toolbar */}
         <div className="relative z-10 border-b border-border">
           <UsersToolbar 
             searchQuery={searchQuery}
@@ -103,7 +111,6 @@ const Users: React.FC = () => {
             clearFilters={clearFilters}
           />
         </div>
-        {/* Table */}
         <div className="relative z-10">
           {isError ? (
             <div className="py-20 text-center text-rose-500">
@@ -117,7 +124,6 @@ const Users: React.FC = () => {
           )}
         </div>
 
-        {/* Info Footer */}
         <div className="relative z-10 px-4 py-3 bg-muted/50 border-t border-border flex items-center justify-between">
           <p className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">
             Database Sync: <span className={isError ? 'text-rose-500' : 'text-emerald-500'}>

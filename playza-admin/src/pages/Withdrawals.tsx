@@ -259,7 +259,7 @@ const Withdrawals: React.FC = () => {
                       )}
                       <Button
                         variant="ghost"
-                        onClick={() => navigate(`/withdrawals/${wd.id}`)}
+                        onClick={() => navigate(`/transactions/${wd.id}`)}
                         className="text-muted-foreground hover:text-primary h-8 w-8 p-0 rounded-lg"
                       >
                         <MdVisibility className="text-lg" />

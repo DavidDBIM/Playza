@@ -2,7 +2,6 @@ import React from 'react';
 import { useParams, useNavigate } from 'react-router';
 import {
   MdArrowBack,
-  MdFlag,
   MdRefresh,
   MdVerified,
   MdAccountBalanceWallet,
@@ -16,20 +15,51 @@ import {
   MdDevices,
 } from "react-icons/md";
 import { Button } from "../components/ui/button";
-import { transactionHistory, usersData } from "../data/usersData";
+import { useAdminTransactionDetails } from "../hooks/use-admin";
+import { formatNaira } from "../lib/utils";
 
 const TransactionDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  // In real app, fetch transaction by id, and then fetch user relation. Using mocked data.
-  const txn =
-    transactionHistory.find((t) => t.id === id) || transactionHistory[0];
-  const user = usersData[0]; // mock relating it to a user
+  const { data: txn, isLoading, isError, refetch } = useAdminTransactionDetails(id || "");
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+        <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+        <span className="text-[10px] font-black uppercase tracking-widest text-primary">
+          Decrypting Ledger...
+        </span>
+      </div>
+    );
+  }
+
+  if (isError || !txn) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] p-10 text-center">
+        <div className="p-8 rounded-[2.5rem] bg-rose-500/5 border border-rose-500/20 max-w-md">
+          <h2 className="text-rose-500 font-headline font-black text-2xl uppercase tracking-widest">
+            Transaction Void
+          </h2>
+          <p className="text-muted-foreground/60 text-xs mt-4">
+            The requested transaction hash does not exist in the regional ledger.
+          </p>
+          <Button
+            onClick={() => navigate("/transactions")}
+            variant="outline"
+            className="mt-8 border-rose-500/30 text-rose-500 h-14 rounded-2xl w-full"
+          >
+            Return to Ledger
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   const isPositive =
-    txn.type === "Deposit" || txn.type === "Winnings" || txn.type === "Reward";
-  const processFee = txn.type === "Withdrawal" ? 50 : 0;
+    txn.type === "deposit" || txn.type === "winnings" || txn.type === "reward";
+  const processFee = txn.type === "withdrawal" ? 50 : 0;
   const netAmount = txn.amount - processFee;
 
   return (
@@ -47,16 +77,17 @@ const TransactionDetails: React.FC = () => {
 
         <div className="flex items-center gap-3 w-full sm:w-auto">
           <Button
+            onClick={() => refetch()}
+            variant="outline"
+            className="h-12 w-12 p-0 rounded-2xl border-border bg-card hover:bg-muted text-foreground transition-all shadow-sm flex items-center justify-center"
+          >
+            <MdRefresh className={`text-xl ${isLoading ? 'animate-spin' : ''}`} />
+          </Button>
+          <Button
             variant="outline"
             className="flex-1 sm:flex-none h-12 px-6 rounded-2xl font-black uppercase tracking-widest text-[10px] border-border bg-card hover:bg-muted text-foreground gap-2 transition-all shadow-sm"
           >
             <MdDownload className="text-lg" /> Receipt
-          </Button>
-          <Button
-            variant="outline"
-            className="flex-1 sm:flex-none h-12 px-6 rounded-2xl font-black uppercase tracking-widest text-[10px] border-rose-500/20 hover:bg-rose-500/10 text-rose-500 gap-2 transition-all shadow-sm"
-          >
-            <MdFlag className="text-lg" /> Flag Txn
           </Button>
         </div>
       </div>
@@ -68,31 +99,31 @@ const TransactionDetails: React.FC = () => {
             <div className="flex items-center gap-2">
               <span
                 className={`px-2.5 py-1 text-[10px] font-black uppercase tracking-wider rounded-lg flex items-center gap-1.5 ${
-                  txn.status === "Successful"
+                  txn.status.toLowerCase() === "success" || txn.status.toLowerCase() === "successful"
                     ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600"
-                    : txn.status === "Pending"
+                    : txn.status.toLowerCase() === "pending"
                       ? "bg-amber-100 dark:bg-amber-900/30 text-amber-600"
                       : "bg-rose-100 dark:bg-rose-900/30 text-rose-600"
                 }`}
               >
                 <span
-                  className={`w-1.5 h-1.5 rounded-full ${txn.status === "Successful" ? "bg-emerald-500" : txn.status === "Pending" ? "bg-amber-500" : "bg-rose-500"}`}
+                  className={`w-1.5 h-1.5 rounded-full ${txn.status.toLowerCase() === "success" || txn.status.toLowerCase() === "successful" ? "bg-emerald-500" : txn.status.toLowerCase() === "pending" ? "bg-amber-500" : "bg-rose-500"}`}
                 ></span>
-                {txn.status}
+                {txn.status.toUpperCase()}
               </span>
               <span className="px-2.5 py-1 bg-muted text-muted-foreground rounded-lg text-[10px] font-black uppercase tracking-wider">
-                {txn.type}
+                {txn.type.toUpperCase()}
               </span>
             </div>
 
             <div>
               <h1 className="text-4xl md:text-5xl font-black text-foreground tracking-tight font-number">
                 <span className={isPositive ? "text-primary" : ""}>
-                  {isPositive ? "+" : "-"}₦{netAmount.toLocaleString()}
+                  {isPositive ? "+" : "-"}{formatNaira(netAmount)}
                 </span>
               </h1>
               <p className="text-muted-foreground font-bold tracking-wider uppercase text-[10px] mt-1 flex items-center gap-2">
-                Processed via {txn.method}{" "}
+                Processed via {txn.reference || "Internal System"}{" "}
                 <MdVerified className="text-emerald-500 text-sm" />
               </p>
             </div>
@@ -104,10 +135,15 @@ const TransactionDetails: React.FC = () => {
                 Transaction ID
               </p>
               <div className="flex items-center gap-2">
-                <p className="font-mono text-sm font-bold text-foreground truncate">
+                <p className="font-mono text-sm font-bold text-foreground truncate max-w-[150px]">
                   #{txn.id}
                 </p>
-                <button className="text-primary hover:text-primary/70 transition-colors">
+                <button 
+                  onClick={() => {
+                    navigator.clipboard.writeText(txn.id);
+                  }}
+                  className="text-primary hover:text-primary/70 transition-colors"
+                >
                   <MdContentCopy />
                 </button>
               </div>
@@ -116,14 +152,14 @@ const TransactionDetails: React.FC = () => {
               <p className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">
                 Timestamp
               </p>
-              <p className="text-sm font-bold text-foreground">{txn.date}</p>
+              <p className="text-sm font-bold text-foreground">{new Date(txn.created_at).toLocaleString()}</p>
             </div>
             <div className="space-y-1">
               <p className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">
-                Gateway Ref
+                Reference
               </p>
-              <p className="font-mono text-sm font-bold text-muted-foreground">
-                PSTK-992-ALPHA
+              <p className="font-mono text-sm font-bold text-muted-foreground truncate max-w-[150px]">
+                {txn.reference || "N/A"}
               </p>
             </div>
             <div className="space-y-1">
@@ -131,7 +167,7 @@ const TransactionDetails: React.FC = () => {
                 Network Fee
               </p>
               <p className="text-sm font-bold text-foreground font-number">
-                ₦{processFee.toLocaleString()}
+                {formatNaira(processFee)}
               </p>
             </div>
           </div>
@@ -156,7 +192,7 @@ const TransactionDetails: React.FC = () => {
                     User Wallet
                   </p>
                   <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1 font-number">
-                    Bal: ₦128,400.00
+                    @{txn.users?.username || "user"}
                   </p>
                 </div>
               </div>
@@ -164,8 +200,7 @@ const TransactionDetails: React.FC = () => {
               <div className="flex-1 w-full flex items-center justify-center relative py-4 md:py-0">
                 <div className="w-full h-px bg-border absolute"></div>
                 <div className="bg-card border border-border px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest z-10 shadow-sm whitespace-nowrap text-primary">
-                  {isPositive ? "← Credited" : "Debited →"} ₦
-                  {txn.amount.toLocaleString()}
+                  {isPositive ? "← Credited" : "Debited →"} {formatNaira(txn.amount)}
                 </div>
               </div>
 
@@ -175,10 +210,10 @@ const TransactionDetails: React.FC = () => {
                 </div>
                 <div>
                   <p className="text-xs font-black uppercase tracking-wider text-foreground">
-                    {txn.method}
+                    {txn.reference?.startsWith('PLZ-') ? 'Playza Engine' : 'Payment Gateway'}
                   </p>
                   <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">
-                    Processor
+                    Settlement Node
                   </p>
                 </div>
               </div>
@@ -190,15 +225,15 @@ const TransactionDetails: React.FC = () => {
                   Gross Amount
                 </span>
                 <span className="text-foreground font-bold font-number">
-                  ₦{txn.amount.toLocaleString()}
+                  {formatNaira(txn.amount)}
                 </span>
               </div>
               <div className="flex justify-between items-center text-sm">
                 <span className="text-muted-foreground font-medium">
-                  Processor Fee
+                  Network Fee
                 </span>
                 <span className="text-rose-500 font-bold font-number">
-                  - ₦{processFee.toLocaleString()}
+                  - {formatNaira(processFee)}
                 </span>
               </div>
               <div className="h-px w-full bg-border my-1"></div>
@@ -207,7 +242,7 @@ const TransactionDetails: React.FC = () => {
                   Net Settled
                 </span>
                 <span className="text-primary text-xl font-black font-number">
-                  ₦{netAmount.toLocaleString()}
+                  {formatNaira(netAmount)}
                 </span>
               </div>
             </div>
@@ -218,21 +253,21 @@ const TransactionDetails: React.FC = () => {
             {[
               {
                 icon: MdLockOutline,
-                label: "Risk Logic",
-                value: "Secure (0.01)",
+                label: "Security Logic",
+                value: "Hash Valid",
                 alt: true,
               },
               {
                 icon: MdLanguage,
-                label: "IP Address",
-                value: "105.112.x.x",
+                label: "Region",
+                value: "NG_LAGOS",
                 mono: true,
               },
-              { icon: MdDevices, label: "Device/OS", value: "iOS 17 Mobile" },
+              { icon: MdDevices, label: "Platform", value: "Web Engine" },
               {
                 icon: MdOutlineGavel,
                 label: "Compliance",
-                value: "KYC Passed",
+                value: "Audited",
               },
             ].map((item, i) => (
               <div
@@ -258,43 +293,21 @@ const TransactionDetails: React.FC = () => {
           {/* User Profile Hook */}
           <div className="bg-card border border-border rounded-2xl shadow-sm p-6 flex flex-col">
             <h3 className="text-[10px] font-black uppercase tracking-wider text-muted-foreground mb-4">
-              Associated User
+              Identity Profile
             </h3>
             <div
               className="flex items-center gap-3 group cursor-pointer"
-              onClick={() => navigate(`/users/${user.id}`)}
+              onClick={() => navigate(`/users/${txn.user_id}`)}
             >
-              <div className="w-12 h-12 rounded-xl overflow-hidden border border-border group-hover:border-primary transition-colors">
-                <img
-                  src={user.avatar}
-                  alt="User Avatar"
-                  className="w-full h-full object-cover"
-                />
+              <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center border border-border group-hover:border-primary transition-colors">
+                 <span className="text-xl">👤</span>
               </div>
               <div>
                 <p className="text-sm font-black text-foreground uppercase tracking-tight group-hover:text-primary transition-colors">
-                  {user.fullName}
+                  {txn.users?.username}
                 </p>
                 <p className="text-[10px] text-muted-foreground font-bold tracking-widest mt-1">
-                  @{user.username}
-                </p>
-              </div>
-            </div>
-            <div className="mt-6 pt-6 border-t border-border grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-[10px] text-muted-foreground font-black uppercase tracking-wider mb-1">
-                  Wallet
-                </p>
-                <p className="text-sm font-black text-foreground font-number">
-                  ₦{user.walletBalance.toLocaleString()}
-                </p>
-              </div>
-              <div>
-                <p className="text-[10px] text-muted-foreground font-black uppercase tracking-wider mb-1">
-                  Status
-                </p>
-                <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 rounded-lg w-max">
-                  Active
+                  {txn.users?.email}
                 </p>
               </div>
             </div>
@@ -302,14 +315,15 @@ const TransactionDetails: React.FC = () => {
 
           {/* Admin Tools */}
           <div className="bg-card border border-border rounded-2xl shadow-sm p-6 space-y-3">
+             <p className="text-[10px] font-black uppercase text-muted-foreground mb-2">Administrator Tools</p>
             <Button className="w-full h-10 bg-primary text-white hover:bg-primary/90 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2">
-              <MdRefresh className="text-lg" /> Initiate Refund
+              <MdRefresh className="text-lg" /> Sync Ledger
             </Button>
             <Button
               variant="outline"
               className="w-full h-10 bg-transparent text-rose-500 hover:bg-rose-500/10 border-rose-500/20 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2"
             >
-              Reverse Txn (Force)
+              Flag Irregularity
             </Button>
           </div>
         </aside>
