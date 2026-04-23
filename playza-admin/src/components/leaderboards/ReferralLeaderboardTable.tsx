@@ -1,6 +1,5 @@
 import React from 'react';
-import { 
-  MdEmojiEvents, 
+import {  
   MdPersonOutline, 
   MdMonetizationOn, 
   MdGroupAdd
