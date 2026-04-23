@@ -8,6 +8,8 @@ export async function getDashboardMetrics() {
     { count: pendingWithdrawals },
     { count: totalReferrals },
     { count: verifiedReferrals },
+    { count: newUsersWeek },
+    { count: verifiedUsers },
   ] = await Promise.all([
     supabaseAdmin.from('users').select('*', { count: 'exact', head: true }),
     supabaseAdmin.from('users').select('*', { count: 'exact', head: true }).eq('is_active', true).eq('is_email_verified', true),
@@ -15,6 +17,8 @@ export async function getDashboardMetrics() {
     supabaseAdmin.from('transactions').select('*', { count: 'exact', head: true }).eq('type', 'withdrawal').eq('status', 'pending'),
     supabaseAdmin.from('referrals').select('*', { count: 'exact', head: true }),
     supabaseAdmin.from('referrals').select('*', { count: 'exact', head: true }).neq('status', 'pending'),
+    supabaseAdmin.from('users').select('*', { count: 'exact', head: true }).gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()),
+    supabaseAdmin.from('users').select('*', { count: 'exact', head: true }).eq('is_email_verified', true),
   ])
 
   const totalDeposited = walletTotals?.reduce((sum, w) => sum + Number(w.total_deposited), 0) ?? 0
@@ -34,6 +38,8 @@ export async function getDashboardMetrics() {
     referral_conversion_rate: totalReferrals
       ? ((verifiedReferrals ?? 0) / totalReferrals * 100).toFixed(1) + '%'
       : '0%',
+    new_users_week: newUsersWeek ?? 0,
+    verified_users: verifiedUsers ?? 0,
   }
 }
 
@@ -99,9 +105,16 @@ export async function getAdminSingleUser(userId: string) {
 
   const { data: pzaEvents } = await supabaseAdmin
     .from('pza_events')
-    .select('event_type, points_awarded, created_at')
+    .select('id, event_type, points_awarded, created_at, details')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
+    .limit(20)
+
+  const { data: gameHistory } = await supabaseAdmin
+    .from('game_history')
+    .select('id, game_name, status, winnings, played_at')
+    .eq('user_id', userId)
+    .order('played_at', { ascending: false })
     .limit(20)
 
   const { data: transactions } = await supabaseAdmin
@@ -116,6 +129,7 @@ export async function getAdminSingleUser(userId: string) {
     referrals: referrals ?? [],
     total_referrals: referralCount ?? 0,
     pza_history: pzaEvents ?? [],
+    game_history: gameHistory ?? [],
     transactions: transactions ?? [],
   }
 }
@@ -143,7 +157,7 @@ export async function getAllTransactionsAdmin(page = 1, limit = 20, type = '', s
   let query = supabaseAdmin
     .from('transactions')
     .select(`
-      id, type, amount, status, reference, created_at,
+      id, user_id, type, amount, status, reference, created_at,
       users(username, email)
     `, { count: 'exact' })
     .order('created_at', { ascending: false })
@@ -163,4 +177,18 @@ export async function getAllTransactionsAdmin(page = 1, limit = 20, type = '', s
     limit,
     total_pages: Math.ceil((count ?? 0) / limit),
   }
+}
+
+export async function getTransactionByIdAdmin(id: string) {
+  const { data, error } = await supabaseAdmin
+    .from('transactions')
+    .select(`
+      id, user_id, type, amount, status, reference, created_at,
+      users(username, email)
+    `)
+    .eq('id', id)
+    .single()
+
+  if (error) throw error
+  return data
 }

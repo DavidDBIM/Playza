@@ -7,7 +7,14 @@ import {
   getAdminSingleUser,
   updateUserStatus,
   getAllTransactionsAdmin,
+  getTransactionByIdAdmin,
 } from './admin.service'
+import {
+  getLoyaltyLeaderboard,
+  getReferralLeaderboard,
+  getAllGamesLeaderboard,
+  LeaderboardPeriod,
+} from '../leaderboard/leaderboard.service'
 import {
   getAllPayoutRequests,
   reviewPayoutRequest,
@@ -67,6 +74,15 @@ router.get('/transactions', requireAuth, async (req: AuthRequest, res) => {
     const type = (req.query.type as string) || ''
     const status = (req.query.status as string) || ''
     const data = await getAllTransactionsAdmin(page, limit, type, status)
+    res.json({ success: true, data })
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message })
+  }
+})
+
+router.get('/transactions/:id', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const data = await getTransactionByIdAdmin(req.params.id)
     res.json({ success: true, data })
   } catch (err: any) {
     res.status(400).json({ success: false, message: err.message })
@@ -200,6 +216,43 @@ router.patch('/referral-payouts/:id/review', requireAuth, async (req: AuthReques
     }
     const result = await reviewPayoutRequest(req.params.id, action, admin_note, req.user!.id)
     res.json({ success: true, data: result })
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message })
+  }
+})
+
+// ────────────────────────────────────────────────────────────
+//  LEADERBOARDS
+// ────────────────────────────────────────────────────────────
+
+router.get('/leaderboards/loyalty', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const period = (req.query.period as LeaderboardPeriod) || 'all'
+    const limit = parseInt(req.query.limit as string) || 50
+    const data = await getLoyaltyLeaderboard(period, limit)
+    res.json({ success: true, data })
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message })
+  }
+})
+
+router.get('/leaderboards/referral', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const period = (req.query.period as LeaderboardPeriod) || 'all'
+    const limit = parseInt(req.query.limit as string) || 50
+    const data = await getReferralLeaderboard(period, limit)
+    res.json({ success: true, data })
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message })
+  }
+})
+
+router.get('/leaderboards/games', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const period = (req.query.period as LeaderboardPeriod) || 'all'
+    const limit = parseInt(req.query.limit as string) || 50
+    const data = await getAllGamesLeaderboard(period, limit)
+    res.json({ success: true, data })
   } catch (err: any) {
     res.status(400).json({ success: false, message: err.message })
   }
