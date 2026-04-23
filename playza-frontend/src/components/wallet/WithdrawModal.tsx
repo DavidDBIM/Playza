@@ -33,7 +33,7 @@ const WithdrawModal = ({ onClose }: WithdrawModalProps) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 dark:bg-background/80 px-2 py-2 md:py-4 md:p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/95 backdrop-blur-2xl px-2 py-2 md:py-4 md:p-4">
       <div className="relative w-full max-w-md bg-white dark:bg-slate-900 glass-card rounded-xl border border-slate-200 dark:border-yellow-500/20 overflow-hidden">
 
         <button 

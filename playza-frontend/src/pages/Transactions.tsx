@@ -1,98 +1,88 @@
 import { Loader2 } from "lucide-react";
 import { MdFileDownload, MdSearch, MdFilterList } from "react-icons/md";
 import TransactionItem from "@/components/transactions/TransactionItem";
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useMemo } from "react";
 import TransactionDetailModal from "@/components/transactions/TransactionDetailModal";
 import type { TransactionUI } from "@/types/types";
-import { transactionsData } from "@/data/transactions";
+import { useTransactions } from "@/hooks/wallet/useWallet";
+import { format } from "date-fns";
 
-const ITEMS_PER_PAGE = 15;
+const ITEMS_PER_PAGE = 20;
 
 const Transactions = () => {
   const [selectedTxn, setSelectedTxn] = useState<TransactionUI | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
-  const [itemsToShow, setItemsToShow] = useState(ITEMS_PER_PAGE);
-  const [isLoading, setIsLoading] = useState(false);
+  const [page, setPage] = useState(1);
   
-  const observerBottom = useRef(null);
-  const observerTop = useRef(null);
+  const { data, isLoading, isPlaceholderData } = useTransactions(page, ITEMS_PER_PAGE);
 
   const handleOpen = (txn: TransactionUI) => {
     setSelectedTxn(txn);
     setIsModalOpen(true);
   };
 
+  const totalItems = data?.total || 0;
+  const totalPages = data?.total_pages || 1;
+
+  const uiTransactions: TransactionUI[] = useMemo(() => {
+    const transactions = data?.transactions || [];
+    return transactions.map((t) => {
+      const isPositive = ["deposit", "winnings", "refund", "win"].includes(t.type);
+
+      const typeLabelMap: Record<string, string> = {
+        deposit: "Deposit",
+        withdrawal: "Withdrawal",
+        game_entry: "Game Stake",
+        winnings: "Match Prize",
+        refund: "Stake Refund",
+        bet: "Game Entry",
+      };
+
+      const statusLabelMap: Record<string, string> = {
+        successful: "Completed",
+        pending: "Pending",
+        failed: "Failed",
+        cancelled: "Cancelled",
+      };
+
+      return {
+        id: `#${t.id.slice(-5).toUpperCase()}`,
+        type: typeLabelMap[t.type] || t.type.charAt(0).toUpperCase() + t.type.slice(1),
+        amount: `${isPositive ? "+" : "-"}ZA${t.amount.toLocaleString()}`,
+        status: statusLabelMap[t.status] || t.status.charAt(0).toUpperCase() + t.status.slice(1),
+        reference: t.reference,
+        date: format(new Date(t.created_at), "MMM dd, yyyy · HH:mm"),
+        // Extra field for filtering
+        typeKey: typeLabelMap[t.type] || t.type
+      };
+    });
+  }, [data?.transactions]);
+
   const filteredTransactions = useMemo(() => {
-    let filtered = transactionsData;
+    let filtered = uiTransactions;
     if (activeTab !== "All") {
-      filtered = filtered.filter(txn => txn.typeKey === activeTab);
+      // Map tab names to type labels
+      const tabToType: Record<string, string> = {
+        "Deposits": "Deposit",
+        "Withdrawals": "Withdrawal",
+        "Entries": "Game Stake",
+        "Wins": "Match Prize"
+      };
+      filtered = filtered.filter(txn => txn.type === tabToType[activeTab] || txn.type === activeTab);
     }
     if (searchQuery) {
-      filtered = filtered.filter(txn => txn.id.toLowerCase().includes(searchQuery.toLowerCase()));
+      filtered = filtered.filter(txn => 
+        txn.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        txn.reference?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
     }
     return filtered;
-  }, [activeTab, searchQuery]);
-
-  const currentItems = useMemo(() => {
-    return filteredTransactions.slice(0, itemsToShow);
-  }, [filteredTransactions, itemsToShow]);
-
-  const hasMore = itemsToShow < filteredTransactions.length;
-
-  const loadMore = () => {
-    if (isLoading || !hasMore) return;
-    setIsLoading(true);
-    setTimeout(() => {
-      setItemsToShow(prev => prev + ITEMS_PER_PAGE);
-      setIsLoading(false);
-    }, 800);
-  };
-
-
-
-  // Bottom Observer (Load More)
-  useEffect(() => {
-    const target = observerBottom.current;
-    if (!target) return;
-
-    const observer = new IntersectionObserver(
-      entries => {
-        if (entries[0].isIntersecting && hasMore && !isLoading) {
-          loadMore();
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    observer.observe(target);
-    return () => observer.disconnect();
-  }, [hasMore, isLoading]);
-
-  // Top Observer (Reduce List)
-  useEffect(() => {
-    const target = observerTop.current;
-    if (!target) return;
-
-    const observer = new IntersectionObserver(
-      entries => {
-        if (entries[0].isIntersecting && itemsToShow > ITEMS_PER_PAGE) {
-          setItemsToShow(ITEMS_PER_PAGE);
-        }
-      },
-      { threshold: 1.0 }
-    );
-
-    observer.observe(target);
-    return () => observer.disconnect();
-  }, [itemsToShow]);
+  }, [uiTransactions, activeTab, searchQuery]);
 
   return (
     <main className="flex-1 mx-auto w-full overflow-x-hidden relative">
-      {/* Top Observer Target */}
-      <div ref={observerTop} className="h-1 w-full absolute top-0 bg-transparent" />
-
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-6 mb-10 mt-4">
         <div className="space-y-2">
           <h1 className="text-4xl md:text-5xl font-black tracking-tighter text-slate-900 dark:text-slate-100">
@@ -116,7 +106,7 @@ const Transactions = () => {
                 key={filter}
                 onClick={() => {
                   setActiveTab(filter);
-                  setItemsToShow(ITEMS_PER_PAGE);
+                  setPage(1);
                   window.scrollTo({ top: 0, behavior: "smooth" });
                 }}
                 className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all border shrink-0 ${
@@ -147,8 +137,8 @@ const Transactions = () => {
         </div>
       </div>
 
-      <div className="glass-card rounded-2xl overflow-hidden mb-10 border border-white/5 shadow-2xl">
-        <div className="bg-white/5 px-2 py-2 md:py-4 border-b border-white/5 flex items-center justify-between">
+      <div className="glass-card rounded-2xl overflow-hidden mb-10 border border-white/5 shadow-2xl min-h-[400px]">
+        <div className="bg-white/5 px-4 py-4 border-b border-white/5 flex items-center justify-between">
           <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
             Transaction Details
           </span>
@@ -156,39 +146,56 @@ const Transactions = () => {
             Amount & Status
           </span>
         </div>
+        
         <div className="flex flex-col">
-          {currentItems.map((txn) => (
-            <TransactionItem
-              key={txn.id}
-              {...txn}
-              onClick={() => handleOpen(txn)}
-            />
-          ))}
-
-          {/* Bottom Observer Target */}
-          <div ref={observerBottom} className="h-20 w-full" />
-
-          {isLoading && (
-            <div className="flex flex-col items-center justify-center p-2 md:p-8 text-slate-500 gap-2 md:gap-3">
-              <Loader2 className="animate-spin text-primary" size={32} />
-              <p className="text-xs font-bold uppercase tracking-widest animate-pulse">
-                Loading more transactions...
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center py-20 text-slate-500 gap-3">
+              <Loader2 className="animate-spin text-primary" size={40} />
+              <p className="text-xs font-black uppercase tracking-widest animate-pulse">
+                Synchronizing Ledger...
               </p>
             </div>
-          )}
-
-          {!hasMore && currentItems.length > 0 && (
-            <div className="p-2 md:p-8 text-center border-t border-white/5 bg-white/5">
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-[0.2em]">
-                ✨ No more transactions to show
+          ) : filteredTransactions.length > 0 ? (
+            <>
+              {filteredTransactions.map((txn) => (
+                <TransactionItem
+                  key={txn.id}
+                  {...txn}
+                  onClick={() => handleOpen(txn)}
+                />
+              ))}
+              
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between px-6 py-4 bg-white/2 border-t border-white/5">
+                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                    Showing Page {page} of {totalPages} ({totalItems.toLocaleString()} total)
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      disabled={page === 1}
+                      onClick={() => setPage(p => p - 1)}
+                      className="px-4 py-2 rounded-lg bg-white/5 text-xs font-bold text-slate-300 hover:bg-white/10 disabled:opacity-30 transition-all"
+                    >
+                      Previous
+                    </button>
+                    <button
+                      disabled={page === totalPages || isPlaceholderData}
+                      onClick={() => setPage(p => p + 1)}
+                      className="px-4 py-2 rounded-lg bg-primary text-background-dark text-xs font-black hover:brightness-110 disabled:opacity-30 transition-all"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="py-20 text-center">
+              <p className="text-slate-500 font-bold uppercase tracking-widest text-sm">
+                No Transactions Found
               </p>
-            </div>
-          )}
-
-          {currentItems.length === 0 && (
-            <div className="p-2 md:p-20 text-center">
-              <p className="text-xs md:text-base text-slate-500 font-bold">
-                No transactions found for this category.
+              <p className="text-slate-600 text-[10px] font-medium mt-1">
+                Try adjusting your filters or search query.
               </p>
             </div>
           )}
@@ -205,6 +212,3 @@ const Transactions = () => {
 };
 
 export default Transactions;
-
-
-

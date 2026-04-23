@@ -35,7 +35,7 @@ const DepositModal = ({ onClose }: DepositModalProps) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 px-2 py-2 md:py-4 md:p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/95 backdrop-blur-2xl px-2 py-2 md:py-4 md:p-4">
       <div className="relative w-full max-w-md glass-card rounded-xl border border-primary/20 overflow-hidden">
 
         <button 
