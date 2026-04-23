@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useCallback, useState } from 'react'
 import type { Ball, Vector2, GameState, ShotInput } from './game/pool/types'
 import { PoolPhysics, TABLE_CONFIG, predictTrajectory, POCKET_POSITIONS } from './game/pool/physics'
+import { loadPoolAssets, type PoolAssets } from './game/pool/assets'
 
 interface PoolBoardProps {
   gameState: GameState
@@ -39,13 +40,15 @@ function drawBall(
   ballNumber: number,
   scale: number,
   alpha = 1,
-  overrideR?: number          // for pocket shrink animation
+  overrideR?: number,         // for pocket shrink animation
+  rotation?: Vector2,
 ) {
   const rr    = overrideR ?? r
   const entry = BALL_COLORS[ballNumber] ?? BALL_COLORS[1]
   const isStripe = ballNumber >= 9
   const isCue    = ballNumber === 0
   const { r: cr, g: cg, b: cb } = entry
+  const rot = rotation ? (rotation.x * 0.45 + rotation.y * 0.25) : 0
 
   ctx.save()
   if (alpha < 1) ctx.globalAlpha = alpha
@@ -70,6 +73,8 @@ function drawBall(
   ctx.beginPath()
   ctx.arc(0, 0, rr, 0, Math.PI * 2)
   ctx.clip()
+
+  // Keep lighting fixed; only rotate surface markings later (stripe + number).
 
   // ── 1. Diffuse base ───────────────────────────────────────────────────────
   const diffG = ctx.createRadialGradient(
@@ -98,6 +103,9 @@ function drawBall(
   ctx.fillRect(-rr, -rr, rr * 2, rr * 2)
 
   // ── 2. Stripe band (balls 9-15) ───────────────────────────────────────────
+  ctx.save()
+  if (rot) ctx.rotate(rot)
+
   if (isStripe) {
     // Lit-side stripe (upper half)
     const stripeTop = ctx.createLinearGradient(0, -rr, 0, 0)
@@ -143,6 +151,8 @@ function drawBall(
     ctx.fillText(String(ballNumber), 0, fontSize * 0.05)
     ctx.restore()
   }
+
+  ctx.restore()
 
   // ── 4. Soft diffuse highlight (wide glow) ────────────────────────────────
   const softHi = ctx.createRadialGradient(
@@ -191,7 +201,7 @@ function drawBall(
 }
 
 // ── Table ────────────────────────────────────────────────────────────────────
-function drawTable(ctx: CanvasRenderingContext2D) {
+function drawTable(ctx: CanvasRenderingContext2D, assets?: PoolAssets | null) {
   const W  = TABLE_CONFIG.width
   const H  = TABLE_CONFIG.height
   const C  = TABLE_CONFIG.cushionHeight
@@ -240,6 +250,15 @@ function drawTable(ctx: CanvasRenderingContext2D) {
   ctx.fillStyle = feltG
   ctx.fillRect(C, C, W - C * 2, H - C * 2)
 
+  // Texture overlays (from reference HTML5 version)
+  const cloth = assets?.images.cloth
+  if (cloth) {
+    ctx.save()
+    ctx.globalAlpha = 0.28
+    ctx.drawImage(cloth, 0, 0, W, H)
+    ctx.restore()
+  }
+
   // Subtle felt texture lines
   ctx.save()
   ctx.strokeStyle = 'rgba(255,255,255,0.03)'
@@ -280,41 +299,64 @@ function drawTable(ctx: CanvasRenderingContext2D) {
   ctx.beginPath(); ctx.moveTo(W - C, C + PR); ctx.lineTo(W - C, H - C - PR); ctx.stroke()
   ctx.restore()
 
-  // Pockets
-  POCKET_POSITIONS.forEach(({ x, y }) => {
-    // Leather outer lip
+  // Procedural pocket fallback (when assets are missing)
+  if (!assets?.images.tableTop) {
+    POCKET_POSITIONS.forEach(({ x, y }) => {
+      // Visual pocket centres slightly inset so the whole rim is visible on-canvas.
+      const px = Math.min(Math.max(x, PR * 0.78), W - PR * 0.78)
+      const py = Math.min(Math.max(y, PR * 0.78), H - PR * 0.78)
+      // Leather outer lip
+      ctx.save()
+      ctx.beginPath()
+      ctx.arc(px, py, PR + 10, 0, Math.PI * 2)
+      ctx.fillStyle = '#5A2E10'
+      ctx.fill()
+
+      // Deep pocket gradient
+      const pG = ctx.createRadialGradient(px, py, 0, px, py, PR + 6)
+      pG.addColorStop(0, '#000000')
+      pG.addColorStop(0.55, '#0B0B0B')
+      pG.addColorStop(0.85, '#1A0E04')
+      pG.addColorStop(1, '#2E1806')
+      ctx.beginPath()
+      ctx.arc(px, py, PR, 0, Math.PI * 2)
+      ctx.fillStyle = pG
+      ctx.fill()
+
+      // Brass ring
+      ctx.strokeStyle = 'rgba(200,145,50,0.80)'
+      ctx.lineWidth = 4.5
+      ctx.beginPath()
+      ctx.arc(px, py, PR, 0, Math.PI * 2)
+      ctx.stroke()
+
+      // Inner glint
+      ctx.strokeStyle = 'rgba(255,215,110,0.35)'
+      ctx.lineWidth = 2
+      ctx.beginPath()
+      ctx.arc(px - PR * 0.22, py - PR * 0.22, PR * 0.48, Math.PI * 1.0, Math.PI * 1.65)
+      ctx.stroke()
+      ctx.restore()
+    })
+  }
+
+  // Pocket shadow overlay + table top skin (transparent cloth cut-out)
+  const pockets = assets?.images.pockets
+  if (pockets) {
     ctx.save()
-    ctx.beginPath()
-    ctx.arc(x, y, PR + 10, 0, Math.PI * 2)
-    ctx.fillStyle = '#5A2E10'
-    ctx.fill()
-
-    // Deep pocket gradient
-    const pG = ctx.createRadialGradient(x, y, 0, x, y, PR + 6)
-    pG.addColorStop(0,   '#000000')
-    pG.addColorStop(0.55,'#0B0B0B')
-    pG.addColorStop(0.85,'#1A0E04')
-    pG.addColorStop(1,   '#2E1806')
-    ctx.beginPath()
-    ctx.arc(x, y, PR, 0, Math.PI * 2)
-    ctx.fillStyle = pG
-    ctx.fill()
-
-    // Brass ring
-    ctx.strokeStyle = 'rgba(200,145,50,0.80)'
-    ctx.lineWidth = 4.5
-    ctx.beginPath()
-    ctx.arc(x, y, PR, 0, Math.PI * 2)
-    ctx.stroke()
-
-    // Inner glint
-    ctx.strokeStyle = 'rgba(255,215,110,0.35)'
-    ctx.lineWidth = 2
-    ctx.beginPath()
-    ctx.arc(x - PR * 0.22, y - PR * 0.22, PR * 0.48, Math.PI * 1.0, Math.PI * 1.65)
-    ctx.stroke()
+    // Needs to be fully opaque so holes don't look "green" through transparency.
+    ctx.globalAlpha = 1
+    ctx.drawImage(pockets, 0, 0, W, H)
     ctx.restore()
-  })
+  }
+
+  const tableTop = assets?.images.tableTop
+  if (tableTop) {
+    ctx.save()
+    ctx.globalAlpha = 1
+    ctx.drawImage(tableTop, 0, 0, W, H)
+    ctx.restore()
+  }
 }
 
 // ── Cue Stick ─────────────────────────────────────────────────────────────────
@@ -322,12 +364,47 @@ function drawCueStick(
   ctx: CanvasRenderingContext2D,
   cx: number, cy: number,
   angle: number,
-  distFromBall: number
+  distFromBall: number,
+  assets?: PoolAssets | null,
 ) {
+  const dist = distFromBall
+
+  const cue = assets?.images.cue
+  const cueShadow = assets?.images.cueShadow
+  if (cue) {
+    const desiredLen = 1120
+    const scale = desiredLen / cue.width
+    const h = cue.height * scale
+    const w = cue.width * scale
+
+    ctx.save()
+    ctx.translate(cx, cy)
+    ctx.rotate(angle + Math.PI)
+
+    if (cueShadow) {
+      const sw = cueShadow.width * scale
+      const sh = cueShadow.height * scale
+      ctx.save()
+      ctx.globalAlpha = 0.55
+      ctx.drawImage(cueShadow, dist + 14, -sh / 2 + 8, sw, sh)
+      ctx.restore()
+    } else {
+      ctx.save()
+      ctx.shadowColor = 'rgba(0,0,0,0.45)'
+      ctx.shadowBlur = 10
+      ctx.shadowOffsetX = 6
+      ctx.shadowOffsetY = 6
+      ctx.restore()
+    }
+
+    ctx.drawImage(cue, dist, -h / 2, w, h)
+    ctx.restore()
+    return
+  }
+
   const stickLen = 900
-  const tipW     = 5
-  const buttW    = 20
-  const dist     = distFromBall
+  const tipW = 5
+  const buttW = 20
 
   ctx.save()
   ctx.translate(cx, cy)
@@ -418,6 +495,8 @@ interface PocketingBall {
 const PoolBoard: React.FC<PoolBoardProps> = ({ gameState, isMyTurn, onShot, onBallPlace }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const scaleRef  = useRef(1)
+  const dprRef    = useRef(1)
+  const assetsRef = useRef<PoolAssets | null>(null)
 
   const [uiPower,    setUiPower]    = useState(0)
   const [isCharging, setIsCharging] = useState(false)
@@ -443,8 +522,11 @@ const PoolBoard: React.FC<PoolBoardProps> = ({ gameState, isMyTurn, onShot, onBa
   const frameIdRef        = useRef(0)
   const prevPocketedRef   = useRef<Set<string>>(new Set())
   const pocketingBallsRef = useRef<PocketingBall[]>([])
+  const pendingAuthoritativeBallsRef = useRef<Ball[] | null>(null)
+  const shotSentRef       = useRef(false)
 
   const STRIKE_FRAMES = 8
+  const MAX_POWER = 5200
 
   useEffect(() => { isMyTurnRef.current   = isMyTurn   }, [isMyTurn])
   useEffect(() => { onShotRef.current     = onShot     }, [onShot])
@@ -452,12 +534,17 @@ const PoolBoard: React.FC<PoolBoardProps> = ({ gameState, isMyTurn, onShot, onBa
   useEffect(() => { gameStateRef.current  = gameState  }, [gameState])
 
   useEffect(() => {
-    if (!isSimulatingRef.current) {
-      localBallsRef.current = gameState.balls.map(b => ({
-        ...b,
-        rotation: b.rotation || { x: 0, y: 0 },
-        velocity: b.velocity || { x: 0, y: 0 },
-      }))
+    const prevRot = new Map(localBallsRef.current.map((b) => [b.id, b.rotation]))
+    const mapped = gameState.balls.map((b) => ({
+      ...b,
+      rotation: b.rotation || prevRot.get(b.id) || { x: 0, y: 0 },
+      velocity: b.velocity || { x: 0, y: 0 },
+    }))
+
+    if (isSimulatingRef.current) {
+      pendingAuthoritativeBallsRef.current = mapped
+    } else {
+      localBallsRef.current = mapped
     }
   }, [gameState.balls])
 
@@ -466,10 +553,12 @@ const PoolBoard: React.FC<PoolBoardProps> = ({ gameState, isMyTurn, onShot, onBa
     if (!canvas) return
     const container = canvas.parentElement
     if (!container) return
+    const dpr = Math.max(1, Math.min(2.5, window.devicePixelRatio || 1))
+    dprRef.current = dpr
     const newScale = container.clientWidth / TABLE_CONFIG.width
     scaleRef.current = newScale
-    canvas.width  = TABLE_CONFIG.width  * newScale
-    canvas.height = TABLE_CONFIG.height * newScale
+    canvas.width  = Math.round(TABLE_CONFIG.width  * newScale * dpr)
+    canvas.height = Math.round(TABLE_CONFIG.height * newScale * dpr)
   }, [])
 
   useEffect(() => {
@@ -478,6 +567,22 @@ const PoolBoard: React.FC<PoolBoardProps> = ({ gameState, isMyTurn, onShot, onBa
     return () => window.removeEventListener('resize', updateScale)
   }, [updateScale])
 
+  useEffect(() => {
+    let cancelled = false
+    loadPoolAssets()
+      .then((assets) => {
+        if (cancelled) return
+        assetsRef.current = assets
+      })
+      .catch(() => {
+        // Assets are cosmetic; fallback rendering covers failures.
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   // ── Draw ──────────────────────────────────────────────────────────────────
   const draw = useCallback(() => {
     const canvas = canvasRef.current
@@ -485,12 +590,14 @@ const PoolBoard: React.FC<PoolBoardProps> = ({ gameState, isMyTurn, onShot, onBa
     const ctx = canvas.getContext('2d')
     if (!ctx) return
     const scale = scaleRef.current
+    const dpr = dprRef.current
 
+    ctx.setTransform(1, 0, 0, 1, 0, 0)
     ctx.clearRect(0, 0, canvas.width, canvas.height)
     ctx.save()
-    ctx.scale(scale, scale)
+    ctx.setTransform(scale * dpr, 0, 0, scale * dpr, 0, 0)
 
-    drawTable(ctx)
+    drawTable(ctx, assetsRef.current)
 
     const balls      = localBallsRef.current
     const myTurn     = isMyTurnRef.current
@@ -515,7 +622,17 @@ const PoolBoard: React.FC<PoolBoardProps> = ({ gameState, isMyTurn, onShot, onBa
         ctx.stroke()
         ctx.restore()
       }
-      drawBall(ctx, ball.position.x, ball.position.y, TABLE_CONFIG.ballRadius, ball.number, scale)
+      drawBall(
+        ctx,
+        ball.position.x,
+        ball.position.y,
+        TABLE_CONFIG.ballRadius,
+        ball.number,
+        scale,
+        1,
+        undefined,
+        ball.rotation,
+      )
     })
 
     // Pocket-entry animations (balls shrinking into pocket)
@@ -529,7 +646,7 @@ const PoolBoard: React.FC<PoolBoardProps> = ({ gameState, isMyTurn, onShot, onBa
       const rr    = TABLE_CONFIG.ballRadius * (1 - eT * 0.85)
       const alpha = 1 - eT * 0.9
       if (rr > 1) {
-        drawBall(ctx, pos.x, pos.y, TABLE_CONFIG.ballRadius, pb.number, scale, alpha, rr)
+        drawBall(ctx, pos.x, pos.y, TABLE_CONFIG.ballRadius, pb.number, scale, alpha, rr, undefined)
       }
     })
 
@@ -540,9 +657,20 @@ const PoolBoard: React.FC<PoolBoardProps> = ({ gameState, isMyTurn, onShot, onBa
         // Trajectory
         const traj = predictTrajectory(cueBall, balls, angle, Math.max(power, 100))
         ctx.save()
-        ctx.strokeStyle = 'rgba(255,255,255,0.32)'
-        ctx.lineWidth = 1.5
-        ctx.setLineDash([7, 6])
+        const dotted = assetsRef.current?.images.dottedLine
+        if (dotted) {
+          const pat = ctx.createPattern(dotted, 'repeat')
+          if (pat && 'setTransform' in pat) {
+            ;(pat as CanvasPattern).setTransform(new DOMMatrix([0.55, 0, 0, 0.55, 0, 0]))
+          }
+          ctx.strokeStyle = pat || 'rgba(255,255,255,0.32)'
+          ctx.lineWidth = 4
+          ctx.globalAlpha = 0.7
+        } else {
+          ctx.strokeStyle = 'rgba(255,255,255,0.32)'
+          ctx.lineWidth = 1.5
+          ctx.setLineDash([7, 6])
+        }
         ctx.beginPath()
         ctx.moveTo(cueBall.position.x, cueBall.position.y)
         traj.points.forEach((p: Vector2) => ctx.lineTo(p.x, p.y))
@@ -553,7 +681,7 @@ const PoolBoard: React.FC<PoolBoardProps> = ({ gameState, isMyTurn, onShot, onBa
           // Ghost ball at collision point
           ctx.save()
           ctx.globalAlpha = 0.35
-          drawBall(ctx, traj.hitPoint.x, traj.hitPoint.y, TABLE_CONFIG.ballRadius, 0, scale)
+          drawBall(ctx, traj.hitPoint.x, traj.hitPoint.y, TABLE_CONFIG.ballRadius, 0, scale, 1, undefined, undefined)
           ctx.restore()
 
           if (traj.targetPath) {
@@ -571,9 +699,11 @@ const PoolBoard: React.FC<PoolBoardProps> = ({ gameState, isMyTurn, onShot, onBa
 
         // Power arc
         if (charging && power > 0) {
-          const sweep = Math.PI * 2 * (power / 3000)
+          const sweep = Math.PI * 2 * Math.min(1, power / MAX_POWER)
           ctx.save()
-          ctx.strokeStyle = power > 2000 ? '#ef4444' : power > 1000 ? '#f59e0b' : '#22c55e'
+          const danger = MAX_POWER * 0.72
+          const warn = MAX_POWER * 0.42
+          ctx.strokeStyle = power > danger ? '#ef4444' : power > warn ? '#f59e0b' : '#22c55e'
           ctx.lineWidth = 4
           ctx.globalAlpha = 0.85
           ctx.beginPath()
@@ -589,7 +719,7 @@ const PoolBoard: React.FC<PoolBoardProps> = ({ gameState, isMyTurn, onShot, onBa
         // Cue during aiming (stick pulled back by power)
         if (!striking) {
           const pullback = TABLE_CONFIG.ballRadius + 8 + (charging ? Math.min(power / 22, 90) : 0)
-          drawCueStick(ctx, cueBall.position.x, cueBall.position.y, angle, pullback)
+          drawCueStick(ctx, cueBall.position.x, cueBall.position.y, angle, pullback, assetsRef.current)
         }
       }
     }
@@ -598,7 +728,14 @@ const PoolBoard: React.FC<PoolBoardProps> = ({ gameState, isMyTurn, onShot, onBa
     if (striking) {
       const cueBall = balls.find(b => b.id === 'cue')
       if (cueBall) {
-        drawCueStick(ctx, cueBall.position.x, cueBall.position.y, angle, TABLE_CONFIG.ballRadius + 6 + strikeOffsetRef.current)
+        drawCueStick(
+          ctx,
+          cueBall.position.x,
+          cueBall.position.y,
+          angle,
+          TABLE_CONFIG.ballRadius + 6 + strikeOffsetRef.current,
+          assetsRef.current,
+        )
       }
     }
 
@@ -624,14 +761,42 @@ const PoolBoard: React.FC<PoolBoardProps> = ({ gameState, isMyTurn, onShot, onBa
           physics.applyShot(aimAngleRef.current, powerRef.current)
           physicsRef.current    = physics
           isSimulatingRef.current = true
+
+          // Reset per-shot animation state
+          prevPocketedRef.current = new Set(localBallsRef.current.filter((b) => b.pocketed).map((b) => b.id))
+          pocketingBallsRef.current = []
+
+          // Fire server shot immediately (authoritative update may arrive while we animate locally).
+          if (!shotSentRef.current) {
+            shotSentRef.current = true
+            onShotRef.current({ angle: aimAngleRef.current, power: powerRef.current, spin: { x: 0, y: 0 } })
+
+            const cueHit = assetsRef.current?.audio.cueHit
+            if (cueHit) {
+              try {
+                cueHit.currentTime = 0
+                void cueHit.play()
+              } catch {
+                // ignore autoplay restrictions
+              }
+            }
+          }
         }
       }
 
-      // ─ Physics (3 substeps for smooth integration) ─
+      // ─ Physics (adaptive substeps for stability) ─
       if (isSimulatingRef.current && physicsRef.current) {
+        const ballsNow = physicsRef.current.getBalls()
+        const maxSpeed = ballsNow.reduce((m, b) => {
+          const s = Math.hypot(b.velocity.x, b.velocity.y)
+          return s > m ? s : m
+        }, 0)
+        const substeps = Math.min(10, Math.max(4, Math.ceil(maxSpeed / 6)))
+        const dt = 1 / substeps
+
         let moving = false
-        for (let i = 0; i < 3; i++) {
-          if (physicsRef.current.step()) moving = true
+        for (let i = 0; i < substeps; i++) {
+          if (physicsRef.current.step(dt)) moving = true
         }
         const nextBalls = physicsRef.current.getBalls()
 
@@ -639,6 +804,17 @@ const PoolBoard: React.FC<PoolBoardProps> = ({ gameState, isMyTurn, onShot, onBa
         nextBalls.forEach(ball => {
           if (ball.pocketed && !prevPocketedRef.current.has(ball.id)) {
             prevPocketedRef.current.add(ball.id)
+
+            const pocketHit = assetsRef.current?.audio.pocketHit
+            if (pocketHit) {
+              try {
+                pocketHit.currentTime = 0
+                void pocketHit.play()
+              } catch {
+                // ignore autoplay restrictions
+              }
+            }
+
             // Find nearest pocket
             const pocket = POCKET_POSITIONS.reduce((best, p) => {
               const d  = Math.hypot(ball.position.x - p.x,   ball.position.y - p.y)
@@ -663,7 +839,12 @@ const PoolBoard: React.FC<PoolBoardProps> = ({ gameState, isMyTurn, onShot, onBa
 
         if (!moving) {
           isSimulatingRef.current = false
-          onShotRef.current({ angle: aimAngleRef.current, power: powerRef.current, spin: { x: 0, y: 0 } })
+
+          // Snap to authoritative state if it arrived during animation.
+          if (pendingAuthoritativeBallsRef.current) {
+            localBallsRef.current = pendingAuthoritativeBallsRef.current
+            pendingAuthoritativeBallsRef.current = null
+          }
         }
       }
 
@@ -701,6 +882,7 @@ const PoolBoard: React.FC<PoolBoardProps> = ({ gameState, isMyTurn, onShot, onBa
 
     dragStartRef.current = pos
     isChargingRef.current = true
+    shotSentRef.current = false
     setIsCharging(true)
     powerRef.current = 0
     setUiPower(0)
@@ -727,7 +909,11 @@ const PoolBoard: React.FC<PoolBoardProps> = ({ gameState, isMyTurn, onShot, onBa
 
     if (isChargingRef.current && dragStartRef.current) {
       const dist    = Math.hypot(pos.x - dragStartRef.current.x, pos.y - dragStartRef.current.y)
-      const newPower = Math.min(dist * 14, 3000)
+      // Non-linear power curve: more realistic control on small drags,
+      // and stronger full-power shots (less "sluggish" feel).
+      const t = Math.min(dist / 220, 1)
+      const curved = Math.pow(t, 1.12)
+      const newPower = curved * MAX_POWER
       powerRef.current = newPower
       setUiPower(newPower)
     }
@@ -781,10 +967,10 @@ const PoolBoard: React.FC<PoolBoardProps> = ({ gameState, isMyTurn, onShot, onBa
         <div
           className="absolute bottom-0 w-full"
           style={{
-            height: `${(uiPower / 3000) * 100}%`,
-            background: uiPower > 2000
+            height: `${Math.min(1, uiPower / MAX_POWER) * 100}%`,
+            background: uiPower > MAX_POWER * 0.72
               ? 'linear-gradient(to top, #dc2626, #f97316)'
-              : uiPower > 1000
+              : uiPower > MAX_POWER * 0.42
               ? 'linear-gradient(to top, #f59e0b, #22c55e)'
               : 'linear-gradient(to top, #22c55e, #86efac)',
             transition: 'height 60ms linear, background 120ms',

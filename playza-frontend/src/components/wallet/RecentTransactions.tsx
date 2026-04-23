@@ -14,15 +14,17 @@ const RecentTransactions = () => {
   const transactions = data?.transactions || [];
 
   const uiTransactions: TransactionUI[] = transactions.map((t) => {
-    const isPositive = ["deposit", "win", "refund"].includes(t.type);
+    // Determine sign based on backend type
+    // In our backend: 'game_entry' is a deduction, 'winnings' is a credit
+    const isPositive = ["deposit", "winnings", "refund", "win"].includes(t.type);
 
-    // Map backend types/status to frontend labels for icon/style matching
     const typeLabelMap: Record<string, string> = {
       deposit: "Deposit",
       withdrawal: "Withdrawal",
+      game_entry: "Game Stake",
+      winnings: "Match Prize",
+      refund: "Stake Refund",
       bet: "Game Entry",
-      win: "Prize Win",
-      refund: "Refund",
     };
 
     const statusLabelMap: Record<string, string> = {

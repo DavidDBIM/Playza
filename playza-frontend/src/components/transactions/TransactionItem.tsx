@@ -13,6 +13,7 @@ interface TransactionItemProps extends TransactionUI {
 
 const getIcon = (type: string) => {
   switch (type) {
+    case "Match Prize":
     case "Prize Win":
       return {
         icon: MdEmojiEvents,
@@ -25,6 +26,7 @@ const getIcon = (type: string) => {
         color: "text-blue-400",
         bg: "bg-blue-400/20 border-blue-400/20",
       };
+    case "Game Stake":
     case "Game Entry":
       return {
         icon: MdVideogameAsset,
@@ -36,6 +38,12 @@ const getIcon = (type: string) => {
         icon: MdAccountBalance,
         color: "text-amber-400",
         bg: "bg-amber-400/20 border-amber-400/20",
+      };
+    case "Stake Refund":
+      return {
+        icon: MdAddCircle,
+        color: "text-emerald-400",
+        bg: "bg-emerald-400/20 border-emerald-400/20",
       };
     default:
       return {

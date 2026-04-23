@@ -15,6 +15,7 @@ import H2HGamePrep from '../H2HGamePrep'
 import H2HWinner from '../H2HWinner'
 import PoolBoard from './PoolBoard'
 import type { PoolRoom, ShotInput, Vector2 } from './game/pool/types'
+import { SHOT_POWER_SCALE } from './game/pool/physics'
 import { ZASymbol } from '@/components/currency/ZASymbol'
 
 interface PoolArenaProps {
@@ -77,7 +78,10 @@ const PoolArena = ({ room: initialRoom, user }: PoolArenaProps) => {
       if (!room || !isMyTurn) return
       
       try {
-          const { data } = await poolApi.executeShot(room.id, shot)
+          const { data } = await poolApi.executeShot(room.id, {
+            ...shot,
+            power: shot.power * SHOT_POWER_SCALE,
+          })
           if (data) {
               setGameState(data.game_state)
               const myType = user?.id === data.host_id ? 'host' : 'guest'

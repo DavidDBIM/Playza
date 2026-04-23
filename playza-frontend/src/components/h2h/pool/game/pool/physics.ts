@@ -4,44 +4,45 @@ export const TABLE_CONFIG = {
   width: 2540,
   height: 1270,
   cushionHeight: 45,
-  pocketRadius: 95,
-  ballRadius: 52,          // bigger balls → more satisfying to hit
+  // Match backend units so table state stays consistent across clients/server.
+  pocketRadius: 60,
+  ballRadius: 28.5,
 }
 
 export const PHYSICS_CONFIG = {
-  // LINEAR friction — constant speed reduction per substep (like real billiard felt).
-  // Real felt decelerates balls nearly uniformly (sliding/rolling friction),
-  // not exponentially. This is why the old multiplicative approach felt "sluggish".
-  linearFriction: 0.024,   // units /substep subtracted from speed
-  minVelocity: 0.12,
-  cushionRestitution: 0.78,
-  ballRestitution: 0.96,
+  // Mirror backend simulation values.
+  friction: 0.985,
+  cushionRestitution: 0.75,
+  ballRestitution: 0.95,
+  minVelocity: 0.5,
 }
 
-// Calibration:
-//   applyShot scale = 0.0054  →  max power(3000) → ~16.2 units/substep
-//   At 60fps × 3 substeps:  stops in 16.2/0.024 = 675 substeps = 225 frames ≈ 3.75 s
-//   50% power: v0=8.1  →  stops in 337 substeps ≈ 1.9 s, travels ~1 700 units (67% of table)
-//   10% power: v0=1.62 →  stops in  67 substeps ≈ 0.4 s, travels ~  68 units
+// UI power comes from drag distance; backend expects power already scaled to table
+// units, so we apply a shared factor on the client before sending + simulating.
+export const SHOT_POWER_SCALE = 0.0054
 
-const PR = TABLE_CONFIG.pocketRadius
-const W  = TABLE_CONFIG.width
-const H  = TABLE_CONFIG.height
+const W = TABLE_CONFIG.width
+const H = TABLE_CONFIG.height
 
 export const POCKET_POSITIONS: Vector2[] = [
-  { x: PR * 0.7,      y: PR * 0.7 },       // top-left
-  { x: W / 2,         y: 0 },               // top-middle
-  { x: W - PR * 0.7,  y: PR * 0.7 },       // top-right
-  { x: PR * 0.7,      y: H - PR * 0.7 },   // bottom-left
-  { x: W / 2,         y: H },               // bottom-middle
-  { x: W - PR * 0.7,  y: H - PR * 0.7 },   // bottom-right
+  { x: 0, y: 0 },
+  { x: W / 2, y: 0 },
+  { x: W, y: 0 },
+  { x: 0, y: H },
+  { x: W / 2, y: H },
+  { x: W, y: H },
 ]
+
+function speed(v: Vector2) {
+  return Math.sqrt(v.x * v.x + v.y * v.y)
+}
 
 export class PoolPhysics {
   private balls: Ball[]
 
   constructor(initialBalls: Ball[]) {
-    this.balls = initialBalls.map(b => ({
+    // Keep object identity local; do not mutate incoming state references.
+    this.balls = initialBalls.map((b) => ({
       ...b,
       velocity: { x: b.velocity?.x ?? 0, y: b.velocity?.y ?? 0 },
       rotation: { x: b.rotation?.x ?? 0, y: b.rotation?.y ?? 0 },
@@ -49,63 +50,64 @@ export class PoolPhysics {
   }
 
   simulateShot(cueBallPos: Vector2, angle: number, power: number): Ball[] {
-    const scale = 0.0054
     const velocity = {
-      x: Math.cos(angle) * power * scale,
-      y: Math.sin(angle) * power * scale,
+      x: Math.cos(angle) * power * SHOT_POWER_SCALE,
+      y: Math.sin(angle) * power * SHOT_POWER_SCALE,
     }
-    this.balls = this.balls.map(ball =>
+
+    this.balls = this.balls.map((ball) =>
       ball.id === 'cue'
-        ? { ...ball, position: { ...cueBallPos }, velocity: { ...velocity }, pocketed: false }
-        : { ...ball, velocity: { x: 0, y: 0 } }
+        ? {
+            ...ball,
+            position: { ...cueBallPos },
+            velocity: { ...velocity },
+            pocketed: false,
+          }
+        : { ...ball, velocity: { x: 0, y: 0 } },
     )
+
     let steps = 0
-    while (this.step() && steps++ < 5000) { /* fast-forward */ }
+    while (this.step(1) && steps++ < 6000) {
+      /* fast-forward */
+    }
     return this.balls
   }
 
   applyShot(angle: number, power: number) {
-    const scale = 0.0054
     const velocity = {
-      x: Math.cos(angle) * power * scale,
-      y: Math.sin(angle) * power * scale,
+      x: Math.cos(angle) * power * SHOT_POWER_SCALE,
+      y: Math.sin(angle) * power * SHOT_POWER_SCALE,
     }
-    this.balls = this.balls.map(ball =>
+
+    this.balls = this.balls.map((ball) =>
       ball.id === 'cue'
         ? { ...ball, velocity: { ...velocity }, pocketed: false }
-        : { ...ball, velocity: { x: 0, y: 0 } }
+        : { ...ball, velocity: { x: 0, y: 0 } },
     )
   }
 
-  public step(): boolean {
+  public step(dt = 1): boolean {
     let anyMoving = false
+    const frictionFactor = Math.pow(PHYSICS_CONFIG.friction, dt)
 
-    // 1. Move balls + linear friction
+    // 1) Integrate + friction + cushions + pockets
     for (const ball of this.balls) {
       if (ball.pocketed) continue
 
-      const speed = Math.sqrt(ball.velocity.x ** 2 + ball.velocity.y ** 2)
-      if (speed > PHYSICS_CONFIG.minVelocity) {
+      const s = speed(ball.velocity)
+      if (s > PHYSICS_CONFIG.minVelocity) {
         anyMoving = true
 
-        // Move first
-        ball.position.x += ball.velocity.x
-        ball.position.y += ball.velocity.y
+        ball.position.x += ball.velocity.x * dt
+        ball.position.y += ball.velocity.y * dt
 
-        // Spin accumulates for visual rotation
-        ball.rotation.x = (ball.rotation.x + ball.velocity.x * 0.06) % (Math.PI * 2)
-        ball.rotation.y = (ball.rotation.y + ball.velocity.y * 0.06) % (Math.PI * 2)
+        // Approx rolling: radians ~= distance / radius
+        const invR = 1 / Math.max(0.001, TABLE_CONFIG.ballRadius)
+        ball.rotation.x = (ball.rotation.x + ball.velocity.x * dt * invR) % (Math.PI * 2)
+        ball.rotation.y = (ball.rotation.y + ball.velocity.y * dt * invR) % (Math.PI * 2)
 
-        // Linear deceleration — subtract constant from speed, preserve direction
-        const newSpeed = speed - PHYSICS_CONFIG.linearFriction
-        if (newSpeed <= PHYSICS_CONFIG.minVelocity) {
-          ball.velocity.x = 0
-          ball.velocity.y = 0
-        } else {
-          const ratio = newSpeed / speed
-          ball.velocity.x *= ratio
-          ball.velocity.y *= ratio
-        }
+        ball.velocity.x *= frictionFactor
+        ball.velocity.y *= frictionFactor
 
         this.handleCushionCollisions(ball)
         this.checkPockets(ball)
@@ -115,64 +117,99 @@ export class PoolPhysics {
       }
     }
 
-    // 2. Ball-to-ball collisions
+    // 2) Ball-to-ball collisions
     for (let i = 0; i < this.balls.length; i++) {
       for (let j = i + 1; j < this.balls.length; j++) {
-        if (!this.balls[i].pocketed && !this.balls[j].pocketed) {
-          this.handleBallCollision(this.balls[i], this.balls[j])
-        }
+        const b1 = this.balls[i]
+        const b2 = this.balls[j]
+        if (!b1.pocketed && !b2.pocketed) this.handleBallCollision(b1, b2)
       }
     }
 
     return anyMoving
   }
 
-  private handleCushionCollisions(ball: Ball) {
-    const r  = TABLE_CONFIG.ballRadius
-    const c  = TABLE_CONFIG.cushionHeight
-    const w  = TABLE_CONFIG.width
-    const h  = TABLE_CONFIG.height
-    const pr = TABLE_CONFIG.pocketRadius
-    const res = PHYSICS_CONFIG.cushionRestitution
+  private handleAngledCollision(ball: Ball, normal: Vector2) {
+    // Keep un-normalized normals to mirror backend behaviour (important for sync).
+    const dvn = ball.velocity.x * normal.x + ball.velocity.y * normal.y
+    if (dvn < 0) {
+      ball.velocity.x -= (1 + PHYSICS_CONFIG.cushionRestitution) * dvn * normal.x
+      ball.velocity.y -= (1 + PHYSICS_CONFIG.cushionRestitution) * dvn * normal.y
+    }
+  }
 
-    // Left
-    if (ball.position.x < c + r) {
+  private handleCushionCollisions(ball: Ball) {
+    const r = TABLE_CONFIG.ballRadius
+    const cushion = TABLE_CONFIG.cushionHeight
+    const w = TABLE_CONFIG.width
+    const h = TABLE_CONFIG.height
+    // pr is the width of the angled cushion near pockets
+    const pr = TABLE_CONFIG.pocketRadius * 0.8
+
+    // Left cushions (segmented)
+    if (ball.position.x < cushion + r) {
       if (ball.position.y > pr && ball.position.y < h - pr) {
-        ball.position.x = c + r
-        ball.velocity.x =  Math.abs(ball.velocity.x) * res
+        ball.position.x = cushion + r
+        ball.velocity.x = -ball.velocity.x * PHYSICS_CONFIG.cushionRestitution
+      } else if (ball.position.y <= pr) {
+        this.handleAngledCollision(ball, { x: 1, y: 1 })
+      } else if (ball.position.y >= h - pr) {
+        this.handleAngledCollision(ball, { x: 1, y: -1 })
       }
     }
-    // Right
-    if (ball.position.x > w - c - r) {
+
+    // Right cushions
+    if (ball.position.x > w - cushion - r) {
       if (ball.position.y > pr && ball.position.y < h - pr) {
-        ball.position.x = w - c - r
-        ball.velocity.x = -Math.abs(ball.velocity.x) * res
+        ball.position.x = w - cushion - r
+        ball.velocity.x = -ball.velocity.x * PHYSICS_CONFIG.cushionRestitution
+      } else if (ball.position.y <= pr) {
+        this.handleAngledCollision(ball, { x: -1, y: 1 })
+      } else if (ball.position.y >= h - pr) {
+        this.handleAngledCollision(ball, { x: -1, y: -1 })
       }
     }
-    // Top
-    if (ball.position.y < c + r) {
-      const midZone = Math.abs(ball.position.x - w / 2) < pr
-      if (ball.position.x > pr && ball.position.x < w - pr && !midZone) {
-        ball.position.y = c + r
-        ball.velocity.y =  Math.abs(ball.velocity.y) * res
+
+    // Top cushions (segmented around middle pocket)
+    if (ball.position.y < cushion + r) {
+      const mw = w / 2
+      const isNearMiddle = Math.abs(ball.position.x - mw) < pr
+      const isNearLeft = ball.position.x < pr
+      const isNearRight = ball.position.x > w - pr
+
+      if (!isNearMiddle && !isNearLeft && !isNearRight) {
+        ball.position.y = cushion + r
+        ball.velocity.y = -ball.velocity.y * PHYSICS_CONFIG.cushionRestitution
+      } else if (isNearMiddle) {
+        const side = ball.position.x < mw ? -1 : 1
+        this.handleAngledCollision(ball, { x: side, y: 1 })
       }
     }
-    // Bottom
-    if (ball.position.y > h - c - r) {
-      const midZone = Math.abs(ball.position.x - w / 2) < pr
-      if (ball.position.x > pr && ball.position.x < w - pr && !midZone) {
-        ball.position.y = h - c - r
-        ball.velocity.y = -Math.abs(ball.velocity.y) * res
+
+    // Bottom cushions
+    if (ball.position.y > h - cushion - r) {
+      const mw = w / 2
+      const isNearMiddle = Math.abs(ball.position.x - mw) < pr
+      const isNearLeft = ball.position.x < pr
+      const isNearRight = ball.position.x > w - pr
+
+      if (!isNearMiddle && !isNearLeft && !isNearRight) {
+        ball.position.y = h - cushion - r
+        ball.velocity.y = -ball.velocity.y * PHYSICS_CONFIG.cushionRestitution
+      } else if (isNearMiddle) {
+        const side = ball.position.x < mw ? -1 : 1
+        this.handleAngledCollision(ball, { x: side, y: -1 })
       }
     }
   }
 
   private checkPockets(ball: Ball) {
+    const r = TABLE_CONFIG.pocketRadius
     for (const pocket of POCKET_POSITIONS) {
       const dx = ball.position.x - pocket.x
       const dy = ball.position.y - pocket.y
-      if (Math.sqrt(dx * dx + dy * dy) < TABLE_CONFIG.pocketRadius * 0.85) {
-        ball.pocketed  = true
+      if (Math.sqrt(dx * dx + dy * dy) < r) {
+        ball.pocketed = true
         ball.velocity.x = 0
         ball.velocity.y = 0
         return
@@ -180,42 +217,43 @@ export class PoolPhysics {
     }
   }
 
-  private handleBallCollision(b1: Ball, b2: Ball) {
-    const dx = b2.position.x - b1.position.x
-    const dy = b2.position.y - b1.position.y
-    const distSq = dx * dx + dy * dy
+  private handleBallCollision(ball1: Ball, ball2: Ball) {
+    const dx = ball2.position.x - ball1.position.x
+    const dy = ball2.position.y - ball1.position.y
+    const distance = Math.sqrt(dx * dx + dy * dy)
     const minDist = TABLE_CONFIG.ballRadius * 2
-    if (distSq >= minDist * minDist || distSq === 0) return
 
-    const dist = Math.sqrt(distSq)
-    const nx = dx / dist
-    const ny = dy / dist
+    if (distance < minDist && distance > 0) {
+      const nx = dx / distance
+      const ny = dy / distance
 
-    const dvx = b1.velocity.x - b2.velocity.x
-    const dvy = b1.velocity.y - b2.velocity.y
-    const dvn = dvx * nx + dvy * ny
-    if (dvn <= 0) return
+      const dvx = ball1.velocity.x - ball2.velocity.x
+      const dvy = ball1.velocity.y - ball2.velocity.y
+      const dvn = dvx * nx + dvy * ny
 
-    const res = PHYSICS_CONFIG.ballRestitution
-    const impulse = -(1 + res) * dvn / 2
+      if (dvn > 0) {
+        const restitution = PHYSICS_CONFIG.ballRestitution
+        const impulse = (-(1 + restitution) * dvn) / 2
 
-    b1.velocity.x += impulse * nx
-    b1.velocity.y += impulse * ny
-    b2.velocity.x -= impulse * nx
-    b2.velocity.y -= impulse * ny
+        ball1.velocity.x += impulse * nx
+        ball1.velocity.y += impulse * ny
+        ball2.velocity.x -= impulse * nx
+        ball2.velocity.y -= impulse * ny
 
-    // Positional correction (remove overlap)
-    const overlap = (minDist - dist) * 0.55
-    b1.position.x -= overlap * nx
-    b1.position.y -= overlap * ny
-    b2.position.x += overlap * nx
-    b2.position.y += overlap * ny
+        const overlap = minDist - distance
+        ball1.position.x -= (overlap / 2) * nx
+        ball1.position.y -= (overlap / 2) * ny
+        ball2.position.x += (overlap / 2) * nx
+        ball2.position.y += (overlap / 2) * ny
+      }
+    }
   }
 
-  getBalls(): Ball[] { return this.balls }
+  getBalls(): Ball[] {
+    return this.balls
+  }
 }
 
-// ── Trajectory preview ────────────────────────────────────────────────────────
 export interface TrajectoryResult {
   points: Vector2[]
   hitBall?: Ball
@@ -227,22 +265,20 @@ export function predictTrajectory(
   cueBall: Ball,
   balls: Ball[],
   angle: number,
-  _power?: number         // kept for signature compat; direction is what matters
+  power = 1600,
 ): TrajectoryResult {
-  void _power  // intentionally unused — preview uses fixed speed, not shot power
-  const PREVIEW_SPEED = 12  // fixed preview speed (direction only)
   const points: Vector2[] = []
   const pos = { ...cueBall.position }
   const vel = {
-    x: Math.cos(angle) * PREVIEW_SPEED,
-    y: Math.sin(angle) * PREVIEW_SPEED,
+    x: Math.cos(angle) * power * SHOT_POWER_SCALE,
+    y: Math.sin(angle) * power * SHOT_POWER_SCALE,
   }
 
   const cushion = TABLE_CONFIG.cushionHeight + TABLE_CONFIG.ballRadius
   let hitBall: Ball | undefined
   let hitPoint: Vector2 | undefined
 
-  for (let i = 0; i < 180; i++) {
+  for (let i = 0; i < 220; i++) {
     points.push({ ...pos })
     pos.x += vel.x
     pos.y += vel.y
@@ -252,7 +288,7 @@ export function predictTrajectory(
       const dx = ball.position.x - pos.x
       const dy = ball.position.y - pos.y
       if (Math.sqrt(dx * dx + dy * dy) < TABLE_CONFIG.ballRadius * 2) {
-        hitBall  = ball
+        hitBall = ball
         hitPoint = { ...pos }
         break
       }
@@ -260,23 +296,31 @@ export function predictTrajectory(
     if (hitBall) break
 
     const nearPocket = POCKET_POSITIONS.some(
-      p => Math.sqrt((pos.x - p.x) ** 2 + (pos.y - p.y) ** 2) < TABLE_CONFIG.pocketRadius
+      (p) => Math.sqrt((pos.x - p.x) ** 2 + (pos.y - p.y) ** 2) < TABLE_CONFIG.pocketRadius,
     )
     if (nearPocket) break
 
-    // Wall reflections
-    if (pos.x < cushion)                          { pos.x = cushion;                          vel.x =  Math.abs(vel.x) * 0.80; break }
-    if (pos.x > TABLE_CONFIG.width  - cushion)    { pos.x = TABLE_CONFIG.width  - cushion;    vel.x = -Math.abs(vel.x) * 0.80; break }
-    if (pos.y < cushion)                          { pos.y = cushion;                          vel.y =  Math.abs(vel.y) * 0.80; break }
-    if (pos.y > TABLE_CONFIG.height - cushion)    { pos.y = TABLE_CONFIG.height - cushion;    vel.y = -Math.abs(vel.y) * 0.80; break }
+    if (pos.x < cushion) {
+      pos.x = cushion
+      vel.x = -vel.x * PHYSICS_CONFIG.cushionRestitution
+    }
+    if (pos.x > TABLE_CONFIG.width - cushion) {
+      pos.x = TABLE_CONFIG.width - cushion
+      vel.x = -vel.x * PHYSICS_CONFIG.cushionRestitution
+    }
+    if (pos.y < cushion) {
+      pos.y = cushion
+      vel.y = -vel.y * PHYSICS_CONFIG.cushionRestitution
+    }
+    if (pos.y > TABLE_CONFIG.height - cushion) {
+      pos.y = TABLE_CONFIG.height - cushion
+      vel.y = -vel.y * PHYSICS_CONFIG.cushionRestitution
+    }
 
-    // Linear friction on preview
-    const speed = Math.sqrt(vel.x ** 2 + vel.y ** 2)
-    if (speed < 0.5) break
-    const newSpeed = speed - PHYSICS_CONFIG.linearFriction * 0.5
-    if (newSpeed <= 0) break
-    vel.x *= newSpeed / speed
-    vel.y *= newSpeed / speed
+    vel.x *= PHYSICS_CONFIG.friction
+    vel.y *= PHYSICS_CONFIG.friction
+
+    if (speed(vel) < PHYSICS_CONFIG.minVelocity) break
   }
 
   let targetPath: Vector2[] | undefined
@@ -286,9 +330,13 @@ export function predictTrajectory(
     const ha = Math.atan2(dy, dx)
     targetPath = [
       { ...hitBall.position },
-      { x: hitBall.position.x + Math.cos(ha) * 200, y: hitBall.position.y + Math.sin(ha) * 200 },
+      {
+        x: hitBall.position.x + Math.cos(ha) * 220,
+        y: hitBall.position.y + Math.sin(ha) * 220,
+      },
     ]
   }
 
   return { points, hitBall, hitPoint, targetPath }
 }
+
