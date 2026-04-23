@@ -34,7 +34,7 @@ function ShareModal({ referralLink, onClose }: { referralLink: string; onClose: 
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/95 backdrop-blur-2xl"
       onClick={onClose}
     >
       <div
