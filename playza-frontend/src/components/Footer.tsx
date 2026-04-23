@@ -5,7 +5,7 @@ const Footer = ({ showAbout = true }: { showAbout?: boolean }) => {
 
   const year = new Date().getFullYear();
   return (
-    <footer className="relative bg-slate-50 dark:bg-playza-dark/50 border-t border-slate-200 dark:border-white/5 pt-8 md:pt-12 pb-16 md:pb-12 overflow-hidden">
+    <footer className="relative bg-slate-50 dark:bg-playza-dark/50 border-t border-slate-200 dark:border-white/5 pt-2 md:pt-4 pb-16 md:pb-12 overflow-hidden">
       {/* Dynamic Glows */}
       <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5 blur-[120px] rounded-full pointer-events-none" />
       <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-secondary/5 blur-[120px] rounded-full pointer-events-none" />

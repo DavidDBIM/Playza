@@ -11,6 +11,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { ToastProvider } from "./context/ToastContext";
 import { useAuth } from "./context/auth";
 import { CompleteProfileModal } from "./components/profile/CompleteProfileModal";
+import { FloatingSpinNotification } from "./components/loyalty/FloatingSpinNotification";
 
 // ─── Lazy pages ───────────────────────────────────────────────────────────────
 const Home = lazy(() => import("./pages/Home"));
@@ -97,6 +98,7 @@ const AppContent = () => {
     (pathname.startsWith("/h2h") &&
       pathname.split("/").filter(Boolean).length >= 3);
   const isRegistrationPage = pathname.includes("/registration");
+  const isSpinActive = searchParams.get("spin") === "true";
 
   // Wrap navigate calls in startTransition so the browser stays responsive
   const handleWithdrawClick = () => {
@@ -148,6 +150,8 @@ const AppContent = () => {
         />
       )}
 
+      <FloatingSpinNotification />
+
       <div
         className={
           isGamePlayPage
@@ -155,7 +159,7 @@ const AppContent = () => {
             : `w-full max-w-400 mx-auto flex gap-4 md:gap-8 px-1.5 md:px-4 pt-4 md:pt-8 ${
                 isRegistrationPage
                   ? "pb-0 min-h-screen flex items-center justify-center"
-                  : "pb-32 md:pb-24 lg:pb-10"
+                  : "pb-12 md:pb-16 lg:pb-10"
               }`
         }
       >
@@ -226,7 +230,7 @@ const AppContent = () => {
       </div>
 
       {pathname === "/" && <Footer showAbout={true} />}
-      {!isRegistrationPage && !isGamePlayPage && <NavFooter />}
+      {!isRegistrationPage && !isGamePlayPage && !activeModal && !showVerificationModal && !isSpinActive && <NavFooter />}
     </div>
   );
 };

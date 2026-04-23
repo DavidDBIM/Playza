@@ -215,7 +215,7 @@ const NavFooter = () => {
       {/* ── Nav + Panels wrapper ── */}
       <div
         id="nav-footer"
-        className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-150 z-50 invite-font"
+        className="lg:hidden fixed bottom-2 left-1/2 -translate-x-1/2 w-[92%] max-w-150 z-50 invite-font"
       >
         <style>{`
           body.modal-open #nav-footer {
