@@ -9,6 +9,8 @@ export interface DashboardMetrics {
   total_referrals: number;
   verified_referrals: number;
   referral_conversion_rate: string;
+  new_users_week: number;
+  verified_users: number;
 }
 
 export interface UserAdmin {
@@ -36,7 +38,7 @@ export interface UserAdmin {
 export interface UserHistoryItem {
   id: string;
   event_type: string;
-  amount: number;
+  points_awarded: number;
   details: Record<string, unknown> | null;
   created_at: string;
 }
@@ -52,6 +54,13 @@ export interface UserDetails extends UserAdmin {
   }[];
   total_referrals: number;
   pza_history: UserHistoryItem[];
+  game_history: {
+    id: string;
+    game_name: string;
+    status: string;
+    winnings: number;
+    played_at: string;
+  }[];
   transactions: {
     id: string;
     type: string;
@@ -64,6 +73,7 @@ export interface UserDetails extends UserAdmin {
 
 export interface TransactionAdmin {
   id: string;
+  user_id: string;
   type: string;
   amount: number;
   status: string;
