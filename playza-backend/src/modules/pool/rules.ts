@@ -5,7 +5,7 @@ export { PoolRules, GameState, PlayerType }
 
 const TABLE_WIDTH = 2540
 const TABLE_HEIGHT = 1270
-const BALL_RADIUS = 28.5
+const BALL_RADIUS = 31
 
 class PoolRules {
   static createInitialState(): GameState {

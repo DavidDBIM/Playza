@@ -107,7 +107,7 @@ function calculateRackPositions(cx: number, cy: number): Vector2[] {
 
 const TABLE_WIDTH = 2540
 const TABLE_HEIGHT = 1270
-const TABLE_BALL_RADIUS = 28.5
+const TABLE_BALL_RADIUS = 31
 
 export function createInitialState(): GameState {
   return {
