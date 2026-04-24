@@ -417,8 +417,6 @@ function render(
   theme: PitchTheme,
   team0Color: string,
   team1Color: string,
-  team0Name: string,
-  team1Name: string,
   drawPathPoints: Vec2[],
 ) {
   const T = PITCH_THEMES[theme];
@@ -651,6 +649,15 @@ const SoccerGame: React.FC<SoccerGameProps> = ({
   const [theme, setTheme] = useState<PitchTheme>(pitchTheme);
   const [showPitchPicker, setShowPitchPicker] = useState(false);
 
+  // Sync props to refs to avoid re-triggering the game loop effect
+  const onGoalRef = useRef(onGoal);
+  const onGameOverRef = useRef(onGameOver);
+  const isBotRef = useRef(isBot);
+
+  onGoalRef.current = onGoal;
+  onGameOverRef.current = onGameOver;
+  isBotRef.current = isBot;
+
   // ── Init state
   const initState = useCallback((): GameState => {
     const s: GameState = {
@@ -712,7 +719,7 @@ const SoccerGame: React.FC<SoccerGameProps> = ({
             stateRef.current!,
             inputRef.current,
             drawShotRef.current,
-            isBot,
+            isBotRef.current,
           );
           drawShotRef.current = null;
 
@@ -728,7 +735,7 @@ const SoccerGame: React.FC<SoccerGameProps> = ({
               setOverlayPhase("finished");
               const [s0, s1] = stateRef.current!.score;
               const winner = s0 > s1 ? 0 : s1 > s0 ? 1 : null;
-              onGameOver?.(stateRef.current!.score, winner as 0 | 1 | null);
+              onGameOverRef.current?.(stateRef.current!.score, winner as 0 | 1 | null);
             }
           }
         }
@@ -742,7 +749,7 @@ const SoccerGame: React.FC<SoccerGameProps> = ({
           stateRef.current = resetPositions(s, nextKickoff);
           stateRef.current = { ...stateRef.current, score: s.score };
           setOverlayPhase("kickoff");
-          onGoal?.(s.score);
+          onGoalRef.current?.(s.score);
         }
       } else if (s.phase === "finished") {
         setOverlayPhase("finished");
@@ -754,8 +761,6 @@ const SoccerGame: React.FC<SoccerGameProps> = ({
         theme,
         team0Color,
         team1Color,
-        team0Name,
-        team1Name,
         drawPathRef.current,
       );
       rafRef.current = requestAnimationFrame(loop);
@@ -768,8 +773,6 @@ const SoccerGame: React.FC<SoccerGameProps> = ({
     initState,
     team0Color,
     team1Color,
-    team0Name,
-    team1Name,
     gameMode,
     theme,
   ]);
