@@ -192,3 +192,97 @@ export async function getTransactionByIdAdmin(id: string) {
   if (error) throw error
   return data
 }
+
+// ────────────────────────────────────────────────────────────
+//  NOTIFICATIONS
+// ────────────────────────────────────────────────────────────
+
+async function ensureNotificationBucket() {
+  const bucketId = 'notifications';
+  const { data: buckets } = await supabaseAdmin.storage.listBuckets();
+  const exists = buckets?.some((b: any) => b.name === bucketId);
+  
+  if (!exists) {
+    await supabaseAdmin.storage.createBucket(bucketId, {
+      public: true,
+      allowedMimeTypes: ['image/png', 'image/jpeg', 'image/gif', 'image/webp'],
+    });
+  }
+  return bucketId;
+}
+
+export async function uploadNotificationImage(base64Data: string): Promise<string> {
+  const match = base64Data.match(/^data:(.+?);base64,(.+)$/);
+  if (!match) return base64Data; // If not base64, assume it's already a URL
+
+  const mimeType = match[1];
+  const raw = match[2];
+  const ext = mimeType.split('/')[1]?.replace('jpeg', 'jpg') ?? 'jpg';
+  const filename = `${Date.now()}.${ext}`;
+  const bucketId = await ensureNotificationBucket();
+
+  const { error } = await supabaseAdmin.storage
+    .from(bucketId)
+    .upload(filename, Buffer.from(raw, 'base64'), {
+      contentType: mimeType,
+      upsert: true,
+    });
+
+  if (error) throw error;
+
+  const { data } = supabaseAdmin.storage.from(bucketId).getPublicUrl(filename);
+  return data.publicUrl;
+}
+
+export async function sendNotification(payload: {
+  title?: string;
+  content?: string;
+  image_url?: string;
+  type: string;
+  priority: string;
+  audience: string;
+}) {
+  let finalImageUrl = payload.image_url;
+
+  // If the image is a base64 string from the upload button, upload it to Supabase
+  if (payload.image_url?.startsWith('data:')) {
+    finalImageUrl = await uploadNotificationImage(payload.image_url);
+  }
+
+  const { data, error } = await supabaseAdmin
+    .from('notifications')
+    .insert([
+      {
+        ...payload,
+        image_url: finalImageUrl,
+        status: 'sent',
+        created_at: new Date().toISOString()
+      }
+    ])
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function getNotificationsHistory(page = 1, limit = 20) {
+  const from = (page - 1) * limit
+  const to = from + limit - 1
+
+  const { data, error, count } = await supabaseAdmin
+    .from('notifications')
+    .select('*', { count: 'exact' })
+    .order('created_at', { ascending: false })
+    .range(from, to)
+
+  if (error) throw error
+
+  return {
+    notifications: data,
+    total: count ?? 0,
+    page,
+    limit,
+    total_pages: Math.ceil((count ?? 0) / limit),
+  }
+}

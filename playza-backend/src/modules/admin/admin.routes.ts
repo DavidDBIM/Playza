@@ -8,6 +8,8 @@ import {
   updateUserStatus,
   getAllTransactionsAdmin,
   getTransactionByIdAdmin,
+  sendNotification,
+  getNotificationsHistory,
 } from './admin.service'
 import {
   getLoyaltyLeaderboard,
@@ -252,6 +254,30 @@ router.get('/leaderboards/games', requireAuth, async (req: AuthRequest, res) => 
     const period = (req.query.period as LeaderboardPeriod) || 'all'
     const limit = parseInt(req.query.limit as string) || 50
     const data = await getAllGamesLeaderboard(period, limit)
+    res.json({ success: true, data })
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message })
+  }
+})
+
+// ────────────────────────────────────────────────────────────
+//  NOTIFICATIONS
+// ────────────────────────────────────────────────────────────
+
+router.get('/notifications', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const page = parseInt(req.query.page as string) || 1
+    const limit = parseInt(req.query.limit as string) || 20
+    const data = await getNotificationsHistory(page, limit)
+    res.json({ success: true, data })
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message })
+  }
+})
+
+router.post('/notifications', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const data = await sendNotification(req.body)
     res.json({ success: true, data })
   } catch (err: any) {
     res.status(400).json({ success: false, message: err.message })
