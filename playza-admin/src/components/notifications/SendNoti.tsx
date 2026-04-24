@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { adminService } from '../../services/admin-service';
 import { 
   MdArrowBack, 
   MdSend, 
@@ -13,13 +14,67 @@ import {
   MdLeaderboard,
   MdBolt,
   MdCalendarToday,
-  MdExpandMore
+  MdExpandMore,
+  MdCopyAll
 } from 'react-icons/md';
 
 const SendNoti: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [notiType, setNotiType] = useState('System Update');
   const [priority, setPriority] = useState('High');
+  const [loading, setLoading] = useState(false);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImageUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSend = async () => {
+    // For Login Banners, title and content are optional if there's an image
+    const isBanner = notiType === 'Login Banner';
+    if (!isBanner && (!title || !content)) {
+      alert('Please fill in title and content');
+      return;
+    }
+
+    if (isBanner && !imageUrl) {
+       alert('Please upload a graphic for the Login Banner');
+       return;
+    }
+
+    setLoading(true);
+    try {
+      // imageFile contains the actual binary if uploaded, otherwise we use the imageUrl
+      console.log('Dispatching notification with file:', imageFile?.name || 'URL only');
+      
+      await adminService.sendNotification({
+        title,
+        content,
+        type: notiType,
+        priority,
+        image_url: imageUrl,
+        audience: 'All Players',
+      });
+      alert('Notification sent successfully!');
+      onBack();
+    } catch (err: unknown) {
+      console.error(err);
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+      alert('Failed to send notification: ' + errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -51,9 +106,12 @@ const SendNoti: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 <div className="relative group">
                   <select 
                     title="Notification Type"
+                    value={notiType}
+                    onChange={(e) => setNotiType(e.target.value)}
                     className="w-full bg-muted/50 dark:bg-background border border-border dark:border-white/5 text-foreground rounded-xl px-4 py-3 focus:outline-none focus:border-primary transition-all appearance-none font-black text-xs uppercase tracking-widest cursor-pointer shadow-inner"
                   >
                     <option>System Update</option>
+                    <option>Login Banner</option>
                     <option>Transactional</option>
                     <option>Promotional Offer</option>
                     <option>Maintenance Alert</option>
@@ -81,7 +139,9 @@ const SendNoti: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             </div>
             
             <div>
-              <label className="block text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-3 ml-2">Notification Title</label>
+              <label className="block text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-3 ml-2">
+                Notification Title {notiType === 'Login Banner' && '(Optional)'}
+              </label>
               <input 
                 type="text"
                 value={title}
@@ -92,13 +152,50 @@ const SendNoti: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             </div>
             
             <div>
-              <label className="block text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-3 ml-2">Message Content</label>
+              <label className="block text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-3 ml-2">
+                Message Content {notiType === 'Login Banner' && '(Optional)'}
+              </label>
               <textarea 
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                className="w-full bg-muted/50 dark:bg-background border border-border dark:border-white/5 text-foreground rounded-xl px-4 py-3 focus:outline-none focus:border-primary placeholder:text-muted-foreground/40 dark:placeholder-white/20 transition-all resize-none min-h-32 font-bold text-sm leading-relaxed shadow-inner" 
+                className="w-full bg-muted/50 dark:bg-background border border-border dark:border-white/5 text-foreground rounded-xl px-4 py-3 focus:outline-none focus:border-primary placeholder:text-muted-foreground/40 dark:placeholder-white/20 transition-all resize-none min-h-24 font-bold text-sm leading-relaxed shadow-inner" 
                 placeholder="Enter the message detail here..."
               />
+            </div>
+
+            <div className="pt-2">
+              <label className="block text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-3 ml-2">Notification Image (Optional)</label>
+              <div className="flex gap-4 items-start">
+                <div className="flex-1">
+                  <div className="relative">
+                    <input 
+                      type="text"
+                      value={imageUrl.startsWith('data:') ? 'Local Image Selected' : imageUrl}
+                      onChange={(e) => setImageUrl(e.target.value)}
+                      className="w-full bg-muted/50 dark:bg-background border border-border dark:border-white/5 text-foreground rounded-xl px-4 py-3 focus:outline-none focus:border-primary placeholder:text-muted-foreground/40 dark:placeholder-white/20 transition-all font-bold text-[10px] tracking-tight shadow-inner" 
+                      placeholder="Paste Image URL or use upload -->" 
+                    />
+                  </div>
+                </div>
+                
+                <label className="cursor-pointer bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 px-4 py-3 rounded-xl transition-all flex items-center gap-2 group">
+                   <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
+                   <MdCopyAll className="text-lg group-hover:scale-110 transition-transform" />
+                   <span className="text-[10px] font-black uppercase tracking-widest">Upload</span>
+                </label>
+              </div>
+
+              {imageUrl && (
+                <div className="mt-4 relative group rounded-2xl overflow-hidden border border-border bg-muted aspect-video shadow-2xl">
+                  <img src={imageUrl} alt="Banner Preview" className="w-full h-full object-cover" />
+                  <button 
+                    onClick={() => {setImageUrl(''); setImageFile(null);}}
+                    className="absolute top-2 right-2 bg-black/60 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <MdArrowBack className="rotate-45" />
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
@@ -151,9 +248,13 @@ const SendNoti: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
           {/* Actions */}
           <div className="flex gap-4 pt-4">
-            <button className="flex-1 bg-primary text-white dark:text-black font-black uppercase tracking-widest py-5 rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-3 text-xs">
+            <button 
+              onClick={handleSend}
+              disabled={loading}
+              className={`flex-1 bg-primary text-white dark:text-black font-black uppercase tracking-widest py-5 rounded-2xl transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-3 text-xs ${loading ? 'opacity-50 cursor-not-allowed' : 'hover:scale-[1.02] active:scale-[0.98]'}`}
+            >
               <MdSend className="text-lg" />
-              Send Notification
+              {loading ? 'Sending...' : 'Send Notification'}
             </button>
             <button className="flex-1 bg-muted/30 dark:bg-white/5 border border-border dark:border-white/5 text-foreground font-black uppercase tracking-widest py-5 rounded-2xl hover:bg-muted dark:hover:bg-white/10 active:scale-[0.98] transition-all flex items-center justify-center gap-3 text-xs">
               <MdSave className="text-lg" />
@@ -188,16 +289,23 @@ const SendNoti: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                   </div>
 
                   {/* Notification Card */}
-                  <div className="bg-white/90 dark:bg-background/95 backdrop-blur-2xl p-4 rounded-2xl shadow-2xl border border-border transform transition-all duration-300 scale-100 animate-pulse-subtle">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-5 h-5 bg-primary rounded flex items-center justify-center text-[10px] text-white font-black">P</div>
-                      <span className="text-[10px] font-black text-foreground/70 uppercase tracking-widest">Playza</span>
-                      <span className="text-[10px] font-bold text-muted-foreground/70 ml-auto lowercase">now</span>
+                  <div className="bg-white/90 dark:bg-background/95 backdrop-blur-2xl p-0 rounded-2xl shadow-2xl border border-border transform transition-all duration-300 scale-100 overflow-hidden animate-pulse-subtle">
+                    {imageUrl && (
+                      <div className="w-full h-24 bg-muted overflow-hidden border-b border-border">
+                         <img src={imageUrl} alt="Banner" className="w-full h-full object-cover" />
+                      </div>
+                    )}
+                    <div className="p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-5 h-5 bg-primary rounded flex items-center justify-center text-[10px] text-white font-black">P</div>
+                        <span className="text-[10px] font-black text-foreground/70 uppercase tracking-widest">Playza</span>
+                        <span className="text-[10px] font-bold text-muted-foreground/70 ml-auto lowercase">now</span>
+                      </div>
+                      <h4 className="text-sm font-black text-foreground mb-1 line-clamp-1">{title || 'Your Title'}</h4>
+                      <p className="text-[10px] leading-relaxed text-muted-foreground font-bold line-clamp-3">
+                        {content || 'Enter message content to see live preview on this device...'}
+                      </p>
                     </div>
-                    <h4 className="text-sm font-black text-foreground mb-1 line-clamp-1">{title || 'Your Title'}</h4>
-                    <p className="text-[10px] leading-relaxed text-muted-foreground font-bold line-clamp-3">
-                      {content || 'Enter message content to see live preview on this device...'}
-                    </p>
                   </div>
                 </div>
 

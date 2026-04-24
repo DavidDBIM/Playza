@@ -2,10 +2,9 @@ import React, { useState } from 'react';
 import NotiHistory from '../components/notifications/NotiHistory';
 import SendNoti from '../components/notifications/SendNoti';
 import Templates from '../components/notifications/Templates';
-import NotificationDetails from '../components/notifications/NotificationDetails';
 import { MdHistory, MdSend, MdCopyAll, MdNotifications } from 'react-icons/md';
 
-type NotiTab = 'history' | 'send' | 'templates' | 'details';
+type NotiTab = 'history' | 'send' | 'templates';
 
 const Notifications: React.FC = () => {
   const [activeTab, setActiveTab] = useState<NotiTab>('history');
@@ -18,8 +17,6 @@ const Notifications: React.FC = () => {
         return <SendNoti onBack={() => setActiveTab('history')} />;
       case 'templates':
         return <Templates />;
-      case 'details':
-        return <NotificationDetails />;
       default:
         return <NotiHistory />;
     }
