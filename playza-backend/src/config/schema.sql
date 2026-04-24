@@ -276,3 +276,29 @@ create trigger ludo_rooms_updated_at before update on ludo_rooms
   for each row execute function update_updated_at();
 
 alter table ludo_rooms enable row level security;
+
+-- NOTIFICATIONS
+create table if not exists notifications (
+  id uuid primary key default uuid_generate_v4(),
+  title text, -- Optional for Banners
+  content text, -- Optional for Banners
+  image_url text,
+  type text not null default 'System Update',
+  priority text not null default 'High',
+  audience text not null default 'All Players',
+  status text not null default 'sent',
+  created_at timestamptz default now()
+);
+
+alter table notifications enable row level security;
+
+-- PUSH TOKENS (For Web Push Notifications)
+create table if not exists push_tokens (
+  id uuid primary key default uuid_generate_v4(),
+  user_id uuid not null references users(id) on delete cascade,
+  token text not null unique,
+  device_type text, -- 'web', 'ios', 'android'
+  created_at timestamptz default now()
+);
+
+alter table push_tokens enable row level security;
