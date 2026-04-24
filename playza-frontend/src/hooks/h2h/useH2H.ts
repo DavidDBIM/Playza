@@ -4,10 +4,11 @@ import { speedBattleApi } from "@/api/speedbattle.api";
 import { wordScrambleApi } from "@/api/wordscramble.api";
 import { poolApi } from "@/api/poolApi";
 import * as ludoApi from "@/api/ludo.api";
+import * as soccerApi from "@/api/soccer.api";
 import { supabase } from "@/config/supabase";
 import { useEffect } from "react";
 
-export type GameType = "chess" | "speed-battle" | "word-scramble" | "pool" | "arena-duel" | "ludo";
+export type GameType = "chess" | "speed-battle" | "word-scramble" | "pool" | "arena-duel" | "ludo" | "soccer";
 
 export interface GameApi {
   getRoom?: (roomId: string) => Promise<unknown>;
@@ -24,6 +25,7 @@ export const getApiForGame = (gameType: GameType): GameApi => {
   if (gameType === "word-scramble") return wordScrambleApi as unknown as GameApi;
   if (gameType === "pool") return poolApi as unknown as GameApi;
   if (gameType === "ludo") return ludoApi as unknown as GameApi;
+  if (gameType === "soccer") return soccerApi as unknown as GameApi;
   if (gameType === "chess") return chessApi as unknown as GameApi;
   return chessApi as unknown as GameApi; // Fallback
 };
@@ -35,6 +37,7 @@ export const useWaitingRooms = (gameType: GameType) => {
       if (gameType === "chess") return chessApi.getWaitingRooms();
       if (gameType === "ludo") return ludoApi.getWaitingRooms();
       if (gameType === "pool") return poolApi.listRooms();
+      if (gameType === "soccer") return soccerApi.getWaitingRooms();
       return [];
     },
     staleTime: 1000 * 5, // 5 seconds
@@ -48,8 +51,13 @@ export const useH2HRoom = (roomId: string | undefined, gameType: GameType) => {
   useEffect(() => {
     if (!roomId) return;
 
-    const table = gameType === "ludo" ? "ludo_rooms" : "chess_rooms";
-    
+    const table =
+      gameType === "ludo"
+        ? "ludo_rooms"
+        : gameType === "soccer"
+        ? "soccer_rooms"
+        : "chess_rooms";
+
     const channel = supabase
       .channel(`room-${roomId}`)
       .on(
@@ -78,7 +86,8 @@ export const useH2HRoom = (roomId: string | undefined, gameType: GameType) => {
       if (!roomId) throw new Error("Room ID required");
       if (gameType === "chess") return chessApi.getChessRoom(roomId);
       if (gameType === "ludo") return ludoApi.getLudoRoom(roomId);
-      
+      if (gameType === "soccer") return soccerApi.getSoccerRoom(roomId);
+
       const api = getApiForGame(gameType);
       if (api.getRoom) {
         return api.getRoom(roomId);
@@ -103,6 +112,7 @@ export const useH2HMutations = (gameType: GameType) => {
     mutationFn: (stake: number) => {
       if (gameType === "chess") return chessApi.createChessRoom(stake);
       if (gameType === "ludo") return ludoApi.createLudoRoom(stake);
+      if (gameType === "soccer") return soccerApi.createSoccerRoom(stake);
       if (!api.createRoom) throw new Error("Creation not supported for this game");
       return api.createRoom(stake);
     },
@@ -112,6 +122,7 @@ export const useH2HMutations = (gameType: GameType) => {
     mutationFn: (stake: number) => {
       if (gameType === "chess") return chessApi.createBotRoom(stake);
       if (gameType === "ludo") return ludoApi.createBotRoom(stake);
+      if (gameType === "soccer") return soccerApi.createBotRoom(stake);
       if (!api.createRoom) throw new Error("Bot match not supported for this game");
       return api.createRoom(stake, true, "medium");
     },
@@ -121,6 +132,7 @@ export const useH2HMutations = (gameType: GameType) => {
     mutationFn: (code: string) => {
       if (gameType === "chess") return chessApi.joinChessRoom(code);
       if (gameType === "ludo") return ludoApi.joinLudoRoom(code);
+      if (gameType === "soccer") return soccerApi.joinSoccerRoom(code);
       if (!api.joinRoom) throw new Error("Joining by code not supported");
       return api.joinRoom(code);
     },
@@ -130,6 +142,7 @@ export const useH2HMutations = (gameType: GameType) => {
     mutationFn: (stake: number) => {
       if (gameType === "chess") return chessApi.findQuickMatch(stake);
       if (gameType === "ludo") return ludoApi.findQuickMatch(stake);
+      if (gameType === "soccer") return soccerApi.findQuickMatch(stake);
       if (!api.findQuickMatch) throw new Error("Quick match not supported");
       return api.findQuickMatch(stake);
     },
