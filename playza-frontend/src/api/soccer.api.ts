@@ -1,5 +1,5 @@
+import { type GameState } from "../types/soccer";
 import axiosInstance from "./axiosInstance";
-
 export const createSoccerRoom = async (stake: number) => {
   const { data } = await axiosInstance.post("/soccer/create", { stake });
   return data.data;
@@ -15,13 +15,14 @@ export const joinSoccerRoom = async (code: string) => {
   return data.data;
 };
 
-export const getSoccerRoom = async (roomId: string) => {
-  const { data } = await axiosInstance.get(`/soccer/room/${roomId}`);
-  return data.data;
-};
-
-export const createBotRoom = async (stake: number, difficulty: "easy" | "medium" | "hard" = "medium") => {
-  const { data } = await axiosInstance.post("/soccer/bot", { stake, difficulty });
+export const createBotRoom = async (
+  stake: number,
+  difficulty: "easy" | "medium" | "hard" = "medium",
+) => {
+  const { data } = await axiosInstance.post("/soccer/bot", {
+    stake,
+    difficulty,
+  });
   return data.data;
 };
 
@@ -35,13 +36,17 @@ export const getWaitingRooms = async () => {
   return data.data;
 };
 
-export const updateGameState = async (roomId: string, gameState: any) => {
-  const { data } = await axiosInstance.post(`/soccer/room/${roomId}/state`, { gameState });
+export const updateGameState = async (roomId: string, gameState: GameState) => {
+  const { data } = await axiosInstance.post(`/soccer/room/${roomId}/state`, {
+    gameState,
+  });
   return data.data;
 };
 
 export const finishGame = async (roomId: string, winnerId: string | null) => {
-  const { data } = await axiosInstance.post(`/soccer/room/${roomId}/finish`, { winnerId });
+  const { data } = await axiosInstance.post(`/soccer/room/${roomId}/finish`, {
+    winnerId,
+  });
   return data.data;
 };
 
@@ -51,17 +56,24 @@ export const createTournament = async (params: {
   stake: number;
   difficulty?: "easy" | "medium" | "hard";
 }) => {
-  const { data } = await axiosInstance.post("/soccer/tournament/create", params);
+  const { data } = await axiosInstance.post(
+    "/soccer/tournament/create",
+    params,
+  );
   return data.data;
 };
 
 export const joinTournament = async (tournamentId: string) => {
-  const { data } = await axiosInstance.post(`/soccer/tournament/${tournamentId}/join`);
+  const { data } = await axiosInstance.post(
+    `/soccer/tournament/${tournamentId}/join`,
+  );
   return data.data;
 };
 
 export const getTournament = async (tournamentId: string) => {
-  const { data } = await axiosInstance.get(`/soccer/tournament/${tournamentId}`);
+  const { data } = await axiosInstance.get(
+    `/soccer/tournament/${tournamentId}`,
+  );
   return data.data;
 };
 
