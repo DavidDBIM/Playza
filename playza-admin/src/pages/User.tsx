@@ -92,8 +92,8 @@ const User: React.FC = () => {
 
   // Filtered Data Logic
   const filteredMatches = useMemo((): MatchRecord[] => {
-    if (!userDetails?.game_history) return [];
-    return userDetails.game_history
+    const history = userDetails?.game_history || [];
+    return history
       .filter((match) =>
         match.game_name.toLowerCase().includes(searchQuery.toLowerCase()),
       )
@@ -108,11 +108,77 @@ const User: React.FC = () => {
       }));
   }, [userDetails, searchQuery]);
 
+  const PZA_EVENT_LABELS: Record<string, string> = {
+    // Basic Onboarding
+    SIGNUP: 'Identity Created',
+    EMAIL_VERIFIED: 'Secure Link Verified',
+    PROFILE_COMPLETED: 'Bio-Data Synced',
+    AVATAR_UPLOADED: 'Visual ID Uplink',
+    
+    // Gameplay Milestones
+    FIRST_GAME_PLAYED: 'First Combat Deployment',
+    FIVE_GAMES_PLAYED: 'Combat Veteran (5 Sessions)',
+    TEN_GAMES_PLAYED: 'Elite Operator (10 Sessions)',
+    FIRST_TICKET_BOUGHT: 'Arena Access Purchased',
+    MATCH_COMPLETED: 'Mission Concluded',
+    MATCH_WON: 'Tactical Victory',
+    WIN_STREAK_3: 'Triple Threat Streak',
+    
+    // Tournaments
+    TOURNAMENT_JOINED: 'Championship Entry',
+    TOURNAMENT_FINISHED: 'Championship Finalized',
+    TOURNAMENT_WON: 'Championship Winner',
+    
+    // Game Streaks
+    STREAK_3_GAMES: 'Rapid Fire (3 Games)',
+    STREAK_7_GAMES: 'Week-Long Warrior',
+    STREAK_14_GAMES: 'Fortnight Fighter',
+    STREAK_21_GAMES: 'Relentless Competitor',
+    STREAK_30_GAMES: 'Monthly Legend',
+    
+    // Referrals
+    REFERRAL_SIGNED_UP: 'Recruit Onboarded',
+    REFERRAL_EMAIL_VERIFIED: 'Recruit Verified',
+    REFERRAL_FIRST_DEPOSIT: 'Recruit Initial Funding',
+    REFERRAL_DEPOSIT_1K: 'Recruit High-Value Funding',
+    REFERRAL_DEPOSIT_10K: 'Whale Recruit Funding',
+    REFERRAL_FIRST_GAME: 'Recruit Combat Deployment',
+    REFERRAL_FIVE_GAMES: 'Active Squad Performance',
+    REFERRAL_TEN_GAMES: 'Elite Squad Performance',
+    REFERRAL_CAMPAIGN_JOINED: 'Affiliate Program Entry',
+    
+    // Ranks
+    RANK_BRONZE: 'Bronze Tier Achievement',
+    RANK_SILVER: 'Silver Tier Achievement',
+    RANK_GOLD: 'Gold Tier Achievement',
+    RANK_PLATINUM: 'Platinum Tier Achievement',
+    
+    // Community & Engagement
+    WEEKLY_LEADERBOARD_TOP: 'Global Top Ranking',
+    MATCH_COMMENT: 'Intel Shared',
+    CONTENT_LIKED_SHARED: 'Social Amplification',
+    COMMUNITY_EVENT_JOINED: 'Faction Gathering',
+    CHEATER_REPORTED: 'Justice Protocol Initiated',
+    CONTENT_CREATED: 'Asset Created',
+    WEEKEND_CHALLENGE: 'Special Op Victory',
+    HOLIDAY_TOURNAMENT: 'Season Event Winner',
+    DAILY_STREAK_CLAIM: 'Daily Loyalty Check-in',
+    FIRST_100_TICKET: 'Early Adopter Purchase',
+    FIRST_100_EVENT: 'Genesis Event Participation',
+  };
+
   const filteredLoyalty = useMemo(() => {
-    if (!userDetails?.pza_history) return [];
-    return userDetails.pza_history.filter((event) =>
-      event.event_type.toLowerCase().includes(searchQuery.toLowerCase()),
-    );
+    const history = userDetails?.pza_history || [];
+    return history
+      .filter((event) => {
+        const label = PZA_EVENT_LABELS[event.event_type] || event.event_type;
+        return label.toLowerCase().includes(searchQuery.toLowerCase()) || 
+               event.event_type.toLowerCase().includes(searchQuery.toLowerCase());
+      })
+      .map(event => ({
+        ...event,
+        event_type: PZA_EVENT_LABELS[event.event_type] || event.event_type.replace(/_/g, ' ')
+      }));
   }, [userDetails, searchQuery]);
 
   const filteredTransactions = useMemo((): TransactionRecord[] => {
