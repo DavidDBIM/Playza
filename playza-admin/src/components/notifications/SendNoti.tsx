@@ -42,7 +42,7 @@ const SendNoti: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
   const handleSend = async () => {
     // Title and Content are only required if no image is provided.
-    // If there's an image, we assume the message is in the graphic.
+    const isBanner = notiType === 'Login Banner';
     if (!imageUrl && (!title || !content)) {
       alert('Please provide either an image OR a title and content.');
       return;
