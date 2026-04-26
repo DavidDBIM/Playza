@@ -3,9 +3,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { IoClose } from 'react-icons/io5';
 
 import { useActiveBanner } from '../hooks/notifications/useNotifications';
+import { useNavigate } from 'react-router';
+
 
 const NotificationBanner: React.FC = () => {
   const { data: banner, isSuccess } = useActiveBanner();
+  const navigate = useNavigate();
   const [isDismissed, setIsDismissed] = useState(false);
 
   // Derive visibility: Show if we have a banner, it's not dismissed, 
@@ -13,12 +16,24 @@ const NotificationBanner: React.FC = () => {
   const lastShownId = sessionStorage.getItem('last_banner_id');
   const shouldShow = isSuccess && banner && !isDismissed && lastShownId !== banner.id;
 
-  // When the user closes the banner, we mark it as dismissed and update storage
   const handleClose = () => {
     setIsDismissed(true);
     if (banner) {
       sessionStorage.setItem('last_banner_id', banner.id);
     }
+  };
+
+  const handleAction = () => {
+    if (banner?.link_url) {
+      // If it's a relative link (e.g. /games/chess), use navigate
+      if (banner.link_url.startsWith('/')) {
+        navigate(banner.link_url);
+      } else {
+        // If it's an external link, open in new tab or same tab
+        window.open(banner.link_url, '_blank');
+      }
+    }
+    handleClose();
   };
 
   if (!shouldShow || !banner) return null;
@@ -40,25 +55,26 @@ const NotificationBanner: React.FC = () => {
             <IoClose size={24} />
           </button>
 
-          {/* Banner Image */}
-          {banner.image_url && (
-            <div className="w-full aspect-video overflow-hidden">
-              <img 
+          {/* Banner Image / Content Area */}
+          <div 
+            onClick={handleAction}
+            className="w-full cursor-pointer overflow-hidden group"
+          >
+            {banner.image_url ? (
+              <motion.img 
+                whileHover={{ scale: 1.02 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
                 src={banner.image_url} 
-                alt={banner.title} 
+                alt={banner.title || 'Playza Announcement'} 
                 className="w-full h-full object-cover"
               />
-            </div>
-          )}
-
-          {/* Action Button */}
-          <div className="p-5">
-            <button 
-              onClick={handleClose}
-              className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase tracking-widest rounded-2xl transition-all shadow-lg shadow-indigo-500/20 active:scale-95"
-            >
-              Let's Play
-            </button>
+            ) : (
+              // Fallback if there's no image but somehow a banner is triggered
+              <div className="p-10 text-center">
+                <h3 className="text-xl font-black text-foreground">{banner.title}</h3>
+                <p className="mt-2 text-muted-foreground">{banner.content}</p>
+              </div>
+            )}
           </div>
         </motion.div>
       </div>

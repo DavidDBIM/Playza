@@ -5,6 +5,7 @@ export interface BannerData {
   title?: string;
   content?: string;
   image_url: string;
+  link_url?: string;
 }
 
 export interface RegisterPushPayload {
