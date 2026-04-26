@@ -37,7 +37,8 @@ router.get('/users', requireAuth, async (req: AuthRequest, res) => {
     const limit = parseInt(req.query.limit as string) || 20
     const search = (req.query.search as string) || ''
     const status = (req.query.status as string) || ''
-    const data = await getAllUsersAdmin(page, limit, search, status)
+    const period = (req.query.period as string) || ''
+    const data = await getAllUsersAdmin(page, limit, search, status, period)
     res.json({ success: true, data })
   } catch (err: any) {
     res.status(400).json({ success: false, message: err.message })

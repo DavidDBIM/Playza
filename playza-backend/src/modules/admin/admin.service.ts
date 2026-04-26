@@ -43,7 +43,7 @@ export async function getDashboardMetrics() {
   }
 }
 
-export async function getAllUsersAdmin(page = 1, limit = 20, search = '', status = '') {
+export async function getAllUsersAdmin(page = 1, limit = 20, search = '', status = '', period = '') {
   const from = (page - 1) * limit
   const to = from + limit - 1
 
@@ -66,6 +66,14 @@ export async function getAllUsersAdmin(page = 1, limit = 20, search = '', status
   if (status === 'active') query = query.eq('is_active', true).eq('is_email_verified', true)
   if (status === 'inactive') query = query.eq('is_active', false)
   if (status === 'unverified') query = query.eq('is_email_verified', false)
+
+  if (period && period !== 'all') {
+    const now = new Date()
+    if (period === 'today') now.setHours(0, 0, 0, 0)
+    else if (period === '7d') now.setDate(now.getDate() - 7)
+    else if (period === '30d') now.setDate(now.getDate() - 30)
+    query = query.gte('created_at', now.toISOString())
+  }
 
   const { data, error, count } = await query
 
