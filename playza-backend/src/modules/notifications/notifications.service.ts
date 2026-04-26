@@ -4,7 +4,7 @@ export async function getActiveBanners() {
   const { data, error } = await supabaseAdmin
     .from('notifications')
     .select('*')
-    .eq('type', 'Login Banner')
+    .in('type', ['Login Banner', 'Universal Announcement'])
     .eq('status', 'sent')
     .order('created_at', { ascending: false })
     .limit(1) // Just get the latest one

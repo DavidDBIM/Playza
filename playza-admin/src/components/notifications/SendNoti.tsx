@@ -121,7 +121,24 @@ const SendNoti: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                   <MdExpandMore className="absolute right-5 top-4 text-muted-foreground text-xl pointer-events-none" />
                 </div>
               </div>
-              <div className="col-span-1">
+                <div className="flex flex-wrap gap-2">
+                  {['System Update', 'Promotional Offer', 'Transactional', 'Maintenance Alert', 'Login Banner', 'Universal Announcement'].map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => setNotiType(t)}
+                      className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                        notiType === t 
+                          ? 'bg-primary text-white shadow-lg shadow-primary/20' 
+                          : 'bg-muted/30 dark:bg-white/5 text-muted-foreground hover:bg-muted/50 dark:hover:bg-white/10'
+                      }`}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="col-span-2">
                 <label className="block text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-3 ml-2">Priority Level</label>
                 <div className="flex gap-3">
                   <button 

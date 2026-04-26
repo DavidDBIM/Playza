@@ -13,15 +13,20 @@ const NotificationBanner: React.FC = () => {
   const navigate = useNavigate();
   const [isDismissed, setIsDismissed] = useState(false);
 
-  // Derive visibility: Show if we have a banner, it's not dismissed, 
-  // we are logged in, and we haven't shown this specific ID on this device yet.
-  const lastShownId = localStorage.getItem('playza_banner_last_seen_id');
-  const shouldShow = user && isSuccess && banner && !isDismissed && lastShownId !== banner.id;
+  // Determine storage type based on banner type
+  const isPermanent = banner?.type === 'Login Banner';
+  const storage = isPermanent ? localStorage : sessionStorage;
+  const storageKey = isPermanent ? 'playza_banner_last_seen_id' : 'playza_banner_dismissed_session_id';
+
+  // Derive visibility: Show if we have a banner, it's not dismissed in relevant storage, 
+  // we are logged in, and we haven't shown this specific ID yet.
+  const lastDismissedId = storage.getItem(storageKey);
+  const shouldShow = user && isSuccess && banner && !isDismissed && lastDismissedId !== banner.id;
 
   const handleClose = () => {
     setIsDismissed(true);
     if (banner) {
-      localStorage.setItem('playza_banner_last_seen_id', banner.id);
+      storage.setItem(storageKey, banner.id);
     }
   };
 
