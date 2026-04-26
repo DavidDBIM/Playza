@@ -15,6 +15,7 @@ import {
 import { useAuth } from "@/context/auth";
 import { ZASymbol } from "./currency/ZASymbol";
 import H2HNotification from "./h2h/H2HNotification";
+import NotificationPrompt from "./NotificationPrompt";
 
 const Header = () => {
   const { user, logout, isLoading } = useAuth();
@@ -31,6 +32,7 @@ const Header = () => {
 
   return (
     <header className="sticky top-0 z-50 glass border-b border-primary/20 w-full">
+      <NotificationPrompt />
       <div className="w-full max-w-400 mx-auto px-1.5 md:px-4 h-16 flex items-center justify-between">
         <div className="flex items-center gap-2 md:gap-12">
           <div className="flex items-center gap-2">

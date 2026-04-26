@@ -12,6 +12,7 @@ import { ToastProvider } from "./context/ToastContext";
 import { useAuth } from "./context/auth";
 import { CompleteProfileModal } from "./components/profile/CompleteProfileModal";
 import { FloatingSpinNotification } from "./components/loyalty/FloatingSpinNotification";
+import NotificationBanner from "./components/NotificationBanner";
 
 // ─── Lazy pages ───────────────────────────────────────────────────────────────
 const Home = lazy(() => import("./pages/Home"));
@@ -151,6 +152,8 @@ const AppContent = () => {
       )}
 
       <FloatingSpinNotification />
+      <NotificationBanner />
+      <NotificationBanner />
 
       <div
         className={

@@ -8,8 +8,10 @@ import WordScrambleArena from '@/components/h2h/word-scramble/WordScrambleArena'
 import PoolArena from '@/components/h2h/pool/PoolArena';
 import ArenaDuel from '@/components/h2h/arena-duel/ArenaDuel';
 import LudoArena from '@/components/h2h/ludo/LudoArena';
+import SoccerArena from '@/components/h2h/soccer/SoccerArena';
 import * as chessApi from '@/api/chess.api';
 import { poolApi } from '@/api/poolApi';
+import * as soccerApi from '@/api/soccer.api';
 import { useH2HRoom, useH2HMutations, type GameType } from '@/hooks/h2h/useH2H';
 import { useAuth } from '@/context/auth';
 import type { PoolRoom } from '@/components/h2h/pool/game/pool/types';
@@ -98,8 +100,9 @@ const H2HZone = () => {
             onJoin={handleJoinRoom}
             onQuickMatch={handleQuickMatch}
             getWaitingRooms={
-              gameType === "chess" ? chessApi.getWaitingRooms : 
+              gameType === "chess" ? chessApi.getWaitingRooms :
               gameType === "pool" ? (poolApi.listRooms as unknown as () => Promise<ChessRoom[]>) :
+              gameType === "soccer" ? (soccerApi.getWaitingRooms as unknown as () => Promise<ChessRoom[]>) :
               async () => []
             }
             loading={loading}
@@ -178,6 +181,14 @@ const H2HZone = () => {
                         user={user}
                       />
                     );
+                  if (gameType === "soccer")
+                    return (
+                      <SoccerArena
+                        key={room.id}
+                        room={room as any}
+                        user={user}
+                      />
+                    );
                   return (
                     <ChessArena
                       key={room.id}
@@ -200,7 +211,9 @@ const H2HZone = () => {
                         gameType === "chess"
                           ? chessApi.getWaitingRooms :
                         gameType === "pool"
-                          ? (poolApi.listRooms as unknown as () => Promise<ChessRoom[]>)
+                          ? (poolApi.listRooms as unknown as () => Promise<ChessRoom[]>) :
+                        gameType === "soccer"
+                          ? (soccerApi.getWaitingRooms as unknown as () => Promise<ChessRoom[]>)
                           : async () => []
                       }
                       loading={loading}

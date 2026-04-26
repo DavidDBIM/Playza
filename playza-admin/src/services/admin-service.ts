@@ -4,6 +4,7 @@ import { userService } from "./user.service";
 import { transactionService } from "./transaction.service";
 import { referralService } from "./referral.service";
 import { leaderboardService } from "./leaderboard.service";
+import { notificationService } from "./notification.service";
 
 export const adminService = {
   ...authService,
@@ -12,6 +13,7 @@ export const adminService = {
   ...transactionService,
   ...referralService,
   ...leaderboardService,
+  ...notificationService,
   
   // Explicitly map names if they differ from old implementation
   getDashboardMetrics: dashboardService.getMetrics,
