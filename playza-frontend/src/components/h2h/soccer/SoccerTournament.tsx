@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { Trophy, Cpu } from "lucide-react";
 
-import { type Difficulty } from "@/types/soccer";
-import SoccerGame, { TEAM_COLORS } from "./SoccerGame";
+import { type Difficulty, TEAM_COLORS } from "@/types/soccer";
+import SoccerGame from "./SoccerGame";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type TournamentSize = 4 | 8 | 16 | 32;
@@ -205,7 +205,7 @@ const SoccerTournament: React.FC<SoccerTournamentProps> = ({
     setPhase("match");
   };
 
-  const handleMatchResult = (score: [number, number], winner: 0 | 1 | null) => {
+  const handleMatchResult = useCallback((score: [number, number], winner: 0 | 1 | null) => {
     if (!activeMatch || !tournament) return;
     const winnerTeam =
       winner === 0
@@ -228,7 +228,7 @@ const SoccerTournament: React.FC<SoccerTournamentProps> = ({
     setActiveMatch(null);
     if (updated.status === "finished") setPhase("champion");
     else setPhase("bracket");
-  };
+  }, [activeMatch, tournament]);
 
   // ── Bracket view
   if (phase === "bracket" && tournament) {
@@ -544,7 +544,7 @@ const SoccerTournament: React.FC<SoccerTournamentProps> = ({
             Team Colour
           </label>
           <div className="grid grid-cols-4 gap-2">
-            {TEAM_COLORS.map((tc, i) => (
+            {TEAM_COLORS.map((tc: { primary: string }, i: number) => (
               <button
                 key={i}
                 onClick={() => setMyColorIdx(i)}

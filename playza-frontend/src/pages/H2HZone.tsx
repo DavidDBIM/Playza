@@ -8,7 +8,7 @@ import WordScrambleArena from '@/components/h2h/word-scramble/WordScrambleArena'
 import PoolArena from '@/components/h2h/pool/PoolArena';
 import ArenaDuel from '@/components/h2h/arena-duel/ArenaDuel';
 import LudoArena from '@/components/h2h/ludo/LudoArena';
-import SoccerArena from '@/components/h2h/soccer/SoccerArena';
+import SoccerArena, { type SoccerRoom } from '@/components/h2h/soccer/SoccerArena';
 import * as chessApi from '@/api/chess.api';
 import { poolApi } from '@/api/poolApi';
 import * as soccerApi from '@/api/soccer.api';
@@ -185,7 +185,7 @@ const H2HZone = () => {
                     return (
                       <SoccerArena
                         key={room.id}
-                        room={room as any}
+                        room={room as unknown as SoccerRoom}
                         user={user}
                       />
                     );

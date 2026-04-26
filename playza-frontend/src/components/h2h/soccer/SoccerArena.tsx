@@ -5,12 +5,12 @@ import { useToast } from "@/context/toast";
 import { supabase } from "@/config/supabase";
 import H2HWinner from "@/components/h2h/H2HWinner";
 import type { UserProfile } from "@/context/auth";
-import { type GameState, type Difficulty, type GameMode } from "@/types/soccer";
-import SoccerGame, { TEAM_COLORS } from "./SoccerGame";
+import { type GameState, type Difficulty, type GameMode, TEAM_COLORS } from "@/types/soccer";
+import SoccerGame from "./SoccerGame";
 import SoccerTournament from "./SoccerTournament";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-interface SoccerRoom {
+export interface SoccerRoom {
   id: string;
   code: string;
   stake: number;

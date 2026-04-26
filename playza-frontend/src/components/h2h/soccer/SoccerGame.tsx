@@ -1,9 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-export type PitchTheme = "classic" | "night" | "snow" | "desert" | "neon";
-export type Difficulty = "easy" | "medium" | "hard";
-export type GameMode = "timed" | "sudden-death" | "tournament";
+import { type PitchTheme, type Difficulty, type GameMode, PITCH_THEMES } from "@/types/soccer";
 
 interface Vec2 { x: number; y: number }
 
@@ -60,25 +56,7 @@ const PLAYER_SPEED = 2.8;
 const BALL_MAX_SPEED = 15;
 const GAME_DURATION = 5 * 60;
 
-// Team colours matching the video (blue vs red)
-export const TEAM_COLORS = [
-  { primary: "#e63946", secondary: "#fff", name: "Red Devils" },
-  { primary: "#1a8cff", secondary: "#fff", name: "Blue Force" },
-  { primary: "#FFD700", secondary: "#000", name: "Gold Kings" },
-  { primary: "#4CAF50", secondary: "#fff", name: "Green Giants" },
-  { primary: "#9C27B0", secondary: "#fff", name: "Purple Reign" },
-  { primary: "#FF9800", secondary: "#000", name: "Orange Blaze" },
-  { primary: "#ffffff", secondary: "#222", name: "White Wolves" },
-  { primary: "#111111", secondary: "#fff", name: "Black Panther" },
-];
-
-export const PITCH_THEMES: Record<PitchTheme, { floor: string; floorAlt: string; line: string; wall: string; goal: string; crowd: string }> = {
-  classic: { floor: "#4a7c59", floorAlt: "#3d6b4a", line: "rgba(255,255,255,0.85)", wall: "#2a3a8a", goal: "#ddd", crowd: "#8B7355" },
-  night:   { floor: "#1a2f1f", floorAlt: "#162819", line: "rgba(100,200,255,0.8)", wall: "#0a0a3a", goal: "#aaa", crowd: "#333" },
-  snow:    { floor: "#c8dff0", floorAlt: "#b8d0e8", line: "rgba(80,120,200,0.8)", wall: "#6080b0", goal: "#fff", crowd: "#9aabbc" },
-  desert:  { floor: "#c8952a", floorAlt: "#b8851a", line: "rgba(255,240,180,0.8)", wall: "#7a3a10", goal: "#e8d080", crowd: "#9a7040" },
-  neon:    { floor: "#050f08", floorAlt: "#040c06", line: "rgba(0,255,120,0.9)", wall: "#050520", goal: "#00ff88", crowd: "#050a05" },
-};
+// ─── Constants ────────────────────────────────────────────────────────────────
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function dist(a: Vec2, b: Vec2) { return Math.hypot(a.x - b.x, a.y - b.y); }
@@ -672,7 +650,7 @@ interface SoccerGameProps {
 
 const SoccerGame: React.FC<SoccerGameProps> = ({
   myTeam, team0Name, team1Name, team0Color, team1Color,
-  isBot, botDifficulty = "medium", gameMode = "timed",
+  botDifficulty = "medium", gameMode = "timed",
   onGoal, onGameOver, pitchTheme = "classic",
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -683,8 +661,6 @@ const SoccerGame: React.FC<SoccerGameProps> = ({
   const rafRef = useRef(0);
   const goalTimerRef = useRef(0);
   const kickoffTimerRef = useRef(0);
-  const [score, setScore] = useState<[number, number]>([0, 0]);
-  const [timeLeft, setTimeLeft] = useState(GAME_DURATION);
   const [overlayMsg, setOverlayMsg] = useState<string | null>("Kick Off!");
   const [theme, setTheme] = useState<PitchTheme>(pitchTheme);
   const [showPitchMenu, setShowPitchMenu] = useState(false);
@@ -729,8 +705,6 @@ const SoccerGame: React.FC<SoccerGameProps> = ({
             }
           }
         }
-        setScore([...stateRef.current.score] as [number, number]);
-        setTimeLeft(Math.max(0, stateRef.current.timeLeft));
       } else if (s.phase === "goal") {
         goalTimerRef.current++;
         if (goalTimerRef.current === 1) {
@@ -800,7 +774,7 @@ const SoccerGame: React.FC<SoccerGameProps> = ({
 
     rafRef.current = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(rafRef.current);
-  }, [theme, team0Color, team1Color, team0Name, team1Name, gameMode, myTeam]);
+  }, [theme, team0Color, team1Color, team0Name, team1Name, gameMode, myTeam, onGoal, onGameOver]);
 
   // Keyboard
   useEffect(() => {
@@ -858,9 +832,6 @@ const SoccerGame: React.FC<SoccerGameProps> = ({
     inputRef.current = { x: 0, y: 0 };
     setJoystickVis(v => ({ ...v, active: false, dx: 0, dy: 0 }));
   }, []);
-
-  const t0Color = team0Color.startsWith("#") ? team0Color : "#e63946";
-  const t1Color = team1Color.startsWith("#") ? team1Color : "#1a8cff";
 
   return (
     <div className="flex flex-col items-center w-full select-none bg-[#0a0a1e]" style={{ fontFamily: "Arial, sans-serif" }}>
@@ -995,4 +966,3 @@ const SoccerGame: React.FC<SoccerGameProps> = ({
 };
 
 export default SoccerGame;
-export { type PitchTheme, type Difficulty, type GameMode };
