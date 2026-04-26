@@ -102,25 +102,9 @@ const SendNoti: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         <div className="col-span-12 lg:col-span-7 space-y-5">
           {/* Basic Info & Type */}
           <div className="glass-card rounded-xl p-5 space-y-5 border border-border dark:border-white/5 bg-white/30 dark:bg-white/5 shadow-xl">
-            <div className="grid grid-cols-2 gap-5">
-              <div className="col-span-1">
+            <div className="space-y-6">
+              <div>
                 <label className="block text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-3 ml-2">Notification Type</label>
-                <div className="relative group">
-                  <select 
-                    title="Notification Type"
-                    value={notiType}
-                    onChange={(e) => setNotiType(e.target.value)}
-                    className="w-full bg-muted/50 dark:bg-background border border-border dark:border-white/5 text-foreground rounded-xl px-4 py-3 focus:outline-none focus:border-primary transition-all appearance-none font-black text-xs uppercase tracking-widest cursor-pointer shadow-inner"
-                  >
-                    <option>System Update</option>
-                    <option>Login Banner</option>
-                    <option>Transactional</option>
-                    <option>Promotional Offer</option>
-                    <option>Maintenance Alert</option>
-                  </select>
-                  <MdExpandMore className="absolute right-5 top-4 text-muted-foreground text-xl pointer-events-none" />
-                </div>
-              </div>
                 <div className="flex flex-wrap gap-2">
                   {['System Update', 'Promotional Offer', 'Transactional', 'Maintenance Alert', 'Login Banner', 'Universal Announcement'].map((t) => (
                     <button
@@ -138,7 +122,8 @@ const SendNoti: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                   ))}
                 </div>
               </div>
-              <div className="col-span-2">
+
+              <div>
                 <label className="block text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-3 ml-2">Priority Level</label>
                 <div className="flex gap-3">
                   <button 
