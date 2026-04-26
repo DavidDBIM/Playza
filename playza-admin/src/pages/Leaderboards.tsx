@@ -12,7 +12,6 @@ import LoyaltyLeaderboardTable from "../components/leaderboards/LoyaltyLeaderboa
 import { useNavigate, useLocation, useMatch } from "react-router";
 import { useEffect } from "react";
 import { 
-  useAdminGamesLeaderboard, 
   useAdminLoyaltyLeaderboard, 
   useAdminReferralLeaderboard 
 } from "../hooks/use-leaderboard";
@@ -45,6 +44,27 @@ interface LoyaltyEntry {
   pza_points: number;
 }
 
+const MOCK_GAMES_DATA: GameData[] = [
+  {
+    slug: 'chess',
+    name: 'Chess',
+    leaderboard: [
+      { rank: 1, username: 'grandmaster_x', avatar_url: null, wins: 142, total_winnings: 450000 },
+      { rank: 2, username: 'pawn_king', avatar_url: null, wins: 128, total_winnings: 380000 },
+      { rank: 3, username: 'queen_slayer', avatar_url: null, wins: 95, total_winnings: 250000 },
+    ]
+  },
+  {
+    slug: 'speedbattle',
+    name: 'Speed Battle',
+    leaderboard: [
+      { rank: 1, username: 'flash_typer', avatar_url: null, wins: 850, total_winnings: 1200000 },
+      { rank: 2, username: 'keyboard_warrior', avatar_url: null, wins: 720, total_winnings: 950000 },
+      { rank: 3, username: 'sonic_bits', avatar_url: null, wins: 640, total_winnings: 820000 },
+    ]
+  }
+];
+
 const Leaderboards: React.FC = () => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -59,7 +79,7 @@ const Leaderboards: React.FC = () => {
   const sessionMatch = useMatch("/leaderboards/game/:sessionId");
   const activeSessionId = sessionMatch?.params.sessionId;
 
-  const { data: gamesData, isLoading: isLoadingGames, refetch: refetchGames } = useAdminGamesLeaderboard(dateFilter);
+  // We omit Games leaderboard hook for now since it strictly uses Demo Data
   const { data: loyaltyData, isLoading: isLoadingLoyalty, refetch: refetchLoyalty } = useAdminLoyaltyLeaderboard(dateFilter);
   const { data: referralData, isLoading: isLoadingReferral, refetch: refetchReferral } = useAdminReferralLeaderboard(dateFilter);
 
@@ -77,8 +97,7 @@ const Leaderboards: React.FC = () => {
   };
 
   const handleRefresh = () => {
-    if (activeTab === "Games") refetchGames();
-    else if (activeTab === "Loyalty") refetchLoyalty();
+    if (activeTab === "Loyalty") refetchLoyalty();
     else if (activeTab === "Referrals") refetchReferral();
   };
 
@@ -125,7 +144,7 @@ const Leaderboards: React.FC = () => {
             className="p-2 rounded-lg text-muted-foreground hover:bg-muted transition-all"
           >
             <MdRefresh
-              className={`text-lg transition-transform hover:rotate-180 duration-500 ${(isLoadingGames || isLoadingLoyalty || isLoadingReferral) ? 'animate-spin' : ''}`}
+              className={`text-lg transition-transform hover:rotate-180 duration-500 ${(isLoadingLoyalty || isLoadingReferral) ? 'animate-spin' : ''}`}
             />
           </button>
         </div>
@@ -161,9 +180,8 @@ const Leaderboards: React.FC = () => {
       <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
         {activeTab === "Games" && (
           <div className="grid grid-cols-1 gap-8">
-            {isLoadingGames ? (
-               <div className="py-20 text-center opacity-30">Syncing Battle Data...</div>
-            ) : (gamesData as GameData[] | undefined)?.map((game) => (
+            {/* Games 'don't have life' yet, so we strictly use DEMO data as requested */}
+            {MOCK_GAMES_DATA.map((game) => (
               <GameLeaderboardCard
                 key={game.slug}
                 game={{
@@ -186,14 +204,21 @@ const Leaderboards: React.FC = () => {
 
         {activeTab === "Referrals" && (
           isLoadingReferral ? (
-            <div className="py-20 text-center opacity-30">Decrypting Referral Network...</div>
+            <div className="flex flex-col items-center justify-center py-20 gap-4">
+              <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] opacity-30">Decrypting Referral Network...</span>
+            </div>
           ) : (
-            <ReferralLeaderboardTable data={(referralData as ReferralEntry[] | undefined)?.map((r) => ({
+            <ReferralLeaderboardTable data={(
+              (referralData && (referralData as ReferralEntry[]).length > 0) 
+                ? (referralData as ReferralEntry[]) 
+                : [] // Show empty if no real data, or MOCK_REFERRAL_DATA if you still want fallback
+            ).map((r) => ({
               rank: r.rank,
               username: r.username,
               avatar: r.avatar_url || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200",
               referrals: r.total_referrals,
-              earnings: 0, // Not tracked in backend yet
+              earnings: 0, 
               status: "ACTIVE"
             })) || []} />
           )
@@ -201,9 +226,16 @@ const Leaderboards: React.FC = () => {
 
         {activeTab === "Loyalty" && (
           isLoadingLoyalty ? (
-            <div className="py-20 text-center opacity-30">Scanning Loyalty Protocols...</div>
+            <div className="flex flex-col items-center justify-center py-20 gap-4">
+              <div className="w-10 h-10 border-4 border-amber-500/20 border-t-amber-500 rounded-full animate-spin" />
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] opacity-30">Scanning Loyalty Protocols...</span>
+            </div>
           ) : (
-            <LoyaltyLeaderboardTable data={(loyaltyData as LoyaltyEntry[] | undefined)?.map((l) => ({
+            <LoyaltyLeaderboardTable data={(
+              (loyaltyData && (loyaltyData as LoyaltyEntry[]).length > 0) 
+                ? (loyaltyData as LoyaltyEntry[]) 
+                : [] // Show empty if no real data
+            ).map((l) => ({
               rank: l.rank,
               username: l.username,
               avatar: l.avatar_url || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200",

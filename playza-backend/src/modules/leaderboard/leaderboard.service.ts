@@ -358,11 +358,23 @@ export async function getGameLeaderboard(game: GameSlug, period: LeaderboardPeri
 export async function getAllGamesLeaderboard(period: LeaderboardPeriod = 'all', limit = 50) {
   const games = Object.keys(GAME_NAMES) as GameSlug[]
   const results = await Promise.all(
-    games.map(async (slug) => ({
-      slug,
-      name: GAME_NAMES[slug],
-      leaderboard: await getGameLeaderboard(slug, period, limit),
-    }))
+    games.map(async (slug) => {
+      try {
+        const leaderboard = await getGameLeaderboard(slug, period, limit)
+        return {
+          slug,
+          name: GAME_NAMES[slug],
+          leaderboard: leaderboard || [],
+        }
+      } catch (err) {
+        console.error(`Error fetching leaderboard for ${slug}:`, err)
+        return {
+          slug,
+          name: GAME_NAMES[slug],
+          leaderboard: [],
+        }
+      }
+    })
   )
   return results
 }
