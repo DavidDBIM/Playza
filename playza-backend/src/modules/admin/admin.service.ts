@@ -1,4 +1,12 @@
 import { supabaseAdmin } from '../../config/supabase'
+import webpush from 'web-push'
+
+// Configure Web Push
+webpush.setVapidDetails(
+  process.env.VAPID_EMAIL || 'mailto:playzadevteam@gmail.com',
+  process.env.VAPID_PUBLIC_KEY || '',
+  process.env.VAPID_PRIVATE_KEY || ''
+)
 
 export async function getDashboardMetrics() {
   const [
@@ -257,6 +265,7 @@ export async function sendNotification(payload: {
     finalImageUrl = await uploadNotificationImage(payload.image_url);
   }
 
+  // 1. Save to database
   const { data, error } = await supabaseAdmin
     .from('notifications')
     .insert([
@@ -271,6 +280,46 @@ export async function sendNotification(payload: {
     .single()
 
   if (error) throw error
+
+  // 2. Trigger Push Delivery in background (don't await to keep Admin UI fast)
+  if (payload.type !== 'Login Banner') {
+    (async () => {
+      try {
+        const { data: subs } = await supabaseAdmin.from('push_tokens').select('token, id');
+        if (!subs || subs.length === 0) return;
+
+        const pushPayload = JSON.stringify({
+          title: payload.title,
+          body: payload.content,
+          image: finalImageUrl,
+          data: {
+            url: '/',
+            type: payload.type
+          }
+        });
+
+        const promises = subs.map(async (sub) => {
+          try {
+            // Some tokens might be old style strings, some new style JSON
+            const subscription = sub.token.startsWith('{') ? JSON.parse(sub.token) : null;
+            if (!subscription) return;
+
+            await webpush.sendNotification(subscription, pushPayload);
+          } catch (err: any) {
+            // If subscription is expired or invalid, remove it
+            if (err.statusCode === 410 || err.statusCode === 404) {
+              await supabaseAdmin.from('push_tokens').delete().eq('id', sub.id);
+            }
+          }
+        });
+
+        await Promise.allSettled(promises);
+      } catch (err) {
+        console.error('Push broadcast error:', err);
+      }
+    })();
+  }
+
   return data
 }
 

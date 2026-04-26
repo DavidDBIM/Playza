@@ -13,7 +13,9 @@ export async function getActiveBanners() {
   return data?.[0] || null
 }
 
-export async function registerPushToken(userId: string, token: string, deviceType: string = 'web') {
+export async function registerPushToken(userId: string, subscription: any, deviceType: string = 'web') {
+  const token = typeof subscription === 'string' ? subscription : JSON.stringify(subscription);
+  
   const { error } = await supabaseAdmin
     .from('push_tokens')
     .upsert({
