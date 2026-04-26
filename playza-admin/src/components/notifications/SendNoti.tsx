@@ -25,6 +25,7 @@ const SendNoti: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [notiType, setNotiType] = useState('System Update');
   const [priority, setPriority] = useState('High');
+  const [linkUrl, setLinkUrl] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -43,7 +44,7 @@ const SendNoti: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     // For Login Banners, title and content are optional if there's an image
     const isBanner = notiType === 'Login Banner';
     if (!isBanner && (!title || !content)) {
-      alert('Please fill in title and content');
+      alert('Please fill in title and content for push notifications');
       return;
     }
 
@@ -64,6 +65,7 @@ const SendNoti: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         priority,
         image_url: imageUrl,
         audience: 'All Players',
+        link_url: linkUrl,
       });
       alert('Notification sent successfully!');
       onBack();
@@ -160,6 +162,17 @@ const SendNoti: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 onChange={(e) => setContent(e.target.value)}
                 className="w-full bg-muted/50 dark:bg-background border border-border dark:border-white/5 text-foreground rounded-xl px-4 py-3 focus:outline-none focus:border-primary placeholder:text-muted-foreground/40 dark:placeholder-white/20 transition-all resize-none min-h-24 font-bold text-sm leading-relaxed shadow-inner" 
                 placeholder="Enter the message detail here..."
+              />
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-3 ml-2">Redirect URL (Optional)</label>
+              <input 
+                type="text"
+                value={linkUrl}
+                onChange={(e) => setLinkUrl(e.target.value)}
+                className="w-full bg-muted/50 dark:bg-background border border-border dark:border-white/5 text-foreground rounded-xl px-4 py-3 focus:outline-none focus:border-primary placeholder:text-muted-foreground/40 dark:placeholder-white/20 transition-all font-bold text-xs shadow-inner" 
+                placeholder="e.g. /games/chess or https://playza.games/..." 
               />
             </div>
 

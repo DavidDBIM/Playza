@@ -7,6 +7,7 @@ export interface NotificationPayload {
   type: string;
   priority: string;
   audience: string;
+  link_url?: string;
 }
 
 export interface Notification extends NotificationPayload {
