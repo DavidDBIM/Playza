@@ -24,13 +24,20 @@ const NotificationBanner: React.FC = () => {
   };
 
   const handleAction = () => {
-    if (banner?.link_url) {
+    let targetUrl = banner?.link_url;
+    
+    // Check if the link is hidden in the content (Metadata Shift)
+    if (!targetUrl && banner?.content?.includes('[PLAYZA_LINK]')) {
+      targetUrl = banner.content.split('[PLAYZA_LINK]')[1].trim();
+    }
+
+    if (targetUrl) {
       // If it's a relative link (e.g. /games/chess), use navigate
-      if (banner.link_url.startsWith('/')) {
-        navigate(banner.link_url);
+      if (targetUrl.startsWith('/')) {
+        navigate(targetUrl);
       } else {
         // If it's an external link, open in new tab or same tab
-        window.open(banner.link_url, '_blank');
+        window.open(targetUrl, '_blank');
       }
     }
     handleClose();

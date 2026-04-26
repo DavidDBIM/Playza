@@ -266,13 +266,17 @@ export async function sendNotification(payload: {
     finalImageUrl = await uploadNotificationImage(payload.image_url);
   }
 
-  // 1. Save to database
+  // 1. Save to database (only include columns that exist in the DB)
   const { data, error } = await supabaseAdmin
     .from('notifications')
     .insert([
       {
-        ...payload,
+        title: payload.title,
+        content: payload.link_url ? `${payload.content || ''} [PLAYZA_LINK]${payload.link_url}` : payload.content,
         image_url: finalImageUrl,
+        type: payload.type,
+        priority: payload.priority,
+        audience: payload.audience,
         status: 'sent',
         created_at: new Date().toISOString()
       }
