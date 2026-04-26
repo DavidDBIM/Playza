@@ -14,7 +14,6 @@ import {
   MdLeaderboard,
   MdBolt,
   MdCalendarToday,
-  MdExpandMore,
   MdCopyAll
 } from 'react-icons/md';
 
