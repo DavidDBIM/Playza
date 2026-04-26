@@ -4,17 +4,19 @@ import { IoClose } from 'react-icons/io5';
 
 import { useActiveBanner } from '../hooks/notifications/useNotifications';
 import { useNavigate } from 'react-router';
+import { useAuth } from '../context/auth';
 
 
 const NotificationBanner: React.FC = () => {
+  const { user } = useAuth();
   const { data: banner, isSuccess } = useActiveBanner();
   const navigate = useNavigate();
   const [isDismissed, setIsDismissed] = useState(false);
 
   // Derive visibility: Show if we have a banner, it's not dismissed, 
-  // and we haven't shown this specific ID in this session yet.
+  // we are logged in, and we haven't shown this specific ID in this session yet.
   const lastShownId = sessionStorage.getItem('last_banner_id');
-  const shouldShow = isSuccess && banner && !isDismissed && lastShownId !== banner.id;
+  const shouldShow = user && isSuccess && banner && !isDismissed && lastShownId !== banner.id;
 
   const handleClose = () => {
     setIsDismissed(true);

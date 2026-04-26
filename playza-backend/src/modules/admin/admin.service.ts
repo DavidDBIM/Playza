@@ -286,8 +286,8 @@ export async function sendNotification(payload: {
 
   if (error) throw error
 
-  // 2. Trigger Push Delivery in background (don't await to keep Admin UI fast)
-  if (payload.type !== 'Login Banner') {
+  // 2. Trigger Push Delivery in background (if text is provided)
+  if (payload.title || payload.content) {
     (async () => {
       try {
         const { data: subs } = await supabaseAdmin.from('push_tokens').select('token, id');
