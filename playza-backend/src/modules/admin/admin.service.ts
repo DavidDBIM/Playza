@@ -257,6 +257,7 @@ export async function sendNotification(payload: {
   type: string;
   priority: string;
   audience: string;
+  link_url?: string;
 }) {
   let finalImageUrl = payload.image_url;
 
@@ -293,7 +294,7 @@ export async function sendNotification(payload: {
           body: payload.content,
           image: finalImageUrl,
           data: {
-            url: '/',
+            url: payload.link_url || '/',
             type: payload.type
           }
         });
