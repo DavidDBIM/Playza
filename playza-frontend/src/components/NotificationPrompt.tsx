@@ -27,12 +27,7 @@ const NotificationPrompt: React.FC = () => {
   const handleEnable = async () => {
     const permission = await Notification.requestPermission();
     if (permission === 'granted') {
-      const mockToken = `web_push_${Math.random().toString(36).substring(2)}_${Date.now()}`;
-      
-      registerPush.mutate({ 
-        token: mockToken, 
-        deviceType: 'web' 
-      }, {
+      registerPush.mutate('web', {
         onSuccess: () => {
           setShowPrompt(false);
           // Mark as dismissed so it doesn't show again
