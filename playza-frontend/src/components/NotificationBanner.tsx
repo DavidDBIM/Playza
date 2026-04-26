@@ -14,14 +14,14 @@ const NotificationBanner: React.FC = () => {
   const [isDismissed, setIsDismissed] = useState(false);
 
   // Derive visibility: Show if we have a banner, it's not dismissed, 
-  // we are logged in, and we haven't shown this specific ID in this session yet.
-  const lastShownId = sessionStorage.getItem('last_banner_id');
+  // we are logged in, and we haven't shown this specific ID on this device yet.
+  const lastShownId = localStorage.getItem('playza_banner_last_seen_id');
   const shouldShow = user && isSuccess && banner && !isDismissed && lastShownId !== banner.id;
 
   const handleClose = () => {
     setIsDismissed(true);
     if (banner) {
-      sessionStorage.setItem('last_banner_id', banner.id);
+      localStorage.setItem('playza_banner_last_seen_id', banner.id);
     }
   };
 
@@ -49,7 +49,7 @@ const NotificationBanner: React.FC = () => {
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-xl">
         <motion.div 
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}

@@ -38,5 +38,9 @@ export function useNotifications() {
     totalPages,
     setPage,
     refresh: () => fetchHistory(page),
+    remove: async (id: string) => {
+      await notificationService.deleteNotification(id);
+      fetchHistory(page);
+    },
   };
 }

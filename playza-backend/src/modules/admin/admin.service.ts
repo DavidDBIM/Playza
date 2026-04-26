@@ -348,3 +348,12 @@ export async function getNotificationsHistory(page = 1, limit = 20) {
     total_pages: Math.ceil((count ?? 0) / limit),
   }
 }
+export async function deleteNotification(id: string) {
+  const { error } = await supabaseAdmin
+    .from('notifications')
+    .delete()
+    .eq('id', id)
+
+  if (error) throw error
+  return { success: true }
+}

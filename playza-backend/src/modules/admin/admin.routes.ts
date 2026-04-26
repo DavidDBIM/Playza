@@ -10,6 +10,7 @@ import {
   getTransactionByIdAdmin,
   sendNotification,
   getNotificationsHistory,
+  deleteNotification,
 } from './admin.service'
 import {
   getLoyaltyLeaderboard,
@@ -280,6 +281,15 @@ router.post('/notifications', requireAuth, async (req: AuthRequest, res) => {
   try {
     const data = await sendNotification(req.body)
     res.json({ success: true, data })
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message })
+  }
+})
+
+router.delete('/notifications/:id', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    await deleteNotification(req.params.id)
+    res.json({ success: true })
   } catch (err: any) {
     res.status(400).json({ success: false, message: err.message })
   }

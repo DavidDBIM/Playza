@@ -36,5 +36,10 @@ export const notificationService = {
       } 
     }>("/admin/notifications", { params: { page, limit } });
     return data.data;
+  },
+
+  deleteNotification: async (id: string) => {
+    const { data } = await apiClient.delete<{ success: boolean }>(`/admin/notifications/${id}`);
+    return data;
   }
 };

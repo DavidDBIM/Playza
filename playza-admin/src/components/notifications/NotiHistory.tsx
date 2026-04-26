@@ -14,7 +14,7 @@ import { useNotifications } from '../../hooks/use-notifications';
 
 const NotiHistory: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const { notifications, loading, total, page, totalPages, setPage, refresh } = useNotifications();
+  const { notifications, loading, total, page, totalPages, setPage, refresh, remove } = useNotifications();
 
   const getIcon = (type: string) => {
     switch (type.toLowerCase()) {
@@ -129,7 +129,19 @@ const NotiHistory: React.FC = () => {
                       })}
                     </td>
                     <td className="px-8 py-6 text-right">
-                      <button className="px-4 py-2 rounded-xl bg-muted/30 dark:bg-white/5 hover:bg-primary/10 hover:text-primary text-[10px] font-black uppercase tracking-widest transition-all">View</button>
+                      <div className="flex justify-end gap-2">
+                        <button className="px-4 py-2 rounded-xl bg-muted/30 dark:bg-white/5 hover:bg-primary/10 hover:text-primary text-[10px] font-black uppercase tracking-widest transition-all">View</button>
+                        <button 
+                          onClick={() => {
+                            if (window.confirm('Are you sure you want to delete this notification?')) {
+                              remove(noti.id);
+                            }
+                          }}
+                          className="px-4 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white text-[10px] font-black uppercase tracking-widest transition-all"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
