@@ -11,6 +11,7 @@ export const userService = {
     limit?: number; 
     search?: string; 
     status?: string; 
+    period?: string;
   }) => {
     const { data } = await apiClient.get<PaginatedResponse<UserAdmin, "users">>(
       "/admin/users", 

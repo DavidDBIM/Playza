@@ -28,10 +28,21 @@ const Users: React.FC = () => {
     }
   }, [statusFilter]);
 
+  // Map UI period filter to API period values
+  const apiPeriod = useMemo(() => {
+    switch (joinedFilter) {
+      case 'Today': return 'today';
+      case 'Past 7 Days': return '7d';
+      case 'Past 30 Days': return '30d';
+      default: return '';
+    }
+  }, [joinedFilter]);
+
   const { data, isLoading, isError, refetch } = useAdminUsers({
     page,
     search: searchQuery,
-    status: apiStatus
+    status: apiStatus,
+    period: apiPeriod
   });
 
   const users = useMemo((): UserRecord[] => {

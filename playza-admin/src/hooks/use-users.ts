@@ -6,6 +6,7 @@ export const useAdminUsers = (params: {
   limit?: number; 
   search?: string; 
   status?: string; 
+  period?: string;
 }) => {
   return useQuery({
     queryKey: ["admin", "users", params],
