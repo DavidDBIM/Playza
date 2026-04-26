@@ -62,7 +62,7 @@ const NotificationPrompt: React.FC = () => {
           initial={{ height: 0, opacity: 0 }}
           animate={{ height: 'auto', opacity: 1 }}
           exit={{ height: 0, opacity: 0 }}
-          className="relative z-10 bg-indigo-600 text-white overflow-hidden shadow-lg border-b border-white/10"
+          className="relative z-10 bg-indigo-600 text-white overflow-hidden shadow-lg "
         >
           <div className="max-w-7xl mx-auto py-1.5 md:py-3 px-3 md:px-6 flex items-center justify-between gap-2 md:gap-4">
             <div className="flex items-center gap-2 md:gap-3">
