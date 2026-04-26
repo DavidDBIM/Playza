@@ -211,7 +211,18 @@ export const LoyaltyLog = ({ data }: { data: UserHistoryItem[] }) => (
               <span className="font-black text-base text-amber-500">+{event.points_awarded}</span>
             </TableCell>
             <TableCell className="px-5 py-3.5 text-right">
-              <span className="text-[10px] font-black uppercase text-muted-foreground">{JSON.stringify(event.details || {})}</span>
+              <div className="flex flex-col items-end gap-1">
+                {Object.entries(event.details || (event as any).meta || {}).length > 0 ? (
+                  Object.entries(event.details || (event as any).meta || {}).map(([key, val]) => (
+                    <div key={key} className="flex items-center gap-1.5 bg-muted/50 px-2 py-0.5 rounded-md border border-border/50">
+                      <span className="text-[8px] font-black text-muted-foreground/60 uppercase tracking-tighter">{key}:</span>
+                      <span className="text-[9px] font-black text-foreground uppercase tracking-tight">{String(val)}</span>
+                    </div>
+                  ))
+                ) : (
+                  <span className="text-[9px] font-black text-muted-foreground/30 uppercase tracking-[0.2em]">Default Parameters</span>
+                )}
+              </div>
             </TableCell>
             <TableCell className="px-5 py-3.5 text-muted-foreground text-[10px] font-black uppercase tracking-widest">
               {new Date(event.created_at).toLocaleDateString()}
