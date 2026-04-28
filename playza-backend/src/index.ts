@@ -19,6 +19,7 @@ import ludoRoutes from './modules/ludo/ludo.routes'
 import soccerRoutes from './modules/soccer/soccer.routes'
 import leaderboardRoutes from './modules/leaderboard/leaderboard.routes'
 import notificationRoutes from './modules/notifications/notifications.routes'
+import feedbackRoutes from './modules/feedback/feedback.routes'
 
 dotenv.config()
 
@@ -58,6 +59,7 @@ app.use('/api/ludo', ludoRoutes)
 app.use('/api/soccer', soccerRoutes)
 app.use('/api/leaderboard', leaderboardRoutes)
 app.use('/api/notifications', notificationRoutes)
+app.use('/api/feedback', feedbackRoutes)
 
 app.use((req, res) => {
   res.status(404).json({ success: false, message: 'Route not found' })
