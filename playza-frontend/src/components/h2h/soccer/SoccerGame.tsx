@@ -42,12 +42,12 @@ interface GameState {
 const W = 780, H = 560;
 // Long horizontal pitch - like a real football pitch (width >> height)
 const PITCH = {
-  left: 28, right: 752,
+  left: 68, right: 712,
   top: 140, bottom: 430,
 };
 const PITCH_W = PITCH.right - PITCH.left; // 724px wide!
 const PITCH_H = PITCH.bottom - PITCH.top;  // 290px tall
-const GOAL_W = 80, GOAL_DEPTH = 26;
+const GOAL_W = 120, GOAL_DEPTH = 52;
 const PLAYER_R = 13;
 const BALL_R = 8;
 const FRICTION = 0.978;
@@ -322,25 +322,70 @@ function tick(s: GameState, inputDir: Vec2, doPass: boolean, doShoot: boolean, d
   ball.vx *= FRICTION; ball.vy *= FRICTION;
   ball.spin *= 0.95;
 
-  // Ball wall bounces
-  if (ball.y - BALL_R < PITCH.top) { ball.y = PITCH.top + BALL_R; ball.vy *= -0.65; }
+  // Ball wall bounces - top/bottom pitch boundary
+  if (ball.y - BALL_R < PITCH.top)    { ball.y = PITCH.top + BALL_R;    ball.vy *= -0.65; }
   if (ball.y + BALL_R > PITCH.bottom) { ball.y = PITCH.bottom - BALL_R; ball.vy *= -0.65; }
 
-  // Goal detection
-  const goalTop = (PITCH.top + PITCH.bottom) / 2 - GOAL_W / 2;
-  const goalBot = (PITCH.top + PITCH.bottom) / 2 + GOAL_W / 2;
+  // ── Goal & post physics ──────────────────────────────────────────────────
+  const goalMidY = (PITCH.top + PITCH.bottom) / 2;
+  const goalTop  = goalMidY - GOAL_W / 2;
+  const goalBot  = goalMidY + GOAL_W / 2;
+  const postR    = 4; // must match drawGoal postR
+
   let goalScored: 0 | 1 | null = null;
 
-  if (ball.x - BALL_R < PITCH.left && ball.y > goalTop && ball.y < goalBot) {
-    goalScored = 1; // team 1 scores in left goal
-  }
-  if (ball.x + BALL_R > PITCH.right && ball.y > goalTop && ball.y < goalBot) {
-    goalScored = 0; // team 0 scores in right goal
+  // Helper: is ball inside a goal mouth (between the posts)?
+  const inLeftGoal  = ball.y > goalTop + postR && ball.y < goalBot - postR;
+  const inRightGoal = ball.y > goalTop + postR && ball.y < goalBot - postR;
+
+  // ── LEFT GOAL ─────────────────────────────────────────────────────────────
+  if (ball.x - BALL_R < PITCH.left) {
+    if (inLeftGoal) {
+      // Ball entered the goal mouth — let it travel into the net
+      const backWall = PITCH.left - GOAL_DEPTH + BALL_R;
+      if (ball.x - BALL_R < backWall) {
+        // Hit the back wall → goal scored
+        goalScored = 1;
+        ball.x = backWall + BALL_R;
+        ball.vx *= -0.35; // dead bounce in net
+        ball.vy *= 0.7;
+      }
+      // Top/bottom inner post of left goal
+      if (ball.y - BALL_R < goalTop + postR) {
+        ball.y = goalTop + postR + BALL_R; ball.vy = Math.abs(ball.vy) * 0.6;
+      }
+      if (ball.y + BALL_R > goalBot - postR) {
+        ball.y = goalBot - postR - BALL_R; ball.vy = -Math.abs(ball.vy) * 0.6;
+      }
+    } else {
+      // Hit the goal post (not in opening) — bounce off front post
+      ball.x = PITCH.left + BALL_R; ball.vx = Math.abs(ball.vx) * 0.55;
+      ball.vy *= 0.8;
+    }
   }
 
-  // Side walls
-  if (ball.x - BALL_R < PITCH.left && goalScored === null) { ball.x = PITCH.left + BALL_R; ball.vx *= -0.65; }
-  if (ball.x + BALL_R > PITCH.right && goalScored === null) { ball.x = PITCH.right - BALL_R; ball.vx *= -0.65; }
+  // ── RIGHT GOAL ────────────────────────────────────────────────────────────
+  if (ball.x + BALL_R > PITCH.right) {
+    if (inRightGoal) {
+      const backWall = PITCH.right + GOAL_DEPTH - BALL_R;
+      if (ball.x + BALL_R > backWall) {
+        goalScored = 0;
+        ball.x = backWall - BALL_R;
+        ball.vx *= -0.35;
+        ball.vy *= 0.7;
+      }
+      // Top/bottom inner post of right goal
+      if (ball.y - BALL_R < goalTop + postR) {
+        ball.y = goalTop + postR + BALL_R; ball.vy = Math.abs(ball.vy) * 0.6;
+      }
+      if (ball.y + BALL_R > goalBot - postR) {
+        ball.y = goalBot - postR - BALL_R; ball.vy = -Math.abs(ball.vy) * 0.6;
+      }
+    } else {
+      ball.x = PITCH.right - BALL_R; ball.vx = -Math.abs(ball.vx) * 0.55;
+      ball.vy *= 0.8;
+    }
+  }
 
   // Player-ball collisions
   players.forEach(p => {
@@ -586,40 +631,126 @@ function renderPitch(ctx: CanvasRenderingContext2D, theme: PitchTheme, score: [n
   ctx.strokeRect(PITCH.right - pBoxW, midY - pBoxH / 2, pBoxW, pBoxH);
   ctx.restore();
 
-  // Goals (3D box)
+  // ── Goals: proper 3D scaffold/cage structure ──────────────────────────────
   const goalTop = midY - GOAL_W / 2;
   const goalBot = midY + GOAL_W / 2;
+  const postR = 4;       // post radius / half-width
+  const goalColor = "#e8e8e8";
+  const goalShadow = "rgba(0,0,0,0.55)";
+  const netColor = "rgba(220,235,255,0.22)";
+  const netLines = 6;
 
-  // Left goal
-  ctx.fillStyle = "rgba(255,255,255,0.12)";
-  ctx.fillRect(PITCH.left - GOAL_DEPTH, goalTop, GOAL_DEPTH, GOAL_W);
-  ctx.strokeStyle = T.goal || "#fff";
-  ctx.lineWidth = 2;
-  ctx.strokeRect(PITCH.left - GOAL_DEPTH, goalTop, GOAL_DEPTH, GOAL_W);
-  // Net lines
-  ctx.strokeStyle = "rgba(255,255,255,0.2)";
-  ctx.lineWidth = 0.5;
-  for (let i = 1; i < 4; i++) {
-    ctx.beginPath(); ctx.moveTo(PITCH.left - GOAL_DEPTH, goalTop + i * (GOAL_W / 4));
-    ctx.lineTo(PITCH.left, goalTop + i * (GOAL_W / 4)); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(PITCH.left - GOAL_DEPTH + i * (GOAL_DEPTH / 4), goalTop);
-    ctx.lineTo(PITCH.left - GOAL_DEPTH + i * (GOAL_DEPTH / 4), goalBot); ctx.stroke();
+  function drawGoal(side: "left" | "right") {
+    const isLeft = side === "left";
+    // gx = the pitch edge where goal mouth is; gd = depth direction
+    const gx = isLeft ? PITCH.left : PITCH.right;
+    const gd = isLeft ? -1 : 1; // -1 = extends left, +1 = extends right
+    const back = gx + gd * GOAL_DEPTH;
+
+    // ── Net fill (back panel + sides) ─────────────────────────────────────
+    // Back net
+    ctx.fillStyle = "rgba(30,40,80,0.55)";
+    ctx.fillRect(
+      Math.min(gx, back), goalTop + postR,
+      GOAL_DEPTH - postR, GOAL_W - postR * 2
+    );
+
+    // Net grid lines - horizontal
+    ctx.strokeStyle = netColor;
+    ctx.lineWidth = 0.7;
+    for (let i = 1; i <= netLines; i++) {
+      const ny = goalTop + (i / (netLines + 1)) * GOAL_W;
+      ctx.beginPath();
+      ctx.moveTo(gx, ny);
+      ctx.lineTo(back, ny);
+      ctx.stroke();
+    }
+    // Net grid lines - vertical (depth lines)
+    const depthSegs = 4;
+    for (let i = 1; i <= depthSegs; i++) {
+      const nx = gx + gd * (i / (depthSegs + 1)) * GOAL_DEPTH;
+      ctx.beginPath();
+      ctx.moveTo(nx, goalTop);
+      ctx.lineTo(nx, goalBot);
+      ctx.stroke();
+    }
+    // Side net panels (triangular perspective)
+    ctx.strokeStyle = "rgba(200,220,255,0.14)";
+    for (let i = 1; i <= netLines; i++) {
+      const ny = goalTop + (i / (netLines + 1)) * GOAL_W;
+      // top side panel
+      ctx.beginPath(); ctx.moveTo(gx, goalTop); ctx.lineTo(back, goalTop); ctx.stroke();
+      // bottom side panel
+      ctx.beginPath(); ctx.moveTo(gx, goalBot); ctx.lineTo(back, goalBot); ctx.stroke();
+    }
+
+    // ── Back post (far end bar) ────────────────────────────────────────────
+    ctx.fillStyle = goalShadow;
+    ctx.fillRect(back - (isLeft ? postR : 0), goalTop - postR, postR * 2, GOAL_W + postR * 2);
+    ctx.fillStyle = goalColor;
+    ctx.fillRect(back - (isLeft ? postR - 1 : 1), goalTop - postR + 1, postR * 2 - 2, GOAL_W + postR * 2 - 2);
+
+    // ── Left/right side bars (depth bars connecting front posts to back) ──
+    // Top depth bar shadow
+    ctx.fillStyle = goalShadow;
+    ctx.fillRect(Math.min(gx, back) - (isLeft ? 0 : postR), goalTop - postR, GOAL_DEPTH + postR, postR * 2);
+    ctx.fillStyle = goalColor;
+    ctx.fillRect(Math.min(gx, back) - (isLeft ? 0 : postR) + 1, goalTop - postR + 1, GOAL_DEPTH + postR - 2, postR * 2 - 2);
+    // Bottom depth bar shadow
+    ctx.fillStyle = goalShadow;
+    ctx.fillRect(Math.min(gx, back) - (isLeft ? 0 : postR), goalBot - postR, GOAL_DEPTH + postR, postR * 2);
+    ctx.fillStyle = goalColor;
+    ctx.fillRect(Math.min(gx, back) - (isLeft ? 0 : postR) + 1, goalBot - postR + 1, GOAL_DEPTH + postR - 2, postR * 2 - 2);
+
+    // ── Front posts (the two uprights at pitch edge) ───────────────────────
+    // Top post (upright)
+    const grad1 = ctx.createLinearGradient(gx - postR, 0, gx + postR, 0);
+    grad1.addColorStop(0, "#aaa");
+    grad1.addColorStop(0.4, "#fff");
+    grad1.addColorStop(1, "#bbb");
+    ctx.fillStyle = goalShadow;
+    ctx.fillRect(gx - postR - 1, goalTop - postR - 1, postR * 2 + 2, postR + 3);
+    ctx.fillStyle = grad1;
+    ctx.fillRect(gx - postR, goalTop - postR, postR * 2, postR + 2);
+
+    // Bottom post (upright)
+    ctx.fillStyle = goalShadow;
+    ctx.fillRect(gx - postR - 1, goalBot - 2, postR * 2 + 2, postR + 2);
+    ctx.fillStyle = grad1;
+    ctx.fillRect(gx - postR, goalBot - 1, postR * 2, postR + 1);
+
+    // ── Crossbar (the vertical bar connecting top & bottom posts at front) ─
+    const barGrad = ctx.createLinearGradient(gx - postR, 0, gx + postR, 0);
+    barGrad.addColorStop(0, "#999");
+    barGrad.addColorStop(0.35, "#ffffff");
+    barGrad.addColorStop(1, "#ccc");
+    ctx.fillStyle = goalShadow;
+    ctx.fillRect(gx - postR - 1, goalTop - postR - 1, postR * 2 + 2, GOAL_W + postR * 2 + 2);
+    ctx.fillStyle = barGrad;
+    ctx.fillRect(gx - postR, goalTop - postR, postR * 2, GOAL_W + postR * 2);
+
+    // ── Post highlight (bright strip on front face) ─────────────────────────
+    ctx.fillStyle = "rgba(255,255,255,0.55)";
+    ctx.fillRect(gx - postR + 2, goalTop - postR + 2, 2, GOAL_W + postR * 2 - 4);
+
+    // ── Outer scaffold support bars (the diagonal/horizontal frame like in screenshots) ─
+    ctx.strokeStyle = "rgba(200,200,200,0.35)";
+    ctx.lineWidth = 1.5;
+    // Top scaffold
+    ctx.beginPath(); ctx.moveTo(gx + gd * 4, goalTop - postR - 8);
+    ctx.lineTo(back + gd * 4, goalTop - postR - 8); ctx.stroke();
+    // Bottom scaffold
+    ctx.beginPath(); ctx.moveTo(gx + gd * 4, goalBot + postR + 8);
+    ctx.lineTo(back + gd * 4, goalBot + postR + 8); ctx.stroke();
+    // Vertical scaffold corners
+    ctx.beginPath(); ctx.moveTo(gx + gd * 4, goalTop - postR - 8);
+    ctx.lineTo(gx + gd * 4, goalBot + postR + 8); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(back + gd * 4, goalTop - postR - 8);
+    ctx.lineTo(back + gd * 4, goalBot + postR + 8); ctx.stroke();
   }
 
-  // Right goal
-  ctx.fillStyle = "rgba(255,255,255,0.12)";
-  ctx.fillRect(PITCH.right, goalTop, GOAL_DEPTH, GOAL_W);
-  ctx.strokeStyle = T.goal || "#fff";
-  ctx.lineWidth = 2;
-  ctx.strokeRect(PITCH.right, goalTop, GOAL_DEPTH, GOAL_W);
-  ctx.strokeStyle = "rgba(255,255,255,0.2)";
-  ctx.lineWidth = 0.5;
-  for (let i = 1; i < 4; i++) {
-    ctx.beginPath(); ctx.moveTo(PITCH.right, goalTop + i * (GOAL_W / 4));
-    ctx.lineTo(PITCH.right + GOAL_DEPTH, goalTop + i * (GOAL_W / 4)); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(PITCH.right + i * (GOAL_DEPTH / 4), goalTop);
-    ctx.lineTo(PITCH.right + i * (GOAL_DEPTH / 4), goalBot); ctx.stroke();
-  }
+  drawGoal("left");
+  drawGoal("right");
 
   // Advertising boards (Playza branding) - top and bottom of pitch like in video
   const boardH = 14;
