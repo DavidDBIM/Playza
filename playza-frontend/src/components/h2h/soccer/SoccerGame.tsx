@@ -38,22 +38,21 @@ interface GameState {
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const W = 420, H = 680;
-// 3D perspective pitch - isometric feel
+// Elongated pitch: much wider canvas so keepers can't see the other post
+const W = 780, H = 560;
+// Long horizontal pitch - like a real football pitch (width >> height)
 const PITCH = {
-  left: 30, right: 390,
-  top: 180, bottom: 590,
-  // 3D offsets for isometric look
-  topSkew: 20,
+  left: 28, right: 752,
+  top: 140, bottom: 430,
 };
-const PITCH_W = PITCH.right - PITCH.left;
-const PITCH_H = PITCH.bottom - PITCH.top;
-const GOAL_W = 70, GOAL_DEPTH = 22;
+const PITCH_W = PITCH.right - PITCH.left; // 724px wide!
+const PITCH_H = PITCH.bottom - PITCH.top;  // 290px tall
+const GOAL_W = 80, GOAL_DEPTH = 26;
 const PLAYER_R = 13;
 const BALL_R = 8;
 const FRICTION = 0.978;
-const PLAYER_SPEED = 2.8;
-const BALL_MAX_SPEED = 15;
+const PLAYER_SPEED = 3.2;
+const BALL_MAX_SPEED = 18;
 const GAME_DURATION = 5 * 60;
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -64,36 +63,31 @@ function norm(v: Vec2): Vec2 { const l = Math.hypot(v.x, v.y) || 1; return { x: 
 function clamp(v: number, mn: number, mx: number) { return Math.max(mn, Math.min(mx, v)); }
 function lerp(a: number, b: number, t: number) { return a + (b - a) * t; }
 
-// Convert pitch coord to screen (isometric perspective)
+// Convert pitch coord to screen (simple top-down for landscape pitch)
 function toScreen(px: number, py: number): Vec2 {
-  // Simple top-down with slight perspective squeeze at top
-  const t = (py - PITCH.top) / PITCH_H; // 0=top 1=bottom
-  const squeeze = lerp(0.82, 1.0, t); // top is slightly squeezed
-  const cx = (PITCH.left + PITCH.right) / 2;
-  const sx = cx + (px - cx) * squeeze;
-  return { x: sx, y: py };
+  return { x: px, y: py };
 }
 
 // ─── Player factory ───────────────────────────────────────────────────────────
 function makePlayers(): Player[] {
   const p: Player[] = [];
-  // Team 0 positions (left side, attacking right)
+  // Team 0 positions (left side, attacking right) - spread across long pitch
   const t0 = [
-    { x: PITCH.left + 28, y: (PITCH.top + PITCH.bottom) / 2 }, // keeper
-    { x: PITCH.left + 110, y: PITCH.top + PITCH_H * 0.25 },
-    { x: PITCH.left + 110, y: PITCH.top + PITCH_H * 0.5 },
-    { x: PITCH.left + 110, y: PITCH.top + PITCH_H * 0.75 },
-    { x: PITCH.left + 190, y: PITCH.top + PITCH_H * 0.4 },
+    { x: PITCH.left + 30, y: (PITCH.top + PITCH.bottom) / 2 }, // keeper - far left
+    { x: PITCH.left + 140, y: PITCH.top + PITCH_H * 0.2 },
+    { x: PITCH.left + 140, y: PITCH.top + PITCH_H * 0.5 },
+    { x: PITCH.left + 140, y: PITCH.top + PITCH_H * 0.8 },
+    { x: PITCH.left + 280, y: PITCH.top + PITCH_H * 0.4 },
   ];
   t0.forEach((pos, i) => p.push({ id: `t0-${i}`, x: pos.x, y: pos.y, vx: 0, vy: 0, team: 0, isKeeper: i === 0, number: i + 1, hasBall: false, animFrame: 0, facing: 0, runPhase: Math.random() * Math.PI * 2 }));
 
-  // Team 1 positions (right side, attacking left)
+  // Team 1 positions (right side, attacking left) - spread across long pitch
   const t1 = [
-    { x: PITCH.right - 28, y: (PITCH.top + PITCH.bottom) / 2 }, // keeper
-    { x: PITCH.right - 110, y: PITCH.top + PITCH_H * 0.25 },
-    { x: PITCH.right - 110, y: PITCH.top + PITCH_H * 0.5 },
-    { x: PITCH.right - 110, y: PITCH.top + PITCH_H * 0.75 },
-    { x: PITCH.right - 190, y: PITCH.top + PITCH_H * 0.6 },
+    { x: PITCH.right - 30, y: (PITCH.top + PITCH.bottom) / 2 }, // keeper - far right
+    { x: PITCH.right - 140, y: PITCH.top + PITCH_H * 0.2 },
+    { x: PITCH.right - 140, y: PITCH.top + PITCH_H * 0.5 },
+    { x: PITCH.right - 140, y: PITCH.top + PITCH_H * 0.8 },
+    { x: PITCH.right - 280, y: PITCH.top + PITCH_H * 0.6 },
   ];
   t1.forEach((pos, i) => p.push({ id: `t1-${i}`, x: pos.x, y: pos.y, vx: 0, vy: 0, team: 1, isKeeper: i === 0, number: i + 1, hasBall: false, animFrame: 0, facing: Math.PI, runPhase: Math.random() * Math.PI * 2 }));
 
@@ -129,8 +123,8 @@ function runAI(s: GameState, aiTeam: 0 | 1): void {
   const { players, ball, aiDifficulty } = s;
   const speed = aiDifficulty === "easy" ? 1.3 : aiDifficulty === "medium" ? 2.1 : 2.9;
   const missChance = aiDifficulty === "easy" ? 0.45 : aiDifficulty === "medium" ? 0.2 : 0.04;
-  const oppGoalX = aiTeam === 0 ? PITCH.right - 10 : PITCH.left + 10;
-  const ownGoalX = aiTeam === 0 ? PITCH.left + 10 : PITCH.right - 10;
+  const oppGoalX = aiTeam === 0 ? PITCH.right - 15 : PITCH.left + 15;
+  const ownGoalX = aiTeam === 0 ? PITCH.left + 15 : PITCH.right - 15;
   const midY = (PITCH.top + PITCH.bottom) / 2;
 
   const teamPlayers = players.filter(p => p.team === aiTeam);
@@ -142,7 +136,7 @@ function runAI(s: GameState, aiTeam: 0 | 1): void {
     let tx = p.x, ty = p.y;
 
     if (p.isKeeper) {
-      tx = ownGoalX + (aiTeam === 0 ? 25 : -25);
+      tx = ownGoalX + (aiTeam === 0 ? 35 : -35);
       ty = clamp(ball.y, PITCH.top + 40, PITCH.bottom - 40);
     } else {
       const isChaseBall = myBallDists[li] === minBallDist;
@@ -258,7 +252,7 @@ function tick(s: GameState, inputDir: Vec2, doPass: boolean, doShoot: boolean): 
     const myPlayers = players.filter(p => p.team === ns.myTeam);
     const shooter = myPlayers.sort((a, b) => dist(a, ball) - dist(b, ball))[0];
     if (shooter && dist(shooter, ball) < PLAYER_R + BALL_R + 18) {
-      const oppGoalX = ns.myTeam === 0 ? PITCH.right - 5 : PITCH.left + 5;
+      const oppGoalX = ns.myTeam === 0 ? PITCH.right - 8 : PITCH.left + 8;
       const goalMidY = (PITCH.top + PITCH.bottom) / 2;
       // Add slight randomness for realism
       const jitter = (Math.random() - 0.5) * 30;
@@ -477,8 +471,8 @@ function renderPitch(ctx: CanvasRenderingContext2D, theme: PitchTheme, score: [n
   ctx.fillRect(0, 0, W, crowdH);
 
   // Draw crowd rows (tiny heads - like in the video)
-  for (let row = 0; row < 5; row++) {
-    const rowY = 40 + row * 22;
+  for (let row = 0; row < 4; row++) {
+    const rowY = 28 + row * 22;
     const cols = Math.floor(W / 18);
     for (let col = 0; col < cols; col++) {
       const cx = 9 + col * 18 + (row % 2 === 0 ? 9 : 0);
@@ -533,8 +527,8 @@ function renderPitch(ctx: CanvasRenderingContext2D, theme: PitchTheme, score: [n
   ctx.beginPath(); ctx.arc(W / 2, (PITCH.top + PITCH.bottom) / 2, 3, 0, Math.PI * 2);
   ctx.fillStyle = T.line; ctx.fill();
 
-  // Penalty boxes
-  const pBoxW = 90, pBoxH = 160;
+  // Penalty boxes - proportional to long pitch
+  const pBoxW = 120, pBoxH = 160;
   const midY = (PITCH.top + PITCH.bottom) / 2;
   ctx.strokeRect(PITCH.left, midY - pBoxH / 2, pBoxW, pBoxH);
   ctx.strokeRect(PITCH.right - pBoxW, midY - pBoxH / 2, pBoxW, pBoxH);
@@ -590,26 +584,26 @@ function renderPitch(ctx: CanvasRenderingContext2D, theme: PitchTheme, score: [n
     ctx.fillText(ad, PITCH.left + segW * i + segW / 2, PITCH.bottom + 10);
   });
 
-  // Scoreboard at very top
+  // Scoreboard at very top - centered
   ctx.fillStyle = "rgba(0,0,0,0.75)";
-  roundRect(ctx, 50, 6, W - 100, 42, 10);
+  roundRect(ctx, W / 2 - 130, 5, 260, 42, 10);
   ctx.fill();
   // Team 0
   ctx.fillStyle = team0Color;
-  ctx.beginPath(); ctx.arc(80, 27, 12, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(W / 2 - 100, 26, 12, 0, Math.PI * 2); ctx.fill();
   ctx.font = "bold 9px Arial"; ctx.textAlign = "center"; ctx.fillStyle = "#fff";
-  ctx.fillText(team0Name.slice(0, 8).toUpperCase(), 80, 47);
+  ctx.fillText(team0Name.slice(0, 8).toUpperCase(), W / 2 - 100, 46);
   // Team 1
   ctx.fillStyle = team1Color;
-  ctx.beginPath(); ctx.arc(W - 80, 27, 12, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(W / 2 + 100, 26, 12, 0, Math.PI * 2); ctx.fill();
   ctx.font = "bold 9px Arial"; ctx.textAlign = "center"; ctx.fillStyle = "#fff";
-  ctx.fillText(team1Name.slice(0, 8).toUpperCase(), W - 80, 47);
+  ctx.fillText(team1Name.slice(0, 8).toUpperCase(), W / 2 + 100, 46);
   // Score
   ctx.font = "bold 22px Arial"; ctx.fillStyle = "#fff"; ctx.textAlign = "center";
-  ctx.fillText(`${score[0]}`, W / 2 - 28, 32);
-  ctx.fillText(`${score[1]}`, W / 2 + 28, 32);
+  ctx.fillText(`${score[0]}`, W / 2 - 40, 31);
+  ctx.fillText(`${score[1]}`, W / 2 + 40, 31);
   ctx.fillStyle = "#aaa"; ctx.font = "bold 14px Arial";
-  ctx.fillText("–", W / 2, 32);
+  ctx.fillText("–", W / 2, 31);
   // Timer
   const m = Math.floor(timeLeft / 60), sec = Math.floor(timeLeft % 60);
   ctx.fillStyle = timeLeft < 30 ? "#ff4444" : "#FFD700";
@@ -836,13 +830,13 @@ const SoccerGame: React.FC<SoccerGameProps> = ({
   return (
     <div className="flex flex-col items-center w-full select-none bg-[#0a0a1e]" style={{ fontFamily: "Arial, sans-serif" }}>
       {/* Canvas */}
-      <div className="relative w-full" style={{ maxWidth: W }}>
+      <div className="relative w-full overflow-x-auto" style={{ maxWidth: W }}>
         <canvas
           ref={canvasRef}
           width={W}
           height={H}
           className="w-full touch-none"
-          style={{ display: "block", imageRendering: "crisp-edges" }}
+          style={{ display: "block", imageRendering: "crisp-edges", minWidth: 480 }}
         />
 
         {/* Goal / Kickoff overlay */}
