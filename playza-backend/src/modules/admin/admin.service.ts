@@ -348,9 +348,78 @@ export async function getNotificationsHistory(page = 1, limit = 20) {
     total_pages: Math.ceil((count ?? 0) / limit),
   }
 }
+
 export async function deleteNotification(id: string) {
   const { error } = await supabaseAdmin
     .from('notifications')
+    .delete()
+    .eq('id', id)
+
+  if (error) throw error
+  return { success: true }
+}
+
+// ────────────────────────────────────────────────────────────
+//  FEEDBACK
+// ────────────────────────────────────────────────────────────
+
+export async function getAllFeedbackAdmin(page = 1, limit = 20, type = '', status = '') {
+  const from = (page - 1) * limit
+  const to = from + limit - 1
+
+  let query = supabaseAdmin
+    .from('feedback')
+    .select(`
+      *,
+      users:user_id (username, email, avatar_url)
+    `, { count: 'exact' })
+    .order('created_at', { ascending: false })
+    .range(from, to)
+
+  if (type && type !== 'All Types') {
+    const typeValue = type.toLowerCase().replace(' ', '_');
+    query = query.eq('type', typeValue);
+  }
+  
+  if (status === 'resolved') query = query.eq('is_resolved', true)
+  if (status === 'pending') query = query.eq('is_resolved', false)
+  if (status === 'unread') query = query.eq('is_read', false)
+
+  const { data, error, count } = await query
+
+  if (error) throw error
+
+  return {
+    feedback: data,
+    total: count ?? 0,
+    page,
+    limit,
+    total_pages: Math.ceil((count ?? 0) / limit),
+  }
+}
+
+export async function updateFeedbackStatusAdmin(id: string, updates: {
+  is_read?: boolean;
+  is_resolved?: boolean;
+  admin_note?: string;
+}) {
+  const { data, error } = await supabaseAdmin
+    .from('feedback')
+    .update({
+      ...updates,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function deleteFeedbackAdmin(id: string) {
+  const { error } = await supabaseAdmin
+    .from('feedback')
     .delete()
     .eq('id', id)
 

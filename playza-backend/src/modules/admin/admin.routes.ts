@@ -11,6 +11,9 @@ import {
   sendNotification,
   getNotificationsHistory,
   deleteNotification,
+  getAllFeedbackAdmin,
+  updateFeedbackStatusAdmin,
+  deleteFeedbackAdmin,
 } from './admin.service'
 import {
   getLoyaltyLeaderboard,
@@ -289,6 +292,42 @@ router.post('/notifications', requireAuth, async (req: AuthRequest, res) => {
 router.delete('/notifications/:id', requireAuth, async (req: AuthRequest, res) => {
   try {
     await deleteNotification(req.params.id)
+    res.json({ success: true })
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message })
+  }
+})
+
+// ────────────────────────────────────────────────────────────
+//  FEEDBACK
+// ────────────────────────────────────────────────────────────
+
+router.get('/feedback', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const page = parseInt(req.query.page as string) || 1
+    const limit = parseInt(req.query.limit as string) || 20
+    const type = (req.query.type as string) || ''
+    const status = (req.query.status as string) || ''
+    
+    const data = await getAllFeedbackAdmin(page, limit, type, status)
+    res.json({ success: true, data })
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message })
+  }
+})
+
+router.patch('/feedback/:id', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const data = await updateFeedbackStatusAdmin(req.params.id, req.body)
+    res.json({ success: true, data })
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message })
+  }
+})
+
+router.delete('/feedback/:id', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    await deleteFeedbackAdmin(req.params.id)
     res.json({ success: true })
   } catch (err: any) {
     res.status(400).json({ success: false, message: err.message })
