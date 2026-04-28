@@ -3,3 +3,7 @@ export * from "./dashboard.service";
 export * from "./user.service";
 export * from "./transaction.service";
 export * from "./referral.service";
+export * from "./feedback.service";
+export * from "./admin-service";
+export * from "./leaderboard.service";
+export * from "./notification.service";
