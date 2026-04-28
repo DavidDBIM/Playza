@@ -25,7 +25,7 @@ export const FloatingSpinNotification = () => {
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
         onClick={() => navigate("/loyalty?spin=true")}
-        className="fixed bottom-24 right-2 md:bottom-12 md:right-12 z-40 cursor-pointer group"
+        className="fixed bottom-42 md:bottom-30 right-4 md:right-10 z-40 cursor-pointer group"
       >
         <div className="relative">
           {/* Animated rings */}

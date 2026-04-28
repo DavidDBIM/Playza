@@ -181,6 +181,7 @@ const GamePlay = () => {
         {gameOverData && (
           <GameOverLeaderboard
             score={gameOverData.score}
+            gameName={game.title}
             playAgain={() => {
               setGameOverData(null);
               setShowLiveEntry(true);

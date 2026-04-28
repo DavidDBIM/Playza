@@ -18,7 +18,6 @@ import { useAuth } from "@/context/auth";
 import { useSecurity } from "@/hooks/profile/useSecurity";
 import { useDeactivateUser } from "@/hooks/users/useDeactivateUser";
 import { useProfile } from "@/hooks/profile/useProfile";
-import { TokenStorage } from "@/api/axiosInstance";
 
 const Security = () => {
   const { pinStatus, changePassword, updatePreferences, isLoadingPinStatus } = useSecurity();
@@ -43,8 +42,7 @@ const Security = () => {
     if (profile) {
       deactivateUser(profile.id, {
         onSuccess: () => {
-          TokenStorage.clearTokens();
-          window.location.href = "/";
+          // No redirect needed, the global modal will catch user.is_active === false
         },
       });
     }

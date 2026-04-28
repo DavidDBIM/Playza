@@ -19,6 +19,7 @@ import SignIn from "./pages/SignIn";
 import { ThemeProvider } from "./components/theme/ThemeProvider";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import ReferralPayouts from "./pages/ReferralPayouts";
+import Feedback from "./pages/Feedback";
 
 // Placeholder components for routes
 const Placeholder = ({ name }: { name: string }) => (
@@ -59,6 +60,7 @@ const App: React.FC = () => {
               <Route path="ambassadors" element={<Ambassadors />} />
               <Route path="referral-payouts" element={<ReferralPayouts />} />
               <Route path="notifications" element={<Notifications />} />
+              <Route path="feedback" element={<Feedback />} />
               <Route path="content" element={<Placeholder name="Content" />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>

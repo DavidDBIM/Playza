@@ -20,6 +20,7 @@ export interface UserProfile {
   createdAt?: string;
   wallet?: Wallet;
   show_activity?: boolean;
+  is_active?: boolean;
 }
 
 export interface AuthContextType {

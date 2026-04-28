@@ -21,7 +21,7 @@ const NotificationBanner: React.FC = () => {
   // Derive visibility: Show if we have a banner, it's not dismissed in relevant storage, 
   // we are logged in, and we haven't shown this specific ID yet.
   const lastDismissedId = storage.getItem(storageKey);
-  const shouldShow = user && isSuccess && banner && !isDismissed && lastDismissedId !== banner.id;
+  const shouldShow = user && user.is_active !== false && isSuccess && banner && !isDismissed && lastDismissedId !== banner.id;
 
   const handleClose = () => {
     setIsDismissed(true);

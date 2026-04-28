@@ -12,6 +12,7 @@ import {
   MdLayers, 
   MdEmojiPeople,
   MdCurrencyExchange,
+  MdChat,
   MdClose
 } from 'react-icons/md';
 import { Link, useLocation } from 'react-router';
@@ -33,6 +34,7 @@ const NAV_ITEMS = [
   { path: '/ambassadors', pathMatch: '/ambassadors', icon: MdEmojiPeople, label: 'Ambassadors' },
   { path: '/referral-payouts', pathMatch: '/referral-payouts', icon: MdCurrencyExchange, label: 'Referral Payouts' },
   { path: '/notifications', pathMatch: '/notifications', icon: MdNotifications, label: 'Notifications' },
+  { path: '/feedback', pathMatch: '/feedback', icon: MdChat, label: 'Feedback' },
   { path: '/content', pathMatch: '/content', icon: MdLayers, label: 'Content' },
 ];
 

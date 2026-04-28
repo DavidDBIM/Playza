@@ -13,6 +13,8 @@ import { useAuth } from "./context/auth";
 import { CompleteProfileModal } from "./components/profile/CompleteProfileModal";
 import { FloatingSpinNotification } from "./components/loyalty/FloatingSpinNotification";
 import NotificationBanner from "./components/NotificationBanner";
+import { DeactivatedAccountModal } from "./components/profile/DeactivatedAccountModal";
+import { FloatingFeedbackButton } from "./components/feedback/FloatingFeedbackButton";
 
 // ─── Lazy pages ───────────────────────────────────────────────────────────────
 const Home = lazy(() => import("./pages/Home"));
@@ -40,6 +42,7 @@ const Loyalty = lazy(() => import("./pages/Loyalty"));
 const CategoryPage = lazy(() => import("./pages/CategoryPage"));
 const SpeedTapArena = lazy(() => import("./pages/games/SpeedTapArena"));
 const SoloEarn = lazy(() => import("./pages/SoloEarn"));
+const Feedback = lazy(() => import("./pages/Feedback"));
 
 
 // Profile sub-pages
@@ -81,7 +84,7 @@ const PageLoader = () => (
 const AppContent = () => {
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const { isProfileComplete } = useAuth();
+  const { isProfileComplete, user } = useAuth();
   const location = useLocation();
 
   // useTransition defers the route update inside Suspense so the old page stays
@@ -151,9 +154,13 @@ const AppContent = () => {
         />
       )}
 
+      <DeactivatedAccountModal isOpen={user?.is_active === false} />
+
       <FloatingSpinNotification />
       <NotificationBanner />
       <NotificationBanner />
+
+      <FloatingFeedbackButton />
 
       <div
         className={
@@ -219,6 +226,7 @@ const AppContent = () => {
               <Route path="/terms" element={<TermsAndConditions />} />
               <Route path="/privacy" element={<PrivacyPolicy />} />
               <Route path="/loyalty" element={<Loyalty />} />
+              <Route path="/feedback" element={<Feedback />} />
               <Route path="/profile" element={<Profile />}>
                 <Route index element={<Overview />} />
                 <Route path="overview" element={<Overview />} />

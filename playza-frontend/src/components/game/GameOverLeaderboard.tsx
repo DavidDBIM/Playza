@@ -1,13 +1,15 @@
 import { User, Trophy, Play, Star } from "lucide-react";
+import { QuickFeedback } from "../feedback/QuickFeedback";
 
 interface GameOverLeaderboardProps {
     score: number;
     playAgain: () => void;
     position?: number;
     onBackToSession?: () => void;
+    gameName?: string;
 }
 
-const GameOverLeaderboard = ({ score, playAgain, position = 15, onBackToSession }: GameOverLeaderboardProps) => {
+const GameOverLeaderboard = ({ score, playAgain, position = 15, onBackToSession, gameName = "Current Game" }: GameOverLeaderboardProps) => {
     // Generate mock leaderboard based on the user's position
     const mockLeaderboard = [
         { rank: position - 2, name: "CryptoKing99", score: score + 1250 },
@@ -76,6 +78,8 @@ const GameOverLeaderboard = ({ score, playAgain, position = 15, onBackToSession 
                         </button>
                     )}
                 </div>
+
+                <QuickFeedback gameName={gameName} />
             </div>
         </div>
     );

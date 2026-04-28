@@ -27,11 +27,11 @@ const NotificationPrompt: React.FC = () => {
   const handleEnable = async () => {
     const permission = await Notification.requestPermission();
     if (permission === 'granted') {
+      setShowPrompt(false);
+      localStorage.setItem('playza_notifications_prompt_dismissed', 'true');
+      
       registerPush.mutate('web', {
         onSuccess: () => {
-          setShowPrompt(false);
-          // Mark as dismissed so it doesn't show again
-          localStorage.setItem('playza_notifications_prompt_dismissed', 'true');
           console.log('Push notifications enabled successfully');
         },
         onError: (err) => {
@@ -40,7 +40,6 @@ const NotificationPrompt: React.FC = () => {
       });
     } else {
       setShowPrompt(false);
-      // Even if they deny, we might want to respect their choice for the session
       localStorage.setItem('playza_notifications_prompt_dismissed', 'true');
     }
   };

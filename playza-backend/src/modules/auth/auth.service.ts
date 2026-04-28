@@ -132,7 +132,7 @@ export async function verifyOtp(email: string, token: string) {
   const { data: profile } = await supabaseAdmin
     .from("users")
     .select(
-      "id, username, email, phone, referral_code, is_email_verified, avatar_url, first_name, last_name",
+      "id, username, email, phone, referral_code, is_email_verified, is_active, avatar_url, first_name, last_name",
     )
     .eq("id", data.user.id)
     .single();
@@ -188,7 +188,7 @@ export async function signin(input: SigninInput) {
   const { data: profile } = await supabaseAdmin
     .from("users")
     .select(
-      "id, username, email, phone, referral_code, is_email_verified, avatar_url, first_name, last_name",
+      "id, username, email, phone, referral_code, is_email_verified, is_active, avatar_url, first_name, last_name",
     )
     .eq("id", data.user.id)
     .single();

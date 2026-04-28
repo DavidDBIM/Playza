@@ -10,6 +10,7 @@ import {
   Home,
   Swords,
   Coins,
+  MessageSquare,
 } from "lucide-react";
 
 
@@ -29,6 +30,7 @@ export const navItems = [
   },
   { icon: Gift, label: "Loyalty", path: "/loyalty" },
   { icon: UserPlus, label: "Referral", path: "/referral" },
+  { icon: MessageSquare, label: "Feedback", path: "/feedback" },
   { icon: Wallet, label: "Wallet", path: "/wallet", mobile: true },
   { icon: ImProfile, label: "Profile", path: "/profile", mobile: true },
 

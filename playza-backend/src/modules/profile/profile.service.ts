@@ -68,7 +68,7 @@ export async function uploadAvatarFromBase64(
 export async function getProfile(userId: string) {
   const { data: user, error } = await supabaseAdmin
     .from('users')
-    .select('id, username, email, phone, first_name, last_name, avatar_url, referral_code, is_email_verified, created_at, tagline, bio, show_activity')
+    .select('id, username, email, phone, first_name, last_name, avatar_url, referral_code, is_email_verified, is_active, created_at, tagline, bio, show_activity')
     .eq('id', userId)
     .single()
 

@@ -47,6 +47,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         wallet: profile.wallet,
         isEmailVerified: profile.is_email_verified,
         show_activity: profile.show_activity,
+        is_active: profile.is_active,
       });
 
       // Background prefetch commonly-accessed data on sign-in
