@@ -38,22 +38,21 @@ interface GameState {
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const W = 420, H = 680;
-// 3D perspective pitch - isometric feel
+// Elongated pitch: much wider canvas so keepers can't see the other post
+const W = 780, H = 560;
+// Long horizontal pitch - like a real football pitch (width >> height)
 const PITCH = {
-  left: 30, right: 390,
-  top: 180, bottom: 590,
-  // 3D offsets for isometric look
-  topSkew: 20,
+  left: 68, right: 712,
+  top: 140, bottom: 430,
 };
-const PITCH_W = PITCH.right - PITCH.left;
-const PITCH_H = PITCH.bottom - PITCH.top;
-const GOAL_W = 70, GOAL_DEPTH = 22;
+const PITCH_W = PITCH.right - PITCH.left; // 724px wide!
+const PITCH_H = PITCH.bottom - PITCH.top;  // 290px tall
+const GOAL_W = 120, GOAL_DEPTH = 52;
 const PLAYER_R = 13;
 const BALL_R = 8;
 const FRICTION = 0.978;
-const PLAYER_SPEED = 2.8;
-const BALL_MAX_SPEED = 15;
+const PLAYER_SPEED = 3.2;
+const BALL_MAX_SPEED = 18;
 const GAME_DURATION = 5 * 60;
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -64,36 +63,31 @@ function norm(v: Vec2): Vec2 { const l = Math.hypot(v.x, v.y) || 1; return { x: 
 function clamp(v: number, mn: number, mx: number) { return Math.max(mn, Math.min(mx, v)); }
 function lerp(a: number, b: number, t: number) { return a + (b - a) * t; }
 
-// Convert pitch coord to screen (isometric perspective)
+// Convert pitch coord to screen (simple top-down for landscape pitch)
 function toScreen(px: number, py: number): Vec2 {
-  // Simple top-down with slight perspective squeeze at top
-  const t = (py - PITCH.top) / PITCH_H; // 0=top 1=bottom
-  const squeeze = lerp(0.82, 1.0, t); // top is slightly squeezed
-  const cx = (PITCH.left + PITCH.right) / 2;
-  const sx = cx + (px - cx) * squeeze;
-  return { x: sx, y: py };
+  return { x: px, y: py };
 }
 
 // ─── Player factory ───────────────────────────────────────────────────────────
 function makePlayers(): Player[] {
   const p: Player[] = [];
-  // Team 0 positions (left side, attacking right)
+  // Team 0 positions (left side, attacking right) - spread across long pitch
   const t0 = [
-    { x: PITCH.left + 28, y: (PITCH.top + PITCH.bottom) / 2 }, // keeper
-    { x: PITCH.left + 110, y: PITCH.top + PITCH_H * 0.25 },
-    { x: PITCH.left + 110, y: PITCH.top + PITCH_H * 0.5 },
-    { x: PITCH.left + 110, y: PITCH.top + PITCH_H * 0.75 },
-    { x: PITCH.left + 190, y: PITCH.top + PITCH_H * 0.4 },
+    { x: PITCH.left + 30, y: (PITCH.top + PITCH.bottom) / 2 }, // keeper - far left
+    { x: PITCH.left + 140, y: PITCH.top + PITCH_H * 0.2 },
+    { x: PITCH.left + 140, y: PITCH.top + PITCH_H * 0.5 },
+    { x: PITCH.left + 140, y: PITCH.top + PITCH_H * 0.8 },
+    { x: PITCH.left + 280, y: PITCH.top + PITCH_H * 0.4 },
   ];
   t0.forEach((pos, i) => p.push({ id: `t0-${i}`, x: pos.x, y: pos.y, vx: 0, vy: 0, team: 0, isKeeper: i === 0, number: i + 1, hasBall: false, animFrame: 0, facing: 0, runPhase: Math.random() * Math.PI * 2 }));
 
-  // Team 1 positions (right side, attacking left)
+  // Team 1 positions (right side, attacking left) - spread across long pitch
   const t1 = [
-    { x: PITCH.right - 28, y: (PITCH.top + PITCH.bottom) / 2 }, // keeper
-    { x: PITCH.right - 110, y: PITCH.top + PITCH_H * 0.25 },
-    { x: PITCH.right - 110, y: PITCH.top + PITCH_H * 0.5 },
-    { x: PITCH.right - 110, y: PITCH.top + PITCH_H * 0.75 },
-    { x: PITCH.right - 190, y: PITCH.top + PITCH_H * 0.6 },
+    { x: PITCH.right - 30, y: (PITCH.top + PITCH.bottom) / 2 }, // keeper - far right
+    { x: PITCH.right - 140, y: PITCH.top + PITCH_H * 0.2 },
+    { x: PITCH.right - 140, y: PITCH.top + PITCH_H * 0.5 },
+    { x: PITCH.right - 140, y: PITCH.top + PITCH_H * 0.8 },
+    { x: PITCH.right - 280, y: PITCH.top + PITCH_H * 0.6 },
   ];
   t1.forEach((pos, i) => p.push({ id: `t1-${i}`, x: pos.x, y: pos.y, vx: 0, vy: 0, team: 1, isKeeper: i === 0, number: i + 1, hasBall: false, animFrame: 0, facing: Math.PI, runPhase: Math.random() * Math.PI * 2 }));
 
@@ -129,8 +123,8 @@ function runAI(s: GameState, aiTeam: 0 | 1): void {
   const { players, ball, aiDifficulty } = s;
   const speed = aiDifficulty === "easy" ? 1.3 : aiDifficulty === "medium" ? 2.1 : 2.9;
   const missChance = aiDifficulty === "easy" ? 0.45 : aiDifficulty === "medium" ? 0.2 : 0.04;
-  const oppGoalX = aiTeam === 0 ? PITCH.right - 10 : PITCH.left + 10;
-  const ownGoalX = aiTeam === 0 ? PITCH.left + 10 : PITCH.right - 10;
+  const oppGoalX = aiTeam === 0 ? PITCH.right - 15 : PITCH.left + 15;
+  const ownGoalX = aiTeam === 0 ? PITCH.left + 15 : PITCH.right - 15;
   const midY = (PITCH.top + PITCH.bottom) / 2;
 
   const teamPlayers = players.filter(p => p.team === aiTeam);
@@ -142,7 +136,7 @@ function runAI(s: GameState, aiTeam: 0 | 1): void {
     let tx = p.x, ty = p.y;
 
     if (p.isKeeper) {
-      tx = ownGoalX + (aiTeam === 0 ? 25 : -25);
+      tx = ownGoalX + (aiTeam === 0 ? 35 : -35);
       ty = clamp(ball.y, PITCH.top + 40, PITCH.bottom - 40);
     } else {
       const isChaseBall = myBallDists[li] === minBallDist;
@@ -184,7 +178,7 @@ function runAI(s: GameState, aiTeam: 0 | 1): void {
 }
 
 // ─── Physics ──────────────────────────────────────────────────────────────────
-function tick(s: GameState, inputDir: Vec2, doPass: boolean, doShoot: boolean): GameState {
+function tick(s: GameState, inputDir: Vec2, doPass: boolean, doShoot: boolean, doDash: boolean, doTackle: boolean, doSwitch: boolean, doDefense: boolean): GameState {
   const ns = { ...s, players: s.players.map(p => ({ ...p })), ball: { ...s.ball, trail: [...s.ball.trail] } };
   const { players, ball } = ns;
 
@@ -193,11 +187,19 @@ function tick(s: GameState, inputDir: Vec2, doPass: boolean, doShoot: boolean): 
   if (cp && ns.phase === "playing") {
     const l = Math.hypot(inputDir.x, inputDir.y);
     if (l > 0.1) {
-      cp.vx = inputDir.x * PLAYER_SPEED;
-      cp.vy = inputDir.y * PLAYER_SPEED;
+      const speed = doDash ? PLAYER_SPEED * 2.2 : PLAYER_SPEED;
+      cp.vx = inputDir.x * speed;
+      cp.vy = inputDir.y * speed;
       cp.facing = Math.atan2(inputDir.y, inputDir.x);
-      cp.runPhase += 0.28;
+      cp.runPhase += doDash ? 0.55 : 0.28;
     }
+  }
+
+  // DASH - burst of speed toward ball
+  if (doDash && ns.phase === "playing" && cp) {
+    const d = norm({ x: ball.x - cp.x, y: ball.y - cp.y });
+    cp.vx += d.x * 6;
+    cp.vy += d.y * 6;
   }
 
   // Teammates auto-run (basic support)
@@ -258,7 +260,7 @@ function tick(s: GameState, inputDir: Vec2, doPass: boolean, doShoot: boolean): 
     const myPlayers = players.filter(p => p.team === ns.myTeam);
     const shooter = myPlayers.sort((a, b) => dist(a, ball) - dist(b, ball))[0];
     if (shooter && dist(shooter, ball) < PLAYER_R + BALL_R + 18) {
-      const oppGoalX = ns.myTeam === 0 ? PITCH.right - 5 : PITCH.left + 5;
+      const oppGoalX = ns.myTeam === 0 ? PITCH.right - 8 : PITCH.left + 8;
       const goalMidY = (PITCH.top + PITCH.bottom) / 2;
       // Add slight randomness for realism
       const jitter = (Math.random() - 0.5) * 30;
@@ -269,6 +271,50 @@ function tick(s: GameState, inputDir: Vec2, doPass: boolean, doShoot: boolean): 
     }
   }
 
+  // TACKLE - lunge at ball carrier
+  if (doTackle && ns.phase === "playing") {
+    const myPlayers = players.filter(p => p.team === ns.myTeam);
+    const tackler = myPlayers.sort((a, b) => dist(a, ball) - dist(b, ball))[0];
+    if (tackler) {
+      const d = norm({ x: ball.x - tackler.x, y: ball.y - tackler.y });
+      tackler.vx = d.x * PLAYER_SPEED * 2.5;
+      tackler.vy = d.y * PLAYER_SPEED * 2.5;
+      // If close enough, dispossess the ball
+      if (dist(tackler, ball) < PLAYER_R + BALL_R + 20) {
+        const scatter = { x: (Math.random() - 0.5) * 6, y: (Math.random() - 0.5) * 6 };
+        ball.vx = scatter.x + d.x * 4;
+        ball.vy = scatter.y + d.y * 2;
+      }
+    }
+  }
+
+  // SWITCH - change controlled player to one closest to ball
+  if (doSwitch && ns.phase === "playing") {
+    const myP = players.map((p, i) => ({ p, i })).filter(({ p }) => p.team === ns.myTeam);
+    // Pick the one closest to ball that isn't already controlled
+    const next = myP.filter(({ i }) => i !== ns.controlledIdx)
+      .sort((a, b) => dist(a.p, ball) - dist(b.p, ball))[0];
+    if (next) ns.controlledIdx = next.i;
+  }
+
+  // DEFENSE - pull back into defensive shape
+  if (doDefense && ns.phase === "playing") {
+    const ownGoalX = ns.myTeam === 0 ? PITCH.left : PITCH.right;
+    const midY = (PITCH.top + PITCH.bottom) / 2;
+    players.forEach((p, i) => {
+      if (p.team === ns.myTeam && !p.isKeeper) {
+        // Pull non-keepers toward defensive third
+        const defX = ns.myTeam === 0
+          ? clamp(ball.x - 80, PITCH.left + 40, (PITCH.left + PITCH.right) / 2)
+          : clamp(ball.x + 80, (PITCH.left + PITCH.right) / 2, PITCH.right - 40);
+        const slotY = midY + ((i % 3) - 1) * 70;
+        const d = norm({ x: defX - p.x, y: slotY - p.y });
+        p.vx = lerp(p.vx, d.x * PLAYER_SPEED * 1.4, 0.3);
+        p.vy = lerp(p.vy, d.y * PLAYER_SPEED * 1.4, 0.3);
+      }
+    });
+  }
+
   // Ball physics
   ball.trail.push({ x: ball.x, y: ball.y });
   if (ball.trail.length > 8) ball.trail.shift();
@@ -276,25 +322,70 @@ function tick(s: GameState, inputDir: Vec2, doPass: boolean, doShoot: boolean): 
   ball.vx *= FRICTION; ball.vy *= FRICTION;
   ball.spin *= 0.95;
 
-  // Ball wall bounces
-  if (ball.y - BALL_R < PITCH.top) { ball.y = PITCH.top + BALL_R; ball.vy *= -0.65; }
+  // Ball wall bounces - top/bottom pitch boundary
+  if (ball.y - BALL_R < PITCH.top)    { ball.y = PITCH.top + BALL_R;    ball.vy *= -0.65; }
   if (ball.y + BALL_R > PITCH.bottom) { ball.y = PITCH.bottom - BALL_R; ball.vy *= -0.65; }
 
-  // Goal detection
-  const goalTop = (PITCH.top + PITCH.bottom) / 2 - GOAL_W / 2;
-  const goalBot = (PITCH.top + PITCH.bottom) / 2 + GOAL_W / 2;
+  // ── Goal & post physics ──────────────────────────────────────────────────
+  const goalMidY = (PITCH.top + PITCH.bottom) / 2;
+  const goalTop  = goalMidY - GOAL_W / 2;
+  const goalBot  = goalMidY + GOAL_W / 2;
+  const postR    = 4; // must match drawGoal postR
+
   let goalScored: 0 | 1 | null = null;
 
-  if (ball.x - BALL_R < PITCH.left && ball.y > goalTop && ball.y < goalBot) {
-    goalScored = 1; // team 1 scores in left goal
-  }
-  if (ball.x + BALL_R > PITCH.right && ball.y > goalTop && ball.y < goalBot) {
-    goalScored = 0; // team 0 scores in right goal
+  // Helper: is ball inside a goal mouth (between the posts)?
+  const inLeftGoal  = ball.y > goalTop + postR && ball.y < goalBot - postR;
+  const inRightGoal = ball.y > goalTop + postR && ball.y < goalBot - postR;
+
+  // ── LEFT GOAL ─────────────────────────────────────────────────────────────
+  if (ball.x - BALL_R < PITCH.left) {
+    if (inLeftGoal) {
+      // Ball entered the goal mouth — let it travel into the net
+      const backWall = PITCH.left - GOAL_DEPTH + BALL_R;
+      if (ball.x - BALL_R < backWall) {
+        // Hit the back wall → goal scored
+        goalScored = 1;
+        ball.x = backWall + BALL_R;
+        ball.vx *= -0.35; // dead bounce in net
+        ball.vy *= 0.7;
+      }
+      // Top/bottom inner post of left goal
+      if (ball.y - BALL_R < goalTop + postR) {
+        ball.y = goalTop + postR + BALL_R; ball.vy = Math.abs(ball.vy) * 0.6;
+      }
+      if (ball.y + BALL_R > goalBot - postR) {
+        ball.y = goalBot - postR - BALL_R; ball.vy = -Math.abs(ball.vy) * 0.6;
+      }
+    } else {
+      // Hit the goal post (not in opening) — bounce off front post
+      ball.x = PITCH.left + BALL_R; ball.vx = Math.abs(ball.vx) * 0.55;
+      ball.vy *= 0.8;
+    }
   }
 
-  // Side walls
-  if (ball.x - BALL_R < PITCH.left && goalScored === null) { ball.x = PITCH.left + BALL_R; ball.vx *= -0.65; }
-  if (ball.x + BALL_R > PITCH.right && goalScored === null) { ball.x = PITCH.right - BALL_R; ball.vx *= -0.65; }
+  // ── RIGHT GOAL ────────────────────────────────────────────────────────────
+  if (ball.x + BALL_R > PITCH.right) {
+    if (inRightGoal) {
+      const backWall = PITCH.right + GOAL_DEPTH - BALL_R;
+      if (ball.x + BALL_R > backWall) {
+        goalScored = 0;
+        ball.x = backWall - BALL_R;
+        ball.vx *= -0.35;
+        ball.vy *= 0.7;
+      }
+      // Top/bottom inner post of right goal
+      if (ball.y - BALL_R < goalTop + postR) {
+        ball.y = goalTop + postR + BALL_R; ball.vy = Math.abs(ball.vy) * 0.6;
+      }
+      if (ball.y + BALL_R > goalBot - postR) {
+        ball.y = goalBot - postR - BALL_R; ball.vy = -Math.abs(ball.vy) * 0.6;
+      }
+    } else {
+      ball.x = PITCH.right - BALL_R; ball.vx = -Math.abs(ball.vx) * 0.55;
+      ball.vy *= 0.8;
+    }
+  }
 
   // Player-ball collisions
   players.forEach(p => {
@@ -477,8 +568,8 @@ function renderPitch(ctx: CanvasRenderingContext2D, theme: PitchTheme, score: [n
   ctx.fillRect(0, 0, W, crowdH);
 
   // Draw crowd rows (tiny heads - like in the video)
-  for (let row = 0; row < 5; row++) {
-    const rowY = 40 + row * 22;
+  for (let row = 0; row < 4; row++) {
+    const rowY = 28 + row * 22;
     const cols = Math.floor(W / 18);
     for (let col = 0; col < cols; col++) {
       const cx = 9 + col * 18 + (row % 2 === 0 ? 9 : 0);
@@ -533,47 +624,133 @@ function renderPitch(ctx: CanvasRenderingContext2D, theme: PitchTheme, score: [n
   ctx.beginPath(); ctx.arc(W / 2, (PITCH.top + PITCH.bottom) / 2, 3, 0, Math.PI * 2);
   ctx.fillStyle = T.line; ctx.fill();
 
-  // Penalty boxes
-  const pBoxW = 90, pBoxH = 160;
+  // Penalty boxes - proportional to long pitch
+  const pBoxW = 120, pBoxH = 160;
   const midY = (PITCH.top + PITCH.bottom) / 2;
   ctx.strokeRect(PITCH.left, midY - pBoxH / 2, pBoxW, pBoxH);
   ctx.strokeRect(PITCH.right - pBoxW, midY - pBoxH / 2, pBoxW, pBoxH);
   ctx.restore();
 
-  // Goals (3D box)
+  // ── Goals: proper 3D scaffold/cage structure ──────────────────────────────
   const goalTop = midY - GOAL_W / 2;
   const goalBot = midY + GOAL_W / 2;
+  const postR = 4;       // post radius / half-width
+  const goalColor = "#e8e8e8";
+  const goalShadow = "rgba(0,0,0,0.55)";
+  const netColor = "rgba(220,235,255,0.22)";
+  const netLines = 6;
 
-  // Left goal
-  ctx.fillStyle = "rgba(255,255,255,0.12)";
-  ctx.fillRect(PITCH.left - GOAL_DEPTH, goalTop, GOAL_DEPTH, GOAL_W);
-  ctx.strokeStyle = T.goal || "#fff";
-  ctx.lineWidth = 2;
-  ctx.strokeRect(PITCH.left - GOAL_DEPTH, goalTop, GOAL_DEPTH, GOAL_W);
-  // Net lines
-  ctx.strokeStyle = "rgba(255,255,255,0.2)";
-  ctx.lineWidth = 0.5;
-  for (let i = 1; i < 4; i++) {
-    ctx.beginPath(); ctx.moveTo(PITCH.left - GOAL_DEPTH, goalTop + i * (GOAL_W / 4));
-    ctx.lineTo(PITCH.left, goalTop + i * (GOAL_W / 4)); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(PITCH.left - GOAL_DEPTH + i * (GOAL_DEPTH / 4), goalTop);
-    ctx.lineTo(PITCH.left - GOAL_DEPTH + i * (GOAL_DEPTH / 4), goalBot); ctx.stroke();
+  function drawGoal(side: "left" | "right") {
+    const isLeft = side === "left";
+    // gx = the pitch edge where goal mouth is; gd = depth direction
+    const gx = isLeft ? PITCH.left : PITCH.right;
+    const gd = isLeft ? -1 : 1; // -1 = extends left, +1 = extends right
+    const back = gx + gd * GOAL_DEPTH;
+
+    // ── Net fill (back panel + sides) ─────────────────────────────────────
+    // Back net
+    ctx.fillStyle = "rgba(30,40,80,0.55)";
+    ctx.fillRect(
+      Math.min(gx, back), goalTop + postR,
+      GOAL_DEPTH - postR, GOAL_W - postR * 2
+    );
+
+    // Net grid lines - horizontal
+    ctx.strokeStyle = netColor;
+    ctx.lineWidth = 0.7;
+    for (let i = 1; i <= netLines; i++) {
+      const ny = goalTop + (i / (netLines + 1)) * GOAL_W;
+      ctx.beginPath();
+      ctx.moveTo(gx, ny);
+      ctx.lineTo(back, ny);
+      ctx.stroke();
+    }
+    // Net grid lines - vertical (depth lines)
+    const depthSegs = 4;
+    for (let i = 1; i <= depthSegs; i++) {
+      const nx = gx + gd * (i / (depthSegs + 1)) * GOAL_DEPTH;
+      ctx.beginPath();
+      ctx.moveTo(nx, goalTop);
+      ctx.lineTo(nx, goalBot);
+      ctx.stroke();
+    }
+    // Side net panels (triangular perspective)
+    ctx.strokeStyle = "rgba(200,220,255,0.14)";
+    for (let i = 1; i <= netLines; i++) {
+      const ny = goalTop + (i / (netLines + 1)) * GOAL_W;
+      // top side panel
+      ctx.beginPath(); ctx.moveTo(gx, goalTop); ctx.lineTo(back, goalTop); ctx.stroke();
+      // bottom side panel
+      ctx.beginPath(); ctx.moveTo(gx, goalBot); ctx.lineTo(back, goalBot); ctx.stroke();
+    }
+
+    // ── Back post (far end bar) ────────────────────────────────────────────
+    ctx.fillStyle = goalShadow;
+    ctx.fillRect(back - (isLeft ? postR : 0), goalTop - postR, postR * 2, GOAL_W + postR * 2);
+    ctx.fillStyle = goalColor;
+    ctx.fillRect(back - (isLeft ? postR - 1 : 1), goalTop - postR + 1, postR * 2 - 2, GOAL_W + postR * 2 - 2);
+
+    // ── Left/right side bars (depth bars connecting front posts to back) ──
+    // Top depth bar shadow
+    ctx.fillStyle = goalShadow;
+    ctx.fillRect(Math.min(gx, back) - (isLeft ? 0 : postR), goalTop - postR, GOAL_DEPTH + postR, postR * 2);
+    ctx.fillStyle = goalColor;
+    ctx.fillRect(Math.min(gx, back) - (isLeft ? 0 : postR) + 1, goalTop - postR + 1, GOAL_DEPTH + postR - 2, postR * 2 - 2);
+    // Bottom depth bar shadow
+    ctx.fillStyle = goalShadow;
+    ctx.fillRect(Math.min(gx, back) - (isLeft ? 0 : postR), goalBot - postR, GOAL_DEPTH + postR, postR * 2);
+    ctx.fillStyle = goalColor;
+    ctx.fillRect(Math.min(gx, back) - (isLeft ? 0 : postR) + 1, goalBot - postR + 1, GOAL_DEPTH + postR - 2, postR * 2 - 2);
+
+    // ── Front posts (the two uprights at pitch edge) ───────────────────────
+    // Top post (upright)
+    const grad1 = ctx.createLinearGradient(gx - postR, 0, gx + postR, 0);
+    grad1.addColorStop(0, "#aaa");
+    grad1.addColorStop(0.4, "#fff");
+    grad1.addColorStop(1, "#bbb");
+    ctx.fillStyle = goalShadow;
+    ctx.fillRect(gx - postR - 1, goalTop - postR - 1, postR * 2 + 2, postR + 3);
+    ctx.fillStyle = grad1;
+    ctx.fillRect(gx - postR, goalTop - postR, postR * 2, postR + 2);
+
+    // Bottom post (upright)
+    ctx.fillStyle = goalShadow;
+    ctx.fillRect(gx - postR - 1, goalBot - 2, postR * 2 + 2, postR + 2);
+    ctx.fillStyle = grad1;
+    ctx.fillRect(gx - postR, goalBot - 1, postR * 2, postR + 1);
+
+    // ── Crossbar (the vertical bar connecting top & bottom posts at front) ─
+    const barGrad = ctx.createLinearGradient(gx - postR, 0, gx + postR, 0);
+    barGrad.addColorStop(0, "#999");
+    barGrad.addColorStop(0.35, "#ffffff");
+    barGrad.addColorStop(1, "#ccc");
+    ctx.fillStyle = goalShadow;
+    ctx.fillRect(gx - postR - 1, goalTop - postR - 1, postR * 2 + 2, GOAL_W + postR * 2 + 2);
+    ctx.fillStyle = barGrad;
+    ctx.fillRect(gx - postR, goalTop - postR, postR * 2, GOAL_W + postR * 2);
+
+    // ── Post highlight (bright strip on front face) ─────────────────────────
+    ctx.fillStyle = "rgba(255,255,255,0.55)";
+    ctx.fillRect(gx - postR + 2, goalTop - postR + 2, 2, GOAL_W + postR * 2 - 4);
+
+    // ── Outer scaffold support bars (the diagonal/horizontal frame like in screenshots) ─
+    ctx.strokeStyle = "rgba(200,200,200,0.35)";
+    ctx.lineWidth = 1.5;
+    // Top scaffold
+    ctx.beginPath(); ctx.moveTo(gx + gd * 4, goalTop - postR - 8);
+    ctx.lineTo(back + gd * 4, goalTop - postR - 8); ctx.stroke();
+    // Bottom scaffold
+    ctx.beginPath(); ctx.moveTo(gx + gd * 4, goalBot + postR + 8);
+    ctx.lineTo(back + gd * 4, goalBot + postR + 8); ctx.stroke();
+    // Vertical scaffold corners
+    ctx.beginPath(); ctx.moveTo(gx + gd * 4, goalTop - postR - 8);
+    ctx.lineTo(gx + gd * 4, goalBot + postR + 8); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(back + gd * 4, goalTop - postR - 8);
+    ctx.lineTo(back + gd * 4, goalBot + postR + 8); ctx.stroke();
   }
 
-  // Right goal
-  ctx.fillStyle = "rgba(255,255,255,0.12)";
-  ctx.fillRect(PITCH.right, goalTop, GOAL_DEPTH, GOAL_W);
-  ctx.strokeStyle = T.goal || "#fff";
-  ctx.lineWidth = 2;
-  ctx.strokeRect(PITCH.right, goalTop, GOAL_DEPTH, GOAL_W);
-  ctx.strokeStyle = "rgba(255,255,255,0.2)";
-  ctx.lineWidth = 0.5;
-  for (let i = 1; i < 4; i++) {
-    ctx.beginPath(); ctx.moveTo(PITCH.right, goalTop + i * (GOAL_W / 4));
-    ctx.lineTo(PITCH.right + GOAL_DEPTH, goalTop + i * (GOAL_W / 4)); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(PITCH.right + i * (GOAL_DEPTH / 4), goalTop);
-    ctx.lineTo(PITCH.right + i * (GOAL_DEPTH / 4), goalBot); ctx.stroke();
-  }
+  drawGoal("left");
+  drawGoal("right");
 
   // Advertising boards (Playza branding) - top and bottom of pitch like in video
   const boardH = 14;
@@ -590,26 +767,26 @@ function renderPitch(ctx: CanvasRenderingContext2D, theme: PitchTheme, score: [n
     ctx.fillText(ad, PITCH.left + segW * i + segW / 2, PITCH.bottom + 10);
   });
 
-  // Scoreboard at very top
+  // Scoreboard at very top - centered
   ctx.fillStyle = "rgba(0,0,0,0.75)";
-  roundRect(ctx, 50, 6, W - 100, 42, 10);
+  roundRect(ctx, W / 2 - 130, 5, 260, 42, 10);
   ctx.fill();
   // Team 0
   ctx.fillStyle = team0Color;
-  ctx.beginPath(); ctx.arc(80, 27, 12, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(W / 2 - 100, 26, 12, 0, Math.PI * 2); ctx.fill();
   ctx.font = "bold 9px Arial"; ctx.textAlign = "center"; ctx.fillStyle = "#fff";
-  ctx.fillText(team0Name.slice(0, 8).toUpperCase(), 80, 47);
+  ctx.fillText(team0Name.slice(0, 8).toUpperCase(), W / 2 - 100, 46);
   // Team 1
   ctx.fillStyle = team1Color;
-  ctx.beginPath(); ctx.arc(W - 80, 27, 12, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(W / 2 + 100, 26, 12, 0, Math.PI * 2); ctx.fill();
   ctx.font = "bold 9px Arial"; ctx.textAlign = "center"; ctx.fillStyle = "#fff";
-  ctx.fillText(team1Name.slice(0, 8).toUpperCase(), W - 80, 47);
+  ctx.fillText(team1Name.slice(0, 8).toUpperCase(), W / 2 + 100, 46);
   // Score
   ctx.font = "bold 22px Arial"; ctx.fillStyle = "#fff"; ctx.textAlign = "center";
-  ctx.fillText(`${score[0]}`, W / 2 - 28, 32);
-  ctx.fillText(`${score[1]}`, W / 2 + 28, 32);
+  ctx.fillText(`${score[0]}`, W / 2 - 40, 31);
+  ctx.fillText(`${score[1]}`, W / 2 + 40, 31);
   ctx.fillStyle = "#aaa"; ctx.font = "bold 14px Arial";
-  ctx.fillText("–", W / 2, 32);
+  ctx.fillText("–", W / 2, 31);
   // Timer
   const m = Math.floor(timeLeft / 60), sec = Math.floor(timeLeft % 60);
   ctx.fillStyle = timeLeft < 30 ? "#ff4444" : "#FFD700";
@@ -658,12 +835,19 @@ const SoccerGame: React.FC<SoccerGameProps> = ({
   const inputRef = useRef<Vec2>({ x: 0, y: 0 });
   const passRef = useRef(false);
   const shootRef = useRef(false);
+  const dashRef = useRef(false);
+  const tackleRef = useRef(false);
+  const switchRef = useRef(false);
+  const defenseRef = useRef(false);
   const rafRef = useRef(0);
   const goalTimerRef = useRef(0);
   const kickoffTimerRef = useRef(0);
   const [overlayMsg, setOverlayMsg] = useState<string | null>("Kick Off!");
   const [theme, setTheme] = useState<PitchTheme>(pitchTheme);
   const [showPitchMenu, setShowPitchMenu] = useState(false);
+  // Possession state: true = my team has ball, false = opponent has ball
+  const [myPossession, setMyPossession] = useState(true);
+  const possessionRef = useRef(true);
 
   // Joystick state
   const joystickRef = useRef({ active: false, startX: 0, startY: 0, dx: 0, dy: 0 });
@@ -694,7 +878,21 @@ const SoccerGame: React.FC<SoccerGameProps> = ({
           accTime -= 16;
           const doPass = passRef.current; passRef.current = false;
           const doShoot = shootRef.current; shootRef.current = false;
-          stateRef.current = tick(stateRef.current, inputRef.current, doPass, doShoot);
+          const doDash = dashRef.current; dashRef.current = false;
+          const doTackle = tackleRef.current; tackleRef.current = false;
+          const doSwitch = switchRef.current; switchRef.current = false;
+          const doDefense = defenseRef.current; defenseRef.current = false;
+          stateRef.current = tick(stateRef.current, inputRef.current, doPass, doShoot, doDash, doTackle, doSwitch, doDefense);
+
+          // Track possession - update React state throttled
+          const cur = stateRef.current;
+          const ballHolder = cur.players.find(p => p.hasBall);
+          const newPossession = !ballHolder || ballHolder.team === myTeam;
+          if (newPossession !== possessionRef.current) {
+            possessionRef.current = newPossession;
+            setMyPossession(newPossession);
+          }
+
           if (gameMode === "timed") {
             stateRef.current.timeLeft -= 16 / 1000;
             if (stateRef.current.timeLeft <= 0) {
@@ -788,8 +986,9 @@ const SoccerGame: React.FC<SoccerGameProps> = ({
       if (down.has("ArrowDown") || down.has("s")) dir.y += 1;
       const l = Math.hypot(dir.x, dir.y) || 1;
       inputRef.current = { x: dir.x / l, y: dir.y / l };
-      if (e.key === " " || e.key === "x") shootRef.current = true;
-      if (e.key === "z" || e.key === "c") passRef.current = true;
+      if (e.key === " " || e.key === "x") { possessionRef.current ? (shootRef.current = true) : (defenseRef.current = true); }
+      if (e.key === "z" || e.key === "c") { possessionRef.current ? (passRef.current = true) : (switchRef.current = true); }
+      if (e.key === "q" || e.key === "Q") { possessionRef.current ? (dashRef.current = true) : (tackleRef.current = true); }
     };
     const onKU = (e: KeyboardEvent) => {
       down.delete(e.key);
@@ -799,6 +998,7 @@ const SoccerGame: React.FC<SoccerGameProps> = ({
       if (down.has("ArrowUp") || down.has("w")) dir.y -= 1;
       if (down.has("ArrowDown") || down.has("s")) dir.y += 1;
       inputRef.current = dir;
+      if (e.key === "q" || e.key === "Q") { dashRef.current = false; tackleRef.current = false; }
     };
     window.addEventListener("keydown", onKD);
     window.addEventListener("keyup", onKU);
@@ -836,13 +1036,13 @@ const SoccerGame: React.FC<SoccerGameProps> = ({
   return (
     <div className="flex flex-col items-center w-full select-none bg-[#0a0a1e]" style={{ fontFamily: "Arial, sans-serif" }}>
       {/* Canvas */}
-      <div className="relative w-full" style={{ maxWidth: W }}>
+      <div className="relative w-full overflow-x-auto" style={{ maxWidth: W }}>
         <canvas
           ref={canvasRef}
           width={W}
           height={H}
           className="w-full touch-none"
-          style={{ display: "block", imageRendering: "crisp-edges" }}
+          style={{ display: "block", imageRendering: "crisp-edges", minWidth: 480 }}
         />
 
         {/* Goal / Kickoff overlay */}
@@ -882,13 +1082,13 @@ const SoccerGame: React.FC<SoccerGameProps> = ({
 
       {/* ── Controls bar ── */}
       <div
-        className="w-full flex items-center justify-between px-4 py-4 bg-[#0a0a1e]"
-        style={{ maxWidth: W, minHeight: 110 }}
+        className="w-full flex items-center justify-between px-5 py-3 bg-[#0d0d1f]"
+        style={{ maxWidth: W, minHeight: 120 }}
       >
-        {/* Joystick (left) */}
+        {/* ── LEFT: Analogue Joystick (always visible) ── */}
         <div
           className="relative flex-shrink-0"
-          style={{ width: 90, height: 90 }}
+          style={{ width: 100, height: 100 }}
           onMouseDown={onJoyStart}
           onMouseMove={onJoyMove}
           onMouseUp={onJoyEnd}
@@ -898,67 +1098,174 @@ const SoccerGame: React.FC<SoccerGameProps> = ({
           onTouchEnd={e => { e.preventDefault(); onJoyEnd(); }}
         >
           {/* Outer ring */}
-          <div className="absolute inset-0 rounded-full border-2 border-cyan-400/50 bg-cyan-900/20" />
-          {/* Inner knob */}
-          <div
-            className="absolute rounded-full bg-cyan-400/80 border-2 border-cyan-300 shadow-lg shadow-cyan-500/30"
+          <div className="absolute inset-0 rounded-full"
             style={{
-              width: 36, height: 36,
-              left: 45 - 18 + (joystickVis.active ? joystickVis.dx * 0.7 : 0),
-              top: 45 - 18 + (joystickVis.active ? joystickVis.dy * 0.7 : 0),
-              transition: joystickVis.active ? "none" : "all 0.15s",
+              background: "radial-gradient(circle, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%)",
+              border: "2px solid rgba(255,255,255,0.18)",
+              boxShadow: "0 0 18px rgba(100,180,255,0.12)",
             }}
           />
-          {/* Crosshair lines */}
+          {/* Subtle crosshair */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="w-full h-px bg-cyan-400/20" />
+            <div className="w-full h-px" style={{ background: "rgba(255,255,255,0.08)" }} />
           </div>
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="w-px h-full bg-cyan-400/20" />
+            <div className="w-px h-full" style={{ background: "rgba(255,255,255,0.08)" }} />
           </div>
+          {/* Inner knob */}
+          <div
+            className="absolute rounded-full"
+            style={{
+              width: 40, height: 40,
+              left: 50 - 20 + (joystickVis.active ? joystickVis.dx * 0.75 : 0),
+              top: 50 - 20 + (joystickVis.active ? joystickVis.dy * 0.75 : 0),
+              transition: joystickVis.active ? "none" : "all 0.12s ease-out",
+              background: "radial-gradient(circle at 38% 35%, rgba(255,255,255,0.35) 0%, rgba(200,220,255,0.18) 55%, rgba(120,160,255,0.08) 100%)",
+              border: "2px solid rgba(255,255,255,0.35)",
+              boxShadow: "0 2px 12px rgba(100,160,255,0.25), inset 0 1px 4px rgba(255,255,255,0.2)",
+            }}
+          />
         </div>
 
-        {/* PASS button (centre) */}
-        <div className="flex flex-col items-center gap-1">
-          <button
-            className="relative flex items-center justify-center rounded-full border-2 font-black uppercase tracking-widest text-sm transition-all active:scale-90"
-            style={{
-              width: 64, height: 64,
-              backgroundColor: "rgba(0,200,100,0.15)",
-              borderColor: "rgba(0,255,120,0.7)",
-              color: "#00ff88",
-              boxShadow: "0 0 16px rgba(0,255,120,0.3), inset 0 0 12px rgba(0,255,120,0.1)",
-              textShadow: "0 0 8px rgba(0,255,120,0.8)",
-            }}
-            onMouseDown={() => { passRef.current = true; }}
-            onTouchStart={e => { e.preventDefault(); passRef.current = true; }}
-          >
-            PASS
-          </button>
-          <span className="text-[9px] text-gray-500 uppercase tracking-widest">Z / C</span>
-        </div>
+        {/* ── RIGHT: Contextual Action Buttons ── */}
+        <div className="flex items-center gap-3 flex-shrink-0">
+          {myPossession ? (
+            // ── ATTACK MODE: DASH + PASS + SHOOT ──
+            <>
+              {/* DASH */}
+              <div className="flex flex-col items-center gap-1">
+                <button
+                  className="relative flex items-center justify-center rounded-full font-black uppercase tracking-widest text-xs transition-all active:scale-90"
+                  style={{
+                    width: 68, height: 68,
+                    background: "radial-gradient(circle at 38% 32%, rgba(255,60,120,0.22) 0%, rgba(180,0,80,0.10) 100%)",
+                    border: "2px solid rgba(255,80,140,0.75)",
+                    color: "#ff4d8f",
+                    boxShadow: "0 0 18px rgba(255,60,120,0.35), inset 0 0 14px rgba(255,60,120,0.12)",
+                    textShadow: "0 0 10px rgba(255,80,140,0.9)",
+                    letterSpacing: "0.08em",
+                  }}
+                  onMouseDown={() => { dashRef.current = true; }}
+                  onMouseUp={() => { dashRef.current = false; }}
+                  onTouchStart={e => { e.preventDefault(); dashRef.current = true; }}
+                  onTouchEnd={e => { e.preventDefault(); dashRef.current = false; }}
+                >
+                  DASH
+                </button>
+                <span className="text-[8px] uppercase tracking-widest" style={{ color: "rgba(255,80,140,0.45)" }}>Q</span>
+              </div>
 
-        {/* SHOOT button (right) */}
-        <div className="flex flex-col items-center gap-1">
-          <button
-            className="relative flex items-center justify-center rounded-full border-2 font-black uppercase tracking-widest text-sm transition-all active:scale-90"
-            style={{
-              width: 72, height: 72,
-              backgroundColor: "rgba(255,80,0,0.15)",
-              borderColor: "rgba(255,120,0,0.8)",
-              color: "#ff8800",
-              boxShadow: "0 0 20px rgba(255,100,0,0.35), inset 0 0 14px rgba(255,100,0,0.1)",
-              textShadow: "0 0 10px rgba(255,120,0,0.9)",
-            }}
-            onMouseDown={() => { shootRef.current = true; }}
-            onTouchStart={e => { e.preventDefault(); shootRef.current = true; }}
-          >
-            SHOOT
-            {/* Arrow decoration like in video */}
-            <span className="absolute top-1 right-1 text-xs" style={{ color: "rgba(255,140,0,0.6)" }}>↗</span>
-            <span className="absolute bottom-1 left-1 text-xs" style={{ color: "rgba(255,140,0,0.6)" }}>↙</span>
-          </button>
-          <span className="text-[9px] text-gray-500 uppercase tracking-widest">Space / X</span>
+              {/* PASS */}
+              <div className="flex flex-col items-center gap-1">
+                <button
+                  className="relative flex items-center justify-center rounded-full font-black uppercase tracking-widest text-xs transition-all active:scale-90"
+                  style={{
+                    width: 76, height: 76,
+                    background: "radial-gradient(circle at 38% 32%, rgba(0,210,255,0.22) 0%, rgba(0,120,200,0.10) 100%)",
+                    border: "2px solid rgba(0,210,255,0.75)",
+                    color: "#00d4ff",
+                    boxShadow: "0 0 22px rgba(0,200,255,0.38), inset 0 0 16px rgba(0,200,255,0.12)",
+                    textShadow: "0 0 10px rgba(0,210,255,0.95)",
+                    letterSpacing: "0.08em",
+                  }}
+                  onMouseDown={() => { passRef.current = true; }}
+                  onTouchStart={e => { e.preventDefault(); passRef.current = true; }}
+                >
+                  PASS
+                </button>
+                <span className="text-[8px] uppercase tracking-widest" style={{ color: "rgba(0,200,255,0.45)" }}>Z / C</span>
+              </div>
+
+              {/* SHOOT */}
+              <div className="flex flex-col items-center gap-1">
+                <button
+                  className="relative flex items-center justify-center rounded-full font-black uppercase tracking-widest text-xs transition-all active:scale-90"
+                  style={{
+                    width: 86, height: 86,
+                    background: "radial-gradient(circle at 38% 32%, rgba(255,140,0,0.25) 0%, rgba(180,60,0,0.12) 100%)",
+                    border: "2.5px solid rgba(255,150,0,0.85)",
+                    color: "#ffaa00",
+                    boxShadow: "0 0 26px rgba(255,130,0,0.42), inset 0 0 18px rgba(255,120,0,0.14)",
+                    textShadow: "0 0 12px rgba(255,150,0,1)",
+                    letterSpacing: "0.08em",
+                    fontSize: 13,
+                  }}
+                  onMouseDown={() => { shootRef.current = true; }}
+                  onTouchStart={e => { e.preventDefault(); shootRef.current = true; }}
+                >
+                  SHOOT
+                </button>
+                <span className="text-[8px] uppercase tracking-widest" style={{ color: "rgba(255,140,0,0.45)" }}>Space</span>
+              </div>
+            </>
+          ) : (
+            // ── DEFEND MODE: TACKLE + SWITCH + DEFENSE ──
+            <>
+              {/* TACKLE */}
+              <div className="flex flex-col items-center gap-1">
+                <button
+                  className="relative flex items-center justify-center rounded-full font-black uppercase tracking-widest text-xs transition-all active:scale-90"
+                  style={{
+                    width: 68, height: 68,
+                    background: "radial-gradient(circle at 38% 32%, rgba(255,60,60,0.22) 0%, rgba(160,0,0,0.10) 100%)",
+                    border: "2px solid rgba(255,80,80,0.75)",
+                    color: "#ff5555",
+                    boxShadow: "0 0 18px rgba(255,60,60,0.35), inset 0 0 14px rgba(255,60,60,0.12)",
+                    textShadow: "0 0 10px rgba(255,80,80,0.9)",
+                    letterSpacing: "0.08em",
+                  }}
+                  onMouseDown={() => { tackleRef.current = true; }}
+                  onTouchStart={e => { e.preventDefault(); tackleRef.current = true; }}
+                >
+                  TACKLE
+                </button>
+                <span className="text-[8px] uppercase tracking-widest" style={{ color: "rgba(255,80,80,0.45)" }}>Q</span>
+              </div>
+
+              {/* SWITCH */}
+              <div className="flex flex-col items-center gap-1">
+                <button
+                  className="relative flex items-center justify-center rounded-full font-black uppercase tracking-widest text-xs transition-all active:scale-90"
+                  style={{
+                    width: 76, height: 76,
+                    background: "radial-gradient(circle at 38% 32%, rgba(0,210,255,0.22) 0%, rgba(0,120,200,0.10) 100%)",
+                    border: "2px solid rgba(0,210,255,0.75)",
+                    color: "#00d4ff",
+                    boxShadow: "0 0 22px rgba(0,200,255,0.38), inset 0 0 16px rgba(0,200,255,0.12)",
+                    textShadow: "0 0 10px rgba(0,210,255,0.95)",
+                    letterSpacing: "0.08em",
+                  }}
+                  onMouseDown={() => { switchRef.current = true; }}
+                  onTouchStart={e => { e.preventDefault(); switchRef.current = true; }}
+                >
+                  SWITCH
+                </button>
+                <span className="text-[8px] uppercase tracking-widest" style={{ color: "rgba(0,200,255,0.45)" }}>Z</span>
+              </div>
+
+              {/* DEFENSE */}
+              <div className="flex flex-col items-center gap-1">
+                <button
+                  className="relative flex items-center justify-center rounded-full font-black uppercase tracking-widest text-xs transition-all active:scale-90"
+                  style={{
+                    width: 86, height: 86,
+                    background: "radial-gradient(circle at 38% 32%, rgba(160,100,255,0.22) 0%, rgba(80,0,180,0.10) 100%)",
+                    border: "2.5px solid rgba(170,110,255,0.85)",
+                    color: "#c084fc",
+                    boxShadow: "0 0 26px rgba(150,80,255,0.40), inset 0 0 18px rgba(140,60,255,0.14)",
+                    textShadow: "0 0 12px rgba(180,110,255,1)",
+                    letterSpacing: "0.08em",
+                    fontSize: 12,
+                  }}
+                  onMouseDown={() => { defenseRef.current = true; }}
+                  onTouchStart={e => { e.preventDefault(); defenseRef.current = true; }}
+                >
+                  DEFENSE
+                </button>
+                <span className="text-[8px] uppercase tracking-widest" style={{ color: "rgba(160,100,255,0.45)" }}>Space</span>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
