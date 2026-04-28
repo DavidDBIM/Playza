@@ -178,7 +178,7 @@ function runAI(s: GameState, aiTeam: 0 | 1): void {
 }
 
 // ─── Physics ──────────────────────────────────────────────────────────────────
-function tick(s: GameState, inputDir: Vec2, doPass: boolean, doShoot: boolean): GameState {
+function tick(s: GameState, inputDir: Vec2, doPass: boolean, doShoot: boolean, doDash: boolean, doTackle: boolean, doSwitch: boolean, doDefense: boolean): GameState {
   const ns = { ...s, players: s.players.map(p => ({ ...p })), ball: { ...s.ball, trail: [...s.ball.trail] } };
   const { players, ball } = ns;
 
@@ -187,11 +187,19 @@ function tick(s: GameState, inputDir: Vec2, doPass: boolean, doShoot: boolean): 
   if (cp && ns.phase === "playing") {
     const l = Math.hypot(inputDir.x, inputDir.y);
     if (l > 0.1) {
-      cp.vx = inputDir.x * PLAYER_SPEED;
-      cp.vy = inputDir.y * PLAYER_SPEED;
+      const speed = doDash ? PLAYER_SPEED * 2.2 : PLAYER_SPEED;
+      cp.vx = inputDir.x * speed;
+      cp.vy = inputDir.y * speed;
       cp.facing = Math.atan2(inputDir.y, inputDir.x);
-      cp.runPhase += 0.28;
+      cp.runPhase += doDash ? 0.55 : 0.28;
     }
+  }
+
+  // DASH - burst of speed toward ball
+  if (doDash && ns.phase === "playing" && cp) {
+    const d = norm({ x: ball.x - cp.x, y: ball.y - cp.y });
+    cp.vx += d.x * 6;
+    cp.vy += d.y * 6;
   }
 
   // Teammates auto-run (basic support)
@@ -261,6 +269,50 @@ function tick(s: GameState, inputDir: Vec2, doPass: boolean, doShoot: boolean): 
       ball.vy = d.y * BALL_MAX_SPEED;
       ball.spin = (Math.random() - 0.5) * 0.3;
     }
+  }
+
+  // TACKLE - lunge at ball carrier
+  if (doTackle && ns.phase === "playing") {
+    const myPlayers = players.filter(p => p.team === ns.myTeam);
+    const tackler = myPlayers.sort((a, b) => dist(a, ball) - dist(b, ball))[0];
+    if (tackler) {
+      const d = norm({ x: ball.x - tackler.x, y: ball.y - tackler.y });
+      tackler.vx = d.x * PLAYER_SPEED * 2.5;
+      tackler.vy = d.y * PLAYER_SPEED * 2.5;
+      // If close enough, dispossess the ball
+      if (dist(tackler, ball) < PLAYER_R + BALL_R + 20) {
+        const scatter = { x: (Math.random() - 0.5) * 6, y: (Math.random() - 0.5) * 6 };
+        ball.vx = scatter.x + d.x * 4;
+        ball.vy = scatter.y + d.y * 2;
+      }
+    }
+  }
+
+  // SWITCH - change controlled player to one closest to ball
+  if (doSwitch && ns.phase === "playing") {
+    const myP = players.map((p, i) => ({ p, i })).filter(({ p }) => p.team === ns.myTeam);
+    // Pick the one closest to ball that isn't already controlled
+    const next = myP.filter(({ i }) => i !== ns.controlledIdx)
+      .sort((a, b) => dist(a.p, ball) - dist(b.p, ball))[0];
+    if (next) ns.controlledIdx = next.i;
+  }
+
+  // DEFENSE - pull back into defensive shape
+  if (doDefense && ns.phase === "playing") {
+    const ownGoalX = ns.myTeam === 0 ? PITCH.left : PITCH.right;
+    const midY = (PITCH.top + PITCH.bottom) / 2;
+    players.forEach((p, i) => {
+      if (p.team === ns.myTeam && !p.isKeeper) {
+        // Pull non-keepers toward defensive third
+        const defX = ns.myTeam === 0
+          ? clamp(ball.x - 80, PITCH.left + 40, (PITCH.left + PITCH.right) / 2)
+          : clamp(ball.x + 80, (PITCH.left + PITCH.right) / 2, PITCH.right - 40);
+        const slotY = midY + ((i % 3) - 1) * 70;
+        const d = norm({ x: defX - p.x, y: slotY - p.y });
+        p.vx = lerp(p.vx, d.x * PLAYER_SPEED * 1.4, 0.3);
+        p.vy = lerp(p.vy, d.y * PLAYER_SPEED * 1.4, 0.3);
+      }
+    });
   }
 
   // Ball physics
@@ -652,12 +704,19 @@ const SoccerGame: React.FC<SoccerGameProps> = ({
   const inputRef = useRef<Vec2>({ x: 0, y: 0 });
   const passRef = useRef(false);
   const shootRef = useRef(false);
+  const dashRef = useRef(false);
+  const tackleRef = useRef(false);
+  const switchRef = useRef(false);
+  const defenseRef = useRef(false);
   const rafRef = useRef(0);
   const goalTimerRef = useRef(0);
   const kickoffTimerRef = useRef(0);
   const [overlayMsg, setOverlayMsg] = useState<string | null>("Kick Off!");
   const [theme, setTheme] = useState<PitchTheme>(pitchTheme);
   const [showPitchMenu, setShowPitchMenu] = useState(false);
+  // Possession state: true = my team has ball, false = opponent has ball
+  const [myPossession, setMyPossession] = useState(true);
+  const possessionRef = useRef(true);
 
   // Joystick state
   const joystickRef = useRef({ active: false, startX: 0, startY: 0, dx: 0, dy: 0 });
@@ -688,7 +747,21 @@ const SoccerGame: React.FC<SoccerGameProps> = ({
           accTime -= 16;
           const doPass = passRef.current; passRef.current = false;
           const doShoot = shootRef.current; shootRef.current = false;
-          stateRef.current = tick(stateRef.current, inputRef.current, doPass, doShoot);
+          const doDash = dashRef.current; dashRef.current = false;
+          const doTackle = tackleRef.current; tackleRef.current = false;
+          const doSwitch = switchRef.current; switchRef.current = false;
+          const doDefense = defenseRef.current; defenseRef.current = false;
+          stateRef.current = tick(stateRef.current, inputRef.current, doPass, doShoot, doDash, doTackle, doSwitch, doDefense);
+
+          // Track possession - update React state throttled
+          const cur = stateRef.current;
+          const ballHolder = cur.players.find(p => p.hasBall);
+          const newPossession = !ballHolder || ballHolder.team === myTeam;
+          if (newPossession !== possessionRef.current) {
+            possessionRef.current = newPossession;
+            setMyPossession(newPossession);
+          }
+
           if (gameMode === "timed") {
             stateRef.current.timeLeft -= 16 / 1000;
             if (stateRef.current.timeLeft <= 0) {
@@ -782,8 +855,9 @@ const SoccerGame: React.FC<SoccerGameProps> = ({
       if (down.has("ArrowDown") || down.has("s")) dir.y += 1;
       const l = Math.hypot(dir.x, dir.y) || 1;
       inputRef.current = { x: dir.x / l, y: dir.y / l };
-      if (e.key === " " || e.key === "x") shootRef.current = true;
-      if (e.key === "z" || e.key === "c") passRef.current = true;
+      if (e.key === " " || e.key === "x") { possessionRef.current ? (shootRef.current = true) : (defenseRef.current = true); }
+      if (e.key === "z" || e.key === "c") { possessionRef.current ? (passRef.current = true) : (switchRef.current = true); }
+      if (e.key === "q" || e.key === "Q") { possessionRef.current ? (dashRef.current = true) : (tackleRef.current = true); }
     };
     const onKU = (e: KeyboardEvent) => {
       down.delete(e.key);
@@ -793,6 +867,7 @@ const SoccerGame: React.FC<SoccerGameProps> = ({
       if (down.has("ArrowUp") || down.has("w")) dir.y -= 1;
       if (down.has("ArrowDown") || down.has("s")) dir.y += 1;
       inputRef.current = dir;
+      if (e.key === "q" || e.key === "Q") { dashRef.current = false; tackleRef.current = false; }
     };
     window.addEventListener("keydown", onKD);
     window.addEventListener("keyup", onKU);
@@ -876,13 +951,13 @@ const SoccerGame: React.FC<SoccerGameProps> = ({
 
       {/* ── Controls bar ── */}
       <div
-        className="w-full flex items-center justify-between px-4 py-4 bg-[#0a0a1e]"
-        style={{ maxWidth: W, minHeight: 110 }}
+        className="w-full flex items-center justify-between px-5 py-3 bg-[#0d0d1f]"
+        style={{ maxWidth: W, minHeight: 120 }}
       >
-        {/* Joystick (left) */}
+        {/* ── LEFT: Analogue Joystick (always visible) ── */}
         <div
           className="relative flex-shrink-0"
-          style={{ width: 90, height: 90 }}
+          style={{ width: 100, height: 100 }}
           onMouseDown={onJoyStart}
           onMouseMove={onJoyMove}
           onMouseUp={onJoyEnd}
@@ -892,67 +967,174 @@ const SoccerGame: React.FC<SoccerGameProps> = ({
           onTouchEnd={e => { e.preventDefault(); onJoyEnd(); }}
         >
           {/* Outer ring */}
-          <div className="absolute inset-0 rounded-full border-2 border-cyan-400/50 bg-cyan-900/20" />
-          {/* Inner knob */}
-          <div
-            className="absolute rounded-full bg-cyan-400/80 border-2 border-cyan-300 shadow-lg shadow-cyan-500/30"
+          <div className="absolute inset-0 rounded-full"
             style={{
-              width: 36, height: 36,
-              left: 45 - 18 + (joystickVis.active ? joystickVis.dx * 0.7 : 0),
-              top: 45 - 18 + (joystickVis.active ? joystickVis.dy * 0.7 : 0),
-              transition: joystickVis.active ? "none" : "all 0.15s",
+              background: "radial-gradient(circle, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%)",
+              border: "2px solid rgba(255,255,255,0.18)",
+              boxShadow: "0 0 18px rgba(100,180,255,0.12)",
             }}
           />
-          {/* Crosshair lines */}
+          {/* Subtle crosshair */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="w-full h-px bg-cyan-400/20" />
+            <div className="w-full h-px" style={{ background: "rgba(255,255,255,0.08)" }} />
           </div>
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="w-px h-full bg-cyan-400/20" />
+            <div className="w-px h-full" style={{ background: "rgba(255,255,255,0.08)" }} />
           </div>
+          {/* Inner knob */}
+          <div
+            className="absolute rounded-full"
+            style={{
+              width: 40, height: 40,
+              left: 50 - 20 + (joystickVis.active ? joystickVis.dx * 0.75 : 0),
+              top: 50 - 20 + (joystickVis.active ? joystickVis.dy * 0.75 : 0),
+              transition: joystickVis.active ? "none" : "all 0.12s ease-out",
+              background: "radial-gradient(circle at 38% 35%, rgba(255,255,255,0.35) 0%, rgba(200,220,255,0.18) 55%, rgba(120,160,255,0.08) 100%)",
+              border: "2px solid rgba(255,255,255,0.35)",
+              boxShadow: "0 2px 12px rgba(100,160,255,0.25), inset 0 1px 4px rgba(255,255,255,0.2)",
+            }}
+          />
         </div>
 
-        {/* PASS button (centre) */}
-        <div className="flex flex-col items-center gap-1">
-          <button
-            className="relative flex items-center justify-center rounded-full border-2 font-black uppercase tracking-widest text-sm transition-all active:scale-90"
-            style={{
-              width: 64, height: 64,
-              backgroundColor: "rgba(0,200,100,0.15)",
-              borderColor: "rgba(0,255,120,0.7)",
-              color: "#00ff88",
-              boxShadow: "0 0 16px rgba(0,255,120,0.3), inset 0 0 12px rgba(0,255,120,0.1)",
-              textShadow: "0 0 8px rgba(0,255,120,0.8)",
-            }}
-            onMouseDown={() => { passRef.current = true; }}
-            onTouchStart={e => { e.preventDefault(); passRef.current = true; }}
-          >
-            PASS
-          </button>
-          <span className="text-[9px] text-gray-500 uppercase tracking-widest">Z / C</span>
-        </div>
+        {/* ── RIGHT: Contextual Action Buttons ── */}
+        <div className="flex items-center gap-3 flex-shrink-0">
+          {myPossession ? (
+            // ── ATTACK MODE: DASH + PASS + SHOOT ──
+            <>
+              {/* DASH */}
+              <div className="flex flex-col items-center gap-1">
+                <button
+                  className="relative flex items-center justify-center rounded-full font-black uppercase tracking-widest text-xs transition-all active:scale-90"
+                  style={{
+                    width: 68, height: 68,
+                    background: "radial-gradient(circle at 38% 32%, rgba(255,60,120,0.22) 0%, rgba(180,0,80,0.10) 100%)",
+                    border: "2px solid rgba(255,80,140,0.75)",
+                    color: "#ff4d8f",
+                    boxShadow: "0 0 18px rgba(255,60,120,0.35), inset 0 0 14px rgba(255,60,120,0.12)",
+                    textShadow: "0 0 10px rgba(255,80,140,0.9)",
+                    letterSpacing: "0.08em",
+                  }}
+                  onMouseDown={() => { dashRef.current = true; }}
+                  onMouseUp={() => { dashRef.current = false; }}
+                  onTouchStart={e => { e.preventDefault(); dashRef.current = true; }}
+                  onTouchEnd={e => { e.preventDefault(); dashRef.current = false; }}
+                >
+                  DASH
+                </button>
+                <span className="text-[8px] uppercase tracking-widest" style={{ color: "rgba(255,80,140,0.45)" }}>Q</span>
+              </div>
 
-        {/* SHOOT button (right) */}
-        <div className="flex flex-col items-center gap-1">
-          <button
-            className="relative flex items-center justify-center rounded-full border-2 font-black uppercase tracking-widest text-sm transition-all active:scale-90"
-            style={{
-              width: 72, height: 72,
-              backgroundColor: "rgba(255,80,0,0.15)",
-              borderColor: "rgba(255,120,0,0.8)",
-              color: "#ff8800",
-              boxShadow: "0 0 20px rgba(255,100,0,0.35), inset 0 0 14px rgba(255,100,0,0.1)",
-              textShadow: "0 0 10px rgba(255,120,0,0.9)",
-            }}
-            onMouseDown={() => { shootRef.current = true; }}
-            onTouchStart={e => { e.preventDefault(); shootRef.current = true; }}
-          >
-            SHOOT
-            {/* Arrow decoration like in video */}
-            <span className="absolute top-1 right-1 text-xs" style={{ color: "rgba(255,140,0,0.6)" }}>↗</span>
-            <span className="absolute bottom-1 left-1 text-xs" style={{ color: "rgba(255,140,0,0.6)" }}>↙</span>
-          </button>
-          <span className="text-[9px] text-gray-500 uppercase tracking-widest">Space / X</span>
+              {/* PASS */}
+              <div className="flex flex-col items-center gap-1">
+                <button
+                  className="relative flex items-center justify-center rounded-full font-black uppercase tracking-widest text-xs transition-all active:scale-90"
+                  style={{
+                    width: 76, height: 76,
+                    background: "radial-gradient(circle at 38% 32%, rgba(0,210,255,0.22) 0%, rgba(0,120,200,0.10) 100%)",
+                    border: "2px solid rgba(0,210,255,0.75)",
+                    color: "#00d4ff",
+                    boxShadow: "0 0 22px rgba(0,200,255,0.38), inset 0 0 16px rgba(0,200,255,0.12)",
+                    textShadow: "0 0 10px rgba(0,210,255,0.95)",
+                    letterSpacing: "0.08em",
+                  }}
+                  onMouseDown={() => { passRef.current = true; }}
+                  onTouchStart={e => { e.preventDefault(); passRef.current = true; }}
+                >
+                  PASS
+                </button>
+                <span className="text-[8px] uppercase tracking-widest" style={{ color: "rgba(0,200,255,0.45)" }}>Z / C</span>
+              </div>
+
+              {/* SHOOT */}
+              <div className="flex flex-col items-center gap-1">
+                <button
+                  className="relative flex items-center justify-center rounded-full font-black uppercase tracking-widest text-xs transition-all active:scale-90"
+                  style={{
+                    width: 86, height: 86,
+                    background: "radial-gradient(circle at 38% 32%, rgba(255,140,0,0.25) 0%, rgba(180,60,0,0.12) 100%)",
+                    border: "2.5px solid rgba(255,150,0,0.85)",
+                    color: "#ffaa00",
+                    boxShadow: "0 0 26px rgba(255,130,0,0.42), inset 0 0 18px rgba(255,120,0,0.14)",
+                    textShadow: "0 0 12px rgba(255,150,0,1)",
+                    letterSpacing: "0.08em",
+                    fontSize: 13,
+                  }}
+                  onMouseDown={() => { shootRef.current = true; }}
+                  onTouchStart={e => { e.preventDefault(); shootRef.current = true; }}
+                >
+                  SHOOT
+                </button>
+                <span className="text-[8px] uppercase tracking-widest" style={{ color: "rgba(255,140,0,0.45)" }}>Space</span>
+              </div>
+            </>
+          ) : (
+            // ── DEFEND MODE: TACKLE + SWITCH + DEFENSE ──
+            <>
+              {/* TACKLE */}
+              <div className="flex flex-col items-center gap-1">
+                <button
+                  className="relative flex items-center justify-center rounded-full font-black uppercase tracking-widest text-xs transition-all active:scale-90"
+                  style={{
+                    width: 68, height: 68,
+                    background: "radial-gradient(circle at 38% 32%, rgba(255,60,60,0.22) 0%, rgba(160,0,0,0.10) 100%)",
+                    border: "2px solid rgba(255,80,80,0.75)",
+                    color: "#ff5555",
+                    boxShadow: "0 0 18px rgba(255,60,60,0.35), inset 0 0 14px rgba(255,60,60,0.12)",
+                    textShadow: "0 0 10px rgba(255,80,80,0.9)",
+                    letterSpacing: "0.08em",
+                  }}
+                  onMouseDown={() => { tackleRef.current = true; }}
+                  onTouchStart={e => { e.preventDefault(); tackleRef.current = true; }}
+                >
+                  TACKLE
+                </button>
+                <span className="text-[8px] uppercase tracking-widest" style={{ color: "rgba(255,80,80,0.45)" }}>Q</span>
+              </div>
+
+              {/* SWITCH */}
+              <div className="flex flex-col items-center gap-1">
+                <button
+                  className="relative flex items-center justify-center rounded-full font-black uppercase tracking-widest text-xs transition-all active:scale-90"
+                  style={{
+                    width: 76, height: 76,
+                    background: "radial-gradient(circle at 38% 32%, rgba(0,210,255,0.22) 0%, rgba(0,120,200,0.10) 100%)",
+                    border: "2px solid rgba(0,210,255,0.75)",
+                    color: "#00d4ff",
+                    boxShadow: "0 0 22px rgba(0,200,255,0.38), inset 0 0 16px rgba(0,200,255,0.12)",
+                    textShadow: "0 0 10px rgba(0,210,255,0.95)",
+                    letterSpacing: "0.08em",
+                  }}
+                  onMouseDown={() => { switchRef.current = true; }}
+                  onTouchStart={e => { e.preventDefault(); switchRef.current = true; }}
+                >
+                  SWITCH
+                </button>
+                <span className="text-[8px] uppercase tracking-widest" style={{ color: "rgba(0,200,255,0.45)" }}>Z</span>
+              </div>
+
+              {/* DEFENSE */}
+              <div className="flex flex-col items-center gap-1">
+                <button
+                  className="relative flex items-center justify-center rounded-full font-black uppercase tracking-widest text-xs transition-all active:scale-90"
+                  style={{
+                    width: 86, height: 86,
+                    background: "radial-gradient(circle at 38% 32%, rgba(160,100,255,0.22) 0%, rgba(80,0,180,0.10) 100%)",
+                    border: "2.5px solid rgba(170,110,255,0.85)",
+                    color: "#c084fc",
+                    boxShadow: "0 0 26px rgba(150,80,255,0.40), inset 0 0 18px rgba(140,60,255,0.14)",
+                    textShadow: "0 0 12px rgba(180,110,255,1)",
+                    letterSpacing: "0.08em",
+                    fontSize: 12,
+                  }}
+                  onMouseDown={() => { defenseRef.current = true; }}
+                  onTouchStart={e => { e.preventDefault(); defenseRef.current = true; }}
+                >
+                  DEFENSE
+                </button>
+                <span className="text-[8px] uppercase tracking-widest" style={{ color: "rgba(160,100,255,0.45)" }}>Space</span>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
