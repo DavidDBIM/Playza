@@ -305,8 +305,8 @@ function tick(s: GameState, inputDir: Vec2, doPass: boolean, doShoot: boolean, d
       if (p.team === ns.myTeam && !p.isKeeper) {
         // Pull non-keepers toward defensive third
         const defX = ns.myTeam === 0
-          ? clamp(ball.x - 80, PITCH.left + 40, (PITCH.left + PITCH.right) / 2)
-          : clamp(ball.x + 80, (PITCH.left + PITCH.right) / 2, PITCH.right - 40);
+          ? clamp(ball.x - 80, ownGoalX + 40, (PITCH.left + PITCH.right) / 2)
+          : clamp(ball.x + 80, (PITCH.left + PITCH.right) / 2, ownGoalX - 40);
         const slotY = midY + ((i % 3) - 1) * 70;
         const d = norm({ x: defX - p.x, y: slotY - p.y });
         p.vx = lerp(p.vx, d.x * PLAYER_SPEED * 1.4, 0.3);
@@ -678,10 +678,10 @@ function renderPitch(ctx: CanvasRenderingContext2D, theme: PitchTheme, score: [n
     ctx.strokeStyle = "rgba(200,220,255,0.14)";
     for (let i = 1; i <= netLines; i++) {
       const ny = goalTop + (i / (netLines + 1)) * GOAL_W;
-      // top side panel
-      ctx.beginPath(); ctx.moveTo(gx, goalTop); ctx.lineTo(back, goalTop); ctx.stroke();
-      // bottom side panel
-      ctx.beginPath(); ctx.moveTo(gx, goalBot); ctx.lineTo(back, goalBot); ctx.stroke();
+      ctx.beginPath(); 
+      ctx.moveTo(gx, ny); 
+      ctx.lineTo(back, ny); 
+      ctx.stroke();
     }
 
     // ── Back post (far end bar) ────────────────────────────────────────────
@@ -986,9 +986,18 @@ const SoccerGame: React.FC<SoccerGameProps> = ({
       if (down.has("ArrowDown") || down.has("s")) dir.y += 1;
       const l = Math.hypot(dir.x, dir.y) || 1;
       inputRef.current = { x: dir.x / l, y: dir.y / l };
-      if (e.key === " " || e.key === "x") { possessionRef.current ? (shootRef.current = true) : (defenseRef.current = true); }
-      if (e.key === "z" || e.key === "c") { possessionRef.current ? (passRef.current = true) : (switchRef.current = true); }
-      if (e.key === "q" || e.key === "Q") { possessionRef.current ? (dashRef.current = true) : (tackleRef.current = true); }
+      if (e.key === " " || e.key === "x") {
+        if (possessionRef.current) shootRef.current = true;
+        else defenseRef.current = true;
+      }
+      if (e.key === "z" || e.key === "c") {
+        if (possessionRef.current) passRef.current = true;
+        else switchRef.current = true;
+      }
+      if (e.key === "q" || e.key === "Q") {
+        if (possessionRef.current) dashRef.current = true;
+        else tackleRef.current = true;
+      }
     };
     const onKU = (e: KeyboardEvent) => {
       down.delete(e.key);
