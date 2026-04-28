@@ -302,3 +302,30 @@ create table if not exists push_tokens (
 );
 
 alter table push_tokens enable row level security;
+
+-- FEEDBACK
+create table if not exists feedback (
+  id uuid primary key default uuid_generate_v4(),
+  user_id uuid references users(id) on delete set null,
+  type text not null,
+  title text not null,
+  message text not null,
+  game_name text,
+  is_read boolean default false,
+  is_resolved boolean default false,
+  admin_note text,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create trigger feedback_updated_at before update on feedback
+  for each row execute function update_updated_at();
+
+alter table feedback enable row level security;
+
+-- FEEDBACK POLICIES
+create policy "Users can insert their own feedback" on feedback
+  for insert with check (auth.uid() = user_id);
+
+create policy "Users can view their own feedback" on feedback
+  for select using (auth.uid() = user_id);
