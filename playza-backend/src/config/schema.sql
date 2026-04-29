@@ -13,6 +13,7 @@ create table if not exists users (
   avatar_url text,
   referral_code text unique not null,
   referred_by uuid references users(id) on delete set null,
+  role text default 'user' check (role in ('user', 'admin', 'superadmin')),
   is_email_verified boolean default false,
   is_active boolean default true,
   created_at timestamptz default now(),
@@ -329,3 +330,28 @@ create policy "Users can insert their own feedback" on feedback
 
 create policy "Users can view their own feedback" on feedback
   for select using (auth.uid() = user_id);
+
+-- ADMIN LOGS
+create table if not exists admin_logs (
+  id uuid primary key default uuid_generate_v4(),
+  admin_id uuid not null references users(id),
+  action text not null,
+  target_id text,
+  details jsonb default '{}',
+  ip_address text,
+  created_at timestamptz default now()
+);
+
+alter table admin_logs enable row level security;
+
+-- ADMIN MFA CODES
+create table if not exists admin_mfa_codes (
+  id uuid primary key default uuid_generate_v4(),
+  user_id uuid not null references users(id) on delete cascade,
+  code text not null,
+  expires_at timestamptz not null,
+  used boolean default false,
+  created_at timestamptz default now()
+);
+
+alter table admin_mfa_codes enable row level security;

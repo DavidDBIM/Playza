@@ -9,9 +9,11 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.43.4",
+    "@types/cookie-parser": "^1.4.10",
     "@types/socket.io": "^3.0.1",
     "bcryptjs": "^2.4.3",
     "chess.js": "^1.4.0",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
