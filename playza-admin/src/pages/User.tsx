@@ -27,6 +27,7 @@ import {
 } from "../components/ui/select";
 import { Button } from "../components/ui/button";
 import { useAdminUserDetails, useUpdateUserStatus } from "../hooks/use-admin";
+import { SecurityChallengeModal } from '../components/auth/SecurityChallengeModal';
 import type {
   UserRecord,
   MatchRecord,
@@ -233,9 +234,31 @@ const User: React.FC = () => {
     setStatusFilter("All");
   };
 
-  const handleUpdateStatus = (action: "activate" | "deactivate" | "ban") => {
+  const [mfaModal, setMfaModal] = useState<{ isOpen: boolean; action: "activate" | "deactivate" | "ban" | null }>({
+    isOpen: false,
+    action: null
+  });
+
+  const handleUpdateStatus = async (action: "activate" | "deactivate" | "ban", mfaCode?: string) => {
     if (!id) return;
-    updateStatus.mutate({ userId: id, action });
+    
+    try {
+      const response = await updateStatus.mutateAsync({ userId: id, action, mfaCode });
+      
+      if (response.mfa_required) {
+        setMfaModal({ isOpen: true, action });
+      } else {
+        setMfaModal({ isOpen: false, action: null });
+      }
+    } catch (err) {
+      console.error("Status update failed:", err);
+    }
+  };
+
+  const handleVerifyMfa = (code: string) => {
+    if (mfaModal.action) {
+      handleUpdateStatus(mfaModal.action, code);
+    }
   };
 
   if (isLoading)
@@ -423,6 +446,14 @@ const User: React.FC = () => {
           )}
         </div>
       </section>
+
+      <SecurityChallengeModal
+        isOpen={mfaModal.isOpen}
+        onClose={() => setMfaModal({ isOpen: false, action: null })}
+        onVerify={handleVerifyMfa}
+        isLoading={updateStatus.isPending}
+        actionName={mfaModal.action || ""}
+      />
     </main>
   );
 };

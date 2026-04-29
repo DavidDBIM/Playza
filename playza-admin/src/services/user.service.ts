@@ -29,12 +29,17 @@ export const userService = {
 
   updateUserStatus: async (
     userId: string, 
-    action: "activate" | "deactivate" | "ban"
+    action: "activate" | "deactivate" | "ban",
+    mfa_code?: string
   ) => {
-    const { data } = await apiClient.patch<{ success: boolean; data: { message: string } }>(
+    const { data } = await apiClient.patch<{ 
+      success: boolean; 
+      data: { message: string };
+      mfa_required?: boolean;
+    }>(
       `/admin/users/${userId}/status`, 
-      { action }
+      { action, mfa_code }
     );
-    return data.data;
+    return data;
   },
 };

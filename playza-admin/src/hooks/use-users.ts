@@ -25,8 +25,8 @@ export const useAdminUserDetails = (userId: string) => {
 export const useUpdateUserStatus = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ userId, action }: { userId: string; action: "activate" | "deactivate" | "ban" }) =>
-      userService.updateUserStatus(userId, action),
+    mutationFn: ({ userId, action, mfaCode }: { userId: string; action: "activate" | "deactivate" | "ban"; mfaCode?: string }) =>
+      userService.updateUserStatus(userId, action, mfaCode),
     onSuccess: (_, { userId }) => {
       queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "users", userId] });
