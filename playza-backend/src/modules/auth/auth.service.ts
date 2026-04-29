@@ -132,7 +132,7 @@ export async function verifyOtp(email: string, token: string) {
   const { data: profile } = await supabaseAdmin
     .from("users")
     .select(
-      "id, username, email, phone, referral_code, is_email_verified, is_active, avatar_url, first_name, last_name",
+      "id, username, email, phone, referral_code, is_email_verified, is_active, avatar_url, first_name, last_name, role",
     )
     .eq("id", data.user.id)
     .single();
@@ -188,7 +188,7 @@ export async function signin(input: SigninInput) {
   const { data: profile } = await supabaseAdmin
     .from("users")
     .select(
-      "id, username, email, phone, referral_code, is_email_verified, is_active, avatar_url, first_name, last_name",
+      "id, username, email, phone, referral_code, is_email_verified, is_active, avatar_url, first_name, last_name, role",
     )
     .eq("id", data.user.id)
     .single();
@@ -211,6 +211,66 @@ export async function signin(input: SigninInput) {
       ...profile,
       pza_points: pzaData?.total_points ?? 0,
     },
+  };
+}
+
+export async function adminSignin(input: SigninInput) {
+  const { identifier, password } = input;
+  
+  // 1. Verify credentials and role first
+  const result = await signin(input);
+  
+  if (result.user.role !== 'admin' && result.user.role !== 'superadmin') {
+    throw new Error("Access denied: Administrative privileges required.");
+  }
+  
+  // 2. Instead of returning the session, trigger Supabase OTP for this email
+  // This uses your existing SMTP/OTP setup used in regular signup
+  const { error: otpError } = await supabase.auth.signInWithOtp({
+    email: result.user.email,
+    options: {
+      shouldCreateUser: false, // Ensure we don't create new users here
+    }
+  });
+
+  if (otpError) throw otpError;
+
+  // 3. Return MFA required state
+  return {
+    mfa_required: true,
+    user_id: result.user.id,
+    email: result.user.email
+  };
+}
+
+export async function verifyAdminMfa(email: string, code: string) {
+  // 1. Verify the OTP using Supabase's built-in verification
+  const { data, error } = await supabase.auth.verifyOtp({
+    email,
+    token: code,
+    type: 'email' // or 'signup' depending on your Supabase config
+  });
+
+  if (error || !data.session || !data.user) {
+    throw new Error("Invalid or expired verification code.");
+  }
+
+  // 2. Fetch the profile to ensure it's still an admin
+  const { data: profile } = await supabaseAdmin
+    .from('users')
+    .select('id, username, email, role, avatar_url')
+    .eq('id', data.user.id)
+    .single();
+
+  if (!profile || (profile.role !== 'admin' && profile.role !== 'superadmin')) {
+    throw new Error("Security check failed: Insufficient privileges.");
+  }
+
+  // 3. Return the verified session
+  return {
+    access_token: data.session.access_token,
+    refresh_token: data.session.refresh_token,
+    user: profile
   };
 }
 
