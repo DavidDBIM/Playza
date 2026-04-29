@@ -9,7 +9,8 @@ export class ObstacleSystem {
         // Collision dimensions referenced by PlayerController.getObstacleBounds()
         this.obstacleConfigs = {
             blocker: { type: 'blocker', width: 2.5, height: 1.8, depth: 1.0 },
-            drone:   { type: 'drone',   width: 2.0, height: 1.4, depth: 4.0 }
+            drone:   { type: 'drone',   width: 2.0, height: 1.4, depth: 4.0 },
+            slideGate: { type: 'slideGate', width: 2.35, height: 1.24, depth: 0.7 }
         };
 
         // Rotating palettes so consecutive obstacles look distinct
@@ -42,9 +43,15 @@ export class ObstacleSystem {
         this.clearMesh(obstacle.mesh);
 
         // Try GLB asset first; use procedural mesh as guaranteed fallback
-        let asset = this.engine.assets?.createObstacle?.(config.type, config);
+        let asset = type === 'slideGate'
+            ? null
+            : this.engine.assets?.createObstacle?.(config.type, config);
         if (!asset) {
-            asset = type === 'drone' ? this.buildFallbackCar() : this.buildFallbackBlocker();
+            asset = type === 'drone'
+                ? this.buildFallbackCar()
+                : type === 'slideGate'
+                    ? this.buildFallbackSlideGate()
+                    : this.buildFallbackBlocker();
         }
 
         obstacle.mesh.add(asset);
@@ -184,6 +191,42 @@ export class ObstacleSystem {
         return group;
     }
 
+    buildFallbackSlideGate() {
+        const group = new THREE.Group();
+        const railMaterial = new THREE.MeshStandardMaterial({
+            color: 0x111827,
+            roughness: 0.22,
+            metalness: 0.9,
+            emissive: 0xa855f7,
+            emissiveIntensity: 0.92
+        });
+        const warningMaterial = new THREE.MeshStandardMaterial({
+            color: 0xf8fafc,
+            roughness: 0.36,
+            metalness: 0.45,
+            emissive: 0x38bdf8,
+            emissiveIntensity: 0.46
+        });
+
+        const topRail = new THREE.Mesh(new THREE.BoxGeometry(2.35, 0.18, 0.7), railMaterial);
+        topRail.position.y = 1.22;
+        topRail.castShadow = true;
+        group.add(topRail);
+
+        [-1.05, 1.05].forEach((x) => {
+            const post = new THREE.Mesh(new THREE.BoxGeometry(0.16, 1.15, 0.62), railMaterial);
+            post.position.set(x, 0.62, 0);
+            post.castShadow = true;
+            group.add(post);
+        });
+
+        const scanLine = new THREE.Mesh(new THREE.BoxGeometry(1.65, 0.08, 0.72), warningMaterial);
+        scanLine.position.y = 0.98;
+        group.add(scanLine);
+
+        return group;
+    }
+
     // -------------------------------------------------------------------------
     // Helpers
     // -------------------------------------------------------------------------
@@ -210,6 +253,10 @@ export class ObstacleSystem {
         this.pool.getActiveItems().forEach((obstacle) => {
             if (obstacle.movement?.mode === 'cruise' && obstacle.config?.type === 'drone') {
                 obstacle.mesh.position.z += obstacle.movement.speed * dt;
+            }
+
+            if (obstacle.config?.type === 'slideGate') {
+                obstacle.mesh.position.y = Math.sin(this.engine.elapsedTime * 4 + obstacle.mesh.position.z) * 0.035;
             }
 
             const distanceAhead = playerZ - obstacle.mesh.position.z;

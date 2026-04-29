@@ -1,0 +1,139 @@
+Rebuild my 8-ball pool game into a modern, high-quality 3D pool simulation.
+Do NOT patch the current system—audit, refactor, and replace weak parts while reusing only what meets high standards.
+
+🎯 OBJECTIVE
+
+Deliver a smooth, realistic, and visually polished 8-ball pool game with:
+
+True spherical balls
+Realistic physics and collisions
+Clean, modern table and environment
+Responsive and accurate cue control
+Professional gameplay feel (like real pool games)
+🔍 PHASE 1: FULL CODE AUDIT
+Scan all existing code (rendering, physics, controls, assets)
+Identify:
+Non-spherical geometry
+Fake or incorrect physics
+Poor collision handling
+Sluggish motion / lack of friction realism
+Mark components as:
+✅ Reusable
+⚠️ Needs refactor
+❌ Replace completely
+🧱 PHASE 2: CORE REBUILD ARCHITECTURE
+1. Physics Engine (CRITICAL)
+
+Implement or integrate a proper physics system:
+
+Accurate rigid body dynamics
+Ball-to-ball collision:
+Conservation of momentum
+Realistic bounce angles
+Ball-to-table interaction:
+Friction (gradual slowing)
+Rolling vs sliding transition
+Cushion (wall) physics:
+Correct reflection angles
+Energy loss on impact
+No sluggish or floaty movement
+2. Perfect Ball System
+Replace all balls with true 3D spheres
+Ensure:
+Smooth geometry (high segment sphere)
+Proper scaling
+Realistic materials:
+Glossy finish
+Light reflections
+Add:
+Subtle spin effect (optional but ideal)
+Clean textures (numbers clearly visible)
+3. Table & Environment
+
+Rebuild the table with high quality:
+
+Accurate proportions (real pool table ratios)
+Components:
+Cloth surface (slight texture)
+Cushions (elastic feel)
+Pockets (correct size and depth)
+
+Improve environment:
+
+Lighting:
+Soft shadows
+Directional light (like overhead lamp)
+Camera:
+Slight perspective depth
+Smooth transitions
+4. Pocket (Hole) System
+Fix pocket detection:
+Ball should fall naturally, not disappear
+Add:
+Pocket depth animation
+Smooth “drop” effect
+Ensure edge cases:
+Balls near pocket edges behave correctly
+5. Cue Stick System
+
+Rebuild cue mechanics:
+
+Aiming system:
+Mouse/touch drag to aim
+Visual guide line (optional)
+Power control:
+Pull-back mechanic
+Strike system:
+Apply force vector based on aim + power
+Add polish:
+Cue animation when striking
+Smooth responsiveness
+6. Game Feel & Responsiveness
+Remove all sluggishness:
+Immediate response on hit
+Smooth frame updates
+Ensure:
+Stable FPS
+No jitter or clipping
+7. Camera System
+Dynamic camera:
+Follow cue direction while aiming
+Switch to tracking shot after hit
+Smooth interpolation (no sudden jumps)
+8. Sound & Feedback (IMPORTANT)
+
+Add immersive feedback:
+
+Ball collisions (distinct sound)
+Cue strike sound
+Pocket drop sound
+Subtle UI feedback
+9. Rules & Game Logic
+
+Implement standard 8-ball rules:
+
+Ball assignment (stripes/solids)
+Fouls
+Win conditions
+Turn system
+⚙️ TECHNICAL REQUIREMENTS
+Use a proper 3D engine approach (e.g., physics + rendering separation)
+Use object-oriented structure:
+Ball class
+Table class
+Physics manager
+Game controller
+Ensure scalability for:
+Multiplayer (future)
+AI opponent
+🚀 EXPECTED RESULT
+Balls look perfectly round and realistic
+Movement feels natural and satisfying
+Collisions behave like real pool
+Table looks modern and polished
+Cue control feels precise and responsive
+Overall experience feels like a real mobile/PC pool game
+⚠️ IMPORTANT RULES
+Do NOT fake physics with simple velocity swaps
+Do NOT keep low-quality assets
+Prioritize realism + smoothness over shortcu

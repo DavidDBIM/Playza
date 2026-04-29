@@ -5,6 +5,8 @@ export class EnvironmentManager {
         this.engine = engine;
         this.scene = engine.scene;
         this.currentBiome = 'road';
+        this.phase = 1;
+        this.targetAtmosphere = null;
         this.floorMeshes = [];
         this.ambientTraffic = [];
         this.billboards = [];
@@ -223,7 +225,7 @@ export class EnvironmentManager {
         }
     }
 
-    update() {
+    update(dt = 0) {
         const playerZ = this.engine.player.player.position.z;
         const totalLength = this.floorMeshes.length * 10;
 
@@ -262,6 +264,8 @@ export class EnvironmentManager {
                 board.position.z = playerZ - 340 - Math.random() * 60;
             }
         });
+
+        this.updateAtmosphere(dt);
     }
 
     setBiome(biome) {
@@ -271,8 +275,12 @@ export class EnvironmentManager {
 
         this.currentBiome = biome;
         const colors = this.biomes[biome];
-        this.scene.background = new THREE.Color(colors.fog);
-        this.scene.fog.color = new THREE.Color(colors.fog);
+        this.targetAtmosphere = {
+            background: new THREE.Color(colors.fog),
+            fog: new THREE.Color(colors.fog),
+            near: this.phase === 3 ? 24 : this.phase === 2 ? 34 : 42,
+            far: this.phase === 3 ? 165 : this.phase === 2 ? 215 : 250
+        };
 
         this.floorMeshes.forEach((segment) => {
             if (segment.userData.road?.material?.color) {
@@ -305,6 +313,23 @@ export class EnvironmentManager {
         });
     }
 
+    setPhase(phase) {
+        this.phase = phase;
+        this.setBiome(this.currentBiome);
+    }
+
+    updateAtmosphere(dt) {
+        if (!this.targetAtmosphere) {
+            return;
+        }
+
+        const blend = 1 - Math.pow(0.025, Math.max(0, dt));
+        this.scene.background.lerp(this.targetAtmosphere.background, blend);
+        this.scene.fog.color.lerp(this.targetAtmosphere.fog, blend);
+        this.scene.fog.near = THREE.MathUtils.lerp(this.scene.fog.near, this.targetAtmosphere.near, blend);
+        this.scene.fog.far = THREE.MathUtils.lerp(this.scene.fog.far, this.targetAtmosphere.far, blend);
+    }
+
     getCurrentDistrictLabel() {
         return this.biomes[this.currentBiome]?.label || 'Core Grid';
     }
@@ -324,6 +349,7 @@ export class EnvironmentManager {
             board.position.z = -30 - index * 38;
         });
 
+        this.phase = 1;
         this.setBiome('road');
     }
 
