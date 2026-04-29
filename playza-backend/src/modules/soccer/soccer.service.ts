@@ -6,28 +6,57 @@ function generateRoomCode(): string {
 }
 
 async function handleGameOver(roomId: string, winnerId: string | null, stake: number) {
-  await supabaseAdmin
+  const { data: room } = await supabaseAdmin
     .from('soccer_rooms')
     .update({ status: 'finished', winner_id: winnerId })
     .eq('id', roomId)
+    .select('host_id, guest_id')
+    .single()
 
+  if (!room) return
+
+  // 1. Handle Prize & Transactions for Winner
   if (stake > 0 && winnerId) {
     const totalPrize = stake * 2
     const platformCut = totalPrize * 0.1
     const winnerPrize = totalPrize - platformCut
 
-    await supabaseAdmin.rpc('increment_wallet_balance', {
-      p_user_id: winnerId,
-      p_amount: winnerPrize,
-    })
+    if (winnerId !== 'bot') {
+      await supabaseAdmin.rpc('increment_wallet_balance', {
+        p_user_id: winnerId,
+        p_amount: winnerPrize,
+      })
 
-    await supabaseAdmin.from('transactions').insert({
-      user_id: winnerId,
-      type: 'winnings',
-      amount: winnerPrize,
-      status: 'successful',
-      reference: `PLZ-SOCCER-WIN-${roomId}`,
-    })
+      await supabaseAdmin.from('transactions').insert({
+        user_id: winnerId,
+        type: 'winnings',
+        amount: winnerPrize,
+        status: 'successful',
+        reference: `PLZ-SOCCER-WIN-${roomId}`,
+      })
+    }
+  }
+
+  // 2. If draw, return 90% of stakes (10% platform fee always applies)
+  if (stake > 0 && !winnerId) {
+    const refundAmount = stake * 0.9
+    const players = [room.host_id, room.guest_id].filter(id => id && id !== 'bot')
+    
+    for (const uid of players) {
+      await supabaseAdmin.rpc('increment_wallet_balance', {
+        p_user_id: uid,
+        p_amount: refundAmount,
+      })
+
+      await supabaseAdmin.from('transactions').insert({
+        user_id: uid,
+        type: 'bonus',
+        amount: refundAmount,
+        status: 'successful',
+        reference: `PLZ-SOCCER-DRAW-${roomId}`,
+        meta: { reason: 'Game draw refund (90%)' }
+      })
+    }
   }
 }
 
