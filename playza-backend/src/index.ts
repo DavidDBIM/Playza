@@ -2,6 +2,7 @@ import express from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
 import dotenv from 'dotenv'
+import cookieParser from 'cookie-parser'
 
 import authRoutes from './modules/auth/auth.routes'
 import referralRoutes from './modules/referral/referral.routes'
@@ -34,6 +35,7 @@ if (process.env.NODE_ENV !== 'production' && !allowedOrigins.includes('http://lo
 }
 
 app.use(helmet())
+app.use(cookieParser())
 app.use(cors({ origin: allowedOrigins, credentials: true }))
 app.post('/api/wallet/webhook/paystack', express.raw({ type: 'application/json' }))
 app.use(express.json({ limit: "10mb" }));

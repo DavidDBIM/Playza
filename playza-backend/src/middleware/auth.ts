@@ -6,14 +6,19 @@ export interface AuthRequest extends Request {
 }
 
 export async function requireAuth(req: AuthRequest, res: Response, next: NextFunction) {
-  const header = req.headers.authorization
+  let token: string | undefined = req.cookies?.admin_token;
+  
+  if (!token) {
+    const header = req.headers.authorization;
+    if (header && header.startsWith('Bearer ')) {
+      token = header.split(' ')[1];
+    }
+  }
 
-  if (!header || !header.startsWith('Bearer ')) {
+  if (!token) {
     res.status(401).json({ success: false, message: 'Unauthorized' })
     return
   }
-
-  const token = header.split(' ')[1]
 
   const { data, error } = await supabaseAdmin.auth.getUser(token)
 
