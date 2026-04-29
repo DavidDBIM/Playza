@@ -127,6 +127,14 @@ export async function submitResult(roomId: string, userId: string, wpm: number, 
       const prize = room.stake * 2 * 0.9
       await supabaseAdmin.rpc('increment_wallet_balance', { p_user_id: winnerId, p_amount: prize })
       await supabaseAdmin.from('transactions').insert({ user_id: winnerId, type: 'winnings', amount: prize, status: 'successful', reference: `PLZ-SPD-WIN-${roomId}` })
+    } else if (!winnerId && room.stake > 0) {
+      // Handle Draw
+      const refund = room.stake * 0.9
+      const players = [room.host_id, room.guest_id].filter(id => id && id !== 'bot')
+      for (const uid of players) {
+        await supabaseAdmin.rpc('increment_wallet_balance', { p_user_id: uid, p_amount: refund })
+        await supabaseAdmin.from('transactions').insert({ user_id: uid, type: 'bonus', amount: refund, status: 'successful', reference: `PLZ-SPD-DRAW-${roomId}`, meta: { reason: 'Game draw refund (90%)' } })
+      }
     }
 
     return { finished: true, winner_id: winnerId }
