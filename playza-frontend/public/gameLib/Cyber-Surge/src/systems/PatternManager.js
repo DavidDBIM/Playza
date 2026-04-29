@@ -48,6 +48,10 @@ export class PatternManager {
                 return this.buildStaggered(anchorZ, biome, difficulty);
             case 'movingCombo':
                 return this.buildMovingCombo(anchorZ, biome, difficulty);
+            case 'gateThread':
+                return this.buildGateThread(anchorZ, biome, difficulty);
+            case 'squeeze':
+                return this.buildSqueeze(anchorZ, biome, difficulty);
             case 'singleBlock':
             default:
                 return this.buildSingleBlock(anchorZ, biome, difficulty);
@@ -170,6 +174,50 @@ export class PatternManager {
         return this.finalizePattern('movingCombo', anchorZ, biome, difficulty, rows, [safeLane]);
     }
 
+    buildGateThread(anchorZ, biome, difficulty) {
+        const laneCount = difficulty.laneCount;
+        let runLane = this.getRandomLane(laneCount);
+        const rows = [];
+        const rowCount = Math.max(2, Math.min(4, difficulty.maxRowsPerPattern));
+
+        for (let index = 0; index < rowCount; index += 1) {
+            if (index > 0 && Math.random() < 0.52) {
+                runLane = this.shiftLane(runLane, laneCount);
+            }
+
+            const blockedLane = this.getRandomLane(laneCount, [runLane]);
+            const entries = [this.makeBarrier(blockedLane, biome)];
+            if (Math.random() < difficulty.slideGateChance) {
+                entries.push(this.makeSlideGate(runLane, biome));
+            }
+            rows.push(this.makeRow(-index * difficulty.rowSpacing, entries));
+        }
+
+        return this.finalizePattern('gateThread', anchorZ, biome, difficulty, rows, [runLane]);
+    }
+
+    buildSqueeze(anchorZ, biome, difficulty) {
+        const laneCount = difficulty.laneCount;
+        const safeLane = this.getRandomLane(laneCount);
+        const firstWall = this.getAllLanes(laneCount).filter((lane) => lane !== safeLane);
+        const secondSafe = this.shiftLane(safeLane, laneCount);
+        const secondWall = this.getAllLanes(laneCount).filter((lane) => lane !== secondSafe);
+
+        const rows = [
+            this.makeRow(0, firstWall.map((lane) => this.makeBarrier(lane, biome))),
+            this.makeRow(-difficulty.rowSpacing * 0.92, [
+                this.makeVehicle(safeLane, biome, difficulty, Math.random() < difficulty.movingVehicleChance),
+                ...secondWall.filter((lane) => lane !== safeLane).map((lane) => (
+                    Math.random() < difficulty.slideGateChance
+                        ? this.makeSlideGate(lane, biome)
+                        : this.makeBarrier(lane, biome)
+                ))
+            ])
+        ];
+
+        return this.finalizePattern('squeeze', anchorZ, biome, difficulty, rows, [safeLane, secondSafe]);
+    }
+
     buildFallbackCorridor(anchorZ, biome, difficulty) {
         const safeLane = this.getRandomLane(difficulty.laneCount);
         const rows = [
@@ -183,15 +231,32 @@ export class PatternManager {
 
     finalizePattern(id, anchorZ, biome, difficulty, rows, preferredSafeLanes = []) {
         const safeLanes = this.resolveSafeLanes(rows, difficulty.laneCount, preferredSafeLanes);
-        const coins = [];
+        let coins = [];
         const primarySafeLane = safeLanes[safeLanes.length - 1] ?? preferredSafeLanes[0] ?? 0;
-        const lastRow = rows[rows.length - 1];
+        const coinPattern = this.selectCoinPattern(id, difficulty);
+        const minimumCoins = difficulty.forceCoins ? 10 : difficulty.event?.type === 'challenge' ? 4 : 6;
 
-        safeLanes.forEach((lane, index) => {
-            const z = anchorZ - index * difficulty.rowSpacing;
-            // 8 coins per safe lane at 1.3 units apart, at y=1.3 (clearly visible)
-            coins.push(...this.createCoinLine(lane, z - 1.2, 8, 1.3, 1.3));
-        });
+        if (coinPattern === 'wave') {
+            coins = this.createCoinWave(safeLanes, anchorZ - 1.2, difficulty);
+        } else if (coinPattern === 'arc') {
+            coins = this.createCoinArc(primarySafeLane, anchorZ - 1.0, difficulty);
+        } else if (coinPattern === 'zigzag') {
+            coins = this.createCoinZigZag(safeLanes, anchorZ - 1.0, difficulty);
+        } else if (coinPattern === 'risk') {
+            coins = this.createRiskCoins(rows, anchorZ, primarySafeLane, difficulty);
+        } else {
+            // Default 'line': one line per safe lane
+            safeLanes.forEach((lane, index) => {
+                const z = anchorZ - index * difficulty.rowSpacing;
+                coins.push(...this.createCoinLine(lane, z - 1.2, 6 + Math.round(3 * difficulty.coinMultiplier), 1.25, 1.25));
+            });
+        }
+
+        if (coins.length < minimumCoins) {
+            coins.push(...this.createCoinLine(primarySafeLane, anchorZ - 1.4, minimumCoins - coins.length, 1.05, 1.25));
+        }
+
+        coins = this.limitCoins(coins, Math.round(10 + difficulty.coinMultiplier * 8));
 
         const powerup = Math.random() < difficulty.powerupChance
             ? { lane: primarySafeLane, z: anchorZ - difficulty.rowSpacing * 0.5, height: 1.5 }
@@ -207,6 +272,7 @@ export class PatternManager {
                 z: anchorZ + row.zOffset
             }))),
             coins,
+            coinPattern,
             powerup,
             // Cap length to spawnSpacing so multi-row patterns don’t leave huge dead gaps.
             // The rows themselves overlap within the pattern — only the gap BETWEEN
@@ -264,7 +330,9 @@ export class PatternManager {
     }
 
     getOpenLanes(row, laneCount) {
-        const blocked = new Set(row.entries.map((entry) => entry.lane));
+        const blocked = new Set(row.entries
+            .filter((entry) => entry.type !== 'slideGate')
+            .map((entry) => entry.lane));
         return this.getAllLanes(laneCount).filter((lane) => !blocked.has(lane));
     }
 
@@ -274,6 +342,114 @@ export class PatternManager {
             z: z - index * spacing,
             height
         }));
+    }
+
+    selectCoinPattern(patternId, difficulty) {
+        if (difficulty.forceCoins) {
+            // Anti-dry: always pick a high-yield visible pattern
+            const roll = Math.random();
+            return roll < 0.4 ? 'wave' : roll < 0.7 ? 'zigzag' : 'line';
+        }
+        if (difficulty.event?.type === 'coinRush') {
+            return Math.random() < 0.58 ? 'wave' : 'arc';
+        }
+        if (difficulty.event?.type === 'challenge') {
+            // Challenge: prefer safe line or zigzag — risk coins in challenge zones
+            // are too punishing and make the drought worse, not better.
+            return Math.random() < 0.55 ? 'line' : 'zigzag';
+        }
+        // Risk coins: only when riskCoinChance is low (early-mid game) AND not forced
+        // Cap risk chance at 0.22 so late-game difficulty doesn't flood with unreachable coins
+        const effectiveRiskChance = Math.min(difficulty.riskCoinChance, 0.22);
+        if (Math.random() < effectiveRiskChance) {
+            return 'risk';
+        }
+        if (patternId === 'alternating' || patternId === 'staggered' || patternId === 'gateThread') {
+            const roll = Math.random();
+            return roll < 0.42 ? 'wave' : roll < 0.72 ? 'zigzag' : 'line';
+        }
+        const roll = Math.random();
+        return roll < 0.28 ? 'arc' : roll < 0.55 ? 'zigzag' : 'line';
+    }
+
+    createCoinWave(safeLanes, z, difficulty) {
+        const lanes = safeLanes.length ? safeLanes : [this.getRandomLane(difficulty.laneCount)];
+        const count = Math.round(10 + difficulty.coinMultiplier * 7);
+        return Array.from({ length: count }, (_, index) => {
+            const lane = lanes[index % lanes.length];
+            return {
+                lane,
+                z: z - index * 1.05,
+                height: 1.05 + Math.sin(index * 0.72) * 0.34
+            };
+        });
+    }
+
+    createCoinArc(centerLane, z, difficulty) {
+        const lanes = this.getAllLanes(difficulty.laneCount);
+        const count = Math.round(9 + difficulty.coinMultiplier * 6);
+        return Array.from({ length: count }, (_, index) => {
+            const lane = lanes[Math.abs((index % 5) - 2) % lanes.length] ?? centerLane;
+            const blendLane = Math.random() < 0.7 ? lane : centerLane;
+            return {
+                lane: this.clampLane(blendLane, difficulty.laneCount),
+                z: z - index * 1.08,
+                height: 1.05 + Math.sin((index / Math.max(1, count - 1)) * Math.PI) * 1.05
+            };
+        });
+    }
+
+    createRiskCoins(rows, anchorZ, fallbackLane, difficulty) {
+        const coins = [];
+        rows.forEach((row, rowIndex) => {
+            const openLanes = this.getOpenLanes(row, difficulty.laneCount);
+            const openLane = openLanes[0] ?? fallbackLane;
+
+            // Risk coins: place NEAR obstacle but on the open (safe) lane.
+            // A small fraction (15%) are placed adjacent to obstacles for risk/reward,
+            // but NEVER directly on a fatal blocked lane.
+            const useAdjacentRisk = Math.random() < 0.15 && openLanes.length > 0;
+            const targetLane = useAdjacentRisk
+                ? this.clampLane(openLane + (Math.random() < 0.5 ? 1 : -1), difficulty.laneCount)
+                : openLane;
+
+            // Verify the chosen lane is actually open (adjacent shift might land on a blocked lane)
+            const resolvedLane = openLanes.includes(targetLane) ? targetLane : openLane;
+
+            coins.push(...this.createCoinLine(
+                this.clampLane(resolvedLane, difficulty.laneCount),
+                anchorZ + row.zOffset - 0.9,
+                rowIndex === 0 ? 5 : 4,
+                1.0,
+                1.2
+            ));
+        });
+        return coins;
+    }
+
+    createCoinZigZag(safeLanes, anchorZ, difficulty) {
+        // Alternates between safe lanes creating a visible zig-zag trail
+        const lanes = safeLanes.length >= 2 ? safeLanes : [
+            ...safeLanes,
+            this.clampLane((safeLanes[0] ?? 1) + 1, difficulty.laneCount)
+        ];
+        const count = Math.round(8 + difficulty.coinMultiplier * 6);
+        return Array.from({ length: count }, (_, index) => ({
+            lane: lanes[index % lanes.length],
+            z: anchorZ - index * 1.1,
+            height: 1.15
+        }));
+    }
+
+    limitCoins(coins, maxCoins) {
+        // Always guarantee at least 6 coins survive the cap
+        const hardMin = Math.min(6, coins.length);
+        const effectiveMax = Math.max(maxCoins, hardMin);
+        if (coins.length <= effectiveMax) {
+            return coins;
+        }
+        const stride = coins.length / effectiveMax;
+        return Array.from({ length: effectiveMax }, (_, index) => coins[Math.floor(index * stride)]);
     }
 
     makeRow(zOffset, entries) {
@@ -296,6 +472,10 @@ export class PatternManager {
                 }
                 : null
         };
+    }
+
+    makeSlideGate(lane, biome) {
+        return { lane, type: 'slideGate', biome, movement: null };
     }
 
     getAllLanes(laneCount) {

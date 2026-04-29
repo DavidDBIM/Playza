@@ -18,6 +18,21 @@ export class PowerUpSystem {
         this.effectDurations = {};
         this.activeShield = false;
 
+        // O(1) active-coin tracking — avoids scanning 1600-slot array every frame
+        this.activeCoins = new Set();
+        // Guaranteed backup spawner timer
+        this._guaranteedCoinTimer = 3;
+
+        this.coinDebug = typeof window !== 'undefined'
+            && window.localStorage?.getItem('cyberSurgeCoinDebug') === '1';
+        this.coinPoolStats = {
+            created: 0,
+            expanded: 0,
+            spawned: 0,
+            collected: 0,
+            despawned: 0
+        };
+
         this.createPool();
     }
 
@@ -30,22 +45,27 @@ export class PowerUpSystem {
             this.powerups.push({ mesh, active: false, type: null });
         }
 
-        // Coin pool — 2 000 slots to survive long high-difficulty runs
-        for (let i = 0; i < 2000; i += 1) {
-            const geometry = new THREE.CylinderGeometry(0.36, 0.36, 0.14, 18);
-            const material = new THREE.MeshStandardMaterial({
-                color: 0xffd700,
-                roughness: 0.15,
-                metalness: 0.95,
-                emissive: 0xffaa00,
-                emissiveIntensity: 0.55   // bright enough to see in dark biomes
-            });
-            const mesh = new THREE.Mesh(geometry, material);
-            mesh.rotation.x = -Math.PI / 2;
-            mesh.visible = false;
-            this.scene.add(mesh);
-            this.coins.push({ mesh, active: false });
+        // Coin pool — 1600 slots
+        for (let i = 0; i < 1600; i += 1) {
+            this.coins.push(this.createCoinItem());
         }
+    }
+
+    createCoinItem() {
+        const geometry = new THREE.CylinderGeometry(0.36, 0.36, 0.14, 18);
+        const material = new THREE.MeshStandardMaterial({
+            color: 0xffd700,
+            roughness: 0.15,
+            metalness: 0.95,
+            emissive: 0xffaa00,
+            emissiveIntensity: 0.55
+        });
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.rotation.x = -Math.PI / 2;
+        mesh.visible = false;
+        this.scene.add(mesh);
+        this.coinPoolStats.created += 1;
+        return { mesh, active: false };
     }
 
     spawn(x, y, z) {
@@ -79,14 +99,36 @@ export class PowerUpSystem {
     }
 
     spawnCoin(x, y, z) {
-        const coin = this.coins.find((item) => !item.active);
-        if (!coin) {
-            return;
+        // Guard: NaN positions make coins invisible without error
+        if (!isFinite(x) || !isFinite(y) || !isFinite(z)) {
+            this.logCoinDebug('spawn-rejected', { reason: 'non-finite', x, y, z });
+            return false;
         }
 
+        const coin = this.acquireCoin();
         coin.mesh.position.set(x, y, z);
         coin.mesh.visible = true;
         coin.active = true;
+        this.activeCoins.add(coin);
+        this.coinPoolStats.spawned += 1;
+        this.logCoinDebug('spawn', { x, y, z });
+        return true;
+    }
+
+    acquireCoin() {
+        const inactive = this.coins.find((item) => !item.active);
+        if (inactive) {
+            return inactive;
+        }
+
+        const coin = this.createCoinItem();
+        this.coins.push(coin);
+        this.coinPoolStats.expanded += 1;
+        this.logCoinDebug('pool-expanded', {
+            poolSize: this.coins.length,
+            active: this.activeCoins.size
+        });
+        return coin;
     }
 
     collectPowerUp(powerup) {
@@ -112,7 +154,8 @@ export class PowerUpSystem {
         this.engine.scoring.addCoins(1);
         this.engine.audio.playCoin();
         this.engine.effects.addCoinCollect(coin.mesh.position.clone());
-        this.despawnCoin(coin);
+        this.coinPoolStats.collected += 1;
+        this.despawnCoin(coin, 'collect');
     }
 
     consumeShield() {
@@ -126,9 +169,18 @@ export class PowerUpSystem {
         powerup.active = false;
     }
 
-    despawnCoin(coin) {
+    despawnCoin(coin, reason = 'despawn') {
         coin.mesh.visible = false;
         coin.active = false;
+        this.activeCoins.delete(coin);
+        if (reason !== 'collect') {
+            this.coinPoolStats.despawned += 1;
+        }
+        this.logCoinDebug('release', {
+            reason,
+            z: coin.mesh.position.z,
+            active: this.activeCoins.size
+        });
     }
 
     update(dt) {
@@ -147,12 +199,9 @@ export class PowerUpSystem {
         });
 
         // ── Guaranteed powerup timer ──────────────────────────────────────
-        // Spawn a powerup directly in front of the player every ~10 s so the
-        // player is GUARANTEED to see power-ups, regardless of pattern probability.
         this._powerupTimer = (this._powerupTimer || 0) - dt;
         if (this._powerupTimer <= 0) {
-            this._powerupTimer = 8 + Math.random() * 6; // 8–14 s interval
-            // Pick a random lane X and place 24 units ahead of player
+            this._powerupTimer = 8 + Math.random() * 6;
             const laneCount  = this.engine.config.laneCount;
             const centerIdx  = (laneCount - 1) / 2;
             const lane       = Math.floor(Math.random() * laneCount);
@@ -178,15 +227,17 @@ export class PowerUpSystem {
         });
 
         // ── Coin update ──────────────────────────────────────────────────
-        this.coins.forEach((coin) => {
-            if (!coin.active) {
-                return;
-            }
+        // FIX 1: Use activeCoins Set (O(1)) instead of scanning 1600-slot array (O(n))
+        // FIX 2: ahead-prune uses renderDistance + 30 buffer so coins at the far end
+        //        of a pattern (anchorZ - N*spacing) aren't pruned the same frame they spawn
+        const aheadPruneDistance = renderDistance + 30;
 
+        for (const coin of this.activeCoins) {
             const distanceAhead = playerZ - coin.mesh.position.z;
-            if (distanceAhead > renderDistance || distanceAhead < -20) {
-                this.despawnCoin(coin);
-                return;
+
+            if (distanceAhead > aheadPruneDistance || distanceAhead < -24) {
+                this.despawnCoin(coin, distanceAhead > aheadPruneDistance ? 'ahead-prune' : 'behind-prune');
+                continue;
             }
 
             coin.mesh.rotation.z += dt * 4.2;
@@ -201,10 +252,42 @@ export class PowerUpSystem {
                     }
                 }
             }
-        });
+        }
+
+        // ── Guaranteed coin backup spawner ────────────────────────────────
+        // If active coins hit 0 for 4+ seconds, bypass the pattern system and
+        // directly spawn a coin line in front of the player. This cannot fail.
+        this._guaranteedCoinTimer -= dt;
+        if (this._guaranteedCoinTimer <= 0) {
+            if (this.activeCoins.size === 0) {
+                const aheadZ = playerZ - 18;
+                for (let i = 0; i < 8; i++) {
+                    this.spawnCoin(0, 1.2, aheadZ - i * 1.3);
+                }
+                if (this.coinDebug) {
+                    console.warn('[CyberSurge:coins] ⚠️ Backup spawner fired — drought detected!');
+                }
+            }
+            this._guaranteedCoinTimer = 4;
+        }
 
         this.engine.ui.updatePowerUps(this.activeEffects, this.effectTimers, this.effectDurations);
         this.engine.container.classList.toggle('turbo-active', !!this.activeEffects.speed);
+    }
+
+    getActiveCoinCount() {
+        return this.activeCoins.size;
+    }
+
+    logCoinDebug(event, payload = {}) {
+        if (!this.coinDebug) {
+            return;
+        }
+        console.debug('[CyberSurge:coins]', event, payload, {
+            pool: this.coins.length,
+            active: this.activeCoins.size,
+            stats: this.coinPoolStats
+        });
     }
 
     deactivateEffect(type) {
@@ -217,8 +300,17 @@ export class PowerUpSystem {
     }
 
     reset() {
+        // Despawn all active coins via Set (fast, correct)
+        for (const coin of [...this.activeCoins]) {
+            this.despawnCoin(coin, 'reset');
+        }
+        this.activeCoins.clear();
+
         this.powerups.forEach((powerup) => this.despawnPowerUp(powerup));
-        this.coins.forEach((coin) => this.despawnCoin(coin));
+        this.coinPoolStats.spawned = 0;
+        this.coinPoolStats.collected = 0;
+        this.coinPoolStats.despawned = 0;
+        this._guaranteedCoinTimer = 3;
 
         Object.keys(this.activeEffects).forEach((key) => {
             this.activeEffects[key] = false;
@@ -227,7 +319,7 @@ export class PowerUpSystem {
         });
 
         this.activeShield = false;
-        this._powerupTimer = 10; // give player 10 s before first guaranteed powerup
+        this._powerupTimer = 10;
         this.engine.container.classList.remove('turbo-active');
     }
 }
