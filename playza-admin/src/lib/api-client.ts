@@ -9,6 +9,7 @@ if (!import.meta.env.VITE_API_URL) {
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
+  withCredentials: true,
   headers: {
     "Content-Type": "application/json",
   },
@@ -30,6 +31,7 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401) {
       localStorage.removeItem("admin_token");
       localStorage.removeItem("admin_user");
+      localStorage.removeItem("admin_login_time");
       window.location.href = "/signin";
     }
     return Promise.reject(error);
