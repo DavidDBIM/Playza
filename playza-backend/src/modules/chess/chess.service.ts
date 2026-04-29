@@ -57,13 +57,23 @@ async function handleGameOver(roomId: string, winnerId: string | null, stake: nu
     })
   }
 
-  // 4. If draw, return stakes to wallet
+  // 4. If draw, return 90% of stakes to wallet (10% platform fee always applies)
   if (stake > 0 && !winnerId) {
+    const refundAmount = stake * 0.9
     for (const uid of [room.host_id, room.guest_id]) {
       if (uid && uid !== SYSTEM_BOT_ID) {
         await supabaseAdmin.rpc('increment_wallet_balance', {
           p_user_id: uid,
-          p_amount: stake,
+          p_amount: refundAmount,
+        })
+        
+        await supabaseAdmin.from('transactions').insert({
+          user_id: uid,
+          type: 'bonus', // Using 'bonus' or could use a new 'refund' type if added to schema
+          amount: refundAmount,
+          status: 'successful',
+          reference: `PLZ-CHESS-DRAW-${roomId}`,
+          meta: { reason: 'Game draw refund (90%)' }
         })
       }
     }
