@@ -19,6 +19,8 @@ const SignIn: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [mfaCode, setMfaCode] = useState("");
+  const [mfaRequired, setMfaRequired] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -34,7 +36,9 @@ const SignIn: React.FC = () => {
         password,
       });
 
-      if (response.access_token) {
+      if (response.mfa_required) {
+        setMfaRequired(true);
+      } else if (response.access_token && response.user) {
         localStorage.setItem("admin_token", response.access_token);
         localStorage.setItem("admin_user", JSON.stringify(response.user));
         navigate("/");
@@ -48,6 +52,42 @@ const SignIn: React.FC = () => {
         setError(err.message);
       } else {
         setError("Authentication failed. Access denied.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyMfa = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/auth/admin/verify-mfa`, {
+        email,
+        code: mfaCode
+      });
+
+      if (data.success) {
+        if (data.data.access_token) {
+           localStorage.setItem("admin_token", data.data.access_token);
+           localStorage.setItem("admin_user", JSON.stringify(data.data.user));
+           localStorage.setItem("admin_login_time", Date.now().toString());
+           navigate("/");
+        } else {
+          // Fallback if token isn't in response yet (due to our backend simplicity)
+          setError("Verification successful. Please sign in again to activate your session.");
+          setMfaRequired(false);
+        }
+      }
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        setError(err.response?.data?.message || err.message);
+      } else if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Verification failed. Please try again.");
       }
     } finally {
       setIsLoading(false);
@@ -109,88 +149,139 @@ const SignIn: React.FC = () => {
               </div>
             )}
 
-            <form onSubmit={handleLogin} className="space-y-6">
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-white/50 ml-1">
-                  Admin Credentials
-                </label>
-                <div className="relative group">
-                  <MdEmail className="-translate-y-1/2 absolute left-4 top-1/2 text-white/30 group-focus-within:text-primary transition-colors duration-300" />
-                  <Input
-                    type="email"
-                    placeholder="admin@playza.com"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="bg-white/5 border-white/10 h-12 pl-12 text-white placeholder:text-white/20 focus:bg-white/10 focus:border-primary/50 transition-all rounded-xl"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex justify-between items-center px-1">
-                  <label className="text-xs font-bold uppercase tracking-wider text-white/50">
-                    Access Key
+            {!mfaRequired ? (
+              <form onSubmit={handleLogin} className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-white/50 ml-1">
+                    Admin Credentials
                   </label>
-                  <button
-                    type="button"
-                    className="text-[10px] font-bold text-primary hover:text-primary/80 uppercase tracking-tight"
-                  >
-                    Forgot Key?
-                  </button>
+                  <div className="relative group">
+                    <MdEmail className="-translate-y-1/2 absolute left-4 top-1/2 text-white/30 group-focus-within:text-primary transition-colors duration-300" />
+                    <Input
+                      type="email"
+                      placeholder="admin@playza.com"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="bg-white/5 border-white/10 h-12 pl-12 text-white placeholder:text-white/20 focus:bg-white/10 focus:border-primary/50 transition-all rounded-xl"
+                    />
+                  </div>
                 </div>
-                <div className="relative group">
-                  <MdLock className="-translate-y-1/2 absolute left-4 top-1/2 text-white/30 group-focus-within:text-primary transition-colors duration-300" />
-                  <Input
-                    type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="bg-white/5 border-white/10 h-12 pl-12 pr-12 text-white placeholder:text-white/20 focus:bg-white/10 focus:border-primary/50 transition-all rounded-xl"
+
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center px-1">
+                    <label className="text-xs font-bold uppercase tracking-wider text-white/50">
+                      Access Key
+                    </label>
+                    <button
+                      type="button"
+                      className="text-[10px] font-bold text-primary hover:text-primary/80 uppercase tracking-tight"
+                    >
+                      Forgot Key?
+                    </button>
+                  </div>
+                  <div className="relative group">
+                    <MdLock className="-translate-y-1/2 absolute left-4 top-1/2 text-white/30 group-focus-within:text-primary transition-colors duration-300" />
+                    <Input
+                      type={showPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="bg-white/5 border-white/10 h-12 pl-12 pr-12 text-white placeholder:text-white/20 focus:bg-white/10 focus:border-primary/50 transition-all rounded-xl"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="-translate-y-1/2 absolute right-4 top-1/2 text-white/30 hover:text-white transition-colors"
+                    >
+                      {showPassword ? <MdVisibilityOff /> : <MdVisibility />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 px-1">
+                  <input
+                    type="checkbox"
+                    id="remember"
+                    className="w-4 h-4 rounded border-white/10 bg-white/5 text-primary focus:ring-primary/20 cursor-pointer"
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="-translate-y-1/2 absolute right-4 top-1/2 text-white/30 hover:text-white transition-colors"
+                  <label
+                    htmlFor="remember"
+                    className="text-xs text-white/50 cursor-pointer hover:text-white/70 transition-colors"
                   >
-                    {showPassword ? <MdVisibilityOff /> : <MdVisibility />}
-                  </button>
+                    Authorize device for 30 days
+                  </label>
                 </div>
-              </div>
 
-              <div className="flex items-center gap-2 px-1">
-                <input
-                  type="checkbox"
-                  id="remember"
-                  className="w-4 h-4 rounded border-white/10 bg-white/5 text-primary focus:ring-primary/20 cursor-pointer"
-                />
-                <label
-                  htmlFor="remember"
-                  className="text-xs text-white/50 cursor-pointer hover:text-white/70 transition-colors"
+                <Button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full h-12 bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(var(--primary),0.3)] group overflow-hidden relative"
                 >
-                  Authorize device for 30 days
-                </label>
-              </div>
+                  <div className="-translate-x-full absolute inset-0 bg-linear-to-r from-white/0 via-white/20 to-white/0 group-hover:animate-shimmer" />
+                  <span className="relative flex items-center justify-center gap-2">
+                    {isLoading ? (
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        INITIALIZE SESSION
+                        <MdArrowForward className="text-xl group-hover:translate-x-1 transition-transform" />
+                      </>
+                    )}
+                  </span>
+                </Button>
+              </form>
+            ) : (
+              <form onSubmit={handleVerifyMfa} className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-white/50 ml-1">
+                    Enter Verification Code
+                  </label>
+                  <p className="text-[10px] text-white/40 mb-4 px-1">
+                    A secure authentication code has been dispatched to your registered email.
+                  </p>
+                  <div className="relative group">
+                    <MdSecurity className="-translate-y-1/2 absolute left-4 top-1/2 text-white/30 group-focus-within:text-primary transition-colors duration-300" />
+                    <Input
+                      type="text"
+                      placeholder="0 0 0 0 0 0"
+                      required
+                      maxLength={6}
+                      value={mfaCode}
+                      onChange={(e) => setMfaCode(e.target.value)}
+                      className="bg-white/5 border-white/10 h-14 pl-12 text-center text-2xl font-black tracking-[0.5em] text-white placeholder:text-white/10 focus:bg-white/10 focus:border-primary/50 transition-all rounded-xl"
+                    />
+                  </div>
+                </div>
 
-              <Button
-                type="submit"
-                disabled={isLoading}
-                className="w-full h-12 bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(var(--primary),0.3)] group overflow-hidden relative"
-              >
-                <div className="-translate-x-full absolute inset-0 bg-linear-to-r from-white/0 via-white/20 to-white/0 group-hover:animate-shimmer" />
-                <span className="relative flex items-center justify-center gap-2">
-                  {isLoading ? (
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  ) : (
-                    <>
-                      INITIALIZE SESSION
-                      <MdArrowForward className="text-xl group-hover:translate-x-1 transition-transform" />
-                    </>
-                  )}
-                </span>
-              </Button>
-            </form>
+                <Button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full h-12 bg-linear-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.2)] group overflow-hidden relative"
+                >
+                  <div className="-translate-x-full absolute inset-0 bg-linear-to-r from-white/0 via-white/20 to-white/0 group-hover:animate-shimmer" />
+                  <span className="relative flex items-center justify-center gap-2">
+                    {isLoading ? (
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        VERIFY & AUTHORIZE
+                        <MdArrowForward className="text-xl group-hover:translate-x-1 transition-transform" />
+                      </>
+                    )}
+                  </span>
+                </Button>
+
+                <button
+                  type="button"
+                  onClick={() => setMfaRequired(false)}
+                  className="w-full text-[10px] font-bold text-white/30 hover:text-white/50 uppercase tracking-widest transition-colors"
+                >
+                  Back to Credentials
+                </button>
+              </form>
+            )}
           </div>
         </div>
       </div>
