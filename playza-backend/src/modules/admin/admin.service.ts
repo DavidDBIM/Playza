@@ -8,6 +8,32 @@ webpush.setVapidDetails(
   process.env.VAPID_PRIVATE_KEY || ''
 )
 
+export async function logAdminAction(
+  adminId: string,
+  action: string,
+  targetId: string | null = null,
+  details: any = {},
+  req?: any // Optional request object to extract IP/UA
+) {
+  const ipAddress = req?.ip || req?.headers?.['x-forwarded-for'] || null;
+  const userAgent = req?.headers?.['user-agent'] || null;
+
+  const { error } = await supabaseAdmin.from('admin_logs').insert({
+    admin_id: adminId,
+    action,
+    target_id: targetId,
+    details: {
+      ...details,
+      userAgent
+    },
+    ip_address: ipAddress,
+  });
+
+  if (error) {
+    console.error('Failed to log admin action:', error);
+  }
+}
+
 export async function getDashboardMetrics() {
   const [
     { count: totalUsers },
@@ -425,4 +451,28 @@ export async function deleteFeedbackAdmin(id: string) {
 
   if (error) throw error
   return { success: true }
+}
+
+export async function getAdminLogs(page = 1, limit = 20) {
+  const from = (page - 1) * limit
+  const to = from + limit - 1
+
+  const { data, error, count } = await supabaseAdmin
+    .from('admin_logs')
+    .select(`
+      *,
+      admin:admin_id (username, email, avatar_url)
+    `, { count: 'exact' })
+    .order('created_at', { ascending: false })
+    .range(from, to)
+
+  if (error) throw error
+
+  return {
+    logs: data,
+    total: count ?? 0,
+    page,
+    limit,
+    total_pages: Math.ceil((count ?? 0) / limit),
+  }
 }
