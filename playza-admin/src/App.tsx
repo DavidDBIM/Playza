@@ -20,6 +20,8 @@ import { ThemeProvider } from "./components/theme/ThemeProvider";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import ReferralPayouts from "./pages/ReferralPayouts";
 import Feedback from "./pages/Feedback";
+import SecurityLogs from "./pages/SecurityLogs";
+import { SecurityWrapper } from "./components/auth/SecurityWrapper";
 
 // Placeholder components for routes
 const Placeholder = ({ name }: { name: string }) => (
@@ -40,7 +42,7 @@ const App: React.FC = () => {
           <Route path="/signin" element={<SignIn />} />
           
           <Route element={<ProtectedRoute />}>
-            <Route path="/" element={<Layout />}>
+            <Route path="/" element={<SecurityWrapper><Layout /></SecurityWrapper>}>
               <Route index element={<Dashboard />} />
               <Route path="users" element={<Users />} />
               <Route path="users/:id" element={<User />} />
@@ -61,6 +63,7 @@ const App: React.FC = () => {
               <Route path="referral-payouts" element={<ReferralPayouts />} />
               <Route path="notifications" element={<Notifications />} />
               <Route path="feedback" element={<Feedback />} />
+              <Route path="security-logs" element={<SecurityLogs />} />
               <Route path="content" element={<Placeholder name="Content" />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
