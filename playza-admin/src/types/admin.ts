@@ -22,6 +22,7 @@ export interface UserAdmin {
   first_name: string;
   last_name: string;
   referral_code: string;
+  role: string;
   is_email_verified: boolean;
   is_active: boolean;
   created_at: string;
@@ -33,6 +34,14 @@ export interface UserAdmin {
   pza_points: {
     total_points: number;
   };
+}
+
+export interface AdminLoginResponse {
+  access_token?: string;
+  user?: UserAdmin;
+  mfa_required?: boolean;
+  user_id?: string;
+  email?: string;
 }
 
 export interface UserHistoryItem {
