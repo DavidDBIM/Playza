@@ -1,8 +1,10 @@
 import { Router } from 'express'
 import { requireAuth, AuthRequest } from '../../middleware/auth'
+import { requireAdmin } from '../../middleware/admin'
 import { supabaseAdmin } from '../../config/supabase'
 import {
   getDashboardMetrics,
+  logAdminAction,
   getAllUsersAdmin,
   getAdminSingleUser,
   updateUserStatus,
@@ -14,6 +16,7 @@ import {
   getAllFeedbackAdmin,
   updateFeedbackStatusAdmin,
   deleteFeedbackAdmin,
+  getAdminLogs,
 } from './admin.service'
 import {
   getLoyaltyLeaderboard,
@@ -28,7 +31,7 @@ import {
 
 const router = Router()
 
-router.get('/dashboard', requireAuth, async (req: AuthRequest, res) => {
+router.get('/dashboard', requireAdmin, async (req: AuthRequest, res) => {
   try {
     const data = await getDashboardMetrics()
     res.json({ success: true, data })
@@ -37,7 +40,7 @@ router.get('/dashboard', requireAuth, async (req: AuthRequest, res) => {
   }
 })
 
-router.get('/users', requireAuth, async (req: AuthRequest, res) => {
+router.get('/users', requireAdmin, async (req: AuthRequest, res) => {
   try {
     const page = parseInt(req.query.page as string) || 1
     const limit = parseInt(req.query.limit as string) || 20
@@ -51,7 +54,7 @@ router.get('/users', requireAuth, async (req: AuthRequest, res) => {
   }
 })
 
-router.get('/users/:id', requireAuth, async (req: AuthRequest, res) => {
+router.get('/users/:id', requireAdmin, async (req: AuthRequest, res) => {
   try {
     const data = await getAdminSingleUser(req.params.id)
     res.json({ success: true, data })
@@ -60,21 +63,69 @@ router.get('/users/:id', requireAuth, async (req: AuthRequest, res) => {
   }
 })
 
-router.patch('/users/:id/status', requireAuth, async (req: AuthRequest, res) => {
+router.patch('/users/:id/status', requireAdmin, async (req: AuthRequest, res) => {
   try {
-    const { action } = req.body
+    const { action, mfa_code } = req.body;
+    const targetUserId = req.params.id;
+
     if (!['activate', 'deactivate', 'ban'].includes(action)) {
-      res.status(400).json({ success: false, message: 'Invalid action' })
-      return
+      res.status(400).json({ success: false, message: 'Invalid action' });
+      return;
     }
-    const data = await updateUserStatus(req.params.id, action)
-    res.json({ success: true, data })
+
+    // STEP-UP AUTH: Require MFA for "Ban" action
+    if (action === 'ban') {
+      if (!mfa_code) {
+        // Trigger a fresh OTP to the admin's email for this sensitive action
+        const { error: otpError } = await supabaseAdmin.auth.signInWithOtp({
+          email: req.user!.email,
+          options: { shouldCreateUser: false }
+        });
+
+        if (otpError) throw otpError;
+
+        res.status(200).json({ 
+          success: true, 
+          mfa_required: true, 
+          message: 'MFA challenge triggered for sensitive action.' 
+        });
+        return;
+      }
+
+      // Verify the Step-Up MFA code
+      const { data, error: verifyError } = await supabaseAdmin.auth.verifyOtp({
+        email: req.user!.email,
+        token: mfa_code,
+        type: 'email'
+      });
+
+      if (verifyError || !data.user) {
+        res.status(401).json({ success: false, message: 'Invalid or expired security code.' });
+        return;
+      }
+    }
+
+    const data = await updateUserStatus(targetUserId, action);
+    
+    // Log the action with full forensic metadata
+    await logAdminAction(
+      req.user!.id,
+      `USER_${action.toUpperCase()}`,
+      targetUserId,
+      { 
+        status_change: action,
+        step_up_verified: action === 'ban'
+      },
+      req
+    );
+
+    res.json({ success: true, data });
   } catch (err: any) {
-    res.status(400).json({ success: false, message: err.message })
+    res.status(400).json({ success: false, message: err.message });
   }
 })
 
-router.get('/transactions', requireAuth, async (req: AuthRequest, res) => {
+router.get('/transactions', requireAdmin, async (req: AuthRequest, res) => {
   try {
     const page = parseInt(req.query.page as string) || 1
     const limit = parseInt(req.query.limit as string) || 20
@@ -87,7 +138,7 @@ router.get('/transactions', requireAuth, async (req: AuthRequest, res) => {
   }
 })
 
-router.get('/transactions/:id', requireAuth, async (req: AuthRequest, res) => {
+router.get('/transactions/:id', requireAdmin, async (req: AuthRequest, res) => {
   try {
     const data = await getTransactionByIdAdmin(req.params.id)
     res.json({ success: true, data })
@@ -101,7 +152,7 @@ router.get('/transactions/:id', requireAuth, async (req: AuthRequest, res) => {
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 // GET /admin/ambassadors â€” list all applications with pagination & filter
-router.get('/ambassadors', requireAuth, async (req: AuthRequest, res) => {
+router.get('/ambassadors', requireAdmin, async (req: AuthRequest, res) => {
   try {
     const page = parseInt(req.query.page as string) || 1
     const limit = parseInt(req.query.limit as string) || 20
@@ -148,7 +199,7 @@ router.get('/ambassadors', requireAuth, async (req: AuthRequest, res) => {
 })
 
 // GET /admin/ambassadors/:id â€” single application detail
-router.get('/ambassadors/:id', requireAuth, async (req: AuthRequest, res) => {
+router.get('/ambassadors/:id', requireAdmin, async (req: AuthRequest, res) => {
   try {
     const { data, error } = await supabaseAdmin
       .from('ambassador_applications')
@@ -167,7 +218,7 @@ router.get('/ambassadors/:id', requireAuth, async (req: AuthRequest, res) => {
 })
 
 // PATCH /admin/ambassadors/:id/review â€” approve or reject
-router.patch('/ambassadors/:id/review', requireAuth, async (req: AuthRequest, res) => {
+router.patch('/ambassadors/:id/review', requireAdmin, async (req: AuthRequest, res) => {
   try {
     const { action, admin_note } = req.body   // action: 'approve' | 'reject'
     if (!['approve', 'reject'].includes(action)) {
@@ -198,7 +249,7 @@ router.patch('/ambassadors/:id/review', requireAuth, async (req: AuthRequest, re
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 // GET /admin/referral-payouts â€” list all requests (paginated, filterable)
-router.get('/referral-payouts', requireAuth, async (req: AuthRequest, res) => {
+router.get('/referral-payouts', requireAdmin, async (req: AuthRequest, res) => {
   try {
     const { status, page, limit, search } = req.query as Record<string, string>
     const data = await getAllPayoutRequests({
@@ -214,7 +265,7 @@ router.get('/referral-payouts', requireAuth, async (req: AuthRequest, res) => {
 })
 
 // PATCH /admin/referral-payouts/:id/review â€” approve or reject
-router.patch('/referral-payouts/:id/review', requireAuth, async (req: AuthRequest, res) => {
+router.patch('/referral-payouts/:id/review', requireAdmin, async (req: AuthRequest, res) => {
   try {
     const { action, admin_note } = req.body as { action: 'approved' | 'rejected'; admin_note?: string }
     if (!['approved', 'rejected'].includes(action)) {
@@ -232,7 +283,7 @@ router.patch('/referral-payouts/:id/review', requireAuth, async (req: AuthReques
 //  LEADERBOARDS
 // ────────────────────────────────────────────────────────────
 
-router.get('/leaderboards/loyalty', requireAuth, async (req: AuthRequest, res) => {
+router.get('/leaderboards/loyalty', requireAdmin, async (req: AuthRequest, res) => {
   try {
     const period = (req.query.period as LeaderboardPeriod) || 'all'
     const limit = parseInt(req.query.limit as string) || 50
@@ -243,7 +294,7 @@ router.get('/leaderboards/loyalty', requireAuth, async (req: AuthRequest, res) =
   }
 })
 
-router.get('/leaderboards/referral', requireAuth, async (req: AuthRequest, res) => {
+router.get('/leaderboards/referral', requireAdmin, async (req: AuthRequest, res) => {
   try {
     const period = (req.query.period as LeaderboardPeriod) || 'all'
     const limit = parseInt(req.query.limit as string) || 50
@@ -254,7 +305,7 @@ router.get('/leaderboards/referral', requireAuth, async (req: AuthRequest, res) 
   }
 })
 
-router.get('/leaderboards/games', requireAuth, async (req: AuthRequest, res) => {
+router.get('/leaderboards/games', requireAdmin, async (req: AuthRequest, res) => {
   try {
     const period = (req.query.period as LeaderboardPeriod) || 'all'
     const limit = parseInt(req.query.limit as string) || 50
@@ -269,7 +320,7 @@ router.get('/leaderboards/games', requireAuth, async (req: AuthRequest, res) => 
 //  NOTIFICATIONS
 // ────────────────────────────────────────────────────────────
 
-router.get('/notifications', requireAuth, async (req: AuthRequest, res) => {
+router.get('/notifications', requireAdmin, async (req: AuthRequest, res) => {
   try {
     const page = parseInt(req.query.page as string) || 1
     const limit = parseInt(req.query.limit as string) || 20
@@ -280,7 +331,7 @@ router.get('/notifications', requireAuth, async (req: AuthRequest, res) => {
   }
 })
 
-router.post('/notifications', requireAuth, async (req: AuthRequest, res) => {
+router.post('/notifications', requireAdmin, async (req: AuthRequest, res) => {
   try {
     const data = await sendNotification(req.body)
     res.json({ success: true, data })
@@ -289,7 +340,7 @@ router.post('/notifications', requireAuth, async (req: AuthRequest, res) => {
   }
 })
 
-router.delete('/notifications/:id', requireAuth, async (req: AuthRequest, res) => {
+router.delete('/notifications/:id', requireAdmin, async (req: AuthRequest, res) => {
   try {
     await deleteNotification(req.params.id)
     res.json({ success: true })
@@ -302,7 +353,7 @@ router.delete('/notifications/:id', requireAuth, async (req: AuthRequest, res) =
 //  FEEDBACK
 // ────────────────────────────────────────────────────────────
 
-router.get('/feedback', requireAuth, async (req: AuthRequest, res) => {
+router.get('/feedback', requireAdmin, async (req: AuthRequest, res) => {
   try {
     const page = parseInt(req.query.page as string) || 1
     const limit = parseInt(req.query.limit as string) || 20
@@ -316,7 +367,7 @@ router.get('/feedback', requireAuth, async (req: AuthRequest, res) => {
   }
 })
 
-router.patch('/feedback/:id', requireAuth, async (req: AuthRequest, res) => {
+router.patch('/feedback/:id', requireAdmin, async (req: AuthRequest, res) => {
   try {
     const data = await updateFeedbackStatusAdmin(req.params.id, req.body)
     res.json({ success: true, data })
@@ -325,10 +376,21 @@ router.patch('/feedback/:id', requireAuth, async (req: AuthRequest, res) => {
   }
 })
 
-router.delete('/feedback/:id', requireAuth, async (req: AuthRequest, res) => {
+router.delete('/feedback/:id', requireAdmin, async (req: AuthRequest, res) => {
   try {
     await deleteFeedbackAdmin(req.params.id)
     res.json({ success: true })
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message })
+  }
+})
+
+router.get('/logs', requireAdmin, async (req: AuthRequest, res) => {
+  try {
+    const page = parseInt(req.query.page as string) || 1
+    const limit = parseInt(req.query.limit as string) || 20
+    const data = await getAdminLogs(page, limit)
+    res.json({ success: true, data })
   } catch (err: any) {
     res.status(400).json({ success: false, message: err.message })
   }
