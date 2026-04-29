@@ -4,6 +4,8 @@ import { authLimiter } from '../../middleware/rateLimit'
 import {
   signupController,
   signinController,
+  adminSigninController,
+  verifyAdminMfaController,
   verifyOtpController,
   resendOtpController,
   forgotPasswordController,
@@ -23,6 +25,8 @@ const router = Router()
 
 router.post('/signup', authLimiter, validate(signupSchema), signupController)
 router.post('/signin', authLimiter, validate(signinSchema), signinController)
+router.post('/admin/signin', authLimiter, validate(signinSchema), adminSigninController)
+router.post('/admin/verify-mfa', authLimiter, verifyAdminMfaController)
 router.post('/verify-otp', validate(verifyOtpSchema), verifyOtpController)
 router.post('/resend-otp', authLimiter, validate(resendOtpSchema), resendOtpController)
 router.post('/forgot-password', authLimiter, validate(forgotPasswordSchema), forgotPasswordController)
