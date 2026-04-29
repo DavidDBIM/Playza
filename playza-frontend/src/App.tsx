@@ -160,7 +160,7 @@ const AppContent = () => {
       <NotificationBanner />
       <NotificationBanner />
 
-      <FloatingFeedbackButton />
+      {!isRegistrationPage && !pathname.includes("/reset-password") && <FloatingFeedbackButton />}
 
       <div
         className={
