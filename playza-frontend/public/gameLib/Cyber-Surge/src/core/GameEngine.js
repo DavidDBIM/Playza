@@ -301,7 +301,10 @@ export class GameEngine {
     }
 
     update() {
-        const baseProgression = 1 + (this.gameTime / 70) * 0.34;
+        const difficultyState = this.generator?.difficulty?.getState?.();
+        const phasePressure = difficultyState?.phase === 3 ? 0.18 : difficultyState?.phase === 2 ? 0.08 : 0;
+        const eventPressure = difficultyState?.event?.type === 'challenge' ? 0.07 : difficultyState?.event?.type === 'coinRush' ? -0.03 : 0;
+        const baseProgression = 1 + (this.gameTime / 72) * 0.31 + phasePressure + eventPressure;
         this.speedMultiplier = this.getSpeedMultiplier();
         let targetSpeed = Math.min(this.config.baseSpeed * baseProgression * this.speedMultiplier, this.config.maxSpeed);
 

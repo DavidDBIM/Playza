@@ -21,7 +21,6 @@ const OBSTACLE_PATHS = {
     blocker: [
         './src/assets/obstacles/road-bloackage/blockade.glb',
         './src/assets/obstacles/road-bloackage/blockage.glb',
-        './src/assets/obstacles/road-bloackage/roadblock.glb',
         './src/assets/obstacles/road-bloackage/road_block.glb',
         './src/assets/obstacles/road-bloackage/redblockade.glb'
     ],
