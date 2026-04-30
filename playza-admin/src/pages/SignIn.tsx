@@ -39,17 +39,25 @@ const SignIn: React.FC = () => {
       if (response.mfa_required) {
         setMfaRequired(true);
       } else if (response.access_token && response.user) {
+        // Verify admin role if present
+        if (response.user.role && response.user.role !== 'admin' && response.user.role !== 'super_admin') {
+          setError("Access Denied: Administrative privileges required.");
+          return;
+        }
+
         localStorage.setItem("admin_token", response.access_token);
         localStorage.setItem("admin_user", JSON.stringify(response.user));
+        localStorage.setItem("admin_login_time", Date.now().toString());
         navigate("/");
       } else {
-        setError("Unauthorized access detected.");
+        setError("Unauthorized access detected. Please check your credentials.");
       }
     } catch (err: unknown) {
-      if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || err.message);
-      } else if (err instanceof Error) {
-        setError(err.message);
+      console.error("Login error:", err);
+      if (axios.isAxiosError(err) && err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else if (err instanceof Error && err.message === "Network Error") {
+        setError("Unable to connect to the security server. Please check your connection.");
       } else {
         setError("Authentication failed. Access denied.");
       }
@@ -95,203 +103,260 @@ const SignIn: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden bg-[#0A0A0B]">
+    <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden bg-[#050506]">
+      {/* Dynamic Background Elements */}
       <div
-        className="absolute inset-0 z-0 scale-110"
+        className="absolute inset-0 z-0"
         style={{
-          backgroundImage: `url(${loginBg})`,
+          backgroundImage: `radial-gradient(circle at 50% 50%, rgba(20, 20, 30, 0.4) 0%, rgba(5, 5, 6, 1) 100%), url(${loginBg})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
-          filter: "brightness(0.4) saturate(1.2)",
+          filter: "brightness(0.3) saturate(1.4)",
         }}
       />
 
-      {/* Animated Glows */}
-      <div className="absolute top-1/4 -left-1/4 w-1/2 h-1/2 bg-primary/20 rounded-full blur-[120px] animate-pulse" />
-      <div className="absolute bottom-1/4 -right-1/4 w-1/2 h-1/2 bg-purple-600/20 rounded-full blur-[120px] animate-pulse delay-1000" />
+      {/* Animated Mesh Gradients */}
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 rounded-full blur-[150px] animate-pulse" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-600/10 rounded-full blur-[150px] animate-pulse delay-1000" />
+      
+      {/* Decorative Grid */}
+      <div className="absolute inset-0 z-0 opacity-10" style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
 
       {/* Main Content */}
-      <div className="relative z-10 w-full max-w-112.5 px-2">
-        <div className="mb-8 text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-linear-to-br from-primary to-purple-600 p-0.5 shadow-2xl shadow-primary/20 mb-6 group transition-transform hover:scale-110 duration-500">
-            <div className="w-full h-full rounded-[14px] bg-[#0A0A0B] flex items-center justify-center">
-              <span className="text-3xl font-black text-white italic tracking-tighter">
-                P
-              </span>
+      <div className="relative z-10 w-full max-w-120 px-4 py-12">
+        <div className="mb-10 text-center space-y-4">
+          <div className="relative inline-block group">
+            <div className="absolute -inset-4 bg-linear-to-tr from-primary to-purple-600 rounded-3xl blur-2xl opacity-20 group-hover:opacity-40 transition-opacity duration-700" />
+            <div className="relative flex items-center justify-center w-20 h-20 rounded-2xl bg-[#0A0A0B] border border-white/10 shadow-2xl transition-transform hover:scale-105 duration-500 overflow-hidden">
+                {/* Internal Glow */}
+                <div className="absolute inset-0 bg-linear-to-br from-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <span className="text-4xl font-black text-white italic tracking-tighter relative z-10">
+                  P
+                </span>
             </div>
           </div>
-          <h1 className="text-4xl font-headline font-black text-white tracking-tight mb-2">
-            PLAYZA <span className="text-primary italic">EMPIRE</span>
-          </h1>
-          <p className="text-muted-foreground font-body font-medium">
-            Administrative Command & Control Center
-          </p>
+          
+          <div className="space-y-1">
+            <h1 className="text-5xl font-headline font-black text-white tracking-tighter flex items-center justify-center gap-3">
+              PLAYZA <span className="text-primary italic drop-shadow-[0_0_15px_rgba(var(--primary),0.5)]">EMPIRE</span>
+            </h1>
+            <div className="flex items-center justify-center gap-2">
+              <div className="h-px w-8 bg-linear-to-r from-transparent to-white/20" />
+              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/40">
+                Centralized Command Node
+              </p>
+              <div className="h-px w-8 bg-linear-to-l from-transparent to-white/20" />
+            </div>
+          </div>
         </div>
 
-        <div className="glass-card rounded-xl p-8 border border-white/10 shadow-2xl relative overflow-hidden group">
-          {/* Subtle Scanline Effect */}
-          <div className="absolute inset-0 bg-linear-to-b from-transparent via-white/2 to-transparent bg-siza-[100%_4px] animate-scanline pointer-events-none" />
+        <div className="relative group">
+          {/* Card Outer Glow/Border */}
+          <div className="absolute -inset-px bg-linear-to-b from-white/20 via-white/5 to-white/10 rounded-2xl blur-px group-hover:from-primary/30 transition-all duration-500" />
+          
+          <div className="relative glass-card rounded-2xl p-8 lg:p-10 border border-white/5 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.8)] overflow-hidden bg-[#0A0A0B]/80 backdrop-blur-3xl">
+            {/* Ambient Light Effect */}
+            <div className="absolute -top-24 -left-24 w-48 h-48 bg-primary/10 rounded-full blur-[60px] pointer-events-none" />
+            <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-purple-600/10 rounded-full blur-[60px] pointer-events-none" />
+            
+            {/* Subtle Scanline Overlay */}
+            <div className="absolute inset-0 bg-linear-to-b from-transparent via-white/2 to-transparent bg-size-[100%_4px] animate-scanline pointer-events-none" />
 
-          <div className="relative z-10">
-            <div className="flex items-center gap-2 mb-8 border-b border-white/10 pb-4">
-              <MdSecurity className="text-primary text-xl" />
-              <span className="text-xs font-black uppercase tracking-[0.2em] text-white/70">
-                Secure Authentication Required
-              </span>
-            </div>
-
-            {error && (
-              <div className="mb-6 p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
-                <MdWarning className="text-rose-500 text-xl shrink-0" />
-                <p className="text-xs font-bold text-rose-500 uppercase tracking-tight leading-relaxed">
-                  {error}
-                </p>
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-10">
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_10px_rgba(var(--primary),0.8)]" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.25em] text-white/60">
+                    System Authentication
+                  </span>
+                </div>
+                <div className="flex gap-1">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="w-4 h-1 rounded-full bg-white/5" />
+                  ))}
+                </div>
               </div>
-            )}
 
-            {!mfaRequired ? (
-              <form onSubmit={handleLogin} className="space-y-6">
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-wider text-white/50 ml-1">
-                    Admin Credentials
-                  </label>
-                  <div className="relative group">
-                    <MdEmail className="-translate-y-1/2 absolute left-4 top-1/2 text-white/30 group-focus-within:text-primary transition-colors duration-300" />
-                    <Input
-                      type="email"
-                      placeholder="admin@playza.com"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="bg-white/5 border-white/10 h-12 pl-12 text-white placeholder:text-white/20 focus:bg-white/10 focus:border-primary/50 transition-all rounded-xl"
-                    />
+              {error && (
+                <div className="mb-8 p-4 rounded-xl bg-rose-500/5 border border-rose-500/20 flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <div className="mt-0.5 p-1 rounded-md bg-rose-500/20">
+                    <MdWarning className="text-rose-500 text-sm shrink-0" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-black text-rose-500/60 uppercase tracking-widest">Access Rejected</p>
+                    <p className="text-xs font-bold text-rose-200 tracking-tight leading-snug">
+                      {error}
+                    </p>
                   </div>
                 </div>
+              )}
 
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center px-1">
-                    <label className="text-xs font-bold uppercase tracking-wider text-white/50">
-                      Access Key
+              {!mfaRequired ? (
+                <form onSubmit={handleLogin} className="space-y-8">
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 ml-1 flex justify-between items-center">
+                      <span>Admin ID</span>
+                      <span className="text-[8px] text-white/10 italic">Secure Input</span>
                     </label>
-                    <button
-                      type="button"
-                      className="text-[10px] font-bold text-primary hover:text-primary/80 uppercase tracking-tight"
-                    >
-                      Forgot Key?
-                    </button>
+                    <div className="relative group/input">
+                      <div className="absolute inset-0 bg-white/2 rounded-xl group-focus-within/input:bg-primary/3 transition-colors" />
+                      <MdEmail className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within/input:text-primary transition-colors duration-300" />
+                      <Input
+                        type="email"
+                        placeholder="ADMINISTRATOR@PLAYZA.EMPIRE"
+                        required
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="bg-transparent border-white/5 h-14 pl-12 text-white placeholder:text-white/10 focus:border-primary/30 transition-all rounded-xl font-bold tracking-wide"
+                      />
+                    </div>
                   </div>
-                  <div className="relative group">
-                    <MdLock className="-translate-y-1/2 absolute left-4 top-1/2 text-white/30 group-focus-within:text-primary transition-colors duration-300" />
-                    <Input
-                      type={showPassword ? "text" : "password"}
-                      placeholder="••••••••"
-                      required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="bg-white/5 border-white/10 h-12 pl-12 pr-12 text-white placeholder:text-white/20 focus:bg-white/10 focus:border-primary/50 transition-all rounded-xl"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="-translate-y-1/2 absolute right-4 top-1/2 text-white/30 hover:text-white transition-colors"
-                    >
-                      {showPassword ? <MdVisibilityOff /> : <MdVisibility />}
-                    </button>
-                  </div>
-                </div>
 
-                <div className="flex items-center gap-2 px-1">
-                  <input
-                    type="checkbox"
-                    id="remember"
-                    className="w-4 h-4 rounded border-white/10 bg-white/5 text-primary focus:ring-primary/20 cursor-pointer"
-                  />
-                  <label
-                    htmlFor="remember"
-                    className="text-xs text-white/50 cursor-pointer hover:text-white/70 transition-colors"
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center px-1">
+                      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30">
+                        Access Protocol
+                      </label>
+                      <button
+                        type="button"
+                        className="text-[9px] font-black text-primary/60 hover:text-primary uppercase tracking-widest transition-colors"
+                      >
+                        Reset Protocol
+                      </button>
+                    </div>
+                    <div className="relative group/input">
+                      <div className="absolute inset-0 bg-white/2 rounded-xl group-focus-within/input:bg-primary/3 transition-colors" />
+                      <MdLock className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within/input:text-primary transition-colors duration-300" />
+                      <Input
+                        type={showPassword ? "text" : "password"}
+                        placeholder="••••••••••••"
+                        required
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="bg-transparent border-white/5 h-14 pl-12 pr-12 text-white placeholder:text-white/10 focus:border-primary/30 transition-all rounded-xl font-bold tracking-[0.3em]"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 hover:text-white transition-colors"
+                      >
+                        {showPassword ? <MdVisibilityOff /> : <MdVisibility />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 px-1">
+                    <div className="relative flex items-center">
+                      <input
+                        type="checkbox"
+                        id="remember"
+                        className="peer w-5 h-5 rounded-lg border-white/10 bg-white/5 text-primary focus:ring-offset-0 focus:ring-primary/20 cursor-pointer appearance-none checked:bg-primary checked:border-primary transition-all"
+                      />
+                      <div className="absolute pointer-events-none opacity-0 peer-checked:opacity-100 text-white flex items-center justify-center w-5 h-5">
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M5 13l4 4L19 7"></path></svg>
+                      </div>
+                    </div>
+                    <label
+                      htmlFor="remember"
+                      className="text-[10px] font-bold uppercase tracking-widest text-white/40 cursor-pointer hover:text-white/60 transition-colors"
+                    >
+                      Authorize Persistent Session
+                    </label>
+                  </div>
+
+                  <Button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full h-14 bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white font-black uppercase tracking-[0.2em] rounded-xl shadow-[0_10px_30px_rgba(var(--primary),0.3)] group/btn overflow-hidden relative border border-white/10"
                   >
-                    Authorize device for 30 days
-                  </label>
-                </div>
-
-                <Button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full h-12 bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(var(--primary),0.3)] group overflow-hidden relative"
-                >
-                  <div className="-translate-x-full absolute inset-0 bg-linear-to-r from-white/0 via-white/20 to-white/0 group-hover:animate-shimmer" />
-                  <span className="relative flex items-center justify-center gap-2">
-                    {isLoading ? (
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    ) : (
-                      <>
-                        INITIALIZE SESSION
-                        <MdArrowForward className="text-xl group-hover:translate-x-1 transition-transform" />
-                      </>
-                    )}
-                  </span>
-                </Button>
-              </form>
-            ) : (
-              <form onSubmit={handleVerifyMfa} className="space-y-6">
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-wider text-white/50 ml-1">
-                    Enter Verification Code
-                  </label>
-                  <p className="text-[10px] text-white/40 mb-4 px-1">
-                    A secure authentication code has been dispatched to your registered email.
-                  </p>
-                  <div className="relative group">
-                    <MdSecurity className="-translate-y-1/2 absolute left-4 top-1/2 text-white/30 group-focus-within:text-primary transition-colors duration-300" />
-                    <Input
-                      type="text"
-                      placeholder="0 0 0 0 0 0"
-                      required
-                      maxLength={6}
-                      value={mfaCode}
-                      onChange={(e) => setMfaCode(e.target.value)}
-                      className="bg-white/5 border-white/10 h-14 pl-12 text-center text-2xl font-black tracking-[0.5em] text-white placeholder:text-white/10 focus:bg-white/10 focus:border-primary/50 transition-all rounded-xl"
-                    />
+                    <div className="absolute inset-0 bg-linear-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover/btn:animate-shimmer" />
+                    <span className="relative flex items-center justify-center gap-3">
+                      {isLoading ? (
+                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      ) : (
+                        <>
+                          Initialize Protocol
+                          <MdArrowForward className="text-xl group-hover/btn:translate-x-1 transition-transform" />
+                        </>
+                      )}
+                    </span>
+                  </Button>
+                </form>
+              ) : (
+                <form onSubmit={handleVerifyMfa} className="space-y-8">
+                  <div className="space-y-4">
+                    <div className="text-center">
+                      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30">
+                        Multi-Factor Challenge
+                      </label>
+                      <p className="text-[10px] text-white/20 mt-2 uppercase tracking-tight">
+                        Security token dispatched to registered comms.
+                      </p>
+                    </div>
+                    
+                    <div className="relative group/input">
+                      <div className="absolute inset-0 bg-white/2 rounded-xl group-focus-within/input:bg-emerald-500/3 transition-colors" />
+                      <MdSecurity className="absolute left-5 top-1/2 -translate-y-1/2 text-white/20 group-focus-within/input:text-emerald-500 transition-colors duration-300" />
+                      <Input
+                        type="text"
+                        placeholder="000000"
+                        required
+                        maxLength={6}
+                        value={mfaCode}
+                        onChange={(e) => setMfaCode(e.target.value)}
+                        className="bg-transparent border-white/5 h-16 pl-14 text-center text-3xl font-black tracking-[0.8em] text-white placeholder:text-white/5 focus:border-emerald-500/30 transition-all rounded-xl"
+                      />
+                    </div>
                   </div>
-                </div>
 
-                <Button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full h-12 bg-linear-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.2)] group overflow-hidden relative"
-                >
-                  <div className="-translate-x-full absolute inset-0 bg-linear-to-r from-white/0 via-white/20 to-white/0 group-hover:animate-shimmer" />
-                  <span className="relative flex items-center justify-center gap-2">
-                    {isLoading ? (
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    ) : (
-                      <>
-                        VERIFY & AUTHORIZE
-                        <MdArrowForward className="text-xl group-hover:translate-x-1 transition-transform" />
-                      </>
-                    )}
-                  </span>
-                </Button>
+                  <Button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full h-14 bg-linear-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black uppercase tracking-[0.2em] rounded-xl shadow-[0_10px_30px_rgba(16,185,129,0.2)] group/btn overflow-hidden relative border border-white/10"
+                  >
+                    <div className="absolute inset-0 bg-linear-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover/btn:animate-shimmer" />
+                    <span className="relative flex items-center justify-center gap-3">
+                      {isLoading ? (
+                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      ) : (
+                        <>
+                          Verify Clearance
+                          <MdArrowForward className="text-xl group-hover/btn:translate-x-1 transition-transform" />
+                        </>
+                      )}
+                    </span>
+                  </Button>
 
-                <button
-                  type="button"
-                  onClick={() => setMfaRequired(false)}
-                  className="w-full text-[10px] font-bold text-white/30 hover:text-white/50 uppercase tracking-widest transition-colors"
-                >
-                  Back to Credentials
-                </button>
-              </form>
-            )}
+                  <button
+                    type="button"
+                    onClick={() => setMfaRequired(false)}
+                    className="w-full text-[10px] font-black text-white/20 hover:text-white/40 uppercase tracking-[0.3em] transition-colors"
+                  >
+                    Return to Primary Terminal
+                  </button>
+                </form>
+              )}
+            </div>
           </div>
+        </div>
+        
+        {/* Footer info */}
+        <div className="mt-12 text-center space-y-2 opacity-30 group-hover:opacity-60 transition-opacity">
+            <p className="text-[9px] font-black uppercase tracking-[0.5em] text-white">
+                Playza OS v4.2.0-ADMIN
+            </p>
+            <p className="text-[8px] font-medium text-white/50">
+                Authorized Personnel Only • All Connections Monitored
+            </p>
         </div>
       </div>
 
-      {/* Background decoration */}
-      <div className="fixed top-0 left-0 w-full h-full pointer-events-none overflow-hidden z-0">
-        <div className="absolute top-[10%] left-[5%] text-[120px] font-black text-white/2 select-none italic">
-          PLAYZA
+      {/* Side Decorative Text */}
+      <div className="fixed top-0 left-0 w-full h-full pointer-events-none overflow-hidden z-0 select-none">
+        <div className="absolute top-[10%] left-[2%] text-[140px] font-black text-white/2 italic tracking-tighter leading-none">
+          SYSTEM
         </div>
-        <div className="absolute bottom-[10%] right-[5%] text-[120px] font-black text-white/2 select-none italic">
+        <div className="absolute bottom-[10%] right-[2%] text-[140px] font-black text-white/2 italic tracking-tighter leading-none">
           EMPIRE
         </div>
       </div>
