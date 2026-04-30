@@ -29,10 +29,13 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem("admin_token");
-      localStorage.removeItem("admin_user");
-      localStorage.removeItem("admin_login_time");
-      window.location.href = "/signin";
+      // Don't redirect if we are already on signin page
+      if (!window.location.pathname.includes('/signin')) {
+        localStorage.removeItem("admin_token");
+        localStorage.removeItem("admin_user");
+        localStorage.removeItem("admin_login_time");
+        window.location.href = "/signin";
+      }
     }
     return Promise.reject(error);
   },
