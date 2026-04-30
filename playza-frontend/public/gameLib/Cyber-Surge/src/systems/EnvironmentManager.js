@@ -6,11 +6,6 @@ import { EnvironmentAssetLoader } from './EnvironmentAssetLoader.js';
 //   ←── SKYLINE ──→  ←── OUTER ──→  ←── INNER ──→  [[ ROAD ]]  ←── INNER ──→  ←── OUTER ──→  ←── SKYLINE ──→
 //       x < -32       -28 to -14     -14 to -7      -3.9 to 3.9   7 to 14        14 to 28       x > 32
 //
-const ROAD_HALF      = 3.9;    // road spans ±3.9
-const SAFE_MARGIN    = 3.1;    // gap between road edge and nearest building edge
-const INNER_X        = 10;    // centre of inner building column  (edge at 10-2=8 > 7 ✓)
-const OUTER_X        = 17;    // centre of outer building column
-const SKYLINE_X      = 36;    // centre of skyline strip
 const BUILD_W        = 4;     // normalised building width (max)
 const BUILD_H        = 18;    // normalised building height (max)
 const BUILD_D        = 6;     // normalised building depth
@@ -41,23 +36,134 @@ const ROAD_VARIANTS = {
 
 const WINDOW_COLORS = [0xffd580, 0x22d3ee, 0xffa040, 0xa78bfa, 0x94a3b8];
 const STRUCT_COLORS = [0x0a1520, 0x0d1b2a, 0x111c2e, 0x0e1929, 0x091422];
+const BRICK_COLORS = ['#6d3f32', '#8a5542', '#4f5f6e', '#75695e', '#2f4050'];
 
 function rand(a, b) { return a + Math.random() * (b - a); }
+
+function makeFacadeTexture(seed = 0, options = {}) {
+    const width = 256;
+    const height = 512;
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    const wall = options.wall || BRICK_COLORS[seed % BRICK_COLORS.length];
+    const mortar = options.mortar || 'rgba(255,255,255,0.08)';
+    const windowLit = options.windowLit || '#ffd580';
+    const windowDark = options.windowDark || '#101826';
+
+    ctx.fillStyle = wall;
+    ctx.fillRect(0, 0, width, height);
+
+    ctx.fillStyle = 'rgba(0,0,0,0.16)';
+    for (let y = 0; y < height; y += 18) {
+        ctx.fillRect(0, y, width, 2);
+    }
+    ctx.fillStyle = mortar;
+    for (let x = (seed % 3) * 8; x < width; x += 34) {
+        ctx.fillRect(x, 0, 2, height);
+    }
+
+    const cols = 5;
+    const rows = 13;
+    const padX = 22;
+    const padY = 26;
+    const cellW = (width - padX * 2) / cols;
+    const cellH = (height - padY * 2) / rows;
+    for (let row = 0; row < rows; row += 1) {
+        for (let col = 0; col < cols; col += 1) {
+            const lit = ((row * 7 + col * 11 + seed) % 5) !== 0;
+            const x = padX + col * cellW + 6;
+            const y = padY + row * cellH + 5;
+            ctx.fillStyle = lit ? windowLit : windowDark;
+            ctx.fillRect(x, y, cellW - 13, cellH - 12);
+            if (lit) {
+                ctx.fillStyle = 'rgba(255,255,255,0.30)';
+                ctx.fillRect(x + 3, y + 2, cellW - 19, 2);
+            }
+        }
+    }
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.needsUpdate = true;
+    return texture;
+}
+
+function makeWindowEmissiveTexture(seed = 0, color = '#ffd580') {
+    const canvas = document.createElement('canvas');
+    canvas.width = 128;
+    canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    for (let y = 16; y < canvas.height; y += 28) {
+        for (let x = 14; x < canvas.width; x += 24) {
+            if (((x + y + seed * 13) % 4) === 0) continue;
+            ctx.fillStyle = color;
+            ctx.fillRect(x, y, 12, 14);
+        }
+    }
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.needsUpdate = true;
+    return texture;
+}
+
+function makeRoadTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#202936';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    for (let i = 0; i < 170; i += 1) {
+        const x = Math.random() * canvas.width;
+        const y = Math.random() * canvas.height;
+        const r = 8 + Math.random() * 34;
+        ctx.strokeStyle = `rgba(180,190,205,${0.05 + Math.random() * 0.09})`;
+        ctx.lineWidth = 1 + Math.random() * 2;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.stroke();
+    }
+    for (let y = 0; y < canvas.height; y += 64) {
+        ctx.strokeStyle = 'rgba(255,255,255,0.035)';
+        ctx.beginPath();
+        ctx.moveTo(0, y + Math.random() * 8);
+        ctx.lineTo(canvas.width, y + Math.random() * 8);
+        ctx.stroke();
+    }
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(1, 8);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.needsUpdate = true;
+    return texture;
+}
 
 // ─── EnvironmentManager ───────────────────────────────────────────────────────
 export class EnvironmentManager {
     constructor(engine) {
         this.engine       = engine;
         this.scene        = engine.scene;
+        this.layout       = engine.layout;
         this.currentBiome = 'road';
         this.phase        = 1;
         this.targetAtmosphere = null;
+        this.worldDebug = typeof window !== 'undefined'
+            && window.localStorage?.getItem('cyberSurgeWorldDebug') === '1';
 
         this.floorMeshes   = [];
         this.glowPanels    = [];
         this.billboards    = [];
+        this.streetProps    = [];
         this.skylineMeshes = [];
         this._skylineReady = false;
+        this.facadeSeed = 0;
 
         this.envLoader = new EnvironmentAssetLoader();
         this.envLoader.loadAll().then(() => {
@@ -69,6 +175,7 @@ export class EnvironmentManager {
         this._createFloor();
         this._createBillboards();
         this._createSkyline();
+        this._createDebugZones();
         this.setBiome(this.currentBiome);
     }
 
@@ -158,12 +265,14 @@ export class EnvironmentManager {
         g.add(bg);
         if (this.envLoader.isLoaded) this._fillTile(g);
 
+        this._addSidewalksAndProps(g);
+
         return g;
     }
 
     _addFallbackRoad(g) {
         const bm = new THREE.MeshStandardMaterial({ color:0x060b14, roughness:0.95, metalness:0.18 });
-        const rm = new THREE.MeshStandardMaterial({ color:0x131c31, roughness:0.75, metalness:0.3 });
+        const rm = new THREE.MeshStandardMaterial({ map: makeRoadTexture(), color:0xffffff, roughness:0.75, metalness:0.3 });
         const em = new THREE.MeshStandardMaterial({ color:0x1f2937, roughness:0.34, metalness:0.82, emissive:0x0ea5e9, emissiveIntensity:0.65 });
         const pm = new THREE.MeshStandardMaterial({ color:0x1e293b, roughness:0.24, metalness:0.85, emissive:0x38bdf8, emissiveIntensity:0.4 });
 
@@ -187,38 +296,144 @@ export class EnvironmentManager {
     }
 
     // ─── Zone-enforced building fill ──────────────────────────────────────────
+    _addSidewalksAndProps(tile) {
+        const sidewalkMat = new THREE.MeshStandardMaterial({
+            color: 0x263241,
+            roughness: 0.82,
+            metalness: 0.12
+        });
+        const curbMat = new THREE.MeshStandardMaterial({
+            color: 0x22d3ee,
+            emissive: 0x0891b2,
+            emissiveIntensity: 0.45,
+            roughness: 0.35,
+            metalness: 0.55
+        });
+
+        [-1, 1].forEach((side) => {
+            const sidewalk = new THREE.Mesh(new THREE.BoxGeometry(2.25, 0.12, TILE_LEN), sidewalkMat);
+            sidewalk.position.set(side * (this.layout.roadHalfWidth + 1.25), 0.03, 0);
+            sidewalk.receiveShadow = true;
+            tile.add(sidewalk);
+
+            const curb = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.18, TILE_LEN), curbMat);
+            curb.position.set(side * (this.layout.roadHalfWidth + 0.08), 0.14, 0);
+            tile.add(curb);
+
+            const lamp = this._createStreetLamp(side);
+            lamp.position.set(side * (this.layout.roadHalfWidth + 2.45), 0, -2.6);
+            tile.add(lamp);
+            this.streetProps.push(lamp);
+
+            if ((Math.abs(tile.userData.z) / TILE_LEN) % 3 === 0) {
+                const sign = this._createNeonSign(side);
+                sign.position.set(side * (this.layout.environmentMinAbsX + 0.35), 3.0, 2.5);
+                tile.add(sign);
+                this.streetProps.push(sign);
+            }
+
+            if ((Math.abs(tile.userData.z) / TILE_LEN) % 4 === 1) {
+                const tree = this._createStreetTree();
+                tree.position.set(side * (this.layout.roadHalfWidth + 2.9), 0, 2.4);
+                tile.add(tree);
+                this.streetProps.push(tree);
+            }
+        });
+    }
+
+    _createStreetLamp(side) {
+        const group = new THREE.Group();
+        const poleMat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.42, metalness: 0.8 });
+        const lightMat = new THREE.MeshStandardMaterial({
+            color: 0xfff1bf,
+            emissive: 0xffd580,
+            emissiveIntensity: 1.7,
+            roughness: 0.22,
+            metalness: 0.2
+        });
+        const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.065, 3.8, 10), poleMat);
+        pole.position.y = 1.9;
+        group.add(pole);
+        const arm = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.055, 0.055), poleMat);
+        arm.position.set(side * -0.33, 3.65, 0);
+        group.add(arm);
+        const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.16, 12, 10), lightMat);
+        bulb.position.set(side * -0.76, 3.58, 0);
+        group.add(bulb);
+        const glow = new THREE.PointLight(0xffd580, 1.6, 9, 2);
+        glow.position.copy(bulb.position);
+        group.add(glow);
+        return group;
+    }
+
+    _createNeonSign(side) {
+        const group = new THREE.Group();
+        const frame = new THREE.Mesh(
+            new THREE.BoxGeometry(1.55, 0.72, 0.08),
+            new THREE.MeshStandardMaterial({
+                color: 0x07111f,
+                emissive: side < 0 ? 0xec4899 : 0x22d3ee,
+                emissiveIntensity: 0.9,
+                roughness: 0.18,
+                metalness: 0.75
+            })
+        );
+        frame.rotation.y = side < 0 ? Math.PI / 2 : -Math.PI / 2;
+        group.add(frame);
+        return group;
+    }
+
+    _createStreetTree() {
+        const group = new THREE.Group();
+        const trunk = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.07, 0.11, 1.2, 8),
+            new THREE.MeshStandardMaterial({ color: 0x4b2f22, roughness: 0.85 })
+        );
+        trunk.position.y = 0.6;
+        group.add(trunk);
+        const crown = new THREE.Mesh(
+            new THREE.ConeGeometry(0.58, 1.65, 9),
+            new THREE.MeshStandardMaterial({ color: 0x0f5132, roughness: 0.72, emissive: 0x062516, emissiveIntensity: 0.05 })
+        );
+        crown.position.y = 1.75;
+        group.add(crown);
+        return group;
+    }
+
     _fillTile(tile) {
         const bg = tile.userData.buildingGroup;
         while (bg.children.length) bg.remove(bg.children[0]);
 
-        // Place buildings in two rows per side (inner + outer column)
-        // Each column: one building per tile at Z=0 (aligned with tile centre)
+        const streetSlots = [
+            { column: 'inner', z: -2.6, scale: 0.98 },
+            { column: 'inner', z: 2.6, scale: 0.94 },
+            { column: 'outer', z: 0, scale: 1.08 }
+        ];
+
         [-1, 1].forEach(side => {
-            [INNER_X, OUTER_X].forEach((col, ci) => {
-                const xCenter = side * col;
+            streetSlots.forEach((slot, slotIndex) => {
+                const xCenter = this.layout.getSideZoneX(side, slot.column);
 
                 // Get asset or fallback
                 const b = this.envLoader.isLoaded
                     ? this.envLoader.cloneRandomBuilding()
                     : null;
-                const mesh = b ?? this._fallbackBuilding(xCenter);
+                const mesh = b ?? this._fallbackBuilding(xCenter, slotIndex);
 
                 if (b) {
-                    const s = rand(0.88, 1.08);
+                    const s = slot.scale * rand(0.96, 1.04);
                     b.scale.multiplyScalar(s);
-                    // Face buildings inward (toward road)
-                    b.rotation.y = side < 0
-                        ? rand(-0.06, 0.12)
-                        : rand(-0.12, 0.06);
-                    b.position.set(xCenter, 0, 0);
+                    b.rotation.y = 0;
+                    b.position.set(xCenter, 0, slot.z);
 
                     // ── Safety: enforce hard boundary ─────────────────────────
-                    this._clampToZone(b, side);
+                    this._clampToZone(b, side, 'building');
                     this._applyBuildingMaterial(b);
+                } else {
+                    this._clampToZone(mesh, side, 'fallback-building');
+                    mesh.position.z = slot.z;
                 }
 
-                // Offset outer column slightly in Z for depth stagger
-                mesh.position.z = ci === 1 ? rand(-1.5, 1.5) : 0;
                 bg.add(mesh);
             });
         });
@@ -228,49 +443,44 @@ export class EnvironmentManager {
      * Hard boundary enforcement — if the building's bounding box intersects
      * the road zone, push it outward until it's clear.
      */
-    _clampToZone(obj, side) {
-        obj.updateMatrixWorld(true);
-        const box  = new THREE.Box3().setFromObject(obj);
-        const minSafeX = ROAD_HALF + SAFE_MARGIN; // 7.0
-
-        if (side < 0) {
-            // Left side: box.max.x must be < -minSafeX
-            if (box.max.x > -minSafeX) {
-                obj.position.x -= (box.max.x + minSafeX);
-                obj.updateMatrixWorld(true);
-            }
-        } else {
-            // Right side: box.min.x must be > minSafeX
-            if (box.min.x < minSafeX) {
-                obj.position.x += (minSafeX - box.min.x);
-                obj.updateMatrixWorld(true);
-            }
-        }
+    _clampToZone(obj, side, label = 'environment') {
+        this.layout.validateEnvironmentObject(obj, side, label);
     }
 
-    _fallbackBuilding(xCenter) {
+    _fallbackBuilding(xCenter, slotIndex = 0) {
         const h   = 8 + Math.random() * 16;
-        const col = STRUCT_COLORS[Math.floor(Math.random() * STRUCT_COLORS.length)];
         const winCol = WINDOW_COLORS[Math.floor(Math.random() * WINDOW_COLORS.length)];
+        const seed = this.facadeSeed + slotIndex;
+        this.facadeSeed += 1;
         const g   = new THREE.Group();
+        const facadeMap = makeFacadeTexture(seed, {
+            wall: BRICK_COLORS[seed % BRICK_COLORS.length],
+            windowLit: `#${winCol.toString(16).padStart(6, '0')}`
+        });
+        const emissiveMap = makeWindowEmissiveTexture(seed, `#${winCol.toString(16).padStart(6, '0')}`);
 
         // Main body
         const body = new THREE.Mesh(
             new THREE.BoxGeometry(BUILD_W, h, BUILD_D),
-            new THREE.MeshStandardMaterial({ color:col, roughness:0.72, metalness:0.38, emissive:0x050e1a, emissiveIntensity:0.04 })
+            new THREE.MeshStandardMaterial({
+                map: facadeMap,
+                roughness: 0.66,
+                metalness: 0.2,
+                emissive: winCol,
+                emissiveMap,
+                emissiveIntensity: 0.34
+            })
         );
         body.position.set(xCenter, h/2, 0);
         body.castShadow = body.receiveShadow = true;
         g.add(body);
 
-        // Window strip
-        const winH = h * 0.55;
-        const win = new THREE.Mesh(
-            new THREE.BoxGeometry(BUILD_W * 0.7, winH, 0.12),
-            new THREE.MeshStandardMaterial({ color:0x050e1a, emissive:winCol, emissiveIntensity:0.55, roughness:0.2, metalness:0.5 })
+        const roof = new THREE.Mesh(
+            new THREE.BoxGeometry(BUILD_W * 1.04, 0.22, BUILD_D * 1.04),
+            new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.5, metalness: 0.42 })
         );
-        win.position.set(xCenter, h * 0.48, BUILD_D/2 + 0.06);
-        g.add(win);
+        roof.position.set(xCenter, h + 0.11, 0);
+        g.add(roof);
         return g;
     }
 
@@ -281,16 +491,29 @@ export class EnvironmentManager {
             const mats = Array.isArray(child.material) ? child.material : [child.material];
             mats.forEach(m => {
                 const hasMap = m.map?.image;
-                if (!hasMap) m.color.setHex(STRUCT_COLORS[idx % STRUCT_COLORS.length]);
-                if ('emissive' in m) {
-                    const small = idx % 4 === 0;
-                    m.emissive.setHex(small ? WINDOW_COLORS[idx % WINDOW_COLORS.length] : 0x050e1a);
-                    m.emissiveIntensity = small ? 0.52 : 0.04;
+                if (!hasMap) {
+                    m.map = makeFacadeTexture(this.facadeSeed + idx, {
+                        wall: BRICK_COLORS[(this.facadeSeed + idx) % BRICK_COLORS.length]
+                    });
+                    m.color?.setHex?.(0xffffff);
                 }
-                m.roughness = 0.72; m.metalness = 0.38; m.needsUpdate = true;
+                if ('emissive' in m) {
+                    const name = `${m.name || ''} ${child.name || ''}`.toLowerCase();
+                    const windowLike = /window|glass|light|lamp|neon|sign/.test(name) || idx % 5 === 0;
+                    if (windowLike) {
+                        m.emissive.setHex(WINDOW_COLORS[idx % WINDOW_COLORS.length]);
+                        m.emissiveIntensity = Math.max(m.emissiveIntensity || 0, 0.42);
+                    } else {
+                        m.emissiveIntensity = Math.min(m.emissiveIntensity || 0, 0.07);
+                    }
+                }
+                m.roughness = Math.min(0.82, Math.max(0.38, m.roughness ?? 0.7));
+                m.metalness = Math.min(0.55, Math.max(0.08, m.metalness ?? 0.2));
+                m.needsUpdate = true;
                 idx++;
             });
         });
+        this.facadeSeed += idx + 1;
     }
 
     _populateAllTiles() {
@@ -333,7 +556,7 @@ export class EnvironmentManager {
             const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, 8), m);
             // Spread towers side by side along X to form a continuous wall
             mesh.position.set(
-                side * (SKYLINE_X + j * (w * 0.85)),
+                this.layout.getSkylineX(side) + side * j * (w * 0.85),
                 h/2,
                 j * 10,
             );
@@ -341,6 +564,7 @@ export class EnvironmentManager {
         }
 
         g.position.z = z;
+        this._clampToZone(g, side, 'procedural-skyline');
         return g;
     }
 
@@ -352,9 +576,10 @@ export class EnvironmentManager {
             const side = grp.userData.side;
             const s = rand(0.85, 1.10);
             asset.scale.multiplyScalar(s);
-            asset.position.set(side * (SKYLINE_X + rand(0,8)), 0, rand(-4,4));
+            asset.position.set(this.layout.getSkylineX(side) + side * rand(0, 8), 0, rand(-4,4));
             asset.rotation.y = side < 0 ? rand(-0.1,0.08) : rand(-0.08,0.1);
             this._applyBuildingMaterial(asset);
+            this._clampToZone(asset, side, 'skyline');
             grp.add(asset);
         });
         this._skylineReady = true;
@@ -375,7 +600,7 @@ export class EnvironmentManager {
             pole.position.y = 3; screen.position.set(0,5,0);
             g.add(pole, screen);
             // Billboards sit just outside road, inside inner column
-            g.position.set(i%2===0 ? -(ROAD_HALF+1.8) : (ROAD_HALF+1.8), 0, -30 - i*38);
+            g.position.set(i%2===0 ? -(this.layout.roadHalfWidth + 1.8) : (this.layout.roadHalfWidth + 1.8), 0, -30 - i*38);
             g.userData.screen = screen;
             this.scene.add(g);
             this.billboards.push(g);
@@ -423,6 +648,37 @@ export class EnvironmentManager {
         });
 
         this.updateAtmosphere(dt);
+    }
+
+    _createDebugZones() {
+        if (!this.worldDebug) {
+            return;
+        }
+
+        const materialRoad = new THREE.LineBasicMaterial({ color: 0xff3366, transparent: true, opacity: 0.85 });
+        const materialEnv = new THREE.LineBasicMaterial({ color: 0x22d3ee, transparent: true, opacity: 0.65 });
+        const zNear = 20;
+        const zFar = -430;
+
+        [
+            { x: this.layout.roadMinX, material: materialRoad },
+            { x: this.layout.roadMaxX, material: materialRoad },
+            { x: -this.layout.environmentMinAbsX, material: materialEnv },
+            { x: this.layout.environmentMinAbsX, material: materialEnv }
+        ].forEach(({ x, material }) => {
+            const geometry = new THREE.BufferGeometry().setFromPoints([
+                new THREE.Vector3(x, 0.09, zNear),
+                new THREE.Vector3(x, 0.09, zFar)
+            ]);
+            const line = new THREE.Line(geometry, material);
+            line.renderOrder = 20;
+            this.scene.add(line);
+        });
+
+        console.info('[CyberSurge:world] Debug zones enabled', {
+            road: [this.layout.roadMinX, this.layout.roadMaxX],
+            environmentMinAbsX: this.layout.environmentMinAbsX
+        });
     }
 
     // ─── Biome / atmosphere ───────────────────────────────────────────────────

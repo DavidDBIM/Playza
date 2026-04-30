@@ -129,18 +129,23 @@ function normaliseAsset(obj, target) {
 }
 
 // ─── Apply cyberpunk neon tint ────────────────────────────────────────────────
-const NEON_PALETTES = [0x22d3ee, 0xa78bfa, 0xf97316, 0xfb7185, 0x34d399, 0xfbbf24];
-let _neonIdx = 0;
-function applyCyberpunkTint(obj) {
-    const neon = NEON_PALETTES[_neonIdx % NEON_PALETTES.length];
-    _neonIdx++;
+function enhanceCityMaterials(obj) {
     obj.traverse((child) => {
         if (!child.isMesh || !child.material) return;
         const mats = Array.isArray(child.material) ? child.material : [child.material];
         mats.forEach((m) => {
+            m.roughness = Math.min(0.86, Math.max(0.38, m.roughness ?? 0.68));
+            m.metalness = Math.min(0.55, Math.max(0.05, m.metalness ?? 0.18));
             if ('emissive' in m) {
-                m.emissive.setHex(neon);
-                m.emissiveIntensity = 0.28;
+                const materialName = `${m.name || ''} ${child.name || ''}`.toLowerCase();
+                const isWindow = /window|glass|light|lamp|neon|sign|emissive/.test(materialName);
+                if (isWindow) {
+                    const sourceColor = m.color?.getHex?.() || 0xffd580;
+                    m.emissive.setHex(sourceColor);
+                    m.emissiveIntensity = Math.max(m.emissiveIntensity || 0, 0.55);
+                } else {
+                    m.emissiveIntensity = Math.min(m.emissiveIntensity || 0, 0.08);
+                }
             }
             m.needsUpdate = true;
         });
@@ -193,7 +198,7 @@ export class EnvironmentAssetLoader {
                 meshes.forEach((m, i) => {
                     sanitiseMaterials(m);
                     normaliseAsset(m, target);
-                    applyCyberpunkTint(m);
+                    enhanceCityMaterials(m);
                     pool.push(m);
                 });
                 console.log(`[EnvironmentAssetLoader] ${label} OK: ${p} → ${meshes.length} mesh(es)`);
