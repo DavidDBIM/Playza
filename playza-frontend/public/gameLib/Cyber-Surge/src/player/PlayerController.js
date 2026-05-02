@@ -237,12 +237,11 @@ export class PlayerController {
     }
 
     getLaneX(lane) {
-        const centerIndex = (this.engine.config.laneCount - 1) / 2;
-        return (lane - centerIndex) * this.config.laneWidth;
+        return this.engine.layout.getLaneX(lane);
     }
 
     getCenterLane() {
-        return Math.floor(this.engine.config.laneCount / 2);
+        return this.engine.layout.getCenterLane();
     }
 
     moveLeft() {
