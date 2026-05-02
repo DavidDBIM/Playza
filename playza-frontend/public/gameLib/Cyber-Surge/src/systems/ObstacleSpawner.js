@@ -184,8 +184,7 @@ export class ObstacleSpawner {
     }
 
     getLaneX(lane) {
-        const centerIndex = (this.engine.config.laneCount - 1) / 2;
-        return (lane - centerIndex) * this.engine.config.laneWidth;
+        return this.engine.layout.getLaneX(lane);
     }
 
     reset() {
