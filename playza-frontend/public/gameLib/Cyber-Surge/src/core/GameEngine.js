@@ -11,6 +11,7 @@ import { AudioManager } from '../systems/AudioManager.js';
 import { EffectSystem } from '../systems/EffectSystem.js';
 import { UIManager } from '../ui/UIManager.js';
 import { AssetLibrary } from './AssetLibrary.js';
+import { WorldLayout } from './WorldLayout.js';
 
 export class GameEngine {
     constructor(container) {
@@ -32,11 +33,15 @@ export class GameEngine {
             maxSpeed: 58,
             laneWidth: 2.5,
             laneCount: 3,
+            roadHalfWidth: 3.9,
+            roadSafetyMargin: 3.1,
             gravity: 33,
             jumpForce: 15.5,
             slideDuration: 0.7,
             hitRecoveryDuration: 1.45
         };
+
+        this.layout = new WorldLayout(this.config);
 
         this.ready = this.init();
     }
