@@ -425,4 +425,31 @@ export const games: Game[] = [
     createdAt: "2026-04-20T00:00:00Z",
     updatedAt: "2026-04-20T00:00:00Z",
   },
+  {
+    id: "18",
+    title: "Sliding Puzzle",
+    slug: "sliding-puzzle",
+    thumbnail: "/games/sliding-puzzle.png",
+    iframeUrl: "/gameLib/Sliding-Puzzle/index.html",
+    category: "Puzzle",
+    mode: "Quick Match",
+    entryFee: 400,
+    difficulty: "Easy",
+    durationInSeconds: 300,
+    status: "live",
+    activePlayers: 310,
+    ctaLabel: "Start Sliding",
+    badge: "NEW",
+    platformFeePercentage: 10,
+    howToPlay: {
+      controls:
+        "Click any tile adjacent to the empty space to slide it in. Use Arrow Keys on desktop for quick moves.",
+      rules:
+        "Reassemble the scrambled image by sliding tiles into the correct positions. Choose Easy (3×3), Medium (4×4), or Hard (5×5). The puzzle is always solvable — no traps!",
+      scoring:
+        "Score is based on difficulty, total moves, and completion time. Fewer moves and a faster finish earn a higher score and more stars.",
+    },
+    createdAt: "2026-04-30T00:00:00Z",
+    updatedAt: "2026-04-30T00:00:00Z",
+  },
 ];
