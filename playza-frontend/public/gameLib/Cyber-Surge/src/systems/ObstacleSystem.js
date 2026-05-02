@@ -38,6 +38,7 @@ export class ObstacleSystem {
         const type   = spec.type || 'blocker';
         const config = this.obstacleConfigs[type];
         if (!config) return null;
+        const lane = this.engine.layout.clampLane(spec.lane ?? 0);
 
         const obstacle = this.pool.acquire();
         this.clearMesh(obstacle.mesh);
@@ -55,13 +56,13 @@ export class ObstacleSystem {
         }
 
         obstacle.mesh.add(asset);
-        obstacle.mesh.position.set(this.getLaneX(spec.lane ?? 0), 0, spec.z ?? 0);
+        obstacle.mesh.position.set(this.getLaneX(lane), 0, spec.z ?? 0);
         obstacle.mesh.rotation.set(0, 0, 0);
         obstacle.mesh.visible = true;
         obstacle.mesh.userData.type = config.type;
 
         obstacle.config   = config;
-        obstacle.lane     = spec.lane ?? 0;
+        obstacle.lane     = lane;
         obstacle.movement = spec.movement ? { ...spec.movement } : null;
 
         this.syncActiveList();
@@ -232,8 +233,7 @@ export class ObstacleSystem {
     // -------------------------------------------------------------------------
 
     getLaneX(lane) {
-        const centerIndex = (this.engine.config.laneCount - 1) / 2;
-        return (lane - centerIndex) * this.engine.config.laneWidth;
+        return this.engine.layout.getLaneX(lane);
     }
 
     clearMesh(group) {
