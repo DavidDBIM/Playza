@@ -58,7 +58,7 @@ export class PowerUpSystem {
             roughness: 0.15,
             metalness: 0.95,
             emissive: 0xffaa00,
-            emissiveIntensity: 0.55
+            emissiveIntensity: 0.78
         });
         const mesh = new THREE.Mesh(geometry, material);
         mesh.rotation.x = -Math.PI / 2;
@@ -69,6 +69,11 @@ export class PowerUpSystem {
     }
 
     spawn(x, y, z) {
+        if (!this.engine.layout.isGameplayPositionValid(x)) {
+            this.logCoinDebug('powerup-rejected', { reason: 'outside-road', x, y, z });
+            return false;
+        }
+
         const types = Object.keys(this.powerUpConfigs);
         const type = types[Math.floor(Math.random() * types.length)];
         const config = this.powerUpConfigs[type];
@@ -96,12 +101,17 @@ export class PowerUpSystem {
         powerup.type = type;
 
         this.engine.effects.addPowerUpSpawn(powerup.mesh.position.clone());
+        return true;
     }
 
     spawnCoin(x, y, z) {
         // Guard: NaN positions make coins invisible without error
         if (!isFinite(x) || !isFinite(y) || !isFinite(z)) {
             this.logCoinDebug('spawn-rejected', { reason: 'non-finite', x, y, z });
+            return false;
+        }
+        if (!this.engine.layout.isGameplayPositionValid(x)) {
+            this.logCoinDebug('spawn-rejected', { reason: 'outside-road', x, y, z });
             return false;
         }
 
@@ -202,10 +212,8 @@ export class PowerUpSystem {
         this._powerupTimer = (this._powerupTimer || 0) - dt;
         if (this._powerupTimer <= 0) {
             this._powerupTimer = 8 + Math.random() * 6;
-            const laneCount  = this.engine.config.laneCount;
-            const centerIdx  = (laneCount - 1) / 2;
-            const lane       = Math.floor(Math.random() * laneCount);
-            const laneX      = (lane - centerIdx) * this.engine.config.laneWidth;
+            const lane       = Math.floor(Math.random() * this.engine.config.laneCount);
+            const laneX      = this.engine.layout.getLaneX(lane);
             this.spawn(laneX, 0, playerZ - 22);
         }
 
@@ -259,10 +267,11 @@ export class PowerUpSystem {
         // directly spawn a coin line in front of the player. This cannot fail.
         this._guaranteedCoinTimer -= dt;
         if (this._guaranteedCoinTimer <= 0) {
-            if (this.activeCoins.size === 0) {
+            if (!this.hasVisibleCoinsAhead(playerZ)) {
                 const aheadZ = playerZ - 18;
+                const laneX = this.engine.layout.getLaneX(this.engine.layout.getCenterLane());
                 for (let i = 0; i < 8; i++) {
-                    this.spawnCoin(0, 1.2, aheadZ - i * 1.3);
+                    this.spawnCoin(laneX, 1.2, aheadZ - i * 1.3);
                 }
                 if (this.coinDebug) {
                     console.warn('[CyberSurge:coins] ⚠️ Backup spawner fired — drought detected!');
@@ -277,6 +286,16 @@ export class PowerUpSystem {
 
     getActiveCoinCount() {
         return this.activeCoins.size;
+    }
+
+    hasVisibleCoinsAhead(playerZ) {
+        for (const coin of this.activeCoins) {
+            const distanceAhead = playerZ - coin.mesh.position.z;
+            if (distanceAhead >= 8 && distanceAhead <= 105) {
+                return true;
+            }
+        }
+        return false;
     }
 
     logCoinDebug(event, payload = {}) {
