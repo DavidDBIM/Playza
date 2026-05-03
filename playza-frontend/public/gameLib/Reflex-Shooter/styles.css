@@ -124,7 +124,7 @@ html, body {
 .target-wrap {
   position: absolute;
   transform: translate(-50%, -50%) scale(0);
-  pointer-events: auto;
+  pointer-events: none; /* Anti-cheat: prevent DOM clicking */
   cursor: crosshair;
   transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
   will-change: transform, left, top;
@@ -181,6 +181,34 @@ html, body {
   background: var(--accent);
 }
 
+/* Golden Target */
+.target-golden .target-circle {
+  border-color: rgba(250, 204, 21, 0.8);
+  background: rgba(250, 204, 21, 0.2);
+  box-shadow: 0 0 20px rgba(250, 204, 21, 0.5);
+}
+.target-golden .target-inner-1 {
+  border-color: rgba(250, 204, 21, 0.9);
+  background: rgba(250, 204, 21, 0.4);
+}
+.target-golden .target-inner-2 {
+  background: #facc15;
+}
+
+/* Bomb Target */
+.target-bomb .target-circle {
+  border-color: rgba(239, 68, 68, 0.8);
+  background: rgba(239, 68, 68, 0.2);
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+}
+.target-bomb .target-inner-1 {
+  border-color: rgba(239, 68, 68, 0.9);
+  background: rgba(239, 68, 68, 0.4);
+}
+.target-bomb .target-inner-2 {
+  background: #ef4444;
+}
+
 /* Hit Feedback Popups */
 .hit-popup {
   position: absolute;
@@ -198,6 +226,37 @@ html, body {
 @keyframes floatUp {
   0% { opacity: 1; transform: translate(-50%, -50%) scale(0.8); }
   100% { opacity: 0; transform: translate(-50%, calc(-50% - 30px)) scale(1.2); }
+}
+
+.hit-popup.negative {
+  color: var(--red);
+  text-shadow: 0 0 8px var(--red);
+}
+
+.hit-popup.positive {
+  color: #facc15;
+  text-shadow: 0 0 8px #facc15;
+}
+
+/* Screen Shake & Frenzy */
+.shake-screen {
+  animation: shake 0.3s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+@keyframes shake {
+  10%, 90% { transform: translate3d(-1px, 0, 0); }
+  20%, 80% { transform: translate3d(2px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+  40%, 60% { transform: translate3d(4px, 0, 0); }
+}
+
+.arena.frenzy-mode {
+  animation: frenzyPulse 1s infinite alternate;
+}
+
+@keyframes frenzyPulse {
+  0% { box-shadow: inset 0 0 0px var(--red); }
+  100% { box-shadow: inset 0 0 40px rgba(239, 68, 68, 0.4); }
 }
 
 /* ─── Overlays ─── */

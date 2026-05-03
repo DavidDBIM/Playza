@@ -7,6 +7,8 @@ let combo = 0;
 let multiplier = 1.0;
 let shotsFired = 0;
 let hits = 0;
+let frenzyTimer = 0;
+let lastShotTime = 0;
 
 let timerInterval = null;
 let spawnInterval = null;
@@ -60,6 +62,9 @@ function startGame() {
   multiplier = 1.0;
   shotsFired = 0;
   hits = 0;
+  frenzyTimer = 0;
+  lastShotTime = 0;
+  arena.classList.remove("frenzy-mode");
 
   // UI Reset
   overStart.classList.add("hidden");
@@ -91,15 +96,33 @@ function endGame() {
   const acc = shotsFired > 0 ? Math.round((hits / shotsFired) * 100) : 0;
   const tier = acc >= 90 ? "S" : acc >= 75 ? "A" : acc >= 50 ? "B" : "C";
 
+  let finalMultiplier = 0;
+  if (tier === "S") finalMultiplier = 2.0;
+  else if (tier === "A") finalMultiplier = 1.5;
+  else if (tier === "B") finalMultiplier = 1.2;
+  else finalMultiplier = 0.0;
+
   document.getElementById("resScore").innerText = score.toLocaleString();
   document.getElementById("resAccuracy").innerText = `${acc}%`;
   document.getElementById("resTier").innerText = tier;
 
   overResult.classList.remove("hidden");
+
+  // --- PARENT COMMUNICATION LOGIC ---
+  // Sends the calculated multiplier and game stats to the parent React app (SoloEarn.tsx)
+  // so the platform can process the user's final payout based on their performance.
+  if (window.parent) {
+    window.parent.postMessage({
+      type: 'GAME_OVER',
+      payload: { multiplier: finalMultiplier, score, tier }
+    }, '*');
+  }
 }
 
 function tickTime() {
-  timeLeft--;
+  if (timeLeft > 0) {
+    timeLeft--;
+  }
   updateHUD();
   if (timeLeft <= 0) {
     endGame();
@@ -122,6 +145,13 @@ function gameLoop() {
       }
     }
   });
+
+  if (frenzyTimer > 0) {
+    frenzyTimer -= 100;
+    if (frenzyTimer <= 0) {
+      arena.classList.remove("frenzy-mode");
+    }
+  }
 }
 
 function scheduleSpawn() {
@@ -130,7 +160,8 @@ function scheduleSpawn() {
   spawnTarget();
 
   const diffFactor = (GAME_DURATION - timeLeft) / GAME_DURATION; // 0 to 1
-  const spawnRate = Math.max(400, 1200 - (diffFactor * 800));
+  let spawnRate = Math.max(400, 1200 - (diffFactor * 800));
+  if (frenzyTimer > 0) spawnRate = 250;
   
   spawnInterval = setTimeout(scheduleSpawn, spawnRate);
 }
@@ -138,8 +169,13 @@ function scheduleSpawn() {
 function spawnTarget() {
   // Cap targets so they don't over clutter
   const currentCount = document.querySelectorAll('.target-wrap:not(.target-hit):not(.target-miss)').length;
-  const diffFactor = (GAME_DURATION - timeLeft) / GAME_DURATION;
-  if(currentCount > 5 + Math.floor(diffFactor * 5)) return;
+  const diffFactor = (GAME_DURATION - Math.max(0, timeLeft)) / GAME_DURATION;
+  if(currentCount > 5 + Math.floor(diffFactor * 5) && frenzyTimer <= 0) return;
+
+  const typeRoll = Math.random();
+  let type = "normal";
+  if (typeRoll > 0.9) type = "golden";
+  else if (typeRoll > 0.75) type = "bomb";
 
   const sizeRoll = Math.random();
   let size = "large";
@@ -161,16 +197,20 @@ function spawnTarget() {
   const x = 10 + Math.random() * 80;
   const y = 10 + Math.random() * 80;
 
-  createTargetDOM(x, y, size, speed, pattern, lifespan);
+  createTargetDOM(x, y, size, speed, pattern, lifespan, type);
 }
 
-function createTargetDOM(x, y, size, speed, pattern, lifespan) {
+function createTargetDOM(x, y, size, speed, pattern, lifespan, type = "normal") {
   const el = document.createElement("div");
-  el.className = "target-wrap";
+  let className = "target-wrap";
+  if (type === "golden") className += " target-golden";
+  if (type === "bomb") className += " target-bomb";
+  el.className = className;
   el.style.left = `${x}%`;
   el.style.top = `${y}%`;
   el.dataset.size = size;
   el.dataset.speed = speed;
+  el.dataset.type = type;
   el.dataset.created = Date.now();
   el.dataset.lifespan = lifespan;
 
@@ -232,11 +272,47 @@ function createTargetDOM(x, y, size, speed, pattern, lifespan) {
 function handleArenaClick(e) {
   if (gameState !== "playing" || ammo <= 0) return;
 
-  // Determine hit
-  const target = e.target.closest('.target-wrap');
+  // Anti-Cheat 1: Block synthetic/scripted clicks
+  if (!e.isTrusted) {
+    console.warn("Anti-Cheat: Synthetic click detected and blocked.");
+    return;
+  }
+
+  // Anti-Cheat 2: Fire rate limiter (max ~10 shots per second) to block auto-clickers
+  const now = Date.now();
+  if (now - lastShotTime < 100) {
+    return;
+  }
+  lastShotTime = now;
+
+  // Anti-Cheat 3: Mathematical hit detection instead of DOM event targets
+  let hitTarget = null;
+  const targets = document.querySelectorAll('.target-wrap:not(.target-hit):not(.target-miss)');
   
-  if (target && !target.classList.contains('target-hit') && !target.classList.contains('target-miss')) {
-     fireShot(true, target, e.clientX, e.clientY);
+  // Loop backwards to check the top-most visual targets first
+  for (let i = targets.length - 1; i >= 0; i--) {
+    const t = targets[i];
+    const rect = t.getBoundingClientRect();
+    
+    // Box bounds check
+    if (e.clientX >= rect.left && e.clientX <= rect.right &&
+        e.clientY >= rect.top && e.clientY <= rect.bottom) {
+       
+       // Precise circular hit detection
+       const centerX = rect.left + rect.width / 2;
+       const centerY = rect.top + rect.height / 2;
+       const radius = rect.width / 2;
+       const distance = Math.hypot(e.clientX - centerX, e.clientY - centerY);
+       
+       if (distance <= radius) {
+         hitTarget = t;
+         break;
+       }
+    }
+  }
+  
+  if (hitTarget) {
+     fireShot(true, hitTarget, e.clientX, e.clientY);
   } else {
      fireShot(false, null, e.clientX, e.clientY);
   }
@@ -250,25 +326,51 @@ function fireShot(isHit, targetEl, mouseX, mouseY) {
     hits++;
     const size = targetEl.dataset.size;
     const speed = targetEl.dataset.speed;
+    const type = targetEl.dataset.type;
     const sizeConfig = SIZE_MAP[size];
     
     let basePts = sizeConfig.points;
     if (speed === "fast") basePts *= 1.5;
 
-    combo++;
-    multiplier = Math.min(2.0, 1 + (combo * 0.1));
-    const gained = Math.floor(basePts * multiplier * 100);
-    score += gained;
-
     targetEl.classList.add("target-hit");
     setTimeout(() => targetEl.remove(), 200);
 
-    // Show popup
-    showHitPopup(mouseX, mouseY, `+${gained}`);
+    if (type === "bomb") {
+      timeLeft = Math.max(0, timeLeft - 5);
+      combo = 0;
+      multiplier = 1.0;
+      score = Math.max(0, score - 500);
+      showHitPopup(mouseX, mouseY, "-5s", "negative");
+      shakeScreen();
+    } else if (type === "golden") {
+      timeLeft += 2;
+      ammo += 5;
+      combo++;
+      multiplier = Math.min(2.0, 1 + (combo * 0.1));
+      score += Math.floor(basePts * multiplier * 300);
+      showHitPopup(mouseX, mouseY, "+2s / +5 Ammo", "positive");
+    } else {
+      ammo++; // dynamic ammo: hit restores 1
+      combo++;
+      multiplier = Math.min(2.0, 1 + (combo * 0.1));
+      
+      if (combo >= 10 && frenzyTimer <= 0) {
+         frenzyTimer = 5000;
+         arena.classList.add("frenzy-mode");
+         showHitPopup(mouseX, mouseY - 40, "FRENZY!", "positive");
+      }
+
+      let gained = Math.floor(basePts * multiplier * 100);
+      if (frenzyTimer > 0) gained *= 2;
+      score += gained;
+      showHitPopup(mouseX, mouseY, `+${gained}`);
+    }
 
   } else {
     combo = 0;
     multiplier = 1.0;
+    ammo--; // dynamic ammo: miss costs additional 1 (total 2)
+    shakeScreen();
   }
 
   updateHUD();
@@ -278,9 +380,9 @@ function fireShot(isHit, targetEl, mouseX, mouseY) {
   }
 }
 
-function showHitPopup(x, y, text) {
+function showHitPopup(x, y, text, typeClass = "") {
   const el = document.createElement("div");
-  el.className = "hit-popup";
+  el.className = `hit-popup ${typeClass}`;
   el.innerText = text;
   
   // Calculate relative to arena
@@ -303,4 +405,10 @@ function updateHUD() {
 
   if (ammo < 5) elAmmoBox.classList.add("danger");
   else elAmmoBox.classList.remove("danger");
+}
+
+function shakeScreen() {
+  arena.classList.remove("shake-screen");
+  void arena.offsetWidth; // trigger reflow
+  arena.classList.add("shake-screen");
 }
