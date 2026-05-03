@@ -806,6 +806,81 @@ body {
   opacity: 0.7;
 }
 
+/* ─── Frenzy Mode ────────────────────────────────────────────────── */
+.frenzy-mode .pattern-arena {
+  border-color: rgba(251, 191, 36, 0.5);
+  box-shadow: 0 0 40px rgba(251, 191, 36, 0.2), inset 0 0 60px rgba(251, 191, 36, 0.05);
+  animation: frenzPulse 1s ease-in-out infinite alternate;
+}
+.frenzy-mode .input-arena {
+  border-color: rgba(251, 191, 36, 0.3);
+}
+.frenzy-mode .phase-progress-fill {
+  background: linear-gradient(90deg, var(--gold), #f97316);
+}
+@keyframes frenzPulse {
+  from { box-shadow: 0 0 20px rgba(251, 191, 36, 0.15); }
+  to   { box-shadow: 0 0 50px rgba(251, 191, 36, 0.35); }
+}
+
+.frenzy-banner {
+  display: none;
+  font-family: var(--font-head);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--gold);
+  text-shadow: 0 0 12px rgba(251, 191, 36, 0.8);
+  text-align: center;
+  padding: 0.3rem 1rem;
+  animation: frenzBlink 0.6s ease-in-out infinite alternate;
+}
+.frenzy-mode .frenzy-banner { display: block; }
+@keyframes frenzBlink {
+  from { opacity: 0.6; }
+  to   { opacity: 1; }
+}
+
+/* ─── Trap Tile ───────────────────────────────────────────────────── */
+.itile.trap-tile {
+  border-color: rgba(239, 68, 68, 0.5) !important;
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.35);
+  animation: trapPulse 0.9s ease-in-out infinite alternate;
+}
+@keyframes trapPulse {
+  from { box-shadow: 0 0 8px  rgba(239, 68, 68, 0.2); }
+  to   { box-shadow: 0 0 24px rgba(239, 68, 68, 0.5); }
+}
+.trap-skull {
+  position: absolute;
+  top: 3px; right: 5px;
+  font-size: 0.6rem;
+  opacity: 0; /* hidden – part of the anti-cheat: players can't rely on visual cue */
+}
+
+/* ─── Floating Combat Text ───────────────────────────────────────── */
+.float-text {
+  position: fixed;
+  pointer-events: none;
+  z-index: 500;
+  font-family: var(--font-head);
+  font-weight: 900;
+  font-size: 1.6rem;
+  color: var(--green);
+  text-shadow: 0 0 12px var(--green-glow);
+  transform: translate(-50%, -50%);
+  animation: floatUp 1s ease-out forwards;
+  white-space: nowrap;
+}
+.float-text.bad  { color: var(--red);   text-shadow: 0 0 12px var(--red-glow); font-size: 2rem; }
+.float-text.gold { color: var(--gold);  text-shadow: 0 0 16px rgba(251,191,36,0.8); font-size: 2.4rem; }
+@keyframes floatUp {
+  0%   { transform: translate(-50%, -50%) scale(0.4); opacity: 0; }
+  20%  { transform: translate(-50%, -70%) scale(1.2); opacity: 1; }
+  100% { transform: translate(-50%, -150%) scale(1);  opacity: 0; }
+}
+
 /* ─── Responsive ─────────────────────────────────────────────────── */
 @media (max-width: 520px) {
   .topbar { padding: 0.6rem 0.5rem; gap: 0.6rem;}
