@@ -355,3 +355,21 @@ create table if not exists admin_mfa_codes (
 );
 
 alter table admin_mfa_codes enable row level security;
+
+-- SOLOEARN SESSIONS
+create table if not exists soloearn_sessions (
+  id uuid primary key default uuid_generate_v4(),
+  user_id uuid not null references users(id) on delete cascade,
+  game_id text not null,
+  stake numeric(12, 2) not null,
+  multiplier numeric(4, 2) default null,
+  payout numeric(12, 2) default null,
+  status text default 'in_progress' check (status in ('in_progress', 'completed', 'terminated')),
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create trigger soloearn_sessions_updated_at before update on soloearn_sessions
+  for each row execute function update_updated_at();
+
+alter table soloearn_sessions enable row level security;

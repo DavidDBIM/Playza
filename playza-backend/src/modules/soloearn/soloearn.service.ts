@@ -1,0 +1,101 @@
+import { supabase } from '../../config/supabase'
+
+export async function startSoloSession(userId: string, gameId: string, stake: number) {
+  if (stake <= 0) {
+    throw new Error("Stake must be greater than 0")
+  }
+
+  // 1. Check user balance
+  const { data: wallet, error: walletErr } = await supabase
+    .from('wallets')
+    .select('balance')
+    .eq('user_id', userId)
+    .single()
+
+  if (walletErr || !wallet) throw new Error("Wallet not found")
+  if (wallet.balance < stake) throw new Error("Insufficient funds")
+
+  // 2. Deduct stake
+  const newBalance = parseFloat((Number(wallet.balance) - stake).toFixed(2))
+  const { error: decErr } = await supabase
+    .from('wallets')
+    .update({ balance: newBalance, updated_at: new Date().toISOString() })
+    .eq('user_id', userId)
+    
+  if (decErr) throw new Error("Failed to deduct stake: " + decErr.message)
+
+  // 3. Log transaction
+  await supabase.from('transactions').insert({
+    user_id: userId,
+    type: 'game_entry',
+    amount: stake,
+    status: 'successful',
+    meta: { game_id: gameId, mode: 'soloearn' }
+  })
+
+  // 4. Create session
+  const { data: session, error: sessErr } = await supabase
+    .from('soloearn_sessions')
+    .insert({
+      user_id: userId,
+      game_id: gameId,
+      stake: stake,
+      status: 'in_progress'
+    })
+    .select()
+    .single()
+
+  if (sessErr) throw new Error("Failed to create session: " + sessErr.message)
+
+  return session
+}
+
+export async function endSoloSession(userId: string, sessionId: string, rawMultiplier: number) {
+  // 1. Fetch session
+  const { data: session, error: sessErr } = await supabase
+    .from('soloearn_sessions')
+    .select('*')
+    .eq('id', sessionId)
+    .eq('user_id', userId)
+    .single()
+
+  if (sessErr || !session) throw new Error("Session not found")
+  if (session.status !== 'in_progress') throw new Error("Session already completed")
+
+  // 2. Enforce 2.0x cap
+  const cappedMultiplier = Math.min(Math.max(rawMultiplier, 0), 2.0)
+  const payout = parseFloat((session.stake * cappedMultiplier).toFixed(2))
+
+  // 3. Update session
+  const { error: updErr } = await supabase
+    .from('soloearn_sessions')
+    .update({
+      multiplier: cappedMultiplier,
+      payout: payout,
+      status: 'completed'
+    })
+    .eq('id', sessionId)
+
+  if (updErr) throw new Error("Failed to update session: " + updErr.message)
+
+  // 4. Pay user if payout > 0
+  if (payout > 0) {
+    const { data: w } = await supabase.from('wallets').select('balance').eq('user_id', userId).single()
+    if (w) {
+      await supabase.from('wallets').update({ 
+        balance: parseFloat((Number(w.balance) + payout).toFixed(2)),
+        updated_at: new Date().toISOString()
+      }).eq('user_id', userId)
+    }
+
+    await supabase.from('transactions').insert({
+      user_id: userId,
+      type: 'winnings',
+      amount: payout,
+      status: 'successful',
+      meta: { game_id: session.game_id, mode: 'soloearn', session_id: sessionId }
+    })
+  }
+
+  return { payout, multiplier: cappedMultiplier }
+}
