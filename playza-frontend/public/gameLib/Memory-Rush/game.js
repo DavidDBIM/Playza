@@ -603,6 +603,13 @@ function showGameOver() {
     $('goBody').textContent   = `You reached Round ${G.round} with a score of ${G.score.toLocaleString()}.`;
 
     DOM.overlayGameOver.classList.remove('hidden');
+
+    // --- PARENT COMMUNICATION LOGIC ---
+    // Sends the calculated multiplier and game stats to the parent React app (SoloEarn.tsx)
+    // so the platform can process the user's final payout based on their performance.
+    if (window.parent) {
+        window.parent.postMessage({ type: 'GAME_OVER', payload: { multiplier: G.multiplier } }, '*');
+    }
 }
 
 // ─── Start / Reset ────────────────────────────────────────────────────────────

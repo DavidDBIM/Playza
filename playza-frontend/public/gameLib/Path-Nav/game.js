@@ -123,6 +123,13 @@ function endGame() {
     document.getElementById("resMult").innerText = `x${multiplier.toFixed(1)}`;
     
     overlayResult.classList.remove("hidden");
+
+    // --- PARENT COMMUNICATION LOGIC ---
+    // Sends the calculated multiplier and game stats to the parent React app (SoloEarn.tsx)
+    // so the platform can process the user's final payout based on their performance.
+    if (window.parent) {
+      window.parent.postMessage({ type: 'GAME_OVER', payload: { multiplier } }, '*');
+    }
   }, 800);
 }
 

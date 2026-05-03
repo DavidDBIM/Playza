@@ -297,12 +297,26 @@ document.addEventListener("DOMContentLoaded", () => {
         state.paused = false;
         clearTargets();
         arenaStatusEl.textContent = "Run Over";
+        
+        const acc = state.shots === 0 ? 0 : Math.round((state.hits / state.shots) * 100);
+        let mult = 0.0;
+        if (state.level >= 5 && acc >= 80) { mult = 2.0; }
+        else if (state.level >= 3 && acc >= 70) { mult = 1.5; }
+        else if (state.level >= 2) { mult = 1.2; }
+
         openOverlay(
             "Run Over",
             `Final score ${state.score}. Accuracy ${state.shots === 0 ? 100 : Math.round((state.hits / state.shots) * 100)}%. Best streak reached level ${state.level}.`,
             "Play Again"
         );
         updateHUD();
+
+        // --- PARENT COMMUNICATION LOGIC ---
+        // Sends the calculated multiplier and game stats to the parent React app (SoloEarn.tsx)
+        // so the platform can process the user's final payout based on their performance.
+        if (window.parent) {
+            window.parent.postMessage({ type: 'GAME_OVER', payload: { multiplier: mult } }, '*');
+        }
     }
 
     function beginReload() {

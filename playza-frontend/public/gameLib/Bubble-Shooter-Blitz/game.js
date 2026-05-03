@@ -967,6 +967,11 @@ class BubbleShooterBlitz {
     this.gameOver = true;
     this.activeShot = null;
     this.saveBestIfNeeded();
+    
+    let mult = 0.0;
+    if (this.score >= 20000) { mult = 2.0; }
+    else if (this.score >= 10000) { mult = 1.5; }
+    else if (this.score >= 3000) { mult = 1.2; }
 
     const title = force ? "Run ended" : "Time!";
     const details = reason || (this.mode === MODES.DAILY ? "Blitz complete. Your score is locked." : "Warmup complete. Push for a new best.");
@@ -979,6 +984,13 @@ class BubbleShooterBlitz {
     this.startEndless.textContent = "Play Endless Warmup";
     this.tone.tone(140, 0.18, "sawtooth", 0.035);
     this.tone.tone(680, 0.1, "triangle", 0.02);
+
+    // --- PARENT COMMUNICATION LOGIC ---
+    // Sends the calculated multiplier and game stats to the parent React app (SoloEarn.tsx)
+    // so the platform can process the user's final payout based on their performance.
+    if (window.parent) {
+      window.parent.postMessage({ type: 'GAME_OVER', payload: { multiplier: mult } }, '*');
+    }
   }
 
   spawnPop(x, y, colorId) {
