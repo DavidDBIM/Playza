@@ -167,6 +167,7 @@ html, body {
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  pointer-events: none; /* Anti-cheat: disable direct DOM clicks */
 }
 
 .node::before {
@@ -214,6 +215,50 @@ html, body {
   20% { transform: scale(1.2) rotate(5deg); opacity: 1; }
   80% { transform: scale(1) rotate(0deg); opacity: 1; }
   100% { transform: scale(1.5); opacity: 0; }
+}
+
+/* ─── Advanced Mechanics ─── */
+.node.corrupted {
+  border-color: var(--red) !important;
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.8) !important;
+  animation: glitch 0.2s infinite;
+}
+.node.corrupted::before { background: var(--red) !important; opacity: 0.8 !important; }
+
+@keyframes glitch {
+  0% { transform: translate(0) }
+  20% { transform: translate(-2px, 2px) }
+  40% { transform: translate(-2px, -2px) }
+  60% { transform: translate(2px, 2px) }
+  80% { transform: translate(2px, -2px) }
+  100% { transform: translate(0) }
+}
+
+.shake-screen { animation: shake 0.3s cubic-bezier(.36,.07,.19,.97) both; }
+@keyframes shake {
+  10%, 90% { transform: translate3d(-2px, 0, 0); }
+  20%, 80% { transform: translate3d(4px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-8px, 0, 0); }
+  40%, 60% { transform: translate3d(8px, 0, 0); }
+}
+
+.overclock-mode .grid-bg { background-image: radial-gradient(rgba(234, 179, 8, 0.4) 2px, transparent 2px); }
+.overclock-mode .board-inner { border-color: var(--yellow); box-shadow: 0 0 60px rgba(234, 179, 8, 0.3); animation: pulseOC 1s infinite alternate; }
+@keyframes pulseOC { from { opacity: 0.5; } to { opacity: 1; } }
+
+.floating-text {
+  position: absolute; pointer-events: none; z-index: 999;
+  font-family: var(--font-head); font-weight: 900; font-size: 1.5rem; color: var(--accent);
+  text-shadow: 0 0 10px var(--accent);
+  transform: translate(-50%, -50%);
+  animation: floatUp 1s ease-out forwards;
+}
+.floating-text.fail { color: var(--red); text-shadow: 0 0 10px var(--red); font-size: 2rem; }
+.floating-text.huge { font-size: 3rem; color: var(--yellow); text-shadow: 0 0 20px var(--yellow); }
+@keyframes floatUp {
+  0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+  20% { transform: translate(-50%, -80%) scale(1.2); opacity: 1; }
+  100% { transform: translate(-50%, -150%) scale(1); opacity: 0; }
 }
 
 /* ─── Modals ─── */

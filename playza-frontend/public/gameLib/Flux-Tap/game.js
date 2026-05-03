@@ -12,8 +12,14 @@ let currentRule = 0; // 0: Plus, 1: X, 2: Row/Col
 // Grid map: 1D array of 9 elements
 let grid = Array(GRID_SIZE * GRID_SIZE).fill(0);
 
-// Timers
+// Timers & Advanced Mechanics
 let timerInterval = null;
+let lastTapTime = 0;
+let fastSolves = 0;
+let roundStartTime = 0;
+let overclockTimer = 0; // ms
+let corruptedNodeIdx = -1;
+let lastTickTime = 0;
 
 // UI Elements
 const elHud = document.getElementById('gameHud');
@@ -31,6 +37,32 @@ const overResult = document.getElementById('overlayResult');
 document.getElementById('btnStartGame').addEventListener('click', startGame);
 document.getElementById('btnPlayAgain').addEventListener('click', startGame);
 
+// Anti-Cheat: Math-based Hit Detection on Container
+nodesGrid.addEventListener('click', (e) => {
+  if (!e.isTrusted) {
+    console.warn("Synthetic click blocked.");
+    return;
+  }
+  
+  if (gameState !== 'playing') return;
+  
+  // Rate Limiter (150ms)
+  const now = performance.now();
+  if (now - lastTapTime < 150) return;
+  lastTapTime = now;
+
+  // Mathematical AABB Check
+  const children = nodesGrid.children;
+  for (let i = 0; i < children.length; i++) {
+    const rect = children[i].getBoundingClientRect();
+    if (e.clientX >= rect.left && e.clientX <= rect.right &&
+        e.clientY >= rect.top && e.clientY <= rect.bottom) {
+        handleTap(i, e.clientX, e.clientY);
+        break;
+    }
+  }
+});
+
 function initGridDOM() {
   nodesGrid.innerHTML = '';
   for (let i = 0; i < grid.length; i++) {
@@ -39,16 +71,27 @@ function initGridDOM() {
     node.dataset.index = i;
     node.dataset.state = grid[i];
     
-    // Tap handler
-    node.addEventListener('pointerdown', (e) => handleTap(i, e.currentTarget));
+    // Tap handler is removed for anti-cheat. Managed by nodesGrid click listener.
     nodesGrid.appendChild(node);
   }
+}
+
+function showFloatingText(text, x, y, extraClass = "") {
+  const el = document.createElement('div');
+  el.className = `floating-text ${extraClass}`;
+  el.innerText = text;
+  el.style.left = `${x || window.innerWidth/2}px`;
+  el.style.top = `${y || window.innerHeight/2}px`;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1000);
 }
 
 function renderGrid() {
   const nodes = nodesGrid.children;
   for (let i = 0; i < grid.length; i++) {
     nodes[i].dataset.state = grid[i];
+    if (i === corruptedNodeIdx) nodes[i].classList.add('corrupted');
+    else nodes[i].classList.remove('corrupted');
   }
 }
 
@@ -65,11 +108,17 @@ function scrambleGrid(ruleId) {
   // Reset grid
   grid.fill(0);
   
-  // Randomly simulate taps to guarantee solvability
-  const taps = 5 + Math.floor(currentRound * 1.5); // Harder rounds = more scramble depth
+  // Overclock mode: 1 tap solve. Normal: scale by round.
+  const taps = overclockTimer > 0 ? 1 : (5 + Math.floor(currentRound * 1.5));
   for (let i = 0; i < taps; i++) {
     const randIdx = Math.floor(Math.random() * grid.length);
     applyTransformation(randIdx, ruleId, true);
+  }
+
+  // Spawn corrupted node?
+  corruptedNodeIdx = -1;
+  if (overclockTimer <= 0 && currentRound >= 3 && Math.random() < 0.3) {
+    corruptedNodeIdx = Math.floor(Math.random() * grid.length);
   }
 }
 
@@ -114,10 +163,17 @@ function applyTransformation(idx, ruleId, isScramble = false) {
   }
 }
 
-function handleTap(idx, el) {
-  if (gameState !== 'playing') return;
+function handleTap(idx, clientX, clientY) {
   totalClicks++;
   
+  if (idx === corruptedNodeIdx) {
+    timeLeft = Math.max(0, timeLeft - 3);
+    showFloatingText("-3s", clientX, clientY, "fail");
+    corruptedNodeIdx = -1;
+    arena.classList.add("shake-screen");
+    setTimeout(() => arena.classList.remove("shake-screen"), 300);
+  }
+
   applyTransformation(idx, currentRule);
   renderGrid();
 
@@ -127,16 +183,37 @@ function handleTap(idx, el) {
 function checkWin() {
   const isSolved = grid.every(val => val === 0);
   if (isSolved) {
-    // Advance Round
     gameState = 'pause';
+    const solveTime = (performance.now() - roundStartTime) / 1000;
+    
+    // Overclock Logic
+    if (overclockTimer <= 0) {
+      if (solveTime < 4) fastSolves++;
+      else fastSolves = 0;
+
+      if (fastSolves >= 3) {
+        overclockTimer = 10000;
+        fastSolves = 0;
+        arena.classList.add("overclock-mode");
+        showFloatingText("OVERCLOCK!", window.innerWidth/2, window.innerHeight/3, "huge");
+      }
+    }
+
     showStageClear();
     
     setTimeout(() => {
       currentRound++;
-      timeLeft += Math.max(5, 15 - Math.floor(currentRound / 2)); // Add time back
+      let timeGained = Math.max(2, 10 - Math.floor(currentRound / 3));
+      if (overclockTimer > 0) timeGained = 1; // Less time gained in frenzy
+      timeLeft += timeGained; 
+      
+      const bRect = gameBoard.getBoundingClientRect();
+      showFloatingText(`+${timeGained}s`, bRect.left + bRect.width/2, bRect.top, "");
+
       setupRound();
       gameState = 'playing';
-    }, 1500);
+      roundStartTime = performance.now();
+    }, 800); // Faster transitions
   }
 }
 
@@ -145,7 +222,7 @@ function showStageClear() {
   el.className = "stage-clear";
   el.innerText = `LINK ${currentRound} FORMED`;
   arena.appendChild(el);
-  setTimeout(() => el.remove(), 1500);
+  setTimeout(() => el.remove(), 800);
 }
 
 function setupRound() {
@@ -163,6 +240,9 @@ function startGame() {
   currentRound = 1;
   timeLeft = 30;
   totalClicks = 0;
+  fastSolves = 0;
+  overclockTimer = 0;
+  arena.classList.remove("overclock-mode");
   
   overStart.classList.add('hidden');
   overResult.classList.add('hidden');
@@ -172,23 +252,39 @@ function startGame() {
   initGridDOM();
   setupRound();
 
-  if (timerInterval) clearInterval(timerInterval);
-  timerInterval = setInterval(tick, 1000);
+  roundStartTime = performance.now();
+  lastTickTime = performance.now();
+  if (timerInterval) cancelAnimationFrame(timerInterval);
+  timerInterval = requestAnimationFrame(tick);
 }
 
 function tick() {
-  if (gameState !== 'playing') return;
-  timeLeft--;
-  updateHUD();
+  if (gameState !== 'ended') {
+    timerInterval = requestAnimationFrame(tick);
+  }
+  
+  const now = performance.now();
+  const dt = now - lastTickTime;
+  lastTickTime = now;
 
-  if (timeLeft <= 0) {
-    endGame();
+  if (gameState === 'playing') {
+    if (overclockTimer > 0) {
+      overclockTimer -= dt;
+      if (overclockTimer <= 0) arena.classList.remove("overclock-mode");
+    }
+
+    timeLeft -= dt / 1000;
+    updateHUD();
+
+    if (timeLeft <= 0) {
+      endGame();
+    }
   }
 }
 
 function updateHUD() {
   elRound.innerText = currentRound;
-  elTimer.innerText = `${timeLeft}s`;
+  elTimer.innerText = `${Math.ceil(timeLeft)}s`;
 
   if (timeLeft <= 10) elTimerBox.classList.add('danger');
   else elTimerBox.classList.remove('danger');
@@ -196,7 +292,6 @@ function updateHUD() {
 
 function endGame() {
   gameState = 'ended';
-  if (timerInterval) clearInterval(timerInterval);
 
   elHud.classList.add('hidden');
   gameBoard.classList.add('hidden');
@@ -226,4 +321,11 @@ function endGame() {
   }
 
   overResult.classList.remove('hidden');
+
+  // --- PARENT COMMUNICATION LOGIC ---
+  // Sends the calculated multiplier and game stats to the parent React app (SoloEarn.tsx)
+  // so the platform can process the user's final payout based on their performance.
+  if (window.parent) {
+    window.parent.postMessage({ type: 'GAME_OVER', payload: { multiplier: mult } }, '*');
+  }
 }
