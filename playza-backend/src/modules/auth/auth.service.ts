@@ -3,6 +3,18 @@ import { generateUniqueReferralCode } from '../../lib/referralCode'
 import { awardPZA } from '../../lib/pzaEngine'
 import { SignupInput, SigninInput } from './auth.schema'
 
+// â”€â”€â”€ Hardcoded super-admin email whitelist â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Only these emails will be granted the 'superadmin' role and receive 10,000
+// ZA tokens when their account is first verified. They are also the only
+// accounts allowed to log in through the /admin routes.
+const SUPERADMIN_EMAILS: string[] = [
+  'muizcal@gmail.com',
+  'ojekunledavid.a@gmail.com',
+  'devguselt@gmail.com',
+]
+const SUPERADMIN_INITIAL_PZA = 10_000
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
 export async function signup(input: SignupInput) {
   const { username, email, phone, password, referral_code } = input;
 
@@ -92,6 +104,7 @@ export async function verifyOtp(email: string, token: string) {
     }
 
     const newReferralCode = await generateUniqueReferralCode();
+    const isSuperAdmin = SUPERADMIN_EMAILS.includes(email.toLowerCase());
 
     const { error: profileError } = await supabaseAdmin.from("users").insert({
       id: data.user.id,
@@ -101,6 +114,8 @@ export async function verifyOtp(email: string, token: string) {
       referral_code: newReferralCode,
       referred_by: referredBy,
       is_email_verified: true,
+      // Grant superadmin role immediately for whitelisted emails
+      ...(isSuperAdmin && { role: 'superadmin' }),
     });
 
     if (profileError) throw profileError;
@@ -110,10 +125,21 @@ export async function verifyOtp(email: string, token: string) {
       balance: 0,
     });
 
+    // Superadmin accounts start with 10,000 ZA tokens; regular users start at 0
     await supabaseAdmin.from("pza_points").insert({
       user_id: data.user.id,
-      total_points: 0,
+      total_points: isSuperAdmin ? SUPERADMIN_INITIAL_PZA : 0,
     });
+
+    if (isSuperAdmin) {
+      // Log the initial token grant as a PZA event for audit trail
+      await supabaseAdmin.from("pza_events").insert({
+        user_id: data.user.id,
+        event_type: 'ADMIN_INITIAL_GRANT',
+        points_awarded: SUPERADMIN_INITIAL_PZA,
+        meta: { reason: 'Superadmin account initialisation' },
+      });
+    }
 
     if (referredBy) {
       await supabaseAdmin.from("referrals").insert({
