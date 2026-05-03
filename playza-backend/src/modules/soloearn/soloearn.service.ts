@@ -97,5 +97,20 @@ export async function endSoloSession(userId: string, sessionId: string, rawMulti
     })
   }
 
+  // 5. Log Game History for User Profile
+  const formattedGameName = session.game_id
+    .split('-')
+    .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+
+  await supabase.from('game_history').insert({
+    user_id: userId,
+    game_name: `Solo: ${formattedGameName}`,
+    status: payout > session.stake ? 'win' : (payout === session.stake ? 'draw' : 'loss'),
+    score: Math.round(cappedMultiplier * 100), // Storing the multiplier as score (e.g. 1.5x -> 150)
+    winnings: payout,
+    played_at: new Date().toISOString()
+  })
+
   return { payout, multiplier: cappedMultiplier }
 }
