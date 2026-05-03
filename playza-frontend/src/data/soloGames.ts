@@ -44,5 +44,23 @@ export const soloGames: SoloGame[] = [
     difficulty: "Extreme",
     thumbnail: "/images/solo/memory_rush.png",
     path: "/gameLib/Memory-Rush/index.html"
+  },
+  {
+    id: "aim-trainer-pro",
+    title: "Aim Trainer Pro",
+    label: "Precision & Speed",
+    description: "Hone your accuracy and reflexes by shooting targets before they disappear.",
+    difficulty: "Medium",
+    thumbnail: "/images/solo/aim_trainer.png", // using placeholder, or wait... maybe I should use reflex_shooter.png as placeholder?
+    path: "/gameLib/Aim-Trainer-Pro/index.html"
+  },
+  {
+    id: "bubble-shooter-blitz",
+    title: "Bubble Blitz",
+    label: "Puzzle Strategy",
+    description: "Pop matching bubbles rapidly before the ceiling crushes you.",
+    difficulty: "Easy",
+    thumbnail: "/images/solo/flux_tap.png", // using flux_tap as placeholder
+    path: "/gameLib/Bubble-Shooter-Blitz/index.html"
   }
 ];
