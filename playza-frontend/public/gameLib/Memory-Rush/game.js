@@ -79,6 +79,12 @@ const G = {
     timerInterval: null,
     progressInterval: null,
     soundEnabled: true,
+    // ─── Advanced Mechanics ───
+    lastTapTime: 0,          // Anti-cheat: rate limiter timestamp
+    sTierStreak: 0,          // Combo counter for Frenzy mode
+    frenzyActive: false,     // Is Frenzy mode currently running?
+    frenzyTimeout: null,     // Frenzy mode expiry timer
+    trapTileId: null,        // ID of the current Trap tile (if any)
     // Backend-ready session data
     session: {
         id: crypto.randomUUID(),
@@ -270,6 +276,17 @@ function hidePattern() {
 
 // ─── Tile Grid (input) ────────────────────────────────────────────────────────
 
+// ─── Floating combat text ─────────────────────────────────────────────────────
+function spawnFloatText(text, x, y, cls = '') {
+    const el = document.createElement('div');
+    el.className = `float-text ${cls}`;
+    el.textContent = text;
+    el.style.left = `${x}px`;
+    el.style.top  = `${y}px`;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1000);
+}
+
 function buildTileGrid(pool, distractorCount = 0) {
     const cfg = DIFFICULTY_CONFIG[G.difficulty];
 
@@ -280,6 +297,17 @@ function buildTileGrid(pool, distractorCount = 0) {
     const distractors = extras.slice(0, distractorCount);
 
     const gridTiles = shuffle([...inPattern, ...distractors]);
+
+    // ─── Trap Tile: one distractor becomes a trap from round 5 ───────────────
+    G.trapTileId = null;
+    let trapCandidate = null;
+    if (G.round >= 5 && distractors.length > 0 && !G.frenzyActive) {
+        // Pick a random distractor to be the trap (30% chance per round)
+        if (Math.random() < 0.30) {
+            trapCandidate = distractors[Math.floor(Math.random() * distractors.length)];
+            G.trapTileId = trapCandidate.id;
+        }
+    }
 
     DOM.tileGrid.innerHTML = '';
     gridTiles.forEach((tile) => {
@@ -299,7 +327,23 @@ function buildTileGrid(pool, distractorCount = 0) {
             btn.appendChild(badge);
         }
 
-        btn.addEventListener('click', () => onTileTap(tile, btn));
+        // Mark trap tile
+        if (trapCandidate && tile.id === trapCandidate.id) {
+            btn.classList.add('trap-tile');
+            const skull = document.createElement('span');
+            skull.className = 'trap-skull';
+            skull.textContent = '💀';
+            btn.appendChild(skull);
+        }
+
+        // Anti-cheat: isTrusted + 150ms rate limiter on every tile tap
+        btn.addEventListener('click', (e) => {
+            if (!e.isTrusted) { console.warn('[MemoryRush] Synthetic click blocked.'); return; }
+            const now = performance.now();
+            if (now - G.lastTapTime < 150) return;
+            G.lastTapTime = now;
+            onTileTap(tile, btn, e);
+        });
         DOM.tileGrid.appendChild(btn);
     });
 }
@@ -338,11 +382,40 @@ function renderSequence() {
 
 // ─── Tap Handler ──────────────────────────────────────────────────────────────
 
-function onTileTap(tile, btn) {
+function onTileTap(tile, btn, e) {
     if (G.phase !== 'recall') return;
 
     const idx      = G.playerSequence.length;
     const expected = G.pattern[idx];
+
+    // ─── Trap Tile Check ─────────────────────────────────────────────────────
+    // If the player taps a Trap tile, it's an instant mistake regardless of sequence.
+    if (G.trapTileId && tile.id === G.trapTileId) {
+        G.mistakes++;
+        G.trapTileId = null; // The trap is disarmed after triggering
+        playWrong();
+        btn.classList.remove('trap-tile');
+        btn.style.boxShadow = `0 0 28px rgba(239,68,68,0.8)`;
+        btn.style.borderColor = '#ef4444';
+        setTimeout(() => { btn.style.boxShadow = ''; btn.style.borderColor = tile.border; }, 500);
+        if (e) spawnFloatText('TRAP! -1', e.clientX, e.clientY, 'bad');
+
+        const cfg = DIFFICULTY_CONFIG[G.difficulty];
+        if (G.mistakes >= cfg.maxMistakes) {
+            setTimeout(() => onRoundFail('Triggered a Trap!'), 400);
+        } else {
+            setTimeout(() => {
+                G.playerSequence = [];
+                renderSequence();
+                showToast(`Trap! ${cfg.maxMistakes - G.mistakes} left`, 'error', 1600);
+            }, 450);
+        }
+        DOM.btnUndo.disabled  = G.playerSequence.length === 0;
+        DOM.btnClear.disabled = G.playerSequence.length === 0;
+        DOM.btnSubmit.disabled = G.playerSequence.length < G.pattern.length;
+        return;
+    }
+
     const correct  = expected && expected.id === tile.id;
 
     // Animate press
@@ -361,12 +434,12 @@ function onTileTap(tile, btn) {
         if (slots[idx]) slots[idx].classList.add('correct');
 
         if (G.playerSequence.length === G.pattern.length) {
-            // Complete!
             onRoundSuccess();
         }
     } else {
         G.mistakes++;
         playWrong();
+        if (e) spawnFloatText('✗ Wrong', e.clientX, e.clientY, 'bad');
 
         // Flash red on tile button
         btn.style.boxShadow = `0 0 18px var(--red-glow, rgba(239,68,68,0.5))`;
@@ -384,7 +457,6 @@ function onTileTap(tile, btn) {
         if (G.mistakes >= cfg.maxMistakes) {
             onRoundFail('Too many mistakes');
         } else {
-            // Reset player sequence but keep going
             setTimeout(() => {
                 G.playerSequence = [];
                 renderSequence();
@@ -443,14 +515,21 @@ function stopTimer() {
 
 function beginRound() {
     const cfg = DIFFICULTY_CONFIG[G.difficulty];
-    const patternLen = Math.min(
-        cfg.startLength + G.round - 1,
-        cfg.maxLength
-    );
+
+    // ─── Frenzy Mode: shorter pattern, faster display ─────────────────────────
+    let patternLen = Math.min(cfg.startLength + G.round - 1, cfg.maxLength);
+    let displayMs;
+    if (G.frenzyActive) {
+        patternLen = Math.max(cfg.startLength, Math.floor(patternLen * 0.5)); // Half the pattern length
+        displayMs  = Math.max(800, cfg.displayTime(patternLen) * 0.5);        // Half the display time
+    } else {
+        displayMs = cfg.displayTime(patternLen);
+    }
 
     G.phase          = 'memorize';
     G.playerSequence = [];
     G.mistakes       = 0;
+    G.trapTileId     = null;
     G.session.seed   = `${G.session.id}-r${G.round}`;
     G.session.inputLog   = [];
     G.session.timingData = [];
@@ -458,7 +537,7 @@ function beginRound() {
 
     updateHUD();
     renderLives();
-    setPhaseLabel('MEMORIZE', '#38bdf8');
+    setPhaseLabel(G.frenzyActive ? '⚡ FRENZY' : 'MEMORIZE', G.frenzyActive ? '#fbbf24' : '#38bdf8');
     DOM.phaseFill.style.width = '100%';
     DOM.btnUndo.disabled   = true;
     DOM.btnClear.disabled  = true;
@@ -473,8 +552,6 @@ function beginRound() {
     // Build tile grid while pattern is showing (player can't tap)
     const pool = buildTilePool(resolvePatternType());
     buildTileGrid(pool, cfg.distractors);
-
-    const displayMs = cfg.displayTime(patternLen);
 
     // Countdown in phase bar
     let elapsed = 0;
@@ -508,6 +585,31 @@ function transitionToRecall() {
     startRecallTimer(recallMs);
 }
 
+// ─── Frenzy Mode ──────────────────────────────────────────────────────────────
+function activateFrenzy() {
+    G.frenzyActive = true;
+    G.sTierStreak  = 0;
+    document.querySelector('.shell').classList.add('frenzy-mode');
+    showToast('⚡ FRENZY MODE! ⚡', 'success', 2500);
+
+    // Inject frenzy banner if not already present
+    let banner = document.getElementById('frenzyBanner');
+    if (!banner) {
+        banner = document.createElement('div');
+        banner.id = 'frenzyBanner';
+        banner.className = 'frenzy-banner';
+        banner.textContent = '⚡ COMBO FRENZY — SHORTER PATTERNS, FASTER REVEAL ⚡';
+        document.querySelector('.shell').prepend(banner);
+    }
+
+    // Frenzy lasts 10 seconds (3 rounds at ~3s each)
+    clearTimeout(G.frenzyTimeout);
+    G.frenzyTimeout = setTimeout(() => {
+        G.frenzyActive = false;
+        document.querySelector('.shell').classList.remove('frenzy-mode');
+    }, 10000);
+}
+
 function onRoundSuccess() {
     G.phase = 'result';
     stopTimer();
@@ -533,6 +635,18 @@ function onRoundSuccess() {
                : accuracy >= 70  ? 'B'
                : 'C';
 
+    // ─── Combo Frenzy trigger ───
+    if (tier === 'S' && !G.frenzyActive) {
+        G.sTierStreak++;
+        if (G.sTierStreak >= 3) activateFrenzy();
+    } else if (tier !== 'S') {
+        G.sTierStreak = 0;
+    }
+
+    // Floating score text at center screen
+    spawnFloatText(`+${roundPts.toLocaleString()}`, window.innerWidth / 2, window.innerHeight / 2,
+        tier === 'S' ? 'gold' : '');
+
     updateHUD();
     showResultPanel(tier, accuracy, elapsed, roundPts, multiplier);
 }
@@ -545,6 +659,7 @@ function onRoundFail(reason) {
 
     G.lives--;
     G.streak = 0;
+    G.sTierStreak = 0; // Reset frenzy combo on any failure
     G.multiplier = Math.max(1.0, G.multiplier - 0.2);
 
     updateHUD();
@@ -615,15 +730,22 @@ function showGameOver() {
 // ─── Start / Reset ────────────────────────────────────────────────────────────
 
 function startGame() {
-    G.round       = 1;
-    G.score       = 0;
-    G.streak      = 0;
-    G.bestStreak  = 0;
-    G.lives       = DIFFICULTY_CONFIG[G.difficulty].maxMistakes + 1;
-    G.maxLives    = G.lives;
-    G.multiplier  = 1.0;
-    G.phase       = 'idle';
-    G.session.id  = crypto.randomUUID();
+    G.round        = 1;
+    G.score        = 0;
+    G.streak       = 0;
+    G.bestStreak   = 0;
+    G.lives        = DIFFICULTY_CONFIG[G.difficulty].maxMistakes + 1;
+    G.maxLives     = G.lives;
+    G.multiplier   = 1.0;
+    G.phase        = 'idle';
+    G.sTierStreak  = 0;
+    G.frenzyActive = false;
+    G.trapTileId   = null;
+    G.session.id   = crypto.randomUUID();
+    clearTimeout(G.frenzyTimeout);
+    document.querySelector('.shell').classList.remove('frenzy-mode');
+    const banner = document.getElementById('frenzyBanner');
+    if (banner) banner.remove();
 
     DOM.overlayStart.classList.add('hidden');
     DOM.overlayResult.classList.add('hidden');
