@@ -4,15 +4,58 @@ import { X, Loader2, Maximize, Minimize } from "lucide-react";
 import { useEffect, useState } from "react";
 import GameOverLeaderboard from "@/components/game/GameOverLeaderboard";
 import LiveEntryModal from "@/components/gameSession/LiveEntryModal";
+import { getActiveSession, submitSessionScore, startRound } from "@/api/gamesession.api";
+
+import { useToast } from "@/context/toast";
+import type { Game } from "@/types/types";
+
+interface Session {
+  id: string;
+  title: string;
+  start_time: string;
+  end_time: string;
+  status: string;
+  entry_fee: number;
+  pool_amount: number;
+  games: Game;
+}
+
 
 const GamePlay = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const toast = useToast();
+
     const [isLoading, setIsLoading] = useState(true);
-    const [gameOverData, setGameOverData] = useState<{ score: number } | null>(null);
+    const [gameOverData, setGameOverData] = useState<{ score: number; rank?: number } | null>(null);
     const [showLiveEntry, setShowLiveEntry] = useState(false);
     const [isFullscreen, setIsFullscreen] = useState(false);
+    const [activeSession, setActiveSession] = useState<Session | null>(null);
+
+    const [currentRoundId, setCurrentRoundId] = useState<string | null>(null);
+
     const game = games.find((g) => g.slug === id);
+
+    useEffect(() => {
+        const fetchSession = async () => {
+            if (!id) return;
+            try {
+                const res = await getActiveSession(id);
+                if (res.success && res.result) {
+                    setActiveSession(res.result);
+                    
+                    // -- SECURITY HANDSHAKE --
+                    const roundRes = await startRound(res.result.id);
+                    if (roundRes.success) {
+                        setCurrentRoundId(roundRes.roundId);
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to initialize session", err);
+            }
+        };
+        fetchSession();
+    }, [id]);
 
     useEffect(() => {
         document.body.style.overflow = "hidden";
@@ -31,12 +74,29 @@ const GamePlay = () => {
                 console.log("Auto-fullscreen requires user gesture", err);
             }
         };
-        // Try to auto-enter fullscreen if the browser allows (e.g. recent navigation click)
         setTimeout(enterFullscreen, 100);
 
-        const handleMessage = (event: MessageEvent) => {
+        const handleMessage = async (event: MessageEvent) => {
             if (event.data?.type === "PLAYZA_SCORE_SUBMISSION") {
-                setGameOverData(event.data.payload);
+                const score = event.data.payload?.score || 0;
+                
+                if (activeSession && currentRoundId) {
+                    try {
+                        const res = await submitSessionScore(activeSession.id, score, currentRoundId);
+                        if (res.success) {
+                            setGameOverData({ score, rank: res.rank });
+                            toast.success(`Victory! Your Rank: #${res.rank}`);
+                            setCurrentRoundId(null); // Burn token
+                        }
+                    } catch (err: unknown) {
+                        const error = err as { response?: { data?: { message?: string } } };
+                        toast.error(error.response?.data?.message || "Submission failed");
+
+                        setGameOverData({ score });
+                    }
+                } else {
+                    setGameOverData({ score });
+                }
             }
         };
 
@@ -46,12 +106,11 @@ const GamePlay = () => {
             document.body.style.overflow = "auto";
             window.removeEventListener("message", handleMessage);
             document.removeEventListener("fullscreenchange", handleFullscreenChange);
-            // Optionally exit fullscreen when leaving page
             if (document.fullscreenElement && document.exitFullscreen) {
                 document.exitFullscreen().catch(err => console.log(err));
             }
         };
-    }, []);
+    }, [activeSession, currentRoundId, toast]);
 
     const toggleFullscreen = async () => {
         if (!document.fullscreenElement) {
