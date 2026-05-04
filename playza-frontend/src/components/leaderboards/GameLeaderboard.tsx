@@ -6,183 +6,384 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { leaderboard } from "@/data/fullLeaderboard";
 import { ZASymbol } from "@/components/currency/ZASymbol";
-import type { GameName, LeaderboardPlayer } from "@/types/types";
 import { useMemo, useState } from "react";
-import { MdTrendingUp } from "react-icons/md";
-import { useAuth } from "@/context/auth";
+
+import { MdKeyboardArrowDown, MdKeyboardArrowUp } from "react-icons/md";
+import { useAuth, type UserProfile } from "@/context/auth";
 import Search from "@/components/Search";
+import {
+  useGames,
+  useGameSessions,
+  useSessionLeaderboard,
+} from "@/hooks/gamesession/useGameSession";
+import { Loader2, Calendar } from "lucide-react";
+import { format } from "date-fns";
+import type { Game } from "@/types/types";
+
+interface Session {
+  id: string;
+  title: string;
+  start_time: string;
+  end_time: string;
+  status: string;
+  pool_amount: number;
+}
+
+
+interface LeaderboardEntry {
+  id: string;
+  user_id: string;
+  best_score: number;
+  attempts: number;
+  users: {
+    username: string;
+    avatar_url: string;
+  };
+}
 
 const GameLeaderboard = () => {
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
-  const gameNames = Object.keys(leaderboard);
-  const [activeGame, setActiveGame] = useState<GameName>("Crystal Match");
+  const [expandedGameId, setExpandedGameId] = useState<string | null>(null);
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(
+    null,
+  );
+  const [selectedSessionPool, setSelectedSessionPool] = useState<number>(0);
 
-  const visibleGames = useMemo(() => {
-    if (!searchQuery) return gameNames;
-    const filtered = gameNames.filter(name => name.toLowerCase().includes(searchQuery.toLowerCase()));
-    return filtered.length > 0 ? filtered : gameNames;
-  }, [gameNames, searchQuery]);
 
-  const filteredData = useMemo(() => {
-    const leaderBoardData = leaderboard[activeGame] || [];
-    if (!searchQuery) return leaderBoardData;
-    
-    // Check if the query matches a game exactly, we shouldn't necessarily filter players if they're searching for a game
-    const isGameMatch = gameNames.some(g => g.toLowerCase().includes(searchQuery.toLowerCase()));
-    
-    const query = searchQuery.toLowerCase();
-    const index = leaderBoardData.findIndex(player => player.username.toLowerCase().includes(query));
+  const { data: gamesData, isLoading: gamesLoading } = useGames();
+  const allGames = gamesData?.games || [];
 
-    if (index !== -1) {
-      const start = Math.max(0, index - 5);
-      const end = Math.min(leaderBoardData.length, index + 6);
-      return leaderBoardData.slice(start, end);
-    }
-
-    if (isGameMatch) {
-      return leaderBoardData;
-    }
-
-    return [];
-  }, [activeGame, searchQuery, gameNames]);
+  const filteredGames = useMemo(() => {
+    if (!searchQuery) return allGames;
+    return allGames.filter((g: Game) =>
+      g.title.toLowerCase().includes(searchQuery.toLowerCase()),
+    );
+  }, [allGames, searchQuery]);
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
       <div className="mb-4 space-y-3">
         <div>
-          <h2 className="text-[10px] md:text-xs font-black uppercase tracking-[0.3em] text-primary">Live Game Rankings</h2>
-          <p className="text-xs text-slate-500 font-bold mt-1">Compete in your favorite games and climb the leaderboards to win daily ZA rewards.</p>
+          <h2 className="text-[10px] md:text-xs font-black uppercase tracking-[0.3em] text-primary">
+            Arena Global Rankings
+          </h2>
+          <p className="text-xs text-slate-500 font-bold mt-1">
+            Select a game and session to view historical and live performance
+            data.
+          </p>
         </div>
         <div className="max-w-md">
-          <Search placeholder="Search by username or game name..." value={searchQuery} onChange={setSearchQuery} />
+          <Search
+            placeholder="Search by game name..."
+            value={searchQuery}
+            onChange={setSearchQuery}
+          />
         </div>
       </div>
 
-      {/* Game Filters */}
-      <div className="flex gap-2 text-xs overflow-x-auto whitespace-nowrap scroll-smooth pb-2 md:pb-4 custom-scrollbar scrollbar-hide py-1 px-1">
-        {visibleGames.map((game) => (
+      <div className="overflow-auto custom-scrollbar flex-1 space-y-4">
+        {gamesLoading ? (
+          <div className="py-20 flex flex-col items-center gap-4">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+              Loading Games...
+            </p>
+          </div>
+        ) : filteredGames.length === 0 ? (
+          <div className="py-32 flex flex-col items-center justify-center text-center space-y-6 animate-in fade-in zoom-in duration-500">
+             <div className="relative">
+                <div className="absolute inset-0 bg-primary/10 blur-3xl rounded-full" />
+                <div className="relative size-20 bg-slate-900/50 backdrop-blur-xl border border-white/5 rounded-2xl flex items-center justify-center shadow-2xl">
+                  <span className="text-4xl opacity-50">📡</span>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-black text-white uppercase tracking-tighter italic">No Active Signal</p>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                  No records found for "{searchQuery}"
+                </p>
+              </div>
+          </div>
+        ) : (
+          filteredGames.map((game: Game) => (
+            <div
+              key={game.id}
+              className="glass-card rounded-2xl border border-slate-200 dark:border-white/5 overflow-hidden"
+            >
+              {/* Game Header */}
+              <button
+                onClick={() =>
+                  setExpandedGameId(expandedGameId === game.id ? null : game.id)
+                }
+                className="w-full flex items-center justify-between p-4 md:p-6 hover:bg-slate-50 dark:hover:bg-white/2 transition-colors"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl overflow-hidden border border-white/10">
+                    <img
+                      src={game.thumbnail_url || game.thumbnail}
+                      alt={game.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="text-left">
+                    <h3 className="font-black text-lg text-slate-900 dark:text-white uppercase italic tracking-tighter">
+                      {game.title}
+                    </h3>
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                      {game.category} • {game.difficulty}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="hidden md:flex flex-col items-end">
+                    <span className="text-[10px] font-black text-slate-400 uppercase">
+                      Status
+                    </span>
+                    <span
+                      className={`text-xs font-black uppercase ${game.is_active ? "text-primary" : "text-slate-500"}`}
+                    >
+                      {game.is_active ? "Online" : "Archived"}
+                    </span>
+                  </div>
+                  {expandedGameId === game.id ? (
+                    <MdKeyboardArrowUp size={24} />
+                  ) : (
+                    <MdKeyboardArrowDown size={24} />
+                  )}
+                </div>
+              </button>
+
+              {/* Sessions List */}
+              {expandedGameId === game.id && (
+                <div className="p-4 md:p-6 border-t border-slate-200 dark:border-white/5 bg-slate-50/50 dark:bg-black/20">
+                  <GameSessionsList
+                    gameId={game.id}
+                    selectedSessionId={selectedSessionId}
+                    onSelectSession={(id, pool) => {
+                      setSelectedSessionId(id);
+                      setSelectedSessionPool(pool);
+                    }}
+                  />
+
+                  {selectedSessionId && (
+                    <div className="mt-8 animate-in fade-in slide-in-from-top-4 duration-500">
+                      <SessionLeaderboardTable
+                        sessionId={selectedSessionId}
+                        user={user}
+                        prizePool={selectedSessionPool}
+                      />
+                    </div>
+                  )}
+
+                </div>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+};
+
+const GameSessionsList = ({
+  gameId,
+  selectedSessionId,
+  onSelectSession,
+}: {
+  gameId: string;
+  selectedSessionId: string | null;
+  onSelectSession: (id: string, pool: number) => void;
+}) => {
+
+  const { data, isLoading } = useGameSessions(gameId);
+  const sessions = data?.sessions || [];
+
+  if (isLoading)
+    return (
+      <div className="flex justify-center py-4">
+        <Loader2 className="animate-spin text-primary" />
+      </div>
+    );
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2 mb-4">
+        <Calendar size={14} className="text-primary" />
+        <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+          Available Sessions
+        </h4>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        {sessions.map((session: Session) => (
           <button
-            key={game}
-            className={`px-4 py-2.5 font-bold rounded-xl cursor-pointer border ${
-              activeGame === game
-                ? "bg-primary text-white border-primary"
-                : "bg-slate-900/5 dark:bg-white/5 text-slate-600 dark:text-slate-400 border-transparent dark:border-white/5 md:hover:bg-slate-900/10 md:dark:hover:bg-white/10 md:hover:text-slate-900 md:dark:hover:text-white"
+            key={session.id}
+            onClick={() => onSelectSession(session.id, session.pool_amount)}
+            className={`p-4 rounded-xl border transition-all text-left group ${
+
+              selectedSessionId === session.id
+                ? "bg-primary border-primary"
+                : "bg-white/5 border-white/10 hover:border-primary/50"
             }`}
-            title={game}
-            onClick={() => setActiveGame(game as GameName)}
           >
-            {game}
+            <h5
+              className={`font-black text-sm uppercase italic tracking-tight ${selectedSessionId === session.id ? "text-black" : "text-white group-hover:text-primary"}`}
+            >
+              {session.title || "Standard Tournament"}
+            </h5>
+            <div className="flex justify-between items-end mt-2">
+              <div
+                className={`text-[9px] font-bold uppercase tracking-widest ${selectedSessionId === session.id ? "text-black/60" : "text-slate-500"}`}
+              >
+                {format(new Date(session.start_time), "MMM dd")}
+              </div>
+              <span
+                className={`text-[9px] font-black uppercase px-2 py-0.5 rounded ${
+                  session.status === "active"
+                    ? "bg-rose-500 text-white"
+                    : "bg-slate-500/20 text-slate-400"
+                }`}
+              >
+                {session.status}
+              </span>
+            </div>
           </button>
         ))}
       </div>
+    </div>
+  );
+};
 
-      <div className="overflow-auto custom-scrollbar flex-1 relative">
-        <Table className={`w-full text-left ${!user ? "opacity-50 grayscale select-none pointer-events-none" : ""}`}>
-          <TableHeader>
-            <TableRow className="border-b-slate-200 dark:border-b-white/10 hover:bg-transparent">
-              <TableHead className="px-2 md:px-4 py-2 md:py-4 text-[10px] uppercase font-black tracking-widest text-slate-500 w-16 text-center">
-                Rank
-              </TableHead>
-              <TableHead className="px-2 md:px-4 py-2 md:py-4 text-[10px] uppercase font-black tracking-widest text-slate-500">
-                Player
-              </TableHead>
-              <TableHead className="px-2 md:px-4 py-2 md:py-4 text-[10px] uppercase font-black tracking-widest text-slate-500 hidden sm:table-cell">
-                Score
-              </TableHead>
-              <TableHead className="px-2 md:px-4 py-2 md:py-4 text-[10px] uppercase font-black tracking-widest text-slate-500 text-right">
-                Prize Won
-              </TableHead>
+const SessionLeaderboardTable = ({
+  sessionId,
+  user,
+  prizePool = 0,
+}: {
+  sessionId: string;
+  user: UserProfile | null;
+  prizePool?: number;
+}) => {
+
+  const { data, isLoading } = useSessionLeaderboard(sessionId);
+  const leaderboardData = data?.leaderboard || [];
+
+  if (isLoading)
+    return (
+      <div className="flex justify-center py-10">
+        <Loader2 className="animate-spin text-primary" />
+      </div>
+    );
+
+  return (
+    <div className="overflow-hidden rounded-xl border border-white/5 shadow-2xl">
+      <Table
+        className={
+          !user ? "opacity-50 grayscale select-none pointer-events-none" : ""
+        }
+      >
+        <TableHeader>
+          <TableRow className="bg-white/5 border-b-white/10 hover:bg-white/5">
+            <TableHead className="w-16 text-center text-[10px] font-black uppercase tracking-widest text-slate-400">
+              Rank
+            </TableHead>
+            <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+              Player
+            </TableHead>
+            <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+              Score
+            </TableHead>
+            <TableHead className="text-right text-[10px] font-black uppercase tracking-widest text-slate-400">
+              Reward
+            </TableHead>
+          </TableRow>
+
+        </TableHeader>
+        <TableBody>
+          {leaderboardData.length === 0 ? (
+            <TableRow>
+              <TableCell
+                colSpan={4}
+                className="h-48 text-center"
+              >
+                <div className="flex flex-col items-center gap-3 py-10 opacity-40">
+                   <div className="size-12 rounded-full bg-white/5 flex items-center justify-center border border-white/10">
+                      <span className="text-xl">🏆</span>
+                   </div>
+                   <div className="space-y-1">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-white">Untapped Glory</p>
+                      <p className="text-[9px] font-bold text-slate-500 uppercase tracking-tight">No participants have claimed their rank in this session yet.</p>
+                   </div>
+                </div>
+              </TableCell>
             </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredData.length === 0 ? (
-              <TableRow className="border-0 hover:bg-transparent">
-                <TableCell colSpan={4} className="h-48 text-center text-slate-500">
-                  No players found matching "{searchQuery}"
-                </TableCell>
-              </TableRow>
-            ) : (
-              filteredData.map(
-                ({
-                  id,
-                  rank,
-                  avatar,
-                  username,
-                  points,
-                  prizeWon,
-                }: LeaderboardPlayer) => {
-                  const isMatch = searchQuery && username.toLowerCase().includes(searchQuery.toLowerCase());
-                  const isGold = rank === 1;
-                  const isSilver = rank === 2;
-                  const isBronze = rank === 3;
-                  const isMe = rank === 4;
+          ) : (
+            leaderboardData.map((player: LeaderboardEntry, index: number) => {
+              const rank = index + 1;
 
-                  const rankStyle =
-                    isGold ? "bg-playza-yellow/20 text-playza-yellow border-playza-yellow/50" :
-                    isSilver ? "bg-slate-300/20 text-slate-700 dark:text-slate-200 border-slate-300/50" :
-                    isBronze ? "bg-amber-600/20 text-amber-500 border-amber-600/50" :
-                    isMe ? "bg-primary text-white border-primary" :
-                    "bg-slate-900/5 dark:bg-white/5 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-white/10";
-
-                  return (
-                    <TableRow
-                      key={id}
-                      className={`border-b-slate-200 dark:border-b-white/5 ${
-                        isMatch
-                          ? "bg-primary/20 dark:bg-primary/20 border-y border-y-primary border-l-[3px] border-l-primary"
-                          : isMe
-                          ? "bg-primary/5 md:hover:bg-primary/10 border-l-[3px] border-l-primary"
-                          : "md:hover:bg-slate-900/5 md:dark:hover:bg-white/5"
+              const isMe = player.user_id === user?.id;
+              return (
+                <TableRow
+                  key={player.id}
+                  className={`${isMe ? "bg-primary/10" : ""} border-b-white/5 hover:bg-white/5`}
+                >
+                  <TableCell className="text-center">
+                    <div
+                      className={`size-8 mx-auto flex items-center justify-center rounded-lg font-black text-xs ${
+                        rank === 1
+                          ? "bg-yellow-400 text-black"
+                          : rank === 2
+                            ? "bg-slate-300 text-black"
+                            : rank === 3
+                              ? "bg-orange-400 text-black"
+                              : "bg-white/5 text-slate-400"
                       }`}
                     >
-                      <TableCell className=" py-2 md:py-3 sm:py-4">
-                        <div className="flex justify-center">
-                          <div className={`size-7 sm:size-8 flex items-center justify-center rounded-xl font-black text-xs sm:text-sm border ${rankStyle}`}>
-                            {rank}
-                          </div>
-                        </div>
-                      </TableCell>
+                      {rank}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full overflow-hidden border border-white/10 bg-slate-800">
+                        <img
+                          src={
+                            player.users?.avatar_url || "/default-avatar.png"
+                          }
+                          alt=""
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <span
+                        className={`font-bold text-xs ${isMe ? "text-primary" : "text-slate-200"}`}
+                      >
+                        {player.users?.username} {isMe && "(You)"}
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="font-black text-xs text-white">
+                    {player.best_score.toLocaleString()}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {rank <= 5 && prizePool > 0 ? (
+                      <div className="flex items-center justify-end gap-1 text-primary">
+                        <ZASymbol className="text-[10px] scale-75" />
+                        <span className="font-black text-xs">
+                          {((rank === 1 ? 0.4 : rank === 2 ? 0.25 : rank === 3 ? 0.15 : 0.1) * prizePool).toLocaleString()}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-[9px] font-black uppercase text-slate-500 tracking-widest">
+                        {player.attempts} Attempts
+                      </span>
+                    )}
+                  </TableCell>
 
-                      <TableCell className=" py-2 md:py-3 sm:py-4 flex items-center gap-2 md:gap-3 sm:gap-4">
-                        <div className={`relative size-8 sm:size-10 rounded-full overflow-hidden border-2 ${isGold ? 'border-playza-yellow' : isMe ? 'border-primary' : 'border-slate-200 dark:border-white/10'}`}>
-                          <img src={avatar} alt={username} className="w-full h-full object-cover" />
-                          {isGold && <div className="absolute inset-0 ring-inset ring-2 ring-playza-yellow/20 rounded-full" />}
-                        </div>
-                        <div className="flex flex-col">
-                          <span className={`${isMe ? "font-black text-slate-900 dark:text-white" : isGold ? "font-bold text-playza-yellow" : "font-bold text-slate-700 dark:text-slate-200 md:group-hover:text-slate-900 md:dark:group-hover:text-white"}`}>
-                            {username} {isMe && <span className="text-primary text-[10px] ml-1 uppercase tracking-widest bg-primary/20 px-1.5 py-0.5 rounded-md">(You)</span>}
-                          </span>
-                          <span className="sm:hidden text-[10px] text-slate-500 font-black tracking-widest flex items-center gap-1 mt-0.5">
-                            <MdTrendingUp className="text-primary"/> {points.toLocaleString()} PTS
-                          </span>
-                        </div>
-                      </TableCell>
-
-                      <TableCell className=" py-2 md:py-3 sm:py-4 font-black hidden sm:table-cell">
-                        <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
-                          {points.toLocaleString()} <span className="text-[9px] text-primary uppercase tracking-widest font-black">PTS</span>
-                        </div>
-                      </TableCell>
-
-                      <TableCell className=" py-2 md:py-3 sm:py-4 text-right">
-                        <div className="inline-block px-2 md:px-3 py-1.5 rounded-xl bg-playza-green/10 border border-playza-green/20">
-                          <span className="font-mono text-sm sm:text-base font-black text-playza-green tracking-tighter flex items-center justify-end gap-1">
-                            <ZASymbol className="text-[10px] scale-90" />
-                            {Number(prizeWon).toLocaleString()}
-                          </span>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                }
-              )
-            )}
-          </TableBody>
-        </Table>
-      </div>
+                </TableRow>
+              );
+            })
+          )}
+        </TableBody>
+      </Table>
     </div>
   );
 };
