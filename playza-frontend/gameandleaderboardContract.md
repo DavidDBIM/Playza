@@ -158,13 +158,3 @@ check this now...
 
 Now what is the grossPrizePool and netPrizepool? and why game has platformfee
 
-
-let start from reflex shooter....
-
-what and what can we do to make the game
-
-1. interesting to play
-2. Improve the engagement
-3. Remove the possibiltiy of the user cheating the system or games
-
-discussion
