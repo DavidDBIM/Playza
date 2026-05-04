@@ -1,30 +1,80 @@
 import { useMemo, useState } from "react";
 import Search from "../Search";
 import GamesCard from "@/utils/GamesCard";
-import { games } from "@/data/games";
 import { calculatePrizePool } from "@/utils/calculatedPrizePool";
 import FeatureGameCard from "../FeatureGameCard";
 import CategoryRow from "./CategoryRow";
 import Filter, { type FilterOption } from "./Filter";
 import { filterGames } from "@/lib/filterGames";
+import { useGames } from "@/hooks/gamesession/useGameSession";
+import { Loader2 } from "lucide-react";
+import type { Game } from "@/types/types";
 
 const FullGame = () => {
   const [query, setQuery] = useState("");
   const [filterBy, setFilterBy] = useState<FilterOption | "">("Filter By");
 
-  const allGames = useMemo(() => 
-    games.map((g) => ({
-      ...g,
-      pricePool: calculatePrizePool(
-        g.entryFee,
-        g.activePlayers,
-        g.platformFeePercentage,
-      ),
-    })), []);
+  const { data: gamesData, isLoading } = useGames();
 
-  const biggestPoolGame = useMemo(() => 
-    [...allGames].sort((a, b) => b.pricePool - a.pricePool)[0], 
-    [allGames]
+  const allGames = useMemo(() => {
+    const rawGames = gamesData?.games || [];
+
+    // Fallback to demo games ONLY if backend is empty during development
+    // In production, we'd only use backend games
+    const gamesToUse = rawGames.length > 0 ? rawGames : [];
+
+    return gamesToUse.map((g: Game & Record<string, unknown>) => {
+      // Map backend fields to frontend Game type
+      const game: Game = {
+        ...g, // Spread first
+        id: g.id,
+        title: g.title,
+        slug: g.slug,
+        thumbnail:
+          (g.thumbnail_url as string) ||
+          (g.thumbnail as string) ||
+          "/games/placeholder.png",
+        category: g.category as Game["category"],
+        mode: g.mode as Game["mode"],
+        entryFee: Number(g.entryFee || 0),
+        platformFeePercentage: Number(
+          g.platform_fee_percentage || g.platformFeePercentage || 10,
+        ),
+        difficulty: g.difficulty as Game["difficulty"],
+        durationInSeconds: Number(
+          g.duration_seconds || g.durationInSeconds || 300,
+        ),
+        status:
+          g.is_active !== undefined
+            ? g.is_active
+              ? "live"
+              : "coming soon"
+            : (g.status as Game["status"]) || "coming soon",
+        activePlayers: Number(g.activePlayers || 0),
+        ctaLabel: (g.ctaLabel as string) || "Play Now",
+        badge: (g.badge as Game["badge"]) || null,
+        iframeUrl: (g.iframe_url as string) || (g.iframeUrl as string),
+        createdAt: (g.created_at as string) || (g.createdAt as string),
+        updatedAt: (g.created_at as string) || (g.updatedAt as string),
+      };
+
+      return {
+        ...game,
+        pricePool: calculatePrizePool(
+          game.entryFee,
+          game.activePlayers,
+          game.platformFeePercentage,
+        ),
+      };
+    });
+  }, [gamesData]);
+
+  const biggestPoolGame = useMemo(
+    () =>
+      allGames.length > 0
+        ? [...allGames].sort((a, b) => b.pricePool - a.pricePool)[0]
+        : null,
+    [allGames],
   );
 
   const handleFiltering = (option: FilterOption) => {
@@ -32,7 +82,6 @@ const FullGame = () => {
   };
 
   const filteredGames = useMemo(() => {
-
     if (query || (filterBy && filterBy !== "Filter By")) {
       return filterGames(allGames, "All Games", filterBy, query);
     }
@@ -43,34 +92,47 @@ const FullGame = () => {
     if (filteredGames) return null;
 
     const statusOrder: Record<string, number> = {
-      "live": 1,
+      live: 1,
       "coming soon": 2,
       "not starting soon": 3,
     };
 
     const groups: Record<string, typeof allGames> = {};
-  
+
     const sortedGames = [...allGames].sort((a, b) => {
       const orderA = statusOrder[a.status] || 99;
       const orderB = statusOrder[b.status] || 99;
       return orderA - orderB;
     });
-    
+
     sortedGames.forEach((game) => {
-      if (!groups[game.category]) {
-        groups[game.category] = [];
+      const cat = game.category || "Other";
+      if (!groups[cat]) {
+        groups[cat] = [];
       }
-      groups[game.category].push(game);
+      groups[cat].push(game);
     });
     return groups;
   }, [allGames, filteredGames]);
 
+  if (isLoading) {
+    return (
+      <div className="py-40 flex flex-col items-center justify-center gap-4 animate-pulse">
+        <Loader2 className="w-12 h-12 text-primary animate-spin" />
+        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500">
+          Syncing Arena Data...
+        </p>
+      </div>
+    );
+  }
+
   return (
     <main className="space-y-6 md:space-y-8">
-
-      <section className="relative flex items-center rounded-xl overflow-hidden">
-        <FeatureGameCard {...biggestPoolGame} subTitle="Featured Challenge" />
-      </section>
+      {biggestPoolGame && (
+        <section className="relative flex items-center rounded-xl overflow-hidden">
+          <FeatureGameCard {...biggestPoolGame} subTitle="Featured Challenge" />
+        </section>
+      )}
 
       <div className="glass rounded-xl p-2 md:p-3 flex gap-2 md:gap-4 items-center">
         <Search
@@ -97,8 +159,8 @@ const FullGame = () => {
             ))}
             {filteredGames.length === 0 && (
               <div className="col-span-full py-2 md:py-20 text-center">
-                <p className="text-slate-500 dark:text-slate-400 text-xs md:text-sm">
-                  No games found matching your criteria.
+                <p className="text-slate-500 dark:text-slate-400 text-xs md:text-sm uppercase font-black tracking-widest">
+                  No signals found matching your criteria.
                 </p>
               </div>
             )}
@@ -129,12 +191,17 @@ const FullGame = () => {
                   Arena Maintenance
                 </h2>
                 <p className="text-slate-500 dark:text-slate-400 text-[10px] md:text-xs font-bold leading-relaxed uppercase tracking-widest">
-                  The gaming sector is currently undergoing a scheduled systems upgrade. New challenges are being calibrated.
+                  The gaming sector is currently undergoing a scheduled systems
+                  upgrade. New challenges are being calibrated.
                 </p>
               </div>
               <div className="flex gap-2">
-                {[1, 2, 3].map(i => (
-                  <div key={i} className="size-1.5 rounded-full bg-primary/30 animate-bounce" style={{ animationDelay: `${i * 0.2}s` }} />
+                {[1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    className="size-1.5 rounded-full bg-primary/30 animate-bounce"
+                    style={{ animationDelay: `${i * 0.2}s` }}
+                  />
                 ))}
               </div>
             </div>
