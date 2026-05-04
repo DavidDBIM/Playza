@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Neon Stacker</title>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700;900&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <div class="shell" id="shell">
+    
+    <!-- Canvas for rendering blocks -->
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- Game HUD -->
+    <div id="gameHud" class="hidden">
+      <div class="hud-box">
+        <span class="hud-label">TOWER</span>
+        <span class="hud-value" id="hudScore">0</span>
+      </div>
+      <div class="hud-box highlight">
+        <span class="hud-label">PAYOUT</span>
+        <span class="hud-value" id="hudMult">x0.00</span>
+      </div>
+    </div>
+
+    <!-- UI Overlay: Start -->
+    <div id="overlayStart" class="overlay">
+      <div class="panel">
+        <div class="icon">🏗️</div>
+        <h1 class="glitch-text">NEON STACKER</h1>
+        <p class="subtitle">PRECISION TIMING</p>
+        <p class="desc">Tap anywhere to drop the neon block. Align it perfectly to keep your width. Overhanging edges will be sliced off. Stack 20 blocks to reach Escape Velocity.</p>
+        
+        <button id="btnStartGame" class="btn-primary">START CONSTRUCTION</button>
+      </div>
+    </div>
+
+    <!-- UI Overlay: Result -->
+    <div id="overlayResult" class="overlay hidden">
+      <div class="panel result-panel">
+        <h2 id="resTitle" class="res-title">COLLAPSE</h2>
+        
+        <div class="stats-grid">
+          <div class="stat-item">
+            <span class="stat-label">BLOCKS</span>
+            <span class="stat-value" id="resBlocks">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">PERFECTS</span>
+            <span class="stat-value" id="resPerfects">0</span>
+          </div>
+        </div>
+
+        <div class="mult-display">
+          <span class="mult-label">FINAL PAYOUT</span>
+          <span class="mult-value" id="resMult">x0.00</span>
+        </div>
+
+        <p id="resKicker" class="kicker">The tower fell.</p>
+
+        <button id="btnPlayAgain" class="btn-primary">TRY AGAIN</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
