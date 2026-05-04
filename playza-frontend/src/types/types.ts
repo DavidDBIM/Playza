@@ -50,6 +50,7 @@ export type Game = {
   mode: "1v1" | "Tournament" | "Quick Match" | "Multiplayer" | "Arcade" | "Adventure";
 
   entryFee: number;
+  entry_fee?: number; // Backend field
   platformFeePercentage: number;
   platform_fee_percentage?: number; // Backend field
   difficulty: "Easy" | "Medium" | "Hard";
