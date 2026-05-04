@@ -211,6 +211,10 @@ function updateHUD() {
     DOM.statStreak.textContent = G.streak;
     DOM.statMulti.textContent  = `×${G.multiplier.toFixed(1)}`;
     DOM.streakChip.classList.toggle('active', G.streak >= 3);
+
+    if (window.parent) {
+        window.parent.postMessage({ type: 'SCORE_UPDATE', payload: { multiplier: G.multiplier } }, '*');
+    }
 }
 
 function setPhaseLabel(text, color = '') {
@@ -825,9 +829,13 @@ $('btnStart').addEventListener('click', startGame);
 
 $('btnNextRound').addEventListener('click', nextRound);
 
-$('btnRestart').addEventListener('click', restartGame);
+$('btnRestart').addEventListener('click', () => {
+    if (window.parent) window.parent.postMessage({ type: 'EXIT_GAME' }, '*');
+});
 
-$('btnPlayAgain').addEventListener('click', restartGame);
+$('btnPlayAgain').addEventListener('click', () => {
+    if (window.parent) window.parent.postMessage({ type: 'EXIT_GAME' }, '*');
+});
 
 $('btnQuit').addEventListener('click', () => {
     DOM.overlayGameOver.classList.add('hidden');

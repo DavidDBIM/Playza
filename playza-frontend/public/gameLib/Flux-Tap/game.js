@@ -21,6 +21,26 @@ let overclockTimer = 0; // ms
 let corruptedNodeIdx = -1;
 let lastTickTime = 0;
 
+// Audio System (Web Audio API)
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function playTone(freq, type, duration, vol=0.1) {
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+  gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + duration);
+}
+function playTapSound() { playTone(600, 'sine', 0.1, 0.1); }
+function playClearSound() { playTone(440, 'triangle', 0.1, 0.15); setTimeout(() => playTone(660, 'triangle', 0.2, 0.15), 100); }
+function playFailSound() { playTone(200, 'sawtooth', 0.4, 0.2); }
+function playOverclockSound() { playTone(800, 'square', 0.1, 0.1); setTimeout(() => playTone(1200, 'square', 0.3, 0.1), 100); }
+
 // UI Elements
 const elHud = document.getElementById('gameHud');
 const elRound = document.getElementById('hudRound');
@@ -35,7 +55,9 @@ const overStart = document.getElementById('overlayStart');
 const overResult = document.getElementById('overlayResult');
 
 document.getElementById('btnStartGame').addEventListener('click', startGame);
-document.getElementById('btnPlayAgain').addEventListener('click', startGame);
+document.getElementById('btnPlayAgain').addEventListener('click', () => {
+  if (window.parent) window.parent.postMessage({ type: 'EXIT_GAME' }, '*');
+});
 
 // Anti-Cheat: Math-based Hit Detection on Container
 nodesGrid.addEventListener('click', (e) => {
@@ -172,6 +194,9 @@ function handleTap(idx, clientX, clientY) {
     corruptedNodeIdx = -1;
     arena.classList.add("shake-screen");
     setTimeout(() => arena.classList.remove("shake-screen"), 300);
+    playFailSound();
+  } else {
+    playTapSound();
   }
 
   applyTransformation(idx, currentRule);
@@ -196,7 +221,12 @@ function checkWin() {
         fastSolves = 0;
         arena.classList.add("overclock-mode");
         showFloatingText("OVERCLOCK!", window.innerWidth/2, window.innerHeight/3, "huge");
+        playOverclockSound();
+      } else {
+        playClearSound();
       }
+    } else {
+      playClearSound();
     }
 
     showStageClear();
@@ -288,6 +318,18 @@ function updateHUD() {
 
   if (timeLeft <= 10) elTimerBox.classList.add('danger');
   else elTimerBox.classList.remove('danger');
+
+  // Send live payout multiplier to parent
+  const r = currentRound - 1;
+  let currMult = 0;
+  if (r >= 10) currMult = 2.0;
+  else if (r >= 6) currMult = 1.6 + ((r - 6) / 4) * 0.4;
+  else if (r >= 3) currMult = 1.2 + ((r - 3) / 3) * 0.4;
+  else currMult = r * (1.2 / 3);
+
+  if (window.parent) {
+    window.parent.postMessage({ type: 'SCORE_UPDATE', payload: { multiplier: currMult } }, '*');
+  }
 }
 
 function endGame() {
