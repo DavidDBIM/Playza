@@ -4,21 +4,24 @@ import type { GameProps } from "./types";
 
 export const ResultsPanel = ({ stake, multiplier = 0, onBack, onPlayAgain }: GameProps) => {
   const simulatedMultiplier = multiplier;
+  const isWin = simulatedMultiplier > 1.0;
   const simulatedEarnings = (parseFloat(stake || "0") * simulatedMultiplier).toFixed(2);
 
   return (
     <div className="w-full max-w-md mx-auto animation-fade-in pt-8">
       <div className="glass-card border border-primary/20 rounded-xl p-8 text-center bg-surface-elevated/40 relative overflow-hidden">
         
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-32 bg-primary/20 blur-[60px]" />
+        <div className={`absolute top-0 left-1/2 -translate-x-1/2 w-full h-32 ${isWin ? 'bg-primary/20' : 'bg-red-500/20'} blur-[60px]`} />
 
         <div className="relative z-10">
-          <div className="w-20 h-20 rounded-full bg-linear-to-br from-primary to-orange-400 mx-auto mb-6 flex items-center justify-center shadow-[0_0_40px_rgba(34,211,238,0.4)]">
-            <span className="font-heading font-black text-3xl text-black">A</span>
+          <div className={`w-20 h-20 rounded-full ${isWin ? 'bg-linear-to-br from-primary to-orange-400' : 'bg-linear-to-br from-slate-600 to-slate-800'} mx-auto mb-6 flex items-center justify-center shadow-[0_0_40px_rgba(34,211,238,0.4)]`}>
+            <span className="font-heading font-black text-3xl text-black">{isWin ? 'S' : 'F'}</span>
           </div>
 
-          <p className="text-[10px] font-black uppercase text-primary tracking-widest mb-1">Rank Achieved</p>
-          <h2 className="font-heading font-black text-3xl text-white uppercase tracking-tight mb-8">Excellent Run!</h2>
+          <p className={`text-[10px] font-black uppercase ${isWin ? 'text-primary' : 'text-slate-500'} tracking-widest mb-1`}>{isWin ? 'Rank Achieved' : 'Challenge Status'}</p>
+          <h2 className="font-heading font-black text-3xl text-white uppercase tracking-tight mb-8">
+            {isWin ? 'Excellent Run!' : 'Mission Failed'}
+          </h2>
 
           <div className="grid grid-cols-2 gap-4 mb-8">
             <div className="glass-card bg-surface border border-white/5 p-4 rounded-2xl flex flex-col items-center">

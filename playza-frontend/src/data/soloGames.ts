@@ -46,21 +46,21 @@ export const soloGames: SoloGame[] = [
     path: "/gameLib/Memory-Rush/index.html"
   },
   {
-    id: "aim-trainer-pro",
-    title: "Aim Trainer Pro",
-    label: "Precision & Speed",
-    description: "Hone your accuracy and reflexes by shooting targets before they disappear.",
-    difficulty: "Medium",
-    thumbnail: "/images/solo/aim_trainer.png", // using placeholder, or wait... maybe I should use reflex_shooter.png as placeholder?
-    path: "/gameLib/Aim-Trainer-Pro/index.html"
+    id: "core-overload",
+    title: "Core Overload",
+    label: "Risk vs Reward",
+    description: "Charge the volatile core by holding it. Release before the stability needle hits the red danger zone. Push your luck!",
+    difficulty: "Extreme",
+    thumbnail: "/images/solo/core_overload.png",
+    path: "/gameLib/Core-Overload/index.html"
   },
   {
-    id: "bubble-shooter-blitz",
-    title: "Bubble Blitz",
-    label: "Puzzle Strategy",
-    description: "Pop matching bubbles rapidly before the ceiling crushes you.",
-    difficulty: "Easy",
-    thumbnail: "/images/solo/flux_tap.png", // using flux_tap as placeholder
-    path: "/gameLib/Bubble-Shooter-Blitz/index.html"
+    id: "neon-stacker",
+    title: "Neon Stacker",
+    label: "Precision & Timing",
+    description: "Stack the neon blocks perfectly. Any overhang gets sliced off, making the next block harder. Build the tower to reach 2.0x.",
+    difficulty: "Hard",
+    thumbnail: "/images/solo/neon_stacker.png",
+    path: "/gameLib/Neon-Stacker/index.html"
   }
 ];
