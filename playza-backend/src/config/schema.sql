@@ -373,3 +373,81 @@ create trigger soloearn_sessions_updated_at before update on soloearn_sessions
   for each row execute function update_updated_at();
 
 alter table soloearn_sessions enable row level security;
+
+-- GAME TOURNAMENTS & SESSIONS
+create table if not exists games (
+  id uuid primary key default uuid_generate_v4(),
+  title text not null,
+  slug text unique not null,
+  category text,
+  thumbnail_url text,
+  iframe_url text,
+  difficulty text,
+  mode text,
+  duration_seconds integer default 300,
+  platform_fee_percentage numeric default 10,
+  how_to_play jsonb,
+  is_active boolean default true,
+  created_at timestamptz default now()
+);
+
+create table if not exists game_sessions (
+  id uuid primary key default uuid_generate_v4(),
+  game_id uuid references games(id) on delete cascade,
+  title text,
+  type text, -- 'tournament', 'daily'
+  entry_fee numeric default 0,
+  max_players integer default 100,
+  winners_count integer default 1,
+  start_time timestamptz,
+  end_time timestamptz,
+  status text default 'upcoming', -- 'upcoming', 'active', 'calculating', 'completed'
+  pool_amount numeric default 0,
+  created_at timestamptz default now()
+);
+
+create table if not exists game_leaderboard (
+  id uuid primary key default uuid_generate_v4(),
+  session_id uuid references game_sessions(id) on delete cascade,
+  user_id uuid references users(id) on delete cascade,
+  best_score integer default 0,
+  attempts integer default 0,
+  status text default 'playing', -- 'playing', 'finished'
+  payout_amount numeric default 0,
+  payout_status text default 'pending', -- 'pending', 'paid'
+  updated_at timestamptz default now(),
+  unique(session_id, user_id)
+);
+
+alter table games enable row level security;
+alter table game_sessions enable row level security;
+alter table game_leaderboard enable row level security;
+
+-- PLAY ROUNDS (For Anti-Cheat Handshake)
+create table if not exists play_rounds (
+  id uuid primary key default uuid_generate_v4(),
+  session_id uuid references game_sessions(id) on delete cascade,
+  user_id uuid references users(id) on delete cascade,
+  start_time timestamptz default now(),
+  status text default 'active', -- 'active', 'submitted', 'expired'
+  created_at timestamptz default now()
+);
+
+alter table play_rounds enable row level security;
+
+-- GAME HISTORY (General match results for Profile tab)
+create table if not exists game_history (
+  id uuid primary key default uuid_generate_v4(),
+  user_id uuid references users(id) on delete cascade,
+  game_name text not null,
+  score integer default 0,
+  position text, -- e.g. '#1', '#24', 'Winner'
+  winnings numeric default 0,
+  status text check (status in ('win', 'loss', 'draw')),
+  played_at timestamptz default now()
+);
+
+alter table game_history enable row level security;
+
+
+

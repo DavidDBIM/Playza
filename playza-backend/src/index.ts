@@ -22,6 +22,7 @@ import leaderboardRoutes from './modules/leaderboard/leaderboard.routes'
 import notificationRoutes from './modules/notifications/notifications.routes'
 import feedbackRoutes from './modules/feedback/feedback.routes'
 import soloearnRoutes from './modules/soloearn/soloearn.routes'
+import gamesessionRoutes from './modules/gamesession/gamesession.routes'
 
 dotenv.config()
 
@@ -64,6 +65,7 @@ app.use('/api/leaderboard', leaderboardRoutes)
 app.use('/api/notifications', notificationRoutes)
 app.use('/api/feedback', feedbackRoutes)
 app.use('/api/soloearn', soloearnRoutes)
+app.use('/api/gamesession', gamesessionRoutes)
 
 app.use((req, res) => {
   res.status(404).json({ success: false, message: 'Route not found' })

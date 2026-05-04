@@ -62,8 +62,27 @@ export async function endSoloSession(userId: string, sessionId: string, rawMulti
   if (sessErr || !session) throw new Error("Session not found")
   if (session.status !== 'in_progress') throw new Error("Session already completed")
 
-  // 2. Enforce 2.0x cap
-  const cappedMultiplier = Math.min(Math.max(rawMultiplier, 0), 2.0)
+  // --- Anti-Cheat: Time Validation ---
+  if (session.created_at) {
+    const createdAt = new Date(session.created_at).getTime()
+    const now = Date.now()
+    const elapsedSeconds = (now - createdAt) / 1000
+
+    if (rawMultiplier > 0 && elapsedSeconds < 3) {
+      throw new Error("Session ended suspiciously fast. Score rejected.")
+    }
+    if (rawMultiplier >= 1.5 && elapsedSeconds < 10) {
+      throw new Error("High multiplier achieved suspiciously fast. Score rejected.")
+    }
+  }
+
+  // 2. Enforce 2.0x cap and strict >1.0 win condition
+  let cappedMultiplier = Math.min(Math.max(rawMultiplier, 0), 2.0)
+  
+  if (cappedMultiplier <= 1.0) {
+    cappedMultiplier = 0.0;
+  }
+
   const payout = parseFloat((session.stake * cappedMultiplier).toFixed(2))
 
   // 3. Update session
