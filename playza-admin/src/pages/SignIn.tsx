@@ -40,7 +40,7 @@ const SignIn: React.FC = () => {
         setMfaRequired(true);
       } else if (response.access_token && response.user) {
         // Verify admin role if present
-        if (response.user.role && response.user.role !== 'admin' && response.user.role !== 'super_admin') {
+        if (response.user.role && response.user.role !== 'admin' && response.user.role !== 'superadmin') {
           setError("Access Denied: Administrative privileges required.");
           return;
         }
