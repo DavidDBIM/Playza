@@ -77,9 +77,13 @@ router.patch('/users/:id/status', requireAdmin, async (req: AuthRequest, res) =>
     if (action === 'ban') {
       if (!mfa_code) {
         // Trigger a fresh OTP to the admin's email for this sensitive action
+        // FIX: No redirectTo option = Supabase sends 6-digit OTP code, NOT a magic link
         const { error: otpError } = await supabaseAdmin.auth.signInWithOtp({
           email: req.user!.email,
-          options: { shouldCreateUser: false }
+          options: {
+            shouldCreateUser: false,
+            // ← DO NOT add redirectTo here. That's what causes the magic link.
+          }
         });
 
         if (otpError) throw otpError;
