@@ -2293,6 +2293,17 @@ class SugarStormGame {
       this.levelComplete = true;
       this.isGameOver = true;
       this.captureCarryover();
+
+      // --- PLAYZA TOURNAMENT INTEGRATION ---
+      if (window.parent) {
+        window.parent.postMessage({
+          type: 'PLAYZA_SCORE_SUBMISSION',
+          payload: {
+            score: this.totalScore
+          }
+        }, '*');
+      }
+
       this.showOverlay(
         "Eye Of The Storm",
         this.levelIndex + 1 >= 4 ? "Level Complete" : "Stage Clear",
@@ -2307,6 +2318,17 @@ class SugarStormGame {
     if (this.movesLeft <= 0) {
       this.levelComplete = false;
       this.isGameOver = true;
+
+      // --- PLAYZA TOURNAMENT INTEGRATION ---
+      if (window.parent) {
+        window.parent.postMessage({
+          type: 'PLAYZA_SCORE_SUBMISSION',
+          payload: {
+            score: this.totalScore
+          }
+        }, '*');
+      }
+
       this.showOverlay(
         "Storm Faded",
         "Out of Moves",
