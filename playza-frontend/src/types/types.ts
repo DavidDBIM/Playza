@@ -44,6 +44,7 @@ export type Game = {
   title: string;
   slug: string;
   thumbnail: string;
+  thumbnail_url?: string; // Real database field
 
   category: "Arcade" | "Action" | "Strategy" | "Puzzle" | "Trivia" | "Adventure";
   mode: "1v1" | "Tournament" | "Quick Match" | "Multiplayer" | "Arcade" | "Adventure";
@@ -56,7 +57,9 @@ export type Game = {
   activePlayers: number;
 
   status: "live" | "upcoming" | "ended" | "coming soon" | "not starting soon";
+  is_active?: boolean; // Real database field
   ctaLabel: string;
+
   badge: GameBadge;
 
   iframeUrl?: string; // Optional URL for the game iframe

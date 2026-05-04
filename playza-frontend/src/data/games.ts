@@ -399,33 +399,6 @@ export const games: Game[] = [
     updatedAt: "2026-04-19T00:00:00Z",
   },
   {
-    id: "17",
-    title: "Aim Trainer Pro",
-    slug: "aim-trainer-pro",
-    thumbnail: "/games/aim-trainer-pro.png",
-    iframeUrl: "/gameLib/Aim-Trainer-Pro/index.html",
-    category: "Action",
-    mode: "Quick Match",
-    entryFee: 400,
-    difficulty: "Hard",
-    durationInSeconds: 60,
-    status: "live",
-    activePlayers: 850,
-    ctaLabel: "Sharpen Aim",
-    badge: "NEW",
-    platformFeePercentage: 10,
-    howToPlay: {
-      controls:
-        "Mouse to aim, Left Click to shoot. 'R' to restart training session. Space to pause.",
-      rules:
-        "Hit as many targets as possible within 60 seconds. Targets shrink over time. Missing a target reduces your accuracy percentage.",
-      scoring:
-        "Points awarded per hit. Smaller targets give more points. Final score is (Hits * Accuracy).",
-    },
-    createdAt: "2026-04-20T00:00:00Z",
-    updatedAt: "2026-04-20T00:00:00Z",
-  },
-  {
     id: "18",
     title: "Sliding Puzzle",
     slug: "sliding-puzzle",
