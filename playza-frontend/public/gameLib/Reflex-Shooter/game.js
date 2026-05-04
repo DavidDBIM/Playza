@@ -14,6 +14,27 @@ let timerInterval = null;
 let spawnInterval = null;
 let gameLoopInterval = null;
 
+// Audio System (Web Audio API)
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function playTone(freq, type, duration, vol=0.1) {
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+  gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + duration);
+}
+function playHitSound() { playTone(880, 'sine', 0.1, 0.15); setTimeout(() => playTone(1200, 'sine', 0.15, 0.1), 30); }
+function playMissSound() { playTone(150, 'sawtooth', 0.3, 0.2); }
+function playBombSound() { playTone(100, 'square', 0.5, 0.3); }
+function playGoldenSound() { playTone(1200, 'triangle', 0.1, 0.2); setTimeout(() => playTone(1600, 'triangle', 0.3, 0.2), 100); }
+function playFrenzySound() { playTone(400, 'square', 0.1, 0.1); setTimeout(() => playTone(600, 'square', 0.1, 0.1), 100); setTimeout(() => playTone(800, 'square', 0.4, 0.1), 200); }
+
 // Constants
 const GAME_DURATION = 45;
 const INITIAL_AMMO = 30;
@@ -44,7 +65,9 @@ const btnPlayAgain = document.getElementById("btnPlayAgain");
 
 // Events
 btnStart.addEventListener("click", startGame);
-btnPlayAgain.addEventListener("click", startGame);
+btnPlayAgain.addEventListener("click", () => {
+  if (window.parent) window.parent.postMessage({ type: 'EXIT_GAME' }, '*');
+});
 
 // Prevent context menu (right click) on arena
 arena.addEventListener("contextmenu", e => e.preventDefault());
@@ -342,6 +365,7 @@ function fireShot(isHit, targetEl, mouseX, mouseY) {
       score = Math.max(0, score - 500);
       showHitPopup(mouseX, mouseY, "-5s", "negative");
       shakeScreen();
+      playBombSound();
     } else if (type === "golden") {
       timeLeft += 2;
       ammo += 5;
@@ -349,15 +373,18 @@ function fireShot(isHit, targetEl, mouseX, mouseY) {
       multiplier = Math.min(2.0, 1 + (combo * 0.1));
       score += Math.floor(basePts * multiplier * 300);
       showHitPopup(mouseX, mouseY, "+2s / +5 Ammo", "positive");
+      playGoldenSound();
     } else {
       ammo++; // dynamic ammo: hit restores 1
       combo++;
       multiplier = Math.min(2.0, 1 + (combo * 0.1));
+      playHitSound();
       
       if (combo >= 10 && frenzyTimer <= 0) {
          frenzyTimer = 5000;
          arena.classList.add("frenzy-mode");
          showHitPopup(mouseX, mouseY - 40, "FRENZY!", "positive");
+         playFrenzySound();
       }
 
       let gained = Math.floor(basePts * multiplier * 100);
@@ -371,6 +398,7 @@ function fireShot(isHit, targetEl, mouseX, mouseY) {
     multiplier = 1.0;
     ammo--; // dynamic ammo: miss costs additional 1 (total 2)
     shakeScreen();
+    playMissSound();
   }
 
   updateHUD();
@@ -405,6 +433,19 @@ function updateHUD() {
 
   if (ammo < 5) elAmmoBox.classList.add("danger");
   else elAmmoBox.classList.remove("danger");
+
+  // Send live payout multiplier to parent
+  const acc = shotsFired > 0 ? Math.round((hits / shotsFired) * 100) : 0;
+  let currMult = 0;
+  if (shotsFired >= 3) {
+    if (acc >= 90) currMult = 2.0;
+    else if (acc >= 75) currMult = 1.5;
+    else if (acc >= 50) currMult = 1.2;
+    else currMult = 0.0;
+  }
+  if (window.parent) {
+    window.parent.postMessage({ type: 'SCORE_UPDATE', payload: { multiplier: currMult } }, '*');
+  }
 }
 
 function shakeScreen() {
