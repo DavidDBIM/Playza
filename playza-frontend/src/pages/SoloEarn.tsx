@@ -74,7 +74,7 @@ const SoloEarn = () => {
   }
 
   if (view === 'playing' && selectedGame) {
-    return <GameArenaLayout game={selectedGame} onResult={handleGameEnd} />;
+    return <GameArenaLayout game={selectedGame} onResult={handleGameEnd} onExit={() => setView('setup')} />;
   }
 
   if (view === 'results' && selectedGame) {
@@ -112,7 +112,7 @@ const SoloEarn = () => {
           <h2 className="font-heading font-black text-lg text-white uppercase tracking-wider">Available Challenges</h2>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
           {soloGames.map(game => (
             <SoloGameCard key={game.id} game={game} onSelect={handleSelectGame} />
           ))}

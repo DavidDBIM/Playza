@@ -2,9 +2,10 @@ import { useState, useEffect } from "react";
 import { X, Loader2, Maximize, Minimize } from "lucide-react";
 import type { GameProps } from "./types";
 
-export const GameArenaLayout = ({ game,  onResult }: GameProps) => {
+export const GameArenaLayout = ({ game, onResult, onExit }: GameProps & { onExit?: () => void }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [liveMultiplier, setLiveMultiplier] = useState(0);
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -38,6 +39,7 @@ export const GameArenaLayout = ({ game,  onResult }: GameProps) => {
   // --- IFRAME TO REACT COMMUNICATION LOGIC ---
   // The HTML5 game runs in an isolated iframe. When a game completes, it calls window.parent.postMessage()
   // passing { type: 'GAME_OVER', payload: { multiplier } }.
+  // It also passes { type: 'SCORE_UPDATE', payload: { multiplier } } continuously to update UI.
   // This listener securely catches that message and passes the multiplier up to the parent component.
   useEffect(() => {
     const handleMessage = (e: MessageEvent) => {
@@ -45,20 +47,39 @@ export const GameArenaLayout = ({ game,  onResult }: GameProps) => {
         const payloadMultiplier = e.data.payload?.multiplier || 0;
         const cappedMultiplier = Math.min(Math.max(payloadMultiplier, 0), 2.0);
         onResult?.(cappedMultiplier);
+      } else if (e.data?.type === 'SCORE_UPDATE') {
+        const payloadMultiplier = e.data.payload?.multiplier || 0;
+        const cappedMultiplier = Math.min(Math.max(payloadMultiplier, 0), 2.0);
+        setLiveMultiplier(cappedMultiplier);
+      } else if (e.data?.type === 'EXIT_GAME') {
+        onExit?.();
       }
     };
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [onResult]);
+  }, [onResult, onExit]);
 
   return (
     <div className="fixed inset-0 z-200 bg-black flex flex-col overflow-hidden">
       <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-100 pointer-events-none">
-        <div className="bg-black/60 backdrop-blur-md px-2 md:px-4 py-2 rounded-full border border-white/10 shadow-xl flex items-center gap-2 md:gap-3">
-          <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-          <span className="text-[10px] font-black uppercase tracking-widest text-white/80 italic">
-            {game.title} - SOLO RUN
-          </span>
+        <div className="flex items-center gap-2 md:gap-4">
+          <div className="bg-black/60 backdrop-blur-md px-3 md:px-5 py-2 md:py-3 rounded-full border border-white/10 shadow-xl flex items-center gap-2 md:gap-3 hidden sm:flex">
+            <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+            <span className="text-[10px] md:text-xs font-black uppercase tracking-widest text-white/80 italic">
+              {game.title}
+            </span>
+          </div>
+
+          <div className="bg-black/60 backdrop-blur-md px-3 md:px-5 py-2 md:py-3 rounded-full border border-primary/30 shadow-[0_0_15px_rgba(59,130,246,0.2)] flex items-center gap-2 md:gap-3">
+            <span className="text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-wider">Mult:</span>
+            <span className="text-sm md:text-lg font-black text-white w-12">{liveMultiplier.toFixed(2)}x</span>
+            <div className="w-20 md:w-32 h-1.5 md:h-2 bg-slate-800 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-primary transition-all duration-300 ease-out"
+                style={{ width: `${(liveMultiplier / 2.0) * 100}%` }}
+              ></div>
+            </div>
+          </div>
         </div>
 
         <div className="pointer-events-auto flex items-center gap-2 md:gap-3">
