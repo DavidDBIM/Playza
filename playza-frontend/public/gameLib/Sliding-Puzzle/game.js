@@ -636,6 +636,16 @@ const GameController = (() => {
 
     document.querySelector('.win-title').innerHTML = `TIME'S<br/><span class="accent">UP!</span>`;
 
+    // --- PLAYZA TOURNAMENT INTEGRATION ---
+    if (window.parent) {
+      window.parent.postMessage({
+        type: 'PLAYZA_SCORE_SUBMISSION',
+        payload: {
+          score: state.score
+        }
+      }, '*');
+    }
+
     showScreen('win');
   }
 
