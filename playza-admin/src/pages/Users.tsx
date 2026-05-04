@@ -7,7 +7,7 @@ import { UsersStats } from '../components/users/UsersStats';
 import { UsersToolbar } from '../components/users/UsersToolbar';
 import { UsersTable } from '../components/users/UsersTable';
 import { useAdminUsers, useDashboardMetrics } from '../hooks/use-admin';
-import type { UserRecord } from '../data/usersData';
+import type { UserRecord } from '../types/user';
 import type { UserAdmin } from '../types/admin';
 
 const Users: React.FC = () => {

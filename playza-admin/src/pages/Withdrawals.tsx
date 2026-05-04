@@ -25,7 +25,7 @@ import {
   TableRow 
 } from '../components/ui/table';
 import { withdrawalsData, withdrawalsStats } from '../data/withdrawalsData';
-import type { WithdrawalRecord } from '../data/withdrawalsData';
+import type { WithdrawalRecord } from '../types/withdrawal';
 
 const Withdrawals: React.FC = () => {
   const navigate = useNavigate();

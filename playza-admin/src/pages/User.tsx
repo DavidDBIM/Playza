@@ -33,7 +33,7 @@ import type {
   MatchRecord,
   TransactionRecord,
   ReferralRecord,
-} from "../data/usersData";
+} from "../types/user";
 
 const User: React.FC = () => {
   const { id } = useParams<{ id: string }>();
