@@ -4,19 +4,20 @@ import { QuickFeedback } from "../feedback/QuickFeedback";
 interface GameOverLeaderboardProps {
     score: number;
     playAgain: () => void;
-    position?: number;
+    rank?: number;
     onBackToSession?: () => void;
     gameName?: string;
 }
 
-const GameOverLeaderboard = ({ score, playAgain, position = 15, onBackToSession, gameName = "Current Game" }: GameOverLeaderboardProps) => {
+const GameOverLeaderboard = ({ score, playAgain, rank = 1, onBackToSession, gameName = "Current Game" }: GameOverLeaderboardProps) => {
+    const displayRank = rank;
     // Generate mock leaderboard based on the user's position
     const mockLeaderboard = [
-        { rank: position - 2, name: "CryptoKing99", score: score + 1250 },
-        { rank: position - 1, name: "NeonRider", score: score + 450 },
-        { rank: position, name: "You", score: score, isCurrentUser: true },
-        { rank: position + 1, name: "PixelStriker", score: score - 200 },
-        { rank: position + 2, name: "GamerXYZ", score: score - 850 }
+        { rank: displayRank - 2, name: "CryptoKing99", score: score + 1250 },
+        { rank: displayRank - 1, name: "NeonRider", score: score + 450 },
+        { rank: displayRank, name: "You", score: score, isCurrentUser: true },
+        { rank: displayRank + 1, name: "PixelStriker", score: score - 200 },
+        { rank: displayRank + 2, name: "GamerXYZ", score: score - 850 }
     ].filter(entry => entry.rank > 0);
 
     return (
