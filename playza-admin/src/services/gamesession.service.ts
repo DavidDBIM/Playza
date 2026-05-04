@@ -45,6 +45,11 @@ export const gameSessionService = {
   async getSessionDetails(sessionId: string) {
     const response = await apiClient.get(`/gamesession/sessions/${sessionId}/details`);
     return response.data;
+  },
+
+  async getGameSessions(gameId: string) {
+    const response = await apiClient.get(`/gamesession/games/${gameId}/sessions`);
+    return response.data;
   }
 };
 

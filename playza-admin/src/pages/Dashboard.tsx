@@ -15,7 +15,7 @@ import { GamingArenas } from '../components/dashboard/GamingArenas';
 import { LiquidityOverview } from '../components/dashboard/LiquidityOverview';
 import { useDashboardMetrics } from '../hooks/use-admin';
 import { formatNaira, formatNumber } from '../lib/utils';
-import type { MetricData } from '../data/adminData';
+import type { MetricData } from '../types/admin';
 
 const Dashboard: React.FC = () => {
   const { data: metrics, isLoading, isError } = useDashboardMetrics();

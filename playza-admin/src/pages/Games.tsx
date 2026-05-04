@@ -1,10 +1,13 @@
-import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router';
+import React, { useState, useMemo } from "react";
+import type { Game } from "../types/game";
+import { useNavigate } from "react-router";
 import { MdAddCircleOutline, MdGamepad } from "react-icons/md";
-import { games, gamesStats } from "../data/gamesData";
+import { gamesStats } from "../data/gamesData";
 import { GamesStats } from "../components/games/GamesStats";
 import { GamesToolbar } from "../components/games/GamesToolbar";
 import { GamesTable } from "../components/games/GamesTable";
+import { useGames } from "../hooks/use-games";
+import { Loader2 } from "lucide-react";
 
 const Games: React.FC = () => {
   const navigate = useNavigate();
@@ -12,13 +15,28 @@ const Games: React.FC = () => {
   const [categoryFilter, setCategoryFilter] = useState("All Categories");
   const [statusFilter, setStatusFilter] = useState("All Status");
 
+  const { data: gamesData, isLoading } = useGames();
+
+  const allGames = useMemo(() => {
+    const rawGames = (gamesData?.games || []) as Game[];
+    return rawGames.map((g) => ({
+      ...g,
+      thumbnail: g.thumbnail_url || g.thumbnail || "/games/placeholder.png",
+      isActive: g.is_active ?? false,
+      durationInSeconds: g.duration_seconds || 300,
+      platformFeePercentage: g.platform_fee_percentage || 10,
+      createdAt: g.created_at || new Date().toISOString(),
+      updatedAt: g.created_at || new Date().toISOString(),
+    }));
+  }, [gamesData]);
+
   const filteredGames = useMemo(() => {
-    return games.filter((game) => {
+    return allGames.filter((game: Game) => {
       const searchLower = searchQuery.toLowerCase();
       const matchesSearch =
         game.title.toLowerCase().includes(searchLower) ||
-        game.id.toLowerCase().includes(searchLower) ||
-        game.slug.toLowerCase().includes(searchLower);
+        (game.id && game.id.toLowerCase().includes(searchLower)) ||
+        (game.slug && game.slug.toLowerCase().includes(searchLower));
 
       const matchesCategory =
         categoryFilter === "All Categories" || game.category === categoryFilter;
@@ -28,7 +46,7 @@ const Games: React.FC = () => {
 
       return matchesSearch && matchesCategory && matchesStatus;
     });
-  }, [searchQuery, categoryFilter, statusFilter]);
+  }, [allGames, searchQuery, categoryFilter, statusFilter]);
 
   const clearFilters = () => {
     setSearchQuery("");
@@ -82,7 +100,16 @@ const Games: React.FC = () => {
 
         {/* Table */}
         <div className="relative z-10">
-          <GamesTable games={filteredGames} clearFilters={clearFilters} />
+          {isLoading ? (
+            <div className="py-20 flex flex-col items-center justify-center gap-4">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                Synchronizing Games Database...
+              </p>
+            </div>
+          ) : (
+            <GamesTable games={filteredGames} clearFilters={clearFilters} />
+          )}
         </div>
 
         {/* Info Footer */}
