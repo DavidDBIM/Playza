@@ -72,20 +72,25 @@ const SignIn: React.FC = () => {
     setError(null);
 
     try {
-      const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/auth/admin/verify-mfa`, {
-        email,
-        code: mfaCode
-      });
+      const { data } = await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/auth/admin/verify-mfa`,
+        {
+          email,
+          code: mfaCode,
+        },
+      );
 
       if (data.success) {
         if (data.data.access_token) {
-           localStorage.setItem("admin_token", data.data.access_token);
-           localStorage.setItem("admin_user", JSON.stringify(data.data.user));
-           localStorage.setItem("admin_login_time", Date.now().toString());
-           navigate("/");
+          localStorage.setItem("admin_token", data.data.access_token);
+          localStorage.setItem("admin_user", JSON.stringify(data.data.user));
+          localStorage.setItem("admin_login_time", Date.now().toString());
+          navigate("/");
         } else {
           // Fallback if token isn't in response yet (due to our backend simplicity)
-          setError("Verification successful. Please sign in again to activate your session.");
+          setError(
+            "Verification successful. Please sign in again to activate your session.",
+          );
           setMfaRequired(false);
         }
       }
@@ -103,12 +108,12 @@ const SignIn: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden bg-[#050506]">
+    <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden bg-[#050506] selection:bg-primary/30">
       {/* Dynamic Background Elements */}
       <div
         className="absolute inset-0 z-0"
         style={{
-          backgroundImage: `radial-gradient(circle at 50% 50%, rgba(20, 20, 30, 0.4) 0%, rgba(5, 5, 6, 1) 100%), url(${loginBg})`,
+          backgroundImage: `radial-gradient(circle at 50% 50%, rgba(20, 20, 30, 0.4) 0%, #050506 100%), url(${loginBg})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
           filter: "brightness(0.3) saturate(1.4)",
@@ -118,27 +123,37 @@ const SignIn: React.FC = () => {
       {/* Animated Mesh Gradients */}
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 rounded-full blur-[150px] animate-pulse" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-600/10 rounded-full blur-[150px] animate-pulse delay-1000" />
-      
+
       {/* Decorative Grid */}
-      <div className="absolute inset-0 z-0 opacity-10" style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+      <div
+        className="absolute inset-0 z-0 opacity-10"
+        style={{
+          backgroundImage:
+            "linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)",
+          backgroundSize: "40px 40px",
+        }}
+      />
 
       {/* Main Content */}
       <div className="relative z-10 w-full max-w-120 px-4 py-12">
         <div className="mb-10 text-center space-y-4">
           <div className="relative inline-block group">
             <div className="absolute -inset-4 bg-linear-to-tr from-primary to-purple-600 rounded-3xl blur-2xl opacity-20 group-hover:opacity-40 transition-opacity duration-700" />
-            <div className="relative flex items-center justify-center w-20 h-20 rounded-2xl bg-[#0A0A0B] border border-white/10 shadow-2xl transition-transform hover:scale-105 duration-500 overflow-hidden">
-                {/* Internal Glow */}
-                <div className="absolute inset-0 bg-linear-to-br from-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <span className="text-4xl font-black text-white italic tracking-tighter relative z-10">
-                  P
-                </span>
+            <div className="relative flex items-center justify-center w-20 h-20 rounded-2xl bg-slate-900 border border-white/10 shadow-2xl transition-transform hover:scale-105 duration-500 overflow-hidden">
+              {/* Internal Glow */}
+              <div className="absolute inset-0 bg-linear-to-br from-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <span className="text-4xl font-black text-white italic tracking-tighter relative z-10">
+                P
+              </span>
             </div>
           </div>
-          
+
           <div className="space-y-1">
             <h1 className="text-5xl font-headline font-black text-white tracking-tighter flex items-center justify-center gap-3">
-              PLAYZA <span className="text-primary italic drop-shadow-[0_0_15px_rgba(var(--primary),0.5)]">EMPIRE</span>
+              PLAYZA{" "}
+              <span className="text-primary italic drop-shadow-[0_0_15px_rgba(var(--primary),0.5)]">
+                EMPIRE
+              </span>
             </h1>
             <div className="flex items-center justify-center gap-2">
               <div className="h-px w-8 bg-linear-to-r from-transparent to-white/20" />
@@ -153,12 +168,12 @@ const SignIn: React.FC = () => {
         <div className="relative group">
           {/* Card Outer Glow/Border */}
           <div className="absolute -inset-px bg-linear-to-b from-white/20 via-white/5 to-white/10 rounded-2xl blur-px group-hover:from-primary/30 transition-all duration-500" />
-          
-          <div className="relative glass-card rounded-2xl p-8 lg:p-10 border border-white/5 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.8)] overflow-hidden bg-[#0A0A0B]/80 backdrop-blur-3xl">
+
+          <div className="relative bg-slate-950/80 backdrop-blur-3xl rounded-2xl p-8 lg:p-10 border border-white/10 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] overflow-hidden">
             {/* Ambient Light Effect */}
             <div className="absolute -top-24 -left-24 w-48 h-48 bg-primary/10 rounded-full blur-[60px] pointer-events-none" />
             <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-purple-600/10 rounded-full blur-[60px] pointer-events-none" />
-            
+
             {/* Subtle Scanline Overlay */}
             <div className="absolute inset-0 bg-linear-to-b from-transparent via-white/2 to-transparent bg-size-[100%_4px] animate-scanline pointer-events-none" />
 
@@ -166,7 +181,7 @@ const SignIn: React.FC = () => {
               <div className="flex items-center justify-between mb-10">
                 <div className="flex items-center gap-3">
                   <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_10px_rgba(var(--primary),0.8)]" />
-                  <span className="text-[10px] font-black uppercase tracking-[0.25em] text-white/60">
+                  <span className="text-[10px] font-black uppercase tracking-[0.25em] text-white/40">
                     System Authentication
                   </span>
                 </div>
@@ -183,7 +198,9 @@ const SignIn: React.FC = () => {
                     <MdWarning className="text-rose-500 text-sm shrink-0" />
                   </div>
                   <div className="space-y-1">
-                    <p className="text-[10px] font-black text-rose-500/60 uppercase tracking-widest">Access Rejected</p>
+                    <p className="text-[10px] font-black text-rose-500/60 uppercase tracking-widest">
+                      Access Rejected
+                    </p>
                     <p className="text-xs font-bold text-rose-200 tracking-tight leading-snug">
                       {error}
                     </p>
@@ -196,18 +213,20 @@ const SignIn: React.FC = () => {
                   <div className="space-y-3">
                     <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 ml-1 flex justify-between items-center">
                       <span>Admin ID</span>
-                      <span className="text-[8px] text-white/10 italic">Secure Input</span>
+                      <span className="text-[8px] text-white/10 italic">
+                        Secure Input
+                      </span>
                     </label>
                     <div className="relative group/input">
-                      <div className="absolute inset-0 bg-white/2 rounded-xl group-focus-within/input:bg-primary/3 transition-colors" />
-                      <MdEmail className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within/input:text-primary transition-colors duration-300" />
+                      <div className="absolute inset-0 bg-white/5 rounded-xl group-focus-within/input:bg-primary/5 transition-colors pointer-events-none" />
+                      <MdEmail className="-translate-y-1/2 absolute left-4 top-1/2 text-white/40 group-focus-within/input:text-primary transition-colors duration-300 z-20" />
                       <Input
                         type="email"
                         placeholder="ADMINISTRATOR@PLAYZA.EMPIRE"
                         required
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="bg-transparent border-white/5 h-14 pl-12 text-white placeholder:text-white/10 focus:border-primary/30 transition-all rounded-xl font-bold tracking-wide"
+                        className="bg-transparent border-white/10 h-14 pl-12 text-white placeholder:text-white/10 focus:border-primary/30 transition-all rounded-xl font-bold tracking-wide relative z-10"
                       />
                     </div>
                   </div>
@@ -225,20 +244,20 @@ const SignIn: React.FC = () => {
                       </button>
                     </div>
                     <div className="relative group/input">
-                      <div className="absolute inset-0 bg-white/2 rounded-xl group-focus-within/input:bg-primary/3 transition-colors" />
-                      <MdLock className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within/input:text-primary transition-colors duration-300" />
+                      <div className="absolute inset-0 bg-white/5 rounded-xl group-focus-within/input:bg-primary/5 transition-colors pointer-events-none" />
+                      <MdLock className="-translate-y-1/2 absolute left-4 top-1/2 text-white/40 group-focus-within/input:text-primary transition-colors duration-300 z-20" />
                       <Input
                         type={showPassword ? "text" : "password"}
                         placeholder="••••••••••••"
                         required
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="bg-transparent border-white/5 h-14 pl-12 pr-12 text-white placeholder:text-white/10 focus:border-primary/30 transition-all rounded-xl font-bold tracking-[0.3em]"
+                        className="bg-transparent border-white/10 h-14 pl-12 pr-12 text-white placeholder:text-white/10 focus:border-primary/30 transition-all rounded-xl font-bold tracking-[0.3em] relative z-10"
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 hover:text-white transition-colors"
+                        className="-translate-y-1/2 absolute right-4 top-1/2 text-white/40 hover:text-white transition-colors z-20"
                       >
                         {showPassword ? <MdVisibilityOff /> : <MdVisibility />}
                       </button>
@@ -253,7 +272,19 @@ const SignIn: React.FC = () => {
                         className="peer w-5 h-5 rounded-lg border-white/10 bg-white/5 text-primary focus:ring-offset-0 focus:ring-primary/20 cursor-pointer appearance-none checked:bg-primary checked:border-primary transition-all"
                       />
                       <div className="absolute pointer-events-none opacity-0 peer-checked:opacity-100 text-white flex items-center justify-center w-5 h-5">
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M5 13l4 4L19 7"></path></svg>
+                        <svg
+                          className="w-3.5 h-3.5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="4"
+                            d="M5 13l4 4L19 7"
+                          ></path>
+                        </svg>
                       </div>
                     </div>
                     <label
@@ -269,7 +300,7 @@ const SignIn: React.FC = () => {
                     disabled={isLoading}
                     className="w-full h-14 bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white font-black uppercase tracking-[0.2em] rounded-xl shadow-[0_10px_30px_rgba(var(--primary),0.3)] group/btn overflow-hidden relative border border-white/10"
                   >
-                    <div className="absolute inset-0 bg-linear-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover/btn:animate-shimmer" />
+                    <div className="-translate-x-full absolute inset-0 bg-linear-to-r from-white/0 via-white/10 to-white/0 group-hover/btn:animate-shimmer" />
                     <span className="relative flex items-center justify-center gap-3">
                       {isLoading ? (
                         <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -293,10 +324,10 @@ const SignIn: React.FC = () => {
                         Security token dispatched to registered comms.
                       </p>
                     </div>
-                    
+
                     <div className="relative group/input">
-                      <div className="absolute inset-0 bg-white/2 rounded-xl group-focus-within/input:bg-emerald-500/3 transition-colors" />
-                      <MdSecurity className="absolute left-5 top-1/2 -translate-y-1/2 text-white/20 group-focus-within/input:text-emerald-500 transition-colors duration-300" />
+                      <div className="absolute inset-0 bg-muted rounded-xl group-focus-within/input:bg-emerald-500/3 transition-colors pointer-events-none" />
+                      <MdSecurity className="-translate-y-1/2 absolute left-5 top-1/2 text-white/20 group-focus-within/input:text-emerald-500 transition-colors duration-300" />
                       <Input
                         type="text"
                         placeholder="000000"
@@ -304,7 +335,7 @@ const SignIn: React.FC = () => {
                         maxLength={6}
                         value={mfaCode}
                         onChange={(e) => setMfaCode(e.target.value)}
-                        className="bg-transparent border-white/5 h-16 pl-14 text-center text-3xl font-black tracking-[0.8em] text-white placeholder:text-white/5 focus:border-emerald-500/30 transition-all rounded-xl"
+                        className="bg-transparent border-border h-16 pl-14 text-center text-3xl font-black tracking-[0.8em] text-foreground placeholder:text-muted-foreground focus:border-emerald-500/30 transition-all rounded-xl"
                       />
                     </div>
                   </div>
@@ -314,7 +345,7 @@ const SignIn: React.FC = () => {
                     disabled={isLoading}
                     className="w-full h-14 bg-linear-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black uppercase tracking-[0.2em] rounded-xl shadow-[0_10px_30px_rgba(16,185,129,0.2)] group/btn overflow-hidden relative border border-white/10"
                   >
-                    <div className="absolute inset-0 bg-linear-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover/btn:animate-shimmer" />
+                    <div className="-translate-x-full absolute inset-0 bg-linear-to-r from-white/0 via-white/10 to-white/0 group-hover/btn:animate-shimmer" />
                     <span className="relative flex items-center justify-center gap-3">
                       {isLoading ? (
                         <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -339,24 +370,24 @@ const SignIn: React.FC = () => {
             </div>
           </div>
         </div>
-        
+
         {/* Footer info */}
         <div className="mt-12 text-center space-y-2 opacity-30 group-hover:opacity-60 transition-opacity">
-            <p className="text-[9px] font-black uppercase tracking-[0.5em] text-white">
-                Playza OS v4.2.0-ADMIN
-            </p>
-            <p className="text-[8px] font-medium text-white/50">
-                Authorized Personnel Only • All Connections Monitored
-            </p>
+          <p className="text-[9px] font-black uppercase tracking-[0.5em] text-foreground">
+            Playza OS v4.2.0-ADMIN
+          </p>
+          <p className="text-[8px] font-medium text-muted-foreground">
+            Authorized Personnel Only • All Connections Monitored
+          </p>
         </div>
       </div>
 
       {/* Side Decorative Text */}
       <div className="fixed top-0 left-0 w-full h-full pointer-events-none overflow-hidden z-0 select-none">
-        <div className="absolute top-[10%] left-[2%] text-[140px] font-black text-white/2 italic tracking-tighter leading-none">
+        <div className="absolute top-[10%] left-[2%] text-[140px] font-black text-foreground/5 italic tracking-tighter leading-none">
           SYSTEM
         </div>
-        <div className="absolute bottom-[10%] right-[2%] text-[140px] font-black text-white/2 italic tracking-tighter leading-none">
+        <div className="absolute bottom-[10%] right-[2%] text-[140px] font-black text-foreground/5 italic tracking-tighter leading-none">
           EMPIRE
         </div>
       </div>
