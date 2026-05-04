@@ -103,6 +103,14 @@ const AppContent = () => {
       pathname.split("/").filter(Boolean).length >= 3);
   const isRegistrationPage = pathname.includes("/registration");
   const isSpinActive = searchParams.get("spin") === "true";
+  const showFeedback = [
+    "/play", 
+    "/wallet", 
+    "/h2h", 
+    "/tournaments", 
+    "/referral",
+    "/profile/settings"
+  ].some(path => pathname.includes(path)) || pathname === "/";
 
   // Wrap navigate calls in startTransition so the browser stays responsive
   const handleWithdrawClick = () => {
@@ -160,7 +168,9 @@ const AppContent = () => {
       <NotificationBanner />
       <NotificationBanner />
 
-      {!isRegistrationPage && !pathname.includes("/reset-password") && <FloatingFeedbackButton />}
+      {!isRegistrationPage && !pathname.includes("/reset-password") && showFeedback && (
+        <FloatingFeedbackButton />
+      )}
 
       <div
         className={
