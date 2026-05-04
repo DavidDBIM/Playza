@@ -44,31 +44,35 @@ export type Game = {
   title: string;
   slug: string;
   thumbnail: string;
-  thumbnail_url?: string; // Real database field
+  thumbnail_url?: string; // Backend field
 
   category: "Arcade" | "Action" | "Strategy" | "Puzzle" | "Trivia" | "Adventure";
   mode: "1v1" | "Tournament" | "Quick Match" | "Multiplayer" | "Arcade" | "Adventure";
 
   entryFee: number;
   platformFeePercentage: number;
+  platform_fee_percentage?: number; // Backend field
   difficulty: "Easy" | "Medium" | "Hard";
   durationInSeconds: number;
+  duration_seconds?: number; // Backend field
 
   activePlayers: number;
 
   status: "live" | "upcoming" | "ended" | "coming soon" | "not starting soon";
-  is_active?: boolean; // Real database field
+  is_active?: boolean; // Backend field
   ctaLabel: string;
 
   badge: GameBadge;
 
-  iframeUrl?: string; // Optional URL for the game iframe
+  iframeUrl?: string;
+  iframe_url?: string; // Backend field
   howToPlay?: {
     controls: string;
     rules: string;
     scoring: string;
   };
   createdAt: string;
+  created_at?: string; // Backend field
   updatedAt: string;
 };
 
@@ -151,12 +155,18 @@ export interface Session {
   id: string;
   title: string;
   entryFee: number;
+  entry_fee?: number; // Backend field
   playersJoined: number;
   maxPlayers: number;
+  max_players?: number; // Backend field
   prizePool: string;
+  pool_amount?: number; // Backend field
   startTime: string;
+  start_time?: string; // Backend field
   endTime: string;
+  end_time?: string; // Backend field
   status: "live" | "upcoming" | "starting soon" | "ended";
   type: "tournament" | "daily";
   winnersCount?: number;
+  winners_count?: number; // Backend field
 }
