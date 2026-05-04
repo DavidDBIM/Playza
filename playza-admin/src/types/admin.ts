@@ -117,3 +117,75 @@ export interface PaginatedResponse<T, K extends string> {
     pages: number;
   };
 }
+
+export interface AmbassadorApplicationAdmin {
+  id: string;
+  full_name: string;
+  email: string;
+  users?: { username?: string };
+  qualification_type: string;
+  follower_count?: number;
+  platforms?: string[];
+  status: "pending" | "approved" | "rejected" | string;
+  created_at: string | Date;
+  admin_note?: string;
+  phone?: string;
+  content_niche?: string;
+  social_handles?: Record<string, string>;
+  motivation: string;
+  reviewed_at?: string | Date;
+}
+
+export interface PayoutRequestAdmin {
+  id: string;
+  users?: {
+    username: string;
+    email: string;
+    wallet?: { balance: number };
+  };
+  amount: number;
+  status: "pending" | "approved" | "rejected" | string;
+  created_at: string | Date;
+  admin_note?: string;
+}
+
+export interface UserHistoryItem {
+  id: string;
+  event_type: string;
+  points_awarded: number;
+  details?: Record<string, unknown>;
+  meta?: Record<string, unknown>;
+  created_at: string | Date;
+}
+
+export interface TransactionAdmin {
+  id: string;
+  users?: { username?: string };
+  type: "withdrawal" | "deposit" | "game_entry" | "winnings" | string;
+  amount: number;
+  status: "success" | "successful" | "pending" | "failed" | string;
+  reference: string;
+  created_at: string | Date;
+}
+
+export interface AdminLoginResponse {
+  mfa_required?: boolean;
+  access_token?: string;
+  user?: {
+    id?: string;
+    username?: string;
+    email?: string;
+    role?: string;
+    [key: string]: unknown;
+  };
+}
+
+export interface DashboardMetrics {
+  total_users: number;
+  active_users: number;
+  total_deposited: number;
+  total_withdrawn: number;
+  platform_profit: number;
+  pending_withdrawals_count: number;
+  referral_conversion_rate: string;
+}

@@ -212,8 +212,8 @@ export const LoyaltyLog = ({ data }: { data: UserHistoryItem[] }) => (
             </TableCell>
             <TableCell className="px-5 py-3.5 text-right">
               <div className="flex flex-col items-end gap-1">
-                {Object.entries(event.details || (event as any).meta || {}).length > 0 ? (
-                  Object.entries(event.details || (event as any).meta || {}).map(([key, val]) => (
+                {Object.entries(event.details || event.meta || {}).length > 0 ? (
+                  Object.entries(event.details || event.meta || {}).map(([key, val]) => (
                     <div key={key} className="flex items-center gap-1.5 bg-muted/50 px-2 py-0.5 rounded-md border border-border/50">
                       <span className="text-[8px] font-black text-muted-foreground/60 uppercase tracking-tighter">{key}:</span>
                       <span className="text-[9px] font-black text-foreground uppercase tracking-tight">{String(val)}</span>

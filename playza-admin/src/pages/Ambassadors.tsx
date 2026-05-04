@@ -29,7 +29,7 @@ const QUAL_COLORS: Record<string, string> = {
   referral_100:
     "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300",
 };
-const STATUS_CONFIG = {
+const STATUS_CONFIG: Record<string, { label: string; icon: React.ReactNode; cls: string }> = {
   pending: {
     label: "Pending",
     icon: <MdPending />,
