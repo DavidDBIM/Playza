@@ -33,8 +33,9 @@ export const useIdleTimeout = (timeoutMinutes: number = 15) => {
       'click'
     ];
 
-    // Initial setup
-    setupTimeout();
+    // Initial setup — delay first timeout to avoid firing on page load
+    // Give 30 extra seconds grace on first load before idle kicks in
+    timeoutId = setTimeout(handleLogout, (timeoutMinutes * 60 + 30) * 1000);
 
     // Attach listeners
     events.forEach(event => {
