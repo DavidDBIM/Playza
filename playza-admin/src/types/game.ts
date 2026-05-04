@@ -1,0 +1,48 @@
+export type Session = {
+  id: string;
+  title: string;
+  type: string;
+  status: string;
+  pool_amount: number;
+  entry_fee: number;
+  start_time: string;
+  end_time: string;
+  max_players: number;
+};
+
+export type GameBadge =
+  | "HOT"
+  | "NEW"
+  | "POPULAR"
+  | "TRENDING"
+  | "HIGH_STAKES"
+  | null;
+
+export type Game = {
+  id: string;
+  title: string;
+  slug: string;
+  thumbnail: string;
+  thumbnail_url?: string;
+
+  category: "Arcade" | "Action" | "Strategy" | "Puzzle" | "Trivia" | string;
+  mode: "1v1" | "Tournament" | "Quick Match" | "Multiplayer" | string;
+
+  entryFee: number;
+  platformFeePercentage: number;
+  platform_fee_percentage?: number;
+  difficulty: "Easy" | "Medium" | "Hard" | string;
+  durationInSeconds: number;
+  duration_seconds?: number;
+
+  activePlayers: number;
+
+  isActive: boolean;
+  is_active?: boolean;
+  ctaLabel: string;
+  badge: GameBadge;
+
+  createdAt: string;
+  created_at?: string;
+  updatedAt: string;
+};
