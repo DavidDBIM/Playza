@@ -29,13 +29,14 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Don't redirect if we are already on signin page
-      if (!window.location.pathname.includes('/signin')) {
-        localStorage.removeItem("admin_token");
-        localStorage.removeItem("admin_user");
-        localStorage.removeItem("admin_login_time");
-        window.location.href = "/signin";
-      }
+      console.error("[Auth Interceptor] 401 Unauthorized received from API. URL:", error.config?.url);
+      // Temporarily disabling auto-redirect to prevent redirect loops and allow UI error states to show
+      // if (!window.location.pathname.includes('/signin')) {
+      //   localStorage.removeItem("admin_token");
+      //   localStorage.removeItem("admin_user");
+      //   localStorage.removeItem("admin_login_time");
+      //   window.location.href = "/signin";
+      // }
     }
     return Promise.reject(error);
   },
