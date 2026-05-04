@@ -106,7 +106,7 @@ const FullGame = () => {
         </section>
       ) : (
         <div className="space-y-4">
-          {groupedGames &&
+          {groupedGames && Object.keys(groupedGames).length > 0 ? (
             Object.entries(groupedGames).map(([category, games]) => (
               <CategoryRow
                 key={category}
@@ -115,7 +115,30 @@ const FullGame = () => {
                 games={games.slice(0, 8)}
                 totalGames={games.length}
               />
-            ))}
+            ))
+          ) : (
+            <div className="py-32 flex flex-col items-center justify-center text-center space-y-6 animate-in fade-in zoom-in duration-700">
+              <div className="relative">
+                <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full" />
+                <div className="relative size-24 md:size-32 bg-slate-900/50 backdrop-blur-xl border border-white/10 rounded-3xl flex items-center justify-center shadow-2xl">
+                  <span className="text-5xl md:text-6xl animate-pulse">🕹️</span>
+                </div>
+              </div>
+              <div className="space-y-2 max-w-sm px-6">
+                <h2 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white uppercase italic tracking-tighter">
+                  Arena Maintenance
+                </h2>
+                <p className="text-slate-500 dark:text-slate-400 text-[10px] md:text-xs font-bold leading-relaxed uppercase tracking-widest">
+                  The gaming sector is currently undergoing a scheduled systems upgrade. New challenges are being calibrated.
+                </p>
+              </div>
+              <div className="flex gap-2">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="size-1.5 rounded-full bg-primary/30 animate-bounce" style={{ animationDelay: `${i * 0.2}s` }} />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </main>
