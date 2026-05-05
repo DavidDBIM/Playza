@@ -36,6 +36,7 @@ export type Game = {
   duration_seconds?: number;
 
   activePlayers: number;
+  unique_players?: number;
 
   isActive: boolean;
   is_active?: boolean;

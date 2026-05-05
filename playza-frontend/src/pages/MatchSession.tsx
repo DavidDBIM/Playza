@@ -154,7 +154,9 @@ const MatchSession = () => {
   const activeTabContent = tabContent.find((item) => item.tab === currentTab);
 
   // Dynamic Prize Distribution (calculated from net pool)
-  const netPool = Number(session.pool_amount || 0);
+  const platformFeePercent = Number(game?.platform_fee_percentage || 10);
+  const netPool =
+    Number(session.pool_amount || 0) * (1 - platformFeePercent / 100);
   const prizes = [
     {
       label: "Grand Prize",
@@ -290,7 +292,7 @@ const MatchSession = () => {
               <div className="text-center pt-2">
                 <p className="text-[10px] text-slate-500 italic uppercase font-bold">
                   Top 5 split the Net Prize Pool (
-                  {session.platform_fee_percentage}% fee applied)
+                  {game.platform_fee_percentage || 10}% fee applied)
                 </p>
               </div>
             </div>

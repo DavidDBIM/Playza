@@ -1,11 +1,42 @@
 import { supabaseAdmin as supabase } from '../../config/supabase'
 
 export async function getAllGames() {
-  const { data, error } = await supabase
+  const { data: games, error } = await supabase
     .from('games')
     .select('*')
     .order('created_at', { ascending: false })
   
+  if (error) throw error
+
+  // Enhance games with unique player counts
+  const gamesWithStats = await Promise.all(games.map(async (game) => {
+    // Get unique players across all sessions for this game
+    const { data: leaderboardData, error: lErr } = await supabase
+      .from('game_leaderboard')
+      .select('user_id')
+      .in('session_id', (
+        await supabase.from('game_sessions').select('id').eq('game_id', game.id)
+      ).data?.map(s => s.id) || [])
+
+    const uniquePlayers = new Set(leaderboardData?.map(l => l.user_id)).size;
+
+    return {
+      ...game,
+      unique_players: uniquePlayers
+    }
+  }))
+
+  return gamesWithStats
+}
+
+export async function retireGame(gameId: string, status: boolean) {
+  const { data, error } = await supabase
+    .from('games')
+    .update({ is_active: status })
+    .eq('id', gameId)
+    .select()
+    .single()
+
   if (error) throw error
   return data
 }
@@ -484,7 +515,23 @@ export async function getSessionDetails(sessionId: string) {
 
   if (rError) throw rError
 
-  return { success: true, session, roster }
+  // Financial Breakdown for Admin
+  const gross = Number(session.pool_amount || 0);
+  const platformFeePercentage = Number(session.games?.platform_fee_percentage || 10);
+  const platformFee = gross * (platformFeePercentage / 100);
+  const netPrizePool = gross - platformFee;
+
+  return { 
+    success: true, 
+    session, 
+    roster,
+    financials: {
+      gross,
+      platformFee,
+      netPrizePool,
+      platformFeePercentage
+    }
+  }
 }
 
 
