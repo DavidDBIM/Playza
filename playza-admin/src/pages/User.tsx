@@ -177,8 +177,10 @@ const User: React.FC = () => {
                event.event_type.toLowerCase().includes(searchQuery.toLowerCase());
       })
       .map(event => ({
-        ...event,
-        event_type: PZA_EVENT_LABELS[event.event_type] || event.event_type.replace(/_/g, ' ')
+        id: event.id,
+        points_awarded: event.points,
+        event_type: PZA_EVENT_LABELS[event.event_type] || event.event_type.replace(/_/g, ' '),
+        created_at: event.created_at
       }));
   }, [userDetails, searchQuery]);
 

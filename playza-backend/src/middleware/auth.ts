@@ -7,65 +7,76 @@ export interface AuthRequest extends Request {
 
 export async function requireAuth(req: AuthRequest, res: Response, next: NextFunction) {
   let token: string | undefined = req.cookies?.admin_token;
-  
-  if (!token) {
-    const header = req.headers.authorization;
-    if (header && header.startsWith('Bearer ')) {
-      token = header.split(' ')[1];
+  let user: any = null;
+
+  // 1. Try Cookie
+  if (token) {
+    const { data, error } = await supabaseAdmin.auth.getUser(token);
+    if (!error && data.user) {
+      user = data.user;
     }
   }
 
-  if (!token) {
-    res.status(401).json({ success: false, message: 'Unauthorized' })
-    return
+  // 2. Try Header Fallback if cookie failed or missing
+  if (!user) {
+    const header = req.headers.authorization;
+    if (header && header.startsWith("Bearer ")) {
+      token = header.split(" ")[1];
+      const { data, error } = await supabaseAdmin.auth.getUser(token);
+      if (!error && data.user) {
+        user = data.user;
+      }
+    }
   }
 
-  const { data, error } = await supabaseAdmin.auth.getUser(token)
-
-  if (error || !data.user) {
-    res.status(401).json({ success: false, message: 'Invalid or expired token' })
-    return
+  if (!user) {
+    return res.status(401).json({ success: false, message: "Invalid or expired token" });
   }
 
-  req.user = { id: data.user.id, email: data.user.email! }
-  next()
+  req.user = { id: user.id, email: user.email! };
+  next();
 }
 
 export async function requireAdmin(req: AuthRequest, res: Response, next: NextFunction) {
   let token: string | undefined = req.cookies?.admin_token;
-  
-  if (!token) {
-    const header = req.headers.authorization;
-    if (header && header.startsWith('Bearer ')) {
-      token = header.split(' ')[1];
+  let user: any = null;
+
+  // 1. Try Cookie
+  if (token) {
+    const { data, error } = await supabaseAdmin.auth.getUser(token);
+    if (!error && data.user) {
+      user = data.user;
     }
   }
 
-  if (!token) {
-    res.status(401).json({ success: false, message: 'Unauthorized' })
-    return
+  // 2. Try Header Fallback
+  if (!user) {
+    const header = req.headers.authorization;
+    if (header && header.startsWith("Bearer ")) {
+      token = header.split(" ")[1];
+      const { data, error } = await supabaseAdmin.auth.getUser(token);
+      if (!error && data.user) {
+        user = data.user;
+      }
+    }
   }
 
-  const { data, error } = await supabaseAdmin.auth.getUser(token)
-
-  if (error || !data.user) {
-    res.status(401).json({ success: false, message: 'Invalid or expired token' })
-    return
+  if (!user) {
+    return res.status(401).json({ success: false, message: "Invalid or expired token" });
   }
 
-  // Check role - assuming it's in user_metadata or we fetch from users table
+  // 3. Admin Role Check
   const { data: userProfile } = await supabaseAdmin
-    .from('users')
-    .select('role')
-    .eq('id', data.user.id)
-    .single()
+    .from("users")
+    .select("role")
+    .eq("id", user.id)
+    .single();
 
-  if (!userProfile || (userProfile.role !== 'admin' && userProfile.role !== 'superadmin')) {
-    res.status(403).json({ success: false, message: 'Forbidden: Admin access required' })
-    return
+  if (!userProfile || (userProfile.role !== "admin" && userProfile.role !== "superadmin")) {
+    return res.status(403).json({ success: false, message: "Forbidden: Admin access required" });
   }
 
-  req.user = { id: data.user.id, email: data.user.email! }
-  next()
+  req.user = { id: user.id, email: user.email! };
+  next();
 }
 

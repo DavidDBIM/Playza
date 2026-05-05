@@ -14,6 +14,7 @@ import { Button } from "../components/ui/button";
 import loginBg from "../assets/admin_login_bg.png";
 import axios from "axios";
 import { adminService } from "../services/admin-service";
+import { apiClient } from "../lib/api-client";
 
 const SignIn: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -72,8 +73,8 @@ const SignIn: React.FC = () => {
     setError(null);
 
     try {
-      const { data } = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/auth/admin/verify-mfa`,
+      const { data } = await apiClient.post(
+        `/auth/admin/verify-mfa`,
         {
           email,
           code: mfaCode,
@@ -326,8 +327,8 @@ const SignIn: React.FC = () => {
                     </div>
 
                     <div className="relative group/input">
-                      <div className="absolute inset-0 bg-muted rounded-xl group-focus-within/input:bg-emerald-500/3 transition-colors pointer-events-none" />
-                      <MdSecurity className="-translate-y-1/2 absolute left-5 top-1/2 text-white/20 group-focus-within/input:text-emerald-500 transition-colors duration-300" />
+                      <div className="absolute inset-0 bg-white/5 rounded-xl group-focus-within/input:bg-emerald-500/5 transition-colors pointer-events-none" />
+                      <MdSecurity className="-translate-y-1/2 absolute left-5 top-1/2 text-white/40 group-focus-within/input:text-emerald-500 transition-colors duration-300 z-20" />
                       <Input
                         type="text"
                         placeholder="000000"
@@ -335,7 +336,7 @@ const SignIn: React.FC = () => {
                         maxLength={6}
                         value={mfaCode}
                         onChange={(e) => setMfaCode(e.target.value)}
-                        className="bg-transparent border-border h-16 pl-14 text-center text-3xl font-black tracking-[0.8em] text-foreground placeholder:text-muted-foreground focus:border-emerald-500/30 transition-all rounded-xl"
+                        className="bg-transparent border-white/10 h-16 pl-14 text-center text-3xl font-black tracking-[0.8em] text-white placeholder:text-white/5 focus:border-emerald-500/30 transition-all rounded-xl relative z-10"
                       />
                     </div>
                   </div>
@@ -373,10 +374,10 @@ const SignIn: React.FC = () => {
 
         {/* Footer info */}
         <div className="mt-12 text-center space-y-2 opacity-30 group-hover:opacity-60 transition-opacity">
-          <p className="text-[9px] font-black uppercase tracking-[0.5em] text-foreground">
+          <p className="text-[9px] font-black uppercase tracking-[0.5em] text-white">
             Playza OS v4.2.0-ADMIN
           </p>
-          <p className="text-[8px] font-medium text-muted-foreground">
+          <p className="text-[8px] font-medium text-white/60">
             Authorized Personnel Only • All Connections Monitored
           </p>
         </div>

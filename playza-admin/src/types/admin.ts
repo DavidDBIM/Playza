@@ -160,7 +160,11 @@ export interface UserHistoryItem {
 
 export interface TransactionAdmin {
   id: string;
-  users?: { username?: string };
+  user_id: string;
+  users?: { 
+    username?: string;
+    email?: string;
+  };
   type: "withdrawal" | "deposit" | "game_entry" | "winnings" | string;
   amount: number;
   status: "success" | "successful" | "pending" | "failed" | string;
@@ -183,6 +187,8 @@ export interface AdminLoginResponse {
 export interface DashboardMetrics {
   total_users: number;
   active_users: number;
+  new_users_week: number;
+  verified_users: number;
   total_deposited: number;
   total_withdrawn: number;
   platform_profit: number;

@@ -1,4 +1,5 @@
 import axios from "axios";
+import { queryClient } from "../lib/queryClient";
 
 // ── Token storage helpers
 export const TokenStorage = {
@@ -48,7 +49,26 @@ function processPendingQueue(err: unknown, token: string | null) {
 
 // ── Response interceptor: silent refresh on 401 
 axiosInstance.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Automatically invalidate wallet/profile data if this was a mutating request to game endpoints
+    const url = response.config.url || "";
+    const method = response.config.method?.toLowerCase();
+    
+    if (method === "post" || method === "put" || method === "delete") {
+      const endpointsThatAffectWallet = [
+        "/soloearn", "/gamesession", "/chess", "/ludo", "/pool", "/soccer", "/speedbattle", "/wordscramble"
+      ];
+      if (endpointsThatAffectWallet.some(ep => url.includes(ep))) {
+        // Run in background without blocking the response
+        Promise.all([
+          queryClient.invalidateQueries({ queryKey: ["users", "me"] }),
+          queryClient.invalidateQueries({ queryKey: ["wallet", "balance"] }),
+          queryClient.invalidateQueries({ queryKey: ["profile"] })
+        ]).catch(console.error);
+      }
+    }
+    return response;
+  },
   async (error) => {
     const originalRequest = error.config as typeof error.config & {
       _retry?: boolean;
