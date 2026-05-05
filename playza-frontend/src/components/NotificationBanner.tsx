@@ -50,10 +50,14 @@ const NotificationBanner: React.FC = () => {
     handleClose();
   };
 
-  if (!shouldShow || !banner) return null;
+  if (!user || user.is_active === false || !isSuccess || !banner) return null;
+
+  const isPreviouslyDismissed = lastDismissedId === banner.id;
+  const showBanner = !isDismissed && !isPreviouslyDismissed;
 
   return (
     <AnimatePresence>
+      {showBanner && (
       <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-xl">
         <motion.div 
           initial={{ scale: 0.9, opacity: 0 }}
@@ -63,7 +67,10 @@ const NotificationBanner: React.FC = () => {
         >
           {/* Close Button */}
           <button 
-            onClick={handleClose}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleClose();
+            }}
             className="absolute top-4 right-4 z-10 p-2 text-white bg-black/40 hover:bg-black/60 rounded-full transition-colors"
           >
             <IoClose size={24} />
@@ -92,6 +99,7 @@ const NotificationBanner: React.FC = () => {
           </div>
         </motion.div>
       </div>
+      )}
     </AnimatePresence>
   );
 };

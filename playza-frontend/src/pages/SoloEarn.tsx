@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Sparkles } from "lucide-react"; 
-import { useAuth } from "@/context/auth";
 import { ZASymbol } from "@/components/currency/ZASymbol";
 import { startSoloSession, endSoloSession } from '@/api/soloearn.api';
 import { useToast } from '@/context/toast';
@@ -15,7 +14,6 @@ import { ResultsPanel } from '@/components/soloearn/ResultsPanel';
 // --- Main Page ---
 
 const SoloEarn = () => {
-  const { user } = useAuth();
   const toast = useToast();
   
   const [view, setView] = useState('hub');
@@ -89,19 +87,12 @@ const SoloEarn = () => {
         <div className="absolute right-0 top-0 w-64 h-64 bg-primary/10 blur-[80px] pointer-events-none" />
         
         <div className="relative z-10 max-w-xl">
-          <h1 className="font-heading font-black text-3xl md:text-4xl text-white uppercase tracking-tight mb-2">
+          <h1 className="font-heading font-black text-3xl md:text-4xl text-foreground uppercase tracking-tight mb-2">
             Solo<span className="text-primary">Earn</span>
           </h1>
-          <p className="text-slate-400 text-sm leading-relaxed">
+          <p className="text-muted-foreground text-sm leading-relaxed">
             Test your limits in skill-based challenges. Stake your entry, achieve high scores, and multiply your earnings instantly based on your performance.
           </p>
-        </div>
-
-        <div className="relative z-10 flex shrink-0 gap-4">
-          <div className="glass-card px-5 py-3 rounded-2xl border border-white/5 bg-background/50 flex flex-col items-end">
-             <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1">Wallet Balance</span>
-             <span className="font-heading text-xl font-black text-white flex gap-1.5 items-center"><ZASymbol className="text-2xl" />{user?.wallet?.balance?.toFixed(2) || '0.00'}</span>
-          </div>
         </div>
       </div>
 
@@ -109,7 +100,7 @@ const SoloEarn = () => {
       <div className="space-y-4">
         <div className="flex items-center gap-3 px-2">
           <Sparkles className="w-5 h-5 text-primary" />
-          <h2 className="font-heading font-black text-lg text-white uppercase tracking-wider">Available Challenges</h2>
+          <h2 className="font-heading font-black text-lg text-foreground uppercase tracking-wider">Available Challenges</h2>
         </div>
         
         <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">

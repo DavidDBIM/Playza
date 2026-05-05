@@ -18,15 +18,15 @@ export const ResultsPanel = ({ stake, multiplier = 0, onBack, onPlayAgain }: Gam
             <span className="font-heading font-black text-3xl text-black">{isWin ? 'S' : 'F'}</span>
           </div>
 
-          <p className={`text-[10px] font-black uppercase ${isWin ? 'text-primary' : 'text-slate-500'} tracking-widest mb-1`}>{isWin ? 'Rank Achieved' : 'Challenge Status'}</p>
-          <h2 className="font-heading font-black text-3xl text-white uppercase tracking-tight mb-8">
+          <p className={`text-[10px] font-black uppercase ${isWin ? 'text-primary' : 'text-muted-foreground'} tracking-widest mb-1`}>{isWin ? 'Rank Achieved' : 'Challenge Status'}</p>
+          <h2 className="font-heading font-black text-3xl text-foreground uppercase tracking-tight mb-8">
             {isWin ? 'Excellent Run!' : 'Mission Failed'}
           </h2>
 
           <div className="grid grid-cols-2 gap-4 mb-8">
-            <div className="glass-card bg-surface border border-white/5 p-4 rounded-2xl flex flex-col items-center">
-              <span className="text-[10px] uppercase font-black text-slate-500 tracking-widest mb-1">Payout Multiplier</span>
-              <span className="font-heading text-2xl font-black text-white">{simulatedMultiplier.toFixed(1)}x</span>
+            <div className="glass-card bg-background/50 border border-border p-4 rounded-2xl flex flex-col items-center">
+              <span className="text-[10px] uppercase font-black text-muted-foreground tracking-widest mb-1">Payout Multiplier</span>
+              <span className="font-heading text-2xl font-black text-foreground">{simulatedMultiplier.toFixed(1)}x</span>
             </div>
             <div className="glass-card bg-primary/10 border border-primary/20 p-4 rounded-2xl flex flex-col items-center">
               <span className="text-[10px] uppercase font-black text-primary/70 tracking-widest mb-1">Total Payout</span>
@@ -38,7 +38,7 @@ export const ResultsPanel = ({ stake, multiplier = 0, onBack, onPlayAgain }: Gam
              <Button onClick={() => onPlayAgain?.()} className="h-12 w-full rounded-full font-black uppercase tracking-widest text-black">
                <span className="flex items-center gap-1">Play Again (<ZASymbol className="text-sm" />{stake})</span>
              </Button>
-             <button onClick={onBack} className="h-12 w-full rounded-full font-bold uppercase tracking-widest text-slate-400 hover:text-white hover:bg-white/5 transition-colors text-xs">
+             <button onClick={onBack} className="h-12 w-full rounded-full font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors text-xs">
                Back to Solo Hub
              </button>
           </div>

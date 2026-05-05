@@ -126,9 +126,10 @@ export async function joinSession(userId: string, sessionId: string) {
   }
 
   // 4. Update wallet and create entry (Transactionally)
-  const newBalance = parseFloat((Number(wallet.balance) - session.entry_fee).toFixed(2))
-  
-  await supabase.from('wallets').update({ balance: newBalance, updated_at: now.toISOString() }).eq('user_id', userId)
+  await supabase.rpc('decrement_wallet_balance', {
+    p_user_id: userId,
+    p_amount: session.entry_fee
+  })
   
   await supabase.from('transactions').insert({
     user_id: userId,
@@ -327,13 +328,10 @@ export async function finalizeSessionAndPayout(sessionId: string) {
 
     if (payoutAmount > 0) {
       // Update User Wallet
-      const { data: wallet } = await supabase.from('wallets').select('balance').eq('user_id', winner.user_id).single()
-      if (wallet) {
-        await supabase.from('wallets').update({ 
-          balance: parseFloat((Number(wallet.balance) + payoutAmount).toFixed(2)),
-          updated_at: new Date().toISOString()
-        }).eq('user_id', winner.user_id)
-      }
+      await supabase.rpc('increment_wallet_balance', {
+        p_user_id: winner.user_id,
+        p_amount: payoutAmount
+      })
 
       // Log Transaction
       await supabase.from('transactions').insert({

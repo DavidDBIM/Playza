@@ -20,11 +20,10 @@ export async function startSoloSession(
   if (wallet.balance < stake) throw new Error("Insufficient funds");
 
   // 2. Deduct stake
-  const newBalance = parseFloat((Number(wallet.balance) - stake).toFixed(2));
-  const { error: decErr } = await supabase
-    .from("wallets")
-    .update({ balance: newBalance, updated_at: new Date().toISOString() })
-    .eq("user_id", userId);
+  const { error: decErr } = await supabase.rpc("decrement_wallet_balance", {
+    p_user_id: userId,
+    p_amount: stake,
+  });
 
   if (decErr) throw new Error("Failed to deduct stake: " + decErr.message);
 
@@ -110,20 +109,12 @@ export async function endSoloSession(
 
   // 4. Pay user if payout > 0
   if (payout > 0) {
-    const { data: w } = await supabase
-      .from("wallets")
-      .select("balance")
-      .eq("user_id", userId)
-      .single();
-    if (w) {
-      await supabase
-        .from("wallets")
-        .update({
-          balance: parseFloat((Number(w.balance) + payout).toFixed(2)),
-          updated_at: new Date().toISOString(),
-        })
-        .eq("user_id", userId);
-    }
+    const { error: incErr } = await supabase.rpc("increment_wallet_balance", {
+      p_user_id: userId,
+      p_amount: payout,
+    });
+
+    if (incErr) console.error("Failed to increment wallet:", incErr);
 
     await supabase.from("transactions").insert({
       user_id: userId,
