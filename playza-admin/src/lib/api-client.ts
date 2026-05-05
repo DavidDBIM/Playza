@@ -20,6 +20,9 @@ apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem("admin_token");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+    // console.log(`[API Request] Token found in localStorage. Length: ${token.length}`);
+  } else {
+    // console.warn("[API Request] No admin_token found in localStorage");
   }
   return config;
 });
@@ -29,14 +32,13 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      console.error("[Auth Interceptor] 401 Unauthorized received from API. URL:", error.config?.url);
-      // Temporarily disabling auto-redirect to prevent redirect loops and allow UI error states to show
-      // if (!window.location.pathname.includes('/signin')) {
-      //   localStorage.removeItem("admin_token");
-      //   localStorage.removeItem("admin_user");
-      //   localStorage.removeItem("admin_login_time");
-      //   window.location.href = "/signin";
-      // }
+      const url = error.config?.url;
+      console.error(`[Auth Interceptor] 401 Unauthorized: ${url}`);
+      
+      // If we're getting 401 on every page, something is fundamentally wrong with the session
+      if (url?.includes('/admin/dashboard')) {
+        console.warn("[Auth] Session appears invalid. You may need to log out and log back in.");
+      }
     }
     return Promise.reject(error);
   },
