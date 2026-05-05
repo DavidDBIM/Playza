@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { requireAuth, AuthRequest, requireAdmin } from '../../middleware/auth'
+import { AuthRequest, requireAdmin } from "../../middleware/auth";
 import { supabaseAdmin } from '../../config/supabase'
 import {
   getDashboardMetrics,
