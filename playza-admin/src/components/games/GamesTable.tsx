@@ -26,13 +26,15 @@ import {
   DropdownMenuTrigger 
 } from '../ui/dropdown-menu';
 import type { Game } from '../../data/gamesData';
+import { gameSessionService } from '../../services/gamesession.service';
 
 interface GamesTableProps {
   games: Game[];
   clearFilters: () => void;
+  refetch: () => void;
 }
 
-export const GamesTable: React.FC<GamesTableProps> = ({ games, clearFilters }) => {
+export const GamesTable: React.FC<GamesTableProps> = ({ games, clearFilters, refetch }) => {
   const navigate = useNavigate();
   return (
     <div className="overflow-x-auto relative">
@@ -112,8 +114,8 @@ export const GamesTable: React.FC<GamesTableProps> = ({ games, clearFilters }) =
                 </TableCell>
                 <TableCell className="py-3.5 px-4 text-center">
                   <div className="flex flex-col items-center">
-                    <span className="font-headline font-black text-sm text-primary">{game.activePlayers}</span>
-                    <span className="text-[9px] text-muted-foreground/50 font-black uppercase tracking-tighter">ActiveNow</span>
+                    <span className="font-headline font-black text-sm text-primary">{game.unique_players || 0}</span>
+                    <span className="text-[9px] text-muted-foreground/50 font-black uppercase tracking-tighter">Total Users</span>
                   </div>
                 </TableCell>
                 <TableCell className="py-3.5 px-4 md:px-6 text-right">
@@ -141,11 +143,21 @@ export const GamesTable: React.FC<GamesTableProps> = ({ games, clearFilters }) =
                       >
                         <MdRemoveRedEye className="text-lg text-primary" /> View Details
                       </DropdownMenuItem>
-                      <DropdownMenuItem className="rounded-xl px-4 py-3 font-bold text-sm cursor-pointer gap-3">
-                        <MdEdit className="text-lg text-amber-500" /> Edit Metadata
-                      </DropdownMenuItem>
-                      <DropdownMenuItem className="rounded-xl px-4 py-3 font-bold text-sm cursor-pointer gap-3 text-rose-500 focus:text-rose-600 focus:bg-rose-500/5">
-                        <MdDeleteForever className="text-lg" /> Retire Game
+                      <DropdownMenuItem 
+                        className="rounded-xl px-4 py-3 font-bold text-sm cursor-pointer gap-3 text-rose-500 focus:text-rose-600 focus:bg-rose-500/5"
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          if (window.confirm(`Are you sure you want to ${game.isActive ? 'retire' : 'activate'} this game?`)) {
+                            try {
+                              await gameSessionService.retireGame(game.id, !game.isActive);
+                              refetch();
+                            } catch (error) {
+                              console.error('Failed to update game status:', error);
+                            }
+                          }
+                        }}
+                      >
+                        <MdDeleteForever className="text-lg" /> {game.isActive ? 'Retire' : 'Activate'} Game
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>

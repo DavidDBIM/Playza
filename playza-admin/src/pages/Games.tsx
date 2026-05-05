@@ -15,7 +15,7 @@ const Games: React.FC = () => {
   const [categoryFilter, setCategoryFilter] = useState("All Categories");
   const [statusFilter, setStatusFilter] = useState("All Status");
 
-  const { data: gamesData, isLoading } = useGames();
+  const { data: gamesData, isLoading, refetch } = useGames();
 
   const allGames = useMemo(() => {
     const rawGames = (gamesData?.games || []) as Game[];
@@ -25,6 +25,7 @@ const Games: React.FC = () => {
       isActive: g.is_active ?? false,
       durationInSeconds: g.duration_seconds || 300,
       platformFeePercentage: g.platform_fee_percentage || 10,
+      unique_players: g.unique_players || 0,
       createdAt: g.created_at || new Date().toISOString(),
       updatedAt: g.created_at || new Date().toISOString(),
     }));
@@ -108,7 +109,7 @@ const Games: React.FC = () => {
               </p>
             </div>
           ) : (
-            <GamesTable games={filteredGames} clearFilters={clearFilters} />
+            <GamesTable games={filteredGames} clearFilters={clearFilters} refetch={refetch} />
           )}
         </div>
 
