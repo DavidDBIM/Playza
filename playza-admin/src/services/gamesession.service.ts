@@ -4,7 +4,7 @@ interface SessionInput {
   title: string;
   type: string;
   entryFee: number;
-  maxPlayers: number;
+  maxPlayers?: number;
   winnersCount: number;
   startTime: string;
   endTime: string;
@@ -18,7 +18,7 @@ interface GameData {
   mode: string;
   thumbnailUrl: string;
   iframeUrl: string;
-  durationInSeconds: number;
+  durationInSeconds?: number;
   platformFeePercentage: number;
   controls: string;
   rules: string;
@@ -49,6 +49,11 @@ export const gameSessionService = {
 
   async getGameSessions(gameId: string) {
     const response = await apiClient.get(`/gamesession/games/${gameId}/sessions`);
+    return response.data;
+  },
+
+  async retireGame(gameId: string, status: boolean) {
+    const response = await apiClient.post(`/gamesession/games/${gameId}/retire`, { status });
     return response.data;
   }
 };

@@ -25,7 +25,7 @@ interface SessionInput {
   title: string;
   type: string;
   entryFee: number;
-  maxPlayers: number;
+  maxPlayers?: number;
   winnersCount: number;
   startTime: string;
   endTime: string;
@@ -39,7 +39,7 @@ interface GameFormData {
   mode: string;
   thumbnailUrl: string;
   iframeUrl: string;
-  durationInSeconds: number;
+  durationInSeconds?: number;
   platformFeePercentage: number;
   controls: string;
   rules: string;
@@ -100,10 +100,9 @@ const CreateGame: React.FC = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSessionChange = (index: number, field: keyof SessionInput, value: string | number) => {
-
+  const handleSessionChange = (index: number, field: keyof SessionInput, value: string | number | undefined) => {
     const newSessions = [...sessions];
-    newSessions[index] = { ...newSessions[index], [field]: value };
+    newSessions[index] = { ...newSessions[index], [field]: value } as SessionInput;
     setSessions(newSessions);
   };
 
@@ -118,6 +117,35 @@ const CreateGame: React.FC = () => {
         winnersCount: 10,
         startTime: '',
         endTime: ''
+      }
+    ]);
+  };
+
+  const duplicateSession = () => {
+    const lastSession = sessions[sessions.length - 1];
+    
+    // Auto-calculate next day's timing if dates exist
+    let newStart = '';
+    let newEnd = '';
+    
+    if (lastSession.startTime && lastSession.endTime) {
+      const start = new Date(lastSession.startTime);
+      const end = new Date(lastSession.endTime);
+      start.setDate(start.getDate() + 1);
+      end.setDate(end.getDate() + 1);
+      
+      // Format to YYYY-MM-DDTHH:mm for datetime-local input
+      newStart = new Date(start.getTime() - start.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+      newEnd = new Date(end.getTime() - end.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    }
+
+    setSessions([
+      ...sessions,
+      {
+        ...lastSession,
+        title: `${lastSession.title} (Clone)`,
+        startTime: newStart,
+        endTime: newEnd
       }
     ]);
   };
@@ -168,13 +196,7 @@ const CreateGame: React.FC = () => {
     }
   };
 
-  // Helper to calculate prize pool
-  const calculatePool = (entryFee: number, maxPlayers: number) => {
-    const gross = entryFee * maxPlayers;
-    const fee = gross * (formData.platformFeePercentage / 100);
-    const net = gross - fee;
-    return { gross, fee, net };
-  };
+
 
   return (
     <main className="p-4 space-y-4">
@@ -287,14 +309,14 @@ const CreateGame: React.FC = () => {
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground ml-1">Duration (Seconds) <span className="text-rose-500">*</span></label>
+                  <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground ml-1">Duration (Seconds)</label>
                   <Input 
                     name="durationInSeconds" 
                     type="number" 
-                    required 
-                    value={formData.durationInSeconds} 
+                    value={formData.durationInSeconds || ''} 
                     onChange={handleInputChange} 
                     className="h-11 bg-muted border-border rounded-xl font-bold font-number" 
+                    placeholder="Unlimited"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -382,18 +404,25 @@ const CreateGame: React.FC = () => {
                 <MdCalendarMonth className="text-primary text-xl" />
                 <h3 className="text-sm font-black text-foreground uppercase tracking-wider">Match Sessions</h3>
               </div>
-              <button 
-                onClick={addSession}
-                type="button" 
-                className="px-4 py-1.5 bg-muted hover:bg-muted/80 text-foreground rounded-xl text-xs font-bold transition-all border border-border"
-              >
-                <MdAdd className="text-lg mr-1 inline" /> Add Session
-              </button>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={duplicateSession}
+                  type="button" 
+                  className="px-4 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-xl text-xs font-bold transition-all border border-primary/20"
+                >
+                  <MdAdd className="text-lg mr-1 inline" /> Clone Previous
+                </button>
+                <button 
+                  onClick={addSession}
+                  type="button" 
+                  className="px-4 py-1.5 bg-muted hover:bg-muted/80 text-foreground rounded-xl text-xs font-bold transition-all border border-border"
+                >
+                  <MdAdd className="text-lg mr-1 inline" /> Add Session
+                </button>
+              </div>
             </div>
 
-            {sessions.map((session, idx) => {
-              const pool = calculatePool(session.entryFee, session.maxPlayers);
-              return (
+            {sessions.map((session, idx) => (
                 <div key={idx} className="bg-card border border-border rounded-2xl p-6 shadow-sm relative">
                   <button 
                     onClick={() => removeSession(idx)}
@@ -439,8 +468,9 @@ const CreateGame: React.FC = () => {
                         <Input 
                           type="number" 
                           className="h-11 bg-muted border-border rounded-xl font-black font-number" 
-                          value={session.maxPlayers}
-                          onChange={(e) => handleSessionChange(idx, 'maxPlayers', Number(e.target.value))}
+                          value={session.maxPlayers || ''}
+                          onChange={(e) => handleSessionChange(idx, 'maxPlayers', e.target.value ? Number(e.target.value) : undefined)}
+                          placeholder="Unlimited"
                         />
                       </div>
                        <div className="space-y-1.5">
@@ -472,34 +502,22 @@ const CreateGame: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                  {/* Prize Logic Footer */}
-                  <div className="mt-6 pt-4 border-t border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <div className="flex flex-wrap gap-6">
-                      <div className="flex flex-col">
-                        <span className="text-[9px] font-black uppercase text-muted-foreground tracking-wider mb-0.5">Gross Expected</span>
-                        <span className="text-lg font-black text-foreground font-number tracking-tight">₦{pool.gross.toLocaleString()}</span>
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-[9px] font-black uppercase text-muted-foreground tracking-wider mb-0.5">Platform Fee ({formData.platformFeePercentage}%)</span>
-                        <span className="text-lg font-black text-primary font-number tracking-tight">₦{pool.fee.toLocaleString()}</span>
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-[9px] font-black uppercase text-muted-foreground tracking-wider mb-0.5">Prize Pool (Net)</span>
-                        <span className="text-lg font-black text-emerald-500 font-number tracking-tight">₦{pool.net.toLocaleString()}</span>
-                      </div>
-                    </div>
+                  {/* Dynamic Prize Note */}
+                  <div className="mt-6 pt-4 border-t border-border">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide italic">
+                      Note: Prize pool and platform fees are calculated dynamically based on actual entries.
+                    </p>
                   </div>
                 </div>
-              );
-            })}
+              ))}
           </section>
 
           {/* Final Actions */}
           <div className="flex flex-col lg:flex-row items-center justify-between gap-6 pt-6 border-t border-border">
             <div className="flex flex-col w-full lg:w-auto">
-              <span className="text-[10px] font-black uppercase text-muted-foreground tracking-wider mb-0.5">Global Profit Estimate</span>
+              <span className="text-[10px] font-black uppercase text-muted-foreground tracking-wider mb-0.5">Platform Revenue</span>
               <span className="text-2xl font-black text-emerald-500 tracking-tight uppercase font-number">
-                ₦{sessions.reduce((acc, s) => acc + calculatePool(s.entryFee, s.maxPlayers).fee, 0).toLocaleString()} Total Fee
+                {formData.platformFeePercentage}% Service Fee
               </span>
             </div>
             <div className="flex items-center gap-3 w-full lg:w-auto">
