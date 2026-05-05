@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Sparkles } from "lucide-react"; 
-import { ZASymbol } from "@/components/currency/ZASymbol";
 import { startSoloSession, endSoloSession } from '@/api/soloearn.api';
 import { useToast } from '@/context/toast';
 
