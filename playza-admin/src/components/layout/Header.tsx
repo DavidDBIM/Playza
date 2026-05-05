@@ -5,10 +5,8 @@ import {
   MdLightMode,
   MdDarkMode,
   MdComputer,
-  MdLogin,
   MdMenu,
 } from "react-icons/md";
-import { Link } from "react-router";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,7 +34,9 @@ const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
       </button>
 
       {/* Mobile logo */}
-      <span className="lg:hidden text-primary font-heading font-black italic text-lg tracking-tighter">PLAYZA</span>
+      <span className="lg:hidden text-primary font-heading font-black italic text-lg tracking-tighter">
+        PLAYZA
+      </span>
 
       {/* Right side actions */}
       <div className="flex items-center gap-3 ml-auto">
@@ -87,13 +87,6 @@ const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
           <button className="hidden sm:block text-muted-foreground hover:text-primary transition-colors cursor-pointer active:opacity-80 text-xl">
             <MdSettings />
           </button>
-          <Link
-            to="/signin"
-            className="hidden sm:flex items-center gap-2 bg-primary/10 hover:bg-primary/20 text-primary px-3 py-1.5 rounded-lg text-xs font-bold transition-all border border-primary/20 hover:border-primary/40 active:scale-95"
-          >
-            <MdLogin className="text-sm" />
-            <span>SIGN IN</span>
-          </Link>
         </div>
         <div className="h-8 w-px bg-border hidden sm:block"></div>
         <div className="flex items-center gap-2 md:gap-3">

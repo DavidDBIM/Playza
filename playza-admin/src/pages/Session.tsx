@@ -27,6 +27,12 @@ interface SessionData {
   pool_amount: number;
   winners_count: number;
   games: GameDetails;
+  financials: {
+    gross: number;
+    platformFee: number;
+    netPrizePool: number;
+    platformFeePercentage: number;
+  };
 }
 
 interface RosterEntry {
@@ -54,7 +60,10 @@ const Session: React.FC = () => {
     try {
       setLoading(true);
       const data = await gameSessionService.getSessionDetails(id!);
-      setSession(data.session);
+      setSession({
+        ...data.session,
+        financials: data.financials
+      });
       setRoster(data.roster);
     } catch (error: unknown) {
       const message =
@@ -190,14 +199,14 @@ const Session: React.FC = () => {
             },
             {
               label: "Base Pool",
-              value: `₦${Number(session?.pool_amount || 0).toLocaleString()}`,
+              value: `₦${Number(session?.financials?.gross || 0).toLocaleString()}`,
               sub: "Gross Amount",
               color: "text-muted-foreground",
             },
             {
               label: "Net Prize",
-              value: `₦${(Number(session?.pool_amount || 0) * (1 - (game?.platform_fee_percentage || 10) / 100)).toLocaleString()}`,
-              sub: `Fee: ${game?.platform_fee_percentage || 10}%`,
+              value: `₦${Number(session?.financials?.netPrizePool || 0).toLocaleString()}`,
+              sub: `Fee: ₦${Number(session?.financials?.platformFee || 0).toLocaleString()} (${session?.financials?.platformFeePercentage || 10}%)`,
               color: "text-emerald-500",
             },
             {
