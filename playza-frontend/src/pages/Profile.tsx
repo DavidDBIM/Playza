@@ -10,7 +10,6 @@ import {
   MdMilitaryTech,
 } from "react-icons/md";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router";
-import BadgeModal from "../components/profile/BadgeModal";
 
 import { useProfile } from "../hooks/profile/useProfile";
 import { useAuth } from "@/context/auth";
@@ -21,7 +20,6 @@ import { ProfileSkeleton } from "@/components/skeletons/ProfileSkeleton";
 
 const Profile = () => {
   const { user, isLoading: authLoading } = useAuth();
-  const [isBadgeModalOpen, setIsBadgeModalOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { data: profileData, isLoading: profileLoading } = useProfile();
@@ -96,11 +94,10 @@ const Profile = () => {
               )}
             </div>
             <button
-              onClick={() => setIsBadgeModalOpen(true)}
               className={`absolute -bottom-1.5 -right-1.5 text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest shadow-md border ${tier.color}`}
             >
               {tier.label}
-            </button>
+            </span>
           </div>
 
           {/* Info + PZA & ZA inline */}
@@ -246,10 +243,7 @@ const Profile = () => {
         </div>
       </div>
 
-      <BadgeModal
-        isOpen={isBadgeModalOpen}
-        onClose={() => setIsBadgeModalOpen(false)}
-      />
+
     </div>
   );
 };
