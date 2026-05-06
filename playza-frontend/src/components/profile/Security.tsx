@@ -1,14 +1,8 @@
 import { useState } from "react";
 import {
   MdVpnKey,
-  MdFingerprint,
-  MdDevices,
-  MdShield,
   MdLockReset,
   MdInfo,
-  MdSmartphone,
-  MdDesktopWindows,
-  MdLogout,
   MdWarning,
 } from "react-icons/md";
 import { PinModal } from "./PinModal";
@@ -23,20 +17,13 @@ const Security = () => {
   const { pinStatus, changePassword, updatePreferences, isLoadingPinStatus } = useSecurity();
   const { data: profile } = useProfile();
   const { mutate: deactivateUser, isPending: isDeactivating } = useDeactivateUser();
-  const [isFingerprintEnabled, setIsFingerprintEnabled] = useState(true);
   const [showDeactivateConfirm, setShowDeactivateConfirm] = useState(false);
-  const [isFaceIDEnabled] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [pinModal, setPinModal] = useState<"change" | "create" | null>(null);
 
   const { logout, user } = useAuth();
   const navigate = useNavigate();
-
-  const handleLogout = () => {
-    logout();
-    navigate("/");
-  };
 
   const handleDeactivate = () => {
     if (profile) {
@@ -55,29 +42,7 @@ const Security = () => {
     setNewPassword("");
   };
 
-  const activeSessions = [
-    {
-      id: 1,
-      device: "iPhone 15 Pro",
-      location: "Lagos, Nigeria",
-      time: "Active Now",
-      current: true,
-    },
-    {
-      id: 2,
-      device: "Windows Desktop • Chrome",
-      location: "Lagos, Nigeria",
-      time: "2 hours ago",
-      current: false,
-    },
-    {
-      id: 3,
-      device: "Samsung Galaxy S23",
-      location: "Abuja, Nigeria",
-      time: "Yesterday",
-      current: false,
-    },
-  ];
+
 
   return (
     <>
@@ -91,21 +56,7 @@ const Security = () => {
           Security
         </h2>
 
-        {/* Header Info */}
-        <div className="bg-playza-green/10 dark:bg-playza-green/5 p-4 md:p-6 rounded-2xl border border-playza-green/20 flex items-start gap-2 md:gap-4 shadow-lg shadow-playza-green/5">
-          <div className="size-12 rounded-2xl bg-playza-green/20 flex items-center justify-center text-playza-green text-xl md:text-3xl shrink-0 shadow-inner">
-            <MdShield />
-          </div>
-          <div>
-            <h3 className="text-slate-900 dark:text-white font-black italic text-sm md:text-lg uppercase tracking-tighter">
-              Your Account is Secure
-            </h3>
-            <p className="text-slate-600 dark:text-slate-500 text-xs font-bold leading-relaxed">
-              We use industry-standard encryption to protect your funds and
-              personal data. Level 2 Security verified.
-            </p>
-          </div>
-        </div>
+
 
         {/* Financial Security - Withdrawal PIN */}
         <section className="space-y-3">
@@ -180,65 +131,6 @@ const Security = () => {
           </div>
         </section>
 
-        {/* Biometrics */}
-        <section className="space-y-3">
-          <div className="flex items-center gap-2 md:gap-3 mb-3">
-            <div className="size-10 rounded-2xl bg-playza-blue/20 flex items-center justify-center text-playza-blue text-base md:text-xl shadow-inner">
-              <MdFingerprint />
-            </div>
-            <h2 className="text-lg md:text-2xl font-black text-slate-900 dark:text-white italic tracking-tight">
-              Biometrics
-            </h2>
-          </div>
-
-          <div className="gl-card p-2 md:p-8 rounded-xl border border-slate-200 dark:border-white/5 space-y-8 shadow-xl bg-white dark:bg-white/5">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <p className="text-slate-900 dark:text-white font-black text-xs md:text-sm italic uppercase tracking-tighter">
-                  Fingerprint Login
-                </p>
-                <p className="text-slate-500 dark:text-slate-500 text-xs font-bold max-w-sm">
-                  Use your device fingerprint to unlock your account and
-                  authorize transactions.
-                </p>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  className="sr-only peer"
-                  checked={isFingerprintEnabled}
-                  onChange={() =>
-                    setIsFingerprintEnabled(!isFingerprintEnabled)
-                  }
-                />
-                <div className="w-14 h-7 bg-slate-200 dark:bg-white/5 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-1 after:left-1 after:bg-white dark:after:bg-slate-700 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary shadow-inner transition-colors"></div>
-              </label>
-            </div>
-
-            <div className="h-px bg-slate-100 dark:bg-white/5"></div>
-
-            <div className="flex items-center justify-between opacity-50">
-              <div className="space-y-1">
-                <p className="text-slate-900 dark:text-white font-black text-xs md:text-sm italic uppercase tracking-tighter">
-                  Face ID Unlock
-                </p>
-                <p className="text-slate-500 text-xs font-bold max-w-sm">
-                  Facial recognition for quick access (Unavailable on this
-                  device).
-                </p>
-              </div>
-              <label className="relative inline-flex items-center cursor-not-allowed">
-                <input
-                  type="checkbox"
-                  className="sr-only peer"
-                  disabled
-                  checked={isFaceIDEnabled}
-                />
-                <div className="w-14 h-7 bg-slate-100 dark:bg-white/5 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white dark:peer-checked:after:border-background-dark after:content-[''] after:absolute after:top-1 after:left-1 after:bg-slate-300 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary/20 shadow-inner transition-colors"></div>
-              </label>
-            </div>
-          </div>
-        </section>
 
         {/* Account Password */}
         <section className="space-y-3">
@@ -290,83 +182,6 @@ const Security = () => {
           </div>
         </section>
 
-        {/* Active Sessions */}
-        <section className="space-y-3">
-          <div className="flex items-center gap-2 md:gap-3 mb-3">
-            <div className="size-10 rounded-2xl bg-slate-500/20 flex items-center justify-center text-slate-500 text-base md:text-xl shadow-inner">
-              <MdDevices />
-            </div>
-            <h2 className="text-lg md:text-2xl font-black text-slate-900 dark:text-white italic tracking-tight">
-              Active Sessions
-            </h2>
-          </div>
-
-          <div className="bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/5 overflow-hidden shadow-xl">
-            <div className="p-2 md:p-6 bg-slate-50 dark:bg-white/5 border-b border-slate-100 dark:border-white/5">
-              <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">
-                Signed in Devices (3)
-              </p>
-            </div>
-            <div className="divide-y divide-slate-100 dark:divide-white/5">
-              {activeSessions.map((session) => (
-                <div
-                  key={session.id}
-                  className="p-2 md:p-6 flex items-center justify-between group hover:bg-white/2 transition-colors"
-                >
-                  <div className="flex items-center gap-2 md:gap-5">
-                    <div
-                      className={`size-12 rounded-2xl flex items-center justify-center text-2xl shadow-inner ${
-                        session.current
-                          ? "bg-playza-green/20 text-playza-green"
-                          : "bg-slate-100 dark:bg-white/5 text-slate-500"
-                      }`}
-                    >
-                      {session.device.includes("iPhone") ||
-                      session.device.includes("Galaxy") ? (
-                        <MdSmartphone />
-                      ) : (
-                        <MdDesktopWindows />
-                      )}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h4 className="text-slate-900 dark:text-white font-black text-sm italic tracking-tight">
-                          {session.device}
-                        </h4>
-                        {session.current && (
-                          <span className="text-[8px] bg-playza-green text-white font-black px-1.5 py-0.5 rounded uppercase">
-                            Current
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-0.5">
-                        {session.location} • {session.time}
-                      </p>
-                    </div>
-                  </div>
-                  {!session.current && (
-                    <button className="text-[10px] font-black text-red-500/60 uppercase tracking-widest hover:text-red-500 transition-all">
-                      Terminate Session
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-            <div className="p-2 md:p-6 bg-red-500/5 flex flex-col items-center gap-3">
-              <button className="text-[10px] font-black text-red-500 uppercase tracking-[0.2em] hover:brightness-125 transition-all">
-                Logout from all other devices
-              </button>
-              <div className="h-px w-full bg-red-500/10 dark:bg-red-500/20 my-2"></div>
-              <button 
-                onClick={handleLogout}
-                className="flex items-center gap-2 text-xs font-black text-rose-500 uppercase tracking-widest hover:text-white hover:bg-rose-500 px-4 py-2 rounded-xl transition-all"
-              >
-                <MdLogout className="text-base md:text-xl" />
-                Sign Out Current Session
-              </button>
-            </div>
-          </div>
-        </section>
 
         {/* Legal Documents */}
         <section className="space-y-3">
