@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width">
+  <title>Stack Ball 3D - Playza</title>
+  <meta name="description" content="Smash through colorful platforms in this addictive 3D helix ball game. Hold to break, dodge the black segments!">
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700;900&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <div class="shell" id="shell">
+
+    <!-- Three.js Canvas mounted here by JS -->
+
+    <!-- Game HUD -->
+    <div id="gameHud" class="hidden">
+      <div class="hud-box">
+        <span class="hud-label">SECTION</span>
+        <span class="hud-value" id="hudLevel">1</span>
+      </div>
+      <div class="hud-center">
+        <div class="combo-badge hidden" id="comboBadge">FIRE CHAIN x<span id="comboCount">0</span></div>
+      </div>
+      <div class="hud-box highlight">
+        <span class="hud-label">SCORE</span>
+        <span class="hud-value" id="hudMult">0</span>
+      </div>
+    </div>
+
+    <!-- Fire Power Mode Banner -->
+    <div id="firePowerBanner" class="fire-power-banner hidden">
+      FIRE MODE - NOTHING CAN STOP YOU
+    </div>
+
+    <!-- UI Overlay: Start -->
+    <div id="overlayStart" class="overlay">
+      <div class="panel">
+        <div class="icon">3D</div>
+        <h1 class="title-text">STACK BALL</h1>
+        <p class="subtitle">SMASH - COMBO - DESCEND</p>
+        <p class="desc">
+          Hold <strong>tap/click</strong> to smash through colored platforms as the helix rotates.<br>
+          <span class="warn-text">Black segments are deadly - avoid them!</span><br>
+          Chain smashes to ignite <strong>Fire Mode</strong> and break through anything.
+        </p>
+        <div class="tip-row">
+          <span class="tip-chip">Hold to smash</span>
+          <span class="tip-chip">Tower rotates</span>
+          <span class="tip-chip">Dodge black</span>
+        </div>
+        <button id="btnStartGame" class="btn-primary">LAUNCH BALL</button>
+      </div>
+    </div>
+
+    <!-- UI Overlay: Result -->
+    <div id="overlayResult" class="overlay hidden">
+      <div class="panel result-panel">
+        <h2 id="resTitle" class="res-title">GAME OVER</h2>
+        <p id="resSubtitle" class="res-subtitle">You hit the black wall</p>
+
+        <div class="stats-grid">
+          <div class="stat-item">
+            <span class="stat-label">SECTION</span>
+            <span class="stat-value" id="resLevels">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">PLATFORMS</span>
+            <span class="stat-value" id="resPlatforms">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">COMBOS</span>
+            <span class="stat-value" id="resCombos">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">FIRE MODES</span>
+            <span class="stat-value" id="resFireModes">0</span>
+          </div>
+        </div>
+
+        <div class="mult-display">
+          <span class="mult-label">FINAL SCORE</span>
+          <span class="mult-value" id="resMult">0</span>
+        </div>
+
+        <button id="btnPlayAgain" class="btn-primary">TRY AGAIN</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Three.js from CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script type="module" src="game.js"></script>
+</body>
+</html>
