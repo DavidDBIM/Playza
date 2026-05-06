@@ -3,7 +3,6 @@ import {
   MdEdit,
   MdShare,
   MdPerson,
-  MdHistory,
   MdEmojiEvents,
   MdSettings,
   MdSecurity,
@@ -37,7 +36,6 @@ const Profile = () => {
 
   const menuItems = [
     { label: "Overview", icon: <MdPerson />, to: "overview" },
-    { label: "History", icon: <MdHistory />, to: "history" },
     { label: "Achievements", icon: <MdEmojiEvents />, to: "achievements" },
     { label: "Settings", icon: <MdSettings />, to: "settings" },
     { label: "Security", icon: <MdSecurity />, to: "security" },
