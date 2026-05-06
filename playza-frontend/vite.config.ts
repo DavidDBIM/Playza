@@ -3,7 +3,7 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 import PrerenderPlugin from "@prerenderer/rollup-plugin";
-import Renderer from "@prerenderer/renderer-puppeteer";
+import Renderer from "@prerenderer/renderer-jsdom";
 
 // ─── Routes to pre-render at build time ────────────────────────────────────
 // Only pre-render public, SEO-critical pages that don't require auth.
@@ -38,9 +38,8 @@ export default defineConfig({
     rollupOptions: {
       plugins: [
         PrerenderPlugin({
-          // Puppeteer-based headless renderer
+          // JSDOM-based renderer (lightweight, works on Vercel)
           renderer: new Renderer({
-            headless: true,
             // Give React time to mount and render before capturing HTML
             renderAfterTime: 2000,
           }),
