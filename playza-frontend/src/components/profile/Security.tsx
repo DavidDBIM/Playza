@@ -6,7 +6,7 @@ import {
   MdWarning,
 } from "react-icons/md";
 import { PinModal } from "./PinModal";
-import { Link, useNavigate } from "react-router";
+import { Link } from "react-router";
 import { ArrowRight } from "lucide-react";
 import { useAuth } from "@/context/auth";
 import { useSecurity } from "@/hooks/profile/useSecurity";
@@ -22,8 +22,7 @@ const Security = () => {
   const [newPassword, setNewPassword] = useState("");
   const [pinModal, setPinModal] = useState<"change" | "create" | null>(null);
 
-  const { logout, user } = useAuth();
-  const navigate = useNavigate();
+  const { user } = useAuth();
 
   const handleDeactivate = () => {
     if (profile) {

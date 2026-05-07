@@ -5,6 +5,8 @@ import RecentWinners from "@/components/home/RecentWinners";
 import HomeGames from "@/components/home/HomeGames";
 import CTAReferral from "@/components/home/CTAReferral";
 import GamesMaintenance from "@/components/home/GamesMaintenance";
+import HomeFAQ from "@/components/home/HomeFAQ";
+
 import { Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router";
@@ -117,7 +119,9 @@ const Home = () => {
       )}
 
       <CTAReferral />
+      <HomeFAQ />
       <HowItWorks />
+
     </main>
   );
 };

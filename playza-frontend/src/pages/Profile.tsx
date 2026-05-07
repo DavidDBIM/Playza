@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import {  useEffect } from "react";
 import {
   MdEdit,
   MdShare,
@@ -97,7 +97,7 @@ const Profile = () => {
               className={`absolute -bottom-1.5 -right-1.5 text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest shadow-md border ${tier.color}`}
             >
               {tier.label}
-            </span>
+            </button>
           </div>
 
           {/* Info + PZA & ZA inline */}

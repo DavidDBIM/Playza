@@ -43,6 +43,8 @@ const CategoryPage = lazy(() => import("./pages/CategoryPage"));
 const SpeedTapArena = lazy(() => import("./pages/games/SpeedTapArena"));
 const SoloEarn = lazy(() => import("./pages/SoloEarn"));
 const Feedback = lazy(() => import("./pages/Feedback"));
+const FAQ = lazy(() => import("./pages/FAQ"));
+
 
 
 // Profile sub-pages
@@ -237,6 +239,8 @@ const AppContent = () => {
               <Route path="/privacy" element={<PrivacyPolicy />} />
               <Route path="/loyalty" element={<Loyalty />} />
               <Route path="/feedback" element={<Feedback />} />
+              <Route path="/faq" element={<FAQ />} />
+
               <Route path="/profile" element={<Profile />}>
                 <Route index element={<Overview />} />
                 <Route path="overview" element={<Overview />} />
