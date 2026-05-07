@@ -132,15 +132,6 @@ const SidebarContent: React.FC<{ onClose?: () => void }> = ({ onClose }) => {
           </button>
         </div>
       </nav>
-      <div className="px-4 mt-6">
-        <div className="p-3 rounded-xl bg-muted/50 border border-border">
-          <p className="text-[8px] font-black text-muted-foreground uppercase tracking-widest mb-2">Engine Integrity</p>
-          <div className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-[9px] font-black text-foreground uppercase tracking-wider">Optimal</span>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };
