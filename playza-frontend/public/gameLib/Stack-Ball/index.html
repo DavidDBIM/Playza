@@ -2,96 +2,81 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Stack Ball 3D - Playza</title>
-  <meta name="description" content="Smash through colorful platforms in this addictive 3D helix ball game. Hold to break, dodge the black segments!">
+  <meta name="description" content="Smash through rotating stack platforms in Playza Stack Ball 3D.">
   <link rel="stylesheet" href="styles.css">
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700;900&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;900&display=swap" rel="stylesheet">
 </head>
 <body>
-
-  <div class="shell" id="shell">
-
-    <!-- Three.js Canvas mounted here by JS -->
-
-    <!-- Game HUD -->
-    <div id="gameHud" class="hidden">
-      <div class="hud-box">
-        <span class="hud-label">SECTION</span>
-        <span class="hud-value" id="hudLevel">1</span>
+  <main id="shell" class="shell">
+    <section id="firstUI" class="home-ui">
+      <button id="settingsButton" class="icon-button" type="button" aria-label="Settings">...</button>
+      <div id="settingsPanel" class="settings-panel hidden">
+        <button id="soundButton" class="settings-action" type="button">Sound On</button>
       </div>
-      <div class="hud-center">
-        <div class="combo-badge hidden" id="comboBadge">FIRE CHAIN x<span id="comboCount">0</span></div>
-      </div>
-      <div class="hud-box highlight">
-        <span class="hud-label">SCORE</span>
-        <span class="hud-value" id="hudMult">0</span>
-      </div>
-    </div>
 
-    <!-- Fire Power Mode Banner -->
-    <div id="firePowerBanner" class="fire-power-banner hidden">
-      FIRE MODE - NOTHING CAN STOP YOU
-    </div>
-
-    <!-- UI Overlay: Start -->
-    <div id="overlayStart" class="overlay">
-      <div class="panel">
-        <div class="icon">3D</div>
-        <h1 class="title-text">STACK BALL</h1>
-        <p class="subtitle">SMASH - COMBO - DESCEND</p>
-        <p class="desc">
-          Hold <strong>tap/click</strong> to smash through colored platforms as the helix rotates.<br>
-          <span class="warn-text">Black segments are deadly - avoid them!</span><br>
-          Chain smashes to ignite <strong>Fire Mode</strong> and break through anything.
-        </p>
-        <div class="tip-row">
-          <span class="tip-chip">Hold to smash</span>
-          <span class="tip-chip">Tower rotates</span>
-          <span class="tip-chip">Dodge black</span>
+      <div class="level-pair">
+        <div class="level-pill">
+          <span class="current-level-text">1</span>
         </div>
-        <button id="btnStartGame" class="btn-primary">LAUNCH BALL</button>
+        <div class="level-line"></div>
+        <div class="level-pill next">
+          <span class="next-level-text">2</span>
+        </div>
       </div>
-    </div>
 
-    <!-- UI Overlay: Result -->
-    <div id="overlayResult" class="overlay hidden">
-      <div class="panel result-panel">
-        <h2 id="resTitle" class="res-title">GAME OVER</h2>
-        <p id="resSubtitle" class="res-subtitle">You hit the black wall</p>
+      <div class="score-card">
+        <span class="score-label">BEST</span>
+        <span id="bestScoreText" class="best-score">0</span>
+      </div>
 
-        <div class="stats-grid">
-          <div class="stat-item">
-            <span class="stat-label">SECTION</span>
-            <span class="stat-value" id="resLevels">0</span>
+      <div id="tapStart" class="tap-start">Tap to play</div>
+    </section>
+
+    <section id="inGameUI" class="game-ui hidden">
+      <div class="top-row">
+        <div class="level-pair compact">
+          <div class="level-pill">
+            <span class="current-level-text">1</span>
           </div>
-          <div class="stat-item">
-            <span class="stat-label">PLATFORMS</span>
-            <span class="stat-value" id="resPlatforms">0</span>
+          <div class="level-progress">
+            <div id="progressFill" class="level-progress-fill"></div>
           </div>
-          <div class="stat-item">
-            <span class="stat-label">COMBOS</span>
-            <span class="stat-value" id="resCombos">0</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-label">FIRE MODES</span>
-            <span class="stat-value" id="resFireModes">0</span>
+          <div class="level-pill next">
+            <span class="next-level-text">2</span>
           </div>
         </div>
-
-        <div class="mult-display">
-          <span class="mult-label">FINAL SCORE</span>
-          <span class="mult-value" id="resMult">0</span>
-        </div>
-
-        <button id="btnPlayAgain" class="btn-primary">TRY AGAIN</button>
       </div>
-    </div>
+      <div id="scoreText" class="score-text">0</div>
+      <div id="overpowerWrap" class="overpower-wrap hidden">
+        <div id="overpowerFill" class="overpower-fill"></div>
+      </div>
+    </section>
 
-  </div>
+    <section id="finishUI" class="result-ui hidden">
+      <h1>Completed</h1>
+      <p id="finishLevelText">Level 1</p>
+      <span>Tap to continue</span>
+    </section>
 
-  <!-- Three.js from CDN -->
+    <section id="gameOverUI" class="result-ui game-over hidden">
+      <h1>Game Over</h1>
+      <div class="result-grid">
+        <div>
+          <span>Score</span>
+          <strong id="gameOverScoreText">0</strong>
+        </div>
+        <div>
+          <span>Best</span>
+          <strong id="gameOverBestText">0</strong>
+        </div>
+      </div>
+      <span>Tap to restart</span>
+    </section>
+  </main>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script type="module" src="game.js"></script>
+  <script src="game.js"></script>
 </body>
 </html>
