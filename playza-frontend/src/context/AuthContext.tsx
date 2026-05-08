@@ -121,8 +121,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = useCallback(async () => {
     try {
       await logoutApi();
-    } catch (err) {
-      console.warn("[Auth] Backend logout call failed:", err);
+    } catch {
+      // Best-effort logout
     } finally {
       TokenStorage.clearTokens();
       setUser(null);

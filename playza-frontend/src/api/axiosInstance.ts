@@ -64,7 +64,7 @@ axiosInstance.interceptors.response.use(
           queryClient.invalidateQueries({ queryKey: ["users", "me"] }),
           queryClient.invalidateQueries({ queryKey: ["wallet", "balance"] }),
           queryClient.invalidateQueries({ queryKey: ["profile"] })
-        ]).catch(console.error);
+        ]).catch(() => {});
       }
     }
     return response;
@@ -131,7 +131,6 @@ axiosInstance.interceptors.response.use(
       } catch (refreshError) {
         processPendingQueue(refreshError, null);
         TokenStorage.clearTokens();
-        console.warn("[Auth] Refresh failed. Clearing session.");
         // Don't redirect — let AuthContext detect missing user and handle UI
         return Promise.reject(refreshError);
       } finally {
@@ -139,7 +138,6 @@ axiosInstance.interceptors.response.use(
       }
     }
 
-    console.error("[AxiosResponseInterceptor] Error response:", error.response?.data);
     return Promise.reject(new Error(message));
   },
 );

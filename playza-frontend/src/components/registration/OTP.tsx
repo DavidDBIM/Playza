@@ -40,7 +40,6 @@ const OTP = ({ onClick }: OtpProps) => {
       setSecondsLeft((s) => {
         if (s <= 1) {
           clearInterval(id);
-          console.log("[OTP] Countdown expired — resend is now available");
           return 0;
         }
         return s - 1;
@@ -50,7 +49,6 @@ const OTP = ({ onClick }: OtpProps) => {
   }, []);
 
   useEffect(() => {
-    console.log("[OTP] Screen mounted. Pending email:", pendingEmail);
     const id = startCountdown();
     return () => clearInterval(id);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -64,7 +62,6 @@ const OTP = ({ onClick }: OtpProps) => {
     const updated = [...digits];
     updated[index] = value.slice(-1); 
     setDigits(updated);
-    console.log(`[OTP] Digit[${index}] changed →`, updated.join(""));
     if (value && index < OTP_LENGTH - 1) {
       inputRefs.current[index + 1]?.focus();
     }
@@ -94,12 +91,10 @@ const OTP = ({ onClick }: OtpProps) => {
   const handleVerify = () => {
     if (!isComplete || !pendingEmail) return;
     setError(null);
-    console.log("[OTP] Verifying token:", { email: pendingEmail, token });
     verifyOtp(
       { email: pendingEmail, token },
       {
         onSuccess: (data) => {
-          console.log("[OTP] Verify success:", data);
           const { session, user } = data.data;
           setAuth(
             {
@@ -123,7 +118,6 @@ const OTP = ({ onClick }: OtpProps) => {
 
         onError: (err: unknown) => {
           const error = err as { response?: { data?: { message?: string } }; message?: string };
-          console.error("[OTP] Verify error:", error.response?.data?.message || error.message);
           setError(error.response?.data?.message || error.message || "An unknown error occurred");
           setDigits(Array(OTP_LENGTH).fill(""));
           inputRefs.current[0]?.focus();
@@ -135,12 +129,10 @@ const OTP = ({ onClick }: OtpProps) => {
   const handleResend = () => {
     if (!canResend || !pendingEmail) return;
     setError(null);
-    console.log("[OTP] Resending OTP to:", pendingEmail);
     resendOtp(
       { email: pendingEmail },
       {
-        onSuccess: (data) => {
-          console.log("[OTP] Resend success:", data);
+        onSuccess: () => {
           setSecondsLeft(RESEND_COOLDOWN);
           setDigits(Array(OTP_LENGTH).fill(""));
           startCountdown();
@@ -151,10 +143,6 @@ const OTP = ({ onClick }: OtpProps) => {
             response?: { data?: { message?: string } };
             message?: string;
           };
-          console.error(
-            "[OTP] Resend error:",
-            error.response?.data?.message || error.message,
-          );
           setError(
             error.response?.data?.message ||
               error.message ||

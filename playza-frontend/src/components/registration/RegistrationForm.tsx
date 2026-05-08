@@ -79,7 +79,6 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
   // Handle URL referral code auto-verification
   useEffect(() => {
     if (urlReferralCode) {
-      console.log("[RegistrationForm] Auto-filling referral code:", urlReferralCode);
       setValue("referralCode", urlReferralCode, { shouldValidate: true });
     }
   }, [urlReferralCode, setValue]);
@@ -116,7 +115,6 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
           : "Strong";
 
   const onFormSubmit = (data: SignupFormValues) => {
-    console.log("[RegistrationForm] Form submitted with data:", data);
     setFormError(null);
 
     const payload = {
@@ -129,17 +127,8 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
         : {}),
     };
 
-    console.log(
-      "[RegistrationForm] Sending signup payload to backend:",
-      payload,
-    );
-
     signup(payload, {
-      onSuccess: (response) => {
-        console.log(
-          "[RegistrationForm] Signup successful! Backend response:",
-          response,
-        );
+      onSuccess: () => {
         sessionStorage.setItem("playza_signup_draft", JSON.stringify(data));
         setPendingEmail(data.email);
         onClick("otp");
@@ -149,7 +138,6 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
           response?: { data?: { message?: string } };
           message?: string;
         };
-        console.error("[RegistrationForm] Signup failed. Error:", error);
         const errorMessage =
           error.response?.data?.message ||
           error.message ||

@@ -21,12 +21,10 @@ const LogIn = ({ onClick }: LogInProps) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("[LogIn] Submitting login request for identifier:", identifier);
     login(
       { identifier, password },
       {
         onSuccess: (data) => {
-          console.log("[LogIn] Success! Token and user data received:", data);
           const { access_token, refresh_token, user } = data.data;
           setAuth(
             {
@@ -48,16 +46,7 @@ const LogIn = ({ onClick }: LogInProps) => {
           navigate(redirectTo);
         },
 
-        onError: (err: unknown) => {
-          const error = err as {
-            response?: { data?: { message?: string } };
-            message?: string;
-          };
-          console.error(
-            "[LogIn] Error during login:",
-            error.response?.data?.message || error.message,
-          );
-        },
+        onError: () => {},
       },
     );
   };
