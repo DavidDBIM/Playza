@@ -146,9 +146,7 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
 
   const toggleFullscreen = useCallback(() => {
     if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch((err) => {
-        console.error(`Error attempting to enable fullscreen: ${err.message}`);
-      });
+      document.documentElement.requestFullscreen().catch(() => {});
     } else {
       if (document.exitFullscreen) {
         document.exitFullscreen();

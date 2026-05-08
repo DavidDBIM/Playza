@@ -54,8 +54,8 @@ const H2HLobby = ({ onCreate, onBotCreate, onJoin, onQuickMatch, getWaitingRooms
       const rooms = await getWaitingRooms();
       setPublicRooms(rooms);
       setQuickViewMode(rooms.length === 0 ? 'create' : 'list');
-    } catch (err) {
-      console.error("Failed to fetch public rooms", err);
+    } catch {
+      // Failed to fetch public rooms
       setQuickViewMode('create');
     } finally {
       setLoadingRooms(false);

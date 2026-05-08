@@ -31,12 +31,8 @@ const NotificationPrompt: React.FC = () => {
       localStorage.setItem('playza_notifications_prompt_dismissed', 'true');
       
       registerPush.mutate('web', {
-        onSuccess: () => {
-          console.log('Push notifications enabled successfully');
-        },
-        onError: (err) => {
-          console.error('Failed to register push token:', err);
-        }
+        onSuccess: () => {},
+        onError: () => {}
       });
     } else {
       setShowPrompt(false);

@@ -32,9 +32,7 @@ const randomPhrase = motivationalPhrases[Math.floor(Math.random() * motivational
 const H2HWinner = ({ room, user, localWinnerId, isSyncing }: H2HWinnerProps) => {
   useEffect(() => {
     if (document.fullscreenElement) {
-      document.exitFullscreen().catch(err => {
-        console.error(`Error attempting to exit fullscreen: ${err.message}`);
-      });
+      document.exitFullscreen().catch(() => {});
     }
   }, []);
 

@@ -6,7 +6,6 @@ const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
 
 function urlBase64ToUint8Array(base64String: string | undefined) {
   if (!base64String) {
-    console.warn("VAPID public key is missing. Push notification registration skipped.");
     return new Uint8Array();
   }
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);

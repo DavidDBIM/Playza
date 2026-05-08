@@ -46,8 +46,8 @@ const H2HNotification = () => {
         if (mounted) {
           setWaitingRooms(rooms);
         }
-      } catch (err) {
-        console.error("Failed to fetch waiting rooms", err);
+      } catch {
+        // Failed to fetch waiting rooms silently
       }
     };
 

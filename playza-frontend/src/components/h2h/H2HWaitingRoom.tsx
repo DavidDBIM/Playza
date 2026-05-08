@@ -47,8 +47,7 @@ const H2HWaitingRoom = ({ room, gameType }: WaitingRoomProps) => {
         toast.success("Match cancelled. Stake preserved.");
       }
       navigate('/h2h');
-    } catch (err) {
-      console.error("Cancel error:", err);
+    } catch {
       navigate('/h2h');
     }
   };

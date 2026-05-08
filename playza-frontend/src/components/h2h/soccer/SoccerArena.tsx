@@ -242,8 +242,7 @@ const SoccerArena: React.FC<SoccerArenaProps> = ({
         setIsSyncing(true);
         try {
           await soccerApi.finishGame(room.id, winnerId);
-        } catch (err) {
-          console.error("Failed to sync game result", err);
+        } catch {
           toast.error("Failed to sync game results. Please refresh.");
         } finally {
           setIsSyncing(false);
