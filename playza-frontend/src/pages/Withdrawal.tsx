@@ -28,13 +28,12 @@ export default function Withdrawal() {
         account_number: "0123456789",
         account_name: "John Doe"
       };
-      console.log("[Withdrawal] Requesting withdrawal:", payload);
+      // Withdrawal request initiated
       await withdraw(payload);
       
-      console.log("[Withdrawal] Success");
+      // Withdrawal success handled via navigation
       navigate(`/wallet/withdraw/success?amount=${amount}&bank=${bank}`);
-    } catch (err) {
-      console.error("[Withdrawal] Request error:", err);
+    } catch {
       setStatus("failed");
     } finally {
       setIsProcessing(false);

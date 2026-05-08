@@ -37,19 +37,16 @@ export interface InitializeDepositResponse {
 export const walletApi = {
   getWallet: async (): Promise<WalletBalance> => {
     const response = await axiosInstance.get("/wallet/balance");
-    console.log("[WalletApi] getWallet response:", response.data);
     return response.data.data;
   },
 
   initializeDeposit: async (amount: number): Promise<InitializeDepositResponse> => {
     const response = await axiosInstance.post("/wallet/deposit/initialize", { amount });
-    console.log("[WalletApi] initializeDeposit response:", response.data);
     return response.data.data;
   },
 
   verifyDeposit: async (reference: string) => {
     const response = await axiosInstance.get(`/wallet/deposit/verify/${reference}`);
-    console.log("[WalletApi] verifyDeposit response:", response.data);
     return response.data.data;
   },
 
@@ -60,19 +57,16 @@ export const walletApi = {
     account_name: string;
   }) => {
     const response = await axiosInstance.post("/wallet/withdraw", data);
-    console.log("[WalletApi] requestWithdrawal response:", response.data);
     return response.data.data;
   },
 
   getTransactionHistory: async (page = 1, limit = 20): Promise<TransactionHistoryResponse> => {
     const response = await axiosInstance.get(`/wallet/transactions?page=${page}&limit=${limit}`);
-    console.log("[WalletApi] getTransactionHistory response:", response.data);
     return response.data.data;
   },
 
   getBankList: async (): Promise<Bank[]> => {
     const response = await axiosInstance.get("/wallet/banks");
-    console.log("[WalletApi] getBankList response:", response.data);
     return response.data.data;
   },
 
@@ -81,7 +75,6 @@ export const walletApi = {
       account_number,
       bank_code,
     });
-    console.log("[WalletApi] verifyBankAccount response:", response.data);
     return response.data.data;
   },
 };

@@ -28,7 +28,7 @@ export default function Deposit() {
     setStatus("processing");
     try {
       const data = await initializeDeposit(total);
-      console.log("[Deposit] Initialized deposit:", data);
+      // Initialization handled via mutation hooks
       
       const config = {
         reference: data.reference,
@@ -36,18 +36,15 @@ export default function Deposit() {
         amount: Math.round(total * 100), // Amount in kobo, ensure it's an integer
         publicKey: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY,
         text: "Pay Now",
-        onSuccess: (response: unknown) => {
-          console.log("[Deposit] Paystack Success:", response);
+        onSuccess: () => {
           setStatus("success");
         },
         onClose: () => {
-          console.log("[Deposit] Paystack Closed");
           setStatus("idle");
         },
       };
       setPaystackProps(config as unknown as PaystackProps); // Type cast via unknown to satisfy strict linting while handling peer-dep type drift
-    } catch (err) {
-      console.error("[Deposit] Initialization error:", err);
+    } catch {
       setStatus("failed");
     }
   };

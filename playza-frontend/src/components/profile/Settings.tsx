@@ -99,11 +99,7 @@ const Settings = () => {
         show_activity: data.showActivity,
       },
       {
-        onSuccess: (result) => {
-          console.log(
-            "[Settings] Profile updated successfully in background:",
-            result,
-          );
+        onSuccess: () => {
           updateAuthState({
             firstName: data.firstName,
             lastName: data.lastName,
@@ -111,9 +107,7 @@ const Settings = () => {
             avatarUrl: data.avatarUrl,
           });
         },
-        onError: (error) => {
-          console.error("[Settings] Profile update failed:", error);
-        },
+        onError: () => {},
       },
     );
   };

@@ -17,6 +17,7 @@ import type { PzaEvent, ClaimedTask } from "@/api/loyalty.api";
 import { useClaimStreak } from "@/hooks/loyalty/useClaimStreak";
 import { useClaimTask } from "@/hooks/loyalty/useClaimTask";
 import { RewardsSection } from "@/components/loyalty/RewardsSection";
+import { useToast } from "@/context/toast";
 
 interface Task {
   id: string;
@@ -177,6 +178,7 @@ export default function Loyalty() {
   const { data: loyaltyData, isLoading: loyaltyLoading, refetch: refetchLoyalty } = useLoyaltyMe();
   const { mutate: performClaimStreak, isPending: claimingStreak } = useClaimStreak();
   const { mutate: performClaimTask, isPending: isMutationPending, variables: mutationVariables } = useClaimTask();
+  const toast = useToast();
   const [activeCategory, setActiveCategory] = useState("onboarding");
   const [tierModal, setTierModal] = useState(false);
   const [countdown, setCountdown] = useState<string>('');
@@ -237,7 +239,7 @@ export default function Loyalty() {
       onError: (err: unknown) => {
         const msg =
           err instanceof Error ? err.message : "Failed to claim reward";
-        alert(msg);
+        toast.error(msg);
       },
     });
   }
@@ -248,7 +250,7 @@ export default function Loyalty() {
       onError: (err: unknown) => {
         const msg =
           err instanceof Error ? err.message : "Failed to claim reward";
-        alert(msg);
+        toast.error(msg);
       },
     });
   }

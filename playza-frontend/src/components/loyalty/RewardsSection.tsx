@@ -14,6 +14,7 @@ import {
 } from "@/api/loyalty.api";
 import { useAmbassadorStatus } from "@/hooks/loyalty/useAmbassadorStatus";
 import { useApplyAmbassador } from "@/hooks/loyalty/useApplyAmbassador";
+import { useToast } from "@/context/toast";
 
 const SPIN_COST = 30;
 
@@ -66,6 +67,7 @@ const QUALIFICATION_TYPES = [
 ];
 
 export function RewardsSection({ totalPoints, spinsLeftToday, onPointsChanged, autoOpenSpin }: RewardsSectionProps) {
+  const toast = useToast();
   const [showSpinModal, setShowSpinModal] = useState(!!autoOpenSpin);
   const [showAmbassadorModal, setShowAmbassadorModal] = useState(false);
   const [redeemModal, setRedeemModal] = useState<MerchProduct | null>(null);
@@ -529,7 +531,7 @@ export function RewardsSection({ totalPoints, spinsLeftToday, onPointsChanged, a
                 className="flex-1 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                 Cancel
               </button>
-              <button onClick={() => { alert(`Redemption for "${redeemModal.name}" submitted!`); setRedeemModal(null); }}
+              <button onClick={() => { toast.success(`Redemption for "${redeemModal.name}" submitted!`); setRedeemModal(null); }}
                 className="flex-1 py-3 rounded-xl bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-black text-sm transition-all shadow-md shadow-indigo-500/30 active:scale-95">
                 Confirm Redeem
               </button>

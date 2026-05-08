@@ -40,7 +40,6 @@ export interface ReferralStatsData {
 }
 
 export const getReferralStatsApi = async (): Promise<ReferralStatsData> => {
-  console.log("[ReferralAPI] Fetching stats...");
   const { data } = await axiosInstance.get(`/referral/stats`);
   return data.data;
 };
