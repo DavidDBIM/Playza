@@ -119,8 +119,8 @@ const Home = () => {
       )}
 
       <CTAReferral />
-      <HomeFAQ />
       <HowItWorks />
+      <HomeFAQ />
 
     </main>
   );

@@ -11,7 +11,7 @@ const SideBar = () => {
   }
 
   const filteredNavItems = navItems.filter((item) => {
-    if (item.label === "Wallet" || item.label === "Profile" || item.label === "My Games") {
+    if (item.label === "Wallet" || item.label === "Profile" || item.label === "My Games" || item.label === "Feedback") {
       return !!user;
     }
     return true;

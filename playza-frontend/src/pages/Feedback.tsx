@@ -1,8 +1,22 @@
 import React from 'react';
 import { MdChat } from 'react-icons/md';
 import { FeedbackForm } from '../components/feedback/FeedbackForm';
+import { useAuth } from '@/context/auth';
+import { useNavigate } from 'react-router';
+import { useEffect } from 'react';
 
 const Feedback: React.FC = () => {
+  const { user, isLoading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isLoading && !user) {
+      navigate('/registration');
+    }
+  }, [user, isLoading, navigate]);
+
+  if (isLoading || !user) return null;
+
   return (
     <div className="max-w-3xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 ">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">

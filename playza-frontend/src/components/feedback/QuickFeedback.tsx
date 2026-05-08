@@ -28,8 +28,8 @@ export const QuickFeedback: React.FC<QuickFeedbackProps> = ({ gameName }) => {
         game_name: gameName
       });
       setStep('success');
-    } catch (err) {
-      console.error(err);
+    } catch {
+      // Silent fail
     } finally {
       setIsSubmitting(false);
     }

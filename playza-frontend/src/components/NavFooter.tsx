@@ -9,6 +9,7 @@ import {
   Swords,
   Medal,
   Coins,
+  MessageSquare,
 } from "lucide-react";
 
 interface NavItem {
@@ -84,6 +85,7 @@ const NavFooter = () => {
     user ? getItem("My Games") : undefined,
     user ? getItem("Wallet") : undefined,
     getItem("Leaderboards"),
+    user ? { label: "Feedback", icon: MessageSquare, path: "/feedback" } : undefined,
   ].filter((item): item is NavItem => !!item);
 
   // Unique visible items logic
