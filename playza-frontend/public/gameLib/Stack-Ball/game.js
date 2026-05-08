@@ -107,9 +107,9 @@ const FIRE_COLOR = 0xff4a18;
 const BALL_RADIUS = 0.28;
 const PLATFORM_HEIGHT = 0.16;
 const PLATFORM_SPACING = 0.5;
-const OUTER_RADIUS = 1.95;
-const INNER_RADIUS = 0.45; // Increased to fit larger pole
-const BALL_X = 1.15; // Fixed in front of pole (positive X)
+const OUTER_RADIUS = 1.1;
+const INNER_RADIUS = 0.45; // Wider middle hole, fits wider pole
+const BALL_X = -1.15; // Fixed in front of pole (camera side, negative Z)
 const START_Y = 1.2;
 const MOVE_SPEED = 500;
 const BOUNCE_SPEED = 250;
@@ -176,10 +176,10 @@ function init() {
 
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0xf4f6fb);
-  scene.fog = new THREE.Fog(0xf4f6fb, 8, 22);
+  scene.fog = new THREE.Fog(0xf4f6fb, 8, 30);
 
-  camera = new THREE.PerspectiveCamera(45, 1, 0.1, 80);
-  camera.position.set(0, 3.2, -5.2);
+camera = new THREE.PerspectiveCamera(55, 1, 0.1, 80);
+camera.position.set(0, 3.2, -7.0);
 
   const hemi = new THREE.HemisphereLight(0xffffff, 0xd6dae2, 1.9);
   scene.add(hemi);
@@ -197,7 +197,7 @@ function init() {
 
 // Increased pole diameter from 0.32 to 0.50 (radius 0.25)
 pole = new THREE.Mesh(
-  new THREE.CylinderGeometry(0.28, 0.28, 80, 32),
+  new THREE.CylinderGeometry(0.26, 0.26, 80, 32),
   new THREE.MeshStandardMaterial({ color: POLE_COLOR, roughness: 0.48, metalness: 0.08 })
 );
   pole.position.y = -22;
@@ -385,7 +385,7 @@ function createPlatformPart(shape, count, index, material) {
 
 function createRingPart(shape, angle, startAngle, material) {
   const steps = shape === "spikes" ? 8 : 18;
-  const outerWave = shape === "flower" ? 0.18 : 0;
+  const outerWave = shape === "flower" ? 0.25 : 0;
   const shape2D = new THREE.Shape();
   shape2D.moveTo(Math.cos(startAngle) * INNER_RADIUS, Math.sin(startAngle) * INNER_RADIUS);
 
@@ -393,7 +393,7 @@ function createRingPart(shape, angle, startAngle, material) {
     const t = i / steps;
     const a = startAngle + angle * t;
     let radius = OUTER_RADIUS;
-    if (shape === "spikes") radius += i % 2 === 0 ? 0.28 : -0.08;
+    if (shape === "spikes") radius += i % 2 === 0 ? 0.35 : -0.1;
     if (shape === "flower") radius += Math.sin(t * Math.PI) * outerWave;
     shape2D.lineTo(Math.cos(a) * radius, Math.sin(a) * radius);
   }
@@ -423,7 +423,7 @@ function createBoxPart(count, index, material) {
   const geometry = new THREE.BoxGeometry(width, PLATFORM_HEIGHT, length);
   const mesh = new THREE.Mesh(geometry, material.clone());
   const angle = (Math.PI * 2 * index) / count + Math.PI / count;
-  const radius = 1.02;
+  const radius = 1.1;
   mesh.position.set(Math.cos(angle) * radius, 0, Math.sin(angle) * radius);
   mesh.rotation.y = -angle;
   return mesh;
@@ -437,7 +437,7 @@ function createFinishPlatform(y) {
     roughness: 0.26,
     metalness: 0.1,
   });
-  const base = new THREE.Mesh(new THREE.CylinderGeometry(2.1, 2.1, 0.22, 56), mat);
+  const base = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 0.22, 56), mat);
   base.castShadow = true;
   base.receiveShadow = true;
   const stripe = new THREE.Mesh(
@@ -900,7 +900,7 @@ function renderCamera(dt) {
     cameraBaseY = platforms[0] ? platforms[0].y + 1.2 : START_Y - 0.3;
   }
 
-  const cameraZ = camera.aspect < 0.7 ? -7.5 : -6.0;
+  const cameraZ = camera.aspect < 0.7 ? -9.5 : -8.0;
   camera.position.set(0, cameraBaseY + 2.0, cameraZ);
   camera.lookAt(0, cameraBaseY - 0.5, 0);
   pole.position.y = cameraBaseY - 22;

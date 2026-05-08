@@ -28,8 +28,7 @@ export const useSessionLeaderboard = (sessionId: string) => {
     // Listen for real-time updates
     const channel = supabase
       .channel(`session_${sessionId}`)
-      .on("broadcast", { event: "LEADERBOARD_UPDATE" }, (payload) => {
-        console.log("Leaderboard update received:", payload);
+      .on("broadcast", { event: "LEADERBOARD_UPDATE" }, () => {
         // Refetch the leaderboard and user stats when a new score is submitted
         queryClient.invalidateQueries({ queryKey: ["leaderboard", sessionId] });
         queryClient.invalidateQueries({ queryKey: ["my-stats", sessionId] });

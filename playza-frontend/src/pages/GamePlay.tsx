@@ -50,8 +50,8 @@ const GamePlay = () => {
                         setCurrentRoundId(roundRes.roundId);
                     }
                 }
-            } catch (err) {
-                console.error("Failed to initialize session", err);
+            } catch {
+                // Silent fail for session initialization
             }
         };
         fetchSession();
@@ -70,8 +70,8 @@ const GamePlay = () => {
                 if (document.documentElement.requestFullscreen) {
                     await document.documentElement.requestFullscreen();
                 }
-            } catch (err) {
-                console.log("Auto-fullscreen requires user gesture", err);
+            } catch {
+                // Auto-fullscreen requires user gesture
             }
         };
         setTimeout(enterFullscreen, 100);
@@ -107,7 +107,7 @@ const GamePlay = () => {
             window.removeEventListener("message", handleMessage);
             document.removeEventListener("fullscreenchange", handleFullscreenChange);
             if (document.fullscreenElement && document.exitFullscreen) {
-                document.exitFullscreen().catch(err => console.log(err));
+                document.exitFullscreen().catch(() => {});
             }
         };
     }, [activeSession, currentRoundId, toast]);
@@ -116,8 +116,8 @@ const GamePlay = () => {
         if (!document.fullscreenElement) {
             try {
                 await document.documentElement.requestFullscreen();
-            } catch (err) {
-                console.error("Error attempting to enable fullscreen:", err);
+            } catch {
+                // Silent fail for fullscreen toggle
             }
         } else {
             if (document.exitFullscreen) {
