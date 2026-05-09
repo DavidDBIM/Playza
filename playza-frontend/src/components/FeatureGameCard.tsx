@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { TrendingUp, Clock, Play, ArrowRight } from "lucide-react";
+import { TrendingUp, Play, ArrowRight } from "lucide-react";
 import type { Game } from "@/types/types";
 
 interface Props extends Game {
@@ -56,19 +56,10 @@ const FeatureGameCard = ({
         {/* Stats Row */}
         <div className="flex items-center gap-4 md:gap-8 mt-1 border-t border-white/5 pt-2">
           <div className="flex flex-col">
-            <span className="text-[8px] md:text-[9px] font-black uppercase tracking-widest text-slate-500">Prize Pool</span>
-            <div className="text-sm md:text-lg font-black text-accent italic leading-none">
-              ${(pricePool ?? 0).toLocaleString()}
-            </div>
-          </div>
-          
-          <div className="h-6 w-px bg-white/10" />
-          
-          <div className="flex flex-col">
-            <span className="text-[8px] md:text-[9px] font-black uppercase tracking-widest text-slate-500">Closing In</span>
-            <div className="text-sm md:text-lg font-black text-white flex items-center gap-1.5 leading-none">
-              <Clock size={12} className="text-primary" />
-              00:42:15
+            <span className="text-[8px] md:text-[9px] font-black uppercase tracking-widest text-slate-500">Global Pot</span>
+            <div className="text-sm md:text-lg font-black text-accent italic leading-none flex items-center gap-1">
+              <span className="text-xs">ZA</span>
+              {(pricePool ?? 0).toLocaleString()}
             </div>
           </div>
         </div>

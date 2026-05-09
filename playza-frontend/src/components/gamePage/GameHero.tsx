@@ -6,11 +6,12 @@ import { ZASymbol } from "@/components/currency/ZASymbol";
 interface GameHeroProps {
   game: Game;
   prizePool: number;
+  activePlayers: number;
   sessions: Session[];
   onJoin: () => void;
 }
 
-export const GameHero = ({ game, prizePool, sessions, onJoin }: GameHeroProps) => {
+export const GameHero = ({ game, prizePool, activePlayers, sessions, onJoin }: GameHeroProps) => {
   const liveSession = sessions.find(s => {
     const status = (s.status || '').toLowerCase();
     return status === 'live' || status === 'active' || status === 'ongoing' || status === 'starting soon';
@@ -75,10 +76,10 @@ export const GameHero = ({ game, prizePool, sessions, onJoin }: GameHeroProps) =
                 </div>
                 <div className="flex flex-col items-start">
                   <span className="text-[7px] md:text-[9px] text-slate-500 font-black uppercase tracking-tight">
-                    Active
+                    Total Active
                   </span>
                   <span className="text-xs md:text-base font-black text-slate-900 dark:text-white leading-none uppercase">
-                    {game.activePlayers.toLocaleString()}
+                    {(activePlayers || 0).toLocaleString()}
                   </span>
                 </div>
               </div>
@@ -103,7 +104,7 @@ export const GameHero = ({ game, prizePool, sessions, onJoin }: GameHeroProps) =
                 </div>
                 <div className="flex flex-col items-start">
                   <span className="text-[7px] md:text-[9px] text-playza-green/70 font-black uppercase tracking-tight">
-                    Pot
+                    Global Pot
                   </span>
                   <span className="text-xl md:text-3xl font-black text-slate-900 dark:text-white italic tracking-tighter flex items-center gap-1">
                     <ZASymbol className="text-lg md:text-2xl" />

@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router";
 import { MdTimeline, MdInfo, MdRule } from "react-icons/md";
-import { calculatePrizePool } from "@/utils/calculatedPrizePool";
 import { GameHero } from "@/components/gamePage/GameHero";
 import { SessionsTab } from "@/components/gamePage/SessionsTab";
 import { AboutGameTab } from "@/components/gamePage/AboutGameTab";
@@ -76,6 +75,14 @@ const Game = () => {
     }));
   }, [sessionsData]);
 
+  const globalPrizePool = useMemo(() => {
+    return sessions.reduce((sum, s) => sum + (Number(s.prizePool) || 0), 0);
+  }, [sessions]);
+
+  const totalPlayers = useMemo(() => {
+    return sessions.reduce((sum, s) => sum + (s.playersJoined || 0), 0);
+  }, [sessions]);
+
   useEffect(() => {
     if (selectedSession) {
       document.body.style.overflow = "hidden";
@@ -121,12 +128,6 @@ const Game = () => {
     );
   }
 
-  const prizePool = calculatePrizePool(
-    game.entryFee,
-    game.activePlayers,
-    game.platformFeePercentage,
-  );
-
   const handleJoinSession = () => {
     // Navigate directly to the match session page instead of opening the modal here
     navigate(`/games/${slug}/session`);
@@ -156,7 +157,13 @@ const Game = () => {
 
   return (
     <main className="flex-1 space-y-4 p-2 md:p-6 pb-24 md:pb-10">
-      <GameHero game={game} prizePool={prizePool} sessions={sessions} onJoin={handleJoinSession} />
+      <GameHero 
+        game={game} 
+        prizePool={globalPrizePool} 
+        activePlayers={totalPlayers}
+        sessions={sessions} 
+        onJoin={handleJoinSession} 
+      />
 
       <div className="flex border-b border-slate-200 dark:border-white/10">
         {tabs.map((tab) => (

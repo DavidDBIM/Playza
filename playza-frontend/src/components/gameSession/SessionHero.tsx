@@ -14,6 +14,7 @@ type SessionHeroProps = {
   endTime: string;
   sessionId: string;
   status: string;
+  gameName?: string;
   onLiveClick: () => void;
   onDemoClick: () => void;
 };
@@ -28,6 +29,7 @@ const SessionHero = ({
   endTime,
   sessionId,
   status,
+  gameName,
   onLiveClick,
   onDemoClick,
 }: SessionHeroProps) => {
@@ -58,6 +60,11 @@ const SessionHero = ({
               #{sessionCode}
             </span>
           </div>
+          {gameName && (
+            <p className="text-[10px] md:text-xs font-black uppercase tracking-[0.2em] text-primary/60 mt-2 -mb-1">
+              {gameName} Arena
+            </p>
+          )}
           <h2 className=" text-lg md:text-5xl font-bold dark:text-white mt-1">
             {title}
           </h2>
@@ -71,9 +78,6 @@ const SessionHero = ({
           </p>
           <p className="text-sm md:text-2xl flex items-baseline  font-black text-slate-900 dark:text-transparent dark:bg-clip-text dark:bg-linear-to-r dark:from-yellow-400 dark:via-amber-200 dark:to-yellow-600">
             {formatZA(prizePool)}
-            <span className="text-playza-green text-xs font-black ml-1">
-              ↑ 1.2%
-            </span>
           </p>
         </div>
       </div>

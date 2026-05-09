@@ -239,6 +239,7 @@ const MatchSession = () => {
           <SessionHero
             title={session.title || game.title}
             slug={game.slug}
+            gameName={game.title}
             thumbnail={game.thumbnail_url || game.thumbnail}
             activePlayers={session.playersJoined || session.players_joined || 0}
             entryFee={Number(session.entryFee || session.entry_fee || 0)}
