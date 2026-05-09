@@ -23,6 +23,17 @@ interface GameData {
   controls: string;
   rules: string;
   scoring: string;
+  /** JSONB capabilities column — set via the admin Game Capabilities section */
+  capabilities?: {
+    powerUps?: boolean;
+    bundles?: boolean;
+    rivalBanner?: boolean;
+    powerUpDefs?: { id: string; label: string; cost: number }[];
+    bundlePacks?: {
+      id: string; label: string; description: string;
+      cost: number; grants: Record<string, number>;
+    }[];
+  };
 }
 
 export const gameSessionService = {

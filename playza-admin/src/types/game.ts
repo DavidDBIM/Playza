@@ -58,4 +58,23 @@ export type Game = {
   createdAt: string;
   created_at?: string;
   updatedAt: string;
+
+  /**
+   * Optional JSONB column added to Supabase `games` table.
+   * Controls which platform features are enabled for this game.
+   * Shape: { powerUps, bundles, rivalBanner, powerUpDefs[], bundlePacks[] }
+   */
+  capabilities?: {
+    powerUps?: boolean;
+    bundles?: boolean;
+    rivalBanner?: boolean;
+    powerUpDefs?: { id: string; label: string; cost: number }[];
+    bundlePacks?: {
+      id: string;
+      label: string;
+      description: string;
+      cost: number;
+      grants: Record<string, number>;
+    }[];
+  };
 };
