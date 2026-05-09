@@ -48,6 +48,7 @@ const App: React.FC = () => {
               <Route path="users/:id" element={<User />} />
               <Route path="games" element={<Games />} />
               <Route path="games/create" element={<CreateGame />} />
+              <Route path="games/edit/:slug" element={<CreateGame />} />
               <Route path="games/:slug" element={<Game />} />
               <Route path="sessions/:id" element={<Session />} />
               <Route

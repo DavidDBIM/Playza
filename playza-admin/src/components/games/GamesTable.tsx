@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router';
 import { 
   MdEdit, 
   MdDeleteForever, 
-  MdRemoveRedEye, 
   MdCheckCircle, 
   MdCancel, 
   MdErrorOutline,
@@ -89,7 +88,7 @@ export const GamesTable: React.FC<GamesTableProps> = ({ games, clearFilters, ref
                   </span>
                 </TableCell>
                 <TableCell className="py-3.5 px-4 text-right font-headline font-black text-sm text-foreground">
-                  ₦{game.entryFee.toLocaleString()}
+                  ₦{(game.entryFee ?? 0).toLocaleString()}
                 </TableCell>
                 <TableCell className="py-3.5 px-4 text-center">
                   <div className={`text-[10px] font-black px-3 py-1 rounded-full border inline-block tracking-widest ${
@@ -114,7 +113,7 @@ export const GamesTable: React.FC<GamesTableProps> = ({ games, clearFilters, ref
                 </TableCell>
                 <TableCell className="py-3.5 px-4 text-center">
                   <div className="flex flex-col items-center">
-                    <span className="font-headline font-black text-sm text-primary">{game.unique_players || 0}</span>
+                    <span className="font-headline font-black text-sm text-primary">{game.unique_players ?? 0}</span>
                     <span className="text-[9px] text-muted-foreground/50 font-black uppercase tracking-tighter">Total Users</span>
                   </div>
                 </TableCell>
@@ -138,10 +137,10 @@ export const GamesTable: React.FC<GamesTableProps> = ({ games, clearFilters, ref
                         className="rounded-xl px-4 py-3 font-bold text-sm cursor-pointer gap-3"
                         onClick={(e) => {
                           e.stopPropagation();
-                          navigate(`/games/${game.slug}`);
+                          navigate(`/games/edit/${game.slug}`);
                         }}
                       >
-                        <MdRemoveRedEye className="text-lg text-primary" /> View Details
+                        <MdEdit className="text-lg text-primary" /> Edit Game
                       </DropdownMenuItem>
                       <DropdownMenuItem 
                         className="rounded-xl px-4 py-3 font-bold text-sm cursor-pointer gap-3 text-rose-500 focus:text-rose-600 focus:bg-rose-500/5"

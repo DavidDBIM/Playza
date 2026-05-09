@@ -8,6 +8,7 @@ export type Session = {
   start_time: string;
   end_time: string;
   max_players: number;
+  winnersCount?: number;
 };
 
 export type GameBadge =
@@ -42,6 +43,17 @@ export type Game = {
   is_active?: boolean;
   ctaLabel: string;
   badge: GameBadge;
+
+  iframeUrl?: string;
+  iframe_url?: string;
+  controls?: string;
+  rules?: string;
+  scoring?: string;
+  howToPlay?: {
+    controls: string;
+    rules: string;
+    scoring: string;
+  };
 
   createdAt: string;
   created_at?: string;

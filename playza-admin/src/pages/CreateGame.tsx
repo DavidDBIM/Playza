@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router';
+import { useGames, useGameSessions } from '../hooks/use-games';
 import { 
   MdInfo, 
   MdCalendarMonth, 
@@ -20,6 +21,8 @@ import {
 } from '../components/ui/select';
 import { gameSessionService } from '../services/gamesession.service';
 import { toast } from 'sonner';
+
+import type { Game, Session } from '../types/game';
 
 interface SessionInput {
   title: string;
@@ -47,14 +50,25 @@ interface GameFormData {
 }
 
 
+// Helper to get today's date in YYYY-MM-DDTHH:mm format for datetime-local input
+const getTodayDateTime = () => {
+  const now = new Date();
+  return new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+};
+
 const CreateGame: React.FC = () => {
+  const { slug } = useParams<{ slug: string }>();
+  const isEditMode = !!slug;
   const navigate = useNavigate();
   const [isActive, setIsActive] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [gameId, setGameId] = useState<string | null>(null);
+
+  const { data: gamesData } = useGames();
+  const { data: existingSessionsData } = useGameSessions(gameId || '');
 
   // Form State
   const [formData, setFormData] = useState<GameFormData>({
-
     title: '',
     slug: '',
     category: 'Puzzle',
@@ -70,17 +84,58 @@ const CreateGame: React.FC = () => {
   });
 
   const [sessions, setSessions] = useState<SessionInput[]>([
-
     {
       title: 'Elite Tournament #1',
       type: 'tournament',
       entryFee: 1500,
       maxPlayers: 200,
       winnersCount: 20,
-      startTime: '2026-04-16T13:00',
-      endTime: '2026-04-16T16:00'
+      startTime: getTodayDateTime(),
+      endTime: new Date(new Date().getTime() + 3 * 60 * 60 * 1000 - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) // 3 hours from now
     }
   ]);
+
+  // Populate form if in edit mode
+  useEffect(() => {
+    if (isEditMode && gamesData?.games) {
+      const game = (gamesData.games as Game[]).find((g) => g.slug === slug);
+      if (game) {
+        setGameId(game.id);
+        setIsActive(game.is_active ?? game.isActive ?? true);
+        setFormData({
+          title: game.title,
+          slug: game.slug,
+          category: game.category,
+          difficulty: game.difficulty,
+          mode: game.mode,
+          durationInSeconds: game.duration_seconds || game.durationInSeconds || 300,
+          platformFeePercentage: game.platform_fee_percentage || game.platformFeePercentage || 10,
+          iframeUrl: game.iframe_url || game.iframeUrl || '',
+          thumbnailUrl: game.thumbnail_url || game.thumbnail,
+          controls: game.controls || game.howToPlay?.controls || '',
+          rules: game.rules || game.howToPlay?.rules || '',
+          scoring: game.scoring || game.howToPlay?.scoring || ''
+        });
+      }
+    }
+  }, [isEditMode, gamesData, slug]);
+
+  useEffect(() => {
+    if (isEditMode && existingSessionsData?.sessions) {
+      const mappedSessions = (existingSessionsData.sessions as Session[]).map((s) => ({
+        title: s.title,
+        type: s.type,
+        entryFee: s.entry_fee || 0,
+        maxPlayers: s.max_players || 0,
+        winnersCount: s.winnersCount || 1,
+        startTime: new Date(new Date(s.start_time || Date.now()).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16),
+        endTime: new Date(new Date(s.end_time || Date.now()).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)
+      }));
+      if (mappedSessions.length > 0) {
+        setSessions(mappedSessions);
+      }
+    }
+  }, [isEditMode, existingSessionsData]);
 
   const categories = [
     { label: "Competitive", items: ["Battle Royale", "MOBA", "Strategy", "Shooter (FPS/TPS)", "Fighting"] },
@@ -115,8 +170,8 @@ const CreateGame: React.FC = () => {
         entryFee: 1000,
         maxPlayers: 100,
         winnersCount: 10,
-        startTime: '',
-        endTime: ''
+        startTime: getTodayDateTime(),
+        endTime: new Date(new Date().getTime() + 3 * 60 * 60 * 1000 - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)
       }
     ]);
   };
@@ -164,28 +219,33 @@ const CreateGame: React.FC = () => {
       const payload = {
         gameData: {
           ...formData,
-          isActive,
-          howToPlay: {
-            controls: formData.controls,
-            rules: formData.rules,
-            scoring: formData.scoring
-          }
+          durationInSeconds: formData.durationInSeconds ? Number(formData.durationInSeconds) : 0,
+          platformFeePercentage: Number(formData.platformFeePercentage || 10),
         },
-        sessions: sessions.map(s => ({
-          ...s,
-          startTime: new Date(s.startTime).toISOString(),
-          endTime: new Date(s.endTime).toISOString()
-        }))
+        sessions: sessions.map(s => {
+          const startTime = s.startTime ? new Date(s.startTime).toISOString() : new Date().toISOString();
+          const endTime = s.endTime ? new Date(s.endTime).toISOString() : new Date(Date.now() + 3 * 3600000).toISOString();
+          
+          return {
+            ...s,
+            entryFee: Number(s.entryFee || 0),
+            maxPlayers: Number(s.maxPlayers || 0),
+            winnersCount: Number(s.winnersCount || 1),
+            startTime,
+            endTime
+          };
+        })
       };
 
-      const response = await gameSessionService.createGame(payload.gameData, payload.sessions);
-      
-      if (response.success) {
-        toast.success('Game and sessions published successfully!');
-        navigate('/games');
+      if (isEditMode && gameId) {
+        await gameSessionService.updateGame(gameId, payload.gameData);
+        toast.success('Game updated successfully!');
       } else {
-        toast.error(response.data.message || 'Failed to publish game');
+        await gameSessionService.createGame(payload.gameData, payload.sessions);
+        toast.success('Game and sessions published successfully!');
       }
+      
+      navigate('/games');
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
       console.error('Error publishing game:', error);
@@ -208,8 +268,8 @@ const CreateGame: React.FC = () => {
               <MdRocketLaunch className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-black text-foreground tracking-tight">Publish Game</h1>
-              <p className="text-sm text-muted-foreground font-medium">Define a new game listing and configure mechanics</p>
+              <h1 className="text-2xl font-black text-foreground tracking-tight">{isEditMode ? 'Edit Game' : 'Publish Game'}</h1>
+              <p className="text-sm text-muted-foreground font-medium">{isEditMode ? 'Modify existing game configuration' : 'Define a new game listing and configure mechanics'}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -225,7 +285,7 @@ const CreateGame: React.FC = () => {
               disabled={isSubmitting}
               className="px-6 py-2 bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl text-sm font-bold shadow-md shadow-primary/20 transition-all disabled:opacity-50"
             >
-              {isSubmitting ? 'Publishing...' : 'Initialize Game'}
+              {isSubmitting ? (isEditMode ? 'Saving...' : 'Publishing...') : (isEditMode ? 'Save Changes' : 'Initialize Game')}
             </button>
           </div>
         </div>
@@ -486,7 +546,7 @@ const CreateGame: React.FC = () => {
                         <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Start</label>
                         <Input 
                           type="datetime-local" 
-                          className="h-11 bg-muted border-border rounded-xl font-bold text-[10px] uppercase" 
+                          className="h-11 bg-muted border-border rounded-xl font-bold text-[10px] uppercase [color-scheme:dark] md:[color-scheme:light] dark:[color-scheme:dark]" 
                           value={session.startTime}
                           onChange={(e) => handleSessionChange(idx, 'startTime', e.target.value)}
                         />
@@ -495,7 +555,7 @@ const CreateGame: React.FC = () => {
                         <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">End</label>
                         <Input 
                           type="datetime-local" 
-                          className="h-11 bg-muted border-border rounded-xl font-bold text-[10px] uppercase" 
+                          className="h-11 bg-muted border-border rounded-xl font-bold text-[10px] uppercase [color-scheme:dark] md:[color-scheme:light] dark:[color-scheme:dark]" 
                           value={session.endTime}
                           onChange={(e) => handleSessionChange(idx, 'endTime', e.target.value)}
                         />
@@ -530,7 +590,7 @@ const CreateGame: React.FC = () => {
                 className="flex-1 lg:flex-none px-10 py-3 bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl font-black shadow-lg shadow-primary/20 uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-95 group disabled:opacity-50"
               >
                 <MdRocketLaunch className="text-lg" />
-                {isSubmitting ? 'Publishing...' : 'Publish Game'}
+                {isSubmitting ? (isEditMode ? 'Saving...' : 'Publishing...') : (isEditMode ? 'Update Game' : 'Publish Game')}
               </button>
             </div>
           </div>
