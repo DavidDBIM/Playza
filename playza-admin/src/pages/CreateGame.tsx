@@ -34,6 +34,36 @@ interface SessionInput {
   endTime: string;
 }
 
+interface PowerUpDef {
+  id: string;
+  label: string;
+  cost: number;
+}
+
+interface BundlePack {
+  id: string;
+  label: string;
+  description: string;
+  cost: number;
+  grants: Record<string, number>;
+}
+
+interface GameCapabilities {
+  powerUps: boolean;
+  bundles: boolean;
+  rivalBanner: boolean;
+  powerUpDefs: PowerUpDef[];
+  bundlePacks: BundlePack[];
+}
+
+const DEFAULT_CAPABILITIES: GameCapabilities = {
+  powerUps: false,
+  bundles: false,
+  rivalBanner: false,
+  powerUpDefs: [],
+  bundlePacks: [],
+};
+
 interface GameFormData {
   title: string;
   slug: string;
@@ -63,6 +93,7 @@ const CreateGame: React.FC = () => {
   const [isActive, setIsActive] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [gameId, setGameId] = useState<string | null>(null);
+  const [capabilities, setCapabilities] = useState<GameCapabilities>(DEFAULT_CAPABILITIES);
 
   const { data: gamesData } = useGames();
   const { data: existingSessionsData } = useGameSessions(gameId || '');
@@ -82,6 +113,20 @@ const CreateGame: React.FC = () => {
     rules: '',
     scoring: ''
   });
+
+  // Capabilities helpers
+  const setCap = <K extends keyof GameCapabilities>(key: K, val: GameCapabilities[K]) =>
+    setCapabilities(prev => ({ ...prev, [key]: val }));
+
+  const addPowerUp = () => setCap('powerUpDefs', [...capabilities.powerUpDefs, { id: '', label: '', cost: 5 }]);
+  const removePowerUp = (i: number) => setCap('powerUpDefs', capabilities.powerUpDefs.filter((_, idx) => idx !== i));
+  const updatePowerUp = (i: number, field: keyof PowerUpDef, val: string | number) =>
+    setCap('powerUpDefs', capabilities.powerUpDefs.map((p, idx) => idx === i ? { ...p, [field]: val } : p));
+
+  const addBundle = () => setCap('bundlePacks', [...capabilities.bundlePacks, { id: '', label: '', description: '', cost: 20, grants: {} }]);
+  const removeBundle = (i: number) => setCap('bundlePacks', capabilities.bundlePacks.filter((_, idx) => idx !== i));
+  const updateBundle = (i: number, field: keyof BundlePack, val: string | number | Record<string, number>) =>
+    setCap('bundlePacks', capabilities.bundlePacks.map((b, idx) => idx === i ? { ...b, [field]: val } : b));
 
   const [sessions, setSessions] = useState<SessionInput[]>([
     {
@@ -116,6 +161,10 @@ const CreateGame: React.FC = () => {
           rules: game.rules || game.howToPlay?.rules || '',
           scoring: game.scoring || game.howToPlay?.scoring || ''
         });
+        // Restore saved capabilities from DB
+        if (game.capabilities) {
+          setCapabilities({ ...DEFAULT_CAPABILITIES, ...game.capabilities });
+        }
       }
     }
   }, [isEditMode, gamesData, slug]);
@@ -221,6 +270,7 @@ const CreateGame: React.FC = () => {
           ...formData,
           durationInSeconds: formData.durationInSeconds ? Number(formData.durationInSeconds) : 0,
           platformFeePercentage: Number(formData.platformFeePercentage || 10),
+          capabilities, // jsonb column — stored as-is in Supabase
         },
         sessions: sessions.map(s => {
           const startTime = s.startTime ? new Date(s.startTime).toISOString() : new Date().toISOString();
@@ -457,7 +507,153 @@ const CreateGame: React.FC = () => {
 
           </section>
 
-          {/* Section 2: Sessions Setup */}
+          {/* Section 2: Game Capabilities */}
+          <section className="bg-card border border-border rounded-xl shadow-sm p-4 space-y-5">
+            <div className="flex items-center gap-2 border-b border-border pb-3">
+              <span className="text-primary text-lg">⚡</span>
+              <h3 className="text-sm font-black text-foreground uppercase tracking-wider">Game Capabilities</h3>
+              <span className="ml-auto text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Stored as JSONB in Supabase</span>
+            </div>
+
+            {/* Feature Toggles */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {([
+                { key: 'powerUps',    label: 'Power-Ups',         sub: 'In-game purchasable actions' },
+                { key: 'bundles',     label: 'Bundle Packs',      sub: 'Pre-session power pack shop' },
+                { key: 'rivalBanner', label: 'Live Rival Banner', sub: 'Real-time opponent score HUD' },
+              ] as const).map(({ key, label, sub }) => (
+                <div key={key} className="flex items-center justify-between p-3 bg-muted/50 rounded-xl border border-border">
+                  <div>
+                    <p className="text-xs font-black text-foreground uppercase tracking-wide">{label}</p>
+                    <p className="text-[10px] font-bold text-muted-foreground mt-0.5">{sub}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setCap(key, !capabilities[key])}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${
+                      capabilities[key] ? 'bg-primary' : 'bg-muted-foreground/30'
+                    }`}
+                  >
+                    <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ${
+                      capabilities[key] ? 'translate-x-5' : 'translate-x-0'
+                    }`} />
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {/* Power-Up Definitions */}
+            {capabilities.powerUps && (
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Power-Up Definitions</p>
+                  <button type="button" onClick={addPowerUp}
+                    className="px-3 py-1 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg text-xs font-bold border border-primary/20 transition-all">
+                    <MdAdd className="inline" /> Add
+                  </button>
+                </div>
+                {capabilities.powerUpDefs.length === 0 && (
+                  <p className="text-[10px] text-muted-foreground italic pl-1">No power-ups defined. Click Add to create one.</p>
+                )}
+                {capabilities.powerUpDefs.map((pu, i) => (
+                  <div key={i} className="grid grid-cols-12 gap-2 items-center bg-muted/40 rounded-xl p-3 border border-border">
+                    <div className="col-span-3 space-y-1">
+                      <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">ID (slug)</label>
+                      <Input value={pu.id} onChange={e => updatePowerUp(i, 'id', e.target.value)}
+                        className="h-9 bg-muted border-border rounded-lg text-xs font-bold lowercase" placeholder="undo" />
+                    </div>
+                    <div className="col-span-5 space-y-1">
+                      <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Label</label>
+                      <Input value={pu.label} onChange={e => updatePowerUp(i, 'label', e.target.value)}
+                        className="h-9 bg-muted border-border rounded-lg text-xs font-bold" placeholder="↩ Undo" />
+                    </div>
+                    <div className="col-span-3 space-y-1">
+                      <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Cost (ZA)</label>
+                      <Input type="number" value={pu.cost} onChange={e => updatePowerUp(i, 'cost', Number(e.target.value))}
+                        className="h-9 bg-muted border-border rounded-lg text-xs font-black text-emerald-500" />
+                    </div>
+                    <div className="col-span-1 flex justify-end">
+                      <button type="button" onClick={() => removePowerUp(i)}
+                        className="h-9 w-9 bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 rounded-lg flex items-center justify-center transition-all">
+                        <MdClose />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Bundle Pack Definitions */}
+            {capabilities.powerUps && capabilities.bundles && (
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Bundle Packs</p>
+                  <button type="button" onClick={addBundle}
+                    className="px-3 py-1 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg text-xs font-bold border border-primary/20 transition-all">
+                    <MdAdd className="inline" /> Add Pack
+                  </button>
+                </div>
+                {capabilities.bundlePacks.length === 0 && (
+                  <p className="text-[10px] text-muted-foreground italic pl-1">No bundle packs defined yet.</p>
+                )}
+                {capabilities.bundlePacks.map((pack, i) => (
+                  <div key={i} className="bg-muted/40 rounded-xl p-3 border border-border space-y-3">
+                    <div className="grid grid-cols-12 gap-2">
+                      <div className="col-span-2 space-y-1">
+                        <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">ID</label>
+                        <Input value={pack.id} onChange={e => updateBundle(i, 'id', e.target.value)}
+                          className="h-9 bg-muted border-border rounded-lg text-xs font-bold lowercase" placeholder="starter" />
+                      </div>
+                      <div className="col-span-4 space-y-1">
+                        <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Label</label>
+                        <Input value={pack.label} onChange={e => updateBundle(i, 'label', e.target.value)}
+                          className="h-9 bg-muted border-border rounded-lg text-xs font-bold" placeholder="⚡ Starter Pack" />
+                      </div>
+                      <div className="col-span-4 space-y-1">
+                        <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Description</label>
+                        <Input value={pack.description} onChange={e => updateBundle(i, 'description', e.target.value)}
+                          className="h-9 bg-muted border-border rounded-lg text-xs" placeholder="3× Undo" />
+                      </div>
+                      <div className="col-span-1 space-y-1">
+                        <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">ZA</label>
+                        <Input type="number" value={pack.cost} onChange={e => updateBundle(i, 'cost', Number(e.target.value))}
+                          className="h-9 bg-muted border-border rounded-lg text-xs font-black text-emerald-500" />
+                      </div>
+                      <div className="col-span-1 flex items-end justify-end">
+                        <button type="button" onClick={() => removeBundle(i)}
+                          className="h-9 w-9 bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 rounded-lg flex items-center justify-center">
+                          <MdClose />
+                        </button>
+                      </div>
+                    </div>
+                    {/* Grants: how many of each power-up the pack gives */}
+                    <div className="space-y-1">
+                      <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Grants (power-up ID → quantity)</p>
+                      <div className="flex flex-wrap gap-2">
+                        {capabilities.powerUpDefs.map(pu => (
+                          <div key={pu.id} className="flex items-center gap-1 bg-muted rounded-lg px-2 py-1">
+                            <span className="text-[10px] font-black text-foreground">{pu.label || pu.id}</span>
+                            <span className="text-muted-foreground text-[10px]">×</span>
+                            <input
+                              type="number" min={0}
+                              value={pack.grants[pu.id] || 0}
+                              onChange={e => updateBundle(i, 'grants', { ...pack.grants, [pu.id]: Number(e.target.value) })}
+                              className="w-10 h-6 bg-background border border-border rounded text-center text-xs font-black text-emerald-500 focus:outline-none"
+                            />
+                          </div>
+                        ))}
+                        {capabilities.powerUpDefs.length === 0 && (
+                          <p className="text-[10px] text-muted-foreground italic">Define power-ups first to set grants.</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* Section 3: Sessions Setup */}
           <section className="space-y-4">
             <div className="flex items-center justify-between px-1">
               <div className="flex items-center gap-2">
