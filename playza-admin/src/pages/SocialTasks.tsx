@@ -39,21 +39,19 @@ interface SubmissionsResponse {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const TASK_LABELS: Record<string, string> = {
-  FOLLOW_INSTAGRAM: "Instagram Follow",
-  FOLLOW_TWITTER: "X (Twitter) Follow",
-  FOLLOW_TIKTOK: "TikTok Follow",
   FOLLOW_FACEBOOK: "Facebook Like",
+  FOLLOW_TWITTER: "X (Twitter) Follow",
+  FOLLOW_INSTAGRAM: "Instagram Follow",
+  FOLLOW_MEDIUM: "Medium Follow",
   FOLLOW_YOUTUBE: "YouTube Subscribe",
-  FOLLOW_TELEGRAM: "Telegram Join",
 };
 
 const TASK_COLORS: Record<string, string> = {
-  FOLLOW_INSTAGRAM: "bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300",
-  FOLLOW_TWITTER: "bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300",
-  FOLLOW_TIKTOK: "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300",
   FOLLOW_FACEBOOK: "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300",
+  FOLLOW_TWITTER: "bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300",
+  FOLLOW_INSTAGRAM: "bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300",
+  FOLLOW_MEDIUM: "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300",
   FOLLOW_YOUTUBE: "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300",
-  FOLLOW_TELEGRAM: "bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300",
 };
 
 const STATUS_CONFIG: Record<string, { label: string; icon: React.ReactNode; cls: string }> = {
@@ -247,9 +245,11 @@ const SocialTasks: React.FC = () => {
               className="appearance-none pl-3 pr-8 py-2.5 rounded-xl bg-muted border border-border text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer transition-all"
             >
               <option value="">All Platforms</option>
-              {Object.entries(TASK_LABELS).map(([id, label]) => (
-                <option key={id} value={id}>{label}</option>
-              ))}
+              <option value="FOLLOW_FACEBOOK">Facebook Like</option>
+              <option value="FOLLOW_TWITTER">X (Twitter) Follow</option>
+              <option value="FOLLOW_INSTAGRAM">Instagram Follow</option>
+              <option value="FOLLOW_MEDIUM">Medium Follow</option>
+              <option value="FOLLOW_YOUTUBE">YouTube Subscribe</option>
             </select>
             <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
           </div>
