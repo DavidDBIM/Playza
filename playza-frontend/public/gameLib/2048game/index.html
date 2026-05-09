@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2048 - Premium Edition</title>
+    <title>2048 - Arena Edition</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -23,35 +23,42 @@
                         <span class="score-label">Best</span>
                         <span id="best-score" class="score-value">0</span>
                     </div>
-                </div>  
-            </div>
-
-            <div class="controls">
-                <p id="result-text">Join the numbers and reach the highest score!</p>
-            </div>
-
-            <div class="grid" id="grid">
-                <!-- Tiles will be dynamically added here -->
-                <div class="overlay" id="game-over-overlay">
-                    <div class="popup">
-                        <h2>GAME OVER</h2>
-                        <div class="final-score-box">
-                            <p>Final Score</p>
-                            <span id="overlay-score">0</span>
-                        </div>
-                        <p style="color:var(--text-muted); font-size:11px; font-weight:bold; letter-spacing:1px; margin-top:5px; animation: pulse 1.5s infinite;">SYNCING LEADERBOARD...</p>
+                    <div class="score-box moves">
+                        <span class="score-label">Moves</span>
+                        <span id="moves-display" class="score-value">0</span>
                     </div>
                 </div>
             </div>
 
-            <p class="mobile-hint">👆 Swipe to move tiles or use the D-Pad</p>
-            <div id="mobile-dpad" class="mobile-dpad">
-                <button class="dpad-btn up" onclick="window.tiltGrid('up')">▲</button>
-                <div class="dpad-row">
-                    <button class="dpad-btn left" onclick="window.tiltGrid('left')">◀</button>
-                    <button class="dpad-btn down" onclick="window.tiltGrid('down')">▼</button>
-                    <button class="dpad-btn right" onclick="window.tiltGrid('right')">▶</button>
+            <div class="controls">
+                <p id="result-text">Join the numbers and reach the highest score!</p>
+                <div class="ctrl-btns">
+                    <button class="ctrl-btn" id="theme-btn" onclick="cycleTheme()" title="Change tile skin">🎨</button>
+                    <button class="ctrl-btn" id="mute-btn" onclick="toggleMute()" title="Toggle sound">🔊</button>
                 </div>
+            </div>
+
+            <!-- Power-up bar -->
+            <div class="powerup-bar">
+                <button class="powerup-btn" onclick="usePowerUp('undo')" title="Undo last move (5 ZA)">
+                    <span class="powerup-icon">↩</span>
+                    <span class="powerup-label">Undo</span>
+                    <span class="powerup-cost">5 ZA</span>
+                </button>
+                <button class="powerup-btn smash" onclick="usePowerUp('smash')" title="Destroy a tile (10 ZA)">
+                    <span class="powerup-icon">💥</span>
+                    <span class="powerup-label">Smash</span>
+                    <span class="powerup-cost">10 ZA</span>
+                </button>
+                <button class="powerup-btn gravity" onclick="usePowerUp('gravity')" title="Rotate board 90° (15 ZA)">
+                    <span class="powerup-icon">🔄</span>
+                    <span class="powerup-label">Gravity</span>
+                    <span class="powerup-cost">15 ZA</span>
+                </button>
+            </div>
+
+            <div class="grid" id="grid">
+                <!-- Tiles will be dynamically added here -->
             </div>
         </div>
     </div>
