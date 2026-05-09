@@ -107,16 +107,15 @@ const TASK_CATEGORIES: TaskCategory[] = [
   },
   {
     id: "community",
-    label: "Follow Us",
+    label: "Social Tasks",
     icon: <Share2 className="w-4 h-4" />,
     color: "rose",
     tasks: [
-      { id: "FOLLOW_INSTAGRAM", name: "Follow on Instagram", desc: "Follow @PlayzaGames on Instagram & upload proof", points: 200, icon: <MdCameraAlt /> },
-      { id: "FOLLOW_TWITTER", name: "Follow on X (Twitter)", desc: "Follow @PlayzaGames on X & upload proof", points: 200, icon: <MdCameraAlt /> },
-      { id: "FOLLOW_TIKTOK", name: "Follow on TikTok", desc: "Follow @PlayzaGames on TikTok & upload proof", points: 200, icon: <MdCameraAlt /> },
-      { id: "FOLLOW_FACEBOOK", name: "Like Facebook Page", desc: "Like the Playza Facebook page & upload proof", points: 200, icon: <MdCameraAlt /> },
-      { id: "FOLLOW_YOUTUBE", name: "Subscribe on YouTube", desc: "Subscribe to the Playza YouTube channel & upload proof", points: 200, icon: <MdCameraAlt /> },
-      { id: "FOLLOW_TELEGRAM", name: "Join Telegram Channel", desc: "Join the official Playza Telegram & upload proof", points: 200, icon: <MdCameraAlt /> },
+      { id: "FOLLOW_FACEBOOK", name: "Like Facebook Page", desc: "Like @Playzadotgames on Facebook & upload proof", points: 200, icon: <MdCameraAlt /> },
+      { id: "FOLLOW_TWITTER", name: "Follow on X (Twitter)", desc: "Follow @playzadotgames on X & upload proof", points: 200, icon: <MdCameraAlt /> },
+      { id: "FOLLOW_INSTAGRAM", name: "Follow on Instagram", desc: "Follow @playzadotgames on Instagram & upload proof", points: 200, icon: <MdCameraAlt /> },
+      { id: "FOLLOW_MEDIUM", name: "Follow on Medium", desc: "Follow @Playzadotgames on Medium & upload proof", points: 200, icon: <MdCameraAlt /> },
+      { id: "FOLLOW_YOUTUBE", name: "Subscribe on YouTube", desc: "Subscribe to @Playzadotgames on YouTube & upload proof", points: 200, icon: <MdCameraAlt /> },
     ],
   },
   {
@@ -194,12 +193,11 @@ export default function Loyalty() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const SOCIAL_LINKS: Record<string, string> = {
-    FOLLOW_INSTAGRAM: "https://instagram.com/playzagames",
-    FOLLOW_TWITTER: "https://x.com/playzagames",
-    FOLLOW_TIKTOK: "https://tiktok.com/@playzagames",
-    FOLLOW_FACEBOOK: "https://facebook.com/playzagames",
-    FOLLOW_YOUTUBE: "https://youtube.com/@playzagames",
-    FOLLOW_TELEGRAM: "https://t.me/playzagames",
+    FOLLOW_FACEBOOK: "https://web.facebook.com/Playzadotgames",
+    FOLLOW_TWITTER: "https://x.com/playzadotgames",
+    FOLLOW_INSTAGRAM: "https://www.instagram.com/playzadotgames",
+    FOLLOW_MEDIUM: "https://medium.com/@Playzadotgames",
+    FOLLOW_YOUTUBE: "https://youtube.com/@Playzadotgames",
   };
 
   function openSocialModal(task: Task) {
@@ -238,7 +236,7 @@ export default function Loyalty() {
     }
   }
 
-  const SOCIAL_TASK_IDS = new Set(["FOLLOW_INSTAGRAM", "FOLLOW_TWITTER", "FOLLOW_TIKTOK", "FOLLOW_FACEBOOK", "FOLLOW_YOUTUBE", "FOLLOW_TELEGRAM"]);
+  const SOCIAL_TASK_IDS = new Set(["FOLLOW_FACEBOOK", "FOLLOW_TWITTER", "FOLLOW_INSTAGRAM", "FOLLOW_MEDIUM", "FOLLOW_YOUTUBE"]);
   
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
