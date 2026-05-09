@@ -17,6 +17,7 @@ import {
   useUpdateSessionStatus, 
   useFinalizeSession 
 } from "../hooks/use-games";
+import { ConfirmDialog } from "../components/ui/confirm-dialog";
 
 interface GameDetails {
   title: string;
@@ -30,6 +31,8 @@ interface SessionData {
   max_players: number;
   pool_amount: number;
   winners_count: number;
+  start_time: string;
+  end_time: string;
   games: GameDetails;
   financials: {
     gross: number;
@@ -74,6 +77,19 @@ const Session: React.FC = () => {
   const isProcessing = updateStatusMutation.isPending || finalizeMutation.isPending;
 
   const [countdown, setCountdown] = React.useState("");
+  const [confirmConfig, setConfirmConfig] = React.useState<{
+    isOpen: boolean;
+    title: string;
+    description: string;
+    type: 'danger' | 'warning' | 'success' | 'info';
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: "",
+    description: "",
+    type: 'warning',
+    onConfirm: () => {},
+  });
 
   React.useEffect(() => {
     const timer = setInterval(() => {
@@ -105,31 +121,47 @@ const Session: React.FC = () => {
   }, [fetchDetails]);
 
   const handleFinalize = async () => {
-    if (!window.confirm("Are you sure you want to finalize this session and trigger payouts? This cannot be undone.")) return;
-
-    try {
-      const res = await finalizeMutation.mutateAsync(id!);
-      if (res.success) {
-        toast.success(`Session finalized! ${res.winnersCount} players paid out.`);
-      } else {
-        toast.error(res.message || "Finalization failed");
+    setConfirmConfig({
+      isOpen: true,
+      title: "Finalize Session?",
+      description: "Are you sure you want to finalize this session and trigger payouts? This cannot be undone.",
+      type: 'danger',
+      onConfirm: async () => {
+        try {
+          const res = await finalizeMutation.mutateAsync(id!);
+          if (res.success) {
+            toast.success(`Session finalized! ${res.winnersCount} players paid out.`);
+          } else {
+            toast.error(res.message || "Finalization failed");
+          }
+        } catch (error: unknown) {
+          const message = error instanceof Error ? error.message : "Error finalizing session";
+          toast.error(message);
+        } finally {
+          setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+        }
       }
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Error finalizing session";
-      toast.error(message);
-    }
+    });
   };
 
   const handleStatusUpdate = async (newStatus: string) => {
-    if (!window.confirm(`Are you sure you want to set this session to ${newStatus}?`)) return;
-    
-    try {
-      await updateStatusMutation.mutateAsync({ sessionId: id!, status: newStatus });
-      toast.success(`Session is now ${newStatus}`);
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Failed to update status";
-      toast.error(message);
-    }
+    setConfirmConfig({
+      isOpen: true,
+      title: `${newStatus.charAt(0).toUpperCase() + newStatus.slice(1)} Session?`,
+      description: `Are you sure you want to set this session to ${newStatus}?`,
+      type: newStatus === 'active' ? 'success' : 'danger',
+      onConfirm: async () => {
+        try {
+          await updateStatusMutation.mutateAsync({ sessionId: id!, status: newStatus });
+          toast.success(`Session is now ${newStatus}`);
+        } catch (error: unknown) {
+          const message = error instanceof Error ? error.message : "Failed to update status";
+          toast.error(message);
+        } finally {
+          setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+        }
+      }
+    });
   };
 
   if (loading) {
@@ -179,6 +211,9 @@ const Session: React.FC = () => {
                     {countdown}
                   </span>
                 )}
+                <span className="flex items-center gap-2 px-3 py-1 bg-muted border border-border/50 rounded-lg text-[9px] font-black uppercase tracking-widest text-muted-foreground">
+                  Timeframe: {session && new Date(session.start_time).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })} - {session && new Date(session.end_time).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                </span>
               </div>
               <p className="text-sm text-muted-foreground font-medium">
                 Arena ID: #{id} • Game: {game?.title}
@@ -421,6 +456,16 @@ const Session: React.FC = () => {
           </div>
         </section>
       </div>
+
+      <ConfirmDialog
+        isOpen={confirmConfig.isOpen}
+        onClose={() => setConfirmConfig((prev) => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmConfig.onConfirm}
+        title={confirmConfig.title}
+        description={confirmConfig.description}
+        type={confirmConfig.type}
+        isLoading={isProcessing}
+      />
     </main>
   );
 };

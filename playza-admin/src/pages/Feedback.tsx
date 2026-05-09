@@ -12,6 +12,7 @@ import {
   MdDelete
 } from 'react-icons/md';
 import { feedbackService, type FeedbackAdminItem } from '../services/feedback.service';
+import { ConfirmDialog } from '../components/ui/confirm-dialog';
 
 const Feedback: React.FC = () => {
   const [feedbackList, setFeedbackList] = useState<FeedbackAdminItem[]>([]);
@@ -20,6 +21,10 @@ const Feedback: React.FC = () => {
   const [filterType, setFilterType] = useState('All Types');
   const [filterStatus, setFilterStatus] = useState('pending');
   const [totalCount, setTotalCount] = useState(0);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; id: string }>({
+    isOpen: false,
+    id: ''
+  });
 
   const fetchFeedback = async () => {
     setLoading(true);
@@ -76,13 +81,19 @@ const Feedback: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this feedback?')) return;
+    setDeleteConfirm({ isOpen: true, id });
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteConfirm.id) return;
     try {
-      await feedbackService.deleteFeedback(id);
-      setFeedbackList(prev => prev.filter(f => f.id !== id));
+      await feedbackService.deleteFeedback(deleteConfirm.id);
+      setFeedbackList(prev => prev.filter(f => f.id !== deleteConfirm.id));
       setTotalCount(prev => prev - 1);
     } catch (err: unknown) {
       console.error(err);
+    } finally {
+      setDeleteConfirm({ isOpen: false, id: '' });
     }
   };
 
@@ -268,6 +279,16 @@ const Feedback: React.FC = () => {
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        isOpen={deleteConfirm.isOpen}
+        onClose={() => setDeleteConfirm({ isOpen: false, id: '' })}
+        onConfirm={confirmDelete}
+        type="danger"
+        title="Delete Feedback?"
+        description="Are you sure you want to permanently delete this user feedback? This action cannot be undone."
+        confirmText="Delete Now"
+      />
     </main>
   );
 };

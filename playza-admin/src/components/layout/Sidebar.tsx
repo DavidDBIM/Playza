@@ -20,6 +20,7 @@ import {
 } from 'react-icons/md';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { authService } from '../../services/auth.service';
+import { ConfirmDialog } from '../ui/confirm-dialog';
 
 interface SidebarProps {
   mobileOpen?: boolean;
@@ -46,6 +47,7 @@ const NAV_ITEMS = [
 const SidebarContent: React.FC<{ onClose?: () => void }> = ({ onClose }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [killSwitchOpen, setKillSwitchOpen] = React.useState(false);
 
   const handleLogout = () => {
     authService.logout();
@@ -107,12 +109,7 @@ const SidebarContent: React.FC<{ onClose?: () => void }> = ({ onClose }) => {
           </p>
           
           <button
-            onClick={() => {
-              if (window.confirm("TERMINATE ALL ACTIVE SESSIONS? This will log you out of all devices including this one.")) {
-                // Implement global invalidation logic
-                handleLogout();
-              }
-            }}
+            onClick={() => setKillSwitchOpen(true)}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group text-amber-500/70 hover:text-amber-500 hover:bg-amber-500/10 border border-amber-500/10"
           >
             <MdPowerSettingsNew className="text-base transition-transform duration-300 group-hover:rotate-90" />
@@ -132,6 +129,19 @@ const SidebarContent: React.FC<{ onClose?: () => void }> = ({ onClose }) => {
           </button>
         </div>
       </nav>
+
+      <ConfirmDialog
+        isOpen={killSwitchOpen}
+        onClose={() => setKillSwitchOpen(false)}
+        onConfirm={() => {
+          handleLogout();
+          setKillSwitchOpen(false);
+        }}
+        type="danger"
+        title="Global Kill Switch?"
+        description="TERMINATE ALL ACTIVE SESSIONS? This will log you out of all devices including this one. This action cannot be undone."
+        confirmText="Execute Kill Switch"
+      />
     </div>
   );
 };

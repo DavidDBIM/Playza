@@ -11,9 +11,11 @@ import {
   MdRefresh
 } from 'react-icons/md';
 import { useNotifications } from '../../hooks/use-notifications';
+import { ConfirmDialog } from '../ui/confirm-dialog';
 
 const NotiHistory: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [deleteId, setDeleteId] = useState<string | null>(null);
   const { notifications, loading, total, page, totalPages, setPage, refresh, remove } = useNotifications();
 
   const getIcon = (type: string) => {
@@ -132,11 +134,7 @@ const NotiHistory: React.FC = () => {
                       <div className="flex justify-end gap-2">
                         <button className="px-4 py-2 rounded-xl bg-muted/30 dark:bg-white/5 hover:bg-primary/10 hover:text-primary text-[10px] font-black uppercase tracking-widest transition-all">View</button>
                         <button 
-                          onClick={() => {
-                            if (window.confirm('Are you sure you want to delete this notification?')) {
-                              remove(noti.id);
-                            }
-                          }}
+                          onClick={() => setDeleteId(noti.id)}
                           className="px-4 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white text-[10px] font-black uppercase tracking-widest transition-all"
                         >
                           Delete
@@ -174,6 +172,21 @@ const NotiHistory: React.FC = () => {
           </button>
         </div>
       </footer>
+
+      <ConfirmDialog
+        isOpen={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        onConfirm={async () => {
+          if (deleteId) {
+            await remove(deleteId);
+            setDeleteId(null);
+          }
+        }}
+        type="danger"
+        title="Delete Notification?"
+        description="Are you sure you want to permanently delete this notification from history? This action cannot be undone."
+        confirmText="Delete Now"
+      />
     </div>
   );
 };
