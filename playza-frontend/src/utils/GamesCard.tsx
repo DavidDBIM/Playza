@@ -71,11 +71,11 @@ const GamesCard = ({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 backdrop-blur-md rounded-xl border border-primary/30 text-primary text-[10px] font-black uppercase tracking-widest">
               <FaUsers className="text-xs" />
-              <span>{activePlayers.toLocaleString()}</span>
+              <span>{(activePlayers ?? 0).toLocaleString()}</span>
             </div>
             <div className="px-3 py-1.5 bg-secondary/50 backdrop-blur-md rounded-xl text-slate-900 dark:text-white text-xs font-black italic tracking-tighter border border-white/10 flex items-center gap-1">
               <ZASymbol className="text-[10px] scale-75" />
-              <span>{entryFee.toLocaleString()}</span>
+              <span>{(entryFee ?? 0).toLocaleString()}</span>
             </div>
           </div>
 

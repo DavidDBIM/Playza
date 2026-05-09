@@ -58,7 +58,7 @@ const FeatureGameCard = ({
           <div className="flex flex-col">
             <span className="text-[8px] md:text-[9px] font-black uppercase tracking-widest text-slate-500">Prize Pool</span>
             <div className="text-sm md:text-lg font-black text-accent italic leading-none">
-              ${pricePool.toLocaleString()}
+              ${(pricePool ?? 0).toLocaleString()}
             </div>
           </div>
           

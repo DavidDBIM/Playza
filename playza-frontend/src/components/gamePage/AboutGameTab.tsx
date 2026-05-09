@@ -1,6 +1,7 @@
+import type { Game } from "@/types/types";
 import { Info, Play, Target, Zap } from "lucide-react";
 
-export const AboutGameTab = () => {
+export const AboutGameTab = ({ game }: { game: Game }) => {
   return (
     <div className="space-y-4 md:space-y-12">
       {/* Overview Card */}
@@ -12,9 +13,8 @@ export const AboutGameTab = () => {
           <h2 className="text-xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight italic uppercase">Game Overview</h2>
         </div>
         <p className="text-slate-600 dark:text-slate-400 text-xs md:text-lg leading-relaxed max-w-4xl font-medium">
-          Step into a world of high-stakes competition. This game is designed to test your strategy, reflex, and endurance. 
-          Navigate through challenging environments, outsmart your opponents, and climb the global leaderboard to claim massive cash rewards.
-          Every move counts, and every second matters in this ultimate gaming showdown.
+          {game.rules || `Step into a world of high-stakes competition. This game is designed to test your strategy, reflex, and endurance. 
+          Navigate through challenging environments, outsmart your opponents, and climb the global leaderboard to claim massive cash rewards.`}
         </p>
       </div>
 
@@ -25,22 +25,11 @@ export const AboutGameTab = () => {
             <div className="p-2 md:p-2.5 bg-playza-yellow/20 rounded-xl">
               <Target className="w-5 h-5 text-playza-yellow" />
             </div>
-            <h3 className="text-base md:text-xl font-bold text-slate-900 dark:text-white tracking-tight italic uppercase">Scoring System</h3>
+            <h3 className="text-base md:text-xl font-bold text-slate-900 dark:text-white tracking-tight italic uppercase">Controls</h3>
           </div>
           <p className="text-slate-500 dark:text-slate-400 text-xs md:text-lg leading-relaxed font-medium">
-            Your performance is measured by multiple metrics. Points are awarded for accuracy, speed, and objective completion. 
-            Bonus multipliers are active for streaks and perfect runs.
+            {game.controls || "Master the movement to dominate the arena. Use your skills to navigate and survive the challenge."}
           </p>
-          <div className="pt-2 md:pt-4 space-y-3">
-            <div className="flex justify-between items-center p-2 md:p-3 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/5 shadow-inner">
-              <span className="text-slate-500 font-bold uppercase tracking-wider text-xs">Base Score</span>
-              <span className="text-slate-900 dark:text-white font-black">100 pts / task</span>
-            </div>
-            <div className="flex justify-between items-center p-2 md:p-3 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/5 shadow-inner">
-              <span className="text-slate-500 font-bold uppercase tracking-wider text-xs">Speed Bonus</span>
-              <span className="text-playza-green font-black">Up to 2x Multiplier</span>
-            </div>
-          </div>
         </div>
 
         {/* Highlights */}
@@ -49,20 +38,21 @@ export const AboutGameTab = () => {
             <div className="p-2 md:p-2.5 bg-primary/10 rounded-xl">
               <Zap className="w-5 h-5 text-primary" />
             </div>
-            <h3 className="text-base md:text-xl font-bold text-slate-900 dark:text-white tracking-tight italic uppercase">Gameplay Highlights</h3>
+            <h3 className="text-base md:text-xl font-bold text-slate-900 dark:text-white tracking-tight italic uppercase">Gameplay Info</h3>
           </div>
           <ul className="space-y-4">
-            {[
-              "High-fidelity graphics and smooth 60FPS gameplay",
-              "Real-time competitive leaderboard and matchmaking",
-              "Dynamic environments that evolve as you play",
-              "Exclusive rewards for top-tier performers"
-            ].map((highlight, i) => (
-              <li key={i} className="flex items-start gap-2 md:gap-3">
-                <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-primary" />
-                <span className="text-slate-500 dark:text-slate-400 text-xs md:text-lg font-medium">{highlight}</span>
-              </li>
-            ))}
+            <li className="flex items-start gap-2 md:gap-3">
+              <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-primary" />
+              <span className="text-slate-500 dark:text-slate-400 text-xs md:text-lg font-medium">Category: {game.category}</span>
+            </li>
+            <li className="flex items-start gap-2 md:gap-3">
+              <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-primary" />
+              <span className="text-slate-500 dark:text-slate-400 text-xs md:text-lg font-medium">Mode: {game.mode}</span>
+            </li>
+            <li className="flex items-start gap-2 md:gap-3">
+              <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-primary" />
+              <span className="text-slate-500 dark:text-slate-400 text-xs md:text-lg font-medium">Difficulty: {game.difficulty}</span>
+            </li>
           </ul>
         </div>
       </div>

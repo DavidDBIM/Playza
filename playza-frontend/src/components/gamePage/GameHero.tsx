@@ -1,15 +1,22 @@
-import type { Game } from "@/types/types";
+import type { Game, Session } from "@/types/types";
 import { Users, Trophy, SwatchBook, MousePointer2 } from "lucide-react";
 import { formatZAAmount } from "@/lib/formatCurrency";
 import { ZASymbol } from "@/components/currency/ZASymbol";
-import { Link } from "react-router";
 
 interface GameHeroProps {
   game: Game;
   prizePool: number;
+  sessions: Session[];
+  onJoin: () => void;
 }
 
-export const GameHero = ({ game, prizePool }: GameHeroProps) => {
+export const GameHero = ({ game, prizePool, sessions, onJoin }: GameHeroProps) => {
+  const liveSession = sessions.find(s => {
+    const status = (s.status || '').toLowerCase();
+    return status === 'live' || status === 'active' || status === 'ongoing' || status === 'starting soon';
+  });
+  const hasLiveSession = !!liveSession;
+
   return (
     <section className="relative w-full min-h-95 md:min-h-120 lg:min-h-137.5 flex items-center overflow-hidden rounded-xl mb-6 md:mb-8 border border-slate-200 dark:border-white/5">
       {/* Background Image with theme-aware overlay */}
@@ -44,7 +51,7 @@ export const GameHero = ({ game, prizePool }: GameHeroProps) => {
             <div className="flex flex-wrap items-center justify-center xl:justify-start gap-3 md:gap-4">
               <span className="flex items-center gap-2 px-3 md:px-4 py-1 bg-red-500 rounded-full text-white text-[9px] md:text-[10px] font-black uppercase tracking-widest">
                 <span className="w-1 md:w-1.5 h-1 md:h-1.5 bg-white rounded-full" />
-                Live
+                {hasLiveSession ? 'Arena Live' : 'Coming Soon'}
               </span>
               <span className="text-slate-500 dark:text-slate-400 font-black text-[9px] md:text-[11px] uppercase tracking-[0.3em]">
                 {game.category} / {game.mode}
@@ -56,12 +63,7 @@ export const GameHero = ({ game, prizePool }: GameHeroProps) => {
                 {game.title}
               </h1>
               <p className="text-slate-600 dark:text-slate-300 text-xs md:text-base xl:text-lg font-medium leading-relaxed max-w-2xl mx-auto lg:mx-0">
-                Endless runner competitive challenge where every turn counts.
-                Push your limits in{" "}
-                <span className="text-slate-900 dark:text-white font-bold">
-                  {game.title}
-                </span>{" "}
-                and compete for the top of the leaderboard.
+                {game.rules ? game.rules.slice(0, 150) + (game.rules.length > 150 ? '...' : '') : `Endless runner competitive challenge where every turn counts. Push your limits in ${game.title} and compete for the top of the leaderboard.`}
               </p>
             </div>
 
@@ -90,7 +92,7 @@ export const GameHero = ({ game, prizePool }: GameHeroProps) => {
                     Sessions
                   </span>
                   <span className="text-xs md:text-base font-black text-slate-900 dark:text-white leading-none uppercase">
-                    3
+                    {sessions.length}
                   </span>
                 </div>
               </div>
@@ -113,17 +115,16 @@ export const GameHero = ({ game, prizePool }: GameHeroProps) => {
 
             {/* CTA Button Underneath */}
             <div>
-              <Link
-                to={`/games/${game.slug}/session`}
-                className="inline-block w-full md:w-auto"
+              <button 
+                onClick={() => hasLiveSession && onJoin()}
+                disabled={!hasLiveSession}
+                className={`relative w-full md:w-auto bg-primary text-slate-900 font-black px-8 md:px-12 py-3 md:py-4 rounded-xl uppercase tracking-[0.2em] text-[10px] md:text-sm flex items-center justify-center gap-2 md:gap-3 overflow-hidden border border-primary/20 ${!hasLiveSession ? 'opacity-50 grayscale cursor-not-allowed' : 'hover:scale-[1.02] active:scale-95 transition-all'}`}
               >
-                <button className="relative w-full md:w-auto bg-primary text-slate-900 font-black px-8 md:px-12 py-3 md:py-4 rounded-xl uppercase tracking-[0.2em] text-[10px] md:text-sm flex items-center justify-center gap-2 md:gap-3 overflow-hidden border border-primary/20">
-                  <span>Enter Live Match Arena</span>
-                  <div className="relative flex items-center justify-center ml-2">
-                    <MousePointer2 className="w-4 h-4 text-slate-900 relative z-10" />
-                  </div>
-                </button>
-              </Link>
+                <span>{hasLiveSession ? 'Enter Live Match Arena' : 'No Live Arena Available'}</span>
+                <div className="relative flex items-center justify-center ml-2">
+                  <MousePointer2 className="w-4 h-4 text-slate-900 relative z-10" />
+                </div>
+              </button>
             </div>
           </div>
         </div>

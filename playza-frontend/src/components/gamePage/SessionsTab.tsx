@@ -5,7 +5,7 @@ import { Loader2 } from "lucide-react";
 interface SessionsTabProps {
   gameTitle: string;
   sessions: Session[];
-  onJoin: (session: Session) => void;
+  onJoin: () => void;
   isLoading?: boolean;
 }
 

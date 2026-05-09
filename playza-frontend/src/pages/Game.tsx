@@ -30,7 +30,7 @@ const Game = () => {
   const joinMutation = useJoinSession();
 
   const game = useMemo(() => {
-    const allGames = (gamesData?.games || []) as GameType[];
+    const allGames = (gamesData?.games || gamesData?.result || (Array.isArray(gamesData) ? gamesData : [])) as GameType[];
     const found = allGames.find((g) => g.slug === slug);
     if (!found) return null;
 
@@ -41,13 +41,16 @@ const Game = () => {
       status: found.is_active ? "live" : "coming soon",
       durationInSeconds: found.duration_seconds || 300,
       platformFeePercentage: Number(found.platform_fee_percentage || 10),
-      entryFee: 0, // Fallback
-      activePlayers: 0,
+      entryFee: Number(found.entry_fee || 0),
+      activePlayers: Number(found.unique_players || 0),
       ctaLabel: "Play Now",
       badge: null,
       createdAt: found.created_at || new Date().toISOString(),
       updatedAt: found.created_at || new Date().toISOString(),
       iframeUrl: found.iframe_url,
+      controls: found.controls,
+      rules: found.rules,
+      scoring: found.scoring,
     };
     return mapped;
   }, [gamesData, slug]);
@@ -57,7 +60,8 @@ const Game = () => {
   );
 
   const sessions: Session[] = useMemo(() => {
-    return (sessionsData?.sessions || []).map((s: Session) => ({
+    const rawSessions = sessionsData?.sessions || sessionsData?.result || sessionsData?.data || (Array.isArray(sessionsData) ? sessionsData : []);
+    return rawSessions.map((s: Session) => ({
       id: s.id,
       title: s.title,
       entryFee: Number(s.entryFee || s.entry_fee || 0),
@@ -123,8 +127,9 @@ const Game = () => {
     game.platformFeePercentage,
   );
 
-  const handleJoinSession = (session: Session) => {
-    setSelectedSession(session);
+  const handleJoinSession = () => {
+    // Navigate directly to the match session page instead of opening the modal here
+    navigate(`/games/${slug}/session`);
   };
 
   const handleConfirmEntry = async () => {
@@ -133,7 +138,7 @@ const Game = () => {
     try {
       await joinMutation.mutateAsync(selectedSession.id);
       toast.success("Successfully joined the tournament!");
-      navigate(`/arena/${selectedSession.id}`);
+      navigate(`/games/${slug}/session`);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Failed to join session";
@@ -151,7 +156,7 @@ const Game = () => {
 
   return (
     <main className="flex-1 space-y-4 p-2 md:p-6 pb-24 md:pb-10">
-      <GameHero game={game} prizePool={prizePool} />
+      <GameHero game={game} prizePool={prizePool} sessions={sessions} onJoin={handleJoinSession} />
 
       <div className="flex border-b border-slate-200 dark:border-white/10">
         {tabs.map((tab) => (
@@ -181,8 +186,8 @@ const Game = () => {
           isLoading={sessionsLoading}
         />
       )}
-      {activeTab === "about" && <AboutGameTab />}
-      {activeTab === "rules" && <RulesTab />}
+      {activeTab === "about" && <AboutGameTab game={game} />}
+      {activeTab === "rules" && <RulesTab game={game} />}
 
       {selectedSession && (
         <EntryConfirmationModal

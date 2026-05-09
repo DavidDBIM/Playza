@@ -12,7 +12,8 @@ import HowToPlayModal from "@/components/gameSession/HowToPlayModal";
 import ActivityToasts from "@/components/gameSession/ActivityToasts";
 import { ZASymbol } from "@/components/currency/ZASymbol";
 import { useAuth } from "@/context/auth";
-import { useActiveSession } from "@/hooks/gamesession/useGameSession";
+import { useActiveSession, useGames, useGameSessions } from "@/hooks/gamesession/useGameSession";
+import type { Game, Session } from "@/types/types";
 
 const MatchSession = () => {
   const { user } = useAuth();
@@ -25,10 +26,22 @@ const MatchSession = () => {
   );
 
   // --- LIVE DATA FETCH ---
+  const { data: gamesData, isLoading: gamesLoading } = useGames();
   const { data: sessionData, isLoading } = useActiveSession(slug || "");
+  
+  const game = (gamesData?.games || gamesData?.result || gamesData?.data || []).find((g: Game) => g.slug === slug);
+  const { data: allSessionsData, isLoading: allSessionsLoading } = useGameSessions(game?.id || "");
 
-  const session = sessionData?.result;
-  const game = session?.games;
+  const session = sessionData?.session || 
+                  sessionData?.result || 
+                  sessionData?.data || 
+                  (Array.isArray(sessionData) && sessionData.length > 0 ? sessionData[0] : null) ||
+                  (allSessionsData?.sessions || allSessionsData?.result || allSessionsData?.data || (Array.isArray(allSessionsData) ? allSessionsData : [])).find((s: Session) => {
+                    const status = (s.status || '').toLowerCase();
+                    return status === 'live' || status === 'active' || status === 'ongoing' || status === 'upcoming';
+                  });
+  
+  const isLoadingAll = isLoading || gamesLoading || allSessionsLoading;
 
   useEffect(() => {
     if (entryState !== "none") {
@@ -41,7 +54,7 @@ const MatchSession = () => {
     };
   }, [entryState]);
 
-  if (isLoading) {
+  if (isLoadingAll) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
         <Loader2 className="w-10 h-10 text-primary animate-spin" />
@@ -191,7 +204,7 @@ const MatchSession = () => {
   ];
 
   return (
-    <main className="relative flex-1 max-w-400 mx-auto overflow-x-hidden p-2 md:p-6 lg:p-8">
+    <main className="relative flex-1 max-w-400 mx-auto overflow-x-hidden p-2 md:p-6 lg:p-8 pb-16 md:pb-10">
       {entryState === "fee" && (
         <LiveEntryModal
           game={{ ...game, entryFee: session.entry_fee, id: session.id }}
@@ -224,12 +237,15 @@ const MatchSession = () => {
           </Link>
 
           <SessionHero
-            title={game.title}
+            title={session.title || game.title}
             slug={game.slug}
-            thumbnail={game.thumbnail_url}
-            activePlayers={session.max_players} // For now using max_players as a metric
-            entryFee={session.entry_fee}
-            prizePool={session.pool_amount}
+            thumbnail={game.thumbnail_url || game.thumbnail}
+            activePlayers={session.playersJoined || session.players_joined || 0}
+            entryFee={Number(session.entryFee || session.entry_fee || 0)}
+            prizePool={Number(session.prizePool || session.pool_amount || 0)}
+            endTime={session.endTime || session.end_time || ""}
+            sessionId={session.id}
+            status={session.status}
             onLiveClick={handleLiveClick}
             onDemoClick={() => navigate(`/games/${slug}/play?mode=demo`)}
           />
@@ -335,10 +351,13 @@ const MatchSession = () => {
               <div>
                 <h4 className=" font-bold text-sm uppercase">Arena Support</h4>
                 <p className="text-[10px] text-slate-600 dark:text-slate-400 mb-3 font-medium">
-                  Support agents are active for this tournament session.
+                  Support agents are active for this tournament session. If you encounter any issues, please report them.
                 </p>
-                <button className="text-[10px] font-black text-primary flex items-center gap-1 md:hover:underline uppercase tracking-widest">
-                  Live Chat <MdArrowForward className="text-xs" />
+                <button 
+                  onClick={() => navigate('/feedback')}
+                  className="text-[10px] font-black text-primary flex items-center gap-1 md:hover:underline uppercase tracking-widest"
+                >
+                  Report an Issue <MdArrowForward className="text-xs" />
                 </button>
               </div>
             </div>

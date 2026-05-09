@@ -1,6 +1,7 @@
+import type { Game } from "@/types/types";
 import { ShieldCheck, Trophy, Smartphone, Upload, Search, Wallet } from "lucide-react";
 
-export const RulesTab = () => {
+export const RulesTab = ({ game }: { game: Game }) => {
   const steps = [
     {
       title: "Join a Session",
@@ -24,11 +25,18 @@ export const RulesTab = () => {
       bg: "bg-cyan-500/10",
     },
     {
-      title: "Rank High",
-      desc: "Keep an eye on the rankings. Players are ranked based on their highest score achieved during that specific session.",
+      title: "Scoring Strategy",
+      desc: game.scoring || "Maximize your performance metrics. Points are awarded for accuracy, speed, and objective completion within the game arena.",
       icon: Trophy,
       color: "text-yellow-400",
       bg: "bg-yellow-500/10",
+    },
+    {
+      title: "Rank High",
+      desc: "Keep an eye on the rankings. Players are ranked based on their highest score achieved during that specific session.",
+      icon: ShieldCheck,
+      color: "text-blue-400",
+      bg: "bg-blue-500/10",
     },
     {
       title: "Earn Rewards",

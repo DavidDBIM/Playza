@@ -58,6 +58,7 @@ export type Game = {
   duration_seconds?: number; // Backend field
 
   activePlayers: number;
+  unique_players?: number; // Backend field
 
   status: "live" | "upcoming" | "ended" | "coming soon" | "not starting soon";
   is_active?: boolean; // Backend field
@@ -72,6 +73,9 @@ export type Game = {
     rules: string;
     scoring: string;
   };
+  controls?: string;
+  rules?: string;
+  scoring?: string;
   createdAt: string;
   created_at?: string; // Backend field
   updatedAt: string;
@@ -166,7 +170,7 @@ export interface Session {
   start_time?: string; // Backend field
   endTime: string;
   end_time?: string; // Backend field
-  status: "live" | "upcoming" | "starting soon" | "ended";
+  status: "live" | "upcoming" | "starting soon" | "completed" | "active";
   type: "tournament" | "daily";
   winnersCount?: number;
   winners_count?: number; // Backend field
