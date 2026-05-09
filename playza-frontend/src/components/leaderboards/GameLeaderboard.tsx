@@ -20,6 +20,7 @@ import {
 import { Loader2, Calendar } from "lucide-react";
 import { format } from "date-fns";
 import type { Game } from "@/types/types";
+import { calculateDistributionCurve } from "@/utils/payoutDistribution";
 
 interface Session {
   id: string;
@@ -28,6 +29,7 @@ interface Session {
   end_time: string;
   status: string;
   pool_amount: number;
+  entry_fee: number;
 }
 
 
@@ -50,7 +52,7 @@ const GameLeaderboard = () => {
     null,
   );
   const [selectedSessionPool, setSelectedSessionPool] = useState<number>(0);
-
+  const [selectedSessionEntryFee, setSelectedSessionEntryFee] = useState<number>(100);
 
   const { data: gamesData, isLoading: gamesLoading } = useGames();
   const allGames = gamesData?.games || [];
@@ -128,7 +130,7 @@ const GameLeaderboard = () => {
                     />
                   </div>
                   <div className="text-left">
-                    <h3 className="font-black text-lg text-slate-900 dark:text-white uppercase italic tracking-tighter">
+                     <h3 className="font-black text-lg text-slate-900 dark:text-white uppercase italic tracking-tighter">
                       {game.title}
                     </h3>
                     <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
@@ -161,9 +163,10 @@ const GameLeaderboard = () => {
                   <GameSessionsList
                     gameId={game.id}
                     selectedSessionId={selectedSessionId}
-                    onSelectSession={(id, pool) => {
+                    onSelectSession={(id, pool, fee) => {
                       setSelectedSessionId(id);
                       setSelectedSessionPool(pool);
+                      setSelectedSessionEntryFee(fee || 100);
                     }}
                   />
 
@@ -173,6 +176,8 @@ const GameLeaderboard = () => {
                         sessionId={selectedSessionId}
                         user={user}
                         prizePool={selectedSessionPool}
+                        entryFee={selectedSessionEntryFee}
+                        platformFeePercent={game.platform_fee_percentage || 10}
                       />
                     </div>
                   )}
@@ -194,7 +199,7 @@ const GameSessionsList = ({
 }: {
   gameId: string;
   selectedSessionId: string | null;
-  onSelectSession: (id: string, pool: number) => void;
+  onSelectSession: (id: string, pool: number, fee: number) => void;
 }) => {
 
   const { data, isLoading } = useGameSessions(gameId);
@@ -219,7 +224,7 @@ const GameSessionsList = ({
         {sessions.map((session: Session) => (
           <button
             key={session.id}
-            onClick={() => onSelectSession(session.id, session.pool_amount)}
+            onClick={() => onSelectSession(session.id, session.pool_amount, session.entry_fee)}
             className={`p-4 rounded-xl border transition-all text-left group ${
 
               selectedSessionId === session.id
@@ -259,14 +264,22 @@ const SessionLeaderboardTable = ({
   sessionId,
   user,
   prizePool = 0,
+  entryFee = 100,
+  platformFeePercent = 10,
 }: {
   sessionId: string;
   user: UserProfile | null;
   prizePool?: number;
+  entryFee?: number;
+  platformFeePercent?: number;
 }) => {
 
   const { data, isLoading } = useSessionLeaderboard(sessionId);
   const leaderboardData = data?.leaderboard || [];
+
+  const netPool = prizePool * (1 - platformFeePercent / 100);
+  const estimatedPlayers = entryFee > 0 ? Math.max(1, Math.floor(prizePool / entryFee)) : 1;
+  const distributionCurve = calculateDistributionCurve(estimatedPlayers);
 
   if (isLoading)
     return (
@@ -364,11 +377,11 @@ const SessionLeaderboardTable = ({
                     {player.best_score.toLocaleString()}
                   </TableCell>
                   <TableCell className="text-right">
-                    {rank <= 5 && prizePool > 0 ? (
+                    {distributionCurve && rank <= distributionCurve.length && netPool > 0 ? (
                       <div className="flex items-center justify-end gap-1 text-primary">
                         <ZASymbol className="text-[10px] scale-75" />
                         <span className="font-black text-xs">
-                          {((rank === 1 ? 0.4 : rank === 2 ? 0.25 : rank === 3 ? 0.15 : 0.1) * prizePool).toLocaleString()}
+                          {(distributionCurve[rank - 1] * netPool).toLocaleString(undefined, { maximumFractionDigits: 2 })}
                         </span>
                       </div>
                     ) : (

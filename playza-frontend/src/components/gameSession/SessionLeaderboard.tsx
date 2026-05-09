@@ -22,6 +22,7 @@ interface LeaderboardEntry {
 interface SessionLeaderboardProps {
   sessionId: string;
   prizePool?: number;
+  distributionCurve?: number[];
 }
 
 
@@ -30,7 +31,7 @@ interface DisplayEntry extends LeaderboardEntry {
   searchRank?: number;
 }
 
-const SessionLeaderboard = ({ sessionId, prizePool = 0 }: SessionLeaderboardProps) => {
+const SessionLeaderboard = ({ sessionId, prizePool = 0, distributionCurve }: SessionLeaderboardProps) => {
   const [query, setQuery] = useState("");
   const { user } = useAuth();
   
@@ -56,13 +57,11 @@ const SessionLeaderboard = ({ sessionId, prizePool = 0 }: SessionLeaderboardProp
   const LeaderCard = ({ item, rank, isTop3, isMatch }: { item: DisplayEntry; rank: number; isTop3?: boolean; isMatch?: boolean }) => {
     const isMe = item.user_id === user?.id;
 
-    // Prize calculation logic (Matching MatchSession.tsx distribution)
+    // Prize calculation logic using dynamic curve
     const getPrize = (r: number) => {
-      if (r === 1) return prizePool * 0.40;
-      if (r === 2) return prizePool * 0.25;
-      if (r === 3) return prizePool * 0.15;
-      if (r === 4) return prizePool * 0.10;
-      if (r === 5) return prizePool * 0.10;
+      if (distributionCurve && r <= distributionCurve.length) {
+        return prizePool * distributionCurve[r - 1];
+      }
       return 0;
     };
 

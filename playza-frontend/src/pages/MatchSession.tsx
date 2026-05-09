@@ -1,5 +1,5 @@
 import { Link, useParams, useNavigate, useLocation } from "react-router";
-import { ArrowBigLeft, Info, Laptop, Smartphone, Loader2 } from "lucide-react";
+import { ArrowBigLeft, Info, Loader2 } from "lucide-react";
 import { BiTrophy } from "react-icons/bi";
 import { MdArrowForward, MdSupportAgent } from "react-icons/md";
 import { useState, useEffect } from "react";
@@ -12,7 +12,12 @@ import HowToPlayModal from "@/components/gameSession/HowToPlayModal";
 import ActivityToasts from "@/components/gameSession/ActivityToasts";
 import { ZASymbol } from "@/components/currency/ZASymbol";
 import { useAuth } from "@/context/auth";
-import { useActiveSession, useGames, useGameSessions } from "@/hooks/gamesession/useGameSession";
+import {
+  useActiveSession,
+  useGames,
+  useGameSessions,
+} from "@/hooks/gamesession/useGameSession";
+import { calculateDistributionCurve } from "@/utils/payoutDistribution";
 import type { Game, Session } from "@/types/types";
 
 const MatchSession = () => {
@@ -29,19 +34,40 @@ const MatchSession = () => {
   // --- LIVE DATA FETCH ---
   const { data: gamesData, isLoading: gamesLoading } = useGames();
   const { data: sessionData, isLoading } = useActiveSession(slug || "");
-  
-  const game = (gamesData?.games || gamesData?.result || gamesData?.data || []).find((g: Game) => g.slug === slug);
-  const { data: allSessionsData, isLoading: allSessionsLoading } = useGameSessions(game?.id || "");
 
-  const session = sessionData?.session || 
-                  sessionData?.result || 
-                  sessionData?.data || 
-                  (Array.isArray(sessionData) && sessionData.length > 0 ? sessionData[0] : null) ||
-                  (allSessionsData?.sessions || allSessionsData?.result || allSessionsData?.data || (Array.isArray(allSessionsData) ? allSessionsData : [])).find((s: Session) => {
-                    const status = (s.status || '').toLowerCase();
-                    return status === 'live' || status === 'active' || status === 'ongoing' || status === 'upcoming';
-                  });
-  
+  const game = (
+    gamesData?.games ||
+    gamesData?.result ||
+    gamesData?.data ||
+    []
+  ).find((g: Game) => g.slug === slug);
+  const { data: allSessionsData, isLoading: allSessionsLoading } =
+    useGameSessions(game?.id || "");
+
+  console.log("The game:", game);
+
+  const session =
+    sessionData?.session ||
+    sessionData?.result ||
+    sessionData?.data ||
+    (Array.isArray(sessionData) && sessionData.length > 0
+      ? sessionData[0]
+      : null) ||
+    (
+      allSessionsData?.sessions ||
+      allSessionsData?.result ||
+      allSessionsData?.data ||
+      (Array.isArray(allSessionsData) ? allSessionsData : [])
+    ).find((s: Session) => {
+      const status = (s.status || "").toLowerCase();
+      return (
+        status === "live" ||
+        status === "active" ||
+        status === "ongoing" ||
+        status === "upcoming"
+      );
+    });
+
   const isLoadingAll = isLoading || gamesLoading || allSessionsLoading;
 
   console.log("GAME:", game);
@@ -111,6 +137,19 @@ const MatchSession = () => {
   const isUpcoming = session.status === "upcoming";
   const isEnded = session.status === "completed";
 
+  // Dynamic Prize Distribution (calculated from net pool)
+  const platformFeePercent = Number(game?.platform_fee_percentage || 10);
+  const netPool =
+    Number(session.pool_amount || 0) * (1 - platformFeePercent / 100);
+
+  // Estimate total players based on pool amount and entry fee
+  const entryFee = Number(session.entry_fee || 100);
+  const estimatedPlayers =
+    entryFee > 0
+      ? Math.max(1, Math.floor(Number(session.pool_amount || 0) / entryFee))
+      : 1;
+  const distributionCurve = calculateDistributionCurve(estimatedPlayers);
+
   type TabItem = {
     tab: string;
     render: () => React.ReactElement;
@@ -122,7 +161,8 @@ const MatchSession = () => {
       render: () => (
         <SessionLeaderboard
           sessionId={session.id}
-          prizePool={session.pool_amount}
+          prizePool={netPool}
+          distributionCurve={distributionCurve}
         />
       ),
     },
@@ -139,7 +179,8 @@ const MatchSession = () => {
       render: () => (
         <SessionLeaderboard
           sessionId={session.id}
-          prizePool={session.pool_amount}
+          prizePool={netPool}
+          distributionCurve={distributionCurve}
         />
       ),
     },
@@ -176,42 +217,43 @@ const MatchSession = () => {
     : displayTabsNames[0];
   const activeTabContent = tabContent.find((item) => item.tab === currentTab);
 
-  // Dynamic Prize Distribution (calculated from net pool)
-  const platformFeePercent = Number(game?.platform_fee_percentage || 10);
-  const netPool =
-    Number(session.pool_amount || 0) * (1 - platformFeePercent / 100);
-  const prizes = [
-    {
-      label: "Grand Prize",
-      rank: "1st",
-      amount: netPool * 0.4,
-      color: "text-yellow-500",
-    },
-    {
-      label: "Runner Up",
-      rank: "2nd",
-      amount: netPool * 0.25,
-      color: "text-slate-400",
-    },
-    {
-      label: "Finalist",
-      rank: "3rd",
-      amount: netPool * 0.15,
-      color: "text-orange-500",
-    },
-    {
-      label: "4th Place",
-      rank: "4th",
-      amount: netPool * 0.1,
-      color: "text-slate-500",
-    },
-    {
-      label: "5th Place",
-      rank: "5th",
-      amount: netPool * 0.1,
-      color: "text-slate-500",
-    },
+  // Generate top prizes for the sidebar
+  const topPrizesCount = Math.min(5, distributionCurve.length);
+  const prizes = [];
+  const labels = [
+    "Grand Prize",
+    "Runner Up",
+    "Finalist",
+    "4th Place",
+    "5th Place",
   ];
+  const colors = [
+    "text-yellow-500",
+    "text-slate-400",
+    "text-orange-500",
+    "text-slate-500",
+    "text-slate-500",
+  ];
+  const ranks = ["1st", "2nd", "3rd", "4th", "5th"];
+
+  for (let i = 0; i < topPrizesCount; i++) {
+    prizes.push({
+      label: labels[i] || `${i + 1}th Place`,
+      rank: ranks[i] || `${i + 1}th`,
+      amount: netPool * distributionCurve[i],
+      color: colors[i] || "text-slate-500",
+    });
+  }
+
+  // If there are more winners than the top 5, add a generic entry for the rest
+  if (distributionCurve.length > 5) {
+    prizes.push({
+      label: "Remaining Winners",
+      rank: `6th-${distributionCurve.length}th`,
+      amount: netPool * distributionCurve.slice(5).reduce((a, b) => a + b, 0),
+      color: "text-slate-600",
+    });
+  }
 
   return (
     <main className="relative flex-1 max-w-400 mx-auto overflow-x-hidden p-2 md:p-6 lg:p-8 pb-16 md:pb-10">
@@ -322,38 +364,9 @@ const MatchSession = () => {
               ))}
               <div className="text-center pt-2">
                 <p className="text-[10px] text-slate-500 italic uppercase font-bold">
-                  Top 5 split the Net Prize Pool (
-                  {game.platform_fee_percentage || 10}% fee applied)
+                  The Winner Zone split the Net Prize Pool (
+                  {game.platform_fee_percentage}% fee applied)
                 </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Metadata Section */}
-          <div className="bg-white dark:bg-black/20 rounded-xl border border-slate-200 dark:border-white/10 p-2 md:p-5">
-            <h3 className="text-sm md:text-lg font-black italic mb-4 flex items-center gap-2 text-slate-900 dark:text-white uppercase tracking-tighter">
-              <Info className="text-primary" />
-              Arena Details
-            </h3>
-            <div className="space-y-3">
-              <div className="flex justify-between text-xs py-2 border-b border-white/5 uppercase font-bold tracking-widest">
-                <span className="dark:text-slate-400">Category</span>
-                <span className="text-white">{game.category}</span>
-              </div>
-              <div className="flex justify-between text-xs py-2 border-b border-white/5 uppercase font-bold tracking-widest">
-                <span className="dark:text-slate-400">Difficulty</span>
-                <span className="text-yellow-500">{game.difficulty}</span>
-              </div>
-              <div className="flex justify-between text-xs py-2 border-b border-white/5 uppercase font-bold tracking-widest">
-                <span className="dark:text-slate-400">Duration</span>
-                <span className="text-white">{game.duration_seconds}s</span>
-              </div>
-              <div className="flex justify-between text-xs py-2 uppercase font-bold tracking-widest">
-                <span className="dark:text-slate-400">Platform</span>
-                <div className="flex gap-2 text-white">
-                  <Laptop size={14} />
-                  <Smartphone size={14} />
-                </div>
               </div>
             </div>
           </div>
@@ -366,10 +379,11 @@ const MatchSession = () => {
               <div>
                 <h4 className=" font-bold text-sm uppercase">Arena Support</h4>
                 <p className="text-[10px] text-slate-600 dark:text-slate-400 mb-3 font-medium">
-                  Support agents are active for this tournament session. If you encounter any issues, please report them.
+                  Support agents are active for this tournament session. If you
+                  encounter any issues, please report them.
                 </p>
-                <button 
-                  onClick={() => navigate('/feedback')}
+                <button
+                  onClick={() => navigate("/feedback")}
                   className="text-[10px] font-black text-primary flex items-center gap-1 md:hover:underline uppercase tracking-widest"
                 >
                   Report an Issue <MdArrowForward className="text-xs" />
