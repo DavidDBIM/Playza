@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { gameSessionService } from '../services/gamesession.service';
 
 export const useGames = () => {
@@ -13,5 +13,36 @@ export const useGameSessions = (gameId: string) => {
     queryKey: ['game-sessions', gameId],
     queryFn: () => gameSessionService.getGameSessions(gameId),
     enabled: !!gameId,
+  });
+};
+
+export const useSessionDetails = (sessionId: string) => {
+  return useQuery({
+    queryKey: ['session', sessionId],
+    queryFn: () => gameSessionService.getSessionDetails(sessionId),
+    enabled: !!sessionId,
+  });
+};
+
+export const useUpdateSessionStatus = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ sessionId, status }: { sessionId: string; status: string }) =>
+      gameSessionService.updateSessionStatus(sessionId, status),
+    onSuccess: (_, { sessionId }) => {
+      queryClient.invalidateQueries({ queryKey: ['session', sessionId] });
+      queryClient.invalidateQueries({ queryKey: ['game-sessions'] });
+    },
+  });
+};
+
+export const useFinalizeSession = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (sessionId: string) => gameSessionService.finalizeSession(sessionId),
+    onSuccess: (_, sessionId) => {
+      queryClient.invalidateQueries({ queryKey: ['session', sessionId] });
+      queryClient.invalidateQueries({ queryKey: ['game-sessions'] });
+    },
   });
 };

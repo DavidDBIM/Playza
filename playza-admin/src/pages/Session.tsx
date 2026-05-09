@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router";
+import React from "react";
+import { useParams } from "react-router";
 import { MdTrendingUp, MdBolt, MdFilterList, MdRefresh } from "react-icons/md";
 import { Button } from "../components/ui/button";
 import {
@@ -10,9 +10,13 @@ import {
   TableHeader,
   TableRow,
 } from "../components/ui/table";
-import { gameSessionService } from "../services/gamesession.service";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { 
+  useSessionDetails, 
+  useUpdateSessionStatus, 
+  useFinalizeSession 
+} from "../hooks/use-games";
 
 interface GameDetails {
   title: string;
@@ -50,61 +54,81 @@ interface RosterEntry {
 
 const Session: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  const [session, setSession] = useState<SessionData | null>(null);
-  const [roster, setRoster] = useState<RosterEntry[]>([]);
-  const [isProcessing, setIsProcessing] = useState(false);
+  
+  const { 
+    data: sessionDetails, 
+    isLoading: loading, 
+    refetch: fetchDetails 
+  } = useSessionDetails(id!);
+  
+  const updateStatusMutation = useUpdateSessionStatus();
+  const finalizeMutation = useFinalizeSession();
 
-  const fetchDetails = async () => {
-    try {
-      setLoading(true);
-      const data = await gameSessionService.getSessionDetails(id!);
-      setSession({
-        ...data.session,
-        financials: data.financials
-      });
-      setRoster(data.roster);
-    } catch (error: unknown) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Failed to fetch session details";
-      toast.error(message);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const session = React.useMemo(() => sessionDetails ? {
+    ...sessionDetails.session,
+    financials: sessionDetails.financials
+  } as SessionData : null, [sessionDetails]);
+  
+  const roster = React.useMemo(() => (sessionDetails?.roster || []) as RosterEntry[], [sessionDetails]);
 
-  useEffect(() => {
-    if (id) fetchDetails();
-  }, [id]);
+  const isProcessing = updateStatusMutation.isPending || finalizeMutation.isPending;
+
+  const [countdown, setCountdown] = React.useState("");
+
+  React.useEffect(() => {
+    const timer = setInterval(() => {
+      if (!session) return;
+      const now = new Date().getTime();
+      const start = new Date(sessionDetails.session.start_time).getTime();
+      const end = new Date(sessionDetails.session.end_time).getTime();
+
+      const target = session.status === "upcoming" ? start : end;
+      const diff = target - now;
+
+      if (diff <= 0) {
+        setCountdown(session.status === "upcoming" ? "Starting Now..." : "Ended");
+        return;
+      }
+
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      setCountdown(`${h}h ${m}m ${s}s`);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [session, sessionDetails]);
+
+  // Auto-sync every 3 seconds
+  React.useEffect(() => {
+    const sync = setInterval(() => fetchDetails(), 3000);
+    return () => clearInterval(sync);
+  }, [fetchDetails]);
 
   const handleFinalize = async () => {
-    if (
-      !window.confirm(
-        "Are you sure you want to finalize this session and trigger payouts? This cannot be undone.",
-      )
-    )
-      return;
+    if (!window.confirm("Are you sure you want to finalize this session and trigger payouts? This cannot be undone.")) return;
 
     try {
-      setIsProcessing(true);
-      const res = await gameSessionService.finalizeSession(id!);
+      const res = await finalizeMutation.mutateAsync(id!);
       if (res.success) {
-        toast.success(
-          `Session finalized! ${res.winnersCount} players paid out.`,
-        );
-        fetchDetails();
+        toast.success(`Session finalized! ${res.winnersCount} players paid out.`);
       } else {
         toast.error(res.message || "Finalization failed");
       }
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "Error finalizing session";
+      const message = error instanceof Error ? error.message : "Error finalizing session";
       toast.error(message);
-    } finally {
-      setIsProcessing(false);
+    }
+  };
+
+  const handleStatusUpdate = async (newStatus: string) => {
+    if (!window.confirm(`Are you sure you want to set this session to ${newStatus}?`)) return;
+    
+    try {
+      await updateStatusMutation.mutateAsync({ sessionId: id!, status: newStatus });
+      toast.success(`Session is now ${newStatus}`);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Failed to update status";
+      toast.error(message);
     }
   };
 
@@ -148,6 +172,13 @@ const Session: React.FC = () => {
                   ></span>
                   {session?.status}
                 </span>
+                {session?.status !== "completed" && session?.status !== "cancelled" && (
+                  <span className="flex items-center gap-1.5 px-3 py-1 bg-primary/10 text-primary text-[10px] font-black tracking-widest uppercase rounded-lg border border-primary/20 shadow-sm animate-pulse">
+                    <MdTrendingUp className="text-sm" />
+                    {session?.status === "upcoming" ? "Starts In: " : "Ends In: "}
+                    {countdown}
+                  </span>
+                )}
               </div>
               <p className="text-sm text-muted-foreground font-medium">
                 Arena ID: #{id} • Game: {game?.title}
@@ -157,13 +188,23 @@ const Session: React.FC = () => {
 
           <div className="flex items-center gap-3">
             <Button
-              onClick={fetchDetails}
+              onClick={() => fetchDetails()}
               variant="outline"
               size="icon"
               className="rounded-xl h-10 w-10"
             >
               <MdRefresh className="text-lg" />
             </Button>
+
+            {session?.status === "upcoming" && (
+              <Button
+                disabled={isProcessing}
+                onClick={() => handleStatusUpdate("active")}
+                className="px-6 py-2 bg-emerald-500 text-white hover:bg-emerald-600 rounded-xl text-xs font-black uppercase tracking-widest shadow-md shadow-emerald-500/20 transition-all"
+              >
+                {isProcessing ? <Loader2 className="animate-spin" /> : "Activate Now"}
+              </Button>
+            )}
 
             {!isEnded && (
               <Button
@@ -179,12 +220,15 @@ const Session: React.FC = () => {
               </Button>
             )}
 
-            <button
-              onClick={() => navigate("/games")}
-              className="px-4 py-2 bg-rose-500 text-white hover:bg-rose-600 rounded-xl text-xs font-bold transition-all"
-            >
-              Terminate
-            </button>
+            {session?.status !== "cancelled" && session?.status !== "completed" && (
+              <button
+                disabled={isProcessing}
+                onClick={() => handleStatusUpdate("cancelled")}
+                className="px-4 py-2 bg-rose-500 text-white hover:bg-rose-600 rounded-xl text-xs font-bold transition-all disabled:opacity-50"
+              >
+                Cancel Arena
+              </button>
+            )}
           </div>
         </div>
 
@@ -211,7 +255,7 @@ const Session: React.FC = () => {
             },
             {
               label: "Winners Zone",
-              value: session?.winners_count || 5,
+              value: session?.winners_count || 0,
               sub: "Paid Slots",
               color: "text-primary",
             },
