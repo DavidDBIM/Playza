@@ -8,7 +8,6 @@ import {
   MdStadium,
   MdInfo,
   MdGavel,
-  MdAdd,
   MdSchedule,
   MdTrendingUp,
   MdArrowForward,
@@ -126,7 +125,7 @@ const Game: React.FC = () => {
         </div>
         <div className="flex items-center gap-3">
           <button
-            onClick={() => navigate("/games/create")}
+            onClick={() => navigate(`/games/edit/${slug}`)}
             className="px-5 py-2.5 bg-muted hover:bg-muted/80 rounded-xl text-xs font-bold text-foreground transition-all"
           >
             <MdEdit className="text-lg mr-2 inline" /> Edit
@@ -167,12 +166,6 @@ const Game: React.FC = () => {
                 <h3 className="text-sm font-black uppercase tracking-wider text-foreground">
                   Active Match Sessions
                 </h3>
-                <button
-                  onClick={() => navigate("/sessions/create")}
-                  className="px-4 py-1.5 bg-muted hover:bg-muted/80 text-foreground rounded-xl text-xs font-bold transition-all border border-border"
-                >
-                  <MdAdd className="text-lg mr-1 inline" /> Create
-                </button>
               </div>
 
               {sessionsLoading ? (
