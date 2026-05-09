@@ -165,17 +165,7 @@ export async function joinSession(userId: string, sessionId: string) {
     throw new Error("Session is not available for joining")
   }
 
-  // 2. Check if already joined
-  const { data: existing } = await supabase
-    .from('game_leaderboard')
-    .select('id')
-    .eq('session_id', sessionId)
-    .eq('user_id', userId)
-    .single()
-
-  if (existing) return { success: true, message: "Already joined" }
-
-  // 3. Handle Wallet Deduction
+  // 2. Handle Wallet Deduction
   const { data: wallet } = await supabase
     .from('wallets')
     .select('balance')
@@ -186,7 +176,7 @@ export async function joinSession(userId: string, sessionId: string) {
     throw new Error("Insufficient funds to join tournament")
   }
 
-  // 4. Update wallet and create entry (Transactionally)
+  // 3. Update wallet and create entry (Transactionally)
   await supabase.rpc('decrement_wallet_balance', {
     p_user_id: userId,
     p_amount: session.entry_fee
@@ -200,11 +190,21 @@ export async function joinSession(userId: string, sessionId: string) {
     meta: { session_id: sessionId }
   })
 
-  // 5. Update session pool
+  // 4. Update session pool
   const { data: currentSession } = await supabase.from('game_sessions').select('pool_amount').eq('id', sessionId).single()
   await supabase.from('game_sessions').update({ 
     pool_amount: (Number(currentSession?.pool_amount || 0) + session.entry_fee)
   }).eq('id', sessionId)
+
+  // 5. Check if already joined
+  const { data: existing } = await supabase
+    .from('game_leaderboard')
+    .select('id')
+    .eq('session_id', sessionId)
+    .eq('user_id', userId)
+    .single()
+
+  if (existing) return { success: true, message: "Re-entered arena" }
 
   // 6. Create leaderboard entry with round_start_time for anti-cheat
   const { data: entry, error: entErr } = await supabase
@@ -347,7 +347,12 @@ export async function submitSessionScore(userId: string, sessionId: string, scor
     .eq('session_id', sessionId)
     .gt('best_score', newBest)
 
-  return { success: true, rank: (count || 0) + 1 }
+  return { 
+    success: true, 
+    rank: (count || 0) + 1,
+    isHighScore: score > entry.best_score,
+    previousBest: entry.best_score
+  }
 }
 
 
