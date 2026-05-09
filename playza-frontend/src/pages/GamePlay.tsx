@@ -40,6 +40,8 @@ const GamePlay = () => {
     rank?: number;
     isHighScore?: boolean;
     previousBest?: number;
+    /** Live leaderboard snapshot fetched right after score submission */
+    leaderboard?: Array<{ best_score: number; users?: { username?: string; avatar_url?: string | null } }>;
   } | null>(null);
   const [showLiveEntry, setShowLiveEntry] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -227,11 +229,19 @@ const GamePlay = () => {
               currentRoundId,
             );
             if (res.success) {
+              // Fetch live leaderboard snapshot for the game over neighborhood display
+              let leaderboardSnapshot: Array<{ best_score: number; users?: { username?: string; avatar_url?: string | null } }> = [];
+              try {
+                const lb = await getSessionLeaderboard(activeSession.id);
+                leaderboardSnapshot = lb?.leaderboard || lb?.result || [];
+              } catch { /* non-critical — game over screen shows loading fallback */ }
+
               setGameOverData({
                 score,
                 rank: res.rank,
                 isHighScore: res.isHighScore,
                 previousBest: res.previousBest,
+                leaderboard: leaderboardSnapshot,
               });
               toast.success(`Victory! Your Rank: #${res.rank}`);
               setCurrentRoundId(null); // Burn one-time round token
@@ -492,8 +502,10 @@ const GamePlay = () => {
         <GameOverLeaderboard
           score={gameOverData.score}
           gameName={game.title}
+          rank={gameOverData.rank}
           isHighScore={gameOverData.isHighScore}
           previousBest={gameOverData.previousBest}
+          leaderboard={gameOverData.leaderboard}
           playAgain={() => {
             setGameOverData(null);
             if (isDemo) {

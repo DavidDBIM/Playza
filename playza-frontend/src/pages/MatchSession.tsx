@@ -168,7 +168,7 @@ const MatchSession = () => {
     },
     {
       tab: "My Performance",
-      render: () => <SessionPerformance sessionId={session.id} />,
+      render: () => <SessionPerformance sessionId={session.id} netPool={netPool} distributionCurve={distributionCurve} />,
     },
     {
       tab: "Live Feeds",
@@ -187,7 +187,7 @@ const MatchSession = () => {
 
     {
       tab: "My Results",
-      render: () => <SessionPerformance sessionId={session.id} />,
+      render: () => <SessionPerformance sessionId={session.id} netPool={netPool} distributionCurve={distributionCurve} />,
     },
     {
       tab: "Pre-Game Lobby",

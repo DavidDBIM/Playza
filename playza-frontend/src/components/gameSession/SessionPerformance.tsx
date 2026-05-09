@@ -5,9 +5,13 @@ import { useMySessionStats } from "@/hooks/gamesession/useGameSession";
 
 interface SessionPerformanceProps {
   sessionId: string;
+  /** Net prize pool after platform fee — used to calculate estimated prize */
+  netPool?: number;
+  /** Payout distribution curve matching the leaderboard sidebar */
+  distributionCurve?: number[];
 }
 
-const SessionPerformance = ({ sessionId }: SessionPerformanceProps) => {
+const SessionPerformance = ({ sessionId, netPool = 0, distributionCurve = [] }: SessionPerformanceProps) => {
   const { data, isLoading } = useMySessionStats(sessionId);
   const stats = data?.stats;
   const rank = data?.rank;
@@ -40,11 +44,12 @@ const SessionPerformance = ({ sessionId }: SessionPerformanceProps) => {
     );
   }
 
-  // Derived metrics (using some dummy math for visuals, real data where possible)
+  // Estimated prize uses the SAME distribution curve as the leaderboard sidebar
+  // so the numbers always match. If the player ranks outside the winner zone,
+  // their estimated prize is 0.
   const estimatedPrize =
-    rank <= 5
-      ? Number(stats.session?.pool_amount || 0) *
-        (rank === 1 ? 0.4 : rank === 2 ? 0.25 : 0.15)
+    rank > 0 && rank <= distributionCurve.length
+      ? netPool * distributionCurve[rank - 1]
       : 0;
 
   return (
@@ -71,9 +76,11 @@ const SessionPerformance = ({ sessionId }: SessionPerformanceProps) => {
               <div className="flex items-center gap-2 text-playza-green">
                 <TrendingUp className="size-4" />
                 <p className="text-xs font-black uppercase tracking-tight">
-                  {rank <= 5
+                  {rank <= distributionCurve.length
                     ? "You are currently in the Winning Zone!"
-                    : `Climb ${rank - 5} positions to enter the Prize Zone`}
+                    : distributionCurve.length > 0
+                      ? `Climb ${rank - distributionCurve.length} position${rank - distributionCurve.length === 1 ? "" : "s"} to enter the Prize Zone`
+                      : "Play and submit a score to earn rewards"}
                 </p>
               </div>
             </div>
