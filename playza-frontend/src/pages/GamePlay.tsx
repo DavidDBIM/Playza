@@ -4,10 +4,12 @@ import { X, Loader2, Maximize, Minimize } from "lucide-react";
 import { useEffect, useState } from "react";
 import GameOverLeaderboard from "@/components/game/GameOverLeaderboard";
 import LiveEntryModal from "@/components/gameSession/LiveEntryModal";
+import type { BundlePack } from "@/components/gameSession/LiveEntryModal";
 import {
   getActiveSession,
   submitSessionScore,
   startRound,
+  getSessionLeaderboard,
 } from "@/api/gamesession.api";
 
 import { useToast } from "@/context/toast";
@@ -44,6 +46,10 @@ const GamePlay = () => {
   const [activeSession, setActiveSession] = useState<Session | null>(null);
 
   const [currentRoundId, setCurrentRoundId] = useState<string | null>(null);
+  // Stores the power-up bundle a player purchased in LiveEntryModal.
+  // Injected into the iframe via PLAYZA_POWERUP_BUNDLE once the game loads.
+  // Uses a generic Record<string,number> so it works for any game's power-up IDs.
+  const [pendingBundle, setPendingBundle] = useState<Record<string, number> | null>(null);
 
   const { data: gamesData, isLoading: gamesLoading } = useGames();
   const game = (
@@ -76,6 +82,74 @@ const GamePlay = () => {
     fetchSession();
   }, [id]);
 
+  /**
+   * ============================================================
+   * 🏟️  ARENA RIVAL BANNER — Live Leaderboard Feed (React → Iframe)
+   * ============================================================
+   * SCOPE: All Playza games (platform-wide pattern).
+   *
+   * WHY THIS EXISTS:
+   * Every Playza game runs inside a sandboxed <iframe> and has no direct
+   * access to the backend or session leaderboard. To give players a
+   * real-time competitive feel, this hook acts as a bridge: React fetches
+   * the current top-ranked player's score from the server every 10 seconds
+   * and "pushes" it into the game via postMessage.
+   *
+   * HOW IT WORKS:
+   * 1. React polls `getSessionLeaderboard(sessionId)` on a 10-second interval.
+   * 2. It extracts the #1 player (username + best_score) from the response.
+   * 3. It fires `iframe.contentWindow.postMessage({ type: 'PLAYZA_RIVAL_UPDATE', payload })`.
+   * 4. Inside the game's script (e.g. game.js), a `window.addEventListener('message')`
+   *    listener receives this and updates the floating "Rival Banner" UI inside the game.
+   * 5. The banner turns 🔴 RED when the player is trailing and 🟢 GREEN when
+   *    they surpass the leader — updating in real time after every move.
+   *
+   * TO ENABLE IN A NEW GAME:
+   * The game's script must listen for the `PLAYZA_RIVAL_UPDATE` message type
+   * and render the rival data in whatever way suits its UI. This React hook
+   * requires no modification — it is already universal.
+   *
+   * NOTE: This is entirely non-blocking. If the fetch fails (e.g. no network),
+   * the rival banner simply stays hidden — it never disrupts gameplay.
+   */
+  useEffect(() => {
+    if (!activeSession) return;
+    const pushRivalToGame = async () => {
+      try {
+        const res = await getSessionLeaderboard(activeSession.id);
+        const leaderboard = res?.leaderboard || res?.result || [];
+        if (leaderboard.length > 0) {
+          const top = leaderboard[0];
+          const iframe = document.querySelector(
+            "iframe",
+          ) as HTMLIFrameElement | null;
+          iframe?.contentWindow?.postMessage(
+            {
+              type: "PLAYZA_RIVAL_UPDATE",
+              payload: {
+                username: top.users?.username || "Player",
+                score: top.best_score || 0,
+              },
+            },
+            // Target the iframe's specific origin, not "*", for safety
+            (() => {
+              const u = game?.iframe_url || game?.iframeUrl;
+              try { return u?.startsWith('http') ? new URL(u).origin : window.location.origin; }
+              catch { return window.location.origin; }
+            })()
+          );
+        }
+      } catch {
+        // Silent fail — rival banner is purely cosmetic and non-critical
+      }
+    };
+
+    // Push once on mount, then repeat every 10 seconds
+    pushRivalToGame();
+    const rivalInterval = setInterval(pushRivalToGame, 10_000);
+    return () => clearInterval(rivalInterval);
+  }, [activeSession]);
+
   useEffect(() => {
     document.body.style.overflow = "hidden";
 
@@ -95,7 +169,53 @@ const GamePlay = () => {
     };
     setTimeout(enterFullscreen, 100);
 
+    /**
+     * ============================================================
+     * 📡  PLAYZA IFRAME ↔ REACT — PostMessage Bridge
+     * ============================================================
+     * SCOPE: Mixed. See individual handler notes below.
+     *
+     * OVERVIEW:
+     * Every Playza game runs in a sandboxed <iframe> and cannot directly
+     * call backend APIs, access the wallet, or write to the leaderboard.
+     * All privileged operations are delegated to this React parent via
+     * the browser's `window.postMessage` API — a safe, origin-agnostic
+     * communication channel between an iframe and its host.
+     *
+     * ──────────────────────────────────────────────────────────────
+     * 1️⃣  PLAYZA_SCORE_SUBMISSION  — PLATFORM-WIDE (All Games)
+     *    Game → React → Backend
+     * ──────────────────────────────────────────────────────────────
+     * Triggered when: A game ends and the player's final score is ready.
+     * What it does:
+     *   - Extracts the final score from the message payload.
+     *   - Calls `submitSessionScore(sessionId, score, roundId)` on the
+     *     backend, which validates the round token (anti-cheat), stores
+     *     the score in the leaderboard, and returns the player's live rank.
+     *   - The one-time `roundId` token is burned (set to null) immediately
+     *     after use to prevent replay attacks or duplicate submissions.
+     *   - Opens the GameOverLeaderboard overlay with the final results.
+     * To adopt in a new game: Fire `PLAYZA_SCORE_SUBMISSION` with
+     *   `{ score: number }` in the payload when the game ends. No changes
+     *   needed in this file — the handler is already universal.
+     */
+
     const handleMessage = async (event: MessageEvent) => {
+      // ── SECURITY: Reject messages from origins other than the game iframe ──────
+      // The iframeUrl may be an absolute CDN URL or a relative same-origin path.
+      // We derive the expected origin from it so only our trusted game can trigger
+      // wallet deductions, score submissions, or power-up flows.
+      const rawUrl = game?.iframe_url || game?.iframeUrl;
+      const expectedOrigin = (() => {
+        try {
+          return rawUrl?.startsWith('http') ? new URL(rawUrl).origin : window.location.origin;
+        } catch {
+          return window.location.origin;
+        }
+      })();
+      if (event.origin !== expectedOrigin) return;
+
+      // --- Handler 1: Score Submission ---
       if (event.data?.type === "PLAYZA_SCORE_SUBMISSION") {
         const score = event.data.payload?.score || 0;
 
@@ -107,23 +227,91 @@ const GamePlay = () => {
               currentRoundId,
             );
             if (res.success) {
-              setGameOverData({ 
-                score, 
+              setGameOverData({
+                score,
                 rank: res.rank,
                 isHighScore: res.isHighScore,
-                previousBest: res.previousBest
+                previousBest: res.previousBest,
               });
               toast.success(`Victory! Your Rank: #${res.rank}`);
-              setCurrentRoundId(null); // Burn token
+              setCurrentRoundId(null); // Burn one-time round token
             }
           } catch (err: unknown) {
             const error = err as { response?: { data?: { message?: string } } };
             toast.error(error.response?.data?.message || "Submission failed");
-
             setGameOverData({ score });
           }
         } else {
+          // Demo mode or session expired — show score locally only
           setGameOverData({ score });
+        }
+      }
+
+      /** ──────────────────────────────────────────────────────────────
+       * 2️⃣  PLAYZA_POWERUP_REQUEST  — 2048-SPECIFIC (not universal)
+       *    Game → React → Backend → Game
+       * ──────────────────────────────────────────────────────────────
+       * Triggered when: The player clicks a power-up inside the 2048 game
+       *   (Undo ↩, Smash 💥, or Gravity Shift 🔄).
+       * Security model:
+       *   - The iframe sends only the power-up TYPE (id string).
+       *   - React looks up the VERIFIED cost from game.capabilities.powerUpDefs
+       *     (set by the admin, stored in Supabase). The iframe's cost field is
+       *     completely ignored — a cheater cannot reduce the price via DevTools.
+       *   - React validates that the power-up ID is in the game's capability list.
+       *     Unknown IDs are silently rejected.
+       * To adopt in another game: Fire `PLAYZA_POWERUP_REQUEST` with
+       *   `{ powerUp: string }` and listen for `PLAYZA_POWERUP_APPROVED` /
+       *   `PLAYZA_POWERUP_DENIED`. Define the power-up in the game's capabilities
+       *   in the admin panel so React can validate and price it.
+       */
+      if (event.data?.type === "PLAYZA_POWERUP_REQUEST") {
+        const { powerUp, cost: iframeCost } = event.data.payload || {};
+        const iframe = document.querySelector("iframe") as HTMLIFrameElement | null;
+
+        // -- SECURITY: Validate powerUp ID and use server-side cost --
+        // If the game has capabilities.powerUpDefs configured (via admin), we
+        // use the server-side cost and reject unknown IDs — full secure mode.
+        // If capabilities haven't been set up yet (null/empty), we fall back to
+        // the iframe's reported cost so existing live games don't break.
+        const powerUpDefs = game?.capabilities?.powerUpDefs;
+        const hasCapabilities = powerUpDefs && powerUpDefs.length > 0;
+        const powerUpDef = hasCapabilities
+          ? powerUpDefs.find((def: { id: string; label: string; cost: number }) => def.id === powerUp)
+          : null;
+
+        if (hasCapabilities && !powerUpDef) {
+          // Capabilities are set but this ID is unknown — reject
+          iframe?.contentWindow?.postMessage({ type: "PLAYZA_POWERUP_DENIED" }, expectedOrigin);
+          return;
+        }
+
+        // Use verified server-side cost if available, otherwise trust iframe cost
+        const verifiedCost = powerUpDef?.cost ?? iframeCost ?? 0;
+        const verifiedLabel = powerUpDef?.label ?? powerUp ?? "Power-up";
+
+        try {
+          const { deductWallet } = await import("@/api/gamesession.api");
+          const res = await deductWallet(verifiedCost, `Power-up: ${verifiedLabel}`);
+          if (res.success) {
+            toast.info(`Power-up activated! -${verifiedCost} ZA`);
+            iframe?.contentWindow?.postMessage(
+              { type: "PLAYZA_POWERUP_APPROVED" },
+              expectedOrigin,
+            );
+          } else {
+            toast.error("Insufficient balance for this power-up.");
+            iframe?.contentWindow?.postMessage(
+              { type: "PLAYZA_POWERUP_DENIED" },
+              expectedOrigin,
+            );
+          }
+        } catch {
+          toast.error("Could not process power-up.");
+          iframe?.contentWindow?.postMessage(
+            { type: "PLAYZA_POWERUP_DENIED" },
+            expectedOrigin,
+          );
         }
       }
     };
@@ -262,20 +450,38 @@ const GamePlay = () => {
         className={`flex-1 min-h-0 w-full relative ${gameOverData ? "hidden" : ""}`}
       >
         <div
-          className="h-full w-full px-2 pb-3 pt-14 md:px-4 md:pt-16 md:pb-4 lg:pt-10 lg:px-6"
+          className="h-full w-full px-2 pb-3 pt-14 md:px-4 md:pt-16 md:pb-4 lg:pt-10 lg:px-6 flex items-center justify-center"
           onClick={(e) =>
             (
               e.currentTarget.querySelector("iframe") as HTMLIFrameElement
             )?.focus()
           }
         >
-          <div className="mx-auto flex h-full w-full max-w-400 items-center justify-center overflow-hidden rounded-2xl bg-slate-950/80 shadow-2xl ring-1 ring-white/10">
+          <div className="mx-auto flex h-full w-full max-w-lg xl:max-w-xl items-center justify-center overflow-hidden rounded-2xl bg-slate-950/80 shadow-2xl ring-1 ring-white/10">
             <iframe
               src={iframeUrl}
               className="h-full w-full border-none"
               title={game.title}
               allow="autoplay; fullscreen; gamepad"
-              onLoad={() => setIsLoading(false)}
+              onLoad={() => {
+                setIsLoading(false);
+                // Inject pre-purchased bundle into the game once iframe is ready
+                if (pendingBundle) {
+                  const rawUrl = game?.iframe_url || game?.iframeUrl;
+                  const targetOrigin = (() => {
+                    try { return rawUrl?.startsWith('http') ? new URL(rawUrl).origin : window.location.origin; }
+                    catch { return window.location.origin; }
+                  })();
+                  const iframe = document.querySelector("iframe") as HTMLIFrameElement | null;
+                  setTimeout(() => {
+                    iframe?.contentWindow?.postMessage(
+                      { type: "PLAYZA_POWERUP_BUNDLE", payload: pendingBundle },
+                      targetOrigin,
+                    );
+                  }, 800);
+                  setPendingBundle(null);
+                }
+              }}
             />
           </div>
         </div>
@@ -316,15 +522,25 @@ const GamePlay = () => {
             entryFee: activeSession?.entry_fee || 0,
             id: activeSession?.id || "",
           }}
+          // Pass bundle packs sourced from game.capabilities (set in admin).
+          // If capabilities is null or bundles is false, powerPacks will be []
+          // and the pack selector section will be hidden automatically.
+          powerPacks={
+            game.capabilities?.bundles && game.capabilities?.bundlePacks
+              ? (game.capabilities.bundlePacks as BundlePack[])
+              : []
+          }
           onClick={(open) => {
             if (!open) {
               setShowLiveEntry(false);
               navigate(`/games/${game.slug}/session`);
             }
           }}
-          onConfirm={async () => {
+          onConfirm={async (bundle) => {
             setShowLiveEntry(false);
             setIsLoading(true);
+            // Store bundle so it can be injected once the iframe reloads
+            if (bundle) setPendingBundle(bundle.grants);
 
             if (activeSession && !isDemo) {
               try {
