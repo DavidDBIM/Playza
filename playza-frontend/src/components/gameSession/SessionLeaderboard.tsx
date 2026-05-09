@@ -276,7 +276,7 @@ const SessionLeaderboard = ({ sessionId, prizePool = 0 }: SessionLeaderboardProp
               Search in the box above or keep playing to climb higher!
             </span>
           </p>
-          <Link to="/leaderboards">
+          <Link to="/leaderboard?tab=Games">
             <button className="group px-2 md:px-8 py-2 md:py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 transition-all rounded-2xl flex items-center gap-2 md:gap-3 active:scale-95 shadow-xl hover:shadow-slate-400/20">
               <span className="text-xs font-black uppercase tracking-[0.2em]">
                 View Global Rankings

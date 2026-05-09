@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import type { Session } from "@/types/types";
 import { Play, Trophy, Users, Clock, CreditCard, Timer } from "lucide-react";
 import { ZASymbol } from "../currency/ZASymbol";
