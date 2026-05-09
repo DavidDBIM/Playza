@@ -24,6 +24,7 @@ const MatchSession = () => {
   const [entryState, setEntryState] = useState<"none" | "fee" | "how-to-play">(
     "none",
   );
+  const [isDemo, setIsDemo] = useState(false);
 
   // --- LIVE DATA FETCH ---
   const { data: gamesData, isLoading: gamesLoading } = useGames();
@@ -42,6 +43,9 @@ const MatchSession = () => {
                   });
   
   const isLoadingAll = isLoading || gamesLoading || allSessionsLoading;
+
+  console.log("GAME:", game);
+  console.log("SESSION:", session);
 
   useEffect(() => {
     if (entryState !== "none") {
@@ -89,6 +93,7 @@ const MatchSession = () => {
   }
 
   const handleLiveClick = () => {
+    setIsDemo(false);
     if (!user) {
       navigate(
         `/registration?view=login&redirect=${encodeURIComponent(location.pathname)}`,
@@ -96,6 +101,11 @@ const MatchSession = () => {
     } else {
       setEntryState("fee");
     }
+  };
+
+  const handleDemoClick = () => {
+    setIsDemo(true);
+    setEntryState("how-to-play");
   };
 
   const isUpcoming = session.status === "upcoming";
@@ -220,7 +230,11 @@ const MatchSession = () => {
           onClose={() => setEntryState("none")}
           onConfirm={() => {
             setEntryState("none");
-            navigate(`/games/${slug}/play`);
+            if (isDemo) {
+              navigate(`/games/${slug}/play?mode=demo`);
+            } else {
+              navigate(`/games/${slug}/play`);
+            }
           }}
         />
       )}
@@ -248,7 +262,7 @@ const MatchSession = () => {
             sessionId={session.id}
             status={session.status}
             onLiveClick={handleLiveClick}
-            onDemoClick={() => navigate(`/games/${slug}/play?mode=demo`)}
+            onDemoClick={handleDemoClick}
           />
 
           <section className="bg-white dark:bg-black/20 rounded-xl overflow-hidden border border-slate-200 dark:border-white/10">

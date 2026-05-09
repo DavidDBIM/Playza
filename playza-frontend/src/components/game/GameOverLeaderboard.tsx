@@ -7,9 +7,11 @@ interface GameOverLeaderboardProps {
     rank?: number;
     onBackToSession?: () => void;
     gameName?: string;
+    isHighScore?: boolean;
+    previousBest?: number;
 }
 
-const GameOverLeaderboard = ({ score, playAgain, rank = 1, onBackToSession, gameName = "Current Game" }: GameOverLeaderboardProps) => {
+const GameOverLeaderboard = ({ score, playAgain, rank = 1, onBackToSession, gameName = "Current Game", isHighScore, previousBest }: GameOverLeaderboardProps) => {
     const displayRank = rank;
     // Generate mock leaderboard based on the user's position
     const mockLeaderboard = [
@@ -29,10 +31,24 @@ const GameOverLeaderboard = ({ score, playAgain, rank = 1, onBackToSession, game
                 </div>
                 
                 <h2 className="text-3xl font-black uppercase italic tracking-tighter text-white mb-1 z-10">Game Over</h2>
-                <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-6 z-10 flex items-center gap-1">
+                <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-4 z-10 flex items-center gap-1">
                     <Star className="w-3 h-3 text-yellow-500" />
                     Final Score: <span className="text-white">{score.toLocaleString()}</span>
                 </p>
+
+                {isHighScore === false && previousBest !== undefined && (
+                    <div className="w-full bg-rose-500/10 border border-rose-500/20 text-rose-200 p-3 rounded-lg text-xs font-medium mb-4 z-10 text-center leading-relaxed">
+                        Your latest score (<span className="font-bold text-rose-100">{score.toLocaleString()}</span>) was lower than your previous best (<span className="font-bold text-rose-100">{previousBest.toLocaleString()}</span>). 
+                        <br/><br/>
+                        <span className="italic text-[10px] text-rose-300 font-bold tracking-wide">Note: Entry fee was deducted, but this score wasn't recorded. Try again, this time you might climb higher!</span>
+                    </div>
+                )}
+                
+                {isHighScore === true && (
+                    <div className="w-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-200 p-3 rounded-lg text-[10px] font-black mb-4 z-10 text-center uppercase tracking-widest">
+                        New High Score Recorded! 🚀
+                    </div>
+                )}
 
                 <div className="w-full bg-slate-950/50 rounded-xl border border-white/5 p-4 mb-8 z-10">
                     <h3 className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-3 flex items-center gap-2">

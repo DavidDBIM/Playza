@@ -1,10 +1,14 @@
-import { useParams, useNavigate } from "react-router";
-import { games } from "@/data/games";
+import { useParams, useNavigate, useLocation } from "react-router";
+import { useGames } from "@/hooks/gamesession/useGameSession";
 import { X, Loader2, Maximize, Minimize } from "lucide-react";
 import { useEffect, useState } from "react";
 import GameOverLeaderboard from "@/components/game/GameOverLeaderboard";
 import LiveEntryModal from "@/components/gameSession/LiveEntryModal";
-import { getActiveSession, submitSessionScore, startRound } from "@/api/gamesession.api";
+import {
+  getActiveSession,
+  submitSessionScore,
+  startRound,
+} from "@/api/gamesession.api";
 
 import { useToast } from "@/context/toast";
 import type { Game } from "@/types/types";
@@ -20,247 +24,273 @@ interface Session {
   games: Game;
 }
 
-
 const GamePlay = () => {
-    const { id } = useParams();
-    const navigate = useNavigate();
-    const toast = useToast();
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const toast = useToast();
 
-    const [isLoading, setIsLoading] = useState(true);
-    const [gameOverData, setGameOverData] = useState<{ score: number; rank?: number } | null>(null);
-    const [showLiveEntry, setShowLiveEntry] = useState(false);
-    const [isFullscreen, setIsFullscreen] = useState(false);
-    const [activeSession, setActiveSession] = useState<Session | null>(null);
+  const isDemo = new URLSearchParams(location.search).get("mode") === "demo";
 
-    const [currentRoundId, setCurrentRoundId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [gameOverData, setGameOverData] = useState<{
+    score: number;
+    rank?: number;
+    isHighScore?: boolean;
+    previousBest?: number;
+  } | null>(null);
+  const [showLiveEntry, setShowLiveEntry] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [activeSession, setActiveSession] = useState<Session | null>(null);
 
-    const game = games.find((g) => g.slug === id);
+  const [currentRoundId, setCurrentRoundId] = useState<string | null>(null);
 
-    useEffect(() => {
-        const fetchSession = async () => {
-            if (!id) return;
-            try {
-                const res = await getActiveSession(id);
-                if (res.success && res.result) {
-                    setActiveSession(res.result);
-                    
-                    // -- SECURITY HANDSHAKE --
-                    const roundRes = await startRound(res.result.id);
-                    if (roundRes.success) {
-                        setCurrentRoundId(roundRes.roundId);
-                    }
-                }
-            } catch {
-                // Silent fail for session initialization
+  const { data: gamesData, isLoading: gamesLoading } = useGames();
+  const game = (
+    gamesData?.games ||
+    gamesData?.result ||
+    gamesData?.data ||
+    []
+  ).find((g: Game) => g.slug === id);
+
+  useEffect(() => {
+    const fetchSession = async () => {
+      if (!id) return;
+      try {
+        const res = await getActiveSession(id);
+        if (res.success && res.result) {
+          setActiveSession(res.result);
+
+          if (!isDemo) {
+            // -- SECURITY HANDSHAKE --
+            const roundRes = await startRound(res.result.id);
+            if (roundRes.success) {
+              setCurrentRoundId(roundRes.roundId);
             }
-        };
-        fetchSession();
-    }, [id]);
-
-    useEffect(() => {
-        document.body.style.overflow = "hidden";
-
-        const handleFullscreenChange = () => {
-            setIsFullscreen(!!document.fullscreenElement);
-        };
-        document.addEventListener("fullscreenchange", handleFullscreenChange);
-
-        const enterFullscreen = async () => {
-            try {
-                if (document.documentElement.requestFullscreen) {
-                    await document.documentElement.requestFullscreen();
-                }
-            } catch {
-                // Auto-fullscreen requires user gesture
-            }
-        };
-        setTimeout(enterFullscreen, 100);
-
-        const handleMessage = async (event: MessageEvent) => {
-            if (event.data?.type === "PLAYZA_SCORE_SUBMISSION") {
-                const score = event.data.payload?.score || 0;
-                
-                if (activeSession && currentRoundId) {
-                    try {
-                        const res = await submitSessionScore(activeSession.id, score, currentRoundId);
-                        if (res.success) {
-                            setGameOverData({ score, rank: res.rank });
-                            toast.success(`Victory! Your Rank: #${res.rank}`);
-                            setCurrentRoundId(null); // Burn token
-                        }
-                    } catch (err: unknown) {
-                        const error = err as { response?: { data?: { message?: string } } };
-                        toast.error(error.response?.data?.message || "Submission failed");
-
-                        setGameOverData({ score });
-                    }
-                } else {
-                    setGameOverData({ score });
-                }
-            }
-        };
-
-        window.addEventListener("message", handleMessage);
-
-        return () => {
-            document.body.style.overflow = "auto";
-            window.removeEventListener("message", handleMessage);
-            document.removeEventListener("fullscreenchange", handleFullscreenChange);
-            if (document.fullscreenElement && document.exitFullscreen) {
-                document.exitFullscreen().catch(() => {});
-            }
-        };
-    }, [activeSession, currentRoundId, toast]);
-
-    const toggleFullscreen = async () => {
-        if (!document.fullscreenElement) {
-            try {
-                await document.documentElement.requestFullscreen();
-            } catch {
-                // Silent fail for fullscreen toggle
-            }
-        } else {
-            if (document.exitFullscreen) {
-                await document.exitFullscreen();
-            }
+          }
         }
+      } catch {
+        // Silent fail for session initialization
+      }
+    };
+    fetchSession();
+  }, [id]);
+
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+
+    const enterFullscreen = async () => {
+      try {
+        if (document.documentElement.requestFullscreen) {
+          await document.documentElement.requestFullscreen();
+        }
+      } catch {
+        // Auto-fullscreen requires user gesture
+      }
+    };
+    setTimeout(enterFullscreen, 100);
+
+    const handleMessage = async (event: MessageEvent) => {
+      if (event.data?.type === "PLAYZA_SCORE_SUBMISSION") {
+        const score = event.data.payload?.score || 0;
+
+        if (activeSession && currentRoundId) {
+          try {
+            const res = await submitSessionScore(
+              activeSession.id,
+              score,
+              currentRoundId,
+            );
+            if (res.success) {
+              setGameOverData({ 
+                score, 
+                rank: res.rank,
+                isHighScore: res.isHighScore,
+                previousBest: res.previousBest
+              });
+              toast.success(`Victory! Your Rank: #${res.rank}`);
+              setCurrentRoundId(null); // Burn token
+            }
+          } catch (err: unknown) {
+            const error = err as { response?: { data?: { message?: string } } };
+            toast.error(error.response?.data?.message || "Submission failed");
+
+            setGameOverData({ score });
+          }
+        } else {
+          setGameOverData({ score });
+        }
+      }
     };
 
-    if (!game) {
-        return (
-            <div className="fixed inset-0 flex flex-col items-center justify-center bg-slate-950 text-white p-2 md:p-6 text-center">
-                <h2 className="text-lg md:text-2xl font-black uppercase tracking-widest mb-4">Arena Error</h2>
-                <p className="text-slate-400 font-bold mb-8 uppercase text-xs tracking-tighter italic">
-                    Game sequence "{id}" not found in our database.
-                </p>
-                <button 
-                    onClick={() => navigate("/games")}
-                    className="bg-primary text-slate-950 px-2 md:px-8 py-2 md:py-3 rounded-xl font-black uppercase text-xs tracking-widest hover:scale-105 transition-all"
-                >
-                    Return to Lobby
-                </button>
-            </div>
-        );
-    }
+    window.addEventListener("message", handleMessage);
 
-    if (!game.iframeUrl) {
-        return (
-            <div className="fixed inset-0 flex flex-col items-center justify-center bg-slate-950 text-white p-2 md:p-6 text-center">
-                <h2 className="text-lg md:text-2xl font-black uppercase tracking-widest mb-4">Configuration Error</h2>
-                <p className="text-slate-400 font-bold mb-8 uppercase text-xs tracking-tighter italic">
-                    The game "{game.title}" is currently being maintained.
-                </p>
-                <button 
-                    onClick={() => navigate(`/games/${game.slug}/session`)}
-                    className="bg-primary text-slate-950 px-2 md:px-8 py-2 md:py-3 rounded-xl font-black uppercase text-xs tracking-widest hover:scale-105 transition-all"
-                >
-                    Back to Session
-                </button>
-            </div>
-        );
-    }
+    return () => {
+      document.body.style.overflow = "auto";
+      window.removeEventListener("message", handleMessage);
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      if (document.fullscreenElement && document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      }
+    };
+  }, [activeSession, currentRoundId, toast]);
 
+  const toggleFullscreen = async () => {
+    if (!document.fullscreenElement) {
+      try {
+        await document.documentElement.requestFullscreen();
+      } catch {
+        // Silent fail for fullscreen toggle
+      }
+    } else {
+      if (document.exitFullscreen) {
+        await document.exitFullscreen();
+      }
+    }
+  };
+
+  if (gamesLoading) {
     return (
-      <div className="fixed inset-0 z-200 bg-black flex flex-col overflow-hidden">
-        {/* Top Bar / Header Overlay */}
-        <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-100 pointer-events-none">
-          <div className="bg-black/60 backdrop-blur-md px-2 md:px-4 py-2 rounded-full border border-white/10 shadow-xl flex items-center gap-2 md:gap-3">
-            <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-white/80 italic">
-              {game.title} - LIVE ARENA
-            </span>
-          </div>
+      <div className="fixed inset-0 flex flex-col items-center justify-center bg-slate-950 text-white p-2 md:p-6 text-center">
+        <Loader2 className="w-10 h-10 text-primary animate-spin mb-4" />
+        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 animate-pulse">
+          Loading Arena...
+        </p>
+      </div>
+    );
+  }
 
-          <div className="pointer-events-auto flex items-center gap-2 md:gap-3">
-            <button
-              onClick={toggleFullscreen}
-              className="bg-black/40 backdrop-blur-md p-2 md:p-3 rounded-full text-white/50 hover:text-white transition-all border border-white/10 shadow-lg hover:scale-110 active:scale-95 group"
-              title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
-            >
-              {isFullscreen ? (
-                <Minimize
-                  size={20}
-                  className="group-hover:scale-90 transition-transform duration-300"
-                />
-              ) : (
-                <Maximize
-                  size={20}
-                  className="group-hover:scale-110 transition-transform duration-300"
-                />
-              )}
-            </button>
-            <button
-              onClick={() => navigate(`/games/${game.slug}/session`)}
-              className="bg-black/40 backdrop-blur-md p-2 md:p-3 rounded-full text-rose-500/50 hover:text-rose-500 transition-all border border-white/10 shadow-lg hover:scale-110 active:scale-95 group"
-              title="Exit Game"
-            >
-              <X
-                size={20}
-                className="group-hover:rotate-90 transition-transform duration-300"
-              />
-            </button>
-          </div>
-        </div>
-
-        {/* Game Loader */}
-        {isLoading && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950 z-20">
-            <Loader2 size={40} className="text-primary animate-spin mb-4" />
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 italic animate-pulse">
-              Initialising Battle Sequence...
-            </p>
-          </div>
-        )}
-
-        {/* Iframe Container */}
-        <div
-          className={`flex-1 min-h-0 w-full relative ${gameOverData ? "hidden" : ""}`}
+  if (!game) {
+    return (
+      <div className="fixed inset-0 flex flex-col items-center justify-center bg-slate-950 text-white p-2 md:p-6 text-center">
+        <h2 className="text-lg md:text-2xl font-black uppercase tracking-widest mb-4">
+          Arena Error
+        </h2>
+        <p className="text-slate-400 font-bold mb-8 uppercase text-xs tracking-tighter italic">
+          Game sequence "{id}" not found in our database.
+        </p>
+        <button
+          onClick={() => navigate("/games")}
+          className="bg-primary text-slate-950 px-2 md:px-8 py-2 md:py-3 rounded-xl font-black uppercase text-xs tracking-widest hover:scale-105 transition-all"
         >
-          <div
-            className="h-full w-full px-2 pb-3 pt-14 md:px-4 md:pt-16 md:pb-4 lg:pt-10 lg:px-6"
-            onClick={(e) =>
-              (
-                e.currentTarget.querySelector("iframe") as HTMLIFrameElement
-              )?.focus()
-            }
-          >
-            <div className="mx-auto flex h-full w-full max-w-400 items-center justify-center overflow-hidden rounded-2xl bg-slate-950/80 shadow-2xl ring-1 ring-white/10">
-              <iframe
-                src={game.iframeUrl}
-                className="h-full w-full border-none"
-                title={game.title}
-                allow="autoplay; fullscreen; gamepad"
-                onLoad={() => setIsLoading(false)}
-              />
-            </div>
-          </div>
+          Return to Lobby
+        </button>
+      </div>
+    );
+  }
+
+  const iframeUrl = game.iframe_url || game.iframeUrl;
+
+  if (!iframeUrl) {
+    return (
+      <div className="fixed inset-0 flex flex-col items-center justify-center bg-slate-950 text-white p-2 md:p-6 text-center">
+        <h2 className="text-lg md:text-2xl font-black uppercase tracking-widest mb-4">
+          Configuration Error
+        </h2>
+        <p className="text-slate-400 font-bold mb-8 uppercase text-xs tracking-tighter italic">
+          The game "{game.title}" is currently being maintained.
+        </p>
+        <button
+          onClick={() => navigate(`/games/${game.slug}/session`)}
+          className="bg-primary text-slate-950 px-2 md:px-8 py-2 md:py-3 rounded-xl font-black uppercase text-xs tracking-widest hover:scale-105 transition-all"
+        >
+          Back to Session
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 z-200 bg-black flex flex-col overflow-hidden">
+      {/* Top Bar / Header Overlay */}
+      <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-100 pointer-events-none">
+        <div className="bg-black/60 backdrop-blur-md px-2 md:px-4 py-2 rounded-full border border-white/10 shadow-xl flex items-center gap-2 md:gap-3">
+          <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+          <span className="text-[10px] font-black uppercase tracking-widest text-white/80 italic">
+            {game.title} - LIVE ARENA
+          </span>
         </div>
 
-        {/* Game Over Overlay */}
-        {gameOverData && (
-          <GameOverLeaderboard
-            score={gameOverData.score}
-            gameName={game.title}
-            playAgain={() => {
-              setGameOverData(null);
-              setShowLiveEntry(true);
-            }}
-            onBackToSession={() => navigate(`/games/${game.slug}/session`)}
-          />
-        )}
+        <div className="pointer-events-auto flex items-center gap-2 md:gap-3">
+          <button
+            onClick={toggleFullscreen}
+            className="bg-black/40 backdrop-blur-md p-2 md:p-3 rounded-full text-white/50 hover:text-white transition-all border border-white/10 shadow-lg hover:scale-110 active:scale-95 group"
+            title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+          >
+            {isFullscreen ? (
+              <Minimize
+                size={20}
+                className="group-hover:scale-90 transition-transform duration-300"
+              />
+            ) : (
+              <Maximize
+                size={20}
+                className="group-hover:scale-110 transition-transform duration-300"
+              />
+            )}
+          </button>
+          <button
+            onClick={() => navigate(`/games/${game.slug}/session`)}
+            className="bg-black/40 backdrop-blur-md p-2 md:p-3 rounded-full text-rose-500/50 hover:text-rose-500 transition-all border border-white/10 shadow-lg hover:scale-110 active:scale-95 group"
+            title="Exit Game"
+          >
+            <X
+              size={20}
+              className="group-hover:rotate-90 transition-transform duration-300"
+            />
+          </button>
+        </div>
+      </div>
 
-        {/* Live Entry Modal Overlay for Re-entry */}
-        {showLiveEntry && game && (
-          <LiveEntryModal
-            game={game}
-            onClick={(open) => {
-              if (!open) {
-                setShowLiveEntry(false);
-                navigate(`/games/${game.slug}/session`);
-              }
-            }}
-            onConfirm={() => {
-              setShowLiveEntry(false);
+      {/* Game Loader */}
+      {isLoading && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950 z-20">
+          <Loader2 size={40} className="text-primary animate-spin mb-4" />
+          <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 italic animate-pulse">
+            Initialising Battle Sequence...
+          </p>
+        </div>
+      )}
+
+      {/* Iframe Container */}
+      <div
+        className={`flex-1 min-h-0 w-full relative ${gameOverData ? "hidden" : ""}`}
+      >
+        <div
+          className="h-full w-full px-2 pb-3 pt-14 md:px-4 md:pt-16 md:pb-4 lg:pt-10 lg:px-6"
+          onClick={(e) =>
+            (
+              e.currentTarget.querySelector("iframe") as HTMLIFrameElement
+            )?.focus()
+          }
+        >
+          <div className="mx-auto flex h-full w-full max-w-400 items-center justify-center overflow-hidden rounded-2xl bg-slate-950/80 shadow-2xl ring-1 ring-white/10">
+            <iframe
+              src={iframeUrl}
+              className="h-full w-full border-none"
+              title={game.title}
+              allow="autoplay; fullscreen; gamepad"
+              onLoad={() => setIsLoading(false)}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Game Over Overlay */}
+      {gameOverData && (
+        <GameOverLeaderboard
+          score={gameOverData.score}
+          gameName={game.title}
+          isHighScore={gameOverData.isHighScore}
+          previousBest={gameOverData.previousBest}
+          playAgain={() => {
+            setGameOverData(null);
+            if (isDemo) {
               setIsLoading(true);
               const iframe = document.querySelector("iframe");
               if (iframe) {
@@ -270,11 +300,56 @@ const GamePlay = () => {
                   iframe.src = originalSrc;
                 }, 10);
               }
-            }}
-          />
-        )}
-      </div>
-    );
+            } else {
+              setShowLiveEntry(true);
+            }
+          }}
+          onBackToSession={() => navigate(`/games/${game.slug}/session`)}
+        />
+      )}
+
+      {/* Live Entry Modal Overlay for Re-entry */}
+      {showLiveEntry && game && (
+        <LiveEntryModal
+          game={{
+            ...game,
+            entryFee: activeSession?.entry_fee || 0,
+            id: activeSession?.id || "",
+          }}
+          onClick={(open) => {
+            if (!open) {
+              setShowLiveEntry(false);
+              navigate(`/games/${game.slug}/session`);
+            }
+          }}
+          onConfirm={async () => {
+            setShowLiveEntry(false);
+            setIsLoading(true);
+
+            if (activeSession && !isDemo) {
+              try {
+                const roundRes = await startRound(activeSession.id);
+                if (roundRes.success) {
+                  setCurrentRoundId(roundRes.roundId);
+                }
+              } catch {
+                // silently fail, the score submission will be caught later
+              }
+            }
+
+            const iframe = document.querySelector("iframe");
+            if (iframe) {
+              const originalSrc = iframe.src;
+              iframe.src = "about:blank";
+              setTimeout(() => {
+                iframe.src = originalSrc;
+              }, 10);
+            }
+          }}
+        />
+      )}
+    </div>
+  );
 };
 
 export default GamePlay;

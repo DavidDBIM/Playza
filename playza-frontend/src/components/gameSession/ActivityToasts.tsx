@@ -9,7 +9,7 @@ const ActivityToasts = ({ sessionId }: { sessionId: string }) => {
     if (!sessionId) return;
 
     const channel = supabase
-      .channel(`session_toasts_${sessionId}`)
+      .channel(`session_${sessionId}`)
       .on("broadcast", { event: "LEADERBOARD_UPDATE" }, (payload) => {
         const { username, newScore, isHighScore } = payload.payload;
         

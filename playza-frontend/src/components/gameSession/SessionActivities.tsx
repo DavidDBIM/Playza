@@ -23,7 +23,7 @@ const SessionActivities = ({ sessionId }: { sessionId: string }) => {
     if (!sessionId) return;
 
     const channel = supabase
-      .channel(`session_feed_${sessionId}`)
+      .channel(`session_${sessionId}`)
       .on("broadcast", { event: "LEADERBOARD_UPDATE" }, (payload) => {
         const { username, avatarUrl, newScore, isHighScore } = payload.payload;
 
