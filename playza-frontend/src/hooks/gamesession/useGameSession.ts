@@ -11,6 +11,26 @@ export const useGames = () => {
 };
 
 export const useActiveSession = (slug: string) => {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (!slug) return;
+    
+    const channel = supabase
+      .channel(`active_session_${slug}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'game_sessions' },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["active-session", slug] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [slug, queryClient]);
 
   return useQuery({
     queryKey: ["active-session", slug],
@@ -56,6 +76,27 @@ export const useMySessionStats = (sessionId: string) => {
 };
 
 export const useGameSessions = (gameId: string) => {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (!gameId) return;
+    
+    const channel = supabase
+      .channel(`game_sessions_${gameId}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'game_sessions' },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["game-sessions", gameId] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [gameId, queryClient]);
+
   return useQuery({
     queryKey: ["game-sessions", gameId],
     queryFn: () => GameSessionApi.getGameSessions(gameId),
