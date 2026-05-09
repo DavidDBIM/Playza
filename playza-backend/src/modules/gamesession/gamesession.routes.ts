@@ -14,6 +14,17 @@ router.post('/games', authenticate, requireAdmin, async (req, res) => {
     res.status(500).json({ success: false, message: error.message })
   }
 })
+
+// Fix: This route was missing — the admin's "Update Game" button was silently 404-ing
+router.put('/games/:id', authenticate, requireAdmin, async (req, res) => {
+  try {
+    const game = await GameSessionService.updateGame(req.params.id, req.body)
+    res.json({ success: true, game })
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message })
+  }
+})
+
 router.post('/sessions/:id/finalize', authenticate, requireAdmin, async (req, res) => {
   try {
     const result = await GameSessionService.finalizeSessionAndPayout(req.params.id)
