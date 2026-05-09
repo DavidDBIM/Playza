@@ -56,7 +56,9 @@ export async function createGameWithSessions(gameData: any, sessions: any[]) {
       duration_seconds: gameData.durationInSeconds,
       platform_fee_percentage: gameData.platformFeePercentage,
       how_to_play: gameData.howToPlay,
-      is_active: gameData.isActive
+      is_active: gameData.isActive,
+      // Store the capabilities JSONB column as-is from the admin form
+      capabilities: gameData.capabilities ?? null,
     })
     .select()
     .single()
@@ -85,6 +87,36 @@ export async function createGameWithSessions(gameData: any, sessions: any[]) {
   }
 
   return game
+}
+
+/**
+ * Update an existing game's metadata and capabilities.
+ * Called by the admin panel via PUT /gamesession/games/:id
+ */
+export async function updateGame(gameId: string, gameData: any) {
+  const { data, error } = await supabase
+    .from('games')
+    .update({
+      title: gameData.title,
+      slug: gameData.slug,
+      category: gameData.category,
+      thumbnail_url: gameData.thumbnailUrl,
+      iframe_url: gameData.iframeUrl,
+      difficulty: gameData.difficulty,
+      mode: gameData.mode,
+      duration_seconds: gameData.durationInSeconds,
+      platform_fee_percentage: gameData.platformFeePercentage,
+      how_to_play: gameData.howToPlay,
+      is_active: gameData.isActive,
+      // Persist capabilities changes (e.g. toggling bundles, editing power-up costs)
+      capabilities: gameData.capabilities ?? null,
+    })
+    .eq('id', gameId)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
 }
 
 export async function updateSessionStatus(sessionId: string, status: string) {
@@ -356,50 +388,96 @@ export async function submitSessionScore(userId: string, sessionId: string, scor
 }
 
 
+function calculateDistributionCurve(totalPlayers: number): number[] {
+  let winnerCount = 1;
+  if (totalPlayers >= 100) winnerCount = Math.floor(totalPlayers * 0.2);
+  else if (totalPlayers >= 31) winnerCount = 10;
+  else if (totalPlayers >= 16) winnerCount = 5;
+  else if (totalPlayers >= 6) winnerCount = 3;
+  else winnerCount = 1;
+
+  winnerCount = Math.min(winnerCount, totalPlayers);
+
+  if (winnerCount === 1) return [1.0];
+  if (winnerCount === 3) return [0.5, 0.3, 0.2];
+  if (winnerCount === 5) return [0.4, 0.25, 0.15, 0.1, 0.1];
+  if (winnerCount === 10) return [0.30, 0.20, 0.12, 0.10, 0.08, 0.06, 0.05, 0.04, 0.03, 0.02];
+
+  const distribution: number[] = [0.25, 0.15, 0.10];
+  const remainingPool = 0.50;
+  const remainingWinners = winnerCount - 3;
+  
+  if (remainingWinners > 0) {
+    const weights = [];
+    let weightSum = 0;
+    // Flatten the curve (Log factor of 4) so the lowest rank gets a higher share
+    const k = Math.log(4) / remainingWinners;
+    for (let i = 0; i < remainingWinners; i++) {
+      const w = Math.exp(-k * i);
+      weights.push(w);
+      weightSum += w;
+    }
+    for (let i = 0; i < remainingWinners; i++) {
+      distribution.push((weights[i] / weightSum) * remainingPool);
+    }
+  }
+
+  const sum = distribution.reduce((a,b) => a+b, 0);
+  return distribution.map(d => Number((d / sum).toFixed(4)));
+}
+
 /**
- * Payout disbursement logic for Top 5 winners
+ * Dynamic Payout disbursement logic
  */
 export async function finalizeSessionAndPayout(sessionId: string) {
-  // 1. Get session details and winners
-  const { data: session } = await supabase.from('game_sessions').select('*, games(platform_fee_percentage)').eq('id', sessionId).single()
+  // 1. Get session details
+  const { data: session } = await supabase.from('game_sessions').select('*, games(platform_fee_percentage, title)').eq('id', sessionId).single()
   if (!session || session.status === 'completed') return { success: false, message: "Invalid session status" }
 
-  // 2. Get Top 5 players by best_score
-  const { data: winners } = await supabase
+  // 2. Get ALL participants
+  const { data: participants } = await supabase
     .from('game_leaderboard')
     .select('*, users(username)')
     .eq('session_id', sessionId)
-    .gt('best_score', 0)
     .order('best_score', { ascending: false })
-    .limit(5)
 
-  if (!winners || winners.length === 0) {
+  if (!participants || participants.length === 0) {
     await supabase.from('game_sessions').update({ status: 'completed' }).eq('id', sessionId)
     return { success: true, message: "No participants to payout" }
   }
 
-  // 3. Calculate Net Prize Pool
-  const grossPool = Number(session.pool_amount)
-  const feePercent = Number(session.games.platform_fee_percentage || 10)
+  // Filter those who actually scored
+  const validPlayers = participants.filter(p => p.best_score > 0);
+
+  if (validPlayers.length === 0) {
+    await supabase.from('game_sessions').update({ status: 'completed' }).eq('id', sessionId)
+    await supabase.from('game_leaderboard').update({ status: 'finished' }).eq('session_id', sessionId)
+    return { success: true, message: "No valid scores" }
+  }
+
+  // 3. Dynamic Curve
+  const distribution = calculateDistributionCurve(validPlayers.length);
+  const winnersCount = distribution.length;
+  const winners = validPlayers.slice(0, winnersCount);
+  const losers = participants.slice(winnersCount);
+
+  // 4. Calculate Net Prize Pool
+  const grossPool = Number(session.pool_amount || 0)
+  const feePercent = Number(session.games?.platform_fee_percentage || 10)
   const netPool = grossPool * (1 - feePercent / 100)
 
-  // 4. Payout Distribution Curve (Top 5)
-  // 1st: 40%, 2nd: 25%, 3rd: 15%, 4th: 10%, 5th: 10% (Simple distribution)
-  const distribution = [0.4, 0.25, 0.15, 0.1, 0.1]
-
+  // 5. Payout Winners
   for (let i = 0; i < winners.length; i++) {
     const winner = winners[i]
     const share = distribution[i] || 0
     const payoutAmount = parseFloat((netPool * share).toFixed(2))
 
     if (payoutAmount > 0) {
-      // Update User Wallet
       await supabase.rpc('increment_wallet_balance', {
         p_user_id: winner.user_id,
         p_amount: payoutAmount
       })
 
-      // Log Transaction
       await supabase.from('transactions').insert({
         user_id: winner.user_id,
         type: 'winnings',
@@ -408,17 +486,15 @@ export async function finalizeSessionAndPayout(sessionId: string) {
         meta: { session_id: sessionId, rank: i + 1, score: winner.best_score }
       })
 
-      // Update leaderboard status
       await supabase.from('game_leaderboard').update({
         payout_amount: payoutAmount,
         payout_status: 'paid',
         status: 'finished'
       }).eq('id', winner.id)
 
-      // --- SYNC TO USER HISTORY (WIN) ---
       await supabase.from('game_history').insert({
         user_id: winner.user_id,
-        game_name: session.title || session.games.title,
+        game_name: session.title || session.games?.title,
         score: winner.best_score,
         position: `#${i + 1}`,
         winnings: payoutAmount,
@@ -428,39 +504,26 @@ export async function finalizeSessionAndPayout(sessionId: string) {
     }
   }
 
-  // 5. Mark non-winners as 'finished' and sync history
-  const { data: others } = await supabase
-    .from('game_leaderboard')
-    .select('*')
-    .eq('session_id', sessionId)
-    .is('payout_status', 'pending')
-
-  if (others && others.length > 0) {
-    for (const player of others) {
-      // Find their actual rank (inefficient but okay for Top 100)
-      const { count } = await supabase
-        .from('game_leaderboard')
-        .select('*', { count: 'exact', head: true })
-        .eq('session_id', sessionId)
-        .gt('best_score', player.best_score)
-      
-      const rank = (count || 0) + 1
-
-      await supabase.from('game_history').insert({
+  // 6. Process Losers in bulk
+  if (losers.length > 0) {
+    const loserHistory = losers.map((player, index) => {
+      const rank = winnersCount + index + 1;
+      return {
         user_id: player.user_id,
-        game_name: session.title || session.games.title,
+        game_name: session.title || session.games?.title,
         score: player.best_score,
         position: `#${rank}`,
         winnings: 0,
         status: 'loss',
         played_at: session.end_time
-      })
-    }
-    
+      }
+    });
+
+    await supabase.from('game_history').insert(loserHistory)
     await supabase.from('game_leaderboard').update({ status: 'finished' }).eq('session_id', sessionId).is('payout_status', 'pending')
   }
 
-  // 6. Mark session as completed
+  // 7. Mark session as completed
   await supabase.from('game_sessions').update({ status: 'completed' }).eq('id', sessionId)
 
   return { success: true, winnersCount: winners.length }
