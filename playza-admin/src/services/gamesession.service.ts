@@ -36,6 +36,11 @@ export const gameSessionService = {
     return response.data;
   },
 
+  async updateGame(gameId: string, gameData: GameData) {
+    const response = await apiClient.put(`/gamesession/games/${gameId}`, gameData);
+    return response.data;
+  },
+
 
   async finalizeSession(sessionId: string) {
     const response = await apiClient.post(`/gamesession/sessions/${sessionId}/finalize`);
@@ -54,6 +59,11 @@ export const gameSessionService = {
 
   async retireGame(gameId: string, status: boolean) {
     const response = await apiClient.post(`/gamesession/games/${gameId}/retire`, { status });
+    return response.data;
+  },
+
+  async updateSessionStatus(sessionId: string, status: string) {
+    const response = await apiClient.patch(`/gamesession/sessions/${sessionId}/status`, { status });
     return response.data;
   }
 };

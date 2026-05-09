@@ -87,6 +87,18 @@ export async function createGameWithSessions(gameData: any, sessions: any[]) {
   return game
 }
 
+export async function updateSessionStatus(sessionId: string, status: string) {
+  const { data, error } = await supabase
+    .from('game_sessions')
+    .update({ status })
+    .eq('id', sessionId)
+    .select()
+    .single()
+
+  if (error) throw error
+  return { success: true, session: data }
+}
+
 export async function getActiveSession(gameSlug: string) {
   // First find the game
   const { data: game, error: gameErr } = await supabase
@@ -97,8 +109,26 @@ export async function getActiveSession(gameSlug: string) {
 
   if (gameErr || !game) return null
 
-  // Find active session
   const now = new Date().toISOString()
+
+  // -- AUTOMATIC TRANSITION --
+  // Look for upcoming sessions that should have started and flip them to active
+  const { data: shouldBeActive } = await supabase
+    .from('game_sessions')
+    .select('id')
+    .eq('game_id', game.id)
+    .eq('status', 'upcoming')
+    .lte('start_time', now)
+    .gte('end_time', now)
+  
+  if (shouldBeActive && shouldBeActive.length > 0) {
+    await supabase
+      .from('game_sessions')
+      .update({ status: 'active' })
+      .in('id', shouldBeActive.map(s => s.id))
+  }
+
+  // Find active session
   const { data: session, error: sessErr } = await supabase
     .from('game_sessions')
     .select('*, games(*)')
@@ -499,6 +529,18 @@ export async function getGameSessions(gameId: string) {
 }
 
 export async function getSessionDetails(sessionId: string) {
+  const now = new Date().toISOString()
+
+  // -- AUTOMATIC TRANSITION --
+  // If viewing an upcoming session that should be live, flip it
+  await supabase
+    .from('game_sessions')
+    .update({ status: 'active' })
+    .eq('id', sessionId)
+    .eq('status', 'upcoming')
+    .lte('start_time', now)
+    .gte('end_time', now)
+
   const { data: session, error: sError } = await supabase
     .from('game_sessions')
     .select('*, games(*)')

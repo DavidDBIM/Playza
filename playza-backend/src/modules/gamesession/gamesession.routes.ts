@@ -23,6 +23,16 @@ router.post('/sessions/:id/finalize', authenticate, requireAdmin, async (req, re
   }
 })
 
+router.patch('/sessions/:id/status', authenticate, requireAdmin, async (req, res) => {
+  try {
+    const { status } = req.body
+    const result = await GameSessionService.updateSessionStatus(req.params.id, status)
+    res.json(result)
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message })
+  }
+})
+
 router.post('/games/:id/retire', authenticate, requireAdmin, async (req, res) => {
   try {
     const { status } = req.body
