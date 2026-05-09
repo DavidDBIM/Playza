@@ -1,6 +1,6 @@
-import { formatZA, formatZAAmount } from "@/lib/formatCurrency";
+import { formatZAAmount } from "@/lib/formatCurrency";
 import { ZASymbol } from "@/components/currency/ZASymbol";
-import { Gamepad2, PlayCircle, Users } from "lucide-react";
+import { Gamepad2, PlayCircle, Users, TrendingUp } from "lucide-react";
 import { useState, useEffect } from "react";
 import { getRemainingTime } from "@/lib/formatDate";
 
@@ -75,13 +75,19 @@ const SessionHero = ({
               : `Join ${(activePlayers || 0).toLocaleString()} players competing for glory`}
           </p>
         </div>
-        <div className="text-right">
-          <p className="text-[10px] text-slate-500 dark:text-slate-400 font-black uppercase tracking-widest mb-1">
-            Prize Pool
-          </p>
-          <p className="text-sm md:text-2xl flex items-baseline font-black text-slate-900 dark:text-transparent dark:bg-clip-text dark:bg-linear-to-r dark:from-yellow-400 dark:via-amber-200 dark:to-yellow-600">
-            {formatZA(prizePool)}
-          </p>
+        <div className="text-right flex flex-col items-end">
+          <div className="flex items-center gap-1.5 mb-1 bg-green-500/10 px-2 py-0.5 rounded-full border border-green-500/20">
+            <TrendingUp size={12} className="text-green-500 animate-pulse" />
+            <p className="text-[9px] text-green-500 font-black uppercase tracking-[0.2em]">
+              Growing Pot
+            </p>
+          </div>
+          <div className="flex items-center gap-1 md:gap-2">
+            <ZASymbol className="text-sm md:text-2xl text-yellow-500" />
+            <p className="text-xl md:text-4xl font-black text-slate-900 dark:text-transparent dark:bg-clip-text dark:bg-linear-to-r dark:from-yellow-400 dark:via-amber-200 dark:to-yellow-600 tracking-tighter drop-shadow-sm">
+              {formatZAAmount(prizePool)}
+            </p>
+          </div>
         </div>
       </div>
       <div className="relative rounded-lg overflow-hidden h-70 md:h-90 mb-6 group">
