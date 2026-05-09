@@ -388,8 +388,10 @@ create table if not exists games (
   platform_fee_percentage numeric default 10,
   how_to_play jsonb,
   is_active boolean default true,
-  created_at timestamptz default now()
+  created_at timestamptz default now(),
+  capabilities jsonb default null
 );
+
 
 create table if not exists game_sessions (
   id uuid primary key default uuid_generate_v4(),
