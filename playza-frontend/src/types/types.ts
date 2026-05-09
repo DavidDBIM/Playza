@@ -79,6 +79,25 @@ export type Game = {
   createdAt: string;
   created_at?: string; // Backend field
   updatedAt: string;
+
+  /**
+   * Optional JSONB column from Supabase `games` table.
+   * Set via the admin panel's Game Capabilities section.
+   * Controls which platform features are active for this specific game.
+   */
+  capabilities?: {
+    powerUps?: boolean;
+    bundles?: boolean;
+    rivalBanner?: boolean;
+    powerUpDefs?: { id: string; label: string; cost: number }[];
+    bundlePacks?: {
+      id: string;
+      label: string;
+      description: string;
+      cost: number;
+      grants: Record<string, number>;
+    }[];
+  };
 };
 
 export type GameBadge =

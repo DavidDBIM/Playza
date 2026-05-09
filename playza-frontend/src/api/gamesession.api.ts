@@ -41,6 +41,7 @@ export const getGameSessions = async (gameId: string) => {
   return response.data;
 };
 
-
-
-
+export const deductWallet = async (amount: number, description: string) => {
+  const response = await axiosInstance.post(`/wallet/deduct`, { amount, description });
+  return response.data;
+};
