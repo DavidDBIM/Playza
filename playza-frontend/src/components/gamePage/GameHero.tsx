@@ -13,6 +13,13 @@ interface GameHeroProps {
 
 export const GameHero = ({ game, prizePool, activePlayers, sessions, onJoin }: GameHeroProps) => {
   const liveSession = sessions.find(s => {
+    const now = new Date().getTime();
+    const startTime = new Date(s.startTime).getTime();
+    const endTime = new Date(s.endTime).getTime();
+    
+    if (now > endTime) return false;
+    if (now >= startTime && now <= endTime) return true;
+
     const status = (s.status || '').toLowerCase();
     return status === 'live' || status === 'active' || status === 'ongoing' || status === 'starting soon';
   });
@@ -50,10 +57,6 @@ export const GameHero = ({ game, prizePool, activePlayers, sessions, onJoin }: G
           {/* Game Info Content */}
           <div className="flex-1 space-y-4 xl:pb-4 text-center xl:text-left">
             <div className="flex flex-wrap items-center justify-center xl:justify-start gap-3 md:gap-4">
-              <span className="flex items-center gap-2 px-3 md:px-4 py-1 bg-red-500 rounded-full text-white text-[9px] md:text-[10px] font-black uppercase tracking-widest">
-                <span className="w-1 md:w-1.5 h-1 md:h-1.5 bg-white rounded-full" />
-                {hasLiveSession ? 'Arena Live' : 'Coming Soon'}
-              </span>
               <span className="text-slate-500 dark:text-slate-400 font-black text-[9px] md:text-[11px] uppercase tracking-[0.3em]">
                 {game.category} / {game.mode}
               </span>
@@ -63,9 +66,6 @@ export const GameHero = ({ game, prizePool, activePlayers, sessions, onJoin }: G
               <h1 className="text-4xl xl:text-8xl font-black uppercase text-slate-900 dark:text-white leading-none tracking-tighter italic">
                 {game.title}
               </h1>
-              <p className="text-slate-600 dark:text-slate-300 text-xs md:text-base xl:text-lg font-medium leading-relaxed max-w-2xl mx-auto lg:mx-0">
-                {game.rules ? game.rules.slice(0, 150) + (game.rules.length > 150 ? '...' : '') : `Endless runner competitive challenge where every turn counts. Push your limits in ${game.title} and compete for the top of the leaderboard.`}
-              </p>
             </div>
 
             {/* Stats Flex-Row */}

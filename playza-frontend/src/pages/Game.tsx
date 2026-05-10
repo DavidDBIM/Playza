@@ -60,19 +60,24 @@ const Game = () => {
 
   const sessions: Session[] = useMemo(() => {
     const rawSessions = sessionsData?.sessions || sessionsData?.result || sessionsData?.data || (Array.isArray(sessionsData) ? sessionsData : []);
-    return rawSessions.map((s: Session) => ({
-      id: s.id,
-      title: s.title,
-      entryFee: Number(s.entryFee || s.entry_fee || 0),
-      playersJoined: s.playersJoined || 0,
-      maxPlayers: s.maxPlayers || s.max_players || 0,
-      prizePool: s.prizePool || s.pool_amount?.toString() || "0",
+    return rawSessions.map((s: Session) => {
+      const entryFee = Number(s.entryFee || s.entry_fee || 0);
+      const prizePool = s.prizePool || s.pool_amount?.toString() || "0";
+      const playersJoined = entryFee > 0 ? Math.max(0, Math.floor(Number(prizePool) / entryFee)) : (s.playersJoined || 0);
+      return {
+        id: s.id,
+        title: s.title,
+        entryFee,
+        playersJoined,
+        maxPlayers: s.maxPlayers || s.max_players || 0,
+        prizePool,
       startTime: s.startTime || s.start_time || "",
       endTime: s.endTime || s.end_time || "",
       status: s.status,
       type: s.type,
-      winnersCount: s.winnersCount || s.winners_count,
-    }));
+        winnersCount: s.winnersCount || s.winners_count,
+      };
+    });
   }, [sessionsData]);
 
   const globalPrizePool = useMemo(() => {

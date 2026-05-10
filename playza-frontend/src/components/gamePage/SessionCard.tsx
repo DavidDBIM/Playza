@@ -3,6 +3,7 @@ import type { Session } from "@/types/types";
 import { Play, Trophy, Users, Clock, CreditCard, Timer } from "lucide-react";
 import { ZASymbol } from "../currency/ZASymbol";
 import { formatSessionTime, getRemainingTime } from "@/lib/formatDate";
+import { calculateDistributionCurve } from "@/utils/payoutDistribution";
 
 interface SessionCardProps {
   session: Session;
@@ -15,27 +16,39 @@ export const SessionCard = ({ session, gameTitle, onJoin }: SessionCardProps) =>
   const [currentStatus, setCurrentStatus] = useState(session.status);
 
   useEffect(() => {
-    if (session.status !== 'upcoming') return;
+    const checkStatus = () => {
+      const now = new Date().getTime();
+      const startTime = new Date(session.startTime).getTime();
+      const endTime = new Date(session.endTime).getTime();
 
-    const timer = setInterval(() => {
-      const remaining = getRemainingTime(session.startTime);
-      if (remaining) {
-        setTimeLeft(remaining);
-      } else {
+      if (now > endTime) {
+        setCurrentStatus('completed');
+        setTimeLeft(null);
+      } else if (now >= startTime && now <= endTime) {
         setCurrentStatus('live');
         setTimeLeft(null);
-        clearInterval(timer);
+      } else if (now < startTime) {
+        setCurrentStatus('upcoming');
+        const remaining = getRemainingTime(session.startTime);
+        setTimeLeft(remaining);
       }
-    }, 1000);
+    };
+
+    checkStatus();
+    const timer = setInterval(checkStatus, 1000);
 
     return () => clearInterval(timer);
-  }, [session.startTime, session.status]);
+  }, [session.startTime, session.endTime]);
 
   const isLive = currentStatus === 'live' || currentStatus === 'active';
   const isUpcoming = currentStatus === 'upcoming';
   const isStartingSoon = currentStatus === 'starting soon';
   const isEnded = currentStatus === 'completed';
-  const progress = (session.playersJoined / session.maxPlayers) * 100;
+
+  const playersJoined = session.entryFee > 0 ? Math.max(0, Math.floor(Number(session.prizePool) / session.entryFee)) : session.playersJoined || 0;
+  const winnersCount = session.winnersCount || (playersJoined > 0 ? calculateDistributionCurve(playersJoined).length : 0);
+  const maxPlayers = session.maxPlayers || Infinity;
+  const progress = maxPlayers !== Infinity ? (playersJoined / maxPlayers) * 100 : 0;
 
   return (
     <div className="group relative">
@@ -128,7 +141,7 @@ export const SessionCard = ({ session, gameTitle, onJoin }: SessionCardProps) =>
                 Total Players Participated
               </span>
               <span className="text-slate-900 dark:text-white text-xs md:text-sm opacity-100 font-bold">
-                {session.playersJoined}
+                {playersJoined}
               </span>
             </div>
             <div className="flex justify-between items-center text-[10px] font-black text-slate-500 uppercase tracking-widest">
@@ -137,7 +150,7 @@ export const SessionCard = ({ session, gameTitle, onJoin }: SessionCardProps) =>
                 Winners
               </span>
               <span className="text-slate-900 dark:text-white text-xs md:text-sm opacity-100 font-bold">
-                {session.winnersCount || 0}
+                {winnersCount}
               </span>
             </div>
           </div>
@@ -149,7 +162,7 @@ export const SessionCard = ({ session, gameTitle, onJoin }: SessionCardProps) =>
                 Players Joined
               </span>
               <span className="text-slate-900 dark:text-white text-xs md:text-sm opacity-100 font-bold">
-                {session.playersJoined} / {session.maxPlayers}
+                {playersJoined} {maxPlayers !== Infinity && `/ ${maxPlayers}`}
               </span>
             </div>
             <div className="h-1.5 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
