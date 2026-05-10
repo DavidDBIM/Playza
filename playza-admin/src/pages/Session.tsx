@@ -193,14 +193,19 @@ const Session: React.FC = () => {
   const isEnded = session?.status === "completed";
 
   return (
-    <main className="p-4 space-y-4 min-h-screen relative overflow-hidden bg-background">
-      {/* Visual Status Glows - The "Sharp" High-Density Aesthetics */}
-      {isEnded && (
-        <div className="absolute -top-25 left-1/2 -translate-x-1/2 w-200 h-75 bg-emerald-500/15 blur-[120px] rounded-full pointer-events-none z-0 animate-pulse" />
+    <main className={`p-4 space-y-4 min-h-screen relative overflow-hidden transition-colors duration-1000 ${isEnded ? 'bg-emerald-500/2' : 'bg-background'}`}>
+      {/* Visual Status Glows - High-Density Sharp Aesthetics */}
+      {isEnded ? (
+        <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[120%] h-125 bg-emerald-500/5 blur-[160px] rounded-full pointer-events-none z-0" />
+      ) : session?.status === 'active' ? (
+        <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[120%] h-125 bg-primary/10 blur-[160px] rounded-full pointer-events-none z-0" />
+      ) : (
+        <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[120%] h-125 bg-slate-500/5 blur-[160px] rounded-full pointer-events-none z-0" />
       )}
-      {session?.status === 'active' && (
-        <div className="absolute -top-25 left-1/2 -translate-x-1/2 w-200 h-75 bg-primary/15 blur-[120px] rounded-full pointer-events-none z-0 animate-pulse" />
-      )}
+
+      {/* Grid Pattern Overlay for "Sharp" look */}
+      <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] pointer-events-none z-0" />
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-size-[40px_40px] mask-[radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] z-0" />
 
       <div className="relative z-10 space-y-8">
         {/* Hero Session Header */}
@@ -215,26 +220,31 @@ const Session: React.FC = () => {
                   {session?.title || "Match Session"}
                 </h1>
                 <span
-                  className={`flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-black tracking-wider uppercase rounded-lg border shadow-sm ${
-                    session?.status === "active"
-                      ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 border-emerald-500/20"
-                      : "bg-slate-100 dark:bg-white/5 text-slate-500 border-white/10"
+                  className={`flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-black tracking-widest uppercase rounded-lg border shadow-sm transition-all duration-500 ${
+                    isEnded
+                      ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/30 shadow-emerald-500/10"
+                      : session?.status === "active"
+                        ? "bg-primary/10 text-primary border-primary/30 shadow-primary/10"
+                        : "bg-slate-500/10 text-slate-500 border-slate-500/20"
                   }`}
                 >
                   <span
-                    className={`w-1.5 h-1.5 rounded-full ${session?.status === "active" ? "bg-emerald-500 animate-pulse" : "bg-slate-500"}`}
+                    className={`w-1.5 h-1.5 rounded-full ${isEnded ? "bg-emerald-500" : session?.status === "active" ? "bg-primary animate-pulse" : "bg-slate-500"}`}
                   ></span>
                   {session?.status}
                 </span>
                 {!isEnded && session?.status !== "cancelled" && (
-                  <span className="flex items-center gap-1.5 px-3 py-1 bg-primary/10 text-primary text-[10px] font-black tracking-widest uppercase rounded-lg border border-primary/20 shadow-sm animate-pulse">
-                    <MdTrendingUp className="text-sm" />
-                    {session?.status === "upcoming" ? "Starts In: " : "Ends In: "}
-                    {countdown}
+                  <span className="flex items-center gap-2 px-3 py-1 bg-background/50 backdrop-blur-md text-foreground text-[10px] font-black tracking-widest uppercase rounded-lg border border-border/50 shadow-sm">
+                    <span className="text-primary animate-pulse">●</span>
+                    {session?.status === "upcoming" ? "Starts: " : "Ends: "}
+                    <span className="font-number">{countdown}</span>
                   </span>
                 )}
-                <span className="flex items-center gap-2 px-3 py-1 bg-muted border border-border/50 rounded-lg text-[9px] font-black uppercase tracking-widest text-muted-foreground">
-                  Timeframe: {session && new Date(session.start_time).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })} - {session && new Date(session.end_time).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                <span className="flex items-center gap-2 px-3 py-1 bg-background/50 backdrop-blur-md border border-border/50 rounded-lg text-[9px] font-black uppercase tracking-widest text-muted-foreground shadow-sm">
+                  <span className="opacity-50">Arena Window:</span> 
+                  <span className="text-foreground">
+                    {session && new Date(session.start_time).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })} - {session && new Date(session.end_time).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  </span>
                 </span>
               </div>
               <p className="text-sm text-muted-foreground font-medium">
