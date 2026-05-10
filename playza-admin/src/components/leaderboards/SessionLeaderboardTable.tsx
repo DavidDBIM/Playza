@@ -4,6 +4,7 @@ import {
   MdSportsScore, 
   MdMonetizationOn 
 } from 'react-icons/md';
+import { ZASymbol } from '../currency/ZASymbol';
 import { 
   Table, 
   TableBody, 
@@ -89,7 +90,7 @@ const SessionLeaderboardTable: React.FC<SessionLeaderboardTableProps> = ({ leade
                       player.prize > 0 ? 'text-emerald-500 glow-emerald-sm' : 'text-muted-foreground/50 dark:text-muted-foreground'
                     }`}>
                        <MdMonetizationOn className="text-emerald-500/30" />
-                       ₦{player.prize.toLocaleString()}
+                       <ZASymbol className="scale-75" />{player.prize.toLocaleString()}
                     </span>
                     <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Potential Winnings</span>
                   </div>

@@ -4,6 +4,7 @@ import {
   MdMonetizationOn, 
   MdGroupAdd
 } from 'react-icons/md';
+import { ZASymbol } from '../currency/ZASymbol';
 import { 
   Table, 
   TableBody, 
@@ -82,7 +83,7 @@ const ReferralLeaderboardTable: React.FC<ReferralLeaderboardTableProps> = ({ dat
                   <TableCell className="py-3 px-4 text-right">
                     <span className="text-xs font-black text-emerald-500 font-number flex items-center justify-end gap-1">
                        <MdMonetizationOn className="text-emerald-500/30" />
-                       ₦{user.earnings.toLocaleString()}
+                       <ZASymbol className="scale-75" />{user.earnings.toLocaleString()}
                     </span>
                   </TableCell>
                   <TableCell className="py-3 px-4">

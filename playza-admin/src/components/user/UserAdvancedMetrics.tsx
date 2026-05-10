@@ -6,6 +6,7 @@ import {
   MdAccountTree, 
   MdTrendingUp 
 } from 'react-icons/md';
+import { ZASymbol } from '../currency/ZASymbol';
 import type { UserRecord } from '../../data/usersData';
 
 interface UserAdvancedMetricsProps {
@@ -14,8 +15,8 @@ interface UserAdvancedMetricsProps {
 
 export const UserAdvancedMetrics: React.FC<UserAdvancedMetricsProps> = ({ user }) => {
   const metrics = [
-    { icon: MdPayments, color: 'text-primary', bg: 'bg-primary/10', label: 'Wallet Balance', value: user.walletBalance, currency: '₦', sub: 'Active Capital' },
-    { icon: MdEmojiEvents, color: 'text-emerald-500', bg: 'bg-emerald-500/10', label: 'Victory Loot', value: user.totalWinnings, currency: '₦', sub: 'Life-time Profit' },
+    { icon: MdPayments, color: 'text-primary', bg: 'bg-primary/10', label: 'Wallet Balance', value: user.walletBalance, currency: <ZASymbol className="mr-1" />, sub: 'Active Capital' },
+    { icon: MdEmojiEvents, color: 'text-emerald-500', bg: 'bg-emerald-500/10', label: 'Victory Loot', value: user.totalWinnings, currency: <ZASymbol className="mr-1" />, sub: 'Life-time Profit' },
     { icon: MdAccountBalanceWallet, color: 'text-amber-500', bg: 'bg-amber-500/10', label: 'Playza Points', value: user.pzaPoints, currency: '', sub: 'Loyalty Level' },
     { icon: MdAccountTree, color: 'text-blue-500', bg: 'bg-blue-500/10', label: 'Network Size', value: user.referrals, currency: '', sub: 'Referral Chain' }
   ];
@@ -33,7 +34,7 @@ export const UserAdvancedMetrics: React.FC<UserAdvancedMetricsProps> = ({ user }
           </div>
           <div>
             <p className="text-[10px] text-muted-foreground/50 mb-1 font-black uppercase tracking-[0.3em]">{metric.label}</p>
-            <h3 className="text-2xl font-headline font-black text-foreground tracking-tight">
+            <h3 className="text-2xl font-headline font-black text-foreground tracking-tight flex items-center">
               {metric.currency}{metric.value.toLocaleString()}
             </h3>
             <p className="text-[9px] font-black text-primary/40 uppercase tracking-widest mt-1">{metric.sub}</p>

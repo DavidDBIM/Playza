@@ -1,3 +1,4 @@
+import React from 'react';
 import { 
   MdMilitaryTech, 
   MdSportsEsports, 
@@ -7,6 +8,7 @@ import {
   MdWarning 
 } from 'react-icons/md';
 import { Link } from 'react-router';
+import { ZASymbol } from '../currency/ZASymbol';
 import type { ActiveSession, PopularGame } from '../../data/adminData';
 
 export const GamingArenas: React.FC<{ 
@@ -62,8 +64,8 @@ export const GamingArenas: React.FC<{
                   <p className="text-[8px] font-black uppercase text-muted-foreground tracking-widest mb-1">
                     Prize Pool
                   </p>
-                  <p className="text-lg font-black text-primary font-number">
-                    ₦{session.prize}
+                  <p className="text-lg font-black text-primary font-number flex items-center gap-1">
+                    <ZASymbol />{session.prize}
                   </p>
                 </div>
                 <div className="text-right">
@@ -109,8 +111,8 @@ export const GamingArenas: React.FC<{
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-[10px] font-black text-emerald-500 font-number uppercase">
-                        {game.revenue}
+                      <p className="text-[10px] font-black text-emerald-500 font-number uppercase flex items-center gap-1 justify-end">
+                        {String(game.revenue).includes('₦') ? <><ZASymbol className="scale-75" />{String(game.revenue).replace('₦', '')}</> : game.revenue}
                       </p>
                     </div>
                   </div>

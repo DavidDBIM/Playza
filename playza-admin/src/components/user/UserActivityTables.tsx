@@ -17,6 +17,7 @@ import {
 } from '../ui/table';
 import type { MatchRecord, TransactionRecord, ReferralRecord } from '../../data/usersData';
 import type { UserHistoryItem } from '../../types/admin';
+import { ZASymbol } from '../currency/ZASymbol';
 
 // Combat Log Component
 export const CombatLog = ({ data }: { data: MatchRecord[] }) => (
@@ -60,7 +61,9 @@ export const CombatLog = ({ data }: { data: MatchRecord[] }) => (
             </TableCell>
             <TableCell className="px-5 py-3.5 text-right">
               <div className="flex flex-col items-end">
-                <span className="text-foreground font-black text-base leading-none">₦{match.winnings.toLocaleString()}</span>
+                <span className="text-foreground font-black text-base leading-none flex items-center gap-1 justify-end">
+                  <ZASymbol />{match.winnings.toLocaleString()}
+                </span>
                 <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest mt-1">Loot Authenticated</span>
               </div>
             </TableCell>
@@ -113,7 +116,9 @@ export const FinancialFlow = ({ data }: { data: TransactionRecord[] }) => (
                </div>
             </TableCell>
             <TableCell className="px-5 py-3.5 text-right">
-              <span className={`font-black text-base ${tx.type === 'Deposit' ? 'text-emerald-500' : 'text-primary'}`}>₦{tx.amount.toLocaleString()}</span>
+              <span className={`font-black text-base ${tx.type === 'Deposit' ? 'text-emerald-500' : 'text-primary'} flex items-center gap-1 justify-end`}>
+                <ZASymbol />{tx.amount.toLocaleString()}
+              </span>
             </TableCell>
             <TableCell className="px-5 py-3.5">
               <div className="flex flex-col">
@@ -166,7 +171,9 @@ export const DownlineNetwork = ({ data }: { data: ReferralRecord[] }) => (
             </TableCell>
             <TableCell className="px-6 py-7 text-muted-foreground text-xs font-bold">{ref.date}</TableCell>
             <TableCell className="px-6 py-7 text-right">
-              <span className="text-primary font-black text-lg">₦{(ref.reward || 0).toLocaleString()}</span>
+              <span className="text-primary font-black text-lg flex items-center gap-1 justify-end">
+                <ZASymbol />{(ref.reward || 0).toLocaleString()}
+              </span>
               <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest mt-1">Credited to Wallet</p>
             </TableCell>
             <TableCell className="px-5 py-3.5">

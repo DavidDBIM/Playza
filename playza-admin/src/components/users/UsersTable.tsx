@@ -8,6 +8,7 @@ import {
   MdContentCopy 
 } from 'react-icons/md';
 import { useNavigate } from 'react-router';
+import { ZASymbol } from '../currency/ZASymbol';
 import { 
   Table, 
   TableBody, 
@@ -93,7 +94,9 @@ export const UsersTable: React.FC<UsersTableProps> = ({ users, clearFilters }) =
                 </TableCell>
                 <TableCell className="px-5 py-3.5 text-right">
                    <div className="flex flex-col items-end">
-                     <span className="font-headline font-black text-primary text-base">₦{user.walletBalance.toLocaleString()}</span>
+                     <span className="font-headline font-black text-primary text-base flex items-center gap-1 justify-end">
+                       <ZASymbol />{user.walletBalance.toLocaleString()}
+                     </span>
                      <span className="text-[9px] font-black text-muted-foreground/40 uppercase tracking-widest">Available Credit</span>
                    </div>
                 </TableCell>

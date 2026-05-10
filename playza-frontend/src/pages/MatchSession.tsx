@@ -1,5 +1,6 @@
 import { Link, useParams, useNavigate, useLocation } from "react-router";
 import { ArrowBigLeft, Info, Loader2 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { BiTrophy } from "react-icons/bi";
 import { MdArrowForward, MdSupportAgent } from "react-icons/md";
 import { useState, useEffect } from "react";
@@ -23,6 +24,7 @@ import type { Game, Session } from "@/types/types";
 const MatchSession = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const location = useLocation();
   const { id: slug } = useParams();
   const [activeTab, setActiveTab] = useState("Live Leaderboard");
@@ -64,7 +66,8 @@ const MatchSession = () => {
         status === "live" ||
         status === "active" ||
         status === "ongoing" ||
-        status === "upcoming"
+        status === "upcoming" ||
+        status === "completed"
       );
     });
 
@@ -72,6 +75,13 @@ const MatchSession = () => {
 
   console.log("GAME:", game);
   console.log("SESSION:", session);
+
+  useEffect(() => {
+    if (session?.status === "completed") {
+      queryClient.invalidateQueries({ queryKey: ["users", "me"] });
+      queryClient.invalidateQueries({ queryKey: ["wallet", "balance"] });
+    }
+  }, [session?.status, queryClient]);
 
   useEffect(() => {
     if (entryState !== "none") {

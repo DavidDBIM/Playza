@@ -1,5 +1,6 @@
 import React from 'react';
 import { MdGamepad, MdTrendingUp, MdGroup, MdAccountBalanceWallet } from 'react-icons/md';
+import { ZASymbol } from '../currency/ZASymbol';
 
 export interface GameStat {
   label: string;
@@ -35,7 +36,10 @@ export const GamesStats: React.FC<{ stats: GameStat[] }> = ({ stats }) => {
             </span>
           </div>
           <h4 className="text-muted-foreground text-[10px] font-black uppercase tracking-[0.2em] mb-1 opacity-70">{stat.label}</h4>
-          <p className="font-headline text-2xl font-black text-foreground tracking-tight">{stat.value}</p>
+          <p className="font-headline text-2xl font-black text-foreground tracking-tight flex items-center gap-1">
+            {stat.label.includes('Revenue') && <ZASymbol className="scale-75" />}
+            {stat.value}
+          </p>
         </div>
       ))}
     </section>

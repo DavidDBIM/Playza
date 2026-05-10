@@ -19,6 +19,7 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from "../components/ui/dropdown-menu";
+import { ZASymbol } from "../components/currency/ZASymbol";
 
 const STATUS_CONFIG = {
   pending: { 
@@ -99,8 +100,8 @@ const ReferralPayouts: React.FC = () => {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
           { label: "Total Requests", value: data?.total ?? 0, color: "text-foreground" },
-          { label: "Pending Value", value: `₦${(data?.requests?.filter(r=>r.status === 'pending').reduce((sum, r) => sum + r.amount, 0) ?? 0).toLocaleString()}`, color: "text-amber-500" },
-          { label: "Total Paid", value: `₦${(data?.requests?.filter(r=>r.status === 'approved').reduce((sum, r) => sum + r.amount, 0) ?? 0).toLocaleString()}`, color: "text-emerald-500" },
+          { label: "Pending Value", value: <div className="flex items-center gap-1"><ZASymbol />{(data?.requests?.filter(r=>r.status === 'pending').reduce((sum, r) => sum + r.amount, 0) ?? 0).toLocaleString()}</div>, color: "text-amber-500" },
+          { label: "Total Paid", value: <div className="flex items-center gap-1"><ZASymbol />{(data?.requests?.filter(r=>r.status === 'approved').reduce((sum, r) => sum + r.amount, 0) ?? 0).toLocaleString()}</div>, color: "text-emerald-500" },
           { label: "Total Rejected", value: data?.requests?.filter(r=>r.status === 'rejected').length ?? 0, color: "text-rose-500" },
         ].map((stat, i) => (
           <div key={i} className="bg-card border border-border rounded-2xl p-4 shadow-sm group relative overflow-hidden">
@@ -184,10 +185,10 @@ const ReferralPayouts: React.FC = () => {
                         </div>
                       </td>
                       <td className="px-4 py-3.5">
-                        <span className="text-base font-black text-primary font-number">₦{req.amount.toLocaleString()}</span>
+                        <span className="text-base font-black text-primary font-number flex items-center gap-1"><ZASymbol />{req.amount.toLocaleString()}</span>
                       </td>
                       <td className="px-4 py-3.5">
-                        <span className="text-xs font-bold text-muted-foreground font-number">₦{(req.users?.wallet?.balance ?? 0).toLocaleString()}</span>
+                        <span className="text-xs font-bold text-muted-foreground font-number flex items-center gap-1"><ZASymbol className="scale-75" />{(req.users?.wallet?.balance ?? 0).toLocaleString()}</span>
                       </td>
                       <td className="px-4 py-3.5">
                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase border border-transparent ${config.cls}`}>
@@ -286,11 +287,11 @@ const ReferralPayouts: React.FC = () => {
                 <div className="flex items-center justify-between p-4 bg-muted/30 rounded-2xl border border-border/50">
                   <div>
                     <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Amount to Pay</p>
-                    <p className="text-2xl font-black text-primary tracking-tight">₦{selectedRequest.amount.toLocaleString()}</p>
+                    <p className="text-2xl font-black text-primary tracking-tight flex items-center gap-1"><ZASymbol />{selectedRequest.amount.toLocaleString()}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">User Balance</p>
-                    <p className="text-sm font-black text-foreground">₦{(selectedRequest.users?.wallet?.balance ?? 0).toLocaleString()}</p>
+                    <p className="text-sm font-black text-foreground flex items-center gap-1"><ZASymbol className="scale-75" />{(selectedRequest.users?.wallet?.balance ?? 0).toLocaleString()}</p>
                   </div>
                 </div>
 
@@ -326,7 +327,7 @@ const ReferralPayouts: React.FC = () => {
               <div className="flex items-start gap-2 text-muted-foreground">
                 <MdInfoOutline className="text-base shrink-0 mt-0.5" />
                 <p className="text-[10px] font-bold leading-relaxed">
-                  Approving this will instantly credit ₦{selectedRequest.amount.toLocaleString()} to @{selectedRequest.users?.username}'s wallet. This action is irreversible.
+                  Approving this will instantly credit <ZASymbol className="scale-75 mx-1" />{selectedRequest.amount.toLocaleString()} to @{selectedRequest.users?.username}'s wallet. This action is irreversible.
                 </p>
               </div>
             </div>

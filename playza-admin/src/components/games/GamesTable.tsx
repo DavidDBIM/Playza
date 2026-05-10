@@ -9,6 +9,7 @@ import {
   MdGamepad,
   MdShield
 } from 'react-icons/md';
+import { ZASymbol } from '../currency/ZASymbol';
 import { 
   Table, 
   TableBody, 
@@ -107,7 +108,7 @@ export const GamesTable: React.FC<GamesTableProps> = ({ games, clearFilters, ref
                     </span>
                   </TableCell>
                   <TableCell className="py-3.5 px-4 text-right font-headline font-black text-sm text-foreground">
-                    ₦{(game.entryFee ?? 0).toLocaleString()}
+                    <span className="flex items-center gap-1 justify-end"><ZASymbol className="scale-75" />{(game.entryFee ?? 0).toLocaleString()}</span>
                   </TableCell>
                   <TableCell className="py-3.5 px-4 text-center">
                     <div className={`text-[10px] font-black px-3 py-1 rounded-full border inline-block tracking-widest ${

@@ -351,7 +351,7 @@ function GameLeaderboard() {
             </div>
           </div>
         ) : (
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-3">
             <div className="flex overflow-x-auto custom-scrollbar gap-2 pb-2">
               {filteredGames.map((game: Game) => (
                 <button
@@ -413,7 +413,7 @@ function GameLeaderboard() {
 
             {activeGameId && selectedSessionId && (
               <div className="glass-card rounded-2xl border border-slate-200 dark:border-white/5 overflow-hidden">
-                <div className="p-4 md:p-6 bg-slate-50/50 dark:bg-black/20">
+                <div className="px-1 py-4 md:py-6 bg-slate-50/50 dark:bg-black/20">
                   <div className="mb-4">
                     <h3 className="text-sm md:text-lg font-black text-slate-900 dark:text-white uppercase tracking-tighter">
                       {selectedSessionTitle} Leaderboard

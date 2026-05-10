@@ -9,6 +9,7 @@ import {
   MdDeleteForever,
   MdVisibility
 } from 'react-icons/md';
+import { ZASymbol } from '../currency/ZASymbol';
 import type { SessionRecord } from '../../data/leaderboardData';
 import SessionLeaderboardTable from './SessionLeaderboardTable';
 import { Button } from '../ui/button';
@@ -80,7 +81,7 @@ const SessionLeaderboardCard: React.FC<SessionLeaderboardCardProps> = ({ session
               <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Grand Prize</span>
               <span className="text-sm font-black text-emerald-500 flex items-center gap-1">
                 <MdEmojiEvents className="text-emerald-500/30" />
-                ₦{session.prizePool.toLocaleString()}
+                <ZASymbol className="scale-75" />{session.prizePool.toLocaleString()}
               </span>
             </div>
           </div>
