@@ -103,28 +103,39 @@ export async function createGameWithSessions(gameData: any, sessions: any[]) {
  * Called by the admin panel via PUT /gamesession/games/:id
  */
 export async function updateGame(gameId: string, gameData: any) {
+  // Construct update object carefully to avoid sending invalid keys
+  const updatePayload: any = {
+    title: gameData.title,
+    slug: gameData.slug,
+    category: gameData.category,
+    thumbnail_url: gameData.thumbnailUrl || gameData.thumbnail_url,
+    iframe_url: gameData.iframeUrl || gameData.iframe_url,
+    difficulty: gameData.difficulty,
+    mode: gameData.mode,
+    is_active: gameData.isActive !== undefined ? gameData.isActive : gameData.is_active,
+  }
+
+  if (gameData.durationInSeconds !== undefined) updatePayload.duration_seconds = Number(gameData.durationInSeconds)
+  if (gameData.platformFeePercentage !== undefined) updatePayload.platform_fee_percentage = Number(gameData.platformFeePercentage)
+  
+  const howToPlay = gameData.howToPlay || gameData.how_to_play
+  if (howToPlay) updatePayload.how_to_play = howToPlay
+
+  if (gameData.capabilities !== undefined) updatePayload.capabilities = gameData.capabilities
+
   const { data, error } = await supabase
     .from('games')
-    .update({
-      title: gameData.title,
-      slug: gameData.slug,
-      category: gameData.category,
-      thumbnail_url: gameData.thumbnailUrl,
-      iframe_url: gameData.iframeUrl,
-      difficulty: gameData.difficulty,
-      mode: gameData.mode,
-      duration_seconds: gameData.durationInSeconds !== undefined ? Number(gameData.durationInSeconds) : undefined,
-      platform_fee_percentage: gameData.platformFeePercentage !== undefined ? Number(gameData.platformFeePercentage) : undefined,
-      how_to_play: gameData.howToPlay || gameData.how_to_play,
-      is_active: gameData.isActive !== undefined ? gameData.isActive : gameData.is_active,
-      // Persist capabilities changes (e.g. toggling bundles, editing power-up costs)
-      capabilities: gameData.capabilities !== undefined ? gameData.capabilities : null,
-    })
+    .update(updatePayload)
     .eq('id', gameId)
     .select()
     .single()
 
-  if (error) throw error
+  if (error) {
+    console.error('Supabase Update Error:', error)
+    // Throw a more descriptive error for the controller to catch
+    throw new Error(`DB Error [${error.code}]: ${error.message}${error.details ? ' - ' + error.details : ''}`)
+  }
+  
   return data
 }
 
