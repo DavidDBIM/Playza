@@ -15,6 +15,7 @@ import TransactionDetails from "./pages/TransactionDetails";
 import Withdrawals from "./pages/Withdrawals";
 import Notifications from "./pages/Notifications";
 import Ambassadors from "./pages/Ambassadors";
+import SocialTasks from "./pages/SocialTasks";
 import SignIn from "./pages/SignIn";
 import { ThemeProvider } from "./components/theme/ThemeProvider";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
@@ -61,6 +62,7 @@ const App: React.FC = () => {
               <Route path="withdrawals" element={<Withdrawals />} />
               <Route path="rewards" element={<Placeholder name="Rewards" />} />
               <Route path="ambassadors" element={<Ambassadors />} />
+              <Route path="social-tasks" element={<SocialTasks />} />
               <Route path="referral-payouts" element={<ReferralPayouts />} />
               <Route path="notifications" element={<Notifications />} />
               <Route path="feedback" element={<Feedback />} />

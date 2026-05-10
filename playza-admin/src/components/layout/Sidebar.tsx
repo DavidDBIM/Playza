@@ -16,7 +16,8 @@ import {
   MdShield,
   MdLogout,
   MdPowerSettingsNew,
-  MdClose
+  MdClose,
+  MdShare,
 } from 'react-icons/md';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { authService } from '../../services/auth.service';
@@ -37,6 +38,7 @@ const NAV_ITEMS = [
   { path: '/withdrawals', pathMatch: '/withdrawals', icon: MdAccountBalanceWallet, label: 'Withdrawals' },
   { path: '/rewards', pathMatch: '/rewards', icon: MdRedeem, label: 'Rewards' },
   { path: '/ambassadors', pathMatch: '/ambassadors', icon: MdEmojiPeople, label: 'Ambassadors' },
+  { path: '/social-tasks', pathMatch: '/social-tasks', icon: MdShare, label: 'Social Tasks' },
   { path: '/referral-payouts', pathMatch: '/referral-payouts', icon: MdCurrencyExchange, label: 'Referral Payouts' },
   { path: '/notifications', pathMatch: '/notifications', icon: MdNotifications, label: 'Notifications' },
   { path: '/feedback', pathMatch: '/feedback', icon: MdChat, label: 'Feedback' },

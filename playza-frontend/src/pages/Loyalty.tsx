@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, type ReactElement } from "react";
+import React, { useState, useEffect, useCallback, useRef, type ReactElement } from "react";
 import { useLoyaltyMe } from "@/hooks/loyalty/useLoyaltyMe";
 import { useAuth } from "@/context/auth";
 import { Link, useLocation } from "react-router";
@@ -8,16 +8,18 @@ import {
   MdCheckCircle, MdLock, MdMilitaryTech, MdAccountCircle,
   MdSportsEsports, MdAccountBalanceWallet,
   MdStars, MdEmojiEvents, MdGroups,
-  MdVerified, MdPhonelinkRing, MdShoppingBag, MdOutlineForum,
-  MdThumbUp, MdEvent, MdReportProblem, MdVideoLibrary, MdToken,
+  MdVerified, MdPhonelinkRing, MdShoppingBag,
+  MdEvent, MdToken,
   MdLocalFireDepartment, MdArrowForward, MdOpenInNew, MdClose,
+  MdCameraAlt, MdUpload, MdHourglassBottom, MdCancel,
 } from "react-icons/md";
-import { Zap, Trophy, Target, Flame, Star, Users, Shield } from "lucide-react";
+import { Zap, Trophy, Target, Flame, Star, Users, Share2 } from "lucide-react";
 import type { PzaEvent, ClaimedTask } from "@/api/loyalty.api";
 import { useClaimStreak } from "@/hooks/loyalty/useClaimStreak";
 import { useClaimTask } from "@/hooks/loyalty/useClaimTask";
 import { RewardsSection } from "@/components/loyalty/RewardsSection";
 import { useToast } from "@/context/toast";
+import axiosInstance from "@/api/axiosInstance";
 
 interface Task {
   id: string;
@@ -105,16 +107,15 @@ const TASK_CATEGORIES: TaskCategory[] = [
   },
   {
     id: "community",
-    label: "Community",
-    icon: <Shield className="w-4 h-4" />,
+    label: "Social Tasks",
+    icon: <Share2 className="w-4 h-4" />,
     color: "rose",
     tasks: [
-      { id: "MATCH_COMMENT", name: "Comment on Match", desc: "Leave a comment on any match", points: 10, icon: <MdOutlineForum /> },
-      { id: "CONTENT_LIKED_SHARED", name: "Like & Share", desc: "Like or share a platform event", points: 5, icon: <MdThumbUp /> },
-      { id: "COMMUNITY_EVENT_JOINED", name: "Community Event", desc: "Join a community live event", points: 50, icon: <MdOutlineForum /> },
-      { id: "CHEATER_REPORTED", name: "Report Cheater", desc: "Submit a valid cheat report", points: 200, icon: <MdReportProblem /> },
-      { id: "CONTENT_CREATED", name: "Create Content", desc: "Create recognized content or art", points: 500, icon: <MdVideoLibrary /> },
-      { id: "REFERRAL_CAMPAIGN_JOINED", name: "Referral Campaign", desc: "Win a weekly referral race", points: 100, icon: <MdStars /> },
+      { id: "FOLLOW_FACEBOOK", name: "Like Facebook Page", desc: "Like @Playzadotgames on Facebook & upload proof", points: 200, icon: <MdCameraAlt /> },
+      { id: "FOLLOW_TWITTER", name: "Follow on X (Twitter)", desc: "Follow @playzadotgames on X & upload proof", points: 200, icon: <MdCameraAlt /> },
+      { id: "FOLLOW_INSTAGRAM", name: "Follow on Instagram", desc: "Follow @playzadotgames on Instagram & upload proof", points: 200, icon: <MdCameraAlt /> },
+      { id: "FOLLOW_MEDIUM", name: "Follow on Medium", desc: "Follow @Playzadotgames on Medium & upload proof", points: 200, icon: <MdCameraAlt /> },
+      { id: "FOLLOW_YOUTUBE", name: "Subscribe on YouTube", desc: "Subscribe to @Playzadotgames on YouTube & upload proof", points: 200, icon: <MdCameraAlt /> },
     ],
   },
   {
@@ -182,6 +183,60 @@ export default function Loyalty() {
   const [activeCategory, setActiveCategory] = useState("onboarding");
   const [tierModal, setTierModal] = useState(false);
   const [countdown, setCountdown] = useState<string>('');
+
+  // Social task submission state
+  const [socialModal, setSocialModal] = useState<{ taskId: string; taskName: string; platform: string; link: string } | null>(null);
+  const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
+  const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [submittedTasks, setSubmittedTasks] = useState<Set<string>>(new Set());
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const SOCIAL_LINKS: Record<string, string> = {
+    FOLLOW_FACEBOOK: "https://web.facebook.com/Playzadotgames",
+    FOLLOW_TWITTER: "https://x.com/playzadotgames",
+    FOLLOW_INSTAGRAM: "https://www.instagram.com/playzadotgames",
+    FOLLOW_MEDIUM: "https://medium.com/@Playzadotgames",
+    FOLLOW_YOUTUBE: "https://youtube.com/@Playzadotgames",
+  };
+
+  function openSocialModal(task: Task) {
+    setSocialModal({ taskId: task.id, taskName: task.name, platform: task.name, link: SOCIAL_LINKS[task.id] ?? "#" });
+    setScreenshotFile(null);
+    setScreenshotPreview(null);
+  }
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setScreenshotFile(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => setScreenshotPreview(ev.target?.result as string);
+    reader.readAsDataURL(file);
+  }
+
+  async function submitSocialTask() {
+    if (!socialModal || !screenshotFile) return;
+    setSubmitting(true);
+    try {
+      const formData = new FormData();
+      formData.append("task_id", socialModal.taskId);
+      formData.append("screenshot", screenshotFile);
+      await axiosInstance.post("/pza/social-task/submit", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      setSubmittedTasks((prev) => new Set([...prev, socialModal.taskId]));
+      toast.success("Screenshot submitted! Admin will review and award your 200 PZA.");
+      setSocialModal(null);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Submission failed";
+      toast.error(msg);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  const SOCIAL_TASK_IDS = new Set(["FOLLOW_FACEBOOK", "FOLLOW_TWITTER", "FOLLOW_INSTAGRAM", "FOLLOW_MEDIUM", "FOLLOW_YOUTUBE"]);
   
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
@@ -540,6 +595,10 @@ export default function Loyalty() {
                     <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-lg text-xs font-bold">
                       <MdCheckCircle className="text-sm" /> Claimed
                     </div>
+                  ) : SOCIAL_TASK_IDS.has(task.id) && submittedTasks.has(task.id) ? (
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-lg text-xs font-bold">
+                      <MdHourglassBottom className="text-sm" /> Pending
+                    </div>
                   ) : isClaimable ? (
                     <button
                       onClick={() => claimTask(task.id)}
@@ -552,6 +611,13 @@ export default function Loyalty() {
                     <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
                       <MdLock className="text-slate-400 text-sm" />
                     </div>
+                  ) : SOCIAL_TASK_IDS.has(task.id) ? (
+                    <button
+                      onClick={() => openSocialModal(task)}
+                      className={`px-3 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${colorStyles.badge} hover:opacity-80`}
+                    >
+                      <MdUpload className="text-sm" /> Submit
+                    </button>
                   ) : task.link ? (
                     <Link to={task.link}>
                       <button
@@ -579,6 +645,123 @@ export default function Loyalty() {
         onPointsChanged={refetchLoyalty}
         autoOpenSpin={autoOpenSpin}
       />
+
+      {/* Social Task Submission Modal */}
+      {socialModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-2xl"
+          onClick={() => setSocialModal(null)}
+        >
+          <div
+            className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 w-full max-w-md shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center">
+                  <Share2 className="w-4 h-4 text-rose-600 dark:text-rose-400" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 dark:text-white text-base leading-tight">
+                    {socialModal.taskName}
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">+200 PZA after admin approval</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSocialModal(null)}
+                className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
+              >
+                <MdClose />
+              </button>
+            </div>
+
+            {/* Step 1 */}
+            <div className="space-y-3 mb-5">
+              <div className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                <span className="w-6 h-6 rounded-full bg-rose-500 text-white text-xs font-black flex items-center justify-center shrink-0 mt-0.5">1</span>
+                <div>
+                  <p className="text-sm font-bold text-slate-900 dark:text-white">Visit & Follow</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Open the link and follow/subscribe/like our page.</p>
+                  <a
+                    href={socialModal.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 bg-rose-500 hover:bg-rose-600 text-white rounded-lg text-xs font-bold transition-colors"
+                  >
+                    <MdOpenInNew className="text-sm" /> Open Link
+                  </a>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                <span className="w-6 h-6 rounded-full bg-rose-500 text-white text-xs font-black flex items-center justify-center shrink-0 mt-0.5">2</span>
+                <div className="flex-1">
+                  <p className="text-sm font-bold text-slate-900 dark:text-white">Take a Screenshot</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Screenshot must clearly show your username and the followed/subscribed state.</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                <span className="w-6 h-6 rounded-full bg-rose-500 text-white text-xs font-black flex items-center justify-center shrink-0 mt-0.5">3</span>
+                <div className="flex-1">
+                  <p className="text-sm font-bold text-slate-900 dark:text-white mb-2">Upload Screenshot</p>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+                  {screenshotPreview ? (
+                    <div className="relative">
+                      <img
+                        src={screenshotPreview}
+                        alt="Screenshot preview"
+                        className="w-full h-32 object-cover rounded-xl border border-slate-200 dark:border-slate-700"
+                      />
+                      <button
+                        onClick={() => { setScreenshotFile(null); setScreenshotPreview(null); }}
+                        className="absolute top-1.5 right-1.5 w-6 h-6 bg-slate-900/70 hover:bg-red-500 text-white rounded-full flex items-center justify-center transition-colors"
+                      >
+                        <MdCancel className="text-xs" />
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      className="w-full border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-rose-400 dark:hover:border-rose-500 rounded-xl py-4 flex flex-col items-center gap-2 transition-colors group"
+                    >
+                      <MdCameraAlt className="text-2xl text-slate-400 group-hover:text-rose-500 transition-colors" />
+                      <span className="text-xs font-bold text-slate-500 dark:text-slate-400 group-hover:text-rose-500 transition-colors">
+                        Tap to upload screenshot
+                      </span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl px-4 py-2.5 mb-5">
+              <p className="text-xs text-amber-700 dark:text-amber-400 font-medium">
+                <span className="font-bold">⚡ Review process:</span> Admin will verify your screenshot within 24–48 hours. Once approved, 200 PZA will be credited to your account.
+              </p>
+            </div>
+
+            <button
+              onClick={submitSocialTask}
+              disabled={!screenshotFile || submitting}
+              className="w-full py-3 rounded-xl font-bold text-sm transition-all bg-rose-500 hover:bg-rose-600 disabled:bg-slate-200 dark:disabled:bg-slate-800 disabled:text-slate-400 text-white disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm shadow-rose-500/30 disabled:shadow-none"
+            >
+              {submitting ? (
+                <><MdHourglassBottom className="animate-spin" /> Submitting…</>
+              ) : (
+                <><MdUpload className="text-base" /> Submit for Review</>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Tier Modal */}
       {tierModal && (

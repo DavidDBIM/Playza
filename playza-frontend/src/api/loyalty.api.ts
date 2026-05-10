@@ -81,3 +81,13 @@ export const applyAmbassadorApi = async (payload: AmbassadorApplyPayload) => {
   const { data } = await axiosInstance.post(`/pza/ambassador/apply`, payload);
   return data.data;
 };
+
+export const submitSocialTaskApi = async (taskId: string, screenshot: File) => {
+  const formData = new FormData();
+  formData.append("task_id", taskId);
+  formData.append("screenshot", screenshot);
+  const { data } = await axiosInstance.post(`/pza/social-task/submit`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return data.data;
+};
