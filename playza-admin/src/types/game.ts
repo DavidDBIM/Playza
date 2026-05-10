@@ -54,6 +54,11 @@ export type Game = {
     rules: string;
     scoring: string;
   };
+  how_to_play?: {
+    controls: string;
+    rules: string;
+    scoring: string;
+  };
 
   createdAt: string;
   created_at?: string;

@@ -17,6 +17,7 @@ import {
   MdShield,
 } from "react-icons/md";
 import { Button } from "../components/ui/button";
+import { ZASymbol } from "../components/currency/ZASymbol";
 import { useGames, useGameSessions } from "../hooks/use-games";
 import { Loader2 } from "lucide-react";
 import { format } from "date-fns";
@@ -188,6 +189,11 @@ const Game: React.FC = () => {
                         Live
                       </div>
                     )}
+                    {session.status === "completed" && (
+                      <div className="absolute top-0 right-0 px-3 py-1 bg-primary text-black font-black text-[9px] uppercase tracking-widest rounded-bl-xl shadow-lg flex items-center gap-1.5">
+                        Completed & Payout
+                      </div>
+                    )}
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                       <div className="space-y-4 flex-1">
                         <div>
@@ -203,8 +209,8 @@ const Game: React.FC = () => {
                             <span className="text-[9px] text-muted-foreground uppercase font-black tracking-wider">
                               Prize Pool
                             </span>
-                            <span className="text-xl font-black text-primary font-number tracking-tight">
-                              ₦{session.pool_amount?.toLocaleString()}
+                            <span className="text-xl font-black text-primary font-number tracking-tight flex items-center gap-1">
+                              <ZASymbol />{session.pool_amount?.toLocaleString()}
                             </span>
                           </div>
                           <div className="flex flex-col flex-1 max-w-48">
@@ -212,8 +218,8 @@ const Game: React.FC = () => {
                               <span className="text-[9px] text-muted-foreground uppercase font-black tracking-wider">
                                 Entry Fee
                               </span>
-                              <span className="text-[10px] font-black text-foreground font-number">
-                                ₦{session.entry_fee?.toLocaleString()}
+                              <span className="text-[10px] font-black text-foreground font-number flex items-center gap-1">
+                                <ZASymbol />{session.entry_fee?.toLocaleString()}
                               </span>
                             </div>
                             <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
@@ -341,17 +347,44 @@ const Game: React.FC = () => {
             </div>
           )}
           {activeTab === "rules" && (
-            <div className="animate-in fade-in duration-500">
+            <div className="animate-in fade-in duration-500 space-y-6">
+              {/* Dynamic Rules from DB */}
               <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
                 <h3 className="text-sm font-black uppercase tracking-wider mb-6 flex items-center gap-2 text-foreground">
-                  <MdGavel className="text-primary" /> Rules & Guidelines
+                  <MdGavel className="text-primary" /> Rules & Scoring
+                </h3>
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <h4 className="text-[10px] font-black text-primary uppercase tracking-widest">Rules</h4>
+                    <p className="text-xs font-bold text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                      {game.rules || game.how_to_play?.rules || "No specific rules defined for this game."}
+                    </p>
+                  </div>
+                  <div className="space-y-2 border-t border-border pt-4">
+                    <h4 className="text-[10px] font-black text-primary uppercase tracking-widest">Controls</h4>
+                    <p className="text-xs font-bold text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                      {game.controls || game.how_to_play?.controls || "Standard platform controls apply."}
+                    </p>
+                  </div>
+                  <div className="space-y-2 border-t border-border pt-4">
+                    <h4 className="text-[10px] font-black text-primary uppercase tracking-widest">Scoring Logic</h4>
+                    <p className="text-xs font-bold text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                      {game.scoring || game.how_to_play?.scoring || "Points are awarded based on performance metrics."}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Standard Platform Rules */}
+              <div className="bg-muted/30 p-6 rounded-2xl border border-border shadow-sm">
+                <h3 className="text-sm font-black uppercase tracking-wider mb-6 flex items-center gap-2 text-foreground">
+                  <MdShield className="text-primary" /> Platform Protocols
                 </h3>
                 <div className="space-y-4">
                   {[
-                    "Fair Play Protocol: Any manipulation of game memory results in immediate ban.",
-                    "Session Integrity: Players must remain connected for at least 80% to qualify.",
-                    "Ranking Weights: Elo ratings are calculated using the platform's v4 algorithm.",
-                    "Prize Escrow: Funds are held in escrow until session validation is complete.",
+                    "Fair Play: Any manipulation of game state results in an immediate ban.",
+                    "Session Integrity: Players must maintain a stable connection to qualify.",
+                    "Prize Escrow: Funds are held until session validation is complete.",
                   ].map((rule, i) => (
                     <div key={i} className="flex gap-4 group">
                       <span className="text-primary font-black italic text-lg opacity-50 font-number">
@@ -363,9 +396,6 @@ const Game: React.FC = () => {
                     </div>
                   ))}
                 </div>
-                <button className="w-full mt-8 h-10 bg-muted hover:bg-muted/80 text-primary rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all">
-                  Download Ruleset Document
-                </button>
               </div>
             </div>
           )}
@@ -388,8 +418,8 @@ const Game: React.FC = () => {
                     <MdTrendingUp /> +12.4%
                   </span>
                 </div>
-                <div className="text-3xl font-black text-foreground font-number tracking-tighter">
-                  ₦12.4M
+                <div className="text-3xl font-black text-foreground font-number tracking-tighter flex items-center gap-1">
+                  <ZASymbol />12.4M
                 </div>
                 <div className="h-12 w-full mt-4 flex items-end gap-1 opacity-60">
                   {[0.4, 0.6, 0.55, 0.8, 0.7, 0.9, 1].map((h, i) => (

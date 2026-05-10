@@ -9,5 +9,5 @@ export const gamesStats: GameStat[] = [
   { label: 'Total Games', value: '0', change: '0', trend: 'up' },
   { label: 'Active Games', value: '0', change: '0', trend: 'up' },
   { label: 'Total Players', value: '0', change: '0', trend: 'up' },
-  { label: 'Revenue (MTD)', value: '₦0', change: '0', trend: 'up' }
+  { label: 'Revenue (MTD)', value: '0', change: '0', trend: 'up' }
 ];

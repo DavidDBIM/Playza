@@ -157,9 +157,9 @@ const CreateGame: React.FC = () => {
           platformFeePercentage: game.platform_fee_percentage || game.platformFeePercentage || 10,
           iframeUrl: game.iframe_url || game.iframeUrl || '',
           thumbnailUrl: game.thumbnail_url || game.thumbnail,
-          controls: game.controls || game.howToPlay?.controls || '',
-          rules: game.rules || game.howToPlay?.rules || '',
-          scoring: game.scoring || game.howToPlay?.scoring || ''
+          controls: game.controls || game.howToPlay?.controls || game.how_to_play?.controls || '',
+          rules: game.rules || game.howToPlay?.rules || game.how_to_play?.rules || '',
+          scoring: game.scoring || game.howToPlay?.scoring || game.how_to_play?.scoring || ''
         });
         // Restore saved capabilities from DB
         if (game.capabilities) {
@@ -268,6 +268,12 @@ const CreateGame: React.FC = () => {
       const payload = {
         gameData: {
           ...formData,
+          isActive,
+          howToPlay: {
+            controls: formData.controls,
+            rules: formData.rules,
+            scoring: formData.scoring
+          },
           durationInSeconds: formData.durationInSeconds ? Number(formData.durationInSeconds) : 0,
           platformFeePercentage: Number(formData.platformFeePercentage || 10),
           capabilities, // jsonb column — stored as-is in Supabase
