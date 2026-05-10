@@ -1,11 +1,9 @@
 import type { Game } from "@/types/types";
 import { Link } from "react-router";
-import { FaUsers } from "react-icons/fa";
 import { GiFlame } from "react-icons/gi";
-import { ZASymbol } from "@/components/currency/ZASymbol";
 
 const GamesCard = (game: Game) => {
-  const { slug, title, thumbnail, sessions, activePlayers, entryFee, badge } = game;
+  const { slug, title, thumbnail, sessions, badge } = game;
 
   const displayStatus = (() => {
     if (sessions?.some(s => s.status === 'active' || s.status === 'live')) return 'live';
@@ -61,17 +59,6 @@ const GamesCard = (game: Game) => {
 
         {/* Stats & Info - Floating Style */}
         <div className="absolute bottom-0 inset-x-0 p-3 z-10 space-y-2">
-          {/* Active Players & Price */}
-          <div className="flex items-center justify-between opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
-            <div className="flex items-center gap-2 px-2.5 py-1.5 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 text-white text-[10px] font-black uppercase tracking-widest">
-              <FaUsers className="text-xs text-primary" />
-              <span>{(activePlayers ?? 0).toLocaleString()}</span>
-            </div>
-            <div className="px-2.5 py-1.5 bg-primary/20 backdrop-blur-md rounded-xl text-primary text-[10px] font-black italic tracking-tighter border border-primary/30 flex items-center gap-1">
-              <ZASymbol className="scale-75" />
-              <span>{(entryFee ?? 0).toLocaleString()}</span>
-            </div>
-          </div>
 
           {/* Title */}
           <div>
