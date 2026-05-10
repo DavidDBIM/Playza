@@ -103,10 +103,20 @@ export async function getAllUsersAdmin(page = 1, limit = 20, search = '', status
 
   if (period && period !== 'all') {
     const now = new Date()
-    if (period === 'today') now.setHours(0, 0, 0, 0)
-    else if (period === '7d') now.setDate(now.getDate() - 7)
-    else if (period === '30d') now.setDate(now.getDate() - 30)
-    query = query.gte('created_at', now.toISOString())
+    // Reset to start of day for accurate filtering
+    now.setHours(0, 0, 0, 0)
+    
+    if (period === 'today') {
+      // already set to 00:00:00
+    } else if (period === '7d') {
+      now.setDate(now.getDate() - 7)
+    } else if (period === '30d') {
+      now.setDate(now.getDate() - 30)
+    }
+    
+    const filterDate = now.toISOString()
+    console.log(`[AdminService] Filtering users created >= ${filterDate} (Period: ${period})`)
+    query = query.gte('created_at', filterDate)
   }
 
   const { data, error, count } = await query
