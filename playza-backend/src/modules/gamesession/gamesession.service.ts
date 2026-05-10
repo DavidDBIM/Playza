@@ -8,21 +8,30 @@ export async function getAllGames() {
   
   if (error) throw error
 
-  // Enhance games with unique player counts
+  // Enhance games with unique player counts and sessions
   const gamesWithStats = await Promise.all(games.map(async (game) => {
     // Get unique players across all sessions for this game
-    const { data: leaderboardData, error: lErr } = await supabase
-      .from('game_leaderboard')
-      .select('user_id')
-      .in('session_id', (
-        await supabase.from('game_sessions').select('id').eq('game_id', game.id)
-      ).data?.map(s => s.id) || [])
+    const { data: sessionsData } = await supabase
+      .from('game_sessions')
+      .select('id, status, start_time, end_time')
+      .eq('game_id', game.id);
 
-    const uniquePlayers = new Set(leaderboardData?.map(l => l.user_id)).size;
+    const sessionIds = sessionsData?.map(s => s.id) || [];
+    
+    let uniquePlayers = 0;
+    if (sessionIds.length > 0) {
+      const { data: leaderboardData } = await supabase
+        .from('game_leaderboard')
+        .select('user_id')
+        .in('session_id', sessionIds);
+      
+      uniquePlayers = new Set(leaderboardData?.map(l => l.user_id)).size;
+    }
 
     return {
       ...game,
-      unique_players: uniquePlayers
+      unique_players: uniquePlayers,
+      sessions: sessionsData || []
     }
   }))
 
@@ -104,12 +113,12 @@ export async function updateGame(gameId: string, gameData: any) {
       iframe_url: gameData.iframeUrl,
       difficulty: gameData.difficulty,
       mode: gameData.mode,
-      duration_seconds: gameData.durationInSeconds,
-      platform_fee_percentage: gameData.platformFeePercentage,
-      how_to_play: gameData.howToPlay,
-      is_active: gameData.isActive,
+      duration_seconds: gameData.durationInSeconds !== undefined ? Number(gameData.durationInSeconds) : undefined,
+      platform_fee_percentage: gameData.platformFeePercentage !== undefined ? Number(gameData.platformFeePercentage) : undefined,
+      how_to_play: gameData.howToPlay || gameData.how_to_play,
+      is_active: gameData.isActive !== undefined ? gameData.isActive : gameData.is_active,
       // Persist capabilities changes (e.g. toggling bundles, editing power-up costs)
-      capabilities: gameData.capabilities ?? null,
+      capabilities: gameData.capabilities !== undefined ? gameData.capabilities : null,
     })
     .eq('id', gameId)
     .select()
@@ -494,12 +503,11 @@ export async function finalizeSessionAndPayout(sessionId: string) {
 
       await supabase.from('game_history').insert({
         user_id: winner.user_id,
-        game_name: session.title || session.games?.title,
+        game_name: session.title || session.games?.title || 'Arena Tournament',
         score: winner.best_score,
-        position: `#${i + 1}`,
         winnings: payoutAmount,
         status: 'win',
-        played_at: session.end_time
+        played_at: session.end_time || new Date().toISOString()
       })
     }
   }
@@ -510,12 +518,11 @@ export async function finalizeSessionAndPayout(sessionId: string) {
       const rank = winnersCount + index + 1;
       return {
         user_id: player.user_id,
-        game_name: session.title || session.games?.title,
+        game_name: session.title || session.games?.title || 'Arena Tournament',
         score: player.best_score,
-        position: `#${rank}`,
         winnings: 0,
         status: 'loss',
-        played_at: session.end_time
+        played_at: session.end_time || new Date().toISOString()
       }
     });
 

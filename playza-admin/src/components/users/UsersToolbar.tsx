@@ -2,8 +2,7 @@ import React from 'react';
 import { 
   MdSearch,
   MdClose,
-  MdKeyboardArrowDown, 
-  MdFileDownload 
+  MdKeyboardArrowDown
 } from 'react-icons/md';
 import { Button } from '../ui/button';
 import { 
@@ -63,10 +62,9 @@ export const UsersToolbar: React.FC<UsersToolbarProps> = ({
             </DropdownMenuTrigger>
             <DropdownMenuContent className="bg-card/95 backdrop-blur-xl border-border/50 shadow-2xl rounded-xl min-w-45 p-2 z-50">
               <DropdownMenuItem onClick={() => setStatusFilter('All Status')} className="text-[10px] font-black uppercase tracking-widest py-2.5 px-3 rounded-xl cursor-pointer hover:bg-primary/5 transition-colors">All Status</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setStatusFilter('Active')} className="text-[10px] font-black uppercase tracking-widest py-2.5 px-3 rounded-xl cursor-pointer text-emerald-500 hover:bg-emerald-500/5 transition-colors">Active Citizens</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setStatusFilter('Banned')} className="text-[10px] font-black uppercase tracking-widest py-2.5 px-3 rounded-xl cursor-pointer text-destructive hover:bg-destructive/5 transition-colors">Banned Users</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setStatusFilter('Suspended')} className="text-[10px] font-black uppercase tracking-widest py-2.5 px-3 rounded-xl cursor-pointer text-amber-500 hover:bg-amber-500/5 transition-colors">Suspended</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setStatusFilter('Pending')} className="text-[10px] font-black uppercase tracking-widest py-2.5 px-3 rounded-xl cursor-pointer text-blue-500 hover:bg-blue-500/5 transition-colors">Pending Review</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setStatusFilter('Active')} className="text-[10px] font-black uppercase tracking-widest py-2.5 px-3 rounded-xl cursor-pointer text-emerald-500 hover:bg-emerald-500/5 transition-colors">Active Users</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setStatusFilter('Suspended')} className="text-[10px] font-black uppercase tracking-widest py-2.5 px-3 rounded-xl cursor-pointer text-destructive hover:bg-destructive/5 transition-colors">Suspended</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setStatusFilter('Unverified')} className="text-[10px] font-black uppercase tracking-widest py-2.5 px-3 rounded-xl cursor-pointer text-amber-500 hover:bg-amber-500/5 transition-colors">Unverified</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -81,6 +79,7 @@ export const UsersToolbar: React.FC<UsersToolbarProps> = ({
               <DropdownMenuItem onClick={() => setJoinedFilter('All Time')} className="text-[10px] font-black uppercase tracking-widest py-2.5 px-3 rounded-xl cursor-pointer hover:bg-primary/5 transition-colors">All Time</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setJoinedFilter('Last 24h')} className="text-[10px] font-black uppercase tracking-widest py-2.5 px-3 rounded-xl cursor-pointer text-primary hover:bg-primary/5 transition-colors">Last 24 Hours</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setJoinedFilter('Last 7 Days')} className="text-[10px] font-black uppercase tracking-widest py-2.5 px-3 rounded-xl cursor-pointer text-primary hover:bg-primary/5 transition-colors">Last 7 Days</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setJoinedFilter('Last 30 Days')} className="text-[10px] font-black uppercase tracking-widest py-2.5 px-3 rounded-xl cursor-pointer text-primary hover:bg-primary/5 transition-colors">Last 30 Days</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -97,10 +96,6 @@ export const UsersToolbar: React.FC<UsersToolbarProps> = ({
             Clear
           </Button>
         )}
-        <Button variant="outline" className="flex-1 md:flex-none bg-background hover:bg-accent/10 border-border/50 text-foreground h-10 px-4 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-sm">
-          <MdFileDownload className="text-primary text-base" />
-          Export
-        </Button>
       </div>
     </div>
   );
