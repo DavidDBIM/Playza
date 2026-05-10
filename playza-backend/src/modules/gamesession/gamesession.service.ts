@@ -131,7 +131,6 @@ export async function updateGame(gameId: string, gameData: any) {
     .single()
 
   if (error) {
-    console.error('Supabase Update Error:', error)
     // Throw a more descriptive error for the controller to catch
     throw new Error(`DB Error [${error.code}]: ${error.message}${error.details ? ' - ' + error.details : ''}`)
   }
