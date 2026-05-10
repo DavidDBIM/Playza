@@ -18,6 +18,7 @@ import {
   useFinalizeSession 
 } from "../hooks/use-games";
 import { ConfirmDialog } from "../components/ui/confirm-dialog";
+import { ZASymbol } from "../components/currency/ZASymbol";
 
 interface GameDetails {
   title: string;
@@ -121,6 +122,19 @@ const Session: React.FC = () => {
   }, [fetchDetails]);
 
   const handleFinalize = async () => {
+    if (!session) return;
+
+    const now = new Date().getTime();
+    const endTime = new Date(session.end_time).getTime();
+
+    if (now < endTime) {
+      toast.error(`Restriction: This session cannot be finalized until the timer reaches zero. (${countdown} remaining)`, {
+        description: "Admins are not allowed to trigger payouts while the arena is still active.",
+        duration: 5000,
+      });
+      return;
+    }
+
     setConfirmConfig({
       isOpen: true,
       title: "Finalize Session?",
@@ -179,8 +193,16 @@ const Session: React.FC = () => {
   const isEnded = session?.status === "completed";
 
   return (
-    <main className="p-4 space-y-4">
-      <div className="space-y-8">
+    <main className="p-4 space-y-4 min-h-screen relative overflow-hidden bg-background">
+      {/* Visual Status Glows - The "Sharp" High-Density Aesthetics */}
+      {isEnded && (
+        <div className="absolute -top-25 left-1/2 -translate-x-1/2 w-200 h-75 bg-emerald-500/15 blur-[120px] rounded-full pointer-events-none z-0 animate-pulse" />
+      )}
+      {session?.status === 'active' && (
+        <div className="absolute -top-25 left-1/2 -translate-x-1/2 w-200 h-75 bg-primary/15 blur-[120px] rounded-full pointer-events-none z-0 animate-pulse" />
+      )}
+
+      <div className="relative z-10 space-y-8">
         {/* Hero Session Header */}
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-3">
@@ -204,7 +226,7 @@ const Session: React.FC = () => {
                   ></span>
                   {session?.status}
                 </span>
-                {session?.status !== "completed" && session?.status !== "cancelled" && (
+                {!isEnded && session?.status !== "cancelled" && (
                   <span className="flex items-center gap-1.5 px-3 py-1 bg-primary/10 text-primary text-[10px] font-black tracking-widest uppercase rounded-lg border border-primary/20 shadow-sm animate-pulse">
                     <MdTrendingUp className="text-sm" />
                     {session?.status === "upcoming" ? "Starts In: " : "Ends In: "}
@@ -241,7 +263,7 @@ const Session: React.FC = () => {
               </Button>
             )}
 
-            {!isEnded && (
+            {session?.status === "active" && (
               <Button
                 disabled={isProcessing}
                 onClick={handleFinalize}
@@ -255,7 +277,7 @@ const Session: React.FC = () => {
               </Button>
             )}
 
-            {session?.status !== "cancelled" && session?.status !== "completed" && (
+            {session?.status !== "cancelled" && !isEnded && (
               <button
                 disabled={isProcessing}
                 onClick={() => handleStatusUpdate("cancelled")}
@@ -278,14 +300,14 @@ const Session: React.FC = () => {
             },
             {
               label: "Base Pool",
-              value: `₦${Number(session?.financials?.gross || 0).toLocaleString()}`,
+              value: <div className="flex items-center gap-1"><ZASymbol />{Number(session?.financials?.gross || 0).toLocaleString()}</div>,
               sub: "Gross Amount",
               color: "text-muted-foreground",
             },
             {
               label: "Net Prize",
-              value: `₦${Number(session?.financials?.netPrizePool || 0).toLocaleString()}`,
-              sub: `Fee: ₦${Number(session?.financials?.platformFee || 0).toLocaleString()} (${session?.financials?.platformFeePercentage || 10}%)`,
+              value: <div className="flex items-center gap-1"><ZASymbol />{Number(session?.financials?.netPrizePool || 0).toLocaleString()}</div>,
+              sub: <div className="flex items-center gap-1">Fee: <ZASymbol />{Number(session?.financials?.platformFee || 0).toLocaleString()} ({session?.financials?.platformFeePercentage || 10}%)</div>,
               color: "text-emerald-500",
             },
             {

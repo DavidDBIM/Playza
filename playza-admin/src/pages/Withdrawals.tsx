@@ -9,6 +9,7 @@ import {
   MdCheckCircle,
   MdCancel
 } from 'react-icons/md';
+import { ZASymbol } from '../components/currency/ZASymbol';
 import { Button } from '../components/ui/button';
 import { 
   DropdownMenu, 
@@ -80,7 +81,8 @@ const Withdrawals: React.FC = () => {
               {stat.label}
             </p>
             <div className="flex items-end justify-between">
-              <h3 className="text-2xl font-black text-foreground font-number group-hover:text-primary transition-colors">
+              <h3 className="text-2xl font-black text-foreground font-number group-hover:text-primary transition-colors flex items-center gap-1">
+                {(stat.label.toLowerCase().includes('total') || stat.label.toLowerCase().includes('payouts') || stat.label.toLowerCase().includes('today')) && <ZASymbol className="scale-75" />}
                 {stat.value}
               </h3>
               <span
@@ -198,8 +200,8 @@ const Withdrawals: React.FC = () => {
                     </div>
                   </TableCell>
                   <TableCell className="px-4 py-3.5">
-                    <span className="font-black text-lg text-foreground tracking-tight font-number">
-                      ₦{wd.amount.toLocaleString()}
+                    <span className="font-black text-lg text-foreground tracking-tight font-number flex items-center gap-1">
+                      <ZASymbol />{wd.amount.toLocaleString()}
                     </span>
                   </TableCell>
                   <TableCell className="px-4 py-3.5">

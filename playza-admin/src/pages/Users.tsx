@@ -31,9 +31,9 @@ const Users: React.FC = () => {
   // Map UI period filter to API period values
   const apiPeriod = useMemo(() => {
     switch (joinedFilter) {
-      case 'Today': return 'today';
-      case 'Past 7 Days': return '7d';
-      case 'Past 30 Days': return '30d';
+      case 'Last 24h': return 'today';
+      case 'Last 7 Days': return '7d';
+      case 'Last 30 Days': return '30d';
       default: return '';
     }
   }, [joinedFilter]);
