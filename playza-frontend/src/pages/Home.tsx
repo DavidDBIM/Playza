@@ -88,19 +88,17 @@ const Home = () => {
 
       {isLoading ? (
         <div className="space-y-8 px-4">
-          {[1, 2].map((i) => (
-            <div key={i} className="space-y-4">
-              <Skeleton className="h-8 w-48 bg-white/5" />
-              <div className="flex gap-4 overflow-hidden">
-                {[1, 2, 3, 4].map((j) => (
-                  <Skeleton
-                    key={j}
-                    className="h-48 w-40 md:w-64 shrink-0 rounded-2xl bg-white/5"
-                  />
-                ))}
-              </div>
+          <div className="space-y-4">
+            <Skeleton className="h-8 w-48 bg-white/10" />
+            <div className="flex gap-4 overflow-hidden">
+              {[1, 2, 3, 4, 5, 6].map((j) => (
+                <Skeleton
+                  key={j}
+                  className="h-48 w-40 md:w-64 shrink-0 rounded-2xl bg-white/10"
+                />
+              ))}
             </div>
-          ))}
+          </div>
         </div>
       ) : hasGames ? (
         <>

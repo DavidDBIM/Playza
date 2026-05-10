@@ -60,7 +60,7 @@ export type Game = {
   activePlayers: number;
   unique_players?: number; // Backend field
 
-  status: "live" | "upcoming" | "ended" | "coming soon" | "not starting soon";
+  status: "live" | "active" | "upcoming" | "ended" | "completed" | "coming soon" | "not starting soon";
   is_active?: boolean; // Backend field
   ctaLabel: string;
 
@@ -98,6 +98,12 @@ export type Game = {
       grants: Record<string, number>;
     }[];
   };
+  sessions?: {
+    id: string;
+    status: string;
+    start_time: string;
+    end_time: string;
+  }[];
 };
 
 export type GameBadge =
