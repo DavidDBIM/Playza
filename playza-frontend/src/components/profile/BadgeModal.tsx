@@ -16,51 +16,68 @@ interface Badge {
   description: string;
 }
 
-const badges: Badge[] = [
-  {
-    id: "bronze",
-    name: "Iron Vanguard",
-    reward: 500,
-    unlocked: false,
-    category: "Rank",
-    icon: <MdMilitaryTech className="text-amber-700 text-2xl md:text-3xl" />,
-    description: "The beginning of greatness. Reach the Iron Rank to establish your name in the Arena.",
-  },
-  {
-    id: "silver",
-    name: "Steel Guardian",
-    reward: 3000,
-    unlocked: false,
-    category: "Rank",
-    icon: <MdMilitaryTech className="text-slate-400 text-2xl md:text-3xl" />,
-    description: "Proving your consistency. Reach Steel Rank by conquering the mid-tier leaderboards.",
-  },
-  {
-    id: "gold",
-    name: "Aurelian Hero",
-    reward: 20000,
-    unlocked: false,
-    category: "Rank",
-    icon: <MdMilitaryTech className="text-yellow-400 text-2xl md:text-3xl" />,
-    description: "A mark of true skill. Reach Gold Rank and join the elite upper echelons of Playza.",
-  },
-  {
-    id: "platinum",
-    name: "Ascended Master",
-    reward: 100000,
-    unlocked: false,
-    category: "Rank",
-    icon: <MdMilitaryTech className="text-blue-300 text-2xl md:text-3xl" />,
-    description: "True legendary status. Reach Platinum Rank to become a god among players.",
-  },
-];
+// Tier thresholds: Bronze 0–4,999 | Silver 5,000–24,999 | Gold 25,000–99,999 | Platinum 100,000+
+function getTierBadges(pzaPoints: number) {
+  return [
+    {
+      id: "bronze",
+      name: "Bronze",
+      minPts: 0,
+      maxPts: 4999,
+      range: "0 – 4,999 PZA",
+      unlocked: pzaPoints >= 0,
+      category: "Rank" as const,
+      icon: <MdMilitaryTech className="text-amber-700 text-2xl md:text-3xl" />,
+      bg: "bg-amber-700",
+      description: "Welcome to the Arena. Every champion starts here — earn your first PZA and claim Bronze status.",
+    },
+    {
+      id: "silver",
+      name: "Silver",
+      minPts: 5000,
+      maxPts: 24999,
+      range: "5,000 – 24,999 PZA",
+      unlocked: pzaPoints >= 5000,
+      category: "Rank" as const,
+      icon: <MdMilitaryTech className="text-slate-300 text-2xl md:text-3xl" />,
+      bg: "bg-slate-400",
+      description: "Proving your consistency. Reach 5,000 PZA to rise into the Silver tier and earn recognition.",
+    },
+    {
+      id: "gold",
+      name: "Gold",
+      minPts: 25000,
+      maxPts: 99999,
+      range: "25,000 – 99,999 PZA",
+      unlocked: pzaPoints >= 25000,
+      category: "Rank" as const,
+      icon: <MdMilitaryTech className="text-yellow-400 text-2xl md:text-3xl" />,
+      bg: "bg-yellow-400",
+      description: "A mark of true dedication. Hit 25,000 PZA to enter the Gold tier and join the elite.",
+    },
+    {
+      id: "platinum",
+      name: "Platinum",
+      minPts: 100000,
+      maxPts: Infinity,
+      range: "100,000+ PZA",
+      unlocked: pzaPoints >= 100000,
+      category: "Rank" as const,
+      icon: <MdMilitaryTech className="text-cyan-300 text-2xl md:text-3xl" />,
+      bg: "bg-cyan-500",
+      description: "Legendary status. Reach 100,000 PZA to ascend to Platinum — the pinnacle of Playza mastery.",
+    },
+  ];
+}
 
 interface BadgeModalProps {
   isOpen: boolean;
   onClose: () => void;
+  pzaPoints?: number;
 }
 
-const BadgeModal: React.FC<BadgeModalProps> = ({ isOpen, onClose }) => {
+const BadgeModal: React.FC<BadgeModalProps> = ({ isOpen, onClose, pzaPoints = 0 }) => {
+  const badges = getTierBadges(pzaPoints);
   React.useEffect(() => {
     if (isOpen) {
       document.body.classList.add("modal-open", "overflow-hidden");
@@ -138,7 +155,7 @@ const BadgeModal: React.FC<BadgeModalProps> = ({ isOpen, onClose }) => {
               <div className="flex flex-col md:flex-row items-center gap-4 md:gap-8 relative z-10">
                 <div className="shrink-0 relative">
                   <div
-                    className={`size-16 md:size-24 rounded-2xl flex items-center justify-center transition-all duration-700 ${badge.unlocked ? "bg-primary/20 shadow-glow scale-105" : "bg-white/5 grayscale saturate-50 opacity-40 group-hover:opacity-100 group-hover:grayscale-0 group-hover:scale-105"}`}
+                    className={`size-16 md:size-24 rounded-2xl flex items-center justify-center transition-all duration-700 shadow-lg ${badge.unlocked ? badge.bg + " scale-105 shadow-xl" : "bg-white/5 grayscale saturate-50 opacity-40 group-hover:opacity-100 group-hover:grayscale-0 group-hover:scale-105"}`}
                   >
                     {badge.icon}
                   </div>
@@ -158,18 +175,15 @@ const BadgeModal: React.FC<BadgeModalProps> = ({ isOpen, onClose }) => {
                   <div className="flex flex-col md:flex-row items-center justify-between gap-2 mb-2">
                     <div>
                       <span className="text-[8px] font-black uppercase text-primary tracking-[0.3em] opacity-80 mb-0.5 block leading-none">
-                        Tier 0{idx + 1}
+                        {badge.range}
                       </span>
                       <h3 className="text-lg md:text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter italic leading-none group-hover:text-primary transition-colors">
                         {badge.name}
                       </h3>
                     </div>
-                    <div className="inline-flex items-center gap-1.5 bg-primary/10 border border-primary/20 px-3 py-1.5 rounded-xl">
-                      <span className="text-lg font-black text-primary italic leading-none">
-                        +{badge.reward.toLocaleString()}
-                      </span>
-                      <span className="text-[9px] font-black text-primary uppercase tracking-widest leading-none">
-                        PZA
+                    <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border ${badge.unlocked ? badge.bg + "/20 border-current" : "bg-white/5 border-white/10"}`}>
+                      <span className={`text-xs font-black uppercase tracking-widest leading-none ${badge.unlocked ? "text-primary" : "text-slate-500"}`}>
+                        {badge.unlocked ? "✓ Unlocked" : "Locked"}
                       </span>
                     </div>
                   </div>
