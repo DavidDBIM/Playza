@@ -475,14 +475,31 @@ const GamePlay = () => {
               allow="autoplay; fullscreen; gamepad"
               onLoad={() => {
                 setIsLoading(false);
+                const rawUrl = game?.iframe_url || game?.iframeUrl;
+                const targetOrigin = (() => {
+                  try { return rawUrl?.startsWith('http') ? new URL(rawUrl).origin : window.location.origin; }
+                  catch { return window.location.origin; }
+                })();
+                const iframe = document.querySelector("iframe") as HTMLIFrameElement | null;
+
+                // ── PLAYZA_SESSION_CONFIG: Standard initialization handshake ──
+                // Sends session metadata to the game to lock state and apply policies.
+                setTimeout(() => {
+                  iframe?.contentWindow?.postMessage(
+                    {
+                      type: "PLAYZA_SESSION_CONFIG",
+                      payload: {
+                        locked: !isDemo,
+                        sessionId: activeSession?.id,
+                        aimAssistPolicy: game.capabilities?.aimAssist || "always"
+                      }
+                    },
+                    targetOrigin
+                  );
+                }, 400);
+
                 // Inject pre-purchased bundle into the game once iframe is ready
                 if (pendingBundle) {
-                  const rawUrl = game?.iframe_url || game?.iframeUrl;
-                  const targetOrigin = (() => {
-                    try { return rawUrl?.startsWith('http') ? new URL(rawUrl).origin : window.location.origin; }
-                    catch { return window.location.origin; }
-                  })();
-                  const iframe = document.querySelector("iframe") as HTMLIFrameElement | null;
                   setTimeout(() => {
                     iframe?.contentWindow?.postMessage(
                       { type: "PLAYZA_POWERUP_BUNDLE", payload: pendingBundle },

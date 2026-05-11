@@ -309,8 +309,12 @@ export async function startRound(userId: string, sessionId: string) {
 export async function submitSessionScore(userId: string, sessionId: string, score: number, roundId?: string) {
   const now = new Date()
 
-  // 1. Get session and entry details
-  const { data: session } = await supabase.from('game_sessions').select('end_time, status').eq('id', sessionId).single()
+  // 1. Get session and entry details (including game slug for dynamic anti-cheat)
+  const { data: session } = await supabase
+    .from('game_sessions')
+    .select('end_time, status, games(slug, category)')
+    .eq('id', sessionId)
+    .single()
   const { data: entry } = await supabase
     .from('game_leaderboard')
     .select('*, users(username, avatar_url)')
@@ -343,13 +347,30 @@ export async function submitSessionScore(userId: string, sessionId: string, scor
     throw new Error("Invalid or expired round token")
   }
 
-  // -- ANTI-CHEAT: VELOCITY VALIDATION --
+  // -- ANTI-CHEAT: DYNAMIC VELOCITY VALIDATION --
   const roundStartTime = new Date(round.start_time).getTime()
   const elapsedSeconds = (now.getTime() - roundStartTime) / 1000
 
-  // Refined Logic: Sliding Puzzle pro solves in ~30s. If score > 500 in < 10s, reject.
-  if (score > 500 && elapsedSeconds < 10) {
-    throw new Error("Suspiciously fast score submission. Score rejected.")
+  const gamesData = session.games as any;
+  const slug = (Array.isArray(gamesData) ? gamesData[0]?.slug : gamesData?.slug) || "";
+  let isSuspicious = false;
+
+  if (slug.includes("puzzle") || slug.includes("2048")) {
+    // Puzzle games are slow. 1000 pts in < 10s is impossible.
+    if (score > 1000 && elapsedSeconds < 10) isSuspicious = true;
+  } else if (slug.includes("bubble")) {
+    // Bubble Shooter: 150 shots. Max 2000 pts/shot. 
+    // Even a pro takes ~0.7s per shot.
+    // 5000 pts in < 5s is impossible.
+    if (score > 5000 && elapsedSeconds < 5) isSuspicious = true;
+    if (score > 350000) isSuspicious = true; // Hard cap on theoretical maximum
+  } else {
+    // Generic fallback: Very aggressive scores in first few seconds are always flagged
+    if (score > 10000 && elapsedSeconds < 5) isSuspicious = true;
+  }
+
+  if (isSuspicious) {
+    throw new Error(`Suspicious score velocity (${score} in ${elapsedSeconds.toFixed(1)}s). Score rejected.`)
   }
 
   // 2. Update score if higher

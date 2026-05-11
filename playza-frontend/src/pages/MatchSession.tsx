@@ -393,7 +393,7 @@ const MatchSession = () => {
                   encounter any issues, please report them.
                 </p>
                 <button
-                  onClick={() => navigate("/feedback")}
+                  onClick={() => navigate("/support")}
                   className="text-[10px] font-black text-primary flex items-center gap-1 md:hover:underline uppercase tracking-widest"
                 >
                   Report an Issue <MdArrowForward className="text-xs" />

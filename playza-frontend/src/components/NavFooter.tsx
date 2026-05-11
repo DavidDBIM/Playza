@@ -85,7 +85,7 @@ const NavFooter = () => {
     user ? getItem("My Games") : undefined,
     user ? getItem("Wallet") : undefined,
     getItem("Leaderboards"),
-    user ? { label: "Feedback", icon: MessageSquare, path: "/feedback" } : undefined,
+    user ? { label: "Support", icon: MessageSquare, path: "/support" } : undefined,
   ].filter((item): item is NavItem => !!item);
 
   // Unique visible items logic

@@ -264,7 +264,7 @@ const FAQ = () => {
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link
-            to="/feedback"
+            to="/support"
             className="w-full sm:w-auto px-10 py-4 rounded-2xl bg-muted hover:bg-muted/80 border border-border text-foreground font-black text-xs uppercase tracking-widest transition-colors dark:bg-white/5 dark:border-white/10 dark:text-slate-200"
           >
             Contact Support
