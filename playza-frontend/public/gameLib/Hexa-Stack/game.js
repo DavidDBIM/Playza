@@ -3,7 +3,7 @@ import * as THREE from './three.module.js';
 const CONFIG = {
   radius: 3,
   cellSize: 0.68,
-  layerHeight: 0.082,
+  layerHeight: 0.044,
   clearRun: 10,
   maxStackHeight: 22,
   traySize: 3,
@@ -31,20 +31,24 @@ const dom = {
   moves: document.getElementById('stat-moves'),
   level: document.getElementById('stat-level'),
   pressureFill: document.getElementById('pressure-fill'),
+  progressGlow: document.getElementById('progress-glow'),
   pressureLabel: document.getElementById('pressure-label'),
-  missionText: document.getElementById('mission-text'),
-  missionCount: document.getElementById('mission-count'),
   toast: document.getElementById('toast'),
   startModal: document.getElementById('modal-start'),
   pauseModal: document.getElementById('modal-pause'),
+  levelModal: document.getElementById('modal-level'),
   overModal: document.getElementById('modal-over'),
   finalScore: document.getElementById('final-score'),
   peakCombo: document.getElementById('peak-combo'),
+  levelScore: document.getElementById('level-score'),
+  levelMoves: document.getElementById('level-moves'),
   start: document.getElementById('btn-start'),
   pause: document.getElementById('btn-pause'),
   resume: document.getElementById('btn-resume'),
   restart: document.getElementById('btn-restart'),
   restartPause: document.getElementById('btn-restart-pause'),
+  nextLevel: document.getElementById('btn-next-level'),
+  backStart: document.getElementById('btn-back-start'),
   spawnSlots: [...document.querySelectorAll('.spawn-slot')],
   powerups: [...document.querySelectorAll('.powerup')]
 };
@@ -194,27 +198,35 @@ class HexaSortGame {
 
   createScene() {
     this.scene = new THREE.Scene();
-    this.scene.fog = new THREE.Fog(0x2a0705, 9, 24);
+    this.scene.fog = new THREE.Fog(0x080d1e, 11, 28);
 
-    this.camera = new THREE.PerspectiveCamera(35, 1, 0.1, 80);
-    this.camera.position.set(0, 8.8, 7.8);
+    this.camera = new THREE.PerspectiveCamera(38, 1, 0.1, 80);
+    this.camera.position.set(0, 11, 5.5);
     this.camera.lookAt(0, 0, 0);
     this.cameraBase = this.camera.position.clone();
 
-    this.scene.add(new THREE.HemisphereLight(0xfff2dd, 0x3d0907, 2.45));
+    // Cool blue-white hemisphere for a clean, airy look
+    this.scene.add(new THREE.HemisphereLight(0xd8e8ff, 0x1a2040, 2.6));
 
-    const key = new THREE.DirectionalLight(0xffffff, 2.85);
-    key.position.set(-3.8, 8, 4.5);
+    const key = new THREE.DirectionalLight(0xffffff, 2.9);
+    key.position.set(-4, 9, 5);
     key.castShadow = true;
-    key.shadow.mapSize.set(1536, 1536);
-    key.shadow.camera.left = -8;
-    key.shadow.camera.right = 8;
-    key.shadow.camera.top = 8;
-    key.shadow.camera.bottom = -8;
+    key.shadow.mapSize.set(2048, 2048);
+    key.shadow.camera.left = -9;
+    key.shadow.camera.right = 9;
+    key.shadow.camera.top = 9;
+    key.shadow.camera.bottom = -9;
+    key.shadow.bias = -0.0004;
     this.scene.add(key);
 
-    const rim = new THREE.PointLight(0xffffff, 22, 16);
-    rim.position.set(4.2, 4.4, -4.4);
+    // Warm accent fill from below-right
+    const fill = new THREE.DirectionalLight(0xffd0a0, 0.9);
+    fill.position.set(5, 2, -3);
+    this.scene.add(fill);
+
+    // Soft blue rim
+    const rim = new THREE.PointLight(0x5080ff, 18, 18);
+    rim.position.set(4.2, 5, -4.4);
     this.scene.add(rim);
 
     this.boardGroup = new THREE.Group();
@@ -228,15 +240,16 @@ class HexaSortGame {
     this.fxGroup = new THREE.Group();
     this.scene.add(this.fxGroup);
 
-    const floorGeo = new THREE.CircleGeometry(7.6, 96);
+    // Dark slate floor with slight sheen
+    const floorGeo = new THREE.CircleGeometry(8.2, 96);
     const floorMat = new THREE.MeshStandardMaterial({
-      color: 0x64100b,
-      emissive: 0x250302,
+      color: 0x111b38,
+      emissive: 0x060e20,
       emissiveIntensity: 0.18,
-      roughness: 0.74,
-      metalness: 0.08,
+      roughness: 0.52,
+      metalness: 0.28,
       transparent: true,
-      opacity: 0.92
+      opacity: 0.96
     });
     this.floor = new THREE.Mesh(floorGeo, floorMat);
     this.floor.rotation.x = -Math.PI / 2;
@@ -249,49 +262,52 @@ class HexaSortGame {
     this.materials = CONFIG.colors.map((color) => new THREE.MeshStandardMaterial({
       color: color.main,
       emissive: color.emissive,
-      emissiveIntensity: 0.08,
-      roughness: 0.31,
-      metalness: 0.14
+      emissiveIntensity: 0.18,  // brighter emissive for more vivid tiles
+      roughness: 0.22,
+      metalness: 0.22
     }));
 
     this.sideMaterials = CONFIG.colors.map((color) => new THREE.MeshStandardMaterial({
       color: color.side,
       emissive: color.emissive,
-      emissiveIntensity: 0.04,
-      roughness: 0.44,
-      metalness: 0.12
+      emissiveIntensity: 0.08,
+      roughness: 0.38,
+      metalness: 0.18
     }));
 
+    // Slate hex cell bases
     this.cellMaterial = new THREE.MeshStandardMaterial({
-      color: 0x4a0d09,
-      emissive: 0x170100,
-      emissiveIntensity: 0.2,
-      roughness: 0.68,
-      metalness: 0.04
+      color: 0x1e2a50,
+      emissive: 0x0a1028,
+      emissiveIntensity: 0.20,
+      roughness: 0.58,
+      metalness: 0.18
     });
     this.hoverMaterial = new THREE.MeshStandardMaterial({
-      color: 0x7e1b12,
-      emissive: 0xff8f24,
-      emissiveIntensity: 0.28,
-      roughness: 0.42,
-      metalness: 0.08
+      color: 0x2e4488,
+      emissive: 0x4060ff,
+      emissiveIntensity: 0.42,
+      roughness: 0.32,
+      metalness: 0.22
     });
     this.invalidMaterial = new THREE.MeshStandardMaterial({
       color: 0xc9a2ac,
       emissive: 0xff3d48,
-      emissiveIntensity: 0.18,
-      roughness: 0.52,
-      metalness: 0.06
+      emissiveIntensity: 0.28,
+      roughness: 0.46,
+      metalness: 0.08
     });
   }
 
   createGeometry() {
-    this.baseGeometry = new THREE.CylinderGeometry(0.46, 0.47, 0.07, 6, 1, false);
+    // Wider, flatter bases so hexes look fused like the reference image
+    this.baseGeometry = new THREE.CylinderGeometry(0.62, 0.63, 0.036, 6, 1, false);
     this.baseGeometry.rotateY(Math.PI / 6);
-    this.layerGeometry = new THREE.CylinderGeometry(0.4, 0.43, CONFIG.layerHeight, 6, 1, false);
+    // Thinner layers, wider radius to fill the cell
+    this.layerGeometry = new THREE.CylinderGeometry(0.57, 0.59, CONFIG.layerHeight, 6, 1, false);
     this.layerGeometry.rotateY(Math.PI / 6);
-    this.ringGeometry = new THREE.RingGeometry(0.28, 0.48, 64);
-    this.particleGeometry = new THREE.SphereGeometry(0.045, 8, 8);
+    this.ringGeometry = new THREE.RingGeometry(0.36, 0.60, 64);
+    this.particleGeometry = new THREE.SphereGeometry(0.040, 8, 8);
   }
 
   createBoard() {
@@ -312,6 +328,18 @@ class HexaSortGame {
       this.cellMap.set(cell.key, cell);
       this.boardGroup.add(base);
     });
+    // Fit camera to new board size
+    this.fitCamera();
+  }
+
+  fitCamera() {
+    const n = this.cells.length;
+    // Scale factor: zoom in for small boards, zoom out for big ones
+    const s = n <= 8 ? 0.78 : n <= 12 ? 0.88 : n <= 20 ? 1.0 : n <= 30 ? 1.14 : 1.28;
+    this.camera.position.set(0, 11 * s, 5.5 * s);
+    this.cameraBase = this.camera.position.clone();
+    this.camera.lookAt(0, 0, 0);
+    this.camera.updateProjectionMatrix();
   }
 
   boardCoordsForLevel(level) {
@@ -416,6 +444,21 @@ class HexaSortGame {
     dom.resume.addEventListener('click', () => this.resume());
     dom.restart.addEventListener('click', () => this.restart());
     dom.restartPause.addEventListener('click', () => this.restart());
+
+    // Level complete — next level
+    dom.nextLevel?.addEventListener('click', () => {
+      dom.levelModal.classList.add('hidden');
+      this.audio.unlock();
+      this.advanceLevel();
+    });
+
+    // Game over — back to start screen
+    dom.backStart?.addEventListener('click', () => {
+      dom.overModal.classList.add('hidden');
+      dom.startModal.classList.remove('hidden');
+      this.reset();
+      this.store.paused = true;
+    });
 
     dom.spawnSlots.forEach((slot) => {
       slot.addEventListener('pointerdown', (event) => this.beginDrag(event, Number(slot.dataset.slot)));
@@ -573,18 +616,18 @@ class HexaSortGame {
     if (cell.stack?.group) this.stackGroup.remove(cell.stack.group);
     const layers = [...stack.layers];
     const group = this.createStackMesh(layers);
-    group.position.set(cell.position.x, animate ? 0.75 : 0, cell.position.z);
-    group.scale.setScalar(animate ? 0.62 : 1);
+    group.position.set(cell.position.x, animate ? 0.42 : 0, cell.position.z);
+    group.scale.setScalar(animate ? 0.65 : 1);
     group.userData.cell = cell;
     this.stackGroup.add(group);
     cell.stack = { layers, group };
     if (animate) {
       this.animate({
-        duration: 330,
+        duration: 300,
         update: (t) => {
           const e = easeOutBack(t);
-          group.position.y = (1 - e) * 0.75;
-          group.scale.setScalar(0.62 + 0.38 * e);
+          group.position.y = (1 - e) * 0.42;
+          group.scale.setScalar(0.65 + 0.35 * e);
         }
       });
     }
@@ -594,15 +637,16 @@ class HexaSortGame {
     const group = new THREE.Group();
     layers.forEach((color, index) => {
       const layer = new THREE.Mesh(this.layerGeometry, [this.sideMaterials[color], this.materials[color], this.sideMaterials[color]]);
-      layer.position.y = 0.075 + index * CONFIG.layerHeight;
+      // Flatter base offset — tiles sit low
+      layer.position.y = 0.040 + index * CONFIG.layerHeight;
       layer.castShadow = true;
       layer.receiveShadow = true;
       layer.userData.baseY = layer.position.y;
       group.add(layer);
     });
     const top = this.topColor({ layers });
-    const glow = new THREE.PointLight(CONFIG.colors[top]?.main || 0xffffff, clamp(layers.length * 0.08, 0.18, 1), 2.2);
-    glow.position.y = 0.24 + layers.length * CONFIG.layerHeight;
+    const glow = new THREE.PointLight(CONFIG.colors[top]?.main || 0xffffff, clamp(layers.length * 0.06, 0.12, 0.7), 1.8);
+    glow.position.y = 0.12 + layers.length * CONFIG.layerHeight;
     group.add(glow);
     return group;
   }
@@ -807,18 +851,26 @@ class HexaSortGame {
   }
 
   completeLevel() {
-    this.showToast('Level complete');
+    this.store.paused = true;
+    this.store.powerups.hammer += 1;
+    // Show level-complete modal with stats
+    if (dom.levelScore) dom.levelScore.textContent = Math.floor(this.store.score).toLocaleString();
+    if (dom.levelMoves) dom.levelMoves.textContent = this.store.moves;
+    dom.levelModal?.classList.remove('hidden');
+  }
+
+  advanceLevel() {
     this.store.level += 1;
     this.store.progress = 0;
-    this.store.powerups.hammer += 1;
-    setTimeout(() => {
-      this.clearStacks();
-      this.createBoard();
-      this.seedLevel();
-      this.tray = Array.from({ length: CONFIG.traySize }, () => this.generateTrayStack());
-      this.renderTray();
-      this.syncUI();
-    }, 900);
+    this.store.paused = false;
+    dom.levelModal?.classList.add('hidden');
+    this.clearStacks();
+    this.createBoard();
+    this.seedLevel();
+    this.tray = Array.from({ length: CONFIG.traySize }, () => this.generateTrayStack());
+    this.renderTray();
+    this.syncUI();
+    this.showToast(`Level ${this.store.level}`);
   }
 
   selectPowerup(type) {
@@ -986,13 +1038,23 @@ class HexaSortGame {
   createMiniPreview(stack, drag = false) {
     const wrap = document.createElement('div');
     wrap.className = drag ? 'drag-preview' : 'slot-preview';
-    const layers = stack.layers.slice(0, 9);
+    const layers = stack.layers.slice(0, 8);
+    // Each tile offset: tiles sit ON TOP of each other — bigger bottom number = lower tile
+    const STEP = drag ? 9 : 7;   // px per layer (vertical stacking gap)
+    const totalH = layers.length * STEP + 38; // 38 = tile height
+    wrap.style.height = `${totalH}px`;
     layers.forEach((colorId, index) => {
       const color = CONFIG.colors[colorId];
       const hex = document.createElement('span');
       hex.className = 'mini-hex';
-      hex.style.bottom = `${index * (drag ? 8 : 6)}px`;
-      hex.style.background = `linear-gradient(145deg, #${color.main.toString(16).padStart(6, '0')}, #${color.side.toString(16).padStart(6, '0')})`;
+      // index 0 = bottom tile, highest index = top tile
+      hex.style.bottom = `${index * STEP}px`;
+      // Tiles further down are slightly smaller to reinforce perspective
+      const scale = 1 - (layers.length - 1 - index) * 0.018;
+      hex.style.transform = `translateX(-50%) scale(${scale.toFixed(3)})`;
+      const main = color.main.toString(16).padStart(6, '0');
+      const side = color.side.toString(16).padStart(6, '0');
+      hex.style.background = `linear-gradient(160deg, #${main} 0%, #${side} 100%)`;
       wrap.appendChild(hex);
     });
     return wrap;
@@ -1013,10 +1075,12 @@ class HexaSortGame {
     dom.score.textContent = Math.floor(this.store.score).toLocaleString();
     dom.moves.textContent = this.store.moves;
     dom.level.textContent = this.store.level;
-    dom.missionText.textContent = 'Clear target colors';
-    dom.missionCount.textContent = `${this.store.progress}/${CONFIG.levelTarget}`;
-    dom.pressureFill.style.width = `${clamp((this.store.progress / CONFIG.levelTarget) * 100, 3, 100)}%`;
-    dom.pressureLabel.textContent = `${this.store.progress} / ${CONFIG.levelTarget}`;
+
+    const pct = clamp((this.store.progress / CONFIG.levelTarget) * 100, 2, 100);
+    dom.pressureFill.style.width = `${pct}%`;
+    if (dom.progressGlow) dom.progressGlow.style.width = `${pct}%`;
+    dom.pressureLabel.textContent = `${this.store.progress}/${CONFIG.levelTarget}`;
+
     dom.root.classList.toggle('danger', this.boardPressure() > 0.82 && !this.store.paused);
 
     if (this.store.combo > 1) {

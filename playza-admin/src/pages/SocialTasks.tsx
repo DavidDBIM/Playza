@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "../lib/api-client";
+import { AxiosError } from "axios";
 import {
   MdSearch, MdRefresh, MdCheckCircle, MdCancel, MdPending,
   MdOpenInNew, MdZoomIn, MdAdd, MdEdit, MdDelete, MdClose,
@@ -191,7 +192,7 @@ function TaskFormModal({ platformId, editing, onClose, onSaved }: TaskFormModalP
       queryClient.invalidateQueries({ queryKey: ["admin", "social-task-configs"] });
       onSaved();
     },
-    onError: (err: any) => setError(err.response?.data?.message ?? err.message ?? "Save failed"),
+    onError: (err: AxiosError<{ message?: string }>) => setError(err.response?.data?.message ?? err.message ?? "Save failed"),
   });
 
   function handleSubmit(e: React.FormEvent) {
@@ -346,7 +347,7 @@ function ReviewModal({ submission, configMap, onClose, onDone }: ReviewModalProp
   const { mutate: doReview, isPending: reviewing } = useMutation({
     mutationFn: reviewSubmission,
     onSuccess: () => { onDone(); onClose(); },
-    onError: (err: any) => setReviewError(err.response?.data?.message ?? err.message ?? "Action failed"),
+    onError: (err: AxiosError<{ message?: string }>) => setReviewError(err.response?.data?.message ?? err.message ?? "Action failed"),
   });
 
   const sc = STATUS_CONFIG[submission.status];
@@ -564,12 +565,6 @@ const SocialTasks: React.FC = () => {
     setSearch(searchInput);
     setPage(1);
   }
-
-  // Platform-level submission stats (pending count badge)
-  const pendingByPlatform = (platform: string) => {
-    // We approximate from loaded submissions, or just show nothing if not loaded
-    return 0; // Real-time badge would require per-platform count query
-  };
 
   const colors = PLATFORM_COLORS[activePlatform];
   const platformInfo = PLATFORMS.find((p) => p.id === activePlatform);
