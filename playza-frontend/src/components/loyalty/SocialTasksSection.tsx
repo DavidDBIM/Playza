@@ -37,17 +37,15 @@ import {
 
 // ─── Platform display config ──────────────────────────────────────────────────
 
-interface PlatformDisplay {
+const PLATFORM_INFO: Record<string, {
   label: string;
   icon: React.ElementType;
-  color: string;
-  bg: string;
+  color: string;       // Tailwind text color
+  bg: string;          // Tailwind bg
   border: string;
   badge: string;
   tabActive: string;
-}
-
-const PLATFORM_INFO: Record<string, PlatformDisplay> = {
+}> = {
   twitter: {
     label: "X (Twitter)",
     icon: FaXTwitter,
@@ -106,26 +104,19 @@ const PLATFORM_INFO: Record<string, PlatformDisplay> = {
 
 // Human-readable action labels
 const ACTION_LABELS: Record<string, string> = {
-  follow: "Follow",
-  like: "Like",
-  retweet: "Retweet",
-  quote: "Quote Tweet",
-  comment: "Comment",
+  follow:    "Follow",
+  like:      "Like",
+  retweet:   "Retweet",
+  quote:     "Quote Tweet",
+  comment:   "Comment",
   subscribe: "Subscribe",
-  clap: "Clap",
-  share: "Share",
+  clap:      "Clap",
+  share:     "Share",
   like_page: "Like Page",
 };
 
 // Platform order for tabs
-const PLATFORM_ORDER = [
-  "twitter",
-  "youtube",
-  "facebook",
-  "tiktok",
-  "instagram",
-  "medium",
-];
+const PLATFORM_ORDER = ["twitter", "youtube", "facebook", "tiktok", "instagram", "medium"];
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -151,32 +142,26 @@ export function SocialTasksSection({ claimedTaskIds }: Props) {
   });
 
   // Build a quick lookup: task_id → submission
-  const submissionMap = Object.fromEntries(
-    mySubmissions.map((s) => [s.task_id, s]),
-  );
+  const submissionMap = Object.fromEntries(mySubmissions.map((s) => [s.task_id, s]));
 
   // Group configs by platform, preserve order
-  const platformsWithTasks = PLATFORM_ORDER.filter((p) =>
-    configs.some((c) => c.platform === p),
+  const platformsWithTasks = PLATFORM_ORDER.filter(
+    (p) => configs.some((c) => c.platform === p)
   );
 
-  const [activePlatform, setActivePlatform] = useState<string>(
-    () => platformsWithTasks[0] ?? "twitter",
-  );
+  const [activePlatform, setActivePlatform] = useState<string>(() => platformsWithTasks[0] ?? "twitter");
 
   // Ensure activePlatform is valid after data loads
   const resolvedPlatform = platformsWithTasks.includes(activePlatform)
     ? activePlatform
-    : (platformsWithTasks[0] ?? activePlatform);
+    : platformsWithTasks[0] ?? activePlatform;
 
   const platformTasks = configs.filter((c) => c.platform === resolvedPlatform);
 
   // Social modal state
   const [modal, setModal] = useState<SocialTaskConfig | null>(null);
   const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
-  const [screenshotPreview, setScreenshotPreview] = useState<string | null>(
-    null,
-  );
+  const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -213,13 +198,10 @@ export function SocialTasksSection({ claimedTaskIds }: Props) {
       });
 
       await refetchSubmissions();
-      toast.success(
-        `Screenshot submitted! You'll receive ${modal.points} PZA once approved.`,
-      );
+      toast.success(`Screenshot submitted! You'll receive ${modal.points} PZA once approved.`);
       setModal(null);
     } catch (err: any) {
-      const msg =
-        err?.response?.data?.message ?? err?.message ?? "Submission failed";
+      const msg = err?.response?.data?.message ?? err?.message ?? "Submission failed";
       toast.error(msg);
     } finally {
       setSubmitting(false);
@@ -250,13 +232,11 @@ export function SocialTasksSection({ claimedTaskIds }: Props) {
       {/* Platform tabs */}
       <div className="flex gap-2 flex-wrap px-4 pt-4 pb-2">
         {platformsWithTasks.map((platformId) => {
-          const info = PLATFORM_INFO[platformId] as PlatformDisplay;
+          const info = PLATFORM_INFO[platformId];
           if (!info) return null;
           const Icon = info.icon;
           const isActive = resolvedPlatform === platformId;
-          const taskCount = configs.filter(
-            (c) => c.platform === platformId,
-          ).length;
+          const taskCount = configs.filter(c => c.platform === platformId).length;
           return (
             <button
               key={platformId}
@@ -269,9 +249,7 @@ export function SocialTasksSection({ claimedTaskIds }: Props) {
             >
               <Icon className="w-3.5 h-3.5" />
               {info.label}
-              <span
-                className={`text-[9px] font-black px-1.5 py-0.5 rounded-md ${isActive ? info.badge : "bg-slate-200 dark:bg-slate-700 text-slate-500"}`}
-              >
+              <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md ${isActive ? info.badge : "bg-slate-200 dark:bg-slate-700 text-slate-500"}`}>
                 {taskCount}
               </span>
             </button>
@@ -283,20 +261,16 @@ export function SocialTasksSection({ claimedTaskIds }: Props) {
       <div className="divide-y divide-slate-100 dark:divide-slate-800">
         {platformTasks.length === 0 ? (
           <div className="p-8 text-center text-slate-400">
-            <p className="text-sm font-medium">
-              No tasks for this platform yet
-            </p>
+            <p className="text-sm font-medium">No tasks for this platform yet</p>
           </div>
         ) : (
           platformTasks.map((task) => {
-            const info = PLATFORM_INFO[task.platform];
-            const Icon = info?.icon ?? Share2;
+            const info = PLATFORM_INFO[task.platform] as typeof PLATFORM_INFO[keyof typeof PLATFORM_INFO] | undefined;
+            const Icon = (info?.icon ?? Share2) as React.ElementType;
             const submission = submissionMap[task.id];
-            const isApproved =
-              claimedTaskIds.has(task.id) || submission?.status === "approved";
+            const isApproved = claimedTaskIds.has(task.id) || submission?.status === "approved";
             const isPending = submission?.status === "pending";
-            const actionLabel =
-              ACTION_LABELS[task.action_type] ?? task.action_type;
+            const actionLabel = ACTION_LABELS[task.action_type] ?? task.action_type;
 
             return (
               <div
@@ -304,47 +278,29 @@ export function SocialTasksSection({ claimedTaskIds }: Props) {
                 className={`flex items-center gap-4 px-5 py-4 transition-all ${isApproved ? "opacity-60" : "hover:bg-slate-50 dark:hover:bg-slate-800/50"}`}
               >
                 {/* Icon */}
-                <div
-                  className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-lg ${isApproved ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400" : `${info?.bg ?? ""}`}`}
-                >
-                  {isApproved ? (
-                    <MdCheckCircle />
-                  ) : (
-                    <Icon className={`w-5 h-5 ${info?.color ?? ""}`} />
-                  )}
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-lg ${isApproved ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400" : `${info?.bg ?? ""}`}`}>
+                  {isApproved ? <MdCheckCircle /> : <Icon className={`w-5 h-5 ${info?.color ?? ""}`} />}
                 </div>
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                    <span
-                      className={`font-bold text-sm ${isApproved ? "text-slate-400 dark:text-slate-600 line-through" : "text-slate-900 dark:text-white"}`}
-                    >
+                    <span className={`font-bold text-sm ${isApproved ? "text-slate-400 dark:text-slate-600 line-through" : "text-slate-900 dark:text-white"}`}>
                       {task.title}
                     </span>
                     {/* Action type badge */}
-                    <span
-                      className={`text-[9px] font-black px-1.5 py-0.5 rounded-md ${info?.badge ?? "bg-muted text-muted-foreground"}`}
-                    >
+                    <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md ${info?.badge ?? "bg-muted text-muted-foreground"}`}>
                       {actionLabel}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                    {task.description}
-                  </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{task.description}</p>
                 </div>
 
                 {/* Points + CTA */}
                 <div className="flex items-center gap-3 shrink-0">
                   <div className="text-right">
-                    <p
-                      className={`font-black text-sm ${info?.color ?? "text-foreground"}`}
-                    >
-                      +{task.points.toLocaleString()}
-                    </p>
-                    <p className="text-[10px] text-slate-400 font-medium">
-                      PZA
-                    </p>
+                    <p className={`font-black text-sm ${info?.color ?? "text-foreground"}`}>+{task.points.toLocaleString()}</p>
+                    <p className="text-[10px] text-slate-400 font-medium">PZA</p>
                   </div>
 
                   {isApproved ? (
@@ -371,175 +327,143 @@ export function SocialTasksSection({ claimedTaskIds }: Props) {
       </div>
 
       {/* ── Submission Modal ─────────────────────────────────────────────── */}
-      {modal &&
-        (() => {
-          const info = PLATFORM_INFO[modal.platform];
-          const Icon = info?.icon ?? Share2;
-          const actionLabel =
-            ACTION_LABELS[modal.action_type] ?? modal.action_type;
-          return (
+      {modal && (() => {
+        const info = PLATFORM_INFO[modal.platform] as typeof PLATFORM_INFO[keyof typeof PLATFORM_INFO] | undefined;
+        const Icon = (info?.icon ?? Share2) as React.ElementType;
+        const actionLabel = ACTION_LABELS[modal.action_type] ?? modal.action_type;
+        return (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-2xl"
+            onClick={() => setModal(null)}
+          >
             <div
-              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-2xl"
-              onClick={() => setModal(null)}
+              className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 w-full max-w-md shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
             >
-              <div
-                className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 w-full max-w-md shadow-2xl"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {/* Modal header */}
-                <div className="flex items-center justify-between mb-5">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`w-9 h-9 rounded-xl flex items-center justify-center ${info?.bg ?? ""} border ${info?.border ?? ""}`}
-                    >
-                      <Icon className={`w-4 h-4 ${info?.color ?? ""}`} />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-slate-900 dark:text-white text-base leading-tight">
-                        {modal.title}
-                      </h3>
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        <span
-                          className={`text-[9px] font-black px-1.5 py-0.5 rounded-md ${info?.badge ?? ""}`}
-                        >
-                          {info?.label}
-                        </span>
-                        <span
-                          className={`text-[9px] font-black px-1.5 py-0.5 rounded-md ${info?.badge ?? ""}`}
-                        >
-                          {actionLabel}
-                        </span>
-                        <span className="text-xs text-slate-500 dark:text-slate-400">
-                          +{modal.points} PZA after approval
-                        </span>
-                      </div>
-                    </div>
+              {/* Modal header */}
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-3">
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${info?.bg ?? ""} border ${info?.border ?? ""}`}>
+                    <Icon className={`w-4 h-4 ${info?.color ?? ""}`} />
                   </div>
-                  <button
-                    onClick={() => setModal(null)}
-                    className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
-                  >
-                    <MdClose />
-                  </button>
-                </div>
-
-                {/* Steps */}
-                <div className="space-y-3 mb-5">
-                  {/* Step 1 */}
-                  <div className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
-                    <span className="w-6 h-6 rounded-full bg-rose-500 text-white text-xs font-black flex items-center justify-center shrink-0 mt-0.5">
-                      1
-                    </span>
-                    <div>
-                      <p className="text-sm font-bold text-slate-900 dark:text-white">
-                        {actionLabel} on {info?.label}
-                      </p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                        {modal.description}
-                      </p>
-                      <a
-                        href={modal.target_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={`inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors text-white ${info?.tabActive ?? "bg-rose-500 hover:bg-rose-600"}`}
-                      >
-                        <MdOpenInNew className="text-sm" /> Open Link
-                      </a>
-                    </div>
-                  </div>
-
-                  {/* Step 2 */}
-                  <div className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
-                    <span className="w-6 h-6 rounded-full bg-rose-500 text-white text-xs font-black flex items-center justify-center shrink-0 mt-0.5">
-                      2
-                    </span>
-                    <div>
-                      <p className="text-sm font-bold text-slate-900 dark:text-white">
-                        Take a Screenshot
-                      </p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                        Screenshot must clearly show your username and the
-                        completed action.
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Step 3 */}
-                  <div className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
-                    <span className="w-6 h-6 rounded-full bg-rose-500 text-white text-xs font-black flex items-center justify-center shrink-0 mt-0.5">
-                      3
-                    </span>
-                    <div className="flex-1">
-                      <p className="text-sm font-bold text-slate-900 dark:text-white mb-2">
-                        Upload Screenshot
-                      </p>
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/*"
-                        onChange={handleFileChange}
-                        className="hidden"
-                      />
-                      {screenshotPreview ? (
-                        <div className="relative">
-                          <img
-                            src={screenshotPreview}
-                            alt="preview"
-                            className="w-full h-32 object-cover rounded-xl border border-slate-200 dark:border-slate-700"
-                          />
-                          <button
-                            onClick={() => {
-                              setScreenshotFile(null);
-                              setScreenshotPreview(null);
-                            }}
-                            className="absolute top-1.5 right-1.5 w-6 h-6 bg-slate-900/70 hover:bg-red-500 text-white rounded-full flex items-center justify-center transition-colors"
-                          >
-                            <MdCancel className="text-xs" />
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => fileInputRef.current?.click()}
-                          className="w-full border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-rose-400 dark:hover:border-rose-500 rounded-xl py-4 flex flex-col items-center gap-2 transition-colors group"
-                        >
-                          <MdCameraAlt className="text-2xl text-slate-400 group-hover:text-rose-500 transition-colors" />
-                          <span className="text-xs font-bold text-slate-500 dark:text-slate-400 group-hover:text-rose-500 transition-colors">
-                            Tap to upload screenshot
-                          </span>
-                        </button>
-                      )}
+                  <div>
+                    <h3 className="font-bold text-slate-900 dark:text-white text-base leading-tight">
+                      {modal.title}
+                    </h3>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md ${info?.badge ?? ""}`}>
+                        {info?.label}
+                      </span>
+                      <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md ${info?.badge ?? ""}`}>
+                        {actionLabel}
+                      </span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400">+{modal.points} PZA after approval</span>
                     </div>
                   </div>
                 </div>
-
-                {/* Review note */}
-                <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl px-4 py-2.5 mb-5">
-                  <p className="text-xs text-amber-700 dark:text-amber-400 font-medium">
-                    <span className="font-bold">⚡ Review process:</span> Admin
-                    will verify your screenshot within 24–48 hours. Once
-                    approved, {modal.points} PZA will be credited.
-                  </p>
-                </div>
-
                 <button
-                  onClick={submitTask}
-                  disabled={!screenshotFile || submitting}
-                  className="w-full py-3 rounded-xl font-bold text-sm transition-all bg-rose-500 hover:bg-rose-600 disabled:bg-slate-200 dark:disabled:bg-slate-800 disabled:text-slate-400 text-white disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm shadow-rose-500/30 disabled:shadow-none"
+                  onClick={() => setModal(null)}
+                  className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
                 >
-                  {submitting ? (
-                    <>
-                      <MdHourglassBottom className="animate-spin" /> Submitting…
-                    </>
-                  ) : (
-                    <>
-                      <MdUpload className="text-base" /> Submit for Review
-                    </>
-                  )}
+                  <MdClose />
                 </button>
               </div>
+
+              {/* Steps */}
+              <div className="space-y-3 mb-5">
+                {/* Step 1 */}
+                <div className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                  <span className="w-6 h-6 rounded-full bg-rose-500 text-white text-xs font-black flex items-center justify-center shrink-0 mt-0.5">1</span>
+                  <div>
+                    <p className="text-sm font-bold text-slate-900 dark:text-white">
+                      {actionLabel} on {info?.label}
+                    </p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{modal.description}</p>
+                    <a
+                      href={modal.target_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors text-white ${info?.tabActive ?? "bg-rose-500 hover:bg-rose-600"}`}
+                    >
+                      <MdOpenInNew className="text-sm" /> Open Link
+                    </a>
+                  </div>
+                </div>
+
+                {/* Step 2 */}
+                <div className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                  <span className="w-6 h-6 rounded-full bg-rose-500 text-white text-xs font-black flex items-center justify-center shrink-0 mt-0.5">2</span>
+                  <div>
+                    <p className="text-sm font-bold text-slate-900 dark:text-white">Take a Screenshot</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      Screenshot must clearly show your username and the completed action.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Step 3 */}
+                <div className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                  <span className="w-6 h-6 rounded-full bg-rose-500 text-white text-xs font-black flex items-center justify-center shrink-0 mt-0.5">3</span>
+                  <div className="flex-1">
+                    <p className="text-sm font-bold text-slate-900 dark:text-white mb-2">Upload Screenshot</p>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileChange}
+                      className="hidden"
+                    />
+                    {screenshotPreview ? (
+                      <div className="relative">
+                        <img
+                          src={screenshotPreview}
+                          alt="preview"
+                          className="w-full h-32 object-cover rounded-xl border border-slate-200 dark:border-slate-700"
+                        />
+                        <button
+                          onClick={() => { setScreenshotFile(null); setScreenshotPreview(null); }}
+                          className="absolute top-1.5 right-1.5 w-6 h-6 bg-slate-900/70 hover:bg-red-500 text-white rounded-full flex items-center justify-center transition-colors"
+                        >
+                          <MdCancel className="text-xs" />
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        className="w-full border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-rose-400 dark:hover:border-rose-500 rounded-xl py-4 flex flex-col items-center gap-2 transition-colors group"
+                      >
+                        <MdCameraAlt className="text-2xl text-slate-400 group-hover:text-rose-500 transition-colors" />
+                        <span className="text-xs font-bold text-slate-500 dark:text-slate-400 group-hover:text-rose-500 transition-colors">
+                          Tap to upload screenshot
+                        </span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Review note */}
+              <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl px-4 py-2.5 mb-5">
+                <p className="text-xs text-amber-700 dark:text-amber-400 font-medium">
+                  <span className="font-bold">⚡ Review process:</span> Admin will verify your screenshot within 24–48 hours. Once approved, {modal.points} PZA will be credited.
+                </p>
+              </div>
+
+              <button
+                onClick={submitTask}
+                disabled={!screenshotFile || submitting}
+                className="w-full py-3 rounded-xl font-bold text-sm transition-all bg-rose-500 hover:bg-rose-600 disabled:bg-slate-200 dark:disabled:bg-slate-800 disabled:text-slate-400 text-white disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm shadow-rose-500/30 disabled:shadow-none"
+              >
+                {submitting ? (
+                  <><MdHourglassBottom className="animate-spin" /> Submitting…</>
+                ) : (
+                  <><MdUpload className="text-base" /> Submit for Review</>
+                )}
+              </button>
             </div>
-          );
-        })()}
+          </div>
+        );
+      })()}
     </div>
   );
 }
