@@ -21,7 +21,7 @@ import {
   type SocialTaskConfig,
 } from "@/api/loyalty.api";
 
-// ─── Platform styles — plain string constants, never dynamic ─────────────────
+// ── Platform style maps ────────────────────────────────────────────────────────
 
 const PLT_LABEL: Record<string, string> = {
   twitter:   "X (Twitter)",
@@ -91,7 +91,7 @@ const ACTION_LABEL: Record<string, string> = {
 
 const PLATFORM_ORDER = ["twitter", "youtube", "facebook", "tiktok", "instagram", "medium"];
 
-// ─── Platform Icon ─────────────────────────────────────────────────────────────
+// ── Platform Icon ──────────────────────────────────────────────────────────────
 
 function PlatformIcon({ platform, className }: { platform: string; className: string }) {
   if (platform === "twitter")   return <FaXTwitter className={className} />;
@@ -103,13 +103,13 @@ function PlatformIcon({ platform, className }: { platform: string; className: st
   return <Share2 className={className} />;
 }
 
-// ─── Props ─────────────────────────────────────────────────────────────────────
+// ── Props ──────────────────────────────────────────────────────────────────────
 
 interface Props {
   claimedTaskIds: Set<string>;
 }
 
-// ─── Component ─────────────────────────────────────────────────────────────────
+// ── Component ──────────────────────────────────────────────────────────────────
 
 export function SocialTasksSection({ claimedTaskIds }: Props) {
   const toast = useToast();
@@ -181,7 +181,7 @@ export function SocialTasksSection({ claimedTaskIds }: Props) {
       });
       await refetchSubs();
       queryClient.invalidateQueries({ queryKey: ["social-task-my-submissions"] });
-      toast.success("Screenshot submitted! You will receive " + modal.points + " PZA once approved.");
+      toast.success(`Screenshot submitted! You will receive ${modal.points} PZA once approved.`);
       setModal(null);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Submission failed";
@@ -195,7 +195,7 @@ export function SocialTasksSection({ claimedTaskIds }: Props) {
     return (
       <div className="p-10 flex items-center justify-center text-slate-400">
         <MdRefresh className="animate-spin text-2xl mr-2" />
-        <span className="text-sm">Loading social tasks…</span>
+        <span className="text-sm">Loading social tasks...</span>
       </div>
     );
   }
@@ -216,11 +216,12 @@ export function SocialTasksSection({ claimedTaskIds }: Props) {
         {platformsWithTasks.map((pid) => {
           const isActive = resolved === pid;
           const count = configs.filter((c) => c.platform === pid).length;
-          const tabCls = isActive
-            ? ["flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all border", PLT_TAB_ACTIVE[pid] ?? ""].join(" ")
+          // FIX: use template literal instead of [].join(" ") to avoid TS2322 never[] error
+          const tabCls: string = isActive
+            ? `flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all border ${PLT_TAB_ACTIVE[pid] ?? ""}`
             : "flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all border bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-transparent hover:bg-slate-200 dark:hover:bg-slate-700";
-          const badgeCls = isActive
-            ? ["text-[9px] font-black px-1.5 py-0.5 rounded-md", PLT_BADGE[pid] ?? ""].join(" ")
+          const badgeCls: string = isActive
+            ? `text-[9px] font-black px-1.5 py-0.5 rounded-md ${PLT_BADGE[pid] ?? ""}`
             : "text-[9px] font-black px-1.5 py-0.5 rounded-md bg-slate-200 dark:bg-slate-700 text-slate-500";
           return (
             <button key={pid} onClick={() => setActivePlatform(pid)} className={tabCls}>
@@ -247,15 +248,16 @@ export function SocialTasksSection({ claimedTaskIds }: Props) {
             const badgeCls   = PLT_BADGE[task.platform] ?? "bg-slate-100 text-slate-600";
             const pointText  = PLT_TEXT[task.platform] ?? "text-slate-600";
 
-            const rowCls = isApproved
+            const rowCls: string = isApproved
               ? "flex items-center gap-4 px-5 py-4 transition-all opacity-60"
               : "flex items-center gap-4 px-5 py-4 transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50";
 
-            const iconWrapCls = isApproved
+            // FIX: template literal instead of [].join(" ")
+            const iconWrapCls: string = isApproved
               ? "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-lg bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400"
-              : ["w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-lg", iconBg].join(" ");
+              : `w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-lg ${iconBg}`;
 
-            const titleCls = isApproved
+            const titleCls: string = isApproved
               ? "font-bold text-sm text-slate-400 dark:text-slate-600 line-through"
               : "font-bold text-sm text-slate-900 dark:text-white";
 
@@ -264,14 +266,14 @@ export function SocialTasksSection({ claimedTaskIds }: Props) {
                 <div className={iconWrapCls}>
                   {isApproved
                     ? <MdCheckCircle />
-                    : <PlatformIcon platform={task.platform} className={["w-5 h-5", iconText].join(" ")} />
+                    : <PlatformIcon platform={task.platform} className={`w-5 h-5 ${iconText}`} />
                   }
                 </div>
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap mb-0.5">
                     <span className={titleCls}>{task.title}</span>
-                    <span className={["text-[9px] font-black px-1.5 py-0.5 rounded-md", badgeCls].join(" ")}>
+                    <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md ${badgeCls}`}>
                       {actionLbl}
                     </span>
                   </div>
@@ -280,7 +282,7 @@ export function SocialTasksSection({ claimedTaskIds }: Props) {
 
                 <div className="flex items-center gap-3 shrink-0">
                   <div className="text-right">
-                    <p className={["font-black text-sm", pointText].join(" ")}>+{task.points.toLocaleString()}</p>
+                    <p className={`font-black text-sm ${pointText}`}>+{task.points.toLocaleString()}</p>
                     <p className="text-[10px] text-slate-400 font-medium">PZA</p>
                   </div>
 
@@ -295,7 +297,7 @@ export function SocialTasksSection({ claimedTaskIds }: Props) {
                   ) : (
                     <button
                       onClick={() => openModal(task)}
-                      className={["px-3 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1", badgeCls, "hover:opacity-80"].join(" ")}
+                      className={`px-3 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${badgeCls} hover:opacity-80`}
                     >
                       <MdUpload className="text-sm" /> Submit
                     </button>
@@ -311,10 +313,11 @@ export function SocialTasksSection({ claimedTaskIds }: Props) {
       {modal !== null && (() => {
         const actionLbl = ACTION_LABEL[modal.action_type] ?? modal.action_type;
         const pLabel    = PLT_LABEL[modal.platform] ?? modal.platform;
-        const btnCls    = PLT_BTN[modal.platform] ?? "bg-rose-500 hover:bg-rose-600 text-white";
-        const iconBg    = PLT_ICON_BG[modal.platform] ?? "bg-slate-100";
-        const iconText  = PLT_TEXT[modal.platform] ?? "text-slate-600";
-        const badgeCls  = PLT_BADGE[modal.platform] ?? "bg-slate-100 text-slate-600";
+        // FIX: use typed string variables, not array joins
+        const btnCls: string    = PLT_BTN[modal.platform] ?? "bg-rose-500 hover:bg-rose-600 text-white";
+        const iconBg: string    = PLT_ICON_BG[modal.platform] ?? "bg-slate-100";
+        const iconText: string  = PLT_TEXT[modal.platform] ?? "text-slate-600";
+        const badgeCls: string  = PLT_BADGE[modal.platform] ?? "bg-slate-100 text-slate-600";
 
         return (
           <div
@@ -328,14 +331,14 @@ export function SocialTasksSection({ claimedTaskIds }: Props) {
               {/* Header */}
               <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-3">
-                  <div className={["w-9 h-9 rounded-xl flex items-center justify-center", iconBg].join(" ")}>
-                    <PlatformIcon platform={modal.platform} className={["w-4 h-4", iconText].join(" ")} />
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${iconBg}`}>
+                    <PlatformIcon platform={modal.platform} className={`w-4 h-4 ${iconText}`} />
                   </div>
                   <div>
                     <h3 className="font-bold text-slate-900 dark:text-white text-base leading-tight">{modal.title}</h3>
                     <div className="flex items-center gap-1.5 mt-0.5">
-                      <span className={["text-[9px] font-black px-1.5 py-0.5 rounded-md", badgeCls].join(" ")}>{pLabel}</span>
-                      <span className={["text-[9px] font-black px-1.5 py-0.5 rounded-md", badgeCls].join(" ")}>{actionLbl}</span>
+                      <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md ${badgeCls}`}>{pLabel}</span>
+                      <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md ${badgeCls}`}>{actionLbl}</span>
                       <span className="text-xs text-slate-500 dark:text-slate-400">+{modal.points} PZA on approval</span>
                     </div>
                   </div>
@@ -359,7 +362,7 @@ export function SocialTasksSection({ claimedTaskIds }: Props) {
                       href={modal.target_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className={["inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors", btnCls].join(" ")}
+                      className={`inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${btnCls}`}
                     >
                       <MdOpenInNew className="text-sm" /> Open Link
                     </a>
@@ -416,7 +419,7 @@ export function SocialTasksSection({ claimedTaskIds }: Props) {
                 className="w-full py-3 rounded-xl font-bold text-sm transition-all bg-rose-500 hover:bg-rose-600 disabled:bg-slate-200 dark:disabled:bg-slate-800 disabled:text-slate-400 text-white disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {submitting ? (
-                  <><MdHourglassBottom className="animate-spin" /> Submitting…</>
+                  <><MdHourglassBottom className="animate-spin" /> Submitting...</>
                 ) : (
                   <><MdUpload className="text-base" /> Submit for Review</>
                 )}
