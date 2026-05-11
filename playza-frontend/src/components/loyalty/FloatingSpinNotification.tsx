@@ -33,7 +33,7 @@ export const FloatingSpinNotification = () => {
           <div className="absolute inset-0 rounded-full bg-indigo-500/10 animate-pulse scale-150" />
           
           {/* Main Button */}
-          <div className="relative w-16 h-16 md:w-20 md:h-20 rounded-full bg-linear-to-br from-indigo-600/20 to-purple-700/20 shadow-xl shadow-indigo-500/40 flex items-center justify-center border-2 border-white/10 overflow-hidden group backdrop-blur-sm">
+          <div className="relative w-12 h-12 md:w-16 md:h-16 rounded-full bg-linear-to-br from-indigo-600/20 to-purple-700/20 shadow-xl shadow-indigo-500/40 flex items-center justify-center border-2 border-white/10 overflow-hidden group backdrop-blur-sm">
             <img 
               src="/lucky_wheel_asset.png" 
               alt="Spin Wheel" 
@@ -41,8 +41,8 @@ export const FloatingSpinNotification = () => {
             />
             
             {/* Spin Count Badge */}
-            <div className="absolute top-1 right-1 w-5 h-5 bg-red-500 border-2 border-white rounded-full flex items-center justify-center shadow-md z-10">
-              <span className="text-white text-[8px] font-black leading-none">{spinsLeft}</span>
+            <div className="absolute top-0 right-0 w-4 h-4 bg-red-500 border-2 border-white rounded-full flex items-center justify-center shadow-md z-10">
+              <span className="text-white text-[7px] font-black leading-none">{spinsLeft}</span>
             </div>
           </div>
 
