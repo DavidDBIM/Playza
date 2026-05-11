@@ -1,26 +1,20 @@
 import { Router } from 'express'
 import { requireAdmin, AuthRequest } from '../../middleware/auth'
 import { supabaseAdmin } from '../../config/supabase'
-import { awardPZA } from '../../lib/pzaEngine'
 
 const router = Router()
+const SOCIAL_TASK_PZA = 200
 
-const SOCIAL_TASK_PZA = 200  // PZA awarded on approval
-
-// ──────────────────────────────────────────────────────────
-//  GET /admin/social-tasks
-//  Query: page, limit, search, status, task_id
-// ──────────────────────────────────────────────────────────
-router.get('/', requireAdmin, async (req: AuthRequest, res) => {
+// GET /admin/social-tasks
+router.get('/', requireAdmin, async (req, res) => {
   try {
-    const page  = Math.max(1, parseInt(req.query.page  as string) || 1)
-    const limit = Math.min(50, parseInt(req.query.limit as string) || 15)
+    const page   = Math.max(1, parseInt(req.query.page  as string) || 1)
+    const limit  = Math.min(50, parseInt(req.query.limit as string) || 15)
     const offset = (page - 1) * limit
     const search  = ((req.query.search  as string) || '').trim()
     const status  = (req.query.status  as string) || ''
     const task_id = (req.query.task_id as string) || ''
 
-    // Build query with join to users table for username/email
     let query = supabaseAdmin
       .from('social_task_submissions')
       .select(
@@ -31,12 +25,9 @@ router.get('/', requireAdmin, async (req: AuthRequest, res) => {
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1)
 
-    if (status) query = query.eq('status', status)
+    if (status)  query = query.eq('status', status)
     if (task_id) query = query.eq('task_id', task_id)
-    if (search) {
-      // Search by username or email via the joined users table
-      query = query.or(`users.username.ilike.%${search}%,users.email.ilike.%${search}%`)
-    }
+    if (search)  query = query.or(`users.username.ilike.%${search}%,users.email.ilike.%${search}%`)
 
     const { data, count, error } = await query
     if (error) throw error
@@ -56,10 +47,7 @@ router.get('/', requireAdmin, async (req: AuthRequest, res) => {
   }
 })
 
-// ──────────────────────────────────────────────────────────
-//  POST /admin/social-tasks/:id/review
-//  Body: { action: 'approve' | 'reject', admin_note?: string }
-// ──────────────────────────────────────────────────────────
+// POST /admin/social-tasks/:id/review
 router.post('/:id/review', requireAdmin, async (req: AuthRequest, res) => {
   try {
     const { id } = req.params
@@ -70,7 +58,6 @@ router.post('/:id/review', requireAdmin, async (req: AuthRequest, res) => {
       return
     }
 
-    // ── Fetch the submission
     const { data: submission, error: fetchErr } = await supabaseAdmin
       .from('social_task_submissions')
       .select('*')
@@ -89,37 +76,23 @@ router.post('/:id/review', requireAdmin, async (req: AuthRequest, res) => {
 
     const newStatus = action === 'approve' ? 'approved' : 'rejected'
 
-    // ── Update submission record
-    const { error: updateErr } = await supabaseAdmin
+    await supabaseAdmin
       .from('social_task_submissions')
-      .update({
-        status: newStatus,
-        admin_note: admin_note || null,
-        reviewed_at: new Date().toISOString(),
-      })
+      .update({ status: newStatus, admin_note: admin_note || null, reviewed_at: new Date().toISOString() })
       .eq('id', id)
 
-    if (updateErr) throw updateErr
-
-    // ── If approved: award 200 PZA and mark task claimed
     if (action === 'approve') {
-      // Award PZA — we pass a custom event string directly since social tasks
-      // are not in the standard PZAEvent enum, so we insert manually
       const POINTS = SOCIAL_TASK_PZA
 
       await supabaseAdmin.from('pza_events').insert({
         user_id: submission.user_id,
-        event_type: submission.task_id,    // e.g. "FOLLOW_INSTAGRAM"
+        event_type: submission.task_id,
         points_awarded: POINTS,
         meta: { source: 'social_task_review', submission_id: id },
       })
 
-      // Upsert the pza_points row
       const { data: existing } = await supabaseAdmin
-        .from('pza_points')
-        .select('id')
-        .eq('user_id', submission.user_id)
-        .single()
+        .from('pza_points').select('id').eq('user_id', submission.user_id).single()
 
       if (existing) {
         await supabaseAdmin.rpc('increment_pza_points', {
@@ -133,7 +106,6 @@ router.post('/:id/review', requireAdmin, async (req: AuthRequest, res) => {
         })
       }
 
-      // Also insert into claimed_tasks so the frontend shows it as "Claimed"
       await supabaseAdmin
         .from('claimed_tasks')
         .upsert(
