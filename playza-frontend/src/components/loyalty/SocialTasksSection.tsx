@@ -118,7 +118,8 @@ export function SocialTasksSection({ claimedTaskIds }: Props) {
   const { data: configs = [], isLoading } = useQuery({
     queryKey: ["social-task-configs"],
     queryFn: getSocialTaskConfigsApi,
-    staleTime: 60_000,
+    staleTime: 0,
+    refetchOnMount: "always",
   });
 
   const { data: mySubmissions = [], refetch: refetchSubs } = useQuery({
@@ -216,7 +217,6 @@ export function SocialTasksSection({ claimedTaskIds }: Props) {
         {platformsWithTasks.map((pid) => {
           const isActive = resolved === pid;
           const count = configs.filter((c) => c.platform === pid).length;
-          // FIX: use template literal instead of [].join(" ") to avoid TS2322 never[] error
           const tabCls: string = isActive
             ? `flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all border ${PLT_TAB_ACTIVE[pid] ?? ""}`
             : "flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all border bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-transparent hover:bg-slate-200 dark:hover:bg-slate-700";
@@ -252,7 +252,6 @@ export function SocialTasksSection({ claimedTaskIds }: Props) {
               ? "flex items-center gap-4 px-5 py-4 transition-all opacity-60"
               : "flex items-center gap-4 px-5 py-4 transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50";
 
-            // FIX: template literal instead of [].join(" ")
             const iconWrapCls: string = isApproved
               ? "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-lg bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400"
               : `w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-lg ${iconBg}`;
@@ -313,7 +312,6 @@ export function SocialTasksSection({ claimedTaskIds }: Props) {
       {modal !== null && (() => {
         const actionLbl = ACTION_LABEL[modal.action_type] ?? modal.action_type;
         const pLabel    = PLT_LABEL[modal.platform] ?? modal.platform;
-        // FIX: use typed string variables, not array joins
         const btnCls: string    = PLT_BTN[modal.platform] ?? "bg-rose-500 hover:bg-rose-600 text-white";
         const iconBg: string    = PLT_ICON_BG[modal.platform] ?? "bg-slate-100";
         const iconText: string  = PLT_TEXT[modal.platform] ?? "text-slate-600";
