@@ -1,4 +1,4 @@
-import {  useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   MdEdit,
   MdShare,
@@ -17,12 +17,14 @@ import { type User } from "@/api/users.api";
 import { ZASymbol } from "@/components/currency/ZASymbol";
 
 import { ProfileSkeleton } from "@/components/skeletons/ProfileSkeleton";
+import BadgeModal from "@/components/profile/BadgeModal";
 
 const Profile = () => {
   const { user, isLoading: authLoading } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const { data: profileData, isLoading: profileLoading } = useProfile();
+  const [badgeOpen, setBadgeOpen] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !profileLoading && !user) {
@@ -65,12 +67,12 @@ const Profile = () => {
     : (user as User | null);
 
   const pts = profile?.pza_points ?? 0;
+  // Tier thresholds: Bronze 0–4999 | Silver 5000–24999 | Gold 25000–99999 | Platinum 100000+
   const tier =
-    pts < 1000  ? { label: "BRONZE",   color: "bg-amber-700/20 text-amber-700 dark:bg-amber-700/30 dark:text-amber-400 border-amber-700/30" } :
-    pts < 5000  ? { label: "SILVER",   color: "bg-slate-400/20 text-slate-500 dark:bg-slate-400/20 dark:text-slate-300 border-slate-400/30" } :
-    pts < 10000 ? { label: "GOLD",     color: "bg-yellow-400/20 text-yellow-600 dark:bg-yellow-400/20 dark:text-yellow-300 border-yellow-400/30" } :
-    pts < 25000 ? { label: "PLATINUM", color: "bg-cyan-400/20 text-cyan-600 dark:bg-cyan-400/20 dark:text-cyan-300 border-cyan-400/30" } :
-                  { label: "LEGEND",   color: "bg-primary/15 text-primary border-primary/30" };
+    pts < 5000   ? { label: "BRONZE",   color: "bg-amber-700 text-white border-amber-800 shadow-amber-900/40" } :
+    pts < 25000  ? { label: "SILVER",   color: "bg-slate-400 text-white border-slate-500 shadow-slate-500/40" } :
+    pts < 100000 ? { label: "GOLD",     color: "bg-yellow-400 text-yellow-900 border-yellow-500 shadow-yellow-500/40" } :
+                   { label: "PLATINUM", color: "bg-cyan-500 text-white border-cyan-600 shadow-cyan-500/40" };
 
   return (
     <div className="flex-1 pb-16 md:pb-10 transition-all duration-500">
@@ -94,7 +96,9 @@ const Profile = () => {
               )}
             </div>
             <button
-              className={`absolute -bottom-1.5 -right-1.5 text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest shadow-md border ${tier.color}`}
+              onClick={() => setBadgeOpen(true)}
+              title="View tier ranks"
+              className={`absolute -bottom-2 -right-2 text-[8px] font-black px-2 py-1 rounded-full uppercase tracking-widest shadow-lg border-2 cursor-pointer hover:scale-110 active:scale-95 transition-transform ${tier.color}`}
             >
               {tier.label}
             </button>
@@ -244,6 +248,7 @@ const Profile = () => {
       </div>
 
 
+      <BadgeModal isOpen={badgeOpen} onClose={() => setBadgeOpen(false)} pzaPoints={pts} />
     </div>
   );
 };
