@@ -15,6 +15,7 @@ const MODES = {
 };
 
 const STRUCTURES = ["full", "diamond", "hourglass", "split", "chevron", "rings", "funnel"];
+const SHOT_SPEED = 920; // shared between fireShot and buildAimPreview — must stay in sync
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
@@ -98,6 +99,7 @@ class BubbleShooterBlitz {
     this.canvas = document.getElementById("gameCanvas");
     this.ctx = this.canvas.getContext("2d");
     this.scoreValue = document.getElementById("scoreValue");
+    this.shotsValue = document.getElementById("shotsValue");
     this.timeValue = document.getElementById("timeValue");
     this.comboValue = document.getElementById("comboValue");
     this.bestValue = document.getElementById("bestValue");
@@ -151,7 +153,8 @@ class BubbleShooterBlitz {
 
     this.playing = false;
     this.gameOver = false;
-    this.score = 0;
+    this.realScore = 0;      // FIX #3: authoritative score used for logic & submission
+    this.score = 0;          // animated display score only
     this.bestKey = "bubbleShooterBlitz.best.daily";
     this.bestScore = 0;
     this.combo = 1;
@@ -183,22 +186,45 @@ class BubbleShooterBlitz {
     this.flash = 0;
 
     this.lastT = 0;
+    this.trails = [];
+    this.frenzyMode = 0;
+    this.frenzyActive = false;
+    this.beatTimer = 0;
+    this.beatCount = 0;
+    // FIX #4: Session lock — set true by PLAYZA_SESSION_CONFIG so R/restart is disabled
+    this.sessionLocked = false;
+    this.sessionId = null;
+    // Rival banner state (PLAYZA_RIVAL_UPDATE)
+    this.rivalUsername = null;
+    this.rivalScore = 0;
+    // Stats for end-screen
+    this.maxCombo = 1;
+    this.biggestDrop = 0;
+    this.bubblesPopped = 0;
+    // Held bubble slot (separate from swap)
+    this.heldBubble = null;
     this.resize();
     this.buildGrid();
-    window.addEventListener("resize", () => this.resize());
+    window.addEventListener("resize", () => {
+      this.resize();
+      this.buildGrid(); // rebuild so cols fills new screen width
+    });
 
     this.bindEvents();
     this.loadBest();
-    this.openOverlay();
+    // AUTO-START: game begins immediately when iframe loads — no lobby needed
+    this.start(MODES.ENDLESS);
     requestAnimationFrame((t) => this.tick(t));
   }
 
   bindEvents() {
     const toWorld = (evt) => {
+      // Canvas is position:absolute inside #game-container — use its rect for correct mapping
       const rect = this.canvas.getBoundingClientRect();
-      const x = (evt.clientX - rect.left) * (this.bounds.width / rect.width);
-      const y = (evt.clientY - rect.top) * (this.bounds.height / rect.height);
-      return { x, y };
+      return {
+        x: (evt.clientX - rect.left) * (this.bounds.width  / rect.width),
+        y: (evt.clientY - rect.top)  * (this.bounds.height / rect.height),
+      };
     };
 
     const onDown = (evt) => {
@@ -233,6 +259,8 @@ class BubbleShooterBlitz {
 
     window.addEventListener("keydown", (evt) => {
       if (evt.key === "r" || evt.key === "R") {
+        // FIX #5: Block restart in a locked paid session
+        if (this.sessionLocked) return;
         if (this.playing) this.endRun(true);
         this.openOverlay();
       }
@@ -240,43 +268,62 @@ class BubbleShooterBlitz {
       if (evt.key === "s" || evt.key === "S") this.swapQueue();
       if (evt.key === "a" || evt.key === "A") this.toggleAim();
       if (evt.key === "b" || evt.key === "B") this.useBomb();
+      if (evt.key === "h" || evt.key === "H") this.holdBubble();
     });
 
-    this.swapButton.addEventListener("click", () => this.swapQueue());
-    this.bombButton.addEventListener("click", () => this.useBomb());
-    this.aimButton.addEventListener("click", () => this.toggleAim());
-    this.soundButton.addEventListener("click", () => this.toggleSound());
-    this.helpButton.addEventListener("click", () => this.openOverlay(true));
+    // Null-safe: some buttons are hidden spans in the new layout
+    this.swapButton?.addEventListener("click", () => this.swapQueue());
+    this.bombButton?.addEventListener("click", () => this.useBomb());
+    this.aimButton?.addEventListener("click",  () => this.toggleAim());
+    this.soundButton?.addEventListener("click",() => this.toggleSound());
+    this.helpButton?.addEventListener("click", () => this.openOverlay(true));
 
-    this.startDaily.addEventListener("click", () => this.start(MODES.DAILY));
-    this.startEndless.addEventListener("click", () => this.start(MODES.ENDLESS));
-    this.closeOverlay.addEventListener("click", () => this.hideOverlay());
+    // Respect the intended mode for both buttons
+    this.startDaily?.addEventListener("click",   () => this.start(MODES.DAILY));
+    this.startEndless?.addEventListener("click", () => this.start(MODES.ENDLESS));
+    this.closeOverlay?.addEventListener("click", () => this.hideOverlay());
   }
 
   resize() {
-    const rect = this.canvas.getBoundingClientRect();
+    // Measure the centred #game-container (max-width: 480px) not the full window.
+    const container = document.getElementById("game-container") || document.body;
+    const W = container.clientWidth;
+    const H = container.clientHeight;
+
     this.dpr = Math.max(1, Math.min(2.5, window.devicePixelRatio || 1));
-    this.canvas.width = Math.floor(rect.width * this.dpr);
-    this.canvas.height = Math.floor(rect.height * this.dpr);
+    this.canvas.width  = Math.floor(W * this.dpr);
+    this.canvas.height = Math.floor(H * this.dpr);
     this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
 
-    this.bounds.width = rect.width;
-    this.bounds.height = rect.height;
-    this.world.width = rect.width;
-    this.world.height = rect.height;
+    this.bounds.width  = W;
+    this.bounds.height = H;
+    this.world.width   = W;
+    this.world.height  = H;
 
-    const playableWidth = Math.max(280, rect.width - 44);
-    this.radius = clamp(Math.floor(playableWidth / 14), 18, 32);
-    this.xStep = this.radius * 2;
-    this.yStep = Math.round(this.radius * Math.sqrt(3));
-    this.cols = clamp(Math.floor(playableWidth / this.xStep), 8, 12);
-    this.maxRows = clamp(Math.floor((rect.height - 160) / this.yStep), 11, 15);
+    // Adjusted for the lowered HUD (10px top + 52px height + buffer)
+    const hudTop = 68;
+    const barH   = 76;
 
-    this.world.paddingSide = Math.round((rect.width - this.cols * this.xStep) / 2) + this.radius;
-    this.world.paddingTop = 34;
-    this.world.paddingBottom = 56;
-    this.launcher.x = rect.width / 2;
-    this.launcher.y = rect.height - this.world.paddingBottom;
+    // ── Reduced bubble count for better mobile fit ────────────────────────
+    const cols = 8; 
+    // In a staggered hex grid: r(2cols+1) <= W. 
+    // Adding 0.5 to divisor for extra side margin padding.
+    this.radius = clamp(Math.floor(W / (2 * cols + 1.5)), 14, 24);
+    this.xStep  = this.radius * 2;
+    this.yStep  = Math.round(this.radius * Math.sqrt(3));
+    this.cols   = cols;
+
+    const playableH = H - hudTop - barH;
+    this.maxRows = clamp(Math.floor(playableH / this.yStep), 10, 14);
+
+    // Centre the grid: left margin = (leftover / 2) + radius
+    const leftover = W - cols * this.xStep - this.radius;
+    this.world.paddingSide   = Math.round(leftover / 2) + this.radius;
+    this.world.paddingTop    = hudTop;
+    this.world.paddingBottom = barH;
+
+    this.launcher.x = W / 2;
+    this.launcher.y = H - barH + this.radius * 0.4;
   }
 
   openOverlay(isHelp = false) {
@@ -309,37 +356,55 @@ class BubbleShooterBlitz {
     this.modePill.textContent = mode === MODES.DAILY ? "Daily Seed" : "Endless";
     this.seedPill.textContent = mode === MODES.DAILY ? `Seed ${this.seedKey}` : "Procedural";
 
+    this.sessionLocked = false;
+    this.sessionId = null;
     this.playing = true;
     this.gameOver = false;
+    this.realScore = 0;
     this.score = 0;
+    this.targetScore = 0;
     this.combo = 1;
+    this.maxCombo = 1;
     this.comboDecay = 0;
     this.elapsed = 0;
     this.timer = mode === MODES.DAILY ? 60 : 0;
+    this.shotsLimit = mode === MODES.ENDLESS ? 150 : Infinity; // Increased to 150 for more engagement
     this.ceiling = 0;
     this.ceilingSpeed = mode === MODES.DAILY ? 8 : 10;
     this.shotsTaken = 0;
     this.misses = 0;
+    this.bubblesPopped = 0;
+    this.biggestDrop = 0;
     this.level = 1;
     this.structureName = STRUCTURES[0];
     this.flash = 0;
     this.shake = 0;
     this.particles = [];
     this.popTexts = [];
+    this.trails = [];
+    this.frenzyActive = false;
+    this.frenzyMode = 0;
+    this.beatTimer = 0;
+    this.beatCount = 0;
+    document.body.classList.remove("frenzy-active"); // FIX #13
 
     this.swapsLeft = mode === MODES.DAILY ? 2 : 3;
     this.bombs = 0;
     this.bombCharge = 0;
+    this.heldBubble = null;  // FIX #24: held slot
     this.aimAssist = true;
     this.activeShot = null;
     this.isAiming = false;
     this.previewPath = [];
+    this._bestReached = false;
+    this._rowAddedForShot = null;
 
     this.buildGrid();
     this.queue.now = this.rollBubble();
     this.queue.next = this.rollBubble();
     this.loadBest();
     this.syncHud();
+    this._bestReached = false;
     this.message("Blitz started. Keep the combo alive.");
   }
 
@@ -351,20 +416,29 @@ class BubbleShooterBlitz {
   }
 
   saveBestIfNeeded() {
-    if (this.score <= this.bestScore) return;
-    this.bestScore = this.score;
+    if (this.realScore <= this.bestScore) return; // FIX #3: use realScore
+    this.bestScore = this.realScore;
     window.localStorage.setItem(this.bestKey, `${this.bestScore}`);
     this.bestValue.textContent = `${this.bestScore}`;
   }
 
   message(text) {
-    if (this.messageLine) this.messageLine.textContent = text;
+    // Works with both the old #messageLine (inside .panel) and the new launcher-bar #messageLine
+    const el = document.getElementById("messageLine");
+    if (el) el.textContent = text;
   }
 
   rollBubble() {
+    // FIX #2: Always consume EXACTLY 2 gameRng calls so the seed sequence
+    // is deterministic regardless of which bubble type is chosen.
+    const chance = this.gameRng();      // call 1: type determination
+    const colorRoll = this.gameRng();   // call 2: color selection (may be unused for specials)
+    if (chance < 0.03) return { type: "rainbow", color: null };
+    if (chance < 0.055 && this.mode === MODES.DAILY) return { type: "clock", color: null };
+    if (chance < 0.08) return { type: "lightning", color: null };
     const palette = this.availableColors();
     const list = palette.length ? palette : COLORS.map((c) => c.id);
-    const color = list[Math.floor(this.gameRng() * list.length)];
+    const color = list[Math.floor(colorRoll * list.length)];
     return { type: "color", color };
   }
 
@@ -439,11 +513,15 @@ class BubbleShooterBlitz {
     for (let col = 0; col < this.cols; col += 1) {
       if (this.gameRng() > density) continue;
       const color = colors[Math.floor(this.gameRng() * colors.length)];
-      this.grid[0][col] = { color, row: 0, col, special: null };
+      let special = null;
+      if (this.gameRng() < 0.05) special = "ice";
+      this.grid[0][col] = { color, row: 0, col, special };
     }
+    // Set ceiling to negative offset so bubbles start at old position and animate down
+    this.ceiling = -this.yStep; 
     this.flash = Math.max(this.flash, 0.06);
-    this.shake = Math.min(16, this.shake + 4);
-    this.tone.tone(220, 0.06, "sawtooth", 0.02);
+    this.shake = Math.min(16, this.shake + 6);
+    this.tone.tone(220, 0.08, "sawtooth", 0.02);
     this.message(this.mode === MODES.ENDLESS ? `Level ${this.level} pressure rising.` : "Ceiling pressure rising.");
   }
 
@@ -491,16 +569,17 @@ class BubbleShooterBlitz {
     if (!shot) return;
 
     const aim = this.getAimVector(targetPoint);
-    const speed = 920;
     this.activeShot = {
       x: this.launcher.x,
       y: this.launcher.y,
-      vx: aim.x * speed,
-      vy: aim.y * speed,
+      vx: aim.x * SHOT_SPEED,   // FIX #15: use shared constant
+      vy: aim.y * SHOT_SPEED,
       radius: this.radius * 0.92,
       bubble: shot,
       life: 6,
       bounces: 0,
+      stretch: 1.4,
+      stretchAngle: Math.atan2(aim.y, aim.x),
     };
     this.queue.now = this.queue.next;
     this.queue.next = this.rollBubble();
@@ -554,33 +633,67 @@ class BubbleShooterBlitz {
     if (this.activeShot) return;
     if (this.bombs <= 0) return;
     this.bombs -= 1;
+    // FIX #17: Save current bubble to held slot instead of discarding it
+    if (this.queue.now && this.queue.now.type !== 'bomb') {
+      this.heldBubble = this.queue.now;
+    }
     this.queue.now = { type: "bomb", color: null };
     this.tone.tone(160, 0.12, "sawtooth", 0.04);
     this.message("Bomb loaded.");
     this.syncHud();
   }
 
-  syncHud() {
-    this.scoreValue.textContent = `${Math.max(0, Math.floor(this.score))}`;
-    this.comboValue.textContent = `x${this.combo}`;
-    if (this.levelValue) this.levelValue.textContent = `${this.level}`;
-    if (this.mode === MODES.DAILY) {
-      this.timeValue.textContent = `${Math.max(0, this.timer).toFixed(1)}`;
-    } else {
-      this.timeValue.textContent = "∞";
-    }
-    this.swapCount.textContent = `${this.swapsLeft}`;
-    this.bombCount.textContent = `${this.bombs}`;
-    this.bombButton.disabled = this.bombs <= 0;
-    this.aimState.textContent = this.aimAssist ? "On" : "Off";
+  holdBubble() {
+    // FIX #24: Hold slot — swap current bubble into hold, restore previous held
+    if (!this.playing || this.gameOver || this.activeShot) return;
+    if (!this.heldBubble && !this.queue.now) return;
+    const current = this.queue.now;
+    this.queue.now = this.heldBubble || this.rollBubble();
+    this.heldBubble = current;
+    this.tone.tone(660, 0.06, "triangle", 0.025);
+    this.message("Bubble held.");
+    this.syncHud();
+  }
 
-    const nowHex = this.queue.now?.type === "bomb" ? "#1f2030" : COLORS.find((c) => c.id === this.queue.now?.color)?.hex || "#ffffff";
-    const nextHex = this.queue.next?.type === "bomb" ? "#1f2030" : COLORS.find((c) => c.id === this.queue.next?.color)?.hex || "#ffffff";
+  syncHud() {
+    if (this.scoreValue) this.scoreValue.textContent = `${Math.max(0, Math.floor(this.score))}`;
+    if (this.shotsValue) {
+      this.shotsValue.textContent = this.mode === MODES.ENDLESS 
+        ? `${Math.max(0, this.shotsLimit - this.shotsTaken)}`
+        : "∞";
+    }
+    if (this.comboValue) this.comboValue.textContent = `x${this.combo}`;
+    if (this.levelValue) this.levelValue.textContent = `${this.level}`;
+    if (this.timeValue) {
+      this.timeValue.textContent = this.mode === MODES.DAILY
+        ? `${Math.max(0, this.timer).toFixed(1)}`
+        : "∞";
+    }
+    // Null-safe for elements that may be hidden spans
+    if (this.swapCount) this.swapCount.textContent = `${this.swapsLeft}`;
+    if (this.bombCount) this.bombCount.textContent = `${this.bombs}`;
+    if (this.bombButton) this.bombButton.disabled = this.bombs <= 0;
+    if (this.aimState)  this.aimState.textContent = this.aimAssist ? "On" : "Off";
+    // FIX #21: trigger combo pop animation on each sync
+    if (this.playing) this.flashCombo();
+
+    const getHex = (b) => {
+      if (!b) return "#fff";
+      if (b.type === "rainbow") return "rainbow";
+      if (b.type === "clock") return "#53d98d";
+      if (b.type === "lightning") return "#ffd33d";
+      if (b.type === "bomb") return "#1f2030";
+      return COLORS.find((c) => c.id === b.color)?.hex || "#fff";
+    };
+
+    const nowHex = getHex(this.queue.now);
+    const nextHex = getHex(this.queue.next);
     this.nowPreview.style.background = this.previewGradient(nowHex);
     this.nextPreview.style.background = this.previewGradient(nextHex);
   }
 
   previewGradient(hex) {
+    if (hex === "rainbow") return `conic-gradient(from 0deg, red, orange, yellow, green, blue, purple, red)`;
     return `radial-gradient(circle at 35% 35%, rgba(255,255,255,0.7), rgba(255,255,255,0.08) 40%, rgba(0,0,0,0)), linear-gradient(135deg, ${hex}, ${hex})`;
   }
 
@@ -607,22 +720,29 @@ class BubbleShooterBlitz {
       }
     }
 
-    const pressure = this.mode === MODES.DAILY ? 1 : 1.2;
-    this.ceiling += dt * this.ceilingSpeed * pressure;
+    // FIX #16: endless shot limit check
+    if (this.mode === MODES.ENDLESS && this.shotsTaken >= this.shotsLimit) {
+      this.endRun(false, `${this.shotsLimit} shots complete.`);
+      return;
+    }
 
-    if (this.mode === MODES.DAILY) {
-      if (this.shotsTaken > 0 && this.shotsTaken % 7 === 0 && !this.activeShot) {
-        if (!this._rowAddedForShot || this._rowAddedForShot !== this.shotsTaken) {
-          this._rowAddedForShot = this.shotsTaken;
-          this.addNewTopRow();
-        }
-      }
-    } else {
-      if (this.shotsTaken > 0 && this.shotsTaken % 6 === 0 && !this.activeShot) {
-        if (!this._rowAddedForShot || this._rowAddedForShot !== this.shotsTaken) {
-          this._rowAddedForShot = this.shotsTaken;
-          this.addNewTopRow();
-        }
+    // ── Ceiling / pressure ──────────────────────────────────────────────────
+    // Standard bubble shooter: the grid does NOT drift down on its own.
+    // Pressure is applied by pushing a new row of bubbles in from the top
+    // every MISS_PER_ROW consecutive misses (penalty for inaccuracy).
+    // this.ceiling is used only for the brief push animation (see addNewTopRow).
+    if (this.ceiling < 0) {
+      // Smoothly animate ceiling back to 0 (push down effect)
+      this.ceiling = Math.min(0, this.ceiling + dt * 140); 
+    }
+
+    // Shot-count-based row push (every 8 shots a new row, regardless of miss/hit)
+    // This ensures the board keeps filling and the game stays challenging.
+    if (this.shotsTaken > 0 && this.shotsTaken % 8 === 0 && !this.activeShot) {
+      if (!this._rowAddedForShot || this._rowAddedForShot !== this.shotsTaken) {
+        this._rowAddedForShot = this.shotsTaken;
+        this.addNewTopRow();
+        this.message("New row! Stay sharp.");
       }
     }
 
@@ -632,6 +752,21 @@ class BubbleShooterBlitz {
       this.combo = Math.max(1, this.combo - 1);
       this.comboDecay = 0.35;
       this.syncHud();
+    }
+
+    if (this.score < this.targetScore) {
+      const diff = this.targetScore - this.score;
+      this.score += Math.max(1, Math.ceil(diff * 10 * dt));
+      this.scoreValue.textContent = `${Math.floor(this.score)}`;
+      // FIX #3: compare realScore for best detection
+      if (this.realScore > this.bestScore && !this._bestReached) {
+        this._bestReached = true;
+        this.popText("NEW BEST!", { x: this.world.width / 2, y: 150 }, "#ffdd7a");
+        this.tone.tone(880, 0.1, "triangle", 0.04);
+      }
+    } else {
+      // Keep display in sync exactly
+      this.score = this.realScore;
     }
 
     if (this.shake > 0.05) {
@@ -644,8 +779,26 @@ class BubbleShooterBlitz {
       this.flash = Math.max(0, this.flash - dt * 2.6);
     }
 
+    if (this.combo >= 8 && !this.frenzyActive) {
+      this.frenzyActive = true;
+      this.message("FRENZY MODE!");
+      this.tone.tone(880, 0.15, "sawtooth", 0.04);
+    } else if (this.combo < 5 && this.frenzyActive) {
+      this.frenzyActive = false;
+    }
+
+    if (this.frenzyActive) {
+      this.frenzyMode = Math.min(1, this.frenzyMode + dt * 2);
+      document.body.classList.add("frenzy-active");
+    } else {
+      this.frenzyMode = Math.max(0, this.frenzyMode - dt * 1);
+      document.body.classList.remove("frenzy-active");
+    }
+
     this.updateShot(dt);
+    this.updateTrails(dt);
     this.updateParticles(dt);
+    this.tickMusic(dt);
 
     if (this.isGridEmpty()) {
       if (this.mode === MODES.ENDLESS) {
@@ -667,7 +820,32 @@ class BubbleShooterBlitz {
       this.endRun(false, "The ceiling caught you.");
     }
 
-    this.timeValue.textContent = this.mode === MODES.DAILY ? `${Math.max(0, this.timer).toFixed(1)}` : "∞";
+    // ── Internal Integrity Check: Anti-cheat ──
+    // Detect illegal score jumps via console manipulation.
+    // authorizes increment only through authorized popCells/dropFloating calls.
+    if (!this._verifiedScore) this._verifiedScore = 0;
+    if (this.realScore > this._verifiedScore + 10000) { 
+      // A jump of >10k in a single frame is impossible in normal play
+      this.endRun(true, "Security: Invalid score jump detected.");
+      return;
+    }
+    this._verifiedScore = this.realScore;
+
+    // ── Internal Integrity Check: Shot Count ──
+    // Detect illegal shot manipulation via console.
+    if (!this._verifiedShots) this._verifiedShots = 0;
+    if (this.shotsTaken < this._verifiedShots) {
+      // Shots should only increase. If they decreased, someone reset them to bypass the limit.
+      this.endRun(true, "Security: Invalid shot count detected.");
+      return;
+    }
+    this._verifiedShots = this.shotsTaken;
+
+    if (this.timeValue) {
+      this.timeValue.textContent = this.mode === MODES.DAILY
+        ? `${Math.max(0, this.timer).toFixed(1)}`
+        : "∞";
+    }
   }
 
   isGridEmpty() {
@@ -709,11 +887,15 @@ class BubbleShooterBlitz {
         shot.x = walls.left + shot.radius;
         shot.vx *= -1;
         shot.bounces += 1;
+        shot.stretch = 1.35;
+        shot.stretchAngle = Math.atan2(shot.vy, shot.vx);
         this.tone.tone(280, 0.04, "sine", 0.018);
       } else if (shot.x >= walls.right - shot.radius) {
         shot.x = walls.right - shot.radius;
         shot.vx *= -1;
         shot.bounces += 1;
+        shot.stretch = 1.35;
+        shot.stretchAngle = Math.atan2(shot.vy, shot.vx);
         this.tone.tone(280, 0.04, "sine", 0.018);
       }
 
@@ -729,7 +911,7 @@ class BubbleShooterBlitz {
         const other = this.grid[cell.row]?.[cell.col];
         if (!other) continue;
         const p = this.worldPosForCell(cell.row, cell.col);
-        if (distance({ x: shot.x, y: shot.y }, p) <= this.radius * 1.85) {
+        if (distance({ x: shot.x, y: shot.y }, p) <= this.radius * 2.0) { // FIX #7: was 1.85
           const snap = this.findBestSnapCell(shot.x, shot.y, cell.row, cell.col);
           this.snapShotToCell(snap);
           return;
@@ -740,7 +922,24 @@ class BubbleShooterBlitz {
         const cell = this.cellForWorldPos(shot.x, shot.y);
         this.snapShotToCell(cell);
       }
+
+      // Trail spawning
+      if (this.fxRng() < 0.4) {
+        const hex = COLORS.find(c => c.id === shot.bubble.color)?.hex || "#fff";
+        this.trails.push({
+          x: shot.x,
+          y: shot.y,
+          life: 0.4,
+          size: this.radius * 0.7,
+          hex
+        });
+      }
     }
+  }
+
+  updateTrails(dt) {
+    this.trails.forEach(t => t.life -= dt);
+    this.trails = this.trails.filter(t => t.life > 0);
   }
 
   collisionCandidates(x, y) {
@@ -779,12 +978,22 @@ class BubbleShooterBlitz {
     this.activeShot = null;
 
     const target = this.findNearestEmptyCell(cell.row, cell.col);
-    const bubble = { color: shot.bubble.color, row: target.row, col: target.col, special: shot.bubble.type };
+    const bubble = { color: shot.bubble.color, row: target.row, col: target.col, special: shot.bubble.type === "color" ? null : shot.bubble.type };
     this.grid[target.row][target.col] = bubble;
 
+    if (shot.bounces >= 2) {
+      this.popText("LONG SHOT!", this.worldPosForCell(target.row, target.col), "#ffd33d");
+      this.targetScore += 500;
+    }
+
+    this.vibrate(20);
     this.tone.tone(380, 0.05, "triangle", 0.025);
     this.resolveAfterPlacement(target.row, target.col);
     this.syncHud();
+  }
+
+  vibrate(ms) {
+    if (navigator.vibrate) navigator.vibrate(ms);
   }
 
   findNearestEmptyCell(row, col) {
@@ -814,8 +1023,38 @@ class BubbleShooterBlitz {
       return;
     }
 
-    const match = this.collectCluster(row, col, placed.color);
-    if (match.length >= 3) {
+    if (placed.special === "lightning") {
+      this.clearRow(row);
+      this.afterClearSuccess(this.cols, this.worldPosForCell(row, col));
+      return;
+    }
+
+    if (placed.special === "clock") {
+      this.timer = Math.min(90, this.timer + 10);
+      this.popCells([{ row, col }], "match");
+      this.popText("+10s", this.worldPosForCell(row, col), "#53d98d");
+      this.tone.tone(880, 0.1, "sine", 0.05);
+      return;
+    }
+
+    // FIX #11: checkIceBreak runs first so ice pops are included in combo total
+    this.checkIceBreak(row, col);
+
+    let colorToMatch = placed.color;
+    if (placed.special === "rainbow") {
+      // FIX #10: match the largest adjacent color group, not just first neighbor
+      const nbs = this.neighbors(row, col).map(n => this.grid[n.row]?.[n.col]).filter(b => b && b.color);
+      if (nbs.length) {
+        const freq = {};
+        nbs.forEach(b => { freq[b.color] = (freq[b.color] || 0) + 1; });
+        colorToMatch = Object.keys(freq).reduce((a, b) => freq[a] >= freq[b] ? a : b);
+      } else {
+        colorToMatch = COLORS[0].id;
+      }
+    }
+
+    const match = this.collectCluster(row, col, colorToMatch);
+    if (match.length >= 3 || placed.special === "rainbow") {
       this.popCells(match, "match");
       const dropped = this.dropFloating();
       const total = match.length + dropped;
@@ -823,6 +1062,28 @@ class BubbleShooterBlitz {
     } else {
       this.afterMiss();
     }
+  }
+
+  clearRow(row) {
+    const affected = [];
+    for (let c = 0; c < this.cols; c++) {
+      if (this.grid[row][c]) affected.push({ row, col: c });
+    }
+    this.popCells(affected, "lightning");
+    this.dropFloating();
+    this.flash = 0.15;
+    this.shake = 15;
+    this.tone.tone(1100, 0.1, "sawtooth", 0.04);
+  }
+
+  checkIceBreak(row, col) {
+    const ns = this.neighbors(row, col);
+    ns.forEach(n => {
+      const b = this.grid[n.row]?.[n.col];
+      if (b && b.special === "ice") {
+        this.popCells([{ row: n.row, col: n.col }], "match");
+      }
+    });
   }
 
   explodeBomb(row, col, radius) {
@@ -853,7 +1114,8 @@ class BubbleShooterBlitz {
       if (visited.has(key)) continue;
       visited.add(key);
       const b = this.grid[cell.row][cell.col];
-      if (!b || b.color !== color || b.special === "bomb") continue;
+      // FIX #9: Ice bubbles are opaque obstacles — block cluster traversal
+      if (!b || b.color !== color || b.special === "bomb" || b.special === "ice") continue;
       result.push(cell);
       this.neighbors(cell.row, cell.col).forEach((n) => stack.push(n));
     }
@@ -861,16 +1123,18 @@ class BubbleShooterBlitz {
   }
 
   popCells(cells, reason) {
-    const base = reason === "bomb" ? 95 : 70;
+    const base = reason === "bomb" || reason === "lightning" ? 95 : 70;
     const chainBoost = 1 + (this.combo - 1) * 0.32;
     const pointsPer = Math.round(base * chainBoost);
     cells.forEach((cell) => {
       const bubble = this.grid[cell.row][cell.col];
       if (!bubble) return;
       const p = this.worldPosForCell(cell.row, cell.col);
-      this.spawnPop(p.x, p.y, bubble.color);
+      this.spawnPop(p.x, p.y, bubble.color || "rainbow");
       this.grid[cell.row][cell.col] = null;
-      this.score += pointsPer;
+      this.realScore += pointsPer;  // FIX #3: always add to realScore
+      this.targetScore = this.realScore;
+      this.bubblesPopped += 1;
       this.bombCharge += 1;
     });
 
@@ -911,16 +1175,26 @@ class BubbleShooterBlitz {
         if (!this.grid[row][col]) continue;
         if (connected.has(`${row},${col}`)) continue;
         const p = this.worldPosForCell(row, col);
-        this.spawnDrop(p.x, p.y, this.grid[row][col].color);
+        this.spawnDrop(p.x, p.y, this.grid[row][col].color || "rainbow");
         this.grid[row][col] = null;
-        this.score += Math.round(120 * (1 + (this.combo - 1) * 0.35));
+        const dropPts = Math.round(120 * (1 + (this.combo - 1) * 0.35));
+        this.realScore += dropPts;  // FIX #3
+        this.targetScore = this.realScore;
         dropped += 1;
         this.bombCharge += 2;
       }
     }
 
+    if (dropped > 0) this.biggestDrop = Math.max(this.biggestDrop, dropped);
+
     if (dropped >= 4) {
-      this.popText(`DROP x${dropped}`, { x: this.world.width / 2, y: this.world.paddingTop + 60 + this.ceiling }, "#79f5ff");
+      const isMassive = dropped >= 6;
+      this.popText(isMassive ? "MASSIVE DROP!" : `DROP x${dropped}`, { x: this.world.width / 2, y: this.world.paddingTop + 60 + this.ceiling }, isMassive ? "#ff5b86" : "#79f5ff");
+      if (isMassive) {
+        this.shake = 15;
+        this.flash = 0.1;
+        this.targetScore += 1000;
+      }
       this.tone.tone(740, 0.07, "square", 0.03);
     }
 
@@ -929,6 +1203,7 @@ class BubbleShooterBlitz {
 
   afterClearSuccess(totalCleared, anchor) {
     this.combo = clamp(this.combo + 1, 1, 12);
+    this.maxCombo = Math.max(this.maxCombo, this.combo); // track peak
     this.comboDecay = 1.1;
     if (this.mode === MODES.DAILY) {
       const bonus = totalCleared >= 8 ? 1.2 : totalCleared >= 5 ? 0.6 : 0.2;
@@ -950,12 +1225,12 @@ class BubbleShooterBlitz {
   }
 
   afterMiss() {
-    this.combo = 1;
+    // FIX #19: Reduce combo by 2 on miss, not full reset — less punishing
+    this.combo = Math.max(1, this.combo - 2);
     this.comboDecay = 0;
     this.misses += 1;
     this.message("No pop. Re-aim and recover.");
     this.tone.tone(180, 0.08, "sine", 0.02);
-
     if (this.mode === MODES.DAILY) {
       this.timer = Math.max(0, this.timer - 0.35);
     }
@@ -966,38 +1241,61 @@ class BubbleShooterBlitz {
     this.playing = false;
     this.gameOver = true;
     this.activeShot = null;
+    document.body.classList.remove("frenzy-active");
     this.saveBestIfNeeded();
-    
-    let mult = 0.0;
-    if (this.score >= 20000) { mult = 2.0; }
-    else if (this.score >= 10000) { mult = 1.5; }
-    else if (this.score >= 3000) { mult = 1.2; }
 
-    const title = force ? "Run ended" : "Time!";
-    const details = reason || (this.mode === MODES.DAILY ? "Blitz complete. Your score is locked." : "Warmup complete. Push for a new best.");
+    // FIX #3: use realScore (not animated display score) for submission
+    const finalScore = this.realScore;
+    const accuracy = this.shotsTaken > 0
+      ? Math.round(((this.shotsTaken - this.misses) / this.shotsTaken) * 100)
+      : 100;
+
+    const title = force ? "Run ended" : (reason ? "Game Over" : "Time!");
+    const details = reason || (this.mode === MODES.DAILY ? "Blitz complete." : "Warmup done.");
 
     this.overlayKicker.textContent = "Bubble Shooter Blitz";
-    this.overlayTitle.textContent = `${title} — ${Math.floor(this.score)} pts`;
-    this.overlayText.textContent = `${details} Best: ${this.bestScore}.`;
+    this.overlayTitle.textContent = `${title} — ${finalScore.toLocaleString()} pts`;
+    this.overlayText.textContent =
+      `${details} Shots: ${this.shotsTaken} | Accuracy: ${accuracy}% | Max Combo: x${this.maxCombo} | Biggest Drop: ${this.biggestDrop} | Best: ${this.bestScore}`;
     this.overlay.classList.remove("hidden");
     this.startDaily.textContent = "Play Daily Blitz";
     this.startEndless.textContent = "Play Endless Warmup";
     this.tone.tone(140, 0.18, "sawtooth", 0.035);
     this.tone.tone(680, 0.1, "triangle", 0.02);
 
-    // --- PARENT COMMUNICATION LOGIC ---
-    // Sends the calculated multiplier and game stats to the parent React app (SoloEarn.tsx)
-    // so the platform can process the user's final payout based on their performance.
-    if (window.parent) {
-      window.parent.postMessage({ type: 'GAME_OVER', payload: { multiplier: mult } }, '*');
+    // FIX #6: Use PLAYZA_SCORE_SUBMISSION (matching 2048 pattern)
+    // Target same origin, not '*'. Include full metadata for server-side plausibility check.
+    if (window.parent && window.parent !== window) {
+      const targetOrigin = window.location.origin;
+      setTimeout(() => {
+        window.parent.postMessage({
+          type: 'PLAYZA_SCORE_SUBMISSION',
+          payload: {
+            score: finalScore,
+            metadata: {
+              category: 'Bubble Shooter',
+              mode: this.mode,
+              shotsUsed: this.shotsTaken,
+              shotsLimit: this.shotsLimit,
+              misses: this.misses,
+              accuracy,
+              maxCombo: this.maxCombo,
+              biggestDrop: this.biggestDrop,
+              bubblesPopped: this.bubblesPopped,
+              levelReached: this.level
+            }
+          }
+        }, targetOrigin);
+      }, 2500);
     }
   }
 
   spawnPop(x, y, colorId) {
     const hex = COLORS.find((c) => c.id === colorId)?.hex || "#ffffff";
-    for (let i = 0; i < 14; i += 1) {
+    const count = this.frenzyActive ? 22 : 14;
+    for (let i = 0; i < count; i += 1) {
       const a = this.fxRng() * TWO_PI;
-      const speed = 120 + this.fxRng() * 260;
+      const speed = (120 + this.fxRng() * 260) * (this.frenzyActive ? 1.4 : 1);
       this.particles.push({
         x,
         y,
@@ -1006,6 +1304,7 @@ class BubbleShooterBlitz {
         life: 0.55 + this.fxRng() * 0.25,
         size: 2 + this.fxRng() * 6,
         hex,
+        type: this.fxRng() < 0.2 ? "star" : "circle"
       });
     }
   }
@@ -1063,7 +1362,7 @@ class BubbleShooterBlitz {
     const dir = this.getAimVector();
     const walls = this.insideWalls(this.launcher.x);
     const pos = { x: this.launcher.x, y: this.launcher.y };
-    const vel = { x: dir.x * 840, y: dir.y * 840 };
+    const vel = { x: dir.x * SHOT_SPEED, y: dir.y * SHOT_SPEED }; // FIX #15: match actual shot speed
     const points = [];
 
     for (let step = 0; step < 260; step += 1) {
@@ -1100,6 +1399,8 @@ class BubbleShooterBlitz {
     }
 
     this.drawBackground(ctx);
+    this.drawDangerGlow(ctx); // FIX #20: escalating red glow near danger line
+    this.drawTrails(ctx);
     this.drawGrid(ctx);
     this.drawLauncher(ctx);
     this.drawShot(ctx);
@@ -1116,14 +1417,17 @@ class BubbleShooterBlitz {
     const w = this.world.width;
     const h = this.world.height;
     const gradient = ctx.createLinearGradient(0, 0, 0, h);
-    gradient.addColorStop(0, "#0b1630");
-    gradient.addColorStop(0.6, "#070f22");
+    const topCol = this.lerpColor("#0b1630", "#2b0b30", this.frenzyMode);
+    const midCol = this.lerpColor("#070f22", "#1a0722", this.frenzyMode);
+    gradient.addColorStop(0, topCol);
+    gradient.addColorStop(0.6, midCol);
     gradient.addColorStop(1, "#060a18");
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, w, h);
 
     const glow = ctx.createRadialGradient(w * 0.5, h * 0.22, 10, w * 0.5, h * 0.22, h * 0.62);
-    glow.addColorStop(0, "rgba(121,245,255,0.12)");
+    const glowCol = this.lerpColor("rgba(121,245,255,0.12)", "rgba(255,91,134,0.25)", this.frenzyMode);
+    glow.addColorStop(0, glowCol);
     glow.addColorStop(0.45, "rgba(255,221,122,0.06)");
     glow.addColorStop(1, "rgba(0,0,0,0)");
     ctx.fillStyle = glow;
@@ -1201,6 +1505,54 @@ class BubbleShooterBlitz {
       ctx.restore();
     }
 
+    if (special === "rainbow") {
+      ctx.save();
+      const grad = ctx.createConicGradient(0, 0, 0);
+      grad.addColorStop(0, "red");
+      grad.addColorStop(0.2, "orange");
+      grad.addColorStop(0.4, "yellow");
+      grad.addColorStop(0.6, "green");
+      grad.addColorStop(0.8, "blue");
+      grad.addColorStop(1, "purple");
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(0, 0, r * 0.8, 0, TWO_PI);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    if (special === "clock") {
+      ctx.save();
+      ctx.fillStyle = "#fff";
+      ctx.font = `bold ${r}px sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("🕒", 0, 0);
+      ctx.restore();
+    }
+
+    if (special === "lightning") {
+      ctx.save();
+      ctx.fillStyle = "#fff";
+      ctx.font = `bold ${r * 1.2}px sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("⚡", 0, 0);
+      ctx.restore();
+    }
+
+    if (special === "ice") {
+      ctx.save();
+      ctx.fillStyle = "rgba(180, 240, 255, 0.4)";
+      ctx.beginPath();
+      ctx.rect(-r * 0.7, -r * 0.7, r * 1.4, r * 1.4);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.restore();
+    }
+
     ctx.restore();
   }
 
@@ -1212,9 +1564,11 @@ class BubbleShooterBlitz {
       const pts = this.previewPath;
       if (pts.length) {
         ctx.save();
-        ctx.strokeStyle = "rgba(121,245,255,0.35)";
-        ctx.lineWidth = 3;
-        ctx.setLineDash([6, 10]);
+        // More vibrant and thicker dots for better visibility on mobile
+        ctx.strokeStyle = "rgba(121,245,255,0.6)";
+        ctx.lineWidth = 4;
+        ctx.setLineDash([4, 12]);
+        ctx.lineCap = "round";
         ctx.beginPath();
         ctx.moveTo(x, y);
         pts.forEach((p) => ctx.lineTo(p.x, p.y));
@@ -1236,15 +1590,40 @@ class BubbleShooterBlitz {
     ctx.restore();
 
     if (this.queue.now) {
-      this.drawBubble(ctx, x, y, this.queue.now.color || "yellow", this.queue.now.type === "bomb" ? "bomb" : null, 1.05);
+      // FIX #18: pass the full special type so rainbow/clock/lightning render in launcher
+      const nowSpecial = this.queue.now.type !== "color" ? this.queue.now.type : null;
+      this.drawBubble(ctx, x, y, this.queue.now.color || "yellow", nowSpecial, 1.05);
     }
   }
 
   drawShot(ctx) {
     if (!this.activeShot) return;
-    const bubble = this.activeShot.bubble;
+    const s = this.activeShot;
+    const bubble = s.bubble;
     const special = bubble.type === "bomb" ? "bomb" : null;
-    this.drawBubble(ctx, this.activeShot.x, this.activeShot.y, bubble.color || "yellow", special, 1.02);
+    
+    // Squash & Stretch logic
+    if (s.stretch > 1.0) s.stretch -= 0.05;
+    else s.stretch = 1.0;
+
+    ctx.save();
+    ctx.translate(s.x, s.y);
+    ctx.rotate(s.stretchAngle);
+    ctx.scale(s.stretch, 1 / s.stretch);
+    this.drawBubble(ctx, 0, 0, bubble.color || "yellow", special, 1.02);
+    ctx.restore();
+  }
+
+  drawTrails(ctx) {
+    this.trails.forEach(t => {
+      ctx.save();
+      ctx.globalAlpha = t.life * 0.4;
+      ctx.fillStyle = t.hex;
+      ctx.beginPath();
+      ctx.arc(t.x, t.y, t.size * (t.life / 0.4), 0, TWO_PI);
+      ctx.fill();
+      ctx.restore();
+    });
   }
 
   drawParticles(ctx) {
@@ -1252,11 +1631,63 @@ class BubbleShooterBlitz {
       ctx.save();
       ctx.globalAlpha = Math.max(0, p.life);
       ctx.fillStyle = p.hex;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.size, 0, TWO_PI);
-      ctx.fill();
+      if (p.type === "star") {
+        this.drawStar(ctx, p.x, p.y, 5, p.size, p.size / 2);
+      } else {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, TWO_PI);
+        ctx.fill();
+      }
       ctx.restore();
     });
+  }
+
+  drawStar(ctx, x, y, spikes, outerRadius, innerRadius) {
+    let rot = (Math.PI / 2) * 3;
+    let cx = x;
+    let cy = y;
+    let step = Math.PI / spikes;
+
+    ctx.beginPath();
+    ctx.moveTo(x, y - outerRadius);
+    for (let i = 0; i < spikes; i++) {
+      x = cx + Math.cos(rot) * outerRadius;
+      y = cy + Math.sin(rot) * outerRadius;
+      ctx.lineTo(x, y);
+      rot += step;
+
+      x = cx + Math.cos(rot) * innerRadius;
+      y = cy + Math.sin(rot) * innerRadius;
+      ctx.lineTo(x, y);
+      rot += step;
+    }
+    ctx.lineTo(cx, cy - outerRadius);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  lerpColor(a, b, t) {
+    // FIX #23: handle both hex and rgba() strings
+    const parseRgba = (s) => {
+      const m = s.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+      if (m) return [+m[1], +m[2], +m[3], m[4] !== undefined ? +m[4] : 1];
+      if (s.startsWith('#')) {
+        return [
+          parseInt(s.slice(1,3),16), parseInt(s.slice(3,5),16), parseInt(s.slice(5,7),16), 1
+        ];
+      }
+      return null;
+    };
+    const ca = parseRgba(a);
+    const cb = parseRgba(b);
+    if (ca && cb) {
+      const r = Math.round(lerp(ca[0], cb[0], t));
+      const g = Math.round(lerp(ca[1], cb[1], t));
+      const bl = Math.round(lerp(ca[2], cb[2], t));
+      const al = +(lerp(ca[3], cb[3], t).toFixed(3));
+      return `rgba(${r},${g},${bl},${al})`;
+    }
+    return a;
   }
 
   drawTexts(ctx) {
@@ -1282,8 +1713,112 @@ class BubbleShooterBlitz {
     ctx.fillRect(0, 0, this.world.width, this.world.height);
     ctx.restore();
   }
+
+  tickMusic(dt) {
+    if (!this.playing || this.gameOver) return;
+    
+    let tempo = this.frenzyActive ? 0.3 : 0.6;
+    if (this.mode === MODES.DAILY && this.timer < 10) tempo *= 0.7;
+
+    this.beatTimer += dt;
+    if (this.beatTimer >= tempo) {
+      this.beatTimer = 0;
+      this.beatCount++;
+      
+      const isDownbeat = this.beatCount % 4 === 0;
+      const freq = isDownbeat ? 60 : 80;
+      const vol = isDownbeat ? 0.02 : 0.01;
+      
+      // Kick/Bass tone
+      this.tone.tone(freq, 0.15, "sine", vol);
+      
+      if (this.frenzyActive && this.beatCount % 2 === 0) {
+        // Extra frenzy hi-hat style tone
+        this.tone.tone(1200, 0.03, "square", 0.005);
+      }
+    }
+  }
+
+  // ── FIX #21: Combo pop CSS animation ──────────────────────────────────────
+  flashCombo() {
+    if (!this.comboValue) return;
+    this.comboValue.classList.remove("combo-pop");
+    // Force reflow so animation restarts
+    void this.comboValue.offsetWidth;
+    this.comboValue.classList.add("combo-pop");
+  }
+
+  // ── FIX #20: Danger proximity glow ─────────────────────────────────────────
+  drawDangerGlow(ctx) {
+    const dangerY = this.launcher.y - this.radius * 2.25;
+    let closestGap = Infinity;
+    for (let row = 0; row < this.maxRows; row++) {
+      for (let col = 0; col < this.cols; col++) {
+        if (!this.grid[row][col]) continue;
+        const p = this.worldPosForCell(row, col);
+        closestGap = Math.min(closestGap, dangerY - (p.y + this.radius));
+      }
+    }
+    const threshold = this.radius * 6;
+    if (closestGap < threshold) {
+      const intensity = Math.max(0, 1 - closestGap / threshold);
+      ctx.save();
+      const grd = ctx.createLinearGradient(0, dangerY - 60, 0, dangerY + 20);
+      grd.addColorStop(0, `rgba(255,91,134,0)`);
+      grd.addColorStop(1, `rgba(255,91,134,${(intensity * 0.45).toFixed(3)})`);
+      ctx.fillStyle = grd;
+      ctx.fillRect(0, dangerY - 60, this.world.width, 80);
+      ctx.restore();
+    }
+  }
+
+  // ── Rival Banner ────────────────────────────────────────────────────────────
+  updateRivalBanner() {
+    let banner = document.getElementById("rival-banner");
+    if (!this.rivalUsername) {
+      if (banner) banner.classList.add("hidden");
+      return;
+    }
+    if (!banner) {
+      banner = document.createElement("div");
+      banner.id = "rival-banner";
+      document.body.appendChild(banner);
+    }
+    const beating = this.realScore > this.rivalScore;
+    const state = beating ? "winning" : "losing";
+    
+    banner.innerHTML = `
+      <span class="rival-dot ${state}"></span>
+      <span>${beating ? "🟢 WINNING" : "🔴 LEADER"}: <b>${this.rivalUsername}</b></span>
+      <span class="rival-status ${state}">${this.rivalScore.toLocaleString()} pts</span>
+    `;
+    banner.classList.remove("hidden");
+  }
 }
 
+// ── Platform Bridge: React → iframe messages ─────────────────────────────────
+window.addEventListener("message", (event) => {
+  const instance = window.__bubbleBlitz;
+  if (!instance) return;
+  const { type, payload } = event.data || {};
+
+  // FIX #4 / #6: Session config locks the game and provides session context
+  if (type === "PLAYZA_SESSION_CONFIG") {
+    instance.sessionLocked = payload?.locked ?? false;
+    instance.sessionId = payload?.sessionId ?? null;
+    // Honour aimAssist policy from session config
+    if (payload?.aimAssistPolicy === "always") instance.aimAssist = true;
+    if (payload?.aimAssistPolicy === "never") instance.aimAssist = false;
+  }
+
+  // Rival banner update (GamePlay.tsx polls every 10s)
+  if (type === "PLAYZA_RIVAL_UPDATE") {
+    instance.rivalUsername = payload?.username || null;
+    instance.rivalScore = payload?.score || 0;
+    instance.updateRivalBanner();
+  }
+});
+
 window.addEventListener("DOMContentLoaded", () => {
-  new BubbleShooterBlitz();
+  window.__bubbleBlitz = new BubbleShooterBlitz();
 });

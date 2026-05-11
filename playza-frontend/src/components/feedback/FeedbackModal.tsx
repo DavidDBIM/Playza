@@ -27,10 +27,10 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose })
                 </div>
                 <div>
                   <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter italic">
-                    Feedback
+                    Support
                   </h2>
                   <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                    Tell us what you want
+                    How can we help?
                   </p>
                 </div>
               </div>
