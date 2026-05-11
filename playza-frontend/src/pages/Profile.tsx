@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import {
   MdEdit,
   MdShare,
@@ -17,15 +17,12 @@ import { type User } from "@/api/users.api";
 import { ZASymbol } from "@/components/currency/ZASymbol";
 
 import { ProfileSkeleton } from "@/components/skeletons/ProfileSkeleton";
-import BadgeModal from "@/components/profile/BadgeModal";
 
 const Profile = () => {
   const { user, isLoading: authLoading } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const { data: profileData, isLoading: profileLoading } = useProfile();
-  const [badgeOpen, setBadgeOpen] = useState(false);
-
   useEffect(() => {
     if (!authLoading && !profileLoading && !user) {
       navigate("/registration?view=login");
@@ -95,13 +92,11 @@ const Profile = () => {
                 <MdPerson className="size-10 text-primary/50" />
               )}
             </div>
-            <button
-              onClick={() => setBadgeOpen(true)}
-              title="View tier ranks"
-              className={`absolute -bottom-2 -right-2 text-[8px] font-black px-2 py-1 rounded-full uppercase tracking-widest shadow-lg border-2 cursor-pointer hover:scale-110 active:scale-95 transition-transform ${tier.color}`}
+            <div
+              className={`absolute -bottom-2 -right-2 text-[8px] font-black px-2 py-1 rounded-full uppercase tracking-widest shadow-lg border-2 ${tier.color}`}
             >
               {tier.label}
-            </button>
+            </div>
           </div>
 
           {/* Info + PZA & ZA inline */}
@@ -248,7 +243,6 @@ const Profile = () => {
       </div>
 
 
-      <BadgeModal isOpen={badgeOpen} onClose={() => setBadgeOpen(false)} pzaPoints={pts} />
     </div>
   );
 };
