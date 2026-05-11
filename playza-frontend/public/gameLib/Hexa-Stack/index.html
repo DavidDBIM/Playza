@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hexa 3D Sort | Playza Arcade</title>
+  <meta name="description" content="A polished 3D hex color sorting puzzle with layered stacks, magnetic merges, and 10-tile clears." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700;800;900&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main id="game-shell" aria-label="Hexa 3D Sort game">
+    <section id="game-container">
+      <div id="render-target" aria-hidden="true"></div>
+
+      <div id="ui-overlay">
+        <header class="hud-header">
+          <div class="hud-row">
+            <button class="icon-btn" id="btn-pause" type="button" aria-label="Pause game" title="Pause">
+              <span></span><span></span>
+            </button>
+
+            <div class="meter" aria-label="Board pressure">
+              <div class="meter-fill" id="pressure-fill"></div>
+              <span id="pressure-label">Stable</span>
+            </div>
+
+            <div class="wallet">
+              <span class="wallet-coin"></span>
+              <span id="stat-coins">1,000</span>
+            </div>
+          </div>
+
+          <div class="score-panel">
+            <div class="combo-badge hidden" id="combo-badge">
+              <span>x</span><strong id="stat-combo">2</strong><small>combo</small>
+            </div>
+            <div class="score" id="stat-score">0</div>
+            <div class="substats">
+              <span>Moves <strong id="stat-moves">0</strong></span>
+              <span>Level <strong id="stat-level">1</strong></span>
+            </div>
+          </div>
+        </header>
+
+        <aside class="mission-strip">
+          <span class="mission-icon"></span>
+          <span id="mission-text">Clear target colors</span>
+          <strong id="mission-count">0/150</strong>
+        </aside>
+
+        <section class="powerups" aria-label="Powerups">
+          <button class="powerup" data-powerup="hammer" type="button" title="Hammer">
+            <span class="p-icon">H</span><strong id="power-hammer">2</strong>
+          </button>
+          <button class="powerup" data-powerup="swap" type="button" title="Swap">
+            <span class="p-icon">S</span><strong id="power-swap">1</strong>
+          </button>
+          <button class="powerup" data-powerup="shuffle" type="button" title="Shuffle">
+            <span class="p-icon">M</span><strong id="power-shuffle">1</strong>
+          </button>
+          <button class="powerup" data-powerup="color" type="button" title="Color shift">
+            <span class="p-icon">C</span><strong id="power-color">1</strong>
+          </button>
+          <button class="powerup" data-powerup="undo" type="button" title="Undo">
+            <span class="p-icon">U</span><strong id="power-undo">1</strong>
+          </button>
+        </section>
+
+        <div class="toast hidden" id="toast"></div>
+
+        <footer class="tray-wrap">
+          <div class="tray-label">Next tiles</div>
+          <div class="spawn-tray" id="spawn-tray">
+            <button class="spawn-slot" id="spawn-0" data-slot="0" type="button" aria-label="Stack option 1"></button>
+            <button class="spawn-slot" id="spawn-1" data-slot="1" type="button" aria-label="Stack option 2"></button>
+            <button class="spawn-slot" id="spawn-2" data-slot="2" type="button" aria-label="Stack option 3"></button>
+          </div>
+        </footer>
+      </div>
+
+      <div id="drag-layer" aria-hidden="true"></div>
+
+      <section class="modal-layer" id="modal-start">
+        <div class="modal-content">
+          <h1>Hexa 3D Sort</h1>
+          <p>Place layered hex tiles, connect matching top colors, and clear runs of 10 to reveal hidden colors.</p>
+          <button class="btn-action" id="btn-start" type="button">Play</button>
+        </div>
+      </section>
+
+      <section class="modal-layer hidden" id="modal-pause">
+        <div class="modal-content">
+          <h2>Paused</h2>
+          <button class="btn-action" id="btn-resume" type="button">Resume</button>
+          <button class="btn-ghost" id="btn-restart-pause" type="button">Restart</button>
+        </div>
+      </section>
+
+      <section class="modal-layer hidden" id="modal-over">
+        <div class="modal-content">
+          <h2>No Space</h2>
+          <div class="modal-stats">
+            <span><small>Score</small><strong id="final-score">0</strong></span>
+            <span><small>Progress</small><strong id="peak-combo">0/150</strong></span>
+          </div>
+          <button class="btn-action" id="btn-restart" type="button">Play Again</button>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script type="module" src="game.js?v=hexa-sort-5"></script>
+</body>
+</html>
