@@ -6,16 +6,6 @@ import {
   MdMilitaryTech 
 } from "react-icons/md";
 
-interface Badge {
-  id: string;
-  name: string;
-  reward: number;
-  unlocked: boolean;
-  category: "Identity" | "Gaming" | "Social" | "Rank";
-  icon: React.ReactNode;
-  description: string;
-}
-
 // Tier thresholds: Bronze 0–4,999 | Silver 5,000–24,999 | Gold 25,000–99,999 | Platinum 100,000+
 function getTierBadges(pzaPoints: number) {
   return [
@@ -140,7 +130,7 @@ const BadgeModal: React.FC<BadgeModalProps> = ({ isOpen, onClose, pzaPoints = 0 
 
         {/* Content */}
         <div className="p-4 md:p-8 space-y-3 max-h-[60vh] overflow-y-auto hide-scrollbar">
-          {badges.map((badge, idx) => (
+          {badges.map((badge) => (
             <div
               key={badge.id}
               className={`p-4 md:p-6 rounded-xl border relative overflow-hidden transition-all duration-700 group ${
