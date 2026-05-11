@@ -37,15 +37,17 @@ import {
 
 // ─── Platform display config ──────────────────────────────────────────────────
 
-const PLATFORM_INFO: Record<string, {
+interface PlatformEntry {
   label: string;
   icon: React.ElementType;
-  color: string;       // Tailwind text color
-  bg: string;          // Tailwind bg
+  color: string;
+  bg: string;
   border: string;
   badge: string;
   tabActive: string;
-}> = {
+}
+
+const PLATFORM_INFO: Record<string, PlatformEntry> = {
   twitter: {
     label: "X (Twitter)",
     icon: FaXTwitter,
@@ -237,19 +239,19 @@ export function SocialTasksSection({ claimedTaskIds }: Props) {
           const Icon = info.icon;
           const isActive = resolvedPlatform === platformId;
           const taskCount = configs.filter(c => c.platform === platformId).length;
+          const tabActiveCls: string = isActive
+              ? [info.bg, info.color, info.border, "shadow-sm"].join(" ")
+              : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-transparent hover:bg-slate-200 dark:hover:bg-slate-700";
+          const tabBadgeCls: string = isActive ? info.badge : "bg-slate-200 dark:bg-slate-700 text-slate-500";
           return (
             <button
               key={platformId}
               onClick={() => setActivePlatform(platformId)}
-              className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all border ${
-                isActive
-                  ? `${info.bg} ${info.color} ${info.border} shadow-sm`
-                  : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-transparent hover:bg-slate-200 dark:hover:bg-slate-700"
-              }`}
+              className={["flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all border", tabActiveCls].join(" ")}
             >
               <Icon className="w-3.5 h-3.5" />
               {info.label}
-              <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md ${isActive ? info.badge : "bg-slate-200 dark:bg-slate-700 text-slate-500"}`}>
+              <span className={["text-[9px] font-black px-1.5 py-0.5 rounded-md", tabBadgeCls].join(" ")}>
                 {taskCount}
               </span>
             </button>
@@ -265,7 +267,7 @@ export function SocialTasksSection({ claimedTaskIds }: Props) {
           </div>
         ) : (
           platformTasks.map((task) => {
-            const info = PLATFORM_INFO[task.platform] as typeof PLATFORM_INFO[keyof typeof PLATFORM_INFO] | undefined;
+            const info = PLATFORM_INFO[task.platform] as PlatformEntry | undefined;
             const Icon = (info?.icon ?? Share2) as React.ElementType;
             const submission = submissionMap[task.id];
             const isApproved = claimedTaskIds.has(task.id) || submission?.status === "approved";
@@ -278,7 +280,7 @@ export function SocialTasksSection({ claimedTaskIds }: Props) {
                 className={`flex items-center gap-4 px-5 py-4 transition-all ${isApproved ? "opacity-60" : "hover:bg-slate-50 dark:hover:bg-slate-800/50"}`}
               >
                 {/* Icon */}
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-lg ${isApproved ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400" : `${info?.bg ?? ""}`}`}>
+                <div className={["w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-lg", isApproved ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400" : (info?.bg ?? "")].join(" ")}>
                   {isApproved ? <MdCheckCircle /> : <Icon className={`w-5 h-5 ${info?.color ?? ""}`} />}
                 </div>
 
@@ -328,7 +330,7 @@ export function SocialTasksSection({ claimedTaskIds }: Props) {
 
       {/* ── Submission Modal ─────────────────────────────────────────────── */}
       {modal && (() => {
-        const info = PLATFORM_INFO[modal.platform] as typeof PLATFORM_INFO[keyof typeof PLATFORM_INFO] | undefined;
+        const info = PLATFORM_INFO[modal.platform] as PlatformEntry | undefined;
         const Icon = (info?.icon ?? Share2) as React.ElementType;
         const actionLabel = ACTION_LABELS[modal.action_type] ?? modal.action_type;
         return (
@@ -343,7 +345,7 @@ export function SocialTasksSection({ claimedTaskIds }: Props) {
               {/* Modal header */}
               <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-3">
-                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${info?.bg ?? ""} border ${info?.border ?? ""}`}>
+                  <div className={["w-9 h-9 rounded-xl flex items-center justify-center border", info?.bg ?? "", info?.border ?? ""].join(" ")}>
                     <Icon className={`w-4 h-4 ${info?.color ?? ""}`} />
                   </div>
                   <div>
