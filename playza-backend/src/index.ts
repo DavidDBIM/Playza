@@ -3,15 +3,15 @@ import cors from 'cors'
 import helmet from 'helmet'
 import dotenv from 'dotenv'
 import cookieParser from 'cookie-parser'
-import multer from 'multer'
 
 import authRoutes from './modules/auth/auth.routes'
 import referralRoutes from './modules/referral/referral.routes'
 import pzaRoutes from "./modules/pza/pza.routes";
 import socialTaskRoutes from './modules/pza/socialTask.routes'
-import adminSocialTaskRoutes from './modules/admin/socialTask.admin.routes'
+import adminSocialTaskRoutes from './modules/pza/socialTask.admin.routes'
 import usersRoutes from './modules/users/users.routes'
 import adminRoutes from './modules/admin/admin.routes'
+import adminRewardsRoutes from './modules/admin/rewards.routes'
 import walletRoutes from './modules/wallet/wallet.routes'
 import chessRoutes from './modules/chess/chess.routes'
 import profileRoutes from './modules/profile/profile.routes'
@@ -50,27 +50,14 @@ app.get('/health', (_, res) => {
   res.json({ status: 'ok', project: 'Playza API', env: process.env.NODE_ENV })
 })
 
-// ── Multer: memory storage for screenshot uploads (max 5 MB)
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 },
-  fileFilter: (_req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) cb(null, true)
-    else cb(new Error('Only image files are allowed'))
-  },
-})
-
 app.use('/api/auth', authRoutes)
 app.use('/api/referral', referralRoutes)
 app.use('/api/pza', pzaRoutes)
-// Social task upload — needs multer BEFORE the router
-app.post('/api/pza/social-task/submit', upload.single('screenshot'), (req, res, next) => {
-  socialTaskRoutes(req, res, next)
-})
 app.use('/api/pza/social-task', socialTaskRoutes)
 app.use('/api/admin/social-tasks', adminSocialTaskRoutes)
 app.use('/api/users', usersRoutes)
 app.use('/api/admin', adminRoutes)
+app.use('/api/admin/rewards', adminRewardsRoutes)
 app.use('/api/wallet', walletRoutes)
 app.use('/api/chess', chessRoutes)
 app.use('/api/profile', profileRoutes)
