@@ -42,7 +42,7 @@ const Loyalty = lazy(() => import("./pages/Loyalty"));
 const CategoryPage = lazy(() => import("./pages/CategoryPage"));
 const SpeedTapArena = lazy(() => import("./pages/games/SpeedTapArena"));
 const SoloEarn = lazy(() => import("./pages/SoloEarn"));
-const Feedback = lazy(() => import("./pages/Feedback"));
+const Support = lazy(() => import("./pages/Support"));
 const FAQ = lazy(() => import("./pages/FAQ"));
 
 
@@ -60,7 +60,7 @@ const Security = lazy(() => import("./components/profile/Security"));
 const NavProgress = ({ active }: { active: boolean }) => (
   <div
     aria-hidden
-    className="fixed top-0 left-0 z-[9999] h-[2px] bg-primary transition-all duration-300 pointer-events-none"
+    className="fixed top-0 left-0 z-9999 h-[2px] bg-primary transition-all duration-300 pointer-events-none"
     style={{
       width: active ? "85%" : "0%",
       opacity: active ? 1 : 0,
@@ -105,15 +105,7 @@ const AppContent = () => {
       pathname.split("/").filter(Boolean).length >= 3);
   const isRegistrationPage = pathname.includes("/registration");
   const isSpinActive = searchParams.get("spin") === "true";
-  const showFeedback = [
-    "/wallet", 
-    "/h2h", 
-    "/tournaments", 
-    "/referral",
-    "/profile/settings",
-    "/faq",
-    "/leaderboard"
-  ].some(path => pathname.includes(path)) || pathname === "/";
+  const showFeedback = pathname === "/wallet" || pathname === "/";
 
   const isHiddenPage = isRegistrationPage || isGamePlayPage || pathname.includes("/reset-password");
 
@@ -241,7 +233,7 @@ const AppContent = () => {
               <Route path="/terms" element={<TermsAndConditions />} />
               <Route path="/privacy" element={<PrivacyPolicy />} />
               <Route path="/loyalty" element={<Loyalty />} />
-              <Route path="/feedback" element={<Feedback />} />
+              <Route path="/support" element={<Support />} />
               <Route path="/faq" element={<FAQ />} />
 
               <Route path="/profile" element={<Profile />}>

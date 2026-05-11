@@ -5,7 +5,7 @@ import { useAuth } from '@/context/auth';
 import { useNavigate } from 'react-router';
 import { useEffect } from 'react';
 
-const Feedback: React.FC = () => {
+const Support: React.FC = () => {
   const { user, isLoading } = useAuth();
   const navigate = useNavigate();
 
@@ -26,10 +26,10 @@ const Feedback: React.FC = () => {
           </div>
           <div>
             <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white italic tracking-tighter uppercase">
-              💬 Feedback
+              🎧 Support
             </h1>
             <p className="text-slate-500 font-bold text-xs md:text-sm uppercase tracking-widest opacity-70">
-              Tell us what you want, ideas, or issues you're facing.
+              Need help? Reach out to us for issues or suggestions.
             </p>
           </div>
         </div>
@@ -44,14 +44,14 @@ const Feedback: React.FC = () => {
 
       <div className="p-8 rounded-3xl border border-primary/10 bg-primary/5 flex items-center gap-4">
         <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary text-xl shrink-0">
-          🚀
+          🛡️
         </div>
         <p className="text-[11px] font-bold text-slate-600 dark:text-slate-400 leading-relaxed uppercase tracking-wider">
-          We appreciate your time. Every piece of feedback helps us build a better gaming platform for you.
+          We appreciate your time. Every message helps us build a better gaming platform for you.
         </p>
       </div>
     </div>
   );
 };
 
-export default Feedback;
+export default Support;
