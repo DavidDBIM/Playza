@@ -219,12 +219,20 @@ export default function Loyalty() {
     if (!socialModal || !screenshotFile) return;
     setSubmitting(true);
     try {
-      const formData = new FormData();
-      formData.append("task_id", socialModal.taskId);
-      formData.append("screenshot", screenshotFile);
-      await axiosInstance.post("/pza/social-task/submit", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+      // Convert file to base64 — no multer needed on backend
+      const screenshot_base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(new Error("Failed to read file"));
+        reader.readAsDataURL(screenshotFile);
       });
+
+      await axiosInstance.post("/pza/social-task/submit", {
+        task_id: socialModal.taskId,
+        screenshot_base64,
+        screenshot_mime: screenshotFile.type,
+      });
+
       setSubmittedTasks((prev) => new Set([...prev, socialModal.taskId]));
       toast.success("Screenshot submitted! Admin will review and award your 200 PZA.");
       setSocialModal(null);
