@@ -12,30 +12,25 @@ const VALID_TASK_IDS = new Set([
   'FOLLOW_YOUTUBE',
 ])
 
-// ──────────────────────────────────────────────────────────
-//  POST /pza/social-task/submit
-//  Body: multipart/form-data  { task_id, screenshot (file) }
-//  Auth: user JWT
-// ──────────────────────────────────────────────────────────
+// POST /pza/social-task/submit
+// Body: JSON { task_id: string, screenshot_base64: string, screenshot_mime: string }
+// No multer needed — uses express.json({ limit: "10mb" }) already in index.ts
 router.post('/submit', requireAuth, async (req: AuthRequest, res) => {
   try {
     const userId = req.user!.id
-    const { task_id } = req.body
+    const { task_id, screenshot_base64, screenshot_mime } = req.body
 
-    // ── Validate task_id
     if (!task_id || !VALID_TASK_IDS.has(task_id)) {
       res.status(400).json({ success: false, message: 'Invalid task_id' })
       return
     }
 
-    // ── Validate file present  (multer puts it on req.file)
-    const file = (req as any).file as Express.Multer.File | undefined
-    if (!file) {
-      res.status(400).json({ success: false, message: 'Screenshot file is required' })
+    if (!screenshot_base64 || !screenshot_mime) {
+      res.status(400).json({ success: false, message: 'Screenshot is required' })
       return
     }
 
-    // ── Check if already submitted (pending or approved)
+    // Prevent duplicate submission
     const { data: existing } = await supabaseAdmin
       .from('social_task_submissions')
       .select('id, status')
@@ -44,24 +39,24 @@ router.post('/submit', requireAuth, async (req: AuthRequest, res) => {
       .single()
 
     if (existing) {
-      const msg =
-        existing.status === 'approved'
-          ? 'You already completed this task and received your PZA.'
-          : 'You already submitted this task. Admin is reviewing your screenshot.'
+      const msg = existing.status === 'approved'
+        ? 'You already completed this task and received your PZA.'
+        : 'You already submitted this task — admin is reviewing your screenshot.'
       res.status(400).json({ success: false, message: msg })
       return
     }
 
-    // ── Upload screenshot to Supabase Storage
-    const ext = file.mimetype.split('/')[1] || 'jpg'
+    // Decode base64 and upload to Supabase Storage
+    const base64Data = screenshot_base64.includes(',')
+      ? screenshot_base64.split(',')[1]
+      : screenshot_base64
+    const buffer = Buffer.from(base64Data, 'base64')
+    const ext = (screenshot_mime.split('/')[1] || 'jpg').replace('jpeg', 'jpg')
     const storagePath = `social-tasks/${userId}/${task_id}-${Date.now()}.${ext}`
 
     const { error: uploadError } = await supabaseAdmin.storage
       .from('social-screenshots')
-      .upload(storagePath, file.buffer, {
-        contentType: file.mimetype,
-        upsert: false,
-      })
+      .upload(storagePath, buffer, { contentType: screenshot_mime, upsert: false })
 
     if (uploadError) {
       console.error('[SocialTask] Storage upload error:', uploadError)
@@ -69,20 +64,16 @@ router.post('/submit', requireAuth, async (req: AuthRequest, res) => {
       return
     }
 
-    // ── Get public URL
     const { data: urlData } = supabaseAdmin.storage
       .from('social-screenshots')
       .getPublicUrl(storagePath)
 
-    const screenshotUrl = urlData.publicUrl
-
-    // ── Insert submission record
     const { data: submission, error: insertError } = await supabaseAdmin
       .from('social_task_submissions')
       .insert({
         user_id: userId,
         task_id,
-        screenshot_url: screenshotUrl,
+        screenshot_url: urlData.publicUrl,
         status: 'pending',
       })
       .select()
@@ -95,7 +86,7 @@ router.post('/submit', requireAuth, async (req: AuthRequest, res) => {
       data: {
         id: submission.id,
         task_id: submission.task_id,
-        status: submission.status,
+        status: 'pending',
         created_at: submission.created_at,
         message: 'Screenshot submitted! Admin will review within 24–48 hours.',
       },
@@ -106,18 +97,13 @@ router.post('/submit', requireAuth, async (req: AuthRequest, res) => {
   }
 })
 
-// ──────────────────────────────────────────────────────────
-//  GET /pza/social-task/my-submissions
-//  Returns all submissions for the logged-in user
-// ──────────────────────────────────────────────────────────
+// GET /pza/social-task/my-submissions
 router.get('/my-submissions', requireAuth, async (req: AuthRequest, res) => {
   try {
-    const userId = req.user!.id
-
     const { data } = await supabaseAdmin
       .from('social_task_submissions')
       .select('id, task_id, status, created_at, reviewed_at, admin_note')
-      .eq('user_id', userId)
+      .eq('user_id', req.user!.id)
       .order('created_at', { ascending: false })
 
     res.json({ success: true, data: data ?? [] })
