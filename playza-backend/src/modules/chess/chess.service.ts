@@ -24,8 +24,17 @@ async function handleGameOver(roomId: string, winnerId: string | null, stake: nu
   // 2. Handle Prize & Transactions for Winner
   if (stake > 0 && winnerId && winnerId !== SYSTEM_BOT_ID) {
     const totalPrize = stake * 2
-    const platformCut = totalPrize * 0.1
-    const winnerPrize = totalPrize - platformCut
+    
+    // Fetch the actual platform fee from the games table
+    const { data: gameInfo } = await supabaseAdmin
+      .from('games')
+      .select('platform_fee_percentage')
+      .eq('slug', 'chess')
+      .single();
+
+    const feePercent = Number(gameInfo?.platform_fee_percentage || 10);
+    const platformCut = totalPrize * (feePercent / 100);
+    const winnerPrize = totalPrize - platformCut;
 
     await supabaseAdmin.rpc('increment_wallet_balance', {
       p_user_id: winnerId,
@@ -57,9 +66,16 @@ async function handleGameOver(roomId: string, winnerId: string | null, stake: nu
     })
   }
 
-  // 4. If draw, return 90% of stakes to wallet (10% platform fee always applies)
+  // 4. If draw, return stakes minus platform fee
   if (stake > 0 && !winnerId) {
-    const refundAmount = stake * 0.9
+    const { data: drawGameInfo } = await supabaseAdmin
+      .from('games')
+      .select('platform_fee_percentage')
+      .eq('slug', 'chess')
+      .single();
+
+    const drawFeePercent = Number(drawGameInfo?.platform_fee_percentage || 10);
+    const refundAmount = stake * (1 - (drawFeePercent / 100));
     for (const uid of [room.host_id, room.guest_id]) {
       if (uid && uid !== SYSTEM_BOT_ID) {
         await supabaseAdmin.rpc('increment_wallet_balance', {
