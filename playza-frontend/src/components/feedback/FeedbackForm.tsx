@@ -9,7 +9,7 @@ interface FeedbackFormProps {
 }
 
 export const FeedbackForm: React.FC<FeedbackFormProps> = ({ onSuccess, className = "" }) => {
-  const [type, setType] = useState('suggest_game');
+  const [type, setType] = useState('');
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
   const [gameName, setGameName] = useState('');
@@ -86,16 +86,22 @@ export const FeedbackForm: React.FC<FeedbackFormProps> = ({ onSuccess, className
           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
             Category <span className="text-red-500">*</span>
           </label>
-          <select
-            required
-            value={type}
-            onChange={(e) => setType(e.target.value)}
-            className="w-full h-12 px-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all text-slate-900 dark:text-white appearance-none cursor-pointer"
-          >
-            <option value="suggest_game">Suggest a Game</option>
-            <option value="report_problem">Report a Problem</option>
-            <option value="idea">Share an Idea</option>
-          </select>
+          <div className="relative group">
+            <select
+              required
+              value={type}
+              onChange={(e) => setType(e.target.value)}
+              className="w-full h-14 px-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all text-slate-900 dark:text-white appearance-none cursor-pointer pr-12 group-hover:bg-slate-100 dark:group-hover:bg-white/[0.08]"
+            >
+              <option value="" disabled>Select a Category</option>
+              <option value="suggest_game">Suggest a Game</option>
+              <option value="report_problem">Report a Problem</option>
+              <option value="idea">Share an Idea</option>
+            </select>
+            <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 group-hover:text-primary transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            </div>
+          </div>
         </div>
 
         {/* Title Input */}
