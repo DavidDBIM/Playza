@@ -62,6 +62,7 @@ export const GamesTable: React.FC<GamesTableProps> = ({ games, clearFilters, ref
             <TableRow className="hover:bg-transparent border-none">
               <TableHead className="py-3 px-4 md:px-6 font-black uppercase text-[10px] tracking-[0.2em] text-muted-foreground/70">Game Details</TableHead>
               <TableHead className="py-3 px-4 font-black uppercase text-[10px] tracking-[0.2em] text-muted-foreground/70">Category</TableHead>
+              <TableHead className="py-3 px-4 font-black uppercase text-[10px] tracking-[0.2em] text-muted-foreground/70 text-center">Mode</TableHead>
               <TableHead className="py-3 px-4 font-black uppercase text-[10px] tracking-[0.2em] text-muted-foreground/70 text-right">Entry Fee</TableHead>
               <TableHead className="py-3 px-4 font-black uppercase text-[10px] tracking-[0.2em] text-muted-foreground/70 text-center">Difficulty</TableHead>
               <TableHead className="py-3 px-4 font-black uppercase text-[10px] tracking-[0.2em] text-muted-foreground/70 text-center">Status</TableHead>
@@ -101,11 +102,21 @@ export const GamesTable: React.FC<GamesTableProps> = ({ games, clearFilters, ref
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="py-3.5 px-4 font-body font-bold text-sm">
+                  <TableCell className="py-3.5 px-4 font-body font-bold text-sm text-center">
                     <span className="px-3 py-1.5 rounded-xl bg-primary/10 text-primary font-black text-[11px] uppercase border border-primary/20 tracking-widest shadow-[0_0_15px_rgba(var(--primary-rgb),0.1)] group-hover:bg-primary group-hover:text-white transition-all duration-300 flex items-center gap-2 w-max">
                       <MdShield className="text-xs opacity-60" />
                       {game.category}
                     </span>
+                  </TableCell>
+                  <TableCell className="py-3.5 px-4 text-center">
+                    <div className={`text-[10px] font-black px-3 py-1 rounded-full border inline-block tracking-widest ${
+                      game.mode === 'Arena' ? 'bg-indigo-500/10 text-indigo-500 border-indigo-500/10' :
+                      game.mode === 'Solo Earn' ? 'bg-amber-500/10 text-amber-500 border-amber-500/10' :
+                      game.mode === 'Tournament' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/10' :
+                      'bg-slate-500/10 text-slate-500 border-slate-500/10'
+                    }`}>
+                      {game.mode.toUpperCase()}
+                    </div>
                   </TableCell>
                   <TableCell className="py-3.5 px-4 text-right font-headline font-black text-sm text-foreground">
                     <span className="flex items-center gap-1 justify-end"><ZASymbol className="scale-75" />{(game.entryFee ?? 0).toLocaleString()}</span>
