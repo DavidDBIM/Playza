@@ -26,7 +26,6 @@ router.get('/me', requireAuth, async (req: AuthRequest, res) => {
       .select('event_type, points_awarded, created_at')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
-      .limit(50)
 
     const { data: streak } = await supabaseAdmin
       .from('user_streaks')
