@@ -8,29 +8,40 @@ export async function getAllGames() {
   
   if (error) throw error
 
-  // Enhance games with unique player counts and sessions
+  // Enhance games with unique player counts, sessions, and revenue stats
   const gamesWithStats = await Promise.all(games.map(async (game) => {
-    // Get unique players across all sessions for this game
+    // Get all sessions for this game
     const { data: sessionsData } = await supabase
       .from('game_sessions')
-      .select('id, status, start_time, end_time')
+      .select('id, status, pool_amount')
       .eq('game_id', game.id);
 
     const sessionIds = sessionsData?.map(s => s.id) || [];
     
     let uniquePlayers = 0;
+    let totalRevenue = 0;
+    
     if (sessionIds.length > 0) {
+      // 1. Calculate unique players across all sessions
       const { data: leaderboardData } = await supabase
         .from('game_leaderboard')
         .select('user_id')
         .in('session_id', sessionIds);
       
       uniquePlayers = new Set(leaderboardData?.map(l => l.user_id)).size;
+
+      // 2. Calculate platform revenue from finalized pool amounts
+      const platformFeePercent = Number(game.platform_fee_percentage || 10);
+      totalRevenue = sessionsData!.reduce((acc, s) => {
+        const gross = Number(s.pool_amount || 0);
+        return acc + (gross * (platformFeePercent / 100));
+      }, 0);
     }
 
     return {
       ...game,
       unique_players: uniquePlayers,
+      total_revenue: totalRevenue,
       sessions: sessionsData || []
     }
   }))
@@ -156,6 +167,7 @@ export async function getActiveSession(gameSlug: string) {
     .from('games')
     .select('id')
     .eq('slug', gameSlug)
+    .eq('is_active', true)
     .single()
 
   if (gameErr || !game) return null
