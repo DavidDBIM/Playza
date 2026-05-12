@@ -49,6 +49,7 @@ interface RosterEntry {
   best_score: number;
   attempts: number;
   updated_at: string;
+  payout_amount?: number;
   users: {
     username: string;
     avatar_url: string;
@@ -382,6 +383,9 @@ const Session: React.FC = () => {
                       <TableHead className="px-6 py-3 text-[10px] uppercase tracking-widest text-center h-auto font-black text-muted-foreground">
                         Attempts
                       </TableHead>
+                      <TableHead className="px-6 py-3 text-[10px] uppercase tracking-widest text-center h-auto font-black text-muted-foreground">
+                        Prize Won
+                      </TableHead>
                       <TableHead className="px-6 py-3 text-[10px] uppercase tracking-widest h-auto font-black text-muted-foreground">
                         Contact
                       </TableHead>
@@ -440,6 +444,17 @@ const Session: React.FC = () => {
                             </TableCell>
                             <TableCell className="px-6 py-4 text-center font-bold text-muted-foreground">
                               {entry.attempts}
+                            </TableCell>
+                            <TableCell className="px-6 py-4 text-center">
+                              {entry.payout_amount ? (
+                                <span className="flex items-center justify-center gap-1 font-black text-emerald-500">
+                                  <ZASymbol />{entry.payout_amount.toLocaleString()}
+                                </span>
+                              ) : isEnded && isWinner ? (
+                                <span className="text-[10px] font-black text-emerald-500/50 uppercase italic">Calculating...</span>
+                              ) : (
+                                <span className="text-[10px] font-bold text-muted-foreground/30">—</span>
+                              )}
                             </TableCell>
                             <TableCell className="px-6 py-4">
                               <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">

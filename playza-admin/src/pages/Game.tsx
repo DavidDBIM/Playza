@@ -30,6 +30,7 @@ const Game: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"sessions" | "about" | "rules">(
     "sessions",
   );
+  const [showCompleted, setShowCompleted] = useState(false);
 
   const { data: gamesData, isLoading: gamesLoading } = useGames();
 
@@ -53,6 +54,12 @@ const Game: React.FC = () => {
   const { data: sessionsData, isLoading: sessionsLoading } = useGameSessions(
     game?.id || "",
   );
+
+  const filteredSessions = useMemo(() => {
+    const sessions = (sessionsData?.sessions || []) as Session[];
+    if (showCompleted) return sessions;
+    return sessions.filter(s => s.status !== 'completed');
+  }, [sessionsData, showCompleted]);
 
   if (gamesLoading) {
     return (
@@ -127,15 +134,10 @@ const Game: React.FC = () => {
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate(`/games/edit/${slug}`)}
-            className="px-5 py-2.5 bg-muted hover:bg-muted/80 rounded-xl text-xs font-bold text-foreground transition-all"
+            className="px-6 py-2.5 bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl text-xs font-black uppercase tracking-widest shadow-md shadow-primary/20 transition-all flex items-center gap-2"
           >
-            <MdEdit className="text-lg mr-2 inline" /> Edit
-          </button>
-          <button
-            onClick={() => navigate(`/sessions/PX-992-ALPHA`)}
-            className="px-6 py-2.5 bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl text-xs font-bold shadow-md shadow-primary/20 transition-all flex items-center gap-2"
-          >
-            <MdRocketLaunch className="text-lg" /> Launch Game
+            <MdEdit className="text-lg" />
+            <span>Configure Game</span>
           </button>
         </div>
       </div>
@@ -165,8 +167,14 @@ const Game: React.FC = () => {
             <div className="space-y-4 animate-in fade-in duration-500">
               <div className="flex justify-between items-center mb-2 px-1">
                 <h3 className="text-sm font-black uppercase tracking-wider text-foreground">
-                  Active Match Sessions
+                  {showCompleted ? "All Match Sessions" : "Active Match Sessions"}
                 </h3>
+                <button 
+                  onClick={() => setShowCompleted(!showCompleted)}
+                  className="text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border border-border hover:bg-muted transition-all"
+                >
+                  {showCompleted ? "Hide Completed" : "Show Completed"}
+                </button>
               </div>
 
               {sessionsLoading ? (
@@ -176,8 +184,8 @@ const Game: React.FC = () => {
                     Fetching Sessions...
                   </p>
                 </div>
-              ) : sessionsData?.sessions?.length > 0 ? (
-                sessionsData.sessions.map((session: Session) => (
+              ) : filteredSessions.length > 0 ? (
+                filteredSessions.map((session: Session) => (
                   <div
                     key={session.id}
                     className="bg-card p-6 rounded-2xl border border-border hover:border-primary/50 transition-all group relative overflow-hidden shadow-sm hover:shadow-md cursor-pointer"
@@ -263,7 +271,7 @@ const Game: React.FC = () => {
                     There are no active or upcoming sessions for this game.
                   </p>
                   <button
-                    onClick={() => navigate("/sessions/create")}
+                    onClick={() => navigate(`/games/edit/${slug}#sessions`)}
                     className="mt-4 px-6 py-2 bg-primary/10 text-primary hover:bg-primary/20 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
                   >
                     Create Session
@@ -415,11 +423,11 @@ const Game: React.FC = () => {
                     Revenue (7D)
                   </span>
                   <span className="text-emerald-500 font-black text-[9px] flex items-center gap-1 font-number">
-                    <MdTrendingUp /> +12.4%
+                    <MdTrendingUp /> LIVE
                   </span>
                 </div>
                 <div className="text-3xl font-black text-foreground font-number tracking-tighter flex items-center gap-1">
-                  <ZASymbol />12.4M
+                  <ZASymbol />{(game.total_revenue || 0).toLocaleString()}
                 </div>
                 <div className="h-12 w-full mt-4 flex items-end gap-1 opacity-60">
                   {[0.4, 0.6, 0.55, 0.8, 0.7, 0.9, 1].map((h, i) => (
@@ -445,7 +453,7 @@ const Game: React.FC = () => {
                     Engaged
                   </span>
                   <span className="text-lg font-black text-foreground font-number uppercase">
-                    {game.activePlayers}
+                    {(game.unique_players || 0).toLocaleString()}
                   </span>
                 </div>
               </div>
