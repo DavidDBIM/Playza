@@ -125,7 +125,8 @@ export function SocialTasksSection({ claimedTaskIds }: Props) {
   const { data: mySubmissions = [], refetch: refetchSubs } = useQuery({
     queryKey: ["social-task-my-submissions"],
     queryFn: getMySocialSubmissionsApi,
-    staleTime: 30_000,
+    staleTime: 0,
+    refetchOnMount: "always",
   });
 
   const submissionMap: Record<string, { status: string }> = {};
@@ -293,6 +294,13 @@ export function SocialTasksSection({ claimedTaskIds }: Props) {
                     <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-lg text-xs font-bold">
                       <MdHourglassBottom className="text-sm" /> Pending
                     </div>
+                  ) : sub?.status === "rejected" ? (
+                    <button
+                      onClick={() => openModal(task)}
+                      className="px-3 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:opacity-80"
+                    >
+                      <MdUpload className="text-sm" /> Resubmit
+                    </button>
                   ) : (
                     <button
                       onClick={() => openModal(task)}
