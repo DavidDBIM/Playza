@@ -4,6 +4,25 @@ import { useEffect } from "react";
 import { supabase } from "@/config/supabase";
 
 export const useGames = () => {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const channel = supabase
+      .channel('games_all')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'games' },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["all-games"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
   return useQuery({
     queryKey: ["all-games"],
     queryFn: () => GameSessionApi.getGames(),
