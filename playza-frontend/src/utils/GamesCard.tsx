@@ -7,7 +7,7 @@ const GamesCard = (game: Game) => {
 
   const displayStatus = (() => {
     if (sessions?.some(s => s.status === 'active' || s.status === 'live')) return 'live';
-    if (sessions?.some(s => s.status === 'upcoming' || s.status === 'coming soon')) return 'upcoming';
+    if (sessions?.some(s => s.status === 'upcoming' || s.status === 'starting soon')) return 'upcoming';
     return null;
   })();
 
