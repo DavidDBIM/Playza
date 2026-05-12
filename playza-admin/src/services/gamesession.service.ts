@@ -1,6 +1,6 @@
 import { apiClient } from '../lib/api-client';
 
-interface SessionInput {
+export interface SessionInput {
   title: string;
   type: string;
   entryFee: number;
@@ -10,7 +10,7 @@ interface SessionInput {
   endTime: string;
 }
 
-interface GameData {
+export interface GameData {
   title: string;
   slug: string;
   category: string;
