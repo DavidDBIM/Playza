@@ -289,7 +289,7 @@ export function SocialTasksSection({ claimedTaskIds }: Props) {
           </div>
         ) : (
           platformTasks.map((task) => {
-            const info = PLATFORM_INFO[task.platform];
+            const info = PLATFORM_INFO[task.platform] as PlatformDisplay;
             const Icon = info?.icon ?? Share2;
             const submission = submissionMap[task.id];
             const isApproved =
@@ -373,7 +373,7 @@ export function SocialTasksSection({ claimedTaskIds }: Props) {
       {/* ── Submission Modal ─────────────────────────────────────────────── */}
       {modal &&
         (() => {
-          const info = PLATFORM_INFO[modal.platform];
+          const info = PLATFORM_INFO[modal.platform] as PlatformDisplay;
           const Icon = info?.icon ?? Share2;
           const actionLabel =
             ACTION_LABELS[modal.action_type] ?? modal.action_type;
