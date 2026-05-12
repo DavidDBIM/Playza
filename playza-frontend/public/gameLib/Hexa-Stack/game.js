@@ -1,21 +1,21 @@
 import * as THREE from './three.module.js';
 
 const CONFIG = {
-  radius: 3,
-  cellSize: 0.68,
-  layerHeight: 0.044,
+  radius: 2,
+  cellSize: 0.50, // Reduced from 0.68
+  layerHeight: 0.035, // Thinner layers to keep stacks low
   clearRun: 10,
-  maxStackHeight: 22,
+  maxStackHeight: 18, // Lower max height to prevent leaving screen
   traySize: 3,
   levelTarget: 150,
   colors: [
-    { id: 0, name: 'blue', main: 0x2f76ff, side: 0x1c46b3, emissive: 0x08285f },
-    { id: 1, name: 'green', main: 0x37f04e, side: 0x159b2b, emissive: 0x0b4a17 },
-    { id: 2, name: 'yellow', main: 0xfff238, side: 0xc89a16, emissive: 0x5f4508 },
-    { id: 3, name: 'pink', main: 0xe12cff, side: 0x8d1fb5, emissive: 0x42115b },
-    { id: 4, name: 'cyan', main: 0x26d9ef, side: 0x1595aa, emissive: 0x0a4653 },
-    { id: 5, name: 'orange', main: 0xff8f24, side: 0xb95712, emissive: 0x5a2707 },
-    { id: 6, name: 'red', main: 0xff3d48, side: 0xb51f2b, emissive: 0x5a1016 }
+    { id: 0, name: 'blue', main: 0x3b82f6, side: 0x1d4ed8, emissive: 0x1e3a8a },
+    { id: 1, name: 'green', main: 0x10b981, side: 0x047857, emissive: 0x064e3b },
+    { id: 2, name: 'yellow', main: 0xfacc15, side: 0xa16207, emissive: 0x713f12 },
+    { id: 3, name: 'pink', main: 0xd946ef, side: 0xa21caf, emissive: 0x701a75 },
+    { id: 4, name: 'cyan', main: 0x06b6d4, side: 0x0e7490, emissive: 0x164e63 },
+    { id: 5, name: 'orange', main: 0xf97316, side: 0xc2410c, emissive: 0x7c2d12 },
+    { id: 6, name: 'red', main: 0xef4444, side: 0xb91c1c, emissive: 0x7f1d1d }
   ],
   neighborDirs: [[1, 0], [1, -1], [0, -1], [-1, 0], [-1, 1], [0, 1]]
 };
@@ -192,7 +192,7 @@ class HexaSortGame {
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.18;
+    this.renderer.toneMappingExposure = 1.25;
     dom.target.appendChild(this.renderer.domElement);
   }
 
@@ -206,7 +206,7 @@ class HexaSortGame {
     this.cameraBase = this.camera.position.clone();
 
     // Cool blue-white hemisphere for a clean, airy look
-    this.scene.add(new THREE.HemisphereLight(0xd8e8ff, 0x1a2040, 2.6));
+    this.scene.add(new THREE.HemisphereLight(0xffffff, 0x1a2040, 3.2));
 
     const key = new THREE.DirectionalLight(0xffffff, 2.9);
     key.position.set(-4, 9, 5);
@@ -230,7 +230,8 @@ class HexaSortGame {
     this.scene.add(rim);
 
     this.boardGroup = new THREE.Group();
-    this.boardGroup.rotation.x = -0.1;
+    this.boardGroup.rotation.x = -0.15; // Slightly more tilted for better depth
+    this.boardGroup.position.y = 0.2;  // Lifted slightly
     this.boardGroup.position.z = -0.2;
     this.scene.add(this.boardGroup);
 
@@ -241,19 +242,19 @@ class HexaSortGame {
     this.scene.add(this.fxGroup);
 
     // Dark slate floor with slight sheen
-    const floorGeo = new THREE.CircleGeometry(8.2, 96);
+    const floorGeo = new THREE.CircleGeometry(10, 64);
     const floorMat = new THREE.MeshStandardMaterial({
-      color: 0x111b38,
-      emissive: 0x060e20,
-      emissiveIntensity: 0.18,
-      roughness: 0.52,
-      metalness: 0.28,
+      color: 0x0a1028,
+      emissive: 0x05081a,
+      emissiveIntensity: 0.1,
+      roughness: 0.6,
+      metalness: 0.4,
       transparent: true,
-      opacity: 0.96
+      opacity: 0.9
     });
     this.floor = new THREE.Mesh(floorGeo, floorMat);
     this.floor.rotation.x = -Math.PI / 2;
-    this.floor.position.y = -0.15;
+    this.floor.position.y = -0.4; // Lower floor for more depth
     this.floor.receiveShadow = true;
     this.scene.add(this.floor);
   }
@@ -262,7 +263,7 @@ class HexaSortGame {
     this.materials = CONFIG.colors.map((color) => new THREE.MeshStandardMaterial({
       color: color.main,
       emissive: color.emissive,
-      emissiveIntensity: 0.18,  // brighter emissive for more vivid tiles
+      emissiveIntensity: 0.24,  // brighter emissive for more vivid tiles
       roughness: 0.22,
       metalness: 0.22
     }));
@@ -300,14 +301,15 @@ class HexaSortGame {
   }
 
   createGeometry() {
-    // Wider, flatter bases so hexes look fused like the reference image
-    this.baseGeometry = new THREE.CylinderGeometry(0.62, 0.63, 0.036, 6, 1, false);
-    this.baseGeometry.rotateY(Math.PI / 6);
-    // Thinner layers, wider radius to fill the cell
-    this.layerGeometry = new THREE.CylinderGeometry(0.57, 0.59, CONFIG.layerHeight, 6, 1, false);
+    // radius matches cellSize for side-by-side joining
+    const R = CONFIG.cellSize;
+    this.baseGeometry = new THREE.CylinderGeometry(R, R * 1.01, 0.04, 6, 1, false);
+    this.baseGeometry.rotateY(Math.PI / 6); // Align flat sides to joining axes
+    
+    this.layerGeometry = new THREE.CylinderGeometry(R * 0.92, R * 0.94, CONFIG.layerHeight, 6, 1, false);
     this.layerGeometry.rotateY(Math.PI / 6);
-    this.ringGeometry = new THREE.RingGeometry(0.36, 0.60, 64);
-    this.particleGeometry = new THREE.SphereGeometry(0.040, 8, 8);
+    this.ringGeometry = new THREE.RingGeometry(R * 0.6, R, 64);
+    this.particleGeometry = new THREE.SphereGeometry(0.035, 8, 8);
   }
 
   createBoard() {
@@ -333,12 +335,11 @@ class HexaSortGame {
   }
 
   fitCamera() {
-    const n = this.cells.length;
-    // Scale factor: zoom in for small boards, zoom out for big ones
-    const s = n <= 8 ? 0.78 : n <= 12 ? 0.88 : n <= 20 ? 1.0 : n <= 30 ? 1.14 : 1.28;
+    // Tight frame for the compact 7-cell flower board
+    const s = 0.58; 
     this.camera.position.set(0, 11 * s, 5.5 * s);
     this.cameraBase = this.camera.position.clone();
-    this.camera.lookAt(0, 0, 0);
+    this.camera.lookAt(0, 0.08, 0);
     this.camera.updateProjectionMatrix();
   }
 
@@ -357,14 +358,8 @@ class HexaSortGame {
   }
 
   boardCellCountForLevel(level) {
-    if (level <= 2) return 8;
-    if (level === 3) return 10;
-    if (level === 4) return 12;
-    if (level === 5) return 15;
-    if (level === 6) return 19;
-    if (level <= 8) return 24;
-    if (level <= 10) return 30;
-    return 37;
+    // Reduced to 7 for a perfect, compact flower shape
+    return 7;
   }
 
   axialToWorld(q, r) {
@@ -388,7 +383,8 @@ class HexaSortGame {
   }
 
   seedLevel() {
-    const seededCount = clamp(Math.floor(this.cells.length * 0.42), 2, Math.max(2, this.cells.length - 3));
+    // Reduced seeded hexas for a cleaner board start
+    const seededCount = clamp(Math.floor(this.cells.length * 0.28), 1, Math.max(1, this.cells.length - 2));
     const sortedCells = [...this.cells].sort((a, b) => {
       const da = Math.max(Math.abs(a.q), Math.abs(a.r), Math.abs(-a.q - a.r));
       const db = Math.max(Math.abs(b.q), Math.abs(b.r), Math.abs(-b.q - b.r));
@@ -1045,17 +1041,12 @@ class HexaSortGame {
     wrap.style.height = `${totalH}px`;
     layers.forEach((colorId, index) => {
       const color = CONFIG.colors[colorId];
-      const hex = document.createElement('span');
-      hex.className = 'mini-hex';
-      // index 0 = bottom tile, highest index = top tile
-      hex.style.bottom = `${index * STEP}px`;
-      // Tiles further down are slightly smaller to reinforce perspective
-      const scale = 1 - (layers.length - 1 - index) * 0.018;
-      hex.style.transform = `translateX(-50%) scale(${scale.toFixed(3)})`;
-      const main = color.main.toString(16).padStart(6, '0');
-      const side = color.side.toString(16).padStart(6, '0');
-      hex.style.background = `linear-gradient(160deg, #${main} 0%, #${side} 100%)`;
-      wrap.appendChild(hex);
+      const el = document.createElement('span');
+      el.className = 'mini-hex';
+      el.style.backgroundColor = color.main;
+      el.style.transform = `translateX(-50%) translateY(${index * -3}px) scale(${1 - index * 0.02})`;
+      el.style.zIndex = index;
+      wrap.appendChild(el);
     });
     return wrap;
   }
@@ -1204,6 +1195,7 @@ class HexaSortGame {
 
   updateWorld(delta, elapsed) {
     this.boardGroup.rotation.y = Math.sin(elapsed * 0.24) * 0.026;
+    this.boardGroup.position.y = 0.2 + Math.sin(elapsed * 0.8) * 0.05; // Subtle floating motion
     this.cells.forEach((cell) => {
       cell.base.position.y = Math.sin(elapsed * 1.5 + cell.pulse) * 0.008;
       if (!cell.stack) return;
