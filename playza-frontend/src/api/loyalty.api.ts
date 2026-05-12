@@ -50,12 +50,10 @@ export interface AmbassadorApplyPayload {
   motivation: string;
 }
 
-// â”€â”€â”€ Social Task Config (admin-created, fetched dynamically) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
 export interface SocialTaskConfig {
-  id: string;            // uuid â€” used as task_id when submitting
-  platform: string;      // 'twitter' | 'youtube' | 'facebook' | 'tiktok' | 'instagram' | 'medium'
-  action_type: string;   // 'follow' | 'retweet' | 'like' | 'comment' | 'quote' | 'subscribe' | 'clap' | 'share' | 'like_page'
+  id: string;
+  platform: string;
+  action_type: string;
   title: string;
   description: string;
   target_url: string;
@@ -70,8 +68,6 @@ export interface SocialSubmission {
   reviewed_at: string | null;
   admin_note: string | null;
 }
-
-// â”€â”€â”€ API functions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export const getLoyaltyMeApi = async (): Promise<LoyaltyData> => {
   const { data } = await axiosInstance.get(`/pza/me`);
@@ -103,24 +99,12 @@ export const applyAmbassadorApi = async (payload: AmbassadorApplyPayload) => {
   return data.data;
 };
 
-// Fetch active social tasks created by admin
 export const getSocialTaskConfigsApi = async (): Promise<SocialTaskConfig[]> => {
   const { data } = await axiosInstance.get(`/pza/social-task/configs`);
   return data.data;
 };
 
-// Fetch user's own submissions (to know which are pending/approved)
 export const getMySocialSubmissionsApi = async (): Promise<SocialSubmission[]> => {
   const { data } = await axiosInstance.get(`/pza/social-task/my-submissions`);
-  return data.data;
-};
-
-// Submit screenshot for a social task
-export const submitSocialTaskApi = async (taskId: string, screenshotBase64: string, screenshotMime: string) => {
-  const { data } = await axiosInstance.post(`/pza/social-task/submit`, {
-    task_id: taskId,
-    screenshot_base64: screenshotBase64,
-    screenshot_mime: screenshotMime,
-  });
   return data.data;
 };

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, type ReactElement } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useLoyaltyMe } from "@/hooks/loyalty/useLoyaltyMe";
 import { useAuth } from "@/context/auth";
 import { Link, useLocation } from "react-router";
@@ -15,6 +16,7 @@ import {
 } from "react-icons/md";
 import { Zap, Trophy, Target, Flame, Star, Users, Share2 } from "lucide-react";
 import type { PzaEvent, ClaimedTask } from "@/api/loyalty.api";
+import { getSocialTaskConfigsApi } from "@/api/loyalty.api";
 import { useClaimStreak } from "@/hooks/loyalty/useClaimStreak";
 import { useClaimTask } from "@/hooks/loyalty/useClaimTask";
 import { RewardsSection } from "@/components/loyalty/RewardsSection";
@@ -110,13 +112,7 @@ const TASK_CATEGORIES: TaskCategory[] = [
     label: "Social Tasks",
     icon: <Share2 className="w-4 h-4" />,
     color: "rose",
-    tasks: [
-      { id: "FOLLOW_FACEBOOK", name: "Like Facebook Page", desc: "Like @Playzadotgames on Facebook & upload proof", points: 200, icon: <MdCameraAlt /> },
-      { id: "FOLLOW_TWITTER", name: "Follow on X (Twitter)", desc: "Follow @playzadotgames on X & upload proof", points: 200, icon: <MdCameraAlt /> },
-      { id: "FOLLOW_INSTAGRAM", name: "Follow on Instagram", desc: "Follow @playzadotgames on Instagram & upload proof", points: 200, icon: <MdCameraAlt /> },
-      { id: "FOLLOW_MEDIUM", name: "Follow on Medium", desc: "Follow @Playzadotgames on Medium & upload proof", points: 200, icon: <MdCameraAlt /> },
-      { id: "FOLLOW_YOUTUBE", name: "Subscribe on YouTube", desc: "Subscribe to @Playzadotgames on YouTube & upload proof", points: 200, icon: <MdCameraAlt /> },
-    ],
+    tasks: [], // populated dynamically from social_task_configs API
   },
   {
     id: "ranks",
@@ -180,6 +176,32 @@ export default function Loyalty() {
   const { mutate: performClaimStreak, isPending: claimingStreak } = useClaimStreak();
   const { mutate: performClaimTask, isPending: isMutationPending, variables: mutationVariables } = useClaimTask();
   const toast = useToast();
+
+  // Fetch dynamic social tasks from admin-managed configs
+  const { data: socialTaskConfigs = [] } = useQuery({
+    queryKey: ["social-task-configs"],
+    queryFn: getSocialTaskConfigsApi,
+    staleTime: 0,
+    refetchOnMount: "always",
+  });
+
+  // Build dynamic community tasks from API configs
+  const dynamicCommunityTasks: Task[] = socialTaskConfigs.map((cfg) => ({
+    id: cfg.id,
+    name: cfg.title,
+    desc: cfg.description,
+    points: cfg.points,
+    icon: <MdCameraAlt />,
+    link: cfg.target_url,
+  }));
+
+  // Merge dynamic tasks into TASK_CATEGORIES at render time
+  const TASK_CATEGORIES_MERGED: typeof TASK_CATEGORIES = TASK_CATEGORIES.map((cat) =>
+    cat.id === "community" ? { ...cat, tasks: dynamicCommunityTasks } : cat
+  );
+
+  // IDs of all current social tasks (dynamic)
+  const SOCIAL_TASK_IDS = new Set(socialTaskConfigs.map((c) => c.id));
   const [activeCategory, setActiveCategory] = useState("onboarding");
   const [tierModal, setTierModal] = useState(false);
   const [countdown, setCountdown] = useState<string>('');
@@ -192,16 +214,12 @@ export default function Loyalty() {
   const [submittedTasks, setSubmittedTasks] = useState<Set<string>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const SOCIAL_LINKS: Record<string, string> = {
-    FOLLOW_FACEBOOK: "https://web.facebook.com/Playzadotgames",
-    FOLLOW_TWITTER: "https://x.com/playzadotgames",
-    FOLLOW_INSTAGRAM: "https://www.instagram.com/playzadotgames",
-    FOLLOW_MEDIUM: "https://medium.com/@Playzadotgames",
-    FOLLOW_YOUTUBE: "https://youtube.com/@Playzadotgames",
-  };
+  const SOCIAL_LINKS: Record<string, string> = Object.fromEntries(
+    socialTaskConfigs.map((c) => [c.id, c.target_url])
+  );
 
   function openSocialModal(task: Task) {
-    setSocialModal({ taskId: task.id, taskName: task.name, platform: task.name, link: SOCIAL_LINKS[task.id] ?? "#" });
+    setSocialModal({ taskId: task.id, taskName: task.name, platform: task.name, link: SOCIAL_LINKS[task.id] ?? task.link ?? "#" });
     setScreenshotFile(null);
     setScreenshotPreview(null);
   }
@@ -244,8 +262,6 @@ export default function Loyalty() {
     }
   }
 
-  const SOCIAL_TASK_IDS = new Set(["FOLLOW_FACEBOOK", "FOLLOW_TWITTER", "FOLLOW_INSTAGRAM", "FOLLOW_MEDIUM", "FOLLOW_YOUTUBE"]);
-  
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const autoOpenSpin = searchParams.get('spin') === 'true';
@@ -290,7 +306,7 @@ export default function Loyalty() {
   const nextTier = TIER_CONFIG.find(t => t.min > totalPoints);
   const progressPct = nextTier ? Math.min(100, Math.round((totalPoints / nextTier.min) * 100)) : 100;
 
-  const activeCategory_ = TASK_CATEGORIES.find(c => c.id === activeCategory)!;
+  const activeCategory_ = TASK_CATEGORIES_MERGED.find(c => c.id === activeCategory)!;
   const colorStyles = COLOR_MAP[activeCategory_.color];
 
   const completedCount = activeCategory_.tasks.filter(t => claimedTaskIds.has(t.id) || completedEventTypes.has(t.id)).length;
@@ -487,7 +503,7 @@ export default function Loyalty() {
         {/* Category Tabs */}
         <div className="border-b border-slate-100 dark:border-slate-800 overflow-x-auto">
           <div className="flex min-w-max px-4">
-            {TASK_CATEGORIES.map((cat) => {
+            {TASK_CATEGORIES_MERGED.map((cat) => {
               const catColor = COLOR_MAP[cat.color];
               const isActive = activeCategory === cat.id;
               const catCompleted = cat.tasks.filter(
