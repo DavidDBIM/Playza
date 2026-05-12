@@ -122,5 +122,62 @@ export async function awardPZA(userId: string, event: PZAEvent, multiplier = 1) 
     })
   }
 
+  // After every point award, check if the user has crossed a new rank threshold
+  await checkAndAwardRanks(userId)
+
   return points
+}
+
+// Rank thresholds: minimum total points to earn each rank bonus
+const RANK_THRESHOLDS: { event: PZAEvent; minPoints: number }[] = [
+  { event: 'RANK_BRONZE',   minPoints: 0 },       // awarded to everyone on first claim
+  { event: 'RANK_SILVER',   minPoints: 5000 },
+  { event: 'RANK_GOLD',     minPoints: 25000 },
+  { event: 'RANK_PLATINUM', minPoints: 100000 },
+]
+
+/**
+ * Check the user's current total points and fire any rank events they've
+ * unlocked but not yet received. Safe to call multiple times — each rank
+ * event is only ever inserted once per user.
+ */
+export async function checkAndAwardRanks(userId: string) {
+  // Get current total points
+  const { data: pzaRow } = await supabaseAdmin
+    .from('pza_points')
+    .select('total_points')
+    .eq('user_id', userId)
+    .single()
+
+  const totalPoints = pzaRow?.total_points ?? 0
+
+  // Get all rank events already awarded to this user
+  const { data: awardedEvents } = await supabaseAdmin
+    .from('pza_events')
+    .select('event_type')
+    .eq('user_id', userId)
+    .in('event_type', RANK_THRESHOLDS.map(r => r.event))
+
+  const awarded = new Set((awardedEvents ?? []).map((e: any) => e.event_type))
+
+  for (const rank of RANK_THRESHOLDS) {
+    if (totalPoints >= rank.minPoints && !awarded.has(rank.event)) {
+      // Insert the pza_event row directly (don't call awardPZA to avoid recursion)
+      const pts = PZA_POINTS[rank.event]
+      await supabaseAdmin.from('pza_events').insert({
+        user_id: userId,
+        event_type: rank.event,
+        points_awarded: pts,
+      })
+      await supabaseAdmin.rpc('increment_pza_points', {
+        p_user_id: userId,
+        p_points: pts,
+      })
+      // Also insert into claimed_tasks so the frontend shows it as fully done
+      await supabaseAdmin.from('claimed_tasks').upsert(
+        { user_id: userId, task_id: rank.event, points_awarded: pts },
+        { onConflict: 'user_id,task_id', ignoreDuplicates: true }
+      )
+    }
+  }
 }
