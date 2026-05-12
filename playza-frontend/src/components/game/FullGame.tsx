@@ -23,9 +23,12 @@ const FullGame = () => {
     const isDev = window.location.hostname === "localhost";
 
     // Filter for active games only - show inactive ones only on localhost for development/preview
-    const gamesToUse = rawGames.filter(
-      (g: Game) => g.is_active === true || isDev,
-    );
+    // ALSO: Exclude "Solo Earn" and "Head to Head" as they have their own dedicated pages
+    const gamesToUse = rawGames.filter((g: Game) => {
+      const isActiveOrDev = g.is_active === true || isDev;
+      const isNotSpecialMode = g.mode !== "Solo Earn" && g.mode !== "Head to Head";
+      return isActiveOrDev && isNotSpecialMode;
+    });
 
     return gamesToUse.map((g: Game & Record<string, unknown>) => {
       // Map backend fields to frontend Game type

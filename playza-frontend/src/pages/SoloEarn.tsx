@@ -25,8 +25,10 @@ const SoloEarn = () => {
 
   const liveSoloGames = useMemo(() => {
     const rawGames = (gamesData?.games || []) as BaseGame[];
+    const isDev = window.location.hostname === 'localhost';
+    
     return rawGames
-      .filter(g => g.mode === 'Solo Earn' && g.is_active)
+      .filter(g => g.mode === 'Solo Earn' && (g.is_active || isDev))
       .map(g => ({
         id: g.id,
         title: g.title,

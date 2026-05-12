@@ -24,7 +24,11 @@ const Home = () => {
 
     // Filter for active games only - show inactive ones only on localhost for development/preview
     const isDev = window.location.hostname === 'localhost';
-    const filteredList = gamesList.filter((g: Game) => g.is_active === true || isDev);
+    const filteredList = gamesList.filter((g: Game) => {
+      const isActiveOrDev = g.is_active === true || isDev;
+      const isNotSpecialMode = g.mode !== "Solo Earn" && g.mode !== "Head to Head";
+      return isActiveOrDev && isNotSpecialMode;
+    });
 
     return filteredList.map((g: Game) => ({
       ...g,
