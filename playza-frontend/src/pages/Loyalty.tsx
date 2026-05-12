@@ -56,19 +56,11 @@ const TASK_CATEGORIES: TaskCategory[] = [
     ],
   },
   {
-    id: "gameplay",
-    label: "Play & Win",
-    icon: <Zap className="w-4 h-4" />,
-    color: "purple",
-    tasks: [
-      { id: "FIRST_GAME_PLAYED", name: "First Match", desc: "Play your very first game", points: 200, icon: <MdSportsEsports />, link: "/games" },
-      { id: "FIRST_TICKET_BOUGHT", name: "Buy First Ticket", desc: "Purchase a game entry ticket", points: 50, icon: <MdShoppingBag />, link: "/games" },
-      { id: "MATCH_COMPLETED", name: "Complete a Duel", desc: "Finish a competitive duel", points: 1000, icon: <MdSportsEsports />, link: "/h2h" },
-      { id: "MATCH_WON", name: "Win a Match", desc: "Claim your first victory", points: 1000, icon: <MdEmojiEvents />, link: "/games" },
-      { id: "WIN_STREAK_3", name: "Hot Streak", desc: "Win 3 matches in a row", points: 200, icon: <MdStars />, link: "/games" },
-      { id: "FIVE_GAMES_PLAYED", name: "5 Games Played", desc: "Complete 5 total matches", points: 1000, icon: <MdSportsEsports />, link: "/games" },
-      { id: "TEN_GAMES_PLAYED", name: "10 Games Played", desc: "Complete 10 total matches", points: 2000, icon: <MdSportsEsports />, link: "/games" },
-    ],
+    id: "community",
+    label: "Social Tasks",
+    icon: <Share2 className="w-4 h-4" />,
+    color: "rose",
+    tasks: [], // populated dynamically from social_task_configs API
   },
   {
     id: "tournaments",
@@ -108,11 +100,19 @@ const TASK_CATEGORIES: TaskCategory[] = [
     ],
   },
   {
-    id: "community",
-    label: "Social Tasks",
-    icon: <Share2 className="w-4 h-4" />,
-    color: "rose",
-    tasks: [], // populated dynamically from social_task_configs API
+    id: "gameplay",
+    label: "Play & Win",
+    icon: <Zap className="w-4 h-4" />,
+    color: "purple",
+    tasks: [
+      { id: "FIRST_GAME_PLAYED", name: "First Match", desc: "Play your very first game", points: 200, icon: <MdSportsEsports />, link: "/games" },
+      { id: "FIRST_TICKET_BOUGHT", name: "Buy First Ticket", desc: "Purchase a game entry ticket", points: 50, icon: <MdShoppingBag />, link: "/games" },
+      { id: "MATCH_COMPLETED", name: "Complete a Duel", desc: "Finish a competitive duel", points: 1000, icon: <MdSportsEsports />, link: "/h2h" },
+      { id: "MATCH_WON", name: "Win a Match", desc: "Claim your first victory", points: 1000, icon: <MdEmojiEvents />, link: "/games" },
+      { id: "WIN_STREAK_3", name: "Hot Streak", desc: "Win 3 matches in a row", points: 200, icon: <MdStars />, link: "/games" },
+      { id: "FIVE_GAMES_PLAYED", name: "5 Games Played", desc: "Complete 5 total matches", points: 1000, icon: <MdSportsEsports />, link: "/games" },
+      { id: "TEN_GAMES_PLAYED", name: "10 Games Played", desc: "Complete 10 total matches", points: 2000, icon: <MdSportsEsports />, link: "/games" },
+    ],
   },
   {
     id: "ranks",
@@ -339,6 +339,10 @@ export default function Loyalty() {
   ): "completed" | "claimable" | "active" | "locked" {
     if (claimedTaskIds.has(task.id)) return "completed";
     if (completedEventTypes.has(task.id)) return "claimable";
+    // Avatar/profile tasks: fall back to profile data from auth context
+    // because pza_events has a limit(50) and old events may not appear in recent_events
+    if (task.id === "AVATAR_UPLOADED" && user?.avatarUrl) return "claimable";
+    if (task.id === "PROFILE_COMPLETED" && user?.firstName && user?.lastName) return "claimable";
     if (task.auto) return "locked";
     return "active";
   }
