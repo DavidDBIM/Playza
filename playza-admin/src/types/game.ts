@@ -38,6 +38,7 @@ export type Game = {
 
   activePlayers: number;
   unique_players?: number;
+  total_revenue?: number;
 
   isActive: boolean;
   is_active?: boolean;

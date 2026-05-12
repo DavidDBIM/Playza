@@ -47,7 +47,7 @@ export type Game = {
   thumbnail_url?: string; // Backend field
 
   category: "Arcade" | "Action" | "Strategy" | "Puzzle" | "Trivia" | "Adventure";
-  mode: "1v1" | "Tournament" | "Quick Match" | "Multiplayer" | "Arcade" | "Adventure";
+  mode: "1v1" | "Tournament" | "Quick Match" | "Multiplayer" | "Arcade" | "Adventure" | "Solo Earn" | "Head to Head" | "Arena" | string;
 
   entryFee: number;
   entry_fee?: number; // Backend field
@@ -69,6 +69,11 @@ export type Game = {
   iframeUrl?: string;
   iframe_url?: string; // Backend field
   howToPlay?: {
+    controls: string;
+    rules: string;
+    scoring: string;
+  };
+  how_to_play?: {
     controls: string;
     rules: string;
     scoring: string;
@@ -98,12 +103,7 @@ export type Game = {
       grants: Record<string, number>;
     }[];
   };
-  sessions?: {
-    id: string;
-    status: string;
-    start_time: string;
-    end_time: string;
-  }[];
+  sessions?: Session[];
 };
 
 export type GameBadge =
