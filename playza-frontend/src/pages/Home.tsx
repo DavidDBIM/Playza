@@ -22,7 +22,11 @@ const Home = () => {
       ? gamesData
       : gamesData?.games || [];
 
-    return gamesList.map((g: Game) => ({
+    // Filter for active games only - show inactive ones only on localhost for development/preview
+    const isDev = window.location.hostname === 'localhost';
+    const filteredList = gamesList.filter((g: Game) => g.is_active === true || isDev);
+
+    return filteredList.map((g: Game) => ({
       ...g,
       thumbnail: g.thumbnail_url || g.thumbnail || "/games/placeholder.png",
       entryFee: g.entry_fee || g.entryFee || 0,
@@ -31,7 +35,8 @@ const Home = () => {
       durationInSeconds: g.duration_seconds || g.durationInSeconds || 60,
       iframeUrl: g.iframe_url || g.iframeUrl,
       status: g.is_active ? "live" : "coming soon",
-      badge: g.badge || (g.is_active ? "POPULAR" : null), // Default badge if none
+      badge: g.badge || null,
+      sessions: g.sessions || []
     }));
   }, [gamesData]);
 
@@ -110,6 +115,9 @@ const Home = () => {
           )}
           {hottestGames.length > 0 && (
             <HomeGames games={hottestGames} title="Hottest Games" />
+          )}
+          {backendGames.length > 0 && (
+            <HomeGames games={backendGames} title="Explore All Games" />
           )}
         </>
       ) : (

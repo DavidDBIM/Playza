@@ -8,7 +8,7 @@ import Filter, { type FilterOption } from "./Filter";
 import { filterGames } from "@/lib/filterGames";
 import { useGames } from "@/hooks/gamesession/useGameSession";
 import { Loader2 } from "lucide-react";
-import type { Game } from "@/types/types";
+import type { Game, Session } from "@/types/types";
 
 const FullGame = () => {
   const [query, setQuery] = useState("");
@@ -17,11 +17,15 @@ const FullGame = () => {
   const { data: gamesData, isLoading } = useGames();
 
   const allGames = useMemo(() => {
-    const rawGames = gamesData?.games || [];
+    const rawGames = (gamesData?.games || []) as Game[];
 
-    // Fallback to demo games ONLY if backend is empty during development
-    // In production, we'd only use backend games
-    const gamesToUse = rawGames.length > 0 ? rawGames : [];
+    // TESTING VIA LOCALHOST
+    const isDev = window.location.hostname === "localhost";
+
+    // Filter for active games only - show inactive ones only on localhost for development/preview
+    const gamesToUse = rawGames.filter(
+      (g: Game) => g.is_active === true || isDev,
+    );
 
     return gamesToUse.map((g: Game & Record<string, unknown>) => {
       // Map backend fields to frontend Game type
@@ -45,17 +49,15 @@ const FullGame = () => {
           g.duration_seconds || g.durationInSeconds || 300,
         ),
         status:
-          g.is_active !== undefined
-            ? g.is_active
-              ? "live"
-              : "coming soon"
-            : (g.status as Game["status"]) || "coming soon",
-        activePlayers: Number(g.activePlayers || 0),
+          (g.status as Game["status"]) ||
+          (g.is_active ? "live" : "coming soon"),
+        activePlayers: Number(g.active_players || g.activePlayers || 0),
         ctaLabel: (g.ctaLabel as string) || "Play Now",
         badge: (g.badge as Game["badge"]) || null,
         iframeUrl: (g.iframe_url as string) || (g.iframeUrl as string),
         createdAt: (g.created_at as string) || (g.createdAt as string),
         updatedAt: (g.created_at as string) || (g.updatedAt as string),
+        sessions: (g.sessions as Session[]) || [],
       };
 
       return {

@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router';
 import { Zap, Swords, Trophy } from 'lucide-react';
 import H2HLobbySkeleton from '../skeletons/H2HLobbySkeleton';
+import { useGames } from '@/hooks/gamesession/useGameSession';
 
 // Extracted Components
 import LobbyHub from './LobbyHub';
@@ -11,6 +12,7 @@ import BotMatchView from './BotMatchView';
 import InviteFriendView from './InviteFriendView';
 import ActionConfirmationModal from './ActionConfirmationModal';
 import type { ChessRoom as WaitingRoom } from '@/types/chess';
+import type { Game } from '@/types/types';
 
 
 
@@ -125,17 +127,49 @@ const H2HLobby = ({ onCreate, onBotCreate, onJoin, onQuickMatch, getWaitingRooms
     setCustomStake((current + amount).toString());
   };
 
-  const isBtnLoading = loading || isFinding;
+  const { data: gamesData, isLoading: gamesLoading } = useGames();
 
-  const games: GameType[] = [
-    { id: 'arena-duel', name: 'Arena Duel', icon: Swords, players: '1.5k', color: 'from-orange-500 to-red-600', thumbnailUrl: '/thumbnails/h2h/arena-duel.png' },
-    { id: 'chess', name: 'Grand Chess', icon: Swords, players: '2.4k', color: 'from-indigo-500 to-purple-600', thumbnailUrl: '/thumbnails/h2h/chess.png' },
-    { id: 'speed-battle', name: 'Speed Battle', icon: Zap, players: '1.2k', color: 'from-blue-500 to-indigo-600', thumbnailUrl: '/thumbnails/h2h/speed-battle.jpg' },
-    { id: 'word-scramble', name: 'Word Scramble', icon: Trophy, players: '900', color: 'from-purple-500 to-pink-600', thumbnailUrl: '/thumbnails/h2h/word-scramble.png' },
-    { id: 'ludo', name: 'Ludo Pro', icon: Trophy, players: '1.8k', color: 'from-emerald-500 to-teal-600', thumbnailUrl: '/thumbnails/h2h/ludo.png' },
-    { id: 'pool', name: '8-Ball Pool', icon: Zap, players: '3.1k', color: 'from-amber-500 to-orange-600', thumbnailUrl: '/thumbnails/h2h/pool.png' },
-    { id: 'soccer', name: 'Score Hero', icon: Trophy, players: '0', color: 'from-green-500 to-emerald-700', thumbnailUrl: '/thumbnails/h2h/soccer.png' },
-  ];
+  const games = useMemo(() => {
+    const rawGames = (gamesData?.games || []) as Game[];
+    const isDev = window.location.hostname === 'localhost';
+
+    return rawGames
+      .filter(g => g.mode === 'Head to Head' && (g.is_active || isDev))
+      .map(g => ({
+        id: g.slug,
+        name: g.title,
+        icon: g.slug === 'arena-duel' ? Swords : g.slug === 'chess' ? Trophy : Zap,
+        players: (g.unique_players || 0).toString(),
+        color: g.category === 'Action' ? 'from-orange-500 to-red-600' : 'from-indigo-500 to-purple-600',
+        thumbnailUrl: g.thumbnail_url || g.thumbnail
+      }));
+  }, [gamesData]);
+
+  if (gamesLoading || loading) return <H2HLobbySkeleton />;
+
+  if (games.length === 0) {
+    return (
+      <div className="py-32 flex flex-col items-center justify-center text-center space-y-6 animate-in fade-in zoom-in duration-700 bg-white/5 rounded-3xl border border-dashed border-primary/10">
+        <div className="relative">
+          <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full" />
+          <div className="relative size-24 bg-slate-900/50 backdrop-blur-xl border border-white/10 rounded-3xl flex items-center justify-center shadow-2xl mx-auto">
+            <span className="text-5xl animate-pulse">⚔️</span>
+          </div>
+        </div>
+        <div className="space-y-2 max-w-sm px-6 mx-auto">
+          <h2 className="text-xl font-black text-foreground uppercase italic tracking-tighter">
+            Arena Under Construction
+          </h2>
+          <p className="text-muted-foreground text-[10px] md:text-xs font-bold leading-relaxed uppercase tracking-widest">
+            The Head to Head arena is currently undergoing scheduled maintenance. 
+            New duels are being calibrated in the database. Check back later.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const isBtnLoading = loading || isFinding;
 
   return (
     <div className="w-full mx-auto">
