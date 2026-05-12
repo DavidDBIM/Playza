@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { supabaseAdmin } from '../../config/supabase'
 import { requireAuth, AuthRequest } from '../../middleware/auth'
-import { awardPZA, checkAndAwardRanks, PZAEvent } from '../../lib/pzaEngine'
+import { awardPZA, PZAEvent } from '../../lib/pzaEngine'
 
 const router = Router()
 
@@ -11,9 +11,6 @@ const router = Router()
 router.get('/me', requireAuth, async (req: AuthRequest, res) => {
   try {
     const userId = req.user!.id
-
-    // Retroactively award any rank milestones the user has reached but not yet received
-    await checkAndAwardRanks(userId)
 
     const { data: points } = await supabaseAdmin
       .from('pza_points')
@@ -26,6 +23,7 @@ router.get('/me', requireAuth, async (req: AuthRequest, res) => {
       .select('event_type, points_awarded, created_at')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
+      .limit(50)
 
     const { data: streak } = await supabaseAdmin
       .from('user_streaks')
@@ -131,17 +129,44 @@ router.post('/streak/claim', requireAuth, async (req: AuthRequest, res) => {
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //  POST /pza/task/claim
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// Auto-tracked tasks: backend already awarded points for these via profile/game events.
-// When the user clicks "Claim" we must NOT re-award — only record in claimed_tasks.
-const AUTO_TRACKED_TASKS = new Set([
-  'AVATAR_UPLOADED',
-  'PROFILE_COMPLETED',
-  'EMAIL_VERIFIED',
-  'RANK_BRONZE',
-  'RANK_SILVER',
-  'RANK_GOLD',
-  'RANK_PLATINUM',
-])
+// Tasks where points are auto-awarded by the backend (avatar upload, profile save, rank unlock).
+// For these, /task/claim must NOT re-award — only verify the condition and record claimed_tasks.
+const AUTO_TRACKED_TASKS: Record<string, (userId: string) => Promise<number | null>> = {
+  AVATAR_UPLOADED: async (userId) => {
+    const { data } = await supabaseAdmin
+      .from('users').select('avatar_url').eq('id', userId).single()
+    if (!data?.avatar_url) return null
+    // Points were already awarded by profile.service when avatar was uploaded.
+    // Return the defined award amount so we can record it.
+    return PZA_POINTS['AVATAR_UPLOADED']
+  },
+  PROFILE_COMPLETED: async (userId) => {
+    const { data } = await supabaseAdmin
+      .from('users').select('first_name, last_name').eq('id', userId).single()
+    if (!data?.first_name || !data?.last_name) return null
+    return PZA_POINTS['PROFILE_COMPLETED']
+  },
+  RANK_BRONZE: async (userId) => {
+    const { data } = await supabaseAdmin
+      .from('pza_points').select('total_points').eq('user_id', userId).single()
+    return (data?.total_points ?? 0) >= 0 ? PZA_POINTS['RANK_BRONZE'] : null
+  },
+  RANK_SILVER: async (userId) => {
+    const { data } = await supabaseAdmin
+      .from('pza_points').select('total_points').eq('user_id', userId).single()
+    return (data?.total_points ?? 0) >= 5000 ? PZA_POINTS['RANK_SILVER'] : null
+  },
+  RANK_GOLD: async (userId) => {
+    const { data } = await supabaseAdmin
+      .from('pza_points').select('total_points').eq('user_id', userId).single()
+    return (data?.total_points ?? 0) >= 25000 ? PZA_POINTS['RANK_GOLD'] : null
+  },
+  RANK_PLATINUM: async (userId) => {
+    const { data } = await supabaseAdmin
+      .from('pza_points').select('total_points').eq('user_id', userId).single()
+    return (data?.total_points ?? 0) >= 100000 ? PZA_POINTS['RANK_PLATINUM'] : null
+  },
+}
 
 router.post('/task/claim', requireAuth, async (req: AuthRequest, res) => {
   try {
@@ -163,22 +188,15 @@ router.post('/task/claim', requireAuth, async (req: AuthRequest, res) => {
 
     let pointsAwarded: number
 
-    if (AUTO_TRACKED_TASKS.has(task_id)) {
-      // Points already awarded by backend event — just verify it happened
-      const { data: eventRow } = await supabaseAdmin
-        .from('pza_events')
-        .select('points_awarded')
-        .eq('user_id', userId)
-        .eq('event_type', task_id)
-        .limit(1)
-        .single()
-
-      if (!eventRow) {
+    if (AUTO_TRACKED_TASKS[task_id]) {
+      // Verify the user has actually completed this task
+      const points = await AUTO_TRACKED_TASKS[task_id](userId)
+      if (points === null) {
         res.status(400).json({ success: false, message: 'Task not yet completed' })
         return
       }
-
-      pointsAwarded = eventRow.points_awarded
+      pointsAwarded = points
+      // Points were already credited by the backend event — only record the claim
       await supabaseAdmin.from('claimed_tasks').insert({ user_id: userId, task_id, points_awarded: pointsAwarded })
     } else {
       // Regular task: award points now
