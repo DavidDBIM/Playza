@@ -72,11 +72,19 @@ router.post('/submit', requireAuth, async (req: AuthRequest, res) => {
       .single()
 
     if (existing) {
-      const msg = existing.status === 'approved'
-        ? 'You already completed this task and received your PZA.'
-        : 'You already submitted this task — admin is reviewing your screenshot.'
-      res.status(400).json({ success: false, message: msg })
-      return
+      if (existing.status === 'approved') {
+        res.status(400).json({ success: false, message: 'You already completed this task and received your PZA.' })
+        return
+      }
+      if (existing.status === 'pending') {
+        res.status(400).json({ success: false, message: 'You already submitted this task — admin is reviewing your screenshot.' })
+        return
+      }
+      // status === 'rejected': delete the old submission so the user can resubmit below
+      await supabaseAdmin
+        .from('social_task_submissions')
+        .delete()
+        .eq('id', existing.id)
     }
 
     const base64Data = String(screenshot_base64).includes(',')
