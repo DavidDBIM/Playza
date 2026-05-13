@@ -113,7 +113,10 @@ export async function createGameWithSessions(gameData: any, sessions: any[]) {
  * Update an existing game's metadata and capabilities.
  * Called by the admin panel via PUT /gamesession/games/:id
  */
-export async function updateGame(gameId: string, gameData: any) {
+export async function updateGame(gameId: string, payload: any) {
+  const gameData = payload.gameData || payload;
+  const sessions = payload.sessions || [];
+  
   // Construct update object carefully to avoid sending invalid keys
   const updatePayload: any = {
     title: gameData.title,
@@ -144,6 +147,38 @@ export async function updateGame(gameId: string, gameData: any) {
   if (error) {
     // Throw a more descriptive error for the controller to catch
     throw new Error(`DB Error [${error.code}]: ${error.message}${error.details ? ' - ' + error.details : ''}`)
+  }
+  
+  // Process sessions if provided
+  if (sessions && sessions.length > 0) {
+    for (const s of sessions) {
+      if (s.id) {
+        // Only update if not active/completed
+        if (s.status !== 'active' && s.status !== 'completed' && s.status !== 'finished') {
+          await supabase.from('game_sessions').update({
+            title: s.title,
+            type: s.type,
+            entry_fee: s.entryFee,
+            max_players: s.maxPlayers,
+            winners_count: s.winnersCount,
+            start_time: s.startTime,
+            end_time: s.endTime,
+          }).eq('id', s.id);
+        }
+      } else {
+        await supabase.from('game_sessions').insert({
+          game_id: gameId,
+          title: s.title,
+          type: s.type,
+          entry_fee: s.entryFee,
+          max_players: s.maxPlayers,
+          winners_count: s.winnersCount,
+          start_time: s.startTime,
+          end_time: s.endTime,
+          status: 'upcoming'
+        });
+      }
+    }
   }
   
   return data
@@ -530,13 +565,15 @@ export async function finalizeSessionAndPayout(sessionId: string) {
         p_amount: payoutAmount
       })
 
-      await supabase.from('transactions').insert({
+      const { error: txError } = await supabase.from('transactions').insert({
         user_id: winner.user_id,
         type: 'winnings',
         amount: payoutAmount,
         status: 'successful',
+        reference: `PLZ-ARENA-WIN-${sessionId}-${winner.user_id}`,
         meta: { session_id: sessionId, rank: i + 1, score: winner.best_score }
       })
+      if (txError) console.error('Transaction Error:', txError);
 
       await supabase.from('game_leaderboard').update({
         payout_amount: payoutAmount,
@@ -544,7 +581,7 @@ export async function finalizeSessionAndPayout(sessionId: string) {
         status: 'finished'
       }).eq('id', winner.id)
 
-      await supabase.from('game_history').insert({
+      const { error: histError } = await supabase.from('game_history').insert({
         user_id: winner.user_id,
         game_name: session.title || session.games?.title || 'Arena Tournament',
         score: winner.best_score,
@@ -552,6 +589,7 @@ export async function finalizeSessionAndPayout(sessionId: string) {
         status: 'win',
         played_at: session.end_time || new Date().toISOString()
       })
+      if (histError) console.error('Game History Win Error:', histError);
     }
   }
 
@@ -569,7 +607,9 @@ export async function finalizeSessionAndPayout(sessionId: string) {
       }
     });
 
-    await supabase.from('game_history').insert(loserHistory)
+    const { error: histLoserErr } = await supabase.from('game_history').insert(loserHistory)
+    if (histLoserErr) console.error('Game History Loser Error:', histLoserErr);
+
     await supabase.from('game_leaderboard').update({ status: 'finished' }).eq('session_id', sessionId).is('payout_status', 'pending')
   }
 

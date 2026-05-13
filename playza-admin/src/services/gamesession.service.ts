@@ -47,8 +47,8 @@ export const gameSessionService = {
     return response.data;
   },
 
-  async updateGame(gameId: string, gameData: GameData) {
-    const response = await apiClient.put(`/gamesession/games/${gameId}`, gameData);
+  async updateGame(gameId: string, gameData: GameData, sessions?: SessionInput[]) {
+    const response = await apiClient.put(`/gamesession/games/${gameId}`, { gameData, sessions });
     return response.data;
   },
 
@@ -75,6 +75,20 @@ export const gameSessionService = {
 
   async updateSessionStatus(sessionId: string, status: string) {
     const response = await apiClient.patch(`/gamesession/sessions/${sessionId}/status`, { status });
+    return response.data;
+  },
+
+  async getH2HMatches(slug: string, page = 1, limit = 20) {
+    const response = await apiClient.get(`/admin/games/${slug}/h2h-matches`, {
+      params: { page, limit }
+    });
+    return response.data;
+  },
+
+  async getSoloActivity(slug: string, viewMode: 'raw' | 'aggregated' = 'aggregated', page = 1, limit = 20) {
+    const response = await apiClient.get(`/admin/games/${slug}/solo-activity`, {
+      params: { viewMode, page, limit }
+    });
     return response.data;
   }
 };

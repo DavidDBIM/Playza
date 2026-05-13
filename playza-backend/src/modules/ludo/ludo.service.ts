@@ -66,6 +66,10 @@ async function handleGameOver(roomId: string, winnerId: string | null, stake: nu
       status: 'successful',
       reference: `PLZ-LUDO-WIN-${roomId}`,
     })
+
+    // Track Revenue
+    const { recordH2HRevenue } = require('../gamesession/h2h.helper');
+    await recordH2HRevenue('ludo', platformCut);
   }
 
   // 3. Record Game History for both players

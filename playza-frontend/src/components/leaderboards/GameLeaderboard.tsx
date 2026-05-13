@@ -296,8 +296,9 @@ function GameLeaderboard() {
   const allGames = gamesData?.games || [];
 
   const filteredGames = useMemo(() => {
-    if (!searchQuery) return allGames;
-    return allGames.filter((g: Game) =>
+    let games = allGames.filter((g: Game) => g.mode?.toLowerCase() === "arena");
+    if (!searchQuery) return games;
+    return games.filter((g: Game) =>
       g.title.toLowerCase().includes(searchQuery.toLowerCase()),
     );
   }, [allGames, searchQuery]);

@@ -29,6 +29,7 @@ import { toast } from "sonner";
 import type { Game, Session } from "../types/game";
 
 interface SessionInput {
+  id?: string;
   title: string;
   type: string;
   entryFee: number;
@@ -36,6 +37,7 @@ interface SessionInput {
   winnersCount: number;
   startTime: string;
   endTime: string;
+  status?: string;
 }
 
 interface PowerUpDef {
@@ -255,6 +257,8 @@ const CreateGame: React.FC = () => {
           )
             .toISOString()
             .slice(0, 16),
+          id: s.id,
+          status: s.status,
         }),
       );
       if (mappedSessions.length > 0) {
@@ -316,7 +320,6 @@ const CreateGame: React.FC = () => {
 
   const addSession = () => {
     setSessions([
-      ...sessions,
       {
         title: `Tournament #${sessions.length + 1}`,
         type: "tournament",
@@ -332,19 +335,21 @@ const CreateGame: React.FC = () => {
           .toISOString()
           .slice(0, 16),
       },
+      ...sessions,
     ]);
   };
 
   const duplicateSession = () => {
-    const lastSession = sessions[sessions.length - 1];
+    const targetSession = sessions[0];
+    if (!targetSession) return;
 
     // Auto-calculate next day's timing if dates exist
     let newStart = "";
     let newEnd = "";
 
-    if (lastSession.startTime && lastSession.endTime) {
-      const start = new Date(lastSession.startTime);
-      const end = new Date(lastSession.endTime);
+    if (targetSession.startTime && targetSession.endTime) {
+      const start = new Date(targetSession.startTime);
+      const end = new Date(targetSession.endTime);
       start.setDate(start.getDate() + 1);
       end.setDate(end.getDate() + 1);
 
@@ -358,13 +363,15 @@ const CreateGame: React.FC = () => {
     }
 
     setSessions([
-      ...sessions,
       {
-        ...lastSession,
-        title: `${lastSession.title} (Clone)`,
+        ...targetSession,
+        id: undefined,
+        status: undefined,
+        title: `${targetSession.title} (Clone)`,
         startTime: newStart,
         endTime: newEnd,
       },
+      ...sessions,
     ]);
   };
 
@@ -406,7 +413,7 @@ const CreateGame: React.FC = () => {
           platformFeePercentage: Number(formData.platformFeePercentage || 10),
           capabilities, // jsonb column — stored as-is in Supabase
         },
-        sessions: sessions.map((s) => {
+        sessions: ["Tournament", "Arena"].includes(formData.mode) ? sessions.map((s) => {
           const startTime = s.startTime
             ? new Date(s.startTime).toISOString()
             : new Date().toISOString();
@@ -422,13 +429,14 @@ const CreateGame: React.FC = () => {
             startTime,
             endTime,
           };
-        }),
+        }) : [],
       };
 
       if (isEditMode && gameId) {
         await updateGameMutation.mutateAsync({
           gameId,
           gameData: payload.gameData,
+          sessions: payload.sessions,
         });
         toast.success("Game updated successfully!");
       } else {
@@ -566,6 +574,11 @@ const CreateGame: React.FC = () => {
                           {i < categories.length - 1 && <SelectSeparator />}
                         </React.Fragment>
                       ))}
+                      {formData.category && !categories.flatMap(g => g.items).includes(formData.category) && (
+                        <SelectItem value={formData.category} className="text-xs font-bold">
+                          {formData.category} (Legacy)
+                        </SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -590,6 +603,11 @@ const CreateGame: React.FC = () => {
                           {item}
                         </SelectItem>
                       ))}
+                      {formData.difficulty && !difficulties.includes(formData.difficulty) && (
+                        <SelectItem value={formData.difficulty} className="text-xs font-bold">
+                          {formData.difficulty} (Legacy)
+                        </SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -626,6 +644,11 @@ const CreateGame: React.FC = () => {
                       >
                         Head to Head (H2H)
                       </SelectItem>
+                      {formData.mode && !["Arena", "Tournament", "Solo Earn", "Head to Head"].includes(formData.mode) && (
+                        <SelectItem value={formData.mode} className="text-xs font-bold">
+                          {formData.mode} (Legacy)
+                        </SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -1052,11 +1075,14 @@ const CreateGame: React.FC = () => {
                 </div>
               </div>
 
-              {sessions.map((session, idx) => (
+              {sessions.map((session, idx) => {
+                const isLocked = ['active', 'completed', 'finished'].includes(session.status || '');
+                return (
                 <div
                   key={idx}
-                  className="bg-card border border-border rounded-2xl p-6 shadow-sm relative"
+                  className={`bg-card border border-border rounded-2xl p-6 shadow-sm relative ${isLocked ? 'opacity-80' : ''}`}
                 >
+                  {!isLocked && (
                   <button
                     onClick={() => removeSession(idx)}
                     className="absolute -top-2 -right-2 h-8 w-8 bg-rose-500 text-white rounded-lg flex items-center justify-center shadow-md hover:bg-rose-600 transition-all z-10"
@@ -1064,12 +1090,19 @@ const CreateGame: React.FC = () => {
                   >
                     <MdClose className="text-lg" />
                   </button>
+                  )}
+                  {isLocked && (
+                    <div className="absolute -top-3 right-4 px-2 py-1 bg-amber-500 text-white rounded text-[10px] font-bold uppercase shadow-sm">
+                      Locked ({session.status})
+                    </div>
+                  )}
                   <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
                     <div className="md:col-span-4 space-y-1.5">
                       <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">
                         Session Title
                       </label>
                       <Input
+                        disabled={isLocked}
                         className="h-11 bg-muted border-border rounded-xl font-bold uppercase tracking-tight"
                         placeholder="Elite Tournament #1"
                         value={session.title}
@@ -1083,6 +1116,7 @@ const CreateGame: React.FC = () => {
                         Type
                       </label>
                       <Select
+                        disabled={isLocked}
                         value={session.type}
                         onValueChange={(v) =>
                           handleSessionChange(idx, "type", v)
@@ -1113,6 +1147,7 @@ const CreateGame: React.FC = () => {
                       </label>
                       <Input
                         type="number"
+                        disabled={isLocked}
                         className="h-11 bg-muted border-border rounded-xl font-black text-emerald-600 font-number"
                         value={session.entryFee}
                         onChange={(e) =>
@@ -1131,6 +1166,7 @@ const CreateGame: React.FC = () => {
                         </label>
                         <Input
                           type="number"
+                          disabled={isLocked}
                           className="h-11 bg-muted border-border rounded-xl font-black font-number"
                           value={session.maxPlayers || ""}
                           onChange={(e) =>
@@ -1151,6 +1187,7 @@ const CreateGame: React.FC = () => {
                         </label>
                         <Input
                           type="number"
+                          disabled={isLocked}
                           className="h-11 bg-muted border-border rounded-xl font-black font-number"
                           value={session.winnersCount}
                           onChange={(e) =>
@@ -1168,6 +1205,7 @@ const CreateGame: React.FC = () => {
                         </label>
                         <Input
                           type="datetime-local"
+                          disabled={isLocked}
                           className="h-11 bg-muted border-border rounded-xl font-bold text-[10px] uppercase [color-scheme:dark] md:[color-scheme:light] dark:[color-scheme:dark]"
                           value={session.startTime}
                           onChange={(e) =>
@@ -1185,6 +1223,7 @@ const CreateGame: React.FC = () => {
                         </label>
                         <Input
                           type="datetime-local"
+                          disabled={isLocked}
                           className="h-11 bg-muted border-border rounded-xl font-bold text-[10px] uppercase [color-scheme:dark] md:[color-scheme:light] dark:[color-scheme:dark]"
                           value={session.endTime}
                           onChange={(e) =>
@@ -1202,7 +1241,8 @@ const CreateGame: React.FC = () => {
                     </p>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </section>
           )}
 

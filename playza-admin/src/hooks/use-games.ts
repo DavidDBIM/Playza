@@ -67,10 +67,12 @@ export const useUpdateGame = () => {
     mutationFn: ({
       gameId,
       gameData,
+      sessions,
     }: {
       gameId: string;
       gameData: GameData;
-    }) => gameSessionService.updateGame(gameId, gameData),
+      sessions?: SessionInput[];
+    }) => gameSessionService.updateGame(gameId, gameData, sessions),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["games"] });
     },

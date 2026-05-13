@@ -2,6 +2,7 @@ import { supabaseAdmin } from '../../config/supabase'
 import crypto from 'crypto'
 import { Chess } from 'chess.js'
 import { getBotMove, SYSTEM_BOT_ID } from './bot'
+import { recordH2HRevenue } from '../gamesession/h2h.helper'
 
 function generateRoomCode(): string {
   return crypto.randomBytes(3).toString('hex').toUpperCase()
@@ -48,6 +49,9 @@ async function handleGameOver(roomId: string, winnerId: string | null, stake: nu
       status: 'successful',
       reference: `PLZ-CHESS-WIN-${roomId}`,
     })
+
+    // Track Revenue
+    await recordH2HRevenue('chess', platformCut);
   }
 
   // 3. Record Game History for both players
