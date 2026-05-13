@@ -137,16 +137,46 @@ export async function updateGame(gameId: string, payload: any) {
 
   if (gameData.capabilities !== undefined) updatePayload.capabilities = gameData.capabilities
 
-  const { data, error } = await supabase
-    .from('games')
-    .update(updatePayload)
-    .eq('id', gameId)
-    .select()
-    .single()
+  // Detect if gameId is a UUID or a Slug
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(gameId);
+  
+  console.log(`[updateGame] Attempting update for ${isUUID ? 'UUID' : 'Slug'}: ${gameId}`);
+
+  let query = supabase.from('games').update(updatePayload);
+  
+  if (isUUID) {
+    query = query.eq('id', gameId);
+  } else {
+    query = query.eq('slug', gameId);
+  }
+
+  const { data, error } = await query.select().maybeSingle();
 
   if (error) {
     console.error(`[updateGame] Database Error:`, error);
-    throw new Error(`DB Error [${error.code}]: ${error.message}${error.details ? ' - ' + error.details : ''}`)
+    throw new Error(`DB Error [${error.code}]: ${error.message}${error.details ? ' - ' + error.details : ''}`);
+  }
+
+  if (!data) {
+    // Fallback: If UUID didn't work, maybe it was a slug after all (or vice versa)
+    console.warn(`[updateGame] No row found with ${isUUID ? 'ID' : 'Slug'} ${gameId}. Trying fallback...`);
+    const fallbackQuery = supabase.from('games').update(updatePayload);
+    if (isUUID) {
+      fallbackQuery.eq('slug', gameId);
+    } else {
+      fallbackQuery.eq('id', gameId);
+    }
+    const { data: fallbackData, error: fallbackError } = await fallbackQuery.select().maybeSingle();
+    
+    if (fallbackError) throw fallbackError;
+    if (!fallbackData) {
+      throw new Error(`Game not found with identifier: ${gameId}`);
+    }
+    // Update the local gameId for session processing
+    gameId = fallbackData.id;
+  } else {
+    // Ensure gameId is the actual UUID for session processing
+    gameId = data.id;
   }
   
   // Process sessions if provided
