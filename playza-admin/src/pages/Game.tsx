@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import {
   MdEdit,
@@ -21,16 +21,48 @@ import { ZASymbol } from "../components/currency/ZASymbol";
 import { useGames, useGameSessions } from "../hooks/use-games";
 import { Loader2 } from "lucide-react";
 import { format } from "date-fns";
+import { useQuery } from "@tanstack/react-query";
+import { gameSessionService } from "../services/gamesession.service";
 
 import type { Game as GameType, Session } from "../types/game";
+
+interface H2HMatch {
+  id: string;
+  code?: string;
+  host: { username: string; avatar_url?: string };
+  guest?: { username: string; avatar_url?: string };
+  is_bot?: boolean;
+  stake: number;
+  status: 'waiting' | 'active' | 'finished' | 'cancelled';
+}
+
+interface SoloActivity {
+  id: string;
+  user_id: string;
+  user: { id: string; username: string; avatar_url?: string };
+  stake: number;
+  multiplier: number;
+  payout: number;
+  status: 'in_progress' | 'completed';
+  created_at: string;
+}
+
+interface SoloAggregation {
+  user: { id: string; username: string; avatar_url?: string };
+  total_runs: number;
+  total_staked: number;
+  total_payout: number;
+  avg_multiplier: number;
+}
 
 const Game: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<"sessions" | "about" | "rules">(
+  const [activeTab, setActiveTab] = useState<"sessions" | "matches" | "about" | "rules">(
     "sessions",
   );
   const [showCompleted, setShowCompleted] = useState(false);
+  const [soloViewMode, setSoloViewMode] = useState<'raw' | 'aggregated'>('aggregated');
 
   const { data: gamesData, isLoading: gamesLoading } = useGames();
 
@@ -58,8 +90,50 @@ const Game: React.FC = () => {
   const filteredSessions = useMemo(() => {
     const sessions = (sessionsData?.sessions || []) as Session[];
     if (showCompleted) return sessions;
-    return sessions.filter(s => s.status !== 'completed');
+    return sessions.filter((s) => s.status !== "completed");
   }, [sessionsData, showCompleted]);
+
+  const isH2H = game?.mode === "Head to Head" || game?.mode === "1v1";
+  const isSolo = game?.mode === "Solo Earn";
+
+  const { data: h2hData, isLoading: h2hLoading } = useQuery({
+    queryKey: ["h2h-matches", slug],
+    queryFn: () => gameSessionService.getH2HMatches(slug || ""),
+    enabled: !!slug && isH2H,
+    refetchInterval: 10000, // Refresh every 10s for live feel
+  });
+
+  const { data: soloData, isLoading: soloLoading } = useQuery({
+    queryKey: ["solo-activity", slug, soloViewMode],
+    queryFn: () => gameSessionService.getSoloActivity(slug || "", soloViewMode),
+    enabled: !!slug && isSolo,
+    refetchInterval: 10000,
+  });
+
+  const h2hMatches = h2hData?.data?.matches || [];
+  const soloActivity = soloData?.data?.activity || [];
+
+  const tabs = isH2H
+    ? ([
+        { id: "matches", label: "Live Matches", icon: MdStadium },
+        { id: "about", label: "About", icon: MdInfo },
+        { id: "rules", label: "Rules", icon: MdGavel },
+      ] as const)
+    : isSolo
+    ? ([
+        { id: "matches", label: "Player Activity", icon: MdStadium },
+        { id: "about", label: "About", icon: MdInfo },
+        { id: "rules", label: "Rules", icon: MdGavel },
+      ] as const)
+    : ([
+        { id: "sessions", label: "Sessions", icon: MdStadium },
+        { id: "about", label: "About", icon: MdInfo },
+        { id: "rules", label: "Rules", icon: MdGavel },
+      ] as const);
+
+  const currentTab = tabs.find((t) => t.id === activeTab)
+    ? activeTab
+    : (tabs[0].id as "sessions" | "matches" | "about" | "rules");
 
   if (gamesLoading) {
     return (
@@ -88,6 +162,7 @@ const Game: React.FC = () => {
       </div>
     );
   }
+
 
   return (
     <main className="p-4 space-y-4">
@@ -147,23 +222,209 @@ const Game: React.FC = () => {
         {/* Primary Tabs & Content */}
         <div className="col-span-1 lg:col-span-8 space-y-8">
           <div className="flex items-center p-1 bg-muted/50 rounded-xl border border-border grow-0 w-fit">
-            {(
-              [
-                { id: "sessions", label: "Sessions", icon: MdStadium },
-                { id: "about", label: "About", icon: MdInfo },
-                { id: "rules", label: "Rules", icon: MdGavel },
-              ] as const
-            ).map((tab) => (
+            {tabs.map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-6 py-2 rounded-lg text-xs font-black uppercase transition-all ${activeTab === tab.id ? "bg-card text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+                onClick={() => setActiveTab(tab.id as "sessions" | "matches" | "about" | "rules")}
+                className={`flex items-center gap-2 px-6 py-2 rounded-lg text-xs font-black uppercase transition-all ${currentTab === tab.id ? "bg-card text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
               >
                 <tab.icon className="text-lg" /> {tab.label}
               </button>
             ))}
           </div>{" "}
-          {activeTab === "sessions" && (
+          {currentTab === "matches" && (isH2H || isSolo) && (
+            <div className="space-y-4 animate-in fade-in duration-500">
+              <div className="flex justify-between items-center mb-2 px-1">
+                <h3 className="text-sm font-black uppercase tracking-wider text-foreground">
+                  {isSolo ? (soloViewMode === 'aggregated' ? "Player Aggregation" : "Live Solo Feed") : "Live & Recent Matches"}
+                </h3>
+                {isSolo && (
+                  <div className="flex bg-muted p-1 rounded-lg border border-border">
+                    <button 
+                      onClick={() => setSoloViewMode('aggregated')}
+                      className={`px-3 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-md transition-all ${soloViewMode === 'aggregated' ? "bg-card text-primary shadow-sm" : "text-muted-foreground"}`}
+                    >
+                      Aggregated
+                    </button>
+                    <button 
+                      onClick={() => setSoloViewMode('raw')}
+                      className={`px-3 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-md transition-all ${soloViewMode === 'raw' ? "bg-card text-primary shadow-sm" : "text-muted-foreground"}`}
+                    >
+                      Raw Feed
+                    </button>
+                  </div>
+                )}
+              </div>
+              <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-muted/50 border-b border-border">
+                        {isSolo ? (
+                          soloViewMode === 'aggregated' ? (
+                            <>
+                              <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Player</th>
+                              <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center">Rounds</th>
+                              <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">Avg Multiplier</th>
+                              <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">Total Staked</th>
+                              <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">Net Profit/Loss</th>
+                            </>
+                          ) : (
+                            <>
+                              <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Time</th>
+                              <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Player</th>
+                              <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center">Multiplier</th>
+                              <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">Stake</th>
+                              <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">Payout</th>
+                            </>
+                          )
+                        ) : (
+                          <>
+                            <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Match ID</th>
+                            <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Players</th>
+                            <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">Stake</th>
+                            <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">Platform Fee</th>
+                            <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center">Status</th>
+                          </>
+                        )}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {isSolo ? (
+                        soloLoading ? (
+                          <tr>
+                            <td colSpan={5} className="py-10 text-center">
+                              <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto mb-2" />
+                              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Fetching Solo Data...</p>
+                            </td>
+                          </tr>
+                        ) : soloActivity.length === 0 ? (
+                          <tr>
+                            <td colSpan={5} className="py-10 text-center">
+                              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">No solo activity recorded yet</p>
+                            </td>
+                          </tr>
+                        ) : (
+                          soloViewMode === 'aggregated' ? (
+                            soloActivity.map((agg: SoloAggregation) => (
+                              <tr key={agg.user.id} className="hover:bg-muted/30 transition-colors">
+                                <td className="px-4 py-4">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
+                                      {agg.user.avatar_url ? <img src={agg.user.avatar_url} alt={agg.user.username} className="w-full h-full" /> : <span className="text-[8px] font-black uppercase">{agg.user.username[0]}</span>}
+                                    </div>
+                                    <span className="text-xs font-bold text-foreground">{agg.user.username}</span>
+                                  </div>
+                                </td>
+                                <td className="px-4 py-4 text-center font-black text-xs">{agg.total_runs}</td>
+                                <td className="px-4 py-4 text-right">
+                                  <span className={`text-xs font-black px-2 py-0.5 rounded ${agg.avg_multiplier >= 1 ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>
+                                    {agg.avg_multiplier.toFixed(2)}x
+                                  </span>
+                                </td>
+                                <td className="px-4 py-4 text-right font-black text-xs font-number">
+                                  <div className="flex items-center justify-end gap-1"><ZASymbol className="scale-75" /> {agg.total_staked.toLocaleString()}</div>
+                                </td>
+                                <td className="px-4 py-4 text-right">
+                                  <span className={`text-xs font-black font-number flex items-center justify-end gap-1 ${(agg.total_staked - agg.total_payout) >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                                    <ZASymbol className="scale-75" />
+                                    {(agg.total_staked - agg.total_payout).toLocaleString()}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))
+                          ) : (
+                            soloActivity.map((run: SoloActivity) => (
+                              <tr key={run.id} className="hover:bg-muted/30 transition-colors">
+                                <td className="px-4 py-4 text-[10px] font-bold text-muted-foreground uppercase">{format(new Date(run.created_at), 'HH:mm:ss')}</td>
+                                <td className="px-4 py-4">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs font-bold text-primary">{run.user.username}</span>
+                                  </div>
+                                </td>
+                                <td className="px-4 py-4 text-center">
+                                  <span className={`text-[10px] font-black px-1.5 py-0.5 rounded ${run.multiplier >= 1 ? 'bg-emerald-500/10 text-emerald-500' : 'bg-muted text-muted-foreground'}`}>
+                                    {Number(run.multiplier).toFixed(2)}x
+                                  </span>
+                                </td>
+                                <td className="px-4 py-4 text-right font-black text-xs font-number">
+                                  <div className="flex items-center justify-end gap-1"><ZASymbol className="scale-75" /> {Number(run.stake).toLocaleString()}</div>
+                                </td>
+                                <td className="px-4 py-4 text-right font-black text-xs font-number">
+                                  <div className="flex items-center justify-end gap-1 text-foreground"><ZASymbol className="scale-75" /> {Number(run.payout || 0).toLocaleString()}</div>
+                                </td>
+                              </tr>
+                            ))
+                          )
+                        )
+                      ) : (
+                        h2hLoading ? (
+                          <tr>
+                            <td colSpan={5} className="py-10 text-center">
+                              <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto mb-2" />
+                              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Synchronizing Match Feed...</p>
+                            </td>
+                          </tr>
+                        ) : h2hMatches.length === 0 ? (
+                          <tr>
+                            <td colSpan={5} className="py-10 text-center">
+                              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">No matches found for this game</p>
+                            </td>
+                          </tr>
+                        ) : (
+                          h2hMatches.map((match: H2HMatch) => (
+                            <tr key={match.id} className="hover:bg-muted/30 transition-colors">
+                              <td className="px-4 py-4 text-xs font-black text-foreground uppercase tracking-wider">
+                                {match.code || match.id.slice(0, 8)}
+                              </td>
+                              <td className="px-4 py-4">
+                                <div className="flex items-center gap-3">
+                                  <span className="text-xs font-bold text-primary">{match.host?.username || "Player"}</span>
+                                  <span className="text-[10px] font-black text-muted-foreground uppercase">VS</span>
+                                  <span className={`text-xs font-bold ${match.guest ? "text-rose-500" : "text-muted-foreground italic"}`}>
+                                    {match.guest?.username || (match.is_bot ? "System Bot" : "Waiting...")}
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="px-4 py-4 text-right">
+                                <span className="text-xs font-black text-foreground font-number flex items-center justify-end gap-1">
+                                  <ZASymbol className="scale-75" />
+                                  {Number(match.stake).toLocaleString()}
+                                </span>
+                              </td>
+                              <td className="px-4 py-4 text-right">
+                                <span className={`text-xs font-black font-number flex items-center justify-end gap-1 ${match.status === 'finished' ? 'text-emerald-500' : 'text-muted-foreground'}`}>
+                                  <ZASymbol className="scale-75" />
+                                  {match.status === 'finished' 
+                                    ? (Number(match.stake) * 2 * (game.platformFeePercentage / 100)).toLocaleString()
+                                    : "—"}
+                                </span>
+                              </td>
+                              <td className="px-4 py-4 text-center">
+                                <span className={`inline-flex px-2 py-1 text-[9px] font-black uppercase tracking-widest rounded ${
+                                  match.status === 'finished' ? "bg-primary/20 text-primary" : 
+                                  match.status === 'waiting' ? "bg-amber-500/20 text-amber-500" : 
+                                  "bg-blue-500/20 text-blue-500"
+                                }`}>
+                                  {match.status} 
+                                  {match.status === 'active' && <span className="w-1.5 h-1.5 rounded-full bg-blue-500 ml-1.5 animate-pulse"></span>}
+                                </span>
+                              </td>
+                            </tr>
+                          ))
+                        )
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="p-4 bg-muted/20 border-t border-border flex justify-between items-center">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Showing Live Activity</span>
+                  <button className="px-4 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg text-[10px] font-black uppercase tracking-widest transition-all">View Full Logs</button>
+                </div>
+              </div>
+            </div>
+          )}
+          {currentTab === "sessions" && !isH2H && !isSolo && (
             <div className="space-y-4 animate-in fade-in duration-500">
               <div className="flex justify-between items-center mb-2 px-1">
                 <h3 className="text-sm font-black uppercase tracking-wider text-foreground">
@@ -280,7 +541,7 @@ const Game: React.FC = () => {
               )}
             </div>
           )}
-          {activeTab === "about" && (
+          {currentTab === "about" && (
             <div className="animate-in fade-in duration-500 space-y-4">
               <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
                 <h3 className="text-sm font-black uppercase tracking-wider mb-4 text-foreground">
@@ -354,7 +615,7 @@ const Game: React.FC = () => {
               </div>
             </div>
           )}
-          {activeTab === "rules" && (
+          {currentTab === "rules" && (
             <div className="animate-in fade-in duration-500 space-y-6">
               {/* Dynamic Rules from DB */}
               <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
@@ -413,14 +674,13 @@ const Game: React.FC = () => {
         <aside className="col-span-1 lg:col-span-4 space-y-6">
           <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
             <h3 className="text-[10px] font-black uppercase tracking-wider mb-6 flex items-center gap-2 text-muted-foreground">
-              <MdTrendingUp className="text-primary text-lg" /> Performance
-              Pulse
+              <MdTrendingUp className="text-primary text-lg" /> {isSolo ? "House Economics" : "Performance Pulse"}
             </h3>
             <div className="space-y-6">
               <div>
                 <div className="flex justify-between items-end mb-1">
                   <span className="text-[9px] text-muted-foreground font-black uppercase tracking-widest">
-                    Revenue (7D)
+                    {isSolo ? "Net House Profit" : "Total Revenue (7D)"}
                   </span>
                   <span className="text-emerald-500 font-black text-[9px] flex items-center gap-1 font-number">
                     <MdTrendingUp /> LIVE
@@ -442,10 +702,10 @@ const Game: React.FC = () => {
               <div className="grid grid-cols-2 gap-3">
                 <div className="p-3 bg-muted/50 rounded-xl border border-border text-center">
                   <span className="text-[8px] text-muted-foreground font-black uppercase tracking-widest block mb-0.5">
-                    Avg Vol
+                    {isSolo ? "RTP Rate" : "Avg Vol"}
                   </span>
                   <span className="text-lg font-black text-foreground font-number uppercase">
-                    42m
+                    {isSolo ? "92.4%" : "42m"}
                   </span>
                 </div>
                 <div className="p-3 bg-muted/50 rounded-xl border border-border text-center">
@@ -459,7 +719,7 @@ const Game: React.FC = () => {
               </div>
             </div>
             <button className="w-full mt-6 h-10 bg-muted hover:bg-muted/80 text-primary rounded-xl font-bold text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all">
-              Full Analytics Report
+              {isSolo ? "Detailed RTP Report" : "Full Analytics Report"}
               <MdArrowForward className="text-lg" />
             </button>
           </div>
