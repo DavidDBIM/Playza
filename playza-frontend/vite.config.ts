@@ -35,6 +35,12 @@ export default defineConfig({
   },
   build: {
     chunkSizeWarningLimit: 1000,
+    // Minify with esbuild (default, fastest)
+    minify: "esbuild",
+    // Inline small assets as base64 to save round trips (default 4kb, raise to 8kb)
+    assetsInlineLimit: 8192,
+    // Enable CSS code splitting so each page only loads its own CSS
+    cssCodeSplit: true,
     rollupOptions: {
       plugins: [
         PrerenderPlugin({
@@ -59,9 +65,21 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (id.includes("node_modules")) {
-            if (id.includes("react")) return "vendor-react";
-            if (id.includes("framer-motion")) return "vendor-motion";
-            if (id.includes("lucide-react")) return "vendor-icons";
+            // React core — loaded first, smallest, most reused
+            if (id.includes("react-dom") || id.includes("react/") || id.includes("react-router")) return "vendor-react";
+            // 3D / game engine — very heavy, only needed on H2H game pages
+            if (id.includes("three") || id.includes("@react-three")) return "vendor-three";
+            if (id.includes("phaser")) return "vendor-phaser";
+            if (id.includes("matter-js")) return "vendor-matter";
+            // Chess — only on chess H2H pages
+            if (id.includes("chess.js") || id.includes("react-chessboard")) return "vendor-chess";
+            // Animation — medium weight, shared across pages
+            if (id.includes("framer-motion") || id.includes("/motion/")) return "vendor-motion";
+            // Icons — large but tree-shaken by Vite, keep separate for caching
+            if (id.includes("lucide-react") || id.includes("react-icons")) return "vendor-icons";
+            // Tanstack query — shared data layer
+            if (id.includes("@tanstack")) return "vendor-query";
+            // Everything else
             return "vendor";
           }
         },
