@@ -198,3 +198,54 @@ export async function getAllArenaGamesLeaderboard(period: LeaderboardPeriod = 'a
   )
   return results
 }
+
+// ─────────────────────────────────────────────
+// 4. COMPATIBILITY WRAPPERS
+// ─────────────────────────────────────────────
+
+export type GameSlug = 'chess' | 'speedbattle' | 'wordscramble' | 'pool' | 'ludo'
+
+/**
+ * Fetch leaderboard for a game by its Slug (legacy support)
+ */
+export async function getGameLeaderboard(slug: string, period: LeaderboardPeriod = 'all', limit = 50) {
+  // Find the game ID from the slug
+  const { data: game, error } = await supabaseAdmin
+    .from('games')
+    .select('id')
+    .eq('slug', slug)
+    .single()
+
+  if (error || !game) throw new Error(`Game not found: ${slug}`)
+  return getArenaLeaderboard(game.id, period, limit)
+}
+
+/**
+ * Fetch leaderboard for a specific session/room
+ */
+export async function getSessionLeaderboard(gameSlug: string, sessionId: string) {
+  const { data, error } = await supabaseAdmin
+    .from('game_leaderboard')
+    .select(`
+      user_id,
+      best_score,
+      payout_amount,
+      users:user_id(username, avatar_url)
+    `)
+    .eq('session_id', sessionId)
+    .order('best_score', { ascending: false })
+
+  if (error) throw error
+
+  return (data ?? []).map((row: any, i: number) => ({
+    rank: i + 1,
+    user_id: row.user_id,
+    username: row.users?.username ?? 'Unknown',
+    avatar_url: row.users?.avatar_url ?? null,
+    score: row.best_score,
+    reward: Number(row.payout_amount || 0)
+  }))
+}
+
+// Alias for compatibility
+export const getAllGamesLeaderboard = getAllArenaGamesLeaderboard

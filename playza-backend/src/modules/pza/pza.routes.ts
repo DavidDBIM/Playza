@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { supabaseAdmin } from '../../config/supabase'
 import { requireAuth, AuthRequest } from '../../middleware/auth'
-import { awardPZA, PZAEvent } from '../../lib/pzaEngine'
+import { awardPZA, PZAEvent, PZA_POINTS } from '../../lib/pzaEngine'
 
 const router = Router()
 
