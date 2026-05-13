@@ -14,13 +14,15 @@ import {
   deleteNotification,
   getAllFeedbackAdmin,
   updateFeedbackStatusAdmin,
-  deleteFeedbackAdmin,
   getAdminLogs,
+  getH2HMatchesAdmin,
+  getSoloActivityAdmin,
+  deleteFeedbackAdmin,
 } from './admin.service'
 import {
   getLoyaltyLeaderboard,
   getReferralLeaderboard,
-  getAllGamesLeaderboard,
+  getAllArenaGamesLeaderboard,
   LeaderboardPeriod,
 } from '../leaderboard/leaderboard.service'
 import {
@@ -312,7 +314,7 @@ router.get('/leaderboards/games', requireAdmin, async (req: AuthRequest, res) =>
   try {
     const period = (req.query.period as LeaderboardPeriod) || 'all'
     const limit = parseInt(req.query.limit as string) || 50
-    const data = await getAllGamesLeaderboard(period, limit)
+    const data = await getAllArenaGamesLeaderboard(period, limit)
     res.json({ success: true, data })
   } catch (err: any) {
     res.status(400).json({ success: false, message: err.message })
@@ -393,6 +395,32 @@ router.get('/logs', requireAdmin, async (req: AuthRequest, res) => {
     const page = parseInt(req.query.page as string) || 1
     const limit = parseInt(req.query.limit as string) || 20
     const data = await getAdminLogs(page, limit)
+    res.json({ success: true, data })
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message })
+  }
+})
+
+router.get('/games/:slug/h2h-matches', requireAdmin, async (req: AuthRequest, res) => {
+  try {
+    const page = parseInt(req.query.page as string) || 1
+    const limit = parseInt(req.query.limit as string) || 20
+    const data = await getH2HMatchesAdmin(req.params.slug, page, limit)
+    res.json({ success: true, data })
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message })
+  }
+})
+
+router.get('/games/:slug/solo-activity', requireAdmin, async (req: AuthRequest, res) => {
+  try {
+    const { viewMode, page, limit } = req.query as any
+    const data = await getSoloActivityAdmin(
+      req.params.slug, 
+      viewMode || 'aggregated',
+      parseInt(page) || 1,
+      parseInt(limit) || 20
+    )
     res.json({ success: true, data })
   } catch (err: any) {
     res.status(400).json({ success: false, message: err.message })

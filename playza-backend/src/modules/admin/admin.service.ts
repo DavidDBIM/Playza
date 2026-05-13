@@ -486,3 +486,169 @@ export async function getAdminLogs(page = 1, limit = 20) {
     total_pages: Math.ceil((count ?? 0) / limit),
   }
 }
+
+/**
+ * Unified H2H Match Fetching for Admin
+ */
+const H2H_TABLE_MAP: Record<string, string> = {
+  'chess': 'chess_rooms',
+  'ludo': 'ludo_rooms',
+  '8-ball-pool': 'pool_rooms',
+  'pool': 'pool_rooms',
+  'speed-battle': 'speedbattle_rooms',
+  'speedbattle': 'speedbattle_rooms',
+  'wordscramble': 'wordscramble_rooms',
+  'word-scramble': 'wordscramble_rooms',
+};
+
+export async function getH2HMatchesAdmin(slug: string, page = 1, limit = 20) {
+  const table = H2H_TABLE_MAP[slug] || `${slug.replace(/-/g, '')}_rooms`;
+  const from = (page - 1) * limit;
+  const to = from + limit - 1;
+
+  // Most H2H tables use UUIDs for guest_id, some use text. 
+  // We'll try to join host/guest/winner info.
+  const { data, error, count } = await supabaseAdmin
+    .from(table)
+    .select(`
+      *,
+      host:host_id (id, username, avatar_url),
+      guest:guest_id (id, username, avatar_url)
+    `, { count: 'exact' })
+    .order('created_at', { ascending: false })
+    .range(from, to);
+
+  if (error) {
+    // Fallback for tables without proper foreign keys (e.g. speedbattle if it fails join)
+    const { data: rawData, error: rawError, count: rawCount } = await supabaseAdmin
+      .from(table)
+      .select('*', { count: 'exact' })
+      .order('created_at', { ascending: false })
+      .range(from, to);
+    
+    if (rawError) throw rawError;
+
+    // Manually hydrate user info if join failed
+    const userIds = new Set<string>();
+    rawData?.forEach((r: any) => {
+      if (r.host_id) userIds.add(r.host_id);
+      if (r.guest_id && r.guest_id.length > 20) userIds.add(r.guest_id); // Basic UUID check
+    });
+
+    const { data: users } = await supabaseAdmin
+      .from('users')
+      .select('id, username, avatar_url')
+      .in('id', Array.from(userIds));
+
+    const userMap = (users || []).reduce((acc: any, u: any) => {
+      acc[u.id] = u;
+      return acc;
+    }, {});
+
+    const hydratedData = rawData?.map((r: any) => ({
+      ...r,
+      host: userMap[r.host_id] || null,
+      guest: userMap[r.guest_id] || null,
+    }));
+
+    return { matches: hydratedData, total: rawCount ?? 0, page, limit };
+  }
+
+  return {
+    matches: data,
+    total: count ?? 0,
+    page,
+    limit,
+    total_pages: Math.ceil((count ?? 0) / limit),
+  };
+}
+
+/**
+ * Unified Solo Activity Fetching for Admin
+ */
+export async function getSoloActivityAdmin(
+  slug: string, 
+  viewMode: 'raw' | 'aggregated' = 'aggregated', 
+  page = 1, 
+  limit = 20
+) {
+  const from = (page - 1) * limit;
+  const to = from + limit - 1;
+
+  if (viewMode === 'aggregated') {
+    // Group by user to see impact per player
+    // Note: We use a raw RPC or complex query because Supabase .select().groupBy() is limited
+    const { data, error } = await supabaseAdmin
+      .from('soloearn_sessions')
+      .select(`
+        user_id,
+        users:user_id (id, username, avatar_url),
+        stake,
+        payout,
+        multiplier
+      `)
+      .eq('game_id', slug);
+
+    if (error) throw error;
+
+    // Manual aggregation (simpler than writing a complex SQL function for one-off admin task)
+    const aggregation: Record<string, any> = {};
+    data.forEach((row: any) => {
+      const uid = row.user_id;
+      if (!aggregation[uid]) {
+        aggregation[uid] = {
+          user: row.users,
+          total_runs: 0,
+          total_staked: 0,
+          total_payout: 0,
+          avg_multiplier: 0,
+          multipliers: []
+        };
+      }
+      aggregation[uid].total_runs++;
+      aggregation[uid].total_staked += Number(row.stake);
+      aggregation[uid].total_payout += Number(row.payout || 0);
+      aggregation[uid].multipliers.push(Number(row.multiplier || 0));
+    });
+
+    const result = Object.values(aggregation).map(a => ({
+      ...a,
+      avg_multiplier: a.multipliers.reduce((s: number, m: number) => s + m, 0) / a.multipliers.length
+    })).sort((a, b) => b.total_staked - a.total_staked);
+
+    const paginated = result.slice(from, to + 1);
+
+    return {
+      activity: paginated,
+      total: result.length,
+      page,
+      limit,
+      total_pages: Math.ceil(result.length / limit)
+    };
+  } else {
+    // Raw feed (chronological)
+    const { data, error, count } = await supabaseAdmin
+      .from('soloearn_sessions')
+      .select(`
+        *,
+        user:user_id (id, username, avatar_url)
+      `, { count: 'exact' })
+      .eq('game_id', slug)
+      .order('created_at', { ascending: false })
+      .range(from, to);
+
+    if (error) throw error;
+
+    return {
+      activity: data,
+      total: count ?? 0,
+      page,
+      limit,
+      total_pages: Math.ceil((count ?? 0) / limit)
+    };
+  }
+}
+
+
+
+
