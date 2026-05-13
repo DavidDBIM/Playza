@@ -207,7 +207,7 @@ const CreateGame: React.FC = () => {
           difficulty: game.difficulty,
           mode: game.mode,
           durationInSeconds:
-            game.duration_seconds || game.durationInSeconds || 300,
+            game.duration_seconds !== undefined ? game.duration_seconds : (game.durationInSeconds || 0),
           platformFeePercentage:
             game.platform_fee_percentage || game.platformFeePercentage || 10,
           iframeUrl: game.iframe_url || game.iframeUrl || "",
@@ -244,7 +244,7 @@ const CreateGame: React.FC = () => {
           type: s.type,
           entryFee: s.entry_fee || 0,
           maxPlayers: s.max_players || 0,
-          winnersCount: s.winners_count || 1,
+          winnersCount: s.winners_count !== undefined ? s.winners_count : 0,
           startTime: new Date(
             new Date(s.start_time || Date.now()).getTime() -
               new Date().getTimezoneOffset() * 60000,
@@ -1189,7 +1189,7 @@ const CreateGame: React.FC = () => {
                                 : undefined,
                             )
                           }
-                          placeholder="Unlimited"
+                          placeholder="0"
                         />
                       </div>
                       <div className="space-y-1.5">
@@ -1208,6 +1208,7 @@ const CreateGame: React.FC = () => {
                               Number(e.target.value),
                             )
                           }
+                          placeholder="0"
                         />
                       </div>
                       <div className="space-y-1.5">

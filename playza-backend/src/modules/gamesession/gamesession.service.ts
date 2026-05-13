@@ -126,7 +126,7 @@ export async function updateGame(gameId: string, payload: any) {
     iframe_url: gameData.iframeUrl || gameData.iframe_url,
     difficulty: gameData.difficulty,
     mode: gameData.mode,
-    is_active: gameData.isActive !== undefined ? gameData.isActive : gameData.is_active,
+    is_active: gameData.isActive !== undefined ? gameData.isActive : (gameData.is_active ?? true),
   }
 
   if (gameData.durationInSeconds !== undefined) updatePayload.duration_seconds = Number(gameData.durationInSeconds)
@@ -140,11 +140,6 @@ export async function updateGame(gameId: string, payload: any) {
   // Detect if gameId is a UUID or a Slug
   const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(gameId);
   
-  console.log(`[updateGame] ---------------------------------`);
-  console.log(`[updateGame] Identifier: ${gameId}`);
-  console.log(`[updateGame] Type: ${isUUID ? 'UUID' : 'Slug'}`);
-  console.log(`[updateGame] Payload keys: ${Object.keys(updatePayload).join(', ')}`);
-
   let query = supabase.from('games').update(updatePayload);
   
   if (isUUID) {
@@ -162,7 +157,6 @@ export async function updateGame(gameId: string, payload: any) {
 
   if (!data) {
     // Fallback: If UUID didn't work, maybe it was a slug after all (or vice versa)
-    console.warn(`[updateGame] No row found with ${isUUID ? 'ID' : 'Slug'} ${gameId}. Trying fallback...`);
     const fallbackQuery = supabase.from('games').update(updatePayload);
     if (isUUID) {
       fallbackQuery.eq('slug', gameId);
