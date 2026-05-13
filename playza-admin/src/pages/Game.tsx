@@ -207,13 +207,14 @@ const Game: React.FC = () => {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <button
+          
+          {/* <button
             onClick={() => window.open(game.iframe_url || game.iframeUrl, '_blank')}
             className="px-6 py-2.5 bg-emerald-500 text-white hover:bg-emerald-600 rounded-xl text-xs font-black uppercase tracking-widest shadow-md shadow-emerald-500/20 transition-all flex items-center gap-2"
           >
             <MdRocketLaunch className="text-lg" />
             <span>Launch Live Game</span>
-          </button>
+          </button> */}
           <button
             onClick={() => navigate(`/games/edit/${slug}`)}
             className="px-6 py-2.5 bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl text-xs font-black uppercase tracking-widest shadow-md shadow-primary/20 transition-all flex items-center gap-2"
