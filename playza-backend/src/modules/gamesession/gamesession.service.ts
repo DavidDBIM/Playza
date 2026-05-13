@@ -93,7 +93,7 @@ export async function createGameWithSessions(gameData: any, sessions: any[]) {
       type: s.type,
       entry_fee: s.entryFee,
       max_players: s.maxPlayers,
-      winners_count: s.winnersCount,
+      winners_count: s.winnersCount || 1,
       start_time: s.startTime,
       end_time: s.endTime,
       status: 'upcoming'
@@ -145,36 +145,34 @@ export async function updateGame(gameId: string, payload: any) {
     .single()
 
   if (error) {
-    // Throw a more descriptive error for the controller to catch
+    console.error(`[updateGame] Database Error:`, error);
     throw new Error(`DB Error [${error.code}]: ${error.message}${error.details ? ' - ' + error.details : ''}`)
   }
   
   // Process sessions if provided
-  if (sessions && sessions.length > 0) {
+  if (sessions && Array.isArray(sessions)) {
     for (const s of sessions) {
+      const sessionPayload = {
+        title: s.title,
+        type: s.type,
+        entry_fee: Number(s.entryFee || 0),
+        max_players: Number(s.maxPlayers || 0),
+        winners_count: Number(s.winnersCount || 1),
+        start_time: s.startTime,
+        end_time: s.endTime,
+      };
+
       if (s.id) {
         // Only update if not active/completed
         if (s.status !== 'active' && s.status !== 'completed' && s.status !== 'finished') {
-          await supabase.from('game_sessions').update({
-            title: s.title,
-            type: s.type,
-            entry_fee: s.entryFee,
-            max_players: s.maxPlayers,
-            winners_count: s.winnersCount,
-            start_time: s.startTime,
-            end_time: s.endTime,
-          }).eq('id', s.id);
+          await supabase.from('game_sessions')
+            .update(sessionPayload)
+            .eq('id', s.id);
         }
       } else {
         await supabase.from('game_sessions').insert({
+          ...sessionPayload,
           game_id: gameId,
-          title: s.title,
-          type: s.type,
-          entry_fee: s.entryFee,
-          max_players: s.maxPlayers,
-          winners_count: s.winnersCount,
-          start_time: s.startTime,
-          end_time: s.endTime,
           status: 'upcoming'
         });
       }

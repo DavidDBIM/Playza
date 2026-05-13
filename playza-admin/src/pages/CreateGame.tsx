@@ -244,7 +244,7 @@ const CreateGame: React.FC = () => {
           type: s.type,
           entryFee: s.entry_fee || 0,
           maxPlayers: s.max_players || 0,
-          winnersCount: s.winnersCount || 1,
+          winnersCount: s.winners_count || 1,
           startTime: new Date(
             new Date(s.start_time || Date.now()).getTime() -
               new Date().getTimezoneOffset() * 60000,
@@ -685,18 +685,29 @@ const CreateGame: React.FC = () => {
                       <span className="text-rose-500">*</span>
                     )}
                   </label>
-                  <Input
-                    name="iframeUrl"
-                    required={formData.mode !== "Head to Head"}
-                    value={formData.iframeUrl}
-                    onChange={handleInputChange}
-                    className="h-11 bg-muted border-border rounded-xl font-bold text-xs"
-                    placeholder={
-                      formData.mode === "Head to Head"
-                        ? "Not required for internal H2H games"
-                        : "https://cdn.playza.com/gameLib/VelocityGL/index.html"
-                    }
-                  />
+                  <div className="flex gap-2">
+                    <Input
+                      name="iframeUrl"
+                      required={formData.mode !== "Head to Head"}
+                      value={formData.iframeUrl}
+                      onChange={handleInputChange}
+                      className="h-11 bg-muted border-border rounded-xl font-bold text-xs flex-1"
+                      placeholder={
+                        formData.mode === "Head to Head"
+                          ? "Not required for internal H2H games"
+                          : "https://cdn.playza.com/gameLib/VelocityGL/index.html"
+                      }
+                    />
+                    <button
+                      type="button"
+                      onClick={() => window.open(formData.iframeUrl, '_blank')}
+                      disabled={!formData.iframeUrl}
+                      className="px-4 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 rounded-xl transition-all border border-emerald-500/20 disabled:opacity-30 flex items-center gap-2 h-11"
+                    >
+                      <MdRocketLaunch className="text-lg" />
+                      <span className="text-[10px] font-black uppercase tracking-widest whitespace-nowrap">Launch Preview</span>
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -1206,7 +1217,7 @@ const CreateGame: React.FC = () => {
                         <Input
                           type="datetime-local"
                           disabled={isLocked}
-                          className="h-11 bg-muted border-border rounded-xl font-bold text-[10px] uppercase [color-scheme:dark] md:[color-scheme:light] dark:[color-scheme:dark]"
+                          className="h-11 bg-muted border-border rounded-xl font-bold text-[10px] uppercase scheme-dark md:scheme-light dark:scheme-dark"
                           value={session.startTime}
                           onChange={(e) =>
                             handleSessionChange(
@@ -1224,7 +1235,7 @@ const CreateGame: React.FC = () => {
                         <Input
                           type="datetime-local"
                           disabled={isLocked}
-                          className="h-11 bg-muted border-border rounded-xl font-bold text-[10px] uppercase [color-scheme:dark] md:[color-scheme:light] dark:[color-scheme:dark]"
+                          className="h-11 bg-muted border-border rounded-xl font-bold text-[10px] uppercase scheme-dark md:scheme-light dark:scheme-dark"
                           value={session.endTime}
                           onChange={(e) =>
                             handleSessionChange(idx, "endTime", e.target.value)

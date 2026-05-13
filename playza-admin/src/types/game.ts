@@ -8,7 +8,7 @@ export type Session = {
   start_time: string;
   end_time: string;
   max_players: number;
-  winnersCount?: number;
+  winners_count?: number;
 };
 
 export type GameBadge =
