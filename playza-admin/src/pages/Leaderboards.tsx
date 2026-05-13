@@ -13,7 +13,8 @@ import { useNavigate, useLocation, useMatch } from "react-router";
 import { useEffect } from "react";
 import { 
   useAdminLoyaltyLeaderboard, 
-  useAdminReferralLeaderboard 
+  useAdminReferralLeaderboard,
+  useAdminGamesLeaderboard
 } from "../hooks/use-leaderboard";
 
 interface GameEntry {
@@ -22,6 +23,8 @@ interface GameEntry {
   avatar_url: string | null;
   wins?: number;
   total_winnings?: number;
+  score?: number;
+  reward?: number;
 }
 
 interface GameData {
@@ -44,27 +47,6 @@ interface LoyaltyEntry {
   pza_points: number;
 }
 
-const MOCK_GAMES_DATA: GameData[] = [
-  {
-    slug: 'chess',
-    name: 'Chess',
-    leaderboard: [
-      { rank: 1, username: 'grandmaster_x', avatar_url: null, wins: 142, total_winnings: 450000 },
-      { rank: 2, username: 'pawn_king', avatar_url: null, wins: 128, total_winnings: 380000 },
-      { rank: 3, username: 'queen_slayer', avatar_url: null, wins: 95, total_winnings: 250000 },
-    ]
-  },
-  {
-    slug: 'speedbattle',
-    name: 'Speed Battle',
-    leaderboard: [
-      { rank: 1, username: 'flash_typer', avatar_url: null, wins: 850, total_winnings: 1200000 },
-      { rank: 2, username: 'keyboard_warrior', avatar_url: null, wins: 720, total_winnings: 950000 },
-      { rank: 3, username: 'sonic_bits', avatar_url: null, wins: 640, total_winnings: 820000 },
-    ]
-  }
-];
-
 const Leaderboards: React.FC = () => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -79,7 +61,7 @@ const Leaderboards: React.FC = () => {
   const sessionMatch = useMatch("/leaderboards/game/:sessionId");
   const activeSessionId = sessionMatch?.params.sessionId;
 
-  // We omit Games leaderboard hook for now since it strictly uses Demo Data
+  const { data: gamesData, isLoading: isLoadingGames, refetch: refetchGames } = useAdminGamesLeaderboard(dateFilter);
   const { data: loyaltyData, isLoading: isLoadingLoyalty, refetch: refetchLoyalty } = useAdminLoyaltyLeaderboard(dateFilter);
   const { data: referralData, isLoading: isLoadingReferral, refetch: refetchReferral } = useAdminReferralLeaderboard(dateFilter);
 
@@ -97,7 +79,8 @@ const Leaderboards: React.FC = () => {
   };
 
   const handleRefresh = () => {
-    if (activeTab === "Loyalty") refetchLoyalty();
+    if (activeTab === "Games") refetchGames();
+    else if (activeTab === "Loyalty") refetchLoyalty();
     else if (activeTab === "Referrals") refetchReferral();
   };
 
@@ -180,25 +163,35 @@ const Leaderboards: React.FC = () => {
       <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
         {activeTab === "Games" && (
           <div className="grid grid-cols-1 gap-8">
-            {/* Games 'don't have life' yet, so we strictly use DEMO data as requested */}
-            {MOCK_GAMES_DATA.map((game) => (
-              <GameLeaderboardCard
-                key={game.slug}
-                game={{
-                  id: game.slug,
-                  name: game.name,
-                  entries: game.leaderboard.map((entry) => ({
-                    rank: entry.rank,
-                    username: entry.username,
-                    avatar: entry.avatar_url || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200",
-                    score: entry.wins || 0,
-                    reward: entry.total_winnings || 0,
-                    status: "ONLINE"
-                  }))
-                }}
-                activeSessionId={activeSessionId}
-              />
-            ))}
+            {isLoadingGames ? (
+              <div className="flex flex-col items-center justify-center py-20 gap-4">
+                <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] opacity-30">Syncing Arena Rankings...</span>
+              </div>
+            ) : gamesData && (gamesData as GameData[]).length > 0 ? (
+              (gamesData as GameData[]).map((game) => (
+                <GameLeaderboardCard
+                  key={game.slug}
+                  game={{
+                    id: game.slug,
+                    name: game.name,
+                    entries: game.leaderboard.map((entry) => ({
+                      rank: entry.rank,
+                      username: entry.username,
+                      avatar: entry.avatar_url || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200",
+                      score: entry.wins || entry.score || 0,
+                      reward: entry.total_winnings || entry.reward || 0,
+                      status: "ONLINE"
+                    }))
+                  }}
+                  activeSessionId={activeSessionId}
+                />
+              ))
+            ) : (
+              <div className="py-20 bg-muted/20 border border-dashed border-border rounded-2xl flex flex-col items-center justify-center text-center p-8">
+                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">No Arena Rankings Available</span>
+              </div>
+            )}
           </div>
         )}
 
