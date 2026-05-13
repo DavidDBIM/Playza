@@ -140,7 +140,10 @@ export async function updateGame(gameId: string, payload: any) {
   // Detect if gameId is a UUID or a Slug
   const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(gameId);
   
-  console.log(`[updateGame] Attempting update for ${isUUID ? 'UUID' : 'Slug'}: ${gameId}`);
+  console.log(`[updateGame] ---------------------------------`);
+  console.log(`[updateGame] Identifier: ${gameId}`);
+  console.log(`[updateGame] Type: ${isUUID ? 'UUID' : 'Slug'}`);
+  console.log(`[updateGame] Payload keys: ${Object.keys(updatePayload).join(', ')}`);
 
   let query = supabase.from('games').update(updatePayload);
   
