@@ -97,6 +97,7 @@ class ToneBus {
 class BubbleShooterBlitz {
   constructor() {
     this.canvas = document.getElementById("gameCanvas");
+    this.canvas.style.touchAction = "none"; // Prevent mobile scroll interference
     this.ctx = this.canvas.getContext("2d");
     this.scoreValue = document.getElementById("scoreValue");
     this.shotsValue = document.getElementById("shotsValue");
@@ -191,10 +192,30 @@ class BubbleShooterBlitz {
     this.frenzyActive = false;
     this.beatTimer = 0;
     this.beatCount = 0;
-    // FIX #4: Session lock — set true by PLAYZA_SESSION_CONFIG so R/restart is disabled
+
+    // --- Network & State Protection ---
+    this.paused = false;
     this.sessionLocked = false;
     this.sessionId = null;
-    // Rival banner state (PLAYZA_RIVAL_UPDATE)
+    
+    // Add event listener for platform-wide signals (Pause/Resume/Config)
+    window.addEventListener("message", (event) => {
+      if (event.data?.type === "PLAYZA_PAUSE") {
+        console.log("Game pausing due to network drop");
+        this.paused = true;
+      }
+      if (event.data?.type === "PLAYZA_RESUME") {
+        console.log("Game resuming due to network restoration");
+        this.paused = false;
+      }
+      if (event.data?.type === "PLAYZA_SESSION_CONFIG") {
+        this.sessionLocked = event.data.payload?.locked;
+        this.sessionId = event.data.payload?.sessionId;
+        this.message("Session synchronized.");
+      }
+    });
+
+    // Stats for end-screen
     this.rivalUsername = null;
     this.rivalScore = 0;
     // Stats for end-screen
@@ -251,11 +272,13 @@ class BubbleShooterBlitz {
 
   bindEvents() {
     const toWorld = (evt) => {
-      // Canvas is position:absolute inside #game-container — use its rect for correct mapping
       const rect = this.canvas.getBoundingClientRect();
+      const clientX = evt.clientX || (evt.touches && evt.touches[0]?.clientX);
+      const clientY = evt.clientY || (evt.touches && evt.touches[0]?.clientY);
+      
       return {
-        x: (evt.clientX - rect.left) * (this.bounds.width  / rect.width),
-        y: (evt.clientY - rect.top)  * (this.bounds.height / rect.height),
+        x: (clientX - rect.left) * (this.bounds.width / rect.width),
+        y: (clientY - rect.top) * (this.bounds.height / rect.height),
       };
     };
 
@@ -283,11 +306,11 @@ class BubbleShooterBlitz {
       }
     };
 
-    this.canvas.addEventListener("pointerdown", onDown);
-    this.canvas.addEventListener("pointermove", onMove);
-    this.canvas.addEventListener("pointerup", onUp);
-    this.canvas.addEventListener("pointercancel", onUp);
-    this.canvas.addEventListener("pointerleave", onUp);
+    this.canvas.addEventListener("pointerdown", onDown, { passive: true });
+    this.canvas.addEventListener("pointermove", onMove, { passive: true });
+    this.canvas.addEventListener("pointerup", onUp, { passive: true });
+    this.canvas.addEventListener("pointercancel", onUp, { passive: true });
+    this.canvas.addEventListener("pointerleave", onUp, { passive: true });
 
     window.addEventListener("keydown", (evt) => {
       if (evt.key === "r" || evt.key === "R") {
@@ -760,6 +783,8 @@ class BubbleShooterBlitz {
   }
 
   update(dt) {
+    if (this.paused) return; // Freeze logic during network drop
+    
     if (!this.playing || this.gameOver) {
       this.updateParticles(dt);
       return;
@@ -810,17 +835,25 @@ class BubbleShooterBlitz {
 
     if (this.score < this.targetScore) {
       const diff = this.targetScore - this.score;
-      this.score += Math.max(1, Math.ceil(diff * 10 * dt));
-      this.scoreValue.textContent = `${Math.floor(this.score)}`;
-      // FIX #3: compare realScore for best detection
+      // Faster, smoother increment for long shots
+      const step = Math.max(1, Math.ceil(diff * 12 * dt));
+      this.score += step;
+      if (this.score > this.targetScore) this.score = this.targetScore;
+      
+      if (this.scoreValue) {
+        this.scoreValue.textContent = Math.floor(this.score).toLocaleString();
+      }
+      
       if (this.realScore > this.bestScore && !this._bestReached) {
         this._bestReached = true;
         this.popText("NEW BEST!", { x: this.world.width / 2, y: 150 }, "#ffdd7a");
         this.tone.tone(880, 0.1, "triangle", 0.04);
       }
     } else {
-      // Keep display in sync exactly
-      this.score = this.realScore;
+      this.score = this.targetScore;
+      if (this.scoreValue) {
+        this.scoreValue.textContent = Math.floor(this.score).toLocaleString();
+      }
     }
 
     if (this.shake > 0.05) {
