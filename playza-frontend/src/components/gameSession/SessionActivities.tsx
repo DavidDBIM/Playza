@@ -2,6 +2,8 @@ import { Trophy, MessageSquare, Loader2, Target } from "lucide-react";
 import { MdTimer } from "react-icons/md";
 import { useEffect, useState } from "react";
 import { supabase } from "@/config/supabase";
+import { getRecentSessionActivity } from "@/api/gamesession.api";
+import { formatDistanceToNow } from "date-fns";
 
 interface Activity {
   id: string;
@@ -16,12 +18,53 @@ interface Activity {
   icon: React.ReactNode;
 }
 
+interface RawActivity {
+  id: string;
+  best_score: number;
+  updated_at: string;
+  user_id: string;
+  users?: {
+    username?: string;
+    avatar_url?: string | null;
+  };
+}
+
 const SessionActivities = ({ sessionId }: { sessionId: string }) => {
   const [activities, setActivities] = useState<Activity[]>([]);
+  const [isHistoryLoading, setIsHistoryLoading] = useState(true);
 
   useEffect(() => {
     if (!sessionId) return;
 
+    // 1. Fetch Historical Data
+    const fetchHistory = async () => {
+      try {
+        const res = await getRecentSessionActivity(sessionId);
+        if (res.success && res.activities) {
+          const historicalActivities: Activity[] = res.activities.map((act: RawActivity) => ({
+            id: act.id,
+            type: "score",
+            user: act.users?.username || "Unknown Player",
+            avatar: act.users?.avatar_url || undefined,
+            action: "previously scored",
+            time: formatDistanceToNow(new Date(act.updated_at), { addSuffix: true }),
+            highlight: act.best_score.toLocaleString(),
+            color: "text-slate-400",
+            bg: "bg-slate-500/5",
+            icon: <Target className="size-5" />,
+          }));
+          setActivities(historicalActivities);
+        }
+      } catch (err) {
+        console.error("Failed to fetch activity history:", err);
+      } finally {
+        setIsHistoryLoading(false);
+      }
+    };
+
+    fetchHistory();
+
+    // 2. Subscribe to Real-time Updates
     const channel = supabase
       .channel(`session_${sessionId}`)
       .on("broadcast", { event: "LEADERBOARD_UPDATE" }, (payload) => {
@@ -81,10 +124,19 @@ const SessionActivities = ({ sessionId }: { sessionId: string }) => {
       </div>
 
       <div className="flex-1 overflow-y-auto p-2 md:p-4 space-y-2 md:space-y-4 custom-scrollbar relative z-10">
-        {activities.length === 0 ? (
+        {isHistoryLoading ? (
           <div className="py-20 flex flex-col items-center gap-4 text-center">
             <div className="p-6 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10">
               <Loader2 size={32} className="text-primary animate-spin" />
+            </div>
+            <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">
+              Synchronizing Arena Stream...
+            </p>
+          </div>
+        ) : activities.length === 0 ? (
+          <div className="py-20 flex flex-col items-center gap-4 text-center">
+            <div className="p-6 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10">
+              <Target size={32} className="text-slate-400 opacity-20" />
             </div>
             <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">
               Waiting for arena activity...

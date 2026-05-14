@@ -40,6 +40,7 @@ const GamePlay = () => {
     rank?: number;
     isHighScore?: boolean;
     previousBest?: number;
+    submissionError?: string | null;
     /** Live leaderboard snapshot fetched right after score submission */
     leaderboard?: Array<{ best_score: number; users?: { username?: string; avatar_url?: string | null } }>;
   } | null>(null);
@@ -248,8 +249,9 @@ const GamePlay = () => {
             }
           } catch (err: unknown) {
             const error = err as { response?: { data?: { message?: string } } };
-            toast.error(error.response?.data?.message || "Submission failed");
-            setGameOverData({ score });
+            const errorMsg = error.response?.data?.message || "Submission failed";
+            toast.error(errorMsg);
+            setGameOverData({ score, submissionError: errorMsg });
           }
         } else {
           // Demo mode or session expired — show score locally only
@@ -523,6 +525,7 @@ const GamePlay = () => {
           isHighScore={gameOverData.isHighScore}
           previousBest={gameOverData.previousBest}
           leaderboard={gameOverData.leaderboard}
+          submissionError={gameOverData.submissionError}
           playAgain={() => {
             setGameOverData(null);
             if (isDemo) {

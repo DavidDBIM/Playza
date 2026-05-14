@@ -16,6 +16,8 @@ interface GameOverLeaderboardProps {
   previousBest?: number;
   /** Live leaderboard snapshot from the backend, passed from GamePlay after submission */
   leaderboard?: LeaderboardEntry[];
+  /** Error message if score submission was rejected by the backend */
+  submissionError?: string | null;
 }
 
 const GameOverLeaderboard = ({
@@ -27,6 +29,7 @@ const GameOverLeaderboard = ({
   isHighScore,
   previousBest,
   leaderboard,
+  submissionError,
 }: GameOverLeaderboardProps) => {
   /**
    * Neighborhood Window Algorithm
@@ -74,6 +77,18 @@ const GameOverLeaderboard = ({
           <Star className="w-3 h-3 text-yellow-500" />
           Final Score: <span className="text-white">{score.toLocaleString()}</span>
         </p>
+        
+        {/* Score Rejection Warning */}
+        {submissionError && (
+          <div className="w-full bg-amber-500/10 border border-amber-500/20 text-amber-200 p-3 rounded-lg text-xs font-bold mb-4 z-10 text-center leading-relaxed animate-in fade-in slide-in-from-top-2">
+            <span className="text-amber-400 uppercase text-[10px] tracking-widest block mb-1">Score Rejected</span>
+            {submissionError}
+            <br />
+            <span className="italic text-[10px] text-amber-500/70 mt-1 block">
+              This score was not recorded on the leaderboard.
+            </span>
+          </div>
+        )}
 
         {/* Not a high score — show context */}
         {isHighScore === false && previousBest !== undefined && (
