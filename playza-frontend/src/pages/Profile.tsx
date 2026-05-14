@@ -72,7 +72,7 @@ const Profile = () => {
                    { label: "PLATINUM", color: "bg-cyan-500 text-white border-cyan-600 shadow-cyan-500/40" };
 
   return (
-    <div className="flex-1 pb-16 md:pb-10 transition-all duration-500">
+    <div className="flex-1 pb-24 md:pb-10 transition-all duration-500">
       {/* ── COMPACT PROFILE HEADER ── */}
       <div className="glass-card rounded-xl p-3 md:p-6 mb-3 md:mb-6 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 blur-[100px] rounded-full -mr-32 -mt-32 pointer-events-none" />

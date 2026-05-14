@@ -33,6 +33,7 @@ export async function startSoloSession(
     type: "game_entry",
     amount: stake,
     status: "successful",
+    reference: `PLZ-SOLO-ENTRY-${gameId}-${userId}-${Date.now()}`,
     meta: { game_id: gameId, mode: "soloearn" },
   });
 
@@ -121,6 +122,7 @@ export async function endSoloSession(
       type: "winnings",
       amount: payout,
       status: "successful",
+      reference: `PLZ-SOLO-WIN-${sessionId}-${userId}`,
       meta: {
         game_id: session.game_id,
         mode: "soloearn",

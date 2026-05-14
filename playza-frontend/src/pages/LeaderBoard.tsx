@@ -24,7 +24,7 @@ const LeaderBoard = () => {
   ];
 
   return (
-    <section className="flex-1 flex flex-col gap-2 md:gap-6 overflow-hidden pb-2 md:pb-10">
+    <section className="flex-1 flex flex-col gap-2 md:gap-6 overflow-hidden pb-24 md:pb-10">
       {/* Premium Header */}
       <div className="relative overflow-hidden bg-slate-900 dark:bg-slate-950 p-8 md:p-12 rounded-xl border border-white/5">
         <div className="absolute top-0 right-0 p-2 md:p-12 opacity-10 rotate-12">

@@ -310,6 +310,7 @@ export async function joinSession(userId: string, sessionId: string) {
     type: 'game_entry',
     amount: session.entry_fee,
     status: 'successful',
+    reference: `PLZ-ARENA-ENTRY-${sessionId}-${userId}-${Date.now()}`,
     meta: { session_id: sessionId }
   })
 
@@ -567,14 +568,16 @@ export async function finalizeSessionAndPayout(sessionId: string) {
     return { success: true, message: "No valid scores" }
   }
 
-  // 3. Dynamic Curve
-  const distribution = calculateDistributionCurve(validPlayers.length);
+  // 3. Dynamic Curve based on Pool Size (to match frontend)
+  const entryFee = Number(session.entry_fee || 100);
+  const effectivePlayerCount = entryFee > 0 ? Math.max(1, Math.floor(grossPool / entryFee)) : 1;
+  const distribution = calculateDistributionCurve(effectivePlayerCount);
+  
   const winnersCount = distribution.length;
   const winners = validPlayers.slice(0, winnersCount);
   const losers = participants.slice(winnersCount);
 
   // 4. Calculate Net Prize Pool
-  const grossPool = Number(session.pool_amount || 0)
   const feePercent = Number(session.games?.platform_fee_percentage || 10)
   const netPool = grossPool * (1 - feePercent / 100)
 

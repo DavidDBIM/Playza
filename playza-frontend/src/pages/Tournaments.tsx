@@ -51,7 +51,7 @@ const Tournaments = () => {
   });
 
   return (
-    <div className="flex flex-col flex-1 pb-2 md:pb-20 w-full overflow-x-hidden">
+    <div className="flex flex-col flex-1 pb-24 md:pb-20 w-full overflow-x-hidden">
       <div className="flex flex-col gap-2 md:gap-6 md:px-0">
         <div className="flex flex-col gap-2 mt-4 px-2 md:px-0">
           <h1 className="text-3xl md:text-5xl font-black font-headline tracking-tighter text-slate-900 dark:text-white uppercase flex items-center gap-2 md:gap-3">

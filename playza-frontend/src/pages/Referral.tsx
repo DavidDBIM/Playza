@@ -182,7 +182,7 @@ const Referral = () => {
 
   /* ── Authenticated view ── */
   return (
-    <div className="flex-1 w-full pb-16 md:pb-10 flex flex-col gap-3">
+    <div className="flex-1 w-full pb-24 md:pb-10 flex flex-col gap-3">
 
       {/* ── Header ── */}
       <div className="flex items-center justify-between">

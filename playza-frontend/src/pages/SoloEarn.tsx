@@ -102,7 +102,7 @@ const SoloEarn = () => {
   }
 
   return (
-    <div className="w-full flex flex-col min-w-0 space-y-8 animate-in fade-in pb-16">
+    <div className="w-full flex flex-col min-w-0 space-y-8 animate-in fade-in pb-24 md:pb-10">
       
       {/* Header Panel */}
       <div className="glass-card p-6 md:p-8 rounded-xl border border-primary/10 bg-surface-elevated/40 flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">

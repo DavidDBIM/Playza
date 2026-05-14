@@ -389,7 +389,7 @@ export default function Loyalty() {
     );
 
   return (
-    <div className="flex-1 space-y-6 pb-20 mx-auto w-full">
+    <div className="flex-1 space-y-6 pb-24 md:pb-10 mx-auto w-full">
       {/* Hero Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
         {/* PZA Balance Card */}

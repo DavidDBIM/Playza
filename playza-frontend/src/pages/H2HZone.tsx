@@ -86,7 +86,7 @@ const H2HZone = () => {
   const loading = createRoom.isPending || createBotRoom.isPending || joinRoom.isPending || quickMatch.isPending;
 
   return (
-    <div className="relative flex-1 min-w-0 overflow-x-hidden scrollbar-hide flex flex-col items-center px-2">
+    <div className="relative flex-1 min-w-0 overflow-x-hidden scrollbar-hide flex flex-col items-center px-2 pb-24 md:pb-10">
       {/* Subtle Ambient Background - Optimized for Performance */}
       <div className="fixed inset-0 pointer-events-none -z-10 bg-slate-50 dark:bg-slate-950">
         <div className="absolute inset-0 bg-linear-to-br from-indigo-500/3 to-purple-500/3" />

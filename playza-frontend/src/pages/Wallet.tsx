@@ -33,7 +33,7 @@ const Wallet = ({ onWithdrawClick }: WalletProps) => {
   }
 
   return (
-    <main className="flex-1 min-w-0 flex flex-col gap-4 md:gap-10 pb-2 md:pb-10 animate-in fade-in duration-500">
+    <main className="flex-1 min-w-0 flex flex-col gap-4 md:gap-10 pb-24 md:pb-10 animate-in fade-in duration-500">
       {!isProfileComplete && (
         <div className="bg-amber-500/10 dark:bg-amber-500/5 border border-amber-500/30 dark:border-amber-500/20 rounded-2xl p-4 md:p-6 flex flex-col md:flex-row items-center justify-between gap-2 md:gap-4">
           <div className="flex items-center gap-2 md:gap-4 text-center md:text-left">

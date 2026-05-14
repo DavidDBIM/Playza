@@ -82,7 +82,7 @@ const Transactions = () => {
   }, [uiTransactions, activeTab, searchQuery]);
 
   return (
-    <main className="flex-1 mx-auto w-full overflow-x-hidden relative">
+    <main className="flex-1 mx-auto w-full overflow-x-hidden relative pb-24 md:pb-10">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-6 mb-10 mt-4">
         <div className="space-y-2">
           <h1 className="text-4xl md:text-5xl font-black tracking-tighter text-slate-900 dark:text-slate-100">
