@@ -29,11 +29,15 @@ import type { Game as GameType, Session } from "../types/game";
 interface H2HMatch {
   id: string;
   code?: string;
-  host: { username: string; avatar_url?: string };
-  guest?: { username: string; avatar_url?: string };
+  host_id: string;
+  guest_id?: string;
+  winner_id?: string;
+  host: { id: string; username: string; avatar_url?: string };
+  guest?: { id: string; username: string; avatar_url?: string };
   is_bot?: boolean;
   stake: number;
   status: 'waiting' | 'active' | 'finished' | 'cancelled';
+  created_at: string;
 }
 
 interface SoloActivity {
@@ -55,6 +59,16 @@ interface SoloAggregation {
   avg_multiplier: number;
 }
 
+interface H2HAggregation {
+  user: { id: string; username: string; avatar_url?: string };
+  total_matches: number;
+  wins: number;
+  losses: number;
+  win_rate: number;
+  total_staked: number;
+  net_profit: number;
+}
+
 const Game: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
@@ -63,6 +77,7 @@ const Game: React.FC = () => {
   );
   const [showCompleted, setShowCompleted] = useState(false);
   const [soloViewMode, setSoloViewMode] = useState<'raw' | 'aggregated'>('aggregated');
+  const [h2hViewMode, setH2hViewMode] = useState<'board' | 'rankings' | 'raw'>('board');
 
   const { data: gamesData, isLoading: gamesLoading } = useGames();
 
@@ -110,8 +125,73 @@ const Game: React.FC = () => {
     refetchInterval: 10000,
   });
 
-  const h2hMatches = h2hData?.data?.matches || [];
-  const soloActivity = soloData?.data?.activity || [];
+  const h2hMatches = (h2hData?.data?.matches || []) as H2HMatch[];
+  const soloActivity = (soloData?.data?.activity || []) as (SoloActivity[] & SoloAggregation[]);
+
+  const h2hRankings = useMemo(() => {
+    if (!isH2H || !h2hMatches.length) return [];
+    
+    const aggregation: Record<string, H2HAggregation> = {};
+    
+    h2hMatches.forEach((match) => {
+      // Process Host
+      if (match.host) {
+        const hid = match.host.id;
+        if (!aggregation[hid]) {
+          aggregation[hid] = {
+            user: match.host,
+            total_matches: 0,
+            wins: 0,
+            losses: 0,
+            win_rate: 0,
+            total_staked: 0,
+            net_profit: 0
+          };
+        }
+        aggregation[hid].total_matches++;
+        aggregation[hid].total_staked += Number(match.stake);
+        if (match.winner_id === hid) {
+          aggregation[hid].wins++;
+          const fee = Number(match.stake) * (game?.platformFeePercentage || 10) / 100;
+          aggregation[hid].net_profit += Number(match.stake) - fee;
+        } else if (match.winner_id && match.winner_id !== hid) {
+          aggregation[hid].losses++;
+          aggregation[hid].net_profit -= Number(match.stake);
+        }
+      }
+      
+      // Process Guest
+      if (match.guest && match.guest.id) {
+        const gid = match.guest.id;
+        if (!aggregation[gid]) {
+          aggregation[gid] = {
+            user: match.guest,
+            total_matches: 0,
+            wins: 0,
+            losses: 0,
+            win_rate: 0,
+            total_staked: 0,
+            net_profit: 0
+          };
+        }
+        aggregation[gid].total_matches++;
+        aggregation[gid].total_staked += Number(match.stake);
+        if (match.winner_id === gid) {
+          aggregation[gid].wins++;
+          const fee = Number(match.stake) * (game?.platformFeePercentage || 10) / 100;
+          aggregation[gid].net_profit += Number(match.stake) - fee;
+        } else if (match.winner_id && match.winner_id !== gid) {
+          aggregation[gid].losses++;
+          aggregation[gid].net_profit -= Number(match.stake);
+        }
+      }
+    });
+    
+    return Object.values(aggregation).map(a => ({
+      ...a,
+      win_rate: a.total_matches > 0 ? (a.wins / a.total_matches) * 100 : 0
+    })).sort((a, b) => b.wins - a.wins || b.total_staked - a.total_staked);
+  }, [h2hMatches, isH2H, game?.platformFeePercentage]);
 
   const tabs = isH2H
     ? ([
@@ -241,194 +321,358 @@ const Game: React.FC = () => {
             ))}
           </div>{" "}
           {currentTab === "matches" && (isH2H || isSolo) && (
-            <div className="space-y-4 animate-in fade-in duration-500">
-              <div className="flex justify-between items-center mb-2 px-1">
-                <h3 className="text-sm font-black uppercase tracking-wider text-foreground">
-                  {isSolo ? (soloViewMode === 'aggregated' ? "Player Aggregation" : "Live Solo Feed") : "Live & Recent Matches"}
-                </h3>
-                {isSolo && (
-                  <div className="flex bg-muted p-1 rounded-lg border border-border">
-                    <button 
-                      onClick={() => setSoloViewMode('aggregated')}
-                      className={`px-3 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-md transition-all ${soloViewMode === 'aggregated' ? "bg-card text-primary shadow-sm" : "text-muted-foreground"}`}
-                    >
-                      Aggregated
-                    </button>
-                    <button 
-                      onClick={() => setSoloViewMode('raw')}
-                      className={`px-3 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-md transition-all ${soloViewMode === 'raw' ? "bg-card text-primary shadow-sm" : "text-muted-foreground"}`}
-                    >
-                      Raw Feed
-                    </button>
-                  </div>
+            <div className="space-y-6 animate-in fade-in duration-500">
+              {/* Mode Specific Quick Stats */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {isH2H ? (
+                  <>
+                    <div className="bg-card/50 backdrop-blur-sm border border-border p-4 rounded-2xl">
+                      <p className="text-[9px] font-black uppercase text-muted-foreground mb-1">Live Battles</p>
+                      <p className="text-xl font-black text-foreground">{h2hMatches.filter((m) => m.status === 'active').length}</p>
+                    </div>
+                    <div className="bg-card/50 backdrop-blur-sm border border-border p-4 rounded-2xl">
+                      <p className="text-[9px] font-black uppercase text-muted-foreground mb-1">Open Challenges</p>
+                      <p className="text-xl font-black text-amber-500">{h2hMatches.filter((m) => m.status === 'waiting').length}</p>
+                    </div>
+                    <div className="bg-card/50 backdrop-blur-sm border border-border p-4 rounded-2xl">
+                      <p className="text-[9px] font-black uppercase text-muted-foreground mb-1">Total Players</p>
+                      <p className="text-xl font-black text-primary">{h2hRankings.length}</p>
+                    </div>
+                    <div className="bg-card/50 backdrop-blur-sm border border-border p-4 rounded-2xl">
+                      <p className="text-[9px] font-black uppercase text-muted-foreground mb-1">Volume (24h)</p>
+                      <div className="flex items-center gap-1 text-xl font-black text-emerald-500">
+                        <ZASymbol className="scale-75" />
+                        {h2hMatches.reduce((s: number, m) => s + Number(m.stake), 0).toLocaleString()}
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="bg-card/50 backdrop-blur-sm border border-border p-4 rounded-2xl">
+                      <p className="text-[9px] font-black uppercase text-muted-foreground mb-1">Active Rounds</p>
+                      <p className="text-xl font-black text-foreground">{soloActivity.filter((m) => m.status === 'in_progress').length}</p>
+                    </div>
+                    <div className="bg-card/50 backdrop-blur-sm border border-border p-4 rounded-2xl">
+                      <p className="text-[9px] font-black uppercase text-muted-foreground mb-1">House Edge</p>
+                      <p className="text-xl font-black text-primary">{(100 - (game?.rtp || 92.4)).toFixed(1)}%</p>
+                    </div>
+                    <div className="bg-card/50 backdrop-blur-sm border border-border p-4 rounded-2xl">
+                      <p className="text-[9px] font-black uppercase text-muted-foreground mb-1">Unique Players</p>
+                      <p className="text-xl font-black text-primary">{soloActivity.length}</p>
+                    </div>
+                    <div className="bg-card/50 backdrop-blur-sm border border-border p-4 rounded-2xl">
+                      <p className="text-[9px] font-black uppercase text-muted-foreground mb-1">House Profit</p>
+                      <div className="flex items-center gap-1 text-xl font-black text-emerald-500">
+                        <ZASymbol className="scale-75" />
+                        {(game?.total_revenue || 0).toLocaleString()}
+                      </div>
+                    </div>
+                  </>
                 )}
               </div>
-              <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="bg-muted/50 border-b border-border">
-                        {isSolo ? (
-                          soloViewMode === 'aggregated' ? (
-                            <>
-                              <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Player</th>
-                              <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center">Rounds</th>
-                              <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">Avg Multiplier</th>
-                              <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">Total Staked</th>
-                              <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">Net Profit/Loss</th>
-                            </>
-                          ) : (
-                            <>
-                              <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Time</th>
-                              <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Player</th>
-                              <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center">Multiplier</th>
-                              <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">Stake</th>
-                              <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">Payout</th>
-                            </>
-                          )
-                        ) : (
-                          <>
-                            <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Match ID</th>
-                            <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Players</th>
-                            <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">Stake</th>
-                            <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">Platform Fee</th>
-                            <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center">Status</th>
-                          </>
-                        )}
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
-                      {isSolo ? (
-                        soloLoading ? (
+
+              <div className="flex justify-between items-center mb-2 px-1">
+                <h3 className="text-sm font-black uppercase tracking-wider text-foreground flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                  {isSolo 
+                    ? (soloViewMode === 'aggregated' ? "Player Performance" : "Live Solo Activity") 
+                    : (h2hViewMode === 'board' ? "Active Battle Board" : h2hViewMode === 'rankings' ? "Global Rankings" : "Raw Match Log")}
+                </h3>
+                <div className="flex bg-muted/50 backdrop-blur-sm p-1 rounded-xl border border-border">
+                  {isSolo ? (
+                    <>
+                      <button 
+                        onClick={() => setSoloViewMode('aggregated')}
+                        className={`px-4 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all ${soloViewMode === 'aggregated' ? "bg-card text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+                      >
+                        Performance
+                      </button>
+                      <button 
+                        onClick={() => setSoloViewMode('raw')}
+                        className={`px-4 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all ${soloViewMode === 'raw' ? "bg-card text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+                      >
+                        Live Feed
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button 
+                        onClick={() => setH2hViewMode('board')}
+                        className={`px-4 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all ${h2hViewMode === 'board' ? "bg-card text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+                      >
+                        Board
+                      </button>
+                      <button 
+                        onClick={() => setH2hViewMode('rankings')}
+                        className={`px-4 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all ${h2hViewMode === 'rankings' ? "bg-card text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+                      >
+                        Rankings
+                      </button>
+                      <button 
+                        onClick={() => setH2hViewMode('raw')}
+                        className={`px-4 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all ${h2hViewMode === 'raw' ? "bg-card text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+                      >
+                        Log
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              <div className="min-h-[400px]">
+                {isSolo ? (
+                  soloLoading ? (
+                    <div className="py-20 text-center bg-card border border-border rounded-2xl">
+                      <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
+                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Synchronizing Solo Activity...</p>
+                    </div>
+                  ) : soloActivity.length === 0 ? (
+                    <div className="py-20 text-center bg-card border border-border rounded-2xl">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">No player activity found for this mode</p>
+                    </div>
+                  ) : soloViewMode === 'aggregated' ? (
+                    <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
+                      <table className="w-full text-left border-collapse">
+                        <thead className="bg-muted/50 border-b border-border">
                           <tr>
-                            <td colSpan={5} className="py-10 text-center">
-                              <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto mb-2" />
-                              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Fetching Solo Data...</p>
-                            </td>
+                            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Player</th>
+                            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center">Sessions</th>
+                            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">Avg Mult</th>
+                            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">Stake</th>
+                            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">Net P/L</th>
                           </tr>
-                        ) : soloActivity.length === 0 ? (
-                          <tr>
-                            <td colSpan={5} className="py-10 text-center">
-                              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">No solo activity recorded yet</p>
-                            </td>
-                          </tr>
-                        ) : (
-                          soloViewMode === 'aggregated' ? (
-                            soloActivity.map((agg: SoloAggregation) => (
-                              <tr key={agg.user.id} className="hover:bg-muted/30 transition-colors">
-                                <td className="px-4 py-4">
-                                  <div className="flex items-center gap-2">
-                                    <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
-                                      {agg.user.avatar_url ? <img src={agg.user.avatar_url} alt={agg.user.username} className="w-full h-full" /> : <span className="text-[8px] font-black uppercase">{agg.user.username[0]}</span>}
-                                    </div>
-                                    <span className="text-xs font-bold text-foreground">{agg.user.username}</span>
-                                  </div>
-                                </td>
-                                <td className="px-4 py-4 text-center font-black text-xs">{agg.total_runs}</td>
-                                <td className="px-4 py-4 text-right">
-                                  <span className={`text-xs font-black px-2 py-0.5 rounded ${agg.avg_multiplier >= 1 ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>
-                                    {agg.avg_multiplier.toFixed(2)}x
-                                  </span>
-                                </td>
-                                <td className="px-4 py-4 text-right font-black text-xs font-number">
-                                  <div className="flex items-center justify-end gap-1"><ZASymbol className="scale-75" /> {agg.total_staked.toLocaleString()}</div>
-                                </td>
-                                <td className="px-4 py-4 text-right">
-                                  <span className={`text-xs font-black font-number flex items-center justify-end gap-1 ${(agg.total_staked - agg.total_payout) >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
-                                    <ZASymbol className="scale-75" />
-                                    {(agg.total_staked - agg.total_payout).toLocaleString()}
-                                  </span>
-                                </td>
-                              </tr>
-                            ))
-                          ) : (
-                            soloActivity.map((run: SoloActivity) => (
-                              <tr key={run.id} className="hover:bg-muted/30 transition-colors">
-                                <td className="px-4 py-4 text-[10px] font-bold text-muted-foreground uppercase">{format(new Date(run.created_at), 'HH:mm:ss')}</td>
-                                <td className="px-4 py-4">
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-xs font-bold text-primary">{run.user.username}</span>
-                                  </div>
-                                </td>
-                                <td className="px-4 py-4 text-center">
-                                  <span className={`text-[10px] font-black px-1.5 py-0.5 rounded ${run.multiplier >= 1 ? 'bg-emerald-500/10 text-emerald-500' : 'bg-muted text-muted-foreground'}`}>
-                                    {Number(run.multiplier).toFixed(2)}x
-                                  </span>
-                                </td>
-                                <td className="px-4 py-4 text-right font-black text-xs font-number">
-                                  <div className="flex items-center justify-end gap-1"><ZASymbol className="scale-75" /> {Number(run.stake).toLocaleString()}</div>
-                                </td>
-                                <td className="px-4 py-4 text-right font-black text-xs font-number">
-                                  <div className="flex items-center justify-end gap-1 text-foreground"><ZASymbol className="scale-75" /> {Number(run.payout || 0).toLocaleString()}</div>
-                                </td>
-                              </tr>
-                            ))
-                          )
-                        )
-                      ) : (
-                        h2hLoading ? (
-                          <tr>
-                            <td colSpan={5} className="py-10 text-center">
-                              <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto mb-2" />
-                              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Synchronizing Match Feed...</p>
-                            </td>
-                          </tr>
-                        ) : h2hMatches.length === 0 ? (
-                          <tr>
-                            <td colSpan={5} className="py-10 text-center">
-                              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">No matches found for this game</p>
-                            </td>
-                          </tr>
-                        ) : (
-                          h2hMatches.map((match: H2HMatch) => (
-                            <tr key={match.id} className="hover:bg-muted/30 transition-colors">
-                              <td className="px-4 py-4 text-xs font-black text-foreground uppercase tracking-wider">
-                                {match.code || match.id.slice(0, 8)}
-                              </td>
-                              <td className="px-4 py-4">
+                        </thead>
+                        <tbody className="divide-y divide-border">
+                          {(soloActivity as unknown as SoloAggregation[]).map((agg: SoloAggregation) => (
+                            <tr key={agg.user.id} className="hover:bg-muted/30 transition-colors group">
+                              <td className="px-6 py-4">
                                 <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center overflow-hidden border border-primary/20">
+                                    {agg.user.avatar_url ? <img src={agg.user.avatar_url} alt={agg.user.username} className="w-full h-full object-cover" /> : <span className="text-xs font-black uppercase text-primary">{agg.user.username[0]}</span>}
+                                  </div>
+                                  <span className="text-xs font-bold text-foreground group-hover:text-primary transition-colors">{agg.user.username}</span>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 text-center font-black text-xs font-number">{agg.total_runs}</td>
+                              <td className="px-6 py-4 text-right">
+                                <span className={`text-[10px] font-black px-2 py-0.5 rounded-lg border ${agg.avg_multiplier >= 1 ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' : 'bg-rose-500/10 text-rose-600 border-rose-500/20'}`}>
+                                  {agg.avg_multiplier.toFixed(2)}x
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 text-right font-black text-xs font-number">
+                                <div className="flex items-center justify-end gap-1"><ZASymbol className="scale-75" /> {agg.total_staked.toLocaleString()}</div>
+                              </td>
+                              <td className="px-6 py-4 text-right">
+                                <span className={`text-xs font-black font-number flex items-center justify-end gap-1 ${(agg.total_staked - agg.total_payout) >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                                  {(agg.total_staked - agg.total_payout) >= 0 ? '+' : '-'}
+                                  <ZASymbol className="scale-75" />
+                                  {Math.abs(agg.total_staked - agg.total_payout).toLocaleString()}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
+                      <table className="w-full text-left border-collapse">
+                        <thead className="bg-muted/50 border-b border-border">
+                          <tr>
+                            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Time</th>
+                            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Player</th>
+                            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center">Mult</th>
+                            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">Stake</th>
+                            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">Payout</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border">
+                          {(soloActivity as unknown as SoloActivity[]).map((run: SoloActivity) => (
+                            <tr key={run.id} className="hover:bg-muted/30 transition-colors">
+                              <td className="px-6 py-4 text-[9px] font-black text-muted-foreground uppercase">{format(new Date(run.created_at), 'HH:mm:ss')}</td>
+                              <td className="px-6 py-4">
+                                <span className="text-xs font-bold text-primary">{run.user.username}</span>
+                              </td>
+                              <td className="px-6 py-4 text-center">
+                                <span className={`text-[10px] font-black px-2 py-0.5 rounded-lg ${run.multiplier >= 1 ? 'bg-emerald-500/10 text-emerald-500' : 'bg-muted text-muted-foreground'}`}>
+                                  {Number(run.multiplier).toFixed(2)}x
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 text-right font-black text-xs font-number">
+                                <div className="flex items-center justify-end gap-1"><ZASymbol className="scale-75" /> {Number(run.stake).toLocaleString()}</div>
+                              </td>
+                              <td className="px-6 py-4 text-right font-black text-xs font-number">
+                                <div className="flex items-center justify-end gap-1 text-foreground"><ZASymbol className="scale-75" /> {Number(run.payout || 0).toLocaleString()}</div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )
+                ) : (
+                  h2hLoading ? (
+                    <div className="py-20 text-center bg-card border border-border rounded-2xl">
+                      <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
+                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Syncing Battle Network...</p>
+                    </div>
+                  ) : h2hMatches.length === 0 ? (
+                    <div className="py-20 text-center bg-card border border-border rounded-2xl border-dashed">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">No active matches found</p>
+                    </div>
+                  ) : h2hViewMode === 'board' ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {h2hMatches.map((match: H2HMatch) => (
+                        <div key={match.id} className={`group bg-card border border-border rounded-2xl p-4 hover:border-primary/50 transition-all shadow-sm relative overflow-hidden ${match.status === 'active' ? 'ring-1 ring-primary/20' : ''}`}>
+                          {match.status === 'active' && (
+                            <div className="absolute top-0 right-0 px-3 py-1 bg-primary text-primary-foreground text-[8px] font-black uppercase tracking-widest rounded-bl-xl shadow-lg flex items-center gap-1">
+                              <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
+                              LIVE
+                            </div>
+                          )}
+                          <div className="flex items-center justify-between gap-4">
+                            <div className="flex-1 flex items-center justify-center gap-3">
+                              <div className="flex flex-col items-center gap-2">
+                                <div className="w-12 h-12 rounded-2xl bg-muted border border-border flex items-center justify-center overflow-hidden shadow-inner">
+                                  {match.host?.avatar_url ? <img src={match.host.avatar_url} className="w-full h-full object-cover" /> : <span className="text-sm font-black text-primary">{match.host?.username?.[0] || 'P'}</span>}
+                                </div>
+                                <p className="text-[10px] font-black text-foreground truncate w-20 text-center">{match.host?.username || 'Player'}</p>
+                              </div>
+                              <div className="flex flex-col items-center">
+                                <span className="text-[10px] font-black text-muted-foreground italic mb-1">VS</span>
+                                <div className="h-0.5 w-8 bg-border rounded-full" />
+                              </div>
+                              <div className="flex flex-col items-center gap-2">
+                                <div className={`w-12 h-12 rounded-2xl ${match.guest ? 'bg-muted' : 'bg-muted/50 border-dashed'} border border-border flex items-center justify-center overflow-hidden shadow-inner`}>
+                                  {match.guest?.avatar_url ? <img src={match.guest.avatar_url} className="w-full h-full object-cover" /> : <span className="text-sm font-black text-muted-foreground">{match.guest?.username?.[0] || '?'}</span>}
+                                </div>
+                                <p className={`text-[10px] font-black ${match.guest ? 'text-foreground' : 'text-muted-foreground italic'} truncate w-20 text-center`}>{match.guest?.username || (match.is_bot ? 'Bot' : 'Waiting...')}</p>
+                              </div>
+                            </div>
+                            <div className="h-16 w-px bg-border hidden sm:block" />
+                            <div className="flex flex-col items-end gap-1 min-w-[80px]">
+                              <p className="text-[9px] font-black text-muted-foreground uppercase">Stake</p>
+                              <div className="flex items-center gap-1 text-lg font-black text-foreground font-number">
+                                <ZASymbol />
+                                {Number(match.stake).toLocaleString()}
+                              </div>
+                              <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-lg border ${
+                                match.status === 'finished' ? 'bg-primary/10 text-primary border-primary/20' : 
+                                match.status === 'waiting' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 
+                                'bg-blue-500/10 text-blue-500 border-blue-500/20'
+                              }`}>
+                                {match.status}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : h2hViewMode === 'rankings' ? (
+                    <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
+                      <table className="w-full text-left border-collapse">
+                        <thead className="bg-muted/50 border-b border-border">
+                          <tr>
+                            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Rank</th>
+                            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Player</th>
+                            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center">Matches</th>
+                            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">Win Rate</th>
+                            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">Net Profit</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border">
+                          {h2hRankings.map((rank, i) => (
+                            <tr key={rank.user.id} className="hover:bg-muted/30 transition-colors group">
+                              <td className="px-6 py-4">
+                                <span className={`w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-black ${
+                                  i === 0 ? 'bg-amber-400 text-amber-950 shadow-md shadow-amber-400/20' :
+                                  i === 1 ? 'bg-slate-300 text-slate-800' :
+                                  i === 2 ? 'bg-amber-700 text-amber-50' :
+                                  'bg-muted text-muted-foreground'
+                                }`}>
+                                  {i + 1}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center overflow-hidden border border-primary/20">
+                                    {rank.user.avatar_url ? <img src={rank.user.avatar_url} className="w-full h-full object-cover" /> : <span className="text-xs font-black uppercase text-primary">{rank.user.username[0]}</span>}
+                                  </div>
+                                  <span className="text-xs font-bold text-foreground group-hover:text-primary transition-colors">{rank.user.username}</span>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 text-center text-xs font-black font-number">{rank.total_matches}</td>
+                              <td className="px-6 py-4 text-right">
+                                <div className="flex flex-col items-end gap-1">
+                                  <span className="text-xs font-black text-foreground font-number">{rank.win_rate.toFixed(1)}%</span>
+                                  <div className="w-16 h-1 bg-muted rounded-full overflow-hidden">
+                                    <div className="h-full bg-primary" style={{ width: `${rank.win_rate}%` }} />
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 text-right">
+                                <span className={`text-xs font-black font-number flex items-center justify-end gap-1 ${rank.net_profit >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                                  {rank.net_profit >= 0 ? '+' : '-'}
+                                  <ZASymbol className="scale-75" />
+                                  {Math.abs(rank.net_profit).toLocaleString()}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
+                      <table className="w-full text-left border-collapse">
+                        <thead className="bg-muted/50 border-b border-border">
+                          <tr>
+                            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Match ID</th>
+                            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Players</th>
+                            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">Stake</th>
+                            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border">
+                          {h2hMatches.map((match: H2HMatch) => (
+                            <tr key={match.id} className="hover:bg-muted/30 transition-colors">
+                              <td className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-wider">{match.code || match.id.slice(0, 8)}</td>
+                              <td className="px-6 py-4">
+                                <div className="flex items-center gap-2">
                                   <span className="text-xs font-bold text-primary">{match.host?.username || "Player"}</span>
-                                  <span className="text-[10px] font-black text-muted-foreground uppercase">VS</span>
-                                  <span className={`text-xs font-bold ${match.guest ? "text-rose-500" : "text-muted-foreground italic"}`}>
+                                  <span className="text-[10px] font-black text-muted-foreground opacity-50">VS</span>
+                                  <span className={`text-xs font-bold ${match.guest ? "text-rose-500" : "text-muted-foreground italic opacity-50"}`}>
                                     {match.guest?.username || (match.is_bot ? "System Bot" : "Waiting...")}
                                   </span>
                                 </div>
                               </td>
-                              <td className="px-4 py-4 text-right">
-                                <span className="text-xs font-black text-foreground font-number flex items-center justify-end gap-1">
-                                  <ZASymbol className="scale-75" />
-                                  {Number(match.stake).toLocaleString()}
-                                </span>
+                              <td className="px-6 py-4 text-right font-black text-xs font-number">
+                                <div className="flex items-center justify-end gap-1 text-foreground"><ZASymbol className="scale-75" /> {Number(match.stake).toLocaleString()}</div>
                               </td>
-                              <td className="px-4 py-4 text-right">
-                                <span className={`text-xs font-black font-number flex items-center justify-end gap-1 ${match.status === 'finished' ? 'text-emerald-500' : 'text-muted-foreground'}`}>
-                                  <ZASymbol className="scale-75" />
-                                  {match.status === 'finished' 
-                                    ? (Number(match.stake) * 2 * (game.platformFeePercentage / 100)).toLocaleString()
-                                    : "—"}
-                                </span>
-                              </td>
-                              <td className="px-4 py-4 text-center">
-                                <span className={`inline-flex px-2 py-1 text-[9px] font-black uppercase tracking-widest rounded ${
-                                  match.status === 'finished' ? "bg-primary/20 text-primary" : 
-                                  match.status === 'waiting' ? "bg-amber-500/20 text-amber-500" : 
-                                  "bg-blue-500/20 text-blue-500"
+                              <td className="px-6 py-4 text-center">
+                                <span className={`inline-flex px-2 py-1 text-[9px] font-black uppercase tracking-widest rounded-lg border ${
+                                  match.status === 'finished' ? "bg-primary/10 text-primary border-primary/20" : 
+                                  match.status === 'waiting' ? "bg-amber-500/10 text-amber-500 border-amber-500/20" : 
+                                  "bg-blue-500/10 text-blue-500 border-blue-500/20"
                                 }`}>
-                                  {match.status} 
-                                  {match.status === 'active' && <span className="w-1.5 h-1.5 rounded-full bg-blue-500 ml-1.5 animate-pulse"></span>}
+                                  {match.status}
                                 </span>
                               </td>
                             </tr>
-                          ))
-                        )
-                      )}
-                    </tbody>
-                  </table>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )
+                )}
+              </div>
+              
+              <div className="p-4 bg-muted/20 border border-border rounded-2xl flex justify-between items-center backdrop-blur-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Database Stream: Live</span>
                 </div>
-                <div className="p-4 bg-muted/20 border-t border-border flex justify-between items-center">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Showing Live Activity</span>
-                  <button className="px-4 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg text-[10px] font-black uppercase tracking-widest transition-all">View Full Logs</button>
-                </div>
+                <button className="px-6 py-2 bg-primary/10 hover:bg-primary/20 text-primary rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border border-primary/20 shadow-sm">Export Data Log</button>
               </div>
             </div>
           )}
