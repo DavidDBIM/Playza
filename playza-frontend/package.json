@@ -6,14 +6,11 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "build:prerender": "tsc -b && vite build",
-    "prerender:check": "node -e \"const fs=require('fs');const routes=['','games','leaderboard','tournaments','registration','terms','privacy','referral','solo-earn','loyalty'];routes.forEach(r=>{const p=r?`dist/${r}/index.html`:'dist/index.html';console.log(fs.existsSync(p)?'✅':'❌',p)})\"",
     "lint": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
-    "@prerenderer/renderer-jsdom": "^1.1.9",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.5.0",
     "@supabase/supabase-js": "^2.100.0",
@@ -48,7 +45,6 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
-    "@prerenderer/rollup-plugin": "^0.3.12",
     "@types/node": "^24.10.12",
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",

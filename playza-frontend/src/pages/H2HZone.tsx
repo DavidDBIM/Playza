@@ -1,14 +1,19 @@
-import { useEffect } from 'react';
+import { useEffect, lazy, Suspense } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import H2HLobby from '@/components/h2h/H2HLobby';
 import H2HWaitingRoom from '@/components/h2h/H2HWaitingRoom';
-import ChessArena from '@/components/h2h/chess/ChessArena';
-import SpeedBattleArena from '@/components/h2h/speed-battle/SpeedBattleArena';
-import WordScrambleArena from '@/components/h2h/word-scramble/WordScrambleArena';
-import PoolArena from '@/components/h2h/pool/PoolArena';
-import ArenaDuel from '@/components/h2h/arena-duel/ArenaDuel';
-import LudoArena from '@/components/h2h/ludo/LudoArena';
-import SoccerArena, { type SoccerRoom } from '@/components/h2h/soccer/SoccerArena';
+// Lazy-load every game arena so their heavy dependencies (three.js, chess.js,
+// matter-js, phaser) are NOT bundled into the initial JS payload.
+// Each arena chunk is only fetched when the user actually enters that game room.
+const ChessArena = lazy(() => import('@/components/h2h/chess/ChessArena'));
+const SpeedBattleArena = lazy(() => import('@/components/h2h/speed-battle/SpeedBattleArena'));
+const WordScrambleArena = lazy(() => import('@/components/h2h/word-scramble/WordScrambleArena'));
+const PoolArena = lazy(() => import('@/components/h2h/pool/PoolArena'));
+const ArenaDuel = lazy(() => import('@/components/h2h/arena-duel/ArenaDuel'));
+const LudoArena = lazy(() => import('@/components/h2h/ludo/LudoArena'));
+const SoccerArena = lazy(() => import('@/components/h2h/soccer/SoccerArena').then(m => ({ default: m.default })));
+// SoccerRoom type is only used for type annotations — import separately
+import type { SoccerRoom } from '@/components/h2h/soccer/SoccerArena';
 import * as chessApi from '@/api/chess.api';
 import { poolApi } from '@/api/poolApi';
 import * as soccerApi from '@/api/soccer.api';
@@ -86,6 +91,14 @@ const H2HZone = () => {
   const loading = createRoom.isPending || createBotRoom.isPending || joinRoom.isPending || quickMatch.isPending;
 
   return (
+    <Suspense fallback={
+      <div className="w-full h-[60vh] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="size-10 border-[3px] border-primary/20 border-t-primary rounded-full animate-spin" />
+          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 animate-pulse">Loading arena...</span>
+        </div>
+      </div>
+    }>
     <div className="relative flex-1 min-w-0 overflow-x-hidden scrollbar-hide flex flex-col items-center px-2 pb-24 md:pb-10">
       {/* Subtle Ambient Background - Optimized for Performance */}
       <div className="fixed inset-0 pointer-events-none -z-10 bg-slate-50 dark:bg-slate-950">
@@ -225,6 +238,7 @@ const H2HZone = () => {
         )}
       </main>
     </div>
+    </Suspense>
   );
 };
 

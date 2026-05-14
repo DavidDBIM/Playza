@@ -7,11 +7,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getProfileApi,
   getBankAccountsApi,
-  getGameHistoryApi,
 } from "@/api/profile.api";
 import { walletApi } from "@/api/wallet.api";
-import { getLoyaltyMeApi } from "@/api/loyalty.api";
-import { getReferralStatsApi } from "@/api/referral.api";
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -50,9 +47,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         is_active: profile.is_active,
       });
 
-      // Background prefetch commonly-accessed data on sign-in
-
-      // Profile & wallet — visited on almost every session
+      // Prefetch only the data that is needed on virtually every session.
+      // Heavy/optional pages (Loyalty, Referral, Profile History) fetch their own
+      // data on demand — prefetching them here wastes bandwidth on users who won't visit.
       queryClient.prefetchQuery({
         queryKey: ["profile"],
         queryFn: getProfileApi,
@@ -63,7 +60,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         queryFn: walletApi.getWallet,
         staleTime: 2 * 60 * 1000,
       });
-      // Bank accounts & bank list — needed for withdrawals
       queryClient.prefetchQuery({
         queryKey: ["profile", "bank-accounts"],
         queryFn: getBankAccountsApi,
@@ -73,23 +69,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         queryKey: ["wallet", "banks"],
         queryFn: walletApi.getBankList,
         staleTime: 60 * 60 * 1000,
-      });
-      // Game history — first page shown in Profile Overview
-      queryClient.prefetchQuery({
-        queryKey: ["profile", "history", 1, 3],
-        queryFn: () => getGameHistoryApi(1, 3),
-        staleTime: 2 * 60 * 1000,
-      });
-      // Loyalty & referral — shown in dedicated pages
-      queryClient.prefetchQuery({
-        queryKey: ["loyalty", "me"],
-        queryFn: getLoyaltyMeApi,
-        staleTime: 2 * 60 * 1000,
-      });
-      queryClient.prefetchQuery({
-        queryKey: ["referral", "stats"],
-        queryFn: getReferralStatsApi,
-        staleTime: 5 * 60 * 1000,
       });
     } else if (isError) {
       TokenStorage.clearTokens();

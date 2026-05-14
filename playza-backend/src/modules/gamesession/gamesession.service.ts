@@ -383,12 +383,12 @@ export async function submitSessionScore(userId: string, sessionId: string, scor
   const now = new Date()
 
   // 1. Get session and entry details (including game slug for dynamic anti-cheat)
-  const { data: session } = await supabase
+  const { data: session, error: sErr } = await supabase
     .from('game_sessions')
     .select('end_time, status, games(slug, category)')
     .eq('id', sessionId)
     .single()
-  const { data: entry } = await supabase
+  const { data: entry, error: eErr } = await supabase
     .from('game_leaderboard')
     .select('*, users(username, avatar_url)')
     .eq('session_id', sessionId)
@@ -396,11 +396,12 @@ export async function submitSessionScore(userId: string, sessionId: string, scor
     .single()
 
 
-  if (!session || !entry) throw new Error("Invalid session or entry")
+  if (sErr || !session) throw new Error("Session not found or invalid");
+  if (eErr || !entry) throw new Error("Leaderboard entry not found for this user");
 
   // -- TOURNAMENT CLOSED CHECK --
   if (now > new Date(session.end_time)) {
-    throw new Error("Tournament has ended. Score not accepted.")
+    throw new Error("Tournament has ended. Score not accepted.");
   }
 
   // -- ROUND HANDSHAKE CHECK --
@@ -438,8 +439,9 @@ export async function submitSessionScore(userId: string, sessionId: string, scor
     if (score > 5000 && elapsedSeconds < 5) isSuspicious = true;
     if (score > 350000) isSuspicious = true; // Hard cap on theoretical maximum
   } else {
-    // Generic fallback: Very aggressive scores in first few seconds are always flagged
-    if (score > 10000 && elapsedSeconds < 5) isSuspicious = true;
+    // Generic fallback: Relaxed threshold (100,000 pts in < 5s) 
+    // This prevents false positives in high-scoring games like Stack Ball.
+    if (score > 100000 && elapsedSeconds < 5) isSuspicious = true;
   }
 
   if (isSuspicious) {
@@ -450,7 +452,7 @@ export async function submitSessionScore(userId: string, sessionId: string, scor
   let newBest = entry.best_score
   if (score > entry.best_score) {
     newBest = score
-    await supabase
+    const { error: upErr } = await supabase
       .from('game_leaderboard')
       .update({
         best_score: score,
@@ -458,14 +460,16 @@ export async function submitSessionScore(userId: string, sessionId: string, scor
         updated_at: now.toISOString()
       })
       .eq('id', entry.id)
+    if (upErr) throw new Error(`Failed to update high score: ${upErr.message}`);
   } else {
-    await supabase
+    const { error: upErr } = await supabase
       .from('game_leaderboard')
       .update({
         attempts: entry.attempts + 1,
         updated_at: now.toISOString()
       })
       .eq('id', entry.id)
+    if (upErr) throw new Error(`Failed to update attempts: ${upErr.message}`);
   }
 
   // 3. Mark round as submitted
@@ -569,6 +573,7 @@ export async function finalizeSessionAndPayout(sessionId: string) {
   }
 
   // 3. Dynamic Curve based on Pool Size (to match frontend)
+  const grossPool = Number(session.pool_amount || 0)
   const entryFee = Number(session.entry_fee || 100);
   const effectivePlayerCount = entryFee > 0 ? Math.max(1, Math.floor(grossPool / entryFee)) : 1;
   const distribution = calculateDistributionCurve(effectivePlayerCount);

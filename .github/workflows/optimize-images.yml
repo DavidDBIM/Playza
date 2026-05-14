@@ -1,0 +1,133 @@
+name: Optimize Images
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'playza-frontend/public/**/*.png'
+      - 'playza-frontend/public/**/*.jpg'
+      - 'playza-frontend/public/**/*.jpeg'
+
+jobs:
+  optimize:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Pillow
+        run: pip install Pillow
+
+      # ── Step 1: Convert PNG/JPG → WebP ──────────────────────────────────────
+      - name: Convert images to WebP
+        run: |
+          python3 << 'PYEOF'
+          from pathlib import Path
+          from PIL import Image
+
+          PUBLIC    = Path("playza-frontend/public")
+          SKIP_DIRS = {"gameLib"}   # game engine assets — leave untouched
+          QUALITY   = 82
+          MAX_DIM   = 1200
+
+          converted = 0
+          for img_path in sorted(PUBLIC.rglob("*")):
+              if any(s in img_path.parts for s in SKIP_DIRS):
+                  continue
+              if img_path.suffix.lower() not in (".png", ".jpg", ".jpeg"):
+                  continue
+              webp = img_path.with_suffix(".webp")
+              if webp.exists():
+                  continue
+              try:
+                  with Image.open(img_path) as im:
+                      out = im.convert("RGBA") if im.mode in ("RGBA","LA") else im.convert("RGB")
+                      if max(out.size) > MAX_DIM:
+                          out.thumbnail((MAX_DIM, MAX_DIM), Image.LANCZOS)
+                      out.save(webp, "WEBP", quality=QUALITY, method=6)
+                  orig = img_path.stat().st_size // 1024
+                  new  = webp.stat().st_size  // 1024
+                  print(f"✓  {img_path.name}  {orig}KB → {new}KB")
+                  converted += 1
+              except Exception as e:
+                  print(f"✗  {img_path.name}: {e}")
+
+          print(f"\nConverted {converted} images")
+          PYEOF
+
+      # ── Step 2: Update .png/.jpg references in source files → .webp ─────────
+      - name: Update image references in source files
+        run: |
+          python3 << 'PYEOF'
+          import re
+          from pathlib import Path
+
+          SRC_DIRS = [
+              Path("playza-frontend/src"),
+          ]
+          # Only rewrite references to images that actually have a .webp version
+          PUBLIC   = Path("playza-frontend/public")
+          SKIP_DIRS = {"gameLib"}
+
+          has_webp = set()
+          for img in PUBLIC.rglob("*.webp"):
+              if not any(s in img.parts for s in SKIP_DIRS):
+                  # Store the path relative to public/ e.g. "games/chess.webp"
+                  has_webp.add(img.relative_to(PUBLIC).as_posix())
+
+          # Pattern: any quoted string ending in .png or .jpg/.jpeg
+          # that maps to a file we have a .webp for
+          pattern = re.compile(r'(["\'])(/[^"\']+)\.(png|jpg|jpeg)(\1)')
+
+          updated_files = 0
+          updated_refs  = 0
+
+          for src_dir in SRC_DIRS:
+              for f in src_dir.rglob("*"):
+                  if f.suffix not in (".tsx", ".ts", ".css", ".html"):
+                      continue
+                  text = f.read_text(encoding="utf-8")
+                  original = text
+
+                  def replace_if_webp_exists(m):
+                      quote    = m.group(1)
+                      path_str = m.group(2)          # e.g. /games/chess
+                      ext      = m.group(3)          # png / jpg / jpeg
+                      rel      = path_str.lstrip("/") + ".webp"
+                      if rel in has_webp:
+                          return f'{quote}{path_str}.webp{quote}'
+                      return m.group(0)              # leave unchanged
+
+                  text = pattern.sub(replace_if_webp_exists, text)
+
+                  if text != original:
+                      f.write_text(text, encoding="utf-8")
+                      count = original.count(".png") + original.count(".jpg") + original.count(".jpeg") - \
+                              text.count(".png") - text.count(".jpg") - text.count(".jpeg")
+                      print(f"  Updated {f.relative_to('playza-frontend')}  ({count} ref(s))")
+                      updated_files += 1
+                      updated_refs  += count
+
+          print(f"\nUpdated {updated_refs} reference(s) across {updated_files} file(s)")
+          PYEOF
+
+      # ── Step 3: Commit everything back ──────────────────────────────────────
+      - name: Commit optimized images and updated references
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add playza-frontend/public
+          git add playza-frontend/src
+          git diff --cached --quiet && echo "Nothing to commit" && exit 0
+          git commit -m "chore: convert images to WebP and update src references [skip ci]"
+          git push
