@@ -269,7 +269,7 @@ export async function joinSession(userId: string, sessionId: string) {
   // 1. Get session details
   const { data: session, error: sessErr } = await supabase
     .from('game_sessions')
-    .select('entry_fee, status, end_time')
+    .select('entry_fee, status, end_time, games(slug, title)')
     .eq('id', sessionId)
     .single()
 
@@ -305,13 +305,14 @@ export async function joinSession(userId: string, sessionId: string) {
     p_amount: session.entry_fee
   })
   
+  const gameData: any = Array.isArray(session.games) ? session.games[0] : session.games;
   await supabase.from('transactions').insert({
     user_id: userId,
     type: 'game_entry',
     amount: session.entry_fee,
     status: 'successful',
-    reference: `PLZ-ARENA-ENTRY-${sessionId}-${userId}-${Date.now()}`,
-    meta: { session_id: sessionId }
+    reference: `PLZ-ARENA-ENTRY-${gameData?.slug || 'GAME'}-${sessionId}-${userId}-${Date.now()}`,
+    meta: { session_id: sessionId, game_slug: gameData?.slug, game_name: gameData?.title }
   })
 
   // 4. Update session pool
@@ -548,7 +549,7 @@ function calculateDistributionCurve(totalPlayers: number): number[] {
  */
 export async function finalizeSessionAndPayout(sessionId: string) {
   // 1. Get session details
-  const { data: session } = await supabase.from('game_sessions').select('*, games(platform_fee_percentage, title)').eq('id', sessionId).single()
+  const { data: session } = await supabase.from('game_sessions').select('*, games(platform_fee_percentage, title, slug)').eq('id', sessionId).single()
   if (!session || session.status === 'completed') return { success: false, message: "Invalid session status" }
 
   // 2. Get ALL participants
@@ -598,13 +599,14 @@ export async function finalizeSessionAndPayout(sessionId: string) {
         p_amount: payoutAmount
       })
 
+      const gameData: any = Array.isArray(session.games) ? session.games[0] : session.games;
       const { error: txError } = await supabase.from('transactions').insert({
         user_id: winner.user_id,
         type: 'winnings',
         amount: payoutAmount,
         status: 'successful',
-        reference: `PLZ-ARENA-WIN-${sessionId}-${winner.user_id}`,
-        meta: { session_id: sessionId, rank: i + 1, score: winner.best_score }
+        reference: `PLZ-ARENA-WIN-${gameData?.slug || 'GAME'}-${sessionId}-${winner.user_id}`,
+        meta: { session_id: sessionId, game_slug: gameData?.slug, game_name: gameData?.title, rank: i + 1, score: winner.best_score }
       })
       if (txError) console.error('Transaction Error:', txError);
 
@@ -653,6 +655,28 @@ export async function finalizeSessionAndPayout(sessionId: string) {
 }
 
 
+export async function getRecentSessionActivity(sessionId: string) {
+  const { data, error } = await supabase
+    .from('game_leaderboard')
+    .select(`
+      id,
+      best_score,
+      updated_at,
+      user_id,
+      users (
+        username,
+        avatar_url
+      )
+    `)
+    .eq('session_id', sessionId)
+    .gt('best_score', 0)
+    .order('updated_at', { ascending: false })
+    .limit(10)
+
+  if (error) throw error
+  return { success: true, activities: data }
+}
+
 export async function getSessionLeaderboard(sessionId: string) {
 
   const { data, error } = await supabase
@@ -669,6 +693,7 @@ export async function getSessionLeaderboard(sessionId: string) {
       )
     `)
     .eq('session_id', sessionId)
+    .gt('best_score', 0)
     .order('best_score', { ascending: false })
     .limit(100)
 

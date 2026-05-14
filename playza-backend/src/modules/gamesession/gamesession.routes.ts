@@ -114,6 +114,15 @@ router.get('/sessions/:id/leaderboard', async (req, res) => {
   }
 })
 
+router.get('/sessions/:id/recent-activity', async (req, res) => {
+  try {
+    const result = await GameSessionService.getRecentSessionActivity(req.params.id)
+    res.json(result)
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message })
+  }
+})
+
 router.get('/sessions/:id/my-stats', authenticate, async (req, res) => {
   try {
     const userId = (req as any).user.id
