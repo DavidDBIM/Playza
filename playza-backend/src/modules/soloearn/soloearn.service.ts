@@ -122,7 +122,7 @@ export async function endSoloSession(
       type: "winnings",
       amount: payout,
       status: "successful",
-      reference: `PLZ-SOLO-WIN-${sessionId}-${userId}`,
+      reference: `PLZ-SOLO-WIN-${session.game_id}-${sessionId}-${userId}`,
       meta: {
         game_id: session.game_id,
         mode: "soloearn",
