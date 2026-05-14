@@ -51,6 +51,7 @@ const GamePlay = () => {
   } | null>(null);
   const [showLiveEntry, setShowLiveEntry] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showExitModal, setShowExitModal] = useState(false);
   const [activeSession, setActiveSession] = useState<Session | null>(null);
 
   const [currentRoundId, setCurrentRoundId] = useState<string | null>(null);
@@ -544,11 +545,7 @@ const GamePlay = () => {
             )}
           </button>
           <button
-            onClick={() => {
-              if (window.confirm("Are you sure you want to abandon this match? This will count as a played attempt with a score of 0.")) {
-                navigate(`/games/${game.slug}/session`);
-              }
-            }}
+            onClick={() => setShowExitModal(true)}
             className="bg-black/40 backdrop-blur-md p-2 md:p-3 rounded-full text-rose-500/50 hover:text-rose-500 transition-all border border-white/10 shadow-lg hover:scale-110 active:scale-95 group"
             title="Abandon Game"
           >
@@ -716,6 +713,35 @@ const GamePlay = () => {
             }
           }}
         />
+      )}
+
+      {/* Custom Exit Confirmation Modal */}
+      {showExitModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+          <div className="bg-slate-900 border border-rose-500/30 rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl text-center">
+            <div className="w-16 h-16 bg-rose-500/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-rose-500/20">
+              <X size={32} className="text-rose-500" />
+            </div>
+            <h3 className="text-xl font-black uppercase tracking-widest text-white mb-3">Abandon Match?</h3>
+            <p className="text-slate-400 text-sm mb-8 leading-relaxed">
+              Are you sure you want to exit? Your current game progress will be lost and this will still count as a played attempt.
+            </p>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setShowExitModal(false)}
+                className="flex-1 bg-slate-800 text-white font-bold py-3 rounded-xl hover:bg-slate-700 transition-colors uppercase tracking-wider text-xs"
+              >
+                Keep Playing
+              </button>
+              <button 
+                onClick={() => navigate(`/games/${game.slug}/session`)}
+                className="flex-1 bg-rose-500 hover:bg-rose-600 text-white font-bold py-3 rounded-xl shadow-lg shadow-rose-500/20 transition-all uppercase tracking-wider text-xs"
+              >
+                Yes, Exit
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
