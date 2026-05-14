@@ -11,13 +11,19 @@
   </head>
   <body>
 
-    <!-- ── Outer shell: centres game column on wide screens ──────────── -->
+    <!-- ── Floating background bubbles (pure CSS, zero JS cost) ── -->
+    <div id="bg-bubbles" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <!-- ── Outer shell ───────────────────────────────────────────── -->
     <div id="game-shell">
 
-      <!-- ── Game container: max 480px, fills height ───────────────── -->
+      <!-- ── Game container ────────────────────────────────────── -->
       <div id="game-container">
 
-        <!-- ── HUD (absolutely positioned inside container) ─────────── -->
+        <!-- ── Top HUD ───────────────────────────────────────── -->
         <div id="hud">
           <div id="hud-left">
             <div class="hud-stat">
@@ -42,11 +48,29 @@
           </div>
         </div>
 
-        <!-- ── Canvas fills the container ───────────────────────────── -->
+        <!-- ── Shot warning bar (fills every 8 shots before new row) ── -->
+        <div id="shot-warning-bar">
+          <div id="shot-warning-fill"></div>
+          <span id="shot-warning-label">NEW ROW IN 2</span>
+        </div>
+
+        <!-- ── Canvas ────────────────────────────────────────── -->
         <canvas id="gameCanvas" aria-label="Bubble Shooter Blitz"></canvas>
 
-        <!-- ── Bottom launcher bar ──────────────────────────────────── -->
+        <!-- ── Milestone banner (mid-game celebration) ─────── -->
+        <div id="milestone-banner" class="hidden" aria-live="polite"></div>
+
+        <!-- ── Bottom launcher bar ───────────────────────────── -->
         <div id="launcher-bar">
+
+          <!-- Hold slot -->
+          <div id="hold-area" title="Hold bubble (H)">
+            <span class="queue-tag">HOLD</span>
+            <div id="holdPreview" class="bubble-preview hold-preview"></div>
+            <span class="hold-key">H</span>
+          </div>
+
+          <!-- NOW + NEXT queue -->
           <div id="queue-display">
             <div class="queue-slot" id="next-slot">
               <span class="queue-tag">NEXT</span>
@@ -58,41 +82,55 @@
             </div>
           </div>
 
+          <!-- Message line -->
           <div id="hud-mid">
             <span class="hud-label" id="messageLine">Tap to shoot</span>
           </div>
 
-          <div id="swap-area">
-            <button class="hud-btn" id="swapButton" type="button" title="Swap (S)">⇄ <span id="swapCount">2</span></button>
+          <!-- Action buttons: AIM · SWAP · BOMB -->
+          <div id="action-area">
+            <button class="hud-btn action-btn" id="aimButton" type="button" title="Aim assist (A)">
+              🎯 <span id="aimState">On</span>
+            </button>
+            <button class="hud-btn action-btn" id="swapButton" type="button" title="Swap (S)">
+              ⇄ <span id="swapCount">2</span>
+            </button>
+            <button class="hud-btn action-btn bomb-btn" id="bombButton" type="button" title="Bomb (B)" disabled>
+              💣 <span id="bombCount">0</span>
+            </button>
           </div>
-        </div>
+
+        </div><!-- /#launcher-bar -->
 
       </div><!-- /#game-container -->
     </div><!-- /#game-shell -->
 
-    <!-- ── Hidden passthrough elements required by game.js ──────────── -->
+    <!-- ── Hidden passthrough elements still required by game.js ── -->
     <span class="hidden" id="timeValue">60.0</span>
     <span class="hidden" id="bestValue">0</span>
     <span class="hidden" id="hintLine"></span>
     <span class="hidden" id="modePill"></span>
     <span class="hidden" id="seedPill"></span>
-    <span class="hidden" id="bombButton"></span>
-    <span class="hidden" id="bombCount">0</span>
-    <span class="hidden" id="aimButton"></span>
-    <span class="hidden" id="aimState">On</span>
     <span class="hidden" id="helpButton"></span>
 
-    <!-- ── Game-over overlay ─────────────────────────────────────────── -->
+    <!-- ── Game-over overlay ─────────────────────────────────── -->
     <div class="overlay hidden" id="overlay">
       <div class="modal">
         <p class="kicker" id="overlayKicker">Bubble Shooter Blitz</p>
         <h3 id="overlayTitle">Game Over</h3>
-        <p class="copy" id="overlayText"></p>
+
+        <!-- Animated stat card — populated by JS on endRun() -->
+        <div id="stat-card" class="stat-card"></div>
+
+        <!-- Legacy text fallback (hidden when stat card is used) -->
+        <p class="copy hidden" id="overlayText"></p>
+
         <div class="overlay-actions">
           <button class="primary" id="startDaily" type="button">Play Again</button>
           <button class="secondary hidden" id="startEndless" type="button"></button>
         </div>
         <div class="overlay-actions secondary-row">
+          <button class="ghost share-btn" id="shareButton" type="button">📤 Share</button>
           <button class="ghost" id="closeOverlay" type="button">Close</button>
         </div>
       </div>

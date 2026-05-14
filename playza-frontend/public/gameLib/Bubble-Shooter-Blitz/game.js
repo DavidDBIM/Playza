@@ -203,17 +203,49 @@ class BubbleShooterBlitz {
     this.bubblesPopped = 0;
     // Held bubble slot (separate from swap)
     this.heldBubble = null;
+    // ── New enhancement refs ──────────────────────────────────────────
+    this.holdPreview       = document.getElementById('holdPreview');
+    this.shotWarningBar    = document.getElementById('shot-warning-bar');
+    this.shotWarningFill   = document.getElementById('shot-warning-fill');
+    this.shotWarningLabel  = document.getElementById('shot-warning-label');
+    this.milestoneBanner   = document.getElementById('milestone-banner');
+    this.shareButton       = document.getElementById('shareButton');
+    this._lastShareScore   = 0;
+    // Score milestones: track which have been celebrated
+    this.milestoneThresholds = [10000, 25000, 50000, 100000];
+    this.reachedMilestones   = new Set();
+    // Level theme hues (cycled per level)
+    this.levelThemes = [
+      { hue: 190, name: 'Oceanic' },
+      { hue: 260, name: 'Cosmic' },
+      { hue: 120, name: 'Forest' },
+      { hue: 30,  name: 'Volcanic' },
+      { hue: 320, name: 'Neon' },
+      { hue: 45,  name: 'Golden' },
+    ];
     this.resize();
     this.buildGrid();
     window.addEventListener("resize", () => {
       this.resize();
-      this.buildGrid(); // rebuild so cols fills new screen width
+      this.buildGrid();
     });
 
     this.bindEvents();
     this.loadBest();
-    // AUTO-START: game begins immediately when iframe loads — no lobby needed
-    this.start(MODES.ENDLESS);
+    
+    if (window.self === window.top) {
+      this.start(MODES.ENDLESS);
+    } else {
+      this.buildGrid();
+      this.queue.now = this.rollBubble();
+      this.queue.next = this.rollBubble();
+      this.syncHud();
+      this.openOverlay();
+      this.overlayKicker.textContent = "Arena Setup";
+      this.overlayTitle.textContent = "Waiting...";
+      this.overlayText.textContent = "Connecting to session config.";
+    }
+    
     requestAnimationFrame((t) => this.tick(t));
   }
 
@@ -271,14 +303,18 @@ class BubbleShooterBlitz {
       if (evt.key === "h" || evt.key === "H") this.holdBubble();
     });
 
-    // Null-safe: some buttons are hidden spans in the new layout
+    // Button wiring (all buttons are now real visible elements)
     this.swapButton?.addEventListener("click", () => this.swapQueue());
     this.bombButton?.addEventListener("click", () => this.useBomb());
     this.aimButton?.addEventListener("click",  () => this.toggleAim());
     this.soundButton?.addEventListener("click",() => this.toggleSound());
     this.helpButton?.addEventListener("click", () => this.openOverlay(true));
+    // Hold slot — tap the hold area or press H
+    document.getElementById('hold-area')?.addEventListener('click', () => this.holdBubble());
+    // Share button on game-over overlay
+    this.shareButton?.addEventListener('click', () => this.shareScore());
 
-    // Respect the intended mode for both buttons
+    // Mode buttons
     this.startDaily?.addEventListener("click",   () => this.start(MODES.DAILY));
     this.startEndless?.addEventListener("click", () => this.start(MODES.ENDLESS));
     this.closeOverlay?.addEventListener("click", () => this.hideOverlay());
@@ -368,7 +404,7 @@ class BubbleShooterBlitz {
     this.comboDecay = 0;
     this.elapsed = 0;
     this.timer = mode === MODES.DAILY ? 60 : 0;
-    this.shotsLimit = mode === MODES.ENDLESS ? 150 : Infinity; // Increased to 150 for more engagement
+    this.shotsLimit = mode === MODES.ENDLESS ? 150 : Infinity;
     this.ceiling = 0;
     this.ceilingSpeed = mode === MODES.DAILY ? 8 : 10;
     this.shotsTaken = 0;
@@ -386,7 +422,10 @@ class BubbleShooterBlitz {
     this.frenzyMode = 0;
     this.beatTimer = 0;
     this.beatCount = 0;
-    document.body.classList.remove("frenzy-active"); // FIX #13
+    document.body.classList.remove("frenzy-active");
+    // Reset milestone & theme tracking
+    this.reachedMilestones = new Set();
+    this.updateLevelTheme(false);
 
     this.swapsLeft = mode === MODES.DAILY ? 2 : 3;
     this.bombs = 0;
@@ -429,13 +468,14 @@ class BubbleShooterBlitz {
   }
 
   rollBubble() {
-    // FIX #2: Always consume EXACTLY 2 gameRng calls so the seed sequence
-    // is deterministic regardless of which bubble type is chosen.
+    // Always consume EXACTLY 2 gameRng calls for deterministic seeding.
     const chance = this.gameRng();      // call 1: type determination
-    const colorRoll = this.gameRng();   // call 2: color selection (may be unused for specials)
-    if (chance < 0.03) return { type: "rainbow", color: null };
-    if (chance < 0.055 && this.mode === MODES.DAILY) return { type: "clock", color: null };
-    if (chance < 0.08) return { type: "lightning", color: null };
+    const colorRoll = this.gameRng();   // call 2: color selection
+    // Special bubble probabilities
+    if (chance < 0.015) return { type: "colorbomb", color: null };  // Color Bomb: clears dominant color
+    if (chance < 0.045) return { type: "rainbow", color: null };
+    if (chance < 0.07 && this.mode === MODES.DAILY) return { type: "clock", color: null };
+    if (chance < 0.095) return { type: "lightning", color: null };
     const palette = this.availableColors();
     const list = palette.length ? palette : COLORS.map((c) => c.id);
     const color = list[Math.floor(colorRoll * list.length)];
@@ -644,47 +684,60 @@ class BubbleShooterBlitz {
   }
 
   holdBubble() {
-    // FIX #24: Hold slot — swap current bubble into hold, restore previous held
     if (!this.playing || this.gameOver || this.activeShot) return;
     if (!this.heldBubble && !this.queue.now) return;
     const current = this.queue.now;
     this.queue.now = this.heldBubble || this.rollBubble();
     this.heldBubble = current;
     this.tone.tone(660, 0.06, "triangle", 0.025);
-    this.message("Bubble held.");
+    this.message("Bubble held. Tap HOLD to restore.");
     this.syncHud();
   }
 
   syncHud() {
     if (this.scoreValue) this.scoreValue.textContent = `${Math.max(0, Math.floor(this.score))}`;
     if (this.shotsValue) {
-      this.shotsValue.textContent = this.mode === MODES.ENDLESS 
+      this.shotsValue.textContent = this.mode === MODES.ENDLESS
         ? `${Math.max(0, this.shotsLimit - this.shotsTaken)}`
-        : "∞";
+        : "\u221e";
     }
     if (this.comboValue) this.comboValue.textContent = `x${this.combo}`;
     if (this.levelValue) this.levelValue.textContent = `${this.level}`;
     if (this.timeValue) {
       this.timeValue.textContent = this.mode === MODES.DAILY
         ? `${Math.max(0, this.timer).toFixed(1)}`
-        : "∞";
+        : "\u221e";
     }
-    // Null-safe for elements that may be hidden spans
     if (this.swapCount) this.swapCount.textContent = `${this.swapsLeft}`;
     if (this.bombCount) this.bombCount.textContent = `${this.bombs}`;
     if (this.bombButton) this.bombButton.disabled = this.bombs <= 0;
     if (this.aimState)  this.aimState.textContent = this.aimAssist ? "On" : "Off";
-    // FIX #21: trigger combo pop animation on each sync
     if (this.playing) this.flashCombo();
+    // Update hold-slot preview
+    if (this.holdPreview) {
+      if (this.heldBubble) {
+        const heldHex = this.getHexForBubble(this.heldBubble);
+        this.holdPreview.style.background = this.previewGradient(heldHex);
+        this.holdPreview.classList.add('has-bubble');
+      } else {
+        this.holdPreview.style.background = '';
+        this.holdPreview.classList.remove('has-bubble');
+      }
+    }
+    // Update shot-warning bar (fills every 8 shots)
+    if (this.shotWarningFill && this.shotWarningBar) {
+      const shotProgress = this.shotsTaken % 8;
+      const pct = (shotProgress / 8) * 100;
+      this.shotWarningFill.style.width = `${pct}%`;
+      if (shotProgress >= 6 && this.playing) {
+        this.shotWarningBar.classList.add('warning-active');
+        if (this.shotWarningLabel) this.shotWarningLabel.textContent = `NEW ROW IN ${8 - shotProgress}`;
+      } else {
+        this.shotWarningBar.classList.remove('warning-active');
+      }
+    }
 
-    const getHex = (b) => {
-      if (!b) return "#fff";
-      if (b.type === "rainbow") return "rainbow";
-      if (b.type === "clock") return "#53d98d";
-      if (b.type === "lightning") return "#ffd33d";
-      if (b.type === "bomb") return "#1f2030";
-      return COLORS.find((c) => c.id === b.color)?.hex || "#fff";
-    };
+    const getHex = (b) => this.getHexForBubble(b);
 
     const nowHex = getHex(this.queue.now);
     const nextHex = getHex(this.queue.next);
@@ -693,7 +746,8 @@ class BubbleShooterBlitz {
   }
 
   previewGradient(hex) {
-    if (hex === "rainbow") return `conic-gradient(from 0deg, red, orange, yellow, green, blue, purple, red)`;
+    if (hex === "rainbow")   return `conic-gradient(from 0deg, red, orange, yellow, green, blue, purple, red)`;
+    if (hex === "colorbomb") return `conic-gradient(from 0deg, #ff5b86, #ffd33d, #53d98d, #4fb3ff, #8f6fff, #ff9c3d, #ff5b86)`;
     return `radial-gradient(circle at 35% 35%, rgba(255,255,255,0.7), rgba(255,255,255,0.08) 40%, rgba(0,0,0,0)), linear-gradient(135deg, ${hex}, ${hex})`;
   }
 
@@ -803,6 +857,7 @@ class BubbleShooterBlitz {
     if (this.isGridEmpty()) {
       if (this.mode === MODES.ENDLESS) {
         this.level += 1;
+        this.updateLevelTheme(true); // shift background colour + announce new level
       }
       if (this.mode === MODES.DAILY) {
         this.timer = Math.min(90, this.timer + 3.5);
@@ -818,6 +873,27 @@ class BubbleShooterBlitz {
 
     if (this.isAnyBubblePastDangerLine()) {
       this.endRun(false, "The ceiling caught you.");
+    }
+
+    // ── Score milestone celebrations ────────────────────────────────────
+    for (const m of this.milestoneThresholds) {
+      if (this.realScore >= m && !this.reachedMilestones.has(m)) {
+        this.reachedMilestones.add(m);
+        const labels = { 10000: '\ud83d\udd25 10K PTS', 25000: '\u26a1 25K — ON FIRE!', 50000: '\ud83d\udca5 50K — UNSTOPPABLE!', 100000: '\ud83c\udfc6 100K — LEGENDARY!' };
+        this.showMilestone(labels[m] || `${m.toLocaleString()} PTS`);
+        this.tone.tone(1100, 0.1, 'triangle', 0.04);
+        setTimeout(() => this.tone.tone(1320, 0.08, 'triangle', 0.03), 100);
+      }
+    }
+
+    // ── Danger HUD ring ────────────────────────────────────────────
+    const gc = document.getElementById('game-container');
+    if (gc) {
+      if (this.isAnyBubblePastDangerLine ? this.isDangerZone() : false) {
+        gc.classList.add('danger-active');
+      } else {
+        gc.classList.remove('danger-active');
+      }
     }
 
     // ── Internal Integrity Check: Anti-cheat ──
@@ -1037,6 +1113,33 @@ class BubbleShooterBlitz {
       return;
     }
 
+    // Color Bomb: finds dominant color on grid and clears all of them
+    if (placed.special === "colorbomb") {
+      const colorCounts = {};
+      for (let r = 0; r < this.maxRows; r++) {
+        for (let c = 0; c < this.cols; c++) {
+          const b = this.grid[r][c];
+          if (b?.color) colorCounts[b.color] = (colorCounts[b.color] || 0) + 1;
+        }
+      }
+      const dominantColor = Object.keys(colorCounts).reduce(
+        (a, b) => (colorCounts[a] >= colorCounts[b] ? a : b), null
+      );
+      if (dominantColor) {
+        const toRemove = [];
+        for (let r = 0; r < this.maxRows; r++)
+          for (let c = 0; c < this.cols; c++)
+            if (this.grid[r][c]?.color === dominantColor) toRemove.push({ row: r, col: c });
+        this.popCells(toRemove, 'bomb');
+        this.dropFloating();
+        this.popText(`\ud83d\udca5 ${toRemove.length}x COLOR BOMB`, { x: this.world.width / 2, y: this.world.height / 2 - 60 }, '#ff5b86');
+        this.flash = 0.28; this.shake = 20;
+        this.tone.tone(880, 0.15, 'sawtooth', 0.05);
+        this.afterClearSuccess(toRemove.length + 4, this.worldPosForCell(row, col));
+      }
+      return;
+    }
+
     // FIX #11: checkIceBreak runs first so ice pops are included in combo total
     this.checkIceBreak(row, col);
 
@@ -1203,11 +1306,18 @@ class BubbleShooterBlitz {
 
   afterClearSuccess(totalCleared, anchor) {
     this.combo = clamp(this.combo + 1, 1, 12);
-    this.maxCombo = Math.max(this.maxCombo, this.combo); // track peak
+    this.maxCombo = Math.max(this.maxCombo, this.combo);
     this.comboDecay = 1.1;
     if (this.mode === MODES.DAILY) {
       const bonus = totalCleared >= 8 ? 1.2 : totalCleared >= 5 ? 0.6 : 0.2;
       this.timer = Math.min(90, this.timer + bonus);
+    }
+    // Hot-streak audio escalation at key combo milestones
+    const streakStings = { 3: [660,880], 5: [660,880,1100], 8: [440,660,880,1100], 12: [440,660,880,1100,1320] };
+    if (streakStings[this.combo]) {
+      streakStings[this.combo].forEach((freq, i) =>
+        setTimeout(() => this.tone.tone(freq, 0.055, 'triangle', 0.022), i * 55)
+      );
     }
 
     if (this.bombCharge >= 26) {
@@ -1241,27 +1351,46 @@ class BubbleShooterBlitz {
     this.playing = false;
     this.gameOver = true;
     this.activeShot = null;
-    document.body.classList.remove("frenzy-active");
+    document.body.classList.remove('frenzy-active');
+    document.getElementById('game-container')?.classList.remove('danger-active');
+    if (this.shotWarningBar) this.shotWarningBar.classList.remove('warning-active');
     this.saveBestIfNeeded();
 
-    // FIX #3: use realScore (not animated display score) for submission
     const finalScore = this.realScore;
     const accuracy = this.shotsTaken > 0
       ? Math.round(((this.shotsTaken - this.misses) / this.shotsTaken) * 100)
       : 100;
+    const title = force ? 'Run Ended' : (reason ? 'Game Over' : 'Time!');
+    const isNewBest = finalScore >= this.bestScore && finalScore > 0;
 
-    const title = force ? "Run ended" : (reason ? "Game Over" : "Time!");
-    const details = reason || (this.mode === MODES.DAILY ? "Blitz complete." : "Warmup done.");
+    // Build animated stat card
+    this._lastShareScore = finalScore;
+    const card = document.getElementById('stat-card');
+    if (card) {
+      const rows = [
+        { label: 'Final Score', value: finalScore.toLocaleString(), cls: 'highlight-row' },
+        { label: 'Best Score',  value: this.bestScore.toLocaleString() + (isNewBest ? ' \ud83c\udfc6 NEW!' : ''), cls: isNewBest ? 'milestone-row' : '' },
+        { label: 'Shots Taken', value: this.shotsTaken },
+        { label: 'Accuracy',    value: `${accuracy}%` },
+        { label: 'Max Combo',   value: `x${this.maxCombo}` },
+        { label: 'Biggest Drop',value: `${this.biggestDrop} bubbles` },
+        { label: 'Bubbles Popped', value: this.bubblesPopped },
+        { label: 'Level Reached',  value: this.level },
+      ];
+      card.innerHTML = rows.map((r, i) =>
+        `<div class="stat-row ${r.cls || ''}" style="animation-delay:${i * 60}ms">
+          <span class="stat-label">${r.label}</span>
+          <span class="stat-value">${r.value}</span>
+        </div>`
+      ).join('');
+    }
 
-    this.overlayKicker.textContent = "Bubble Shooter Blitz";
-    this.overlayTitle.textContent = `${title} — ${finalScore.toLocaleString()} pts`;
-    this.overlayText.textContent =
-      `${details} Shots: ${this.shotsTaken} | Accuracy: ${accuracy}% | Max Combo: x${this.maxCombo} | Biggest Drop: ${this.biggestDrop} | Best: ${this.bestScore}`;
-    this.overlay.classList.remove("hidden");
-    this.startDaily.textContent = "Play Daily Blitz";
-    this.startEndless.textContent = "Play Endless Warmup";
-    this.tone.tone(140, 0.18, "sawtooth", 0.035);
-    this.tone.tone(680, 0.1, "triangle", 0.02);
+    this.overlayKicker.textContent = 'Bubble Shooter Blitz';
+    this.overlayTitle.textContent  = title;
+    this.overlay.classList.remove('hidden');
+    this.startDaily.textContent    = 'Play Again';
+    this.tone.tone(140, 0.18, 'sawtooth', 0.035);
+    this.tone.tone(680, 0.1,  'triangle', 0.02);
 
     // FIX #6: Use PLAYZA_SCORE_SUBMISSION (matching 2048 pattern)
     // Target same origin, not '*'. Include full metadata for server-side plausibility check.
@@ -1794,6 +1923,69 @@ class BubbleShooterBlitz {
     `;
     banner.classList.remove("hidden");
   }
+
+  // ── Helper: centralised hex colour for any bubble type ───────────────────
+  getHexForBubble(b) {
+    if (!b) return "#fff";
+    if (b.type === "rainbow")   return "rainbow";
+    if (b.type === "colorbomb") return "colorbomb";
+    if (b.type === "clock")     return "#53d98d";
+    if (b.type === "lightning") return "#ffd33d";
+    if (b.type === "bomb")      return "#1f2030";
+    return COLORS.find((c) => c.id === b.color)?.hex || "#fff";
+  }
+
+  // ── Helper: show a mid-game milestone banner for 2.8 seconds ─────────────
+  showMilestone(text) {
+    const el = this.milestoneBanner || document.getElementById('milestone-banner');
+    if (!el) return;
+    el.textContent = text;
+    el.classList.remove('hidden', 'show');
+    void el.offsetWidth; // force reflow so animation restarts
+    el.classList.remove('hidden');
+    el.classList.add('show');
+    clearTimeout(this._milestoneTimer);
+    this._milestoneTimer = setTimeout(() => {
+      el.classList.remove('show');
+      el.classList.add('hidden');
+    }, 2900);
+  }
+
+  // ── Helper: apply level colour theme to the CSS root variable ────────────
+  updateLevelTheme(announce = true) {
+    const theme = this.levelThemes[(this.level - 1) % this.levelThemes.length];
+    document.documentElement.style.setProperty('--level-hue', theme.hue);
+    if (announce && this.level > 1) {
+      this.showMilestone(`LEVEL ${this.level} — ${theme.name} Arena`);
+    }
+  }
+
+  // ── Helper: danger zone check (bubbles within 3 rows of launcher) ────────
+  isDangerZone() {
+    const dangerY = this.launcher.y - this.radius * 4;
+    for (let row = 0; row < this.maxRows; row++) {
+      for (let col = 0; col < this.cols; col++) {
+        if (!this.grid[row][col]) continue;
+        const p = this.worldPosForCell(row, col);
+        if (p.y + this.radius >= dangerY) return true;
+      }
+    }
+    return false;
+  }
+
+  // ── Helper: share score via Web Share API (falls back to clipboard) ───────
+  shareScore() {
+    const score = this._lastShareScore || this.realScore;
+    const text = `🎯 Bubble Shooter Blitz — I scored ${score.toLocaleString()} pts on Playza! Can you beat me? 🫧`;
+    if (navigator.share) {
+      navigator.share({ title: 'Bubble Shooter Blitz', text }).catch(() => {});
+    } else if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = document.getElementById('shareButton');
+        if (btn) { btn.textContent = '✅ Copied!'; setTimeout(() => { btn.textContent = '📤 Share'; }, 2000); }
+      }).catch(() => {});
+    }
+  }
 }
 
 // ── Platform Bridge: React → iframe messages ─────────────────────────────────
@@ -1809,6 +2001,9 @@ window.addEventListener("message", (event) => {
     // Honour aimAssist policy from session config
     if (payload?.aimAssistPolicy === "always") instance.aimAssist = true;
     if (payload?.aimAssistPolicy === "never") instance.aimAssist = false;
+    
+    // Auto-start endless mode when session config arrives
+    instance.start(MODES.ENDLESS);
   }
 
   // Rival banner update (GamePlay.tsx polls every 10s)
