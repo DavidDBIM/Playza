@@ -23,38 +23,5 @@ export default defineConfig({
     assetsInlineLimit: 8192,
     // CSS code splitting — each page only loads its own styles
     cssCodeSplit: true,
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          if (id.includes("node_modules")) {
-            // React core — smallest, most reused, loaded first
-            if (
-              id.includes("react-dom") ||
-              id.includes("/react/") ||
-              id.includes("react-router")
-            )
-              return "vendor-react";
-            // 3D / game engines — very heavy, only needed on specific game pages
-            if (id.includes("three") || id.includes("@react-three"))
-              return "vendor-three";
-            if (id.includes("phaser")) return "vendor-phaser";
-            if (id.includes("matter-js")) return "vendor-matter";
-            // Chess — only on chess H2H pages
-            if (id.includes("chess.js") || id.includes("react-chessboard"))
-              return "vendor-chess";
-            // Animation
-            if (id.includes("framer-motion") || id.includes("/motion/"))
-              return "vendor-motion";
-            // Icons — large but tree-shaken, keep separate for long-term caching
-            if (id.includes("lucide-react") || id.includes("react-icons"))
-              return "vendor-icons";
-            // TanStack Query — shared data layer
-            if (id.includes("@tanstack")) return "vendor-query";
-            // Everything else
-            return "vendor";
-          }
-        },
-      },
-    },
   },
 });

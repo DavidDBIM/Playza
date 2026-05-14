@@ -13,6 +13,7 @@ import { useAuth } from "./context/auth";
 import { CompleteProfileModal } from "./components/profile/CompleteProfileModal";
 import { FloatingSpinNotification } from "./components/loyalty/FloatingSpinNotification";
 import NotificationBanner from "./components/NotificationBanner";
+import PayoutBanner from "./components/PayoutBanner";
 import { DeactivatedAccountModal } from "./components/profile/DeactivatedAccountModal";
 import { FloatingFeedbackButton } from "./components/feedback/FloatingFeedbackButton";
 
@@ -163,7 +164,7 @@ const AppContent = () => {
 
       <FloatingSpinNotification />
       <NotificationBanner />
-      <NotificationBanner />
+      <PayoutBanner />
 
       {!isHiddenPage && showFeedback && user && (
         <FloatingFeedbackButton />

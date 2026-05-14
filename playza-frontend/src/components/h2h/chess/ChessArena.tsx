@@ -262,7 +262,8 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
 
   // ── Auto-scroll battle log ──────────────────────────────────────────────────
   useEffect(() => {
-    logEndRef.current?.scrollIntoView({ behavior: "auto" });
+    // block: "nearest" ensures only the log container scrolls without jumping the main window
+    logEndRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
   }, [game]);
 
   // ── Fullscreen Support ──────────────────────────────────────────────────────
@@ -1375,8 +1376,6 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
             )}
           </div>
         </div>
-
-        <div className="flex-1 min-h-0" />
 
         {/* Resign */}
         <button

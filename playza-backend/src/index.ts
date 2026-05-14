@@ -3,6 +3,9 @@ import cors from 'cors'
 import helmet from 'helmet'
 import dotenv from 'dotenv'
 import cookieParser from 'cookie-parser'
+import cron from 'node-cron'
+import { supabaseAdmin as supabase } from './config/supabase'
+import { finalizeSessionAndPayout } from './modules/gamesession/gamesession.service'
 
 import authRoutes from './modules/auth/auth.routes'
 import referralRoutes from './modules/referral/referral.routes'
@@ -75,6 +78,33 @@ app.use('/api/gamesession', gamesessionRoutes)
 
 app.use((req, res) => {
   res.status(404).json({ success: false, message: 'Route not found' })
+})
+
+// --- BACKGROUND JOBS ---
+// Auto-finalize sessions that ended 30 minutes ago
+cron.schedule('*/5 * * * *', async () => {
+  try {
+    const thirtyMinsAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString()
+    
+    // Find all active sessions where end_time has passed by more than 30 mins
+    const { data: sessions, error } = await supabase
+      .from('game_sessions')
+      .select('id')
+      .eq('status', 'active')
+      .lt('end_time', thirtyMinsAgo)
+      
+    if (error) {
+      console.error('[CRON] Error fetching sessions to finalize:', error)
+      return
+    }
+    
+    for (const session of sessions) {
+      console.log(`[CRON] Auto-finalizing session ${session.id}...`)
+      await finalizeSessionAndPayout(session.id)
+    }
+  } catch (err) {
+    console.error('[CRON] Auto-payout error:', err)
+  }
 })
 
 app.listen(PORT, () => {
