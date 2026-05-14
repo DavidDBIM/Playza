@@ -201,6 +201,19 @@ const GamePlay = () => {
     }
   }, [isOnline, game]);
 
+  // Prevent accidental reload cheating
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (currentRoundId && !gameOverData && !isDemo) {
+        e.preventDefault();
+        e.returnValue = "Are you sure you want to exit? This will count as an abandoned attempt.";
+        return e.returnValue;
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [currentRoundId, gameOverData, isDemo]);
+
   // Offline Score Buffer Sync
   useEffect(() => {
     if (isOnline) {
@@ -531,9 +544,13 @@ const GamePlay = () => {
             )}
           </button>
           <button
-            onClick={() => navigate(`/games/${game.slug}/session`)}
+            onClick={() => {
+              if (window.confirm("Are you sure you want to abandon this match? This will count as a played attempt with a score of 0.")) {
+                navigate(`/games/${game.slug}/session`);
+              }
+            }}
             className="bg-black/40 backdrop-blur-md p-2 md:p-3 rounded-full text-rose-500/50 hover:text-rose-500 transition-all border border-white/10 shadow-lg hover:scale-110 active:scale-95 group"
-            title="Exit Game"
+            title="Abandon Game"
           >
             <X
               size={20}

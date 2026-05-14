@@ -356,12 +356,36 @@ export async function startRound(userId: string, sessionId: string) {
   // 1. Verify session is active and user has joined
   const { data: entry } = await supabase
     .from('game_leaderboard')
-    .select('id')
+    .select('*')
     .eq('session_id', sessionId)
     .eq('user_id', userId)
     .single()
 
   if (!entry) throw new Error("Join the session before starting a round")
+
+  // -- ANTI-CHEAT: ABORTED ROUND DETECTION --
+  // If the user reloaded the page or closed the browser during a previous round,
+  // it will still be marked as 'active'. We must burn it and penalize their attempts.
+  const { data: abandonedRounds } = await supabase
+    .from('play_rounds')
+    .select('id')
+    .eq('session_id', sessionId)
+    .eq('user_id', userId)
+    .eq('status', 'active')
+
+  if (abandonedRounds && abandonedRounds.length > 0) {
+    // Mark them as aborted
+    await supabase.from('play_rounds').update({ status: 'aborted' }).in('id', abandonedRounds.map(r => r.id))
+    
+    // Increment attempts for the abandoned rounds so they can't hide their failures
+    await supabase
+      .from('game_leaderboard')
+      .update({
+        attempts: entry.attempts + abandonedRounds.length,
+        updated_at: now.toISOString()
+      })
+      .eq('id', entry.id)
+  }
 
   // 2. Create a play round record
   const { data: round, error } = await supabase
