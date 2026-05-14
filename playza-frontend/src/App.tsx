@@ -255,14 +255,18 @@ const AppContent = () => {
   );
 };
 
+import { ConnectivityProvider } from "./context/ConnectivityContext";
+
 // ─── App root ─────────────────────────────────────────────────────────────────
 const App = () => {
   return (
     <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
       <AuthProvider>
-        <ToastProvider>
-          <AppContent />
-        </ToastProvider>
+        <ConnectivityProvider>
+          <ToastProvider>
+            <AppContent />
+          </ToastProvider>
+        </ConnectivityProvider>
       </AuthProvider>
     </ThemeProvider>
   );

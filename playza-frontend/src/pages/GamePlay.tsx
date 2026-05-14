@@ -2,6 +2,7 @@ import { useParams, useNavigate, useLocation } from "react-router";
 import { useGames } from "@/hooks/gamesession/useGameSession";
 import { X, Loader2, Maximize, Minimize } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useConnectivity } from "@/hooks/useConnectivity";
 import GameOverLeaderboard from "@/components/game/GameOverLeaderboard";
 import LiveEntryModal from "@/components/gameSession/LiveEntryModal";
 import type { BundlePack } from "@/components/gameSession/LiveEntryModal";
@@ -31,6 +32,7 @@ const GamePlay = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const toast = useToast();
+  const { isOnline } = useConnectivity();
 
   const isDemo = new URLSearchParams(location.search).get("mode") === "demo";
 
@@ -42,7 +44,10 @@ const GamePlay = () => {
     previousBest?: number;
     submissionError?: string | null;
     /** Live leaderboard snapshot fetched right after score submission */
-    leaderboard?: Array<{ best_score: number; users?: { username?: string; avatar_url?: string | null } }>;
+    leaderboard?: Array<{
+      best_score: number;
+      users?: { username?: string; avatar_url?: string | null };
+    }>;
   } | null>(null);
   const [showLiveEntry, setShowLiveEntry] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -52,7 +57,10 @@ const GamePlay = () => {
   // Stores the power-up bundle a player purchased in LiveEntryModal.
   // Injected into the iframe via PLAYZA_POWERUP_BUNDLE once the game loads.
   // Uses a generic Record<string,number> so it works for any game's power-up IDs.
-  const [pendingBundle, setPendingBundle] = useState<Record<string, number> | null>(null);
+  const [pendingBundle, setPendingBundle] = useState<Record<
+    string,
+    number
+  > | null>(null);
 
   const { data: gamesData, isLoading: gamesLoading } = useGames();
   const game = (
@@ -137,9 +145,14 @@ const GamePlay = () => {
             // Target the iframe's specific origin, not "*", for safety
             (() => {
               const u = game?.iframe_url || game?.iframeUrl;
-              try { return u?.startsWith('http') ? new URL(u).origin : window.location.origin; }
-              catch { return window.location.origin; }
-            })()
+              try {
+                return u?.startsWith("http")
+                  ? new URL(u).origin
+                  : window.location.origin;
+              } catch {
+                return window.location.origin;
+              }
+            })(),
           );
         }
       } catch {
@@ -152,6 +165,58 @@ const GamePlay = () => {
     const rivalInterval = setInterval(pushRivalToGame, 10_000);
     return () => clearInterval(rivalInterval);
   }, [activeSession]);
+
+  /**
+   * ============================================================
+   * 📡  NETWORK RESILIENCE: Auto-Pause/Resume Bridge
+   * ============================================================
+   * Listens to the global connectivity status and commands the
+   * game engine to pause or resume.
+   */
+  useEffect(() => {
+    const iframe = document.querySelector("iframe") as HTMLIFrameElement | null;
+    const rawUrl = game?.iframe_url || game?.iframeUrl;
+    const targetOrigin = (() => {
+      try {
+        return rawUrl?.startsWith("http")
+          ? new URL(rawUrl).origin
+          : window.location.origin;
+      } catch {
+        return window.location.origin;
+      }
+    })();
+
+    if (!isOnline) {
+      console.log("Network dropped — sending PAUSE signal to game");
+      iframe?.contentWindow?.postMessage(
+        { type: "PLAYZA_PAUSE" },
+        targetOrigin,
+      );
+    } else {
+      console.log("Network restored — sending RESUME signal to game");
+      iframe?.contentWindow?.postMessage(
+        { type: "PLAYZA_RESUME" },
+        targetOrigin,
+      );
+    }
+  }, [isOnline, game]);
+
+  // Offline Score Buffer Sync
+  useEffect(() => {
+    if (isOnline) {
+      const bufferedScore = localStorage.getItem("playza_offline_score");
+      if (bufferedScore && activeSession && currentRoundId) {
+        console.log("Found buffered score, attempting to sync...");
+        const { score } = JSON.parse(bufferedScore);
+        // Resubmit the buffered score
+        window.postMessage(
+          { type: "PLAYZA_SCORE_SUBMISSION", payload: { score } },
+          window.location.origin,
+        );
+        localStorage.removeItem("playza_offline_score");
+      }
+    }
+  }, [isOnline, activeSession, currentRoundId]);
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -211,7 +276,9 @@ const GamePlay = () => {
       const rawUrl = game?.iframe_url || game?.iframeUrl;
       const expectedOrigin = (() => {
         try {
-          return rawUrl?.startsWith('http') ? new URL(rawUrl).origin : window.location.origin;
+          return rawUrl?.startsWith("http")
+            ? new URL(rawUrl).origin
+            : window.location.origin;
         } catch {
           return window.location.origin;
         }
@@ -231,11 +298,16 @@ const GamePlay = () => {
             );
             if (res.success) {
               // Fetch live leaderboard snapshot for the game over neighborhood display
-              let leaderboardSnapshot: Array<{ best_score: number; users?: { username?: string; avatar_url?: string | null } }> = [];
+              let leaderboardSnapshot: Array<{
+                best_score: number;
+                users?: { username?: string; avatar_url?: string | null };
+              }> = [];
               try {
                 const lb = await getSessionLeaderboard(activeSession.id);
                 leaderboardSnapshot = lb?.leaderboard || lb?.result || [];
-              } catch { /* non-critical — game over screen shows loading fallback */ }
+              } catch {
+                /* non-critical — game over screen shows loading fallback */
+              }
 
               setGameOverData({
                 score,
@@ -248,8 +320,21 @@ const GamePlay = () => {
               setCurrentRoundId(null); // Burn one-time round token
             }
           } catch (err: unknown) {
+            if (!isOnline) {
+              // Buffer the score locally if offline
+              localStorage.setItem(
+                "playza_offline_score",
+                JSON.stringify({ score, timestamp: Date.now() }),
+              );
+              toast.info(
+                "Connection lost. Your score has been saved and will sync when you're back online!",
+              );
+              setGameOverData({ score });
+              return;
+            }
             const error = err as { response?: { data?: { message?: string } } };
-            const errorMsg = error.response?.data?.message || "Submission failed";
+            const errorMsg =
+              error.response?.data?.message || "Submission failed";
             toast.error(errorMsg);
             setGameOverData({ score, submissionError: errorMsg });
           }
@@ -279,7 +364,9 @@ const GamePlay = () => {
        */
       if (event.data?.type === "PLAYZA_POWERUP_REQUEST") {
         const { powerUp, cost: iframeCost } = event.data.payload || {};
-        const iframe = document.querySelector("iframe") as HTMLIFrameElement | null;
+        const iframe = document.querySelector(
+          "iframe",
+        ) as HTMLIFrameElement | null;
 
         // -- SECURITY: Validate powerUp ID and use server-side cost --
         // If the game has capabilities.powerUpDefs configured (via admin), we
@@ -289,12 +376,18 @@ const GamePlay = () => {
         const powerUpDefs = game?.capabilities?.powerUpDefs;
         const hasCapabilities = powerUpDefs && powerUpDefs.length > 0;
         const powerUpDef = hasCapabilities
-          ? powerUpDefs.find((def: { id: string; label: string; cost: number }) => def.id === powerUp)
+          ? powerUpDefs.find(
+              (def: { id: string; label: string; cost: number }) =>
+                def.id === powerUp,
+            )
           : null;
 
         if (hasCapabilities && !powerUpDef) {
           // Capabilities are set but this ID is unknown — reject
-          iframe?.contentWindow?.postMessage({ type: "PLAYZA_POWERUP_DENIED" }, expectedOrigin);
+          iframe?.contentWindow?.postMessage(
+            { type: "PLAYZA_POWERUP_DENIED" },
+            expectedOrigin,
+          );
           return;
         }
 
@@ -304,7 +397,10 @@ const GamePlay = () => {
 
         try {
           const { deductWallet } = await import("@/api/gamesession.api");
-          const res = await deductWallet(verifiedCost, `Power-up: ${verifiedLabel}`);
+          const res = await deductWallet(
+            verifiedCost,
+            `Power-up: ${verifiedLabel}`,
+          );
           if (res.success) {
             toast.info(`Power-up activated! -${verifiedCost} ZA`);
             iframe?.contentWindow?.postMessage(
@@ -479,10 +575,17 @@ const GamePlay = () => {
                 setIsLoading(false);
                 const rawUrl = game?.iframe_url || game?.iframeUrl;
                 const targetOrigin = (() => {
-                  try { return rawUrl?.startsWith('http') ? new URL(rawUrl).origin : window.location.origin; }
-                  catch { return window.location.origin; }
+                  try {
+                    return rawUrl?.startsWith("http")
+                      ? new URL(rawUrl).origin
+                      : window.location.origin;
+                  } catch {
+                    return window.location.origin;
+                  }
                 })();
-                const iframe = document.querySelector("iframe") as HTMLIFrameElement | null;
+                const iframe = document.querySelector(
+                  "iframe",
+                ) as HTMLIFrameElement | null;
 
                 // ── PLAYZA_SESSION_CONFIG: Standard initialization handshake ──
                 // Sends session metadata to the game to lock state and apply policies.
@@ -493,10 +596,11 @@ const GamePlay = () => {
                       payload: {
                         locked: !isDemo,
                         sessionId: activeSession?.id,
-                        aimAssistPolicy: game.capabilities?.aimAssist || "always"
-                      }
+                        aimAssistPolicy:
+                          game.capabilities?.aimAssist || "always",
+                      },
                     },
-                    targetOrigin
+                    targetOrigin,
                   );
                 }, 400);
 
