@@ -9,9 +9,20 @@ import {
   verifyBankAccount,
   getBankList,
   paystackWebhook,
+  deductBalance,
 } from './wallet.service'
 
 const router = Router()
+
+router.post('/deduct', requireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    const { amount, description } = req.body
+    const data = await deductBalance(req.user!.id, amount, description)
+    res.json({ success: true, data })
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message })
+  }
+})
 
 router.get('/balance', requireAuth, async (req: AuthRequest, res: Response) => {
   try {

@@ -187,3 +187,33 @@ export async function getBankList() {
   if (!result.status) throw new Error('Could not fetch banks')
   return (result.data as any[]).map((b) => ({ name: b.name, code: b.code }))
 }
+
+export async function deductBalance(userId: string, amount: number, description: string) {
+  if (amount <= 0) throw new Error('Deduction amount must be positive')
+
+  const { data: wallet } = await supabaseAdmin
+    .from('wallets')
+    .select('balance')
+    .eq('user_id', userId)
+    .single()
+
+  if (!wallet || wallet.balance < amount) throw new Error('Insufficient balance')
+
+  const reference = `PLZ-PURCHASE-${Date.now()}-${crypto.randomBytes(4).toString('hex').toUpperCase()}`
+
+  await supabaseAdmin.from('transactions').insert({
+    user_id: userId,
+    type: 'purchase', // Matches power-ups, bundles, etc.
+    amount,
+    status: 'successful',
+    reference,
+    meta: { description },
+  })
+
+  await supabaseAdmin.rpc('decrement_wallet_balance', {
+    p_user_id: userId,
+    p_amount: amount,
+  })
+
+  return { message: 'Deduction successful', reference }
+}
