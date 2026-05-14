@@ -654,31 +654,38 @@ document.addEventListener('DOMContentLoaded', () => {
                        </div>`;
 
                 overlay.innerHTML = `
-                    <div class="popup">
-                        <h2 id="overlay-title">${isHyperMode ? '⚡ HYPER END' : 'GAME OVER'}</h2>
-                        <div class="final-score-box">
-                            <p>Ranked Score</p>
-                            <span id="overlay-score">${finalScore.toLocaleString()}</span>
+                    <div class="modal">
+                        <p class="kicker">2048</p>
+                        <h3 id="overlay-title">${isHyperMode ? '⚡ HYPER END' : 'Game Over'}</h3>
+                        <div class="stat-card">
+                            <div class="stat-row highlight-row" style="animation-delay:0ms">
+                                <span class="stat-label">Ranked Score</span>
+                                <span class="stat-value">${finalScore.toLocaleString()}</span>
+                            </div>
+                            <div class="stat-row" style="animation-delay:60ms">
+                                <span class="stat-label">Raw Score</span>
+                                <span class="stat-value">${score.toLocaleString()}</span>
+                            </div>
+                            <div class="stat-row" style="animation-delay:120ms">
+                                <span class="stat-label">Total Moves</span>
+                                <span class="stat-value">${moveCount.toLocaleString()}</span>
+                            </div>
+                            <div class="stat-row" style="animation-delay:180ms">
+                                <span class="stat-label">Efficiency</span>
+                                <span class="stat-value" style="color:${gradeColor}">${efficiency.toLocaleString()} pts/mv</span>
+                            </div>
+                            <div class="stat-row" style="animation-delay:240ms">
+                                <span class="stat-label">Grade</span>
+                                <span class="stat-value" style="color:${gradeColor}">${grade}</span>
+                            </div>
                         </div>
-                        <div class="overlay-stats">
-                            <div class="overlay-stat">
-                                <p>Total Moves</p>
-                                <span>${moveCount.toLocaleString()}</span>
-                            </div>
-                            <div class="overlay-stat">
-                                <p>Efficiency</p>
-                                <span style="color:${gradeColor}">${efficiency.toLocaleString()} pts/move</span>
-                            </div>
-                            <div class="overlay-stat">
-                                <p>Grade</p>
-                                <span style="color:${gradeColor};font-size:13px">${grade}</span>
-                            </div>
-                        </div>
-                        <div class="overlay-bonus-breakdown">
+                        <div class="overlay-bonus-breakdown" style="margin-top:14px">
                             ${bonusRow}
                         </div>
-                        ${streakLine}
-                        <p style="color:var(--text-muted); font-size:11px; font-weight:bold; letter-spacing:1px; margin-top:12px; animation: pulse 1.5s infinite;">SYNCING LEADERBOARD...</p>
+                        <div style="margin-top: 10px; text-align: center;">
+                            ${streakLine}
+                        </div>
+                        <p style="color:var(--text-muted); font-size:11px; font-weight:bold; letter-spacing:1px; margin-top:16px; text-align:center; animation: pulse 1.5s infinite;">SYNCING LEADERBOARD...</p>
                     </div>`;
                 overlay.style.display = 'flex';
             }
@@ -708,7 +715,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 beatPersonalBest: beatPersonalBest,
                             }
                         }
-                    }, '*');
+                    }, window.location.origin);
                 }, 2500);
             }
         }
@@ -797,7 +804,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     cost: powerUpDefs[type].cost,
                     label: powerUpDefs[type].label
                 }
-            }, '*');
+            }, window.location.origin);
             document.querySelectorAll('.powerup-btn').forEach(b => {
                 b.disabled = true;
                 b.style.opacity = '0.5';
@@ -921,7 +928,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (free > 0) {
                 costEl.innerHTML = `<span style="color:#22c55e;font-weight:900">\u00d7${free} FREE</span>`;
             } else {
-                costEl.textContent = `${powerUpDefs[type].cost} ZA`;
+                costEl.textContent = `Buy`;
             }
         });
     }
