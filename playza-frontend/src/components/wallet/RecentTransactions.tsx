@@ -44,6 +44,7 @@ const RecentTransactions = () => {
         statusLabelMap[t.status] ||
         t.status.charAt(0).toUpperCase() + t.status.slice(1),
       reference: t.reference,
+      meta: t.meta,
       date: format(new Date(t.created_at), "MMM dd, yyyy · HH:mm"),
     };
   });

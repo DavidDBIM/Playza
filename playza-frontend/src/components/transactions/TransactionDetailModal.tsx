@@ -97,21 +97,30 @@ const TransactionDetailModal = ({ isOpen, onClose, transaction }: TransactionDet
             </div>
             <div className="flex justify-between items-center text-sm">
               <span className="text-slate-500 font-medium">Date & Time</span>
-              <span className="text-white font-bold">{transaction.date}</span>
+              <span className="text-slate-900 dark:text-white font-bold">{transaction.date}</span>
             </div>
             <div className="flex justify-between items-center text-sm">
               <span className="text-slate-500 font-medium">Reference</span>
-              <span className="text-white font-bold truncate max-w-45">{transaction.reference}</span>
+              <span className="text-slate-900 dark:text-white font-bold truncate max-w-45">{transaction.reference}</span>
             </div>
             <div className="flex justify-between items-center text-sm">
               <span className="text-slate-500 font-medium">Payment Method</span>
-              <span className="text-white font-bold">Wallet Transfer</span>
+              <span className="text-slate-900 dark:text-white font-bold">Wallet Transfer</span>
             </div>
+            {(transaction.meta as Record<string, number>)?.post_balance !== undefined && (
+              <div className="flex justify-between items-center text-sm pt-2 border-t border-slate-200 dark:border-white/5">
+                <span className="text-slate-500 font-medium">Balance After</span>
+                <span className="text-primary font-bold flex items-center gap-1">
+                   <ZASymbol className="scale-75" />
+                   {(transaction.meta as Record<string, number>).post_balance.toLocaleString()}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Actions */}
           <div className="grid grid-cols-2 gap-2 md:gap-4">
-             <button className="flex items-center justify-center gap-2 py-2 md:py-3 bg-white/5 border border-white/5 rounded-xl text-white font-bold hover:bg-white/10 transition-all">
+             <button className="flex items-center justify-center gap-2 py-2 md:py-3 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-xl text-slate-900 dark:text-white font-bold hover:bg-slate-200 dark:hover:bg-white/10 transition-all">
                <Share2 size={18} />
                Share
              </button>

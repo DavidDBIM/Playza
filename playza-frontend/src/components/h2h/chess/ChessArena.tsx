@@ -424,7 +424,7 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
     user?.id === room.host_id
       ? room.guest_id
         ? room.guest?.username || "GUEST"
-        : "COMPUTER"
+        : (room.board_state?.bot?.username || "COMPUTER")
       : room.host?.username || "HOST";
 
   const attemptMove = useCallback(
@@ -831,16 +831,16 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
               className={`shrink-0 w-8.5 h-8.5 rounded-lg flex items-center justify-center font-black text-[10px] md:text-sm text-white border bg-slate-900 md:w-10.5 md:h-10.5 lg:w-11.5 lg:h-11.5 overflow-hidden
               ${(!hostIsWhite && myTurn) || (hostIsWhite && oppTurn) ? "border-indigo-500" : "border-slate-200 dark:border-white/10"}`}
             >
-              {room.guest?.avatar_url ? (
+              {room.guest?.avatar_url || room.board_state?.bot?.avatar_url ? (
                 <img
-                  src={room.guest.avatar_url}
+                  src={room.guest?.avatar_url || room.board_state?.bot?.avatar_url}
                   className="w-full h-full object-cover"
                   alt=""
                   loading="lazy"
                 />
               ) : (
                 room.guest?.username?.[0]?.toUpperCase() ||
-                (room.guest_id ? "?" : "C")
+                (room.guest_id ? "?" : (room.board_state?.bot?.username?.[0] || "C"))
               )}
             </div>
           </div>
