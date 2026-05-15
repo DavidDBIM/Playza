@@ -59,12 +59,15 @@ async function handleGameOver(roomId: string, winnerId: string | null, stake: nu
       p_amount: winnerPrize,
     })
 
+    const { data: updatedWallet } = await supabaseAdmin.from('wallets').select('balance').eq('user_id', winnerId).single();
+
     await supabaseAdmin.from('transactions').insert({
       user_id: winnerId,
       type: 'winnings',
       amount: winnerPrize,
       status: 'successful',
       reference: `PLZ-LUDO-WIN-${roomId}`,
+      meta: { post_balance: updatedWallet?.balance || 0 }
     })
 
     // Track Revenue
@@ -98,13 +101,15 @@ async function handleGameOver(roomId: string, winnerId: string | null, stake: nu
           p_amount: refundAmount,
         })
         
+        const { data: updatedWallet } = await supabaseAdmin.from('wallets').select('balance').eq('user_id', uid).single();
+
         await supabaseAdmin.from('transactions').insert({
           user_id: uid,
           type: 'bonus',
           amount: refundAmount,
           status: 'successful',
           reference: `PLZ-LUDO-DRAW-${roomId}`,
-          meta: { reason: 'Game draw refund (90%)' }
+          meta: { reason: 'Game draw refund (90%)', post_balance: updatedWallet?.balance || 0 }
         })
       }
     }
@@ -469,7 +474,15 @@ async function handleEntryFee(userId: string, stake: number, ref: string) {
     const { data: wallet } = await supabaseAdmin.from("wallets").select("balance").eq("user_id", userId).single();
     if (!wallet || wallet.balance < stake) throw new Error("Insufficient balance");
     await supabaseAdmin.rpc("decrement_wallet_balance", { p_user_id: userId, p_amount: stake });
-    await supabaseAdmin.from("transactions").insert({ user_id: userId, type: "game_entry", amount: stake, status: "successful", reference: `PLZ-LUDO-${ref}` });
+    const { data: updatedWallet } = await supabaseAdmin.from('wallets').select('balance').eq('user_id', userId).single();
+    await supabaseAdmin.from("transactions").insert({ 
+      user_id: userId, 
+      type: "game_entry", 
+      amount: stake, 
+      status: "successful", 
+      reference: `PLZ-LUDO-${ref}`,
+      meta: { post_balance: updatedWallet?.balance || 0 }
+    });
   }
 }
 

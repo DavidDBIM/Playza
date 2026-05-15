@@ -87,13 +87,29 @@ export async function joinPoolRoom(userId: string, code: string) {
     const { data: hostWallet } = await supabaseAdmin.from('wallets').select('balance').eq('user_id', room.host_id).single();
     if (!hostWallet || hostWallet.balance < room.stake) throw new Error("Host no longer has sufficient balance");
     await supabaseAdmin.rpc("decrement_wallet_balance", { p_user_id: room.host_id, p_amount: room.stake });
-    await supabaseAdmin.from("transactions").insert({ user_id: room.host_id, type: "game_entry", amount: room.stake, status: "successful", reference: `PLZ-POOL-HOST-${room.id}` });
+    const { data: hostWalletFinal } = await supabaseAdmin.from('wallets').select('balance').eq('user_id', room.host_id).single();
+    await supabaseAdmin.from("transactions").insert({ 
+      user_id: room.host_id, 
+      type: "game_entry", 
+      amount: room.stake, 
+      status: "successful", 
+      reference: `PLZ-POOL-HOST-${room.id}`,
+      meta: { post_balance: hostWalletFinal?.balance || 0 }
+    });
 
     // Deduct Guest
     const { data: guestWallet } = await supabaseAdmin.from('wallets').select('balance').eq('user_id', userId).single();
     if (!guestWallet || guestWallet.balance < room.stake) throw new Error("Insufficient balance to join this game");
     await supabaseAdmin.rpc("decrement_wallet_balance", { p_user_id: userId, p_amount: room.stake });
-    await supabaseAdmin.from("transactions").insert({ user_id: userId, type: "game_entry", amount: room.stake, status: "successful", reference: `PLZ-POOL-JOIN-${room.id}` });
+    const { data: guestWalletFinal } = await supabaseAdmin.from('wallets').select('balance').eq('user_id', userId).single();
+    await supabaseAdmin.from("transactions").insert({ 
+      user_id: userId, 
+      type: "game_entry", 
+      amount: room.stake, 
+      status: "successful", 
+      reference: `PLZ-POOL-JOIN-${room.id}`,
+      meta: { post_balance: guestWalletFinal?.balance || 0 }
+    });
   }
 
   const initialState = PoolRules.createInitialState()
@@ -268,12 +284,14 @@ export async function createBotRoom(userId: string, stakeValue: number) {
   if (error) throw error
 
   if (stake > 0) {
+    const { data: updatedWallet } = await supabaseAdmin.from('wallets').select('balance').eq('user_id', userId).single();
     await supabaseAdmin.from('transactions').insert({
       user_id: userId,
       type: 'game_entry',
       amount: stake,
       status: 'successful',
       reference: `PLZ-POOL-BOT-${data.id}`,
+      meta: { post_balance: updatedWallet?.balance || 0 }
     })
   }
 
@@ -355,12 +373,15 @@ async function handleGameOver(roomId: string, winnerId: string | null, stake: nu
       p_amount: winnerPrize,
     })
 
+    const { data: updatedWallet } = await supabaseAdmin.from('wallets').select('balance').eq('user_id', winnerId).single();
+
     await supabaseAdmin.from('transactions').insert({
       user_id: winnerId,
       type: 'winnings',
       amount: winnerPrize,
       status: 'successful',
       reference: `PLZ-POOL-WIN-${roomId}`,
+      meta: { post_balance: updatedWallet?.balance || 0 }
     })
   }
 
@@ -390,13 +411,15 @@ async function handleGameOver(roomId: string, winnerId: string | null, stake: nu
           p_amount: refundAmount,
         })
 
+        const { data: updatedWallet } = await supabaseAdmin.from('wallets').select('balance').eq('user_id', uid).single();
+
         await supabaseAdmin.from('transactions').insert({
           user_id: uid,
           type: 'bonus',
           amount: refundAmount,
           status: 'successful',
           reference: `PLZ-POOL-DRAW-${roomId}`,
-          meta: { reason: 'Game draw refund (90%)' }
+          meta: { reason: 'Game draw refund (90%)', post_balance: updatedWallet?.balance || 0 }
         })
       }
     }
