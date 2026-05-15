@@ -27,6 +27,9 @@ export async function startSoloSession(
 
   if (decErr) throw new Error("Failed to deduct stake: " + decErr.message);
 
+  // Record post_balance for tracing
+  const { data: updatedWallet } = await supabase.from('wallets').select('balance').eq('user_id', userId).single();
+
   // 3. Log transaction
   await supabase.from("transactions").insert({
     user_id: userId,
@@ -34,7 +37,7 @@ export async function startSoloSession(
     amount: stake,
     status: "successful",
     reference: `PLZ-SOLO-ENTRY-${gameId}-${userId}-${Date.now()}`,
-    meta: { game_id: gameId, mode: "soloearn" },
+    meta: { game_id: gameId, mode: "soloearn", post_balance: updatedWallet?.balance || 0 },
   });
 
   // 4. Create session
@@ -117,6 +120,9 @@ export async function endSoloSession(
 
     if (incErr) console.error("Failed to increment wallet:", incErr);
 
+    // Record post_balance for tracing
+    const { data: updatedWallet } = await supabase.from('wallets').select('balance').eq('user_id', userId).single();
+
     await supabase.from("transactions").insert({
       user_id: userId,
       type: "winnings",
@@ -127,6 +133,7 @@ export async function endSoloSession(
         game_id: session.game_id,
         mode: "soloearn",
         session_id: sessionId,
+        post_balance: updatedWallet?.balance || 0
       },
     });
   }

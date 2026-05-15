@@ -36,7 +36,15 @@ export async function createRoom(userId: string, stake: number, isBot = false, b
     const { data: wallet } = await supabaseAdmin.from('wallets').select('balance').eq('user_id', userId).single()
     if (!wallet || wallet.balance < stake) throw new Error('Insufficient balance')
     await supabaseAdmin.rpc('decrement_wallet_balance', { p_user_id: userId, p_amount: stake })
-    await supabaseAdmin.from('transactions').insert({ user_id: userId, type: 'game_entry', amount: stake, status: 'successful', reference: `PLZ-SPD-${code}` })
+    const { data: updatedWallet } = await supabaseAdmin.from('wallets').select('balance').eq('user_id', userId).single();
+    await supabaseAdmin.from('transactions').insert({ 
+      user_id: userId, 
+      type: 'game_entry', 
+      amount: stake, 
+      status: 'successful', 
+      reference: `PLZ-SPD-${code}`,
+      meta: { post_balance: updatedWallet?.balance || 0 }
+    })
   }
 
   const { data, error } = await supabaseAdmin.from('speedbattle_rooms').insert({
@@ -59,7 +67,15 @@ export async function joinRoom(userId: string, code: string) {
     const { data: wallet } = await supabaseAdmin.from('wallets').select('balance').eq('user_id', userId).single()
     if (!wallet || wallet.balance < room.stake) throw new Error('Insufficient balance')
     await supabaseAdmin.rpc('decrement_wallet_balance', { p_user_id: userId, p_amount: room.stake })
-    await supabaseAdmin.from('transactions').insert({ user_id: userId, type: 'game_entry', amount: room.stake, status: 'successful', reference: `PLZ-SPD-JOIN-${room.id}` })
+    const { data: updatedWallet } = await supabaseAdmin.from('wallets').select('balance').eq('user_id', userId).single();
+    await supabaseAdmin.from('transactions').insert({ 
+      user_id: userId, 
+      type: 'game_entry', 
+      amount: room.stake, 
+      status: 'successful', 
+      reference: `PLZ-SPD-JOIN-${room.id}`,
+      meta: { post_balance: updatedWallet?.balance || 0 }
+    })
   }
 
   await supabaseAdmin.from('speedbattle_rooms').update({ guest_id: userId, status: 'active' }).eq('id', room.id)
@@ -126,14 +142,30 @@ export async function submitResult(roomId: string, userId: string, wpm: number, 
     if (winnerId && winnerId !== 'bot' && room.stake > 0) {
       const prize = room.stake * 2 * 0.9
       await supabaseAdmin.rpc('increment_wallet_balance', { p_user_id: winnerId, p_amount: prize })
-      await supabaseAdmin.from('transactions').insert({ user_id: winnerId, type: 'winnings', amount: prize, status: 'successful', reference: `PLZ-SPD-WIN-${roomId}` })
+      const { data: updatedWallet } = await supabaseAdmin.from('wallets').select('balance').eq('user_id', winnerId).single();
+      await supabaseAdmin.from('transactions').insert({ 
+        user_id: winnerId, 
+        type: 'winnings', 
+        amount: prize, 
+        status: 'successful', 
+        reference: `PLZ-SPD-WIN-${roomId}`,
+        meta: { post_balance: updatedWallet?.balance || 0 }
+      })
     } else if (!winnerId && room.stake > 0) {
       // Handle Draw
       const refund = room.stake * 0.9
       const players = [room.host_id, room.guest_id].filter(id => id && id !== 'bot')
       for (const uid of players) {
         await supabaseAdmin.rpc('increment_wallet_balance', { p_user_id: uid, p_amount: refund })
-        await supabaseAdmin.from('transactions').insert({ user_id: uid, type: 'bonus', amount: refund, status: 'successful', reference: `PLZ-SPD-DRAW-${roomId}`, meta: { reason: 'Game draw refund (90%)' } })
+        const { data: updatedWallet } = await supabaseAdmin.from('wallets').select('balance').eq('user_id', uid).single();
+        await supabaseAdmin.from('transactions').insert({ 
+          user_id: uid, 
+          type: 'bonus', 
+          amount: refund, 
+          status: 'successful', 
+          reference: `PLZ-SPD-DRAW-${roomId}`, 
+          meta: { reason: 'Game draw refund (90%)', post_balance: updatedWallet?.balance || 0 } 
+        })
       }
     }
 
