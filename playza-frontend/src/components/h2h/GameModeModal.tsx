@@ -1,4 +1,4 @@
-import { Swords, Trophy } from "lucide-react";
+import { Swords } from "lucide-react";
 import { MdLink } from "react-icons/md";
 
 interface GameModeModalProps {
@@ -35,7 +35,7 @@ const GameModeModal = ({
           </button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {/* Find Online Rival */}
           <button
             onClick={() => {
@@ -48,8 +48,12 @@ const GameModeModal = ({
               <Swords className="w-6 h-6" />
             </div>
             <div>
-              <span className="text-indigo-500 text-[10px] font-black uppercase tracking-[0.2em] mb-1 block">Quick Play</span>
-              <h2 className="text-[10px] md:text-sm font-black uppercase italic tracking-tighter text-slate-900 dark:text-white">Find Rival</h2>
+              <span className="text-indigo-500 text-[10px] font-black uppercase tracking-[0.2em] mb-1 block">
+                Quick Play
+              </span>
+              <h2 className="text-[10px] md:text-sm font-black uppercase italic tracking-tighter text-slate-900 dark:text-white">
+                Find Rival
+              </h2>
             </div>
           </button>
 
@@ -65,25 +69,12 @@ const GameModeModal = ({
               <MdLink className="w-6 h-6" />
             </div>
             <div>
-              <span className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.2em] mb-1 block">Private</span>
-              <h2 className="text-[10px] md:text-sm font-black uppercase italic tracking-tighter text-slate-900 dark:text-white">Invite Friend</h2>
-            </div>
-          </button>
-
-          {/* Solo Practice (Bot) */}
-          <button
-            onClick={() => {
-              onSelectMode("bot");
-              onClose();
-            }}
-            className="relative overflow-hidden rounded-xl p-4 border border-black/5 dark:border-white/10 bg-black/5 dark:bg-white/5 text-center flex flex-col items-center gap-3 active:translate-y-1"
-          >
-            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20 text-amber-500">
-              <Trophy className="w-6 h-6" />
-            </div>
-            <div>
-              <span className="text-amber-500 text-[10px] font-black uppercase tracking-[0.2em] mb-1 block">Solo Training</span>
-              <h2 className="text-[10px] md:text-sm font-black uppercase italic tracking-tighter text-slate-900 dark:text-white">vs Computer</h2>
+              <span className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.2em] mb-1 block">
+                Private
+              </span>
+              <h2 className="text-[10px] md:text-sm font-black uppercase italic tracking-tighter text-slate-900 dark:text-white">
+                Invite Friend
+              </h2>
             </div>
           </button>
         </div>

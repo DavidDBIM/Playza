@@ -1,8 +1,35 @@
 import { supabaseAdmin } from '../../config/supabase'
 import crypto from 'crypto'
 import { Chess } from 'chess.js'
-import { getBotMove, SYSTEM_BOT_ID } from './bot'
 import { recordH2HRevenue } from '../gamesession/h2h.helper'
+import { SYSTEM_BOT_ID, getBotMove } from './bot'
+
+const BOT_PERSONAS = [
+  { username: 'GrandmasterAI', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=bot1' },
+  { username: 'ChessKing_99', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=bot2' },
+  { username: 'DeepThought', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=bot3' },
+  { username: 'Enigma_X', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=bot4' },
+  { username: 'CheckmateCharlie', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=bot5' },
+  { username: 'GambitGosu', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=bot6' },
+  { username: 'KnightRider', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=bot7' },
+  { username: 'BishopBasher', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=bot8' },
+  { username: 'RookNRoll', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=bot9' },
+  { username: 'QueenOfChess', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=bot10' },
+  { username: 'PawnStar', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=bot11' },
+  { username: 'SmartyPawns', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=bot12' },
+  { username: 'TheSicilian', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=bot13' },
+  { username: 'BlunderProof', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=bot14' },
+  { username: 'MateInThree', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=bot15' },
+  { username: 'BlitzBot', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=bot16' },
+  { username: 'TacticalTurtle', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=bot17' },
+  { username: 'StalemateStan', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=bot18' },
+  { username: 'MasterMind', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=bot19' },
+  { username: 'ChessPulse_AI', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=bot20' },
+];
+
+function getRandomBot() {
+  return BOT_PERSONAS[Math.floor(Math.random() * BOT_PERSONAS.length)];
+}
 
 function generateRoomCode(): string {
   return crypto.randomBytes(3).toString('hex').toUpperCase()
@@ -228,6 +255,7 @@ export async function joinChessRoom(userId: string, code: string) {
 export async function createBotRoom(userId: string, stakeValue: number) {
   const code = generateRoomCode();
   const stake = Number(stakeValue);
+  const botPersona = getRandomBot();
 
   if (stake > 0) {
     const { data: wallet } = await supabaseAdmin
@@ -245,14 +273,17 @@ export async function createBotRoom(userId: string, stakeValue: number) {
     });
   }
 
-  const initialBoard = getInitialBoard();
+  const initialBoard = {
+    ...getInitialBoard(),
+    bot: botPersona
+  };
 
   const { data, error } = await supabaseAdmin
     .from("chess_rooms")
     .insert({
       code,
       host_id: userId,
-      guest_id: null,
+      guest_id: SYSTEM_BOT_ID,
       stake,
       status: "active",
       board_state: initialBoard,
@@ -323,8 +354,9 @@ export async function makeMove(
   if (!result) throw new Error("Illegal move");
 
   const nextTurn =
-    room.current_turn === room.host_id ? room.guest_id : room.host_id;
+    room.current_turn === room.host_id ? (room.guest_id || SYSTEM_BOT_ID) : room.host_id;
   const updatedBoard = {
+    ...room.board_state,
     fen: chess.fen(),
     last_move: move,
     moves: [...(room.board_state?.moves || []), result.san],
@@ -352,7 +384,7 @@ export async function makeMove(
   }
 
   // Bot game: guest_id is null, so nextTurn is also null (bot's turn)
-  const isBotGame = !room.guest_id;
+  const isBotGame = !room.guest_id || room.guest_id === SYSTEM_BOT_ID;
   if (isBotGame && !chess.isGameOver()) {
     // Fire bot move asynchronously so the HTTP response is NOT delayed
     setImmediate(async () => {
@@ -393,7 +425,8 @@ export async function findQuickMatch(userId: string, stakeValue: number) {
     }
   }
 
-  return await createChessRoom(userId, stake);
+  // 2. If no human found, immediately create a bot match
+  return await createBotRoom(userId, stake);
 }
 
 export async function resignGame(roomId: string, userId: string) {

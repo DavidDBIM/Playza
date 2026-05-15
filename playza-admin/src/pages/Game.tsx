@@ -39,6 +39,10 @@ interface H2HMatch {
   stake: number;
   status: 'waiting' | 'active' | 'finished' | 'cancelled';
   created_at: string;
+  board_state?: {
+    bot?: { username: string; avatar_url: string };
+    [key: string]: unknown;
+  };
 }
 
 interface SoloActivity {
@@ -126,8 +130,8 @@ const Game: React.FC = () => {
     refetchInterval: 10000,
   });
 
-  const h2hMatches = (h2hData?.data?.matches || []) as H2HMatch[];
-  const soloActivity = (soloData?.data?.activity || []) as (SoloActivity[] & SoloAggregation[]);
+  const h2hMatches = useMemo(() => (h2hData?.data?.matches || []) as H2HMatch[], [h2hData]);
+  const soloActivity = useMemo(() => (soloData?.data?.activity || []) as (SoloActivity[] & SoloAggregation[]), [soloData]);
 
   const h2hRankings = useMemo(() => {
     if (!isH2H || !h2hMatches.length) return [];
@@ -523,25 +527,37 @@ const Game: React.FC = () => {
                     </div>
                   ) : h2hViewMode === 'board' ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {h2hMatches.map((match: H2HMatch) => {
+                      {h2hMatches
+                        .filter(m => m.status !== 'waiting' || m.guest_id) // Hide empty waiting rooms
+                        .map((match: H2HMatch) => {
                         const isHostWinner = match.status === 'finished' && match.winner_id === match.host_id;
                         const isGuestWinner = match.status === 'finished' && match.winner_id === match.guest_id;
                         const isDraw = match.status === 'finished' && !match.winner_id;
                         
+                        const isBot = match.is_bot || match.guest_id === '00000000-0000-0000-0000-000000000000' || !!match.board_state?.bot;
+                        const botPersona = match.board_state?.bot;
+                        const guestName = match.guest?.username || botPersona?.username || (isBot ? 'Bot' : 'Waiting...');
+                        const guestAvatar = match.guest?.avatar_url || botPersona?.avatar_url;
+
                         return (
                           <div key={match.id} className={`group bg-card border border-border rounded-2xl p-4 hover:border-primary/50 transition-all shadow-sm relative overflow-hidden ${match.status === 'active' ? 'ring-1 ring-primary/20' : ''}`}>
                             {match.status === 'active' && (
-                              <div className="absolute top-0 right-0 px-3 py-1 bg-primary text-primary-foreground text-[8px] font-black uppercase tracking-widest rounded-bl-xl shadow-lg flex items-center gap-1">
+                              <div className="absolute top-0 right-0 px-3 py-1 bg-primary text-primary-foreground text-[8px] font-black uppercase tracking-widest rounded-bl-xl shadow-lg flex items-center gap-1 z-10">
                                 <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
                                 LIVE
                               </div>
                             )}
                             {match.status === 'finished' && (
-                              <div className="absolute top-0 right-0 px-3 py-1 bg-emerald-500 text-white text-[8px] font-black uppercase tracking-widest rounded-bl-xl shadow-lg">
+                              <div className="absolute top-0 right-0 px-3 py-1 bg-emerald-500 text-white text-[8px] font-black uppercase tracking-widest rounded-bl-xl shadow-lg z-10">
                                 COMPLETED
                               </div>
                             )}
-                            <div className="flex items-center justify-between gap-4">
+                            {isBot && (
+                              <div className="absolute top-0 left-0 px-2 py-0.5 bg-muted text-muted-foreground text-[7px] font-black uppercase tracking-tighter border-br border-border rounded-br-lg z-10">
+                                Bot Match (Admin)
+                              </div>
+                            )}
+                            <div className="flex items-center justify-between gap-4 mt-2">
                               <div className="flex-1 flex items-center justify-center gap-3">
                                 <div className="flex flex-col items-center gap-2">
                                   <div className={`w-12 h-12 rounded-2xl bg-muted border ${isHostWinner ? 'border-primary ring-2 ring-primary/20' : 'border-border'} flex items-center justify-center overflow-hidden shadow-inner relative`}>
@@ -555,11 +571,13 @@ const Game: React.FC = () => {
                                   <div className="h-0.5 w-8 bg-border rounded-full" />
                                 </div>
                                 <div className="flex flex-col items-center gap-2">
-                                  <div className={`w-12 h-12 rounded-2xl ${match.guest ? 'bg-muted' : 'bg-muted/50 border-dashed'} border ${isGuestWinner ? 'border-primary ring-2 ring-primary/20' : 'border-border'} flex items-center justify-center overflow-hidden shadow-inner relative`}>
-                                    {match.guest?.avatar_url ? <img src={match.guest.avatar_url} className="w-full h-full object-cover" /> : <span className={`text-sm font-black ${match.guest ? 'text-primary' : 'text-muted-foreground'}`}>{match.guest?.username?.[0] || '?'}</span>}
+                                  <div className={`w-12 h-12 rounded-2xl ${match.guest || botPersona ? 'bg-muted' : 'bg-muted/50 border-dashed'} border ${isGuestWinner ? 'border-primary ring-2 ring-primary/20' : 'border-border'} flex items-center justify-center overflow-hidden shadow-inner relative`}>
+                                    {guestAvatar ? <img src={guestAvatar} className="w-full h-full object-cover" /> : <span className={`text-sm font-black ${match.guest || botPersona ? 'text-primary' : 'text-muted-foreground'}`}>{guestName[0]}</span>}
                                     {isGuestWinner && <div className="absolute -top-1 -right-1 p-1 bg-primary rounded-full shadow-md z-10"><MdEmojiEvents className="w-3 h-3 text-white" /></div>}
                                   </div>
-                                  <p className={`text-[10px] font-black ${isGuestWinner ? 'text-primary' : (match.guest ? 'text-foreground' : 'text-muted-foreground italic')} truncate w-20 text-center`}>{match.guest?.username || (match.is_bot ? 'Bot' : 'Waiting...')}</p>
+                                  <p className={`text-[10px] font-black ${isGuestWinner ? 'text-primary' : (match.guest || botPersona ? 'text-foreground' : 'text-muted-foreground italic')} truncate w-20 text-center`}>
+                                    {guestName}
+                                  </p>
                                 </div>
                               </div>
                               <div className="h-16 w-px bg-border hidden sm:block" />
