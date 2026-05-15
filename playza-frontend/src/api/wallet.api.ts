@@ -8,11 +8,12 @@ export interface WalletBalance {
 
 export interface Transaction {
   id: string;
-  type: 'deposit' | 'withdrawal' | 'bet' | 'win' | 'refund';
+  type: 'deposit' | 'withdrawal' | 'bet' | 'win' | 'refund' | 'game_entry' | 'winnings' | string;
   amount: number;
-  status: 'pending' | 'successful' | 'failed' | 'cancelled';
+  status: 'pending' | 'successful' | 'failed' | 'cancelled' | string;
   reference: string;
   created_at: string;
+  meta?: Record<string, unknown>;
 }
 
 export interface TransactionHistoryResponse {

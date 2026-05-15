@@ -95,6 +95,13 @@ export async function verifyDeposit(reference: string) {
     p_amount: amount,
   })
 
+  // Record post_balance for tracing
+  const { data: updatedWallet } = await supabaseAdmin.from('wallets').select('balance').eq('user_id', existingTxn.user_id).single();
+  await supabaseAdmin
+    .from('transactions')
+    .update({ meta: { post_balance: updatedWallet?.balance || 0 } })
+    .eq('reference', reference);
+
   return { message: 'Deposit successful', amount }
 }
 
@@ -146,6 +153,13 @@ export async function requestWithdrawal(
     p_amount: amount,
   })
 
+  // Record post_balance for tracing
+  const { data: updatedWallet } = await supabaseAdmin.from('wallets').select('balance').eq('user_id', userId).single();
+  await supabaseAdmin
+    .from('transactions')
+    .update({ meta: { bank_code: bankCode, account_number: accountNumber, account_name: accountName, post_balance: updatedWallet?.balance || 0 } })
+    .eq('reference', reference);
+
   return { message: 'Withdrawal request submitted', reference }
 }
 
@@ -155,7 +169,7 @@ export async function getTransactionHistory(userId: string, page = 1, limit = 20
 
   const { data, error, count } = await supabaseAdmin
     .from('transactions')
-    .select('id, type, amount, status, reference, created_at', { count: 'exact' })
+    .select('id, type, amount, status, reference, meta, created_at', { count: 'exact' })
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
     .range(from, to)
@@ -214,6 +228,13 @@ export async function deductBalance(userId: string, amount: number, description:
     p_user_id: userId,
     p_amount: amount,
   })
+
+  // Record post_balance for tracing
+  const { data: updatedWallet } = await supabaseAdmin.from('wallets').select('balance').eq('user_id', userId).single();
+  await supabaseAdmin
+    .from('transactions')
+    .update({ meta: { description, post_balance: updatedWallet?.balance || 0 } })
+    .eq('reference', reference);
 
   return { message: 'Deduction successful', reference }
 }

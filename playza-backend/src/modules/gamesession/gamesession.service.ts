@@ -305,6 +305,9 @@ export async function joinSession(userId: string, sessionId: string) {
     p_amount: session.entry_fee
   })
   
+  // Record post_balance for tracing
+  const { data: updatedWallet } = await supabase.from('wallets').select('balance').eq('user_id', userId).single();
+
   const gameData: any = Array.isArray(session.games) ? session.games[0] : session.games;
   await supabase.from('transactions').insert({
     user_id: userId,
@@ -312,7 +315,12 @@ export async function joinSession(userId: string, sessionId: string) {
     amount: session.entry_fee,
     status: 'successful',
     reference: `PLZ-ARENA-ENTRY-${gameData?.slug || 'GAME'}-${sessionId}-${userId}-${Date.now()}`,
-    meta: { session_id: sessionId, game_slug: gameData?.slug, game_name: gameData?.title }
+    meta: { 
+      session_id: sessionId, 
+      game_slug: gameData?.slug, 
+      game_name: gameData?.title,
+      post_balance: updatedWallet?.balance || 0
+    }
   })
 
   // 4. Update session pool
@@ -623,6 +631,9 @@ export async function finalizeSessionAndPayout(sessionId: string) {
         p_amount: payoutAmount
       })
 
+      // Record post_balance for tracing
+      const { data: updatedWallet } = await supabase.from('wallets').select('balance').eq('user_id', winner.user_id).single();
+
       const gameData: any = Array.isArray(session.games) ? session.games[0] : session.games;
       const { error: txError } = await supabase.from('transactions').insert({
         user_id: winner.user_id,
@@ -630,7 +641,14 @@ export async function finalizeSessionAndPayout(sessionId: string) {
         amount: payoutAmount,
         status: 'successful',
         reference: `PLZ-ARENA-WIN-${gameData?.slug || 'GAME'}-${sessionId}-${winner.user_id}`,
-        meta: { session_id: sessionId, game_slug: gameData?.slug, game_name: gameData?.title, rank: i + 1, score: winner.best_score }
+        meta: { 
+          session_id: sessionId, 
+          game_slug: gameData?.slug, 
+          game_name: gameData?.title, 
+          rank: i + 1, 
+          score: winner.best_score,
+          post_balance: updatedWallet?.balance || 0
+        }
       })
       if (txError) console.error('Transaction Error:', txError);
 

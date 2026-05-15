@@ -1,11 +1,14 @@
 import type { DAYS_OF_WEEK, MONTHS } from "@/constants/constants";
 export interface Transaction {
-  id: number;
-  type: "deposit" | "withdrawal" | "game";
+  id: string;
+  type: string;
   amount: number;
-  description: string;
-  date: string;
-  status: "completed" | "pending";
+  description?: string;
+  date?: string;
+  status: string;
+  created_at?: string;
+  reference?: string;
+  meta?: Record<string, unknown>;
 }
 
 export interface TransactionUI {
@@ -16,6 +19,7 @@ export interface TransactionUI {
   date: string;
   reference: string;
   typeKey?: string;
+  meta?: Record<string, unknown>;
 }
 
 export interface Currency {
