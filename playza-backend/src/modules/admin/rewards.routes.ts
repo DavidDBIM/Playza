@@ -111,13 +111,19 @@ router.post('/grant', requireAdmin, async (req: AuthRequest, res) => {
       }
 
       // Log as a transaction
+      const { data: updatedWallet } = await supabaseAdmin.from('wallets').select('balance').eq('user_id', user_id).single();
+
       await supabaseAdmin.from('transactions').insert({
         user_id,
         type: 'admin_grant',
         amount: pts,
         status: 'completed',
         reference: `ADMIN-GRANT-${Date.now()}`,
-        meta: { admin_id: adminId, reason },
+        meta: { 
+          admin_id: adminId, 
+          reason,
+          post_balance: updatedWallet?.balance || 0
+        },
       })
     }
 

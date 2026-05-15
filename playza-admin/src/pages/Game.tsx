@@ -198,6 +198,38 @@ const Game: React.FC = () => {
     })).sort((a, b) => b.wins - a.wins || b.total_staked - a.total_staked);
   }, [h2hMatches, isH2H, game?.platformFeePercentage]);
 
+  const h2hRevenue = useMemo(() => {
+    if (!isH2H) return 0;
+    return h2hMatches.reduce((acc, match) => {
+      if (match.status !== 'finished') return acc;
+      
+      const stake = Number(match.stake);
+      if (stake <= 0) return acc;
+
+      const isBot = match.is_bot || match.guest_id === '00000000-0000-0000-0000-000000000000' || !!match.board_state?.bot;
+      const botWon = isBot && !!match.board_state?.is_checkmate && !match.winner_id;
+      const isDraw = !!match.board_state?.is_draw || (!match.winner_id && !botWon);
+
+      if (!isBot) {
+        // Human vs Human: 10% of total pool (2 * stake)
+        return acc + (stake * 2 * 0.1);
+      } else {
+        // Human vs Bot
+        if (match.winner_id === match.host_id) {
+          // Human won: gets 1.8 * stake. Platform collected 1.0. Net = -0.8
+          return acc - (stake * 0.8);
+        } else if (botWon) {
+          // Bot won: platform keeps 1.0 * stake.
+          return acc + stake;
+        } else if (isDraw) {
+          // Draw: Human gets 0.9 back. Platform collected 1.0. Net = 0.1
+          return acc + (stake * 0.1);
+        }
+      }
+      return acc;
+    }, 0);
+  }, [h2hMatches, isH2H]);
+
   const tabs = isH2H
     ? ([
         { id: "matches", label: "Live Matches", icon: MdStadium },
@@ -532,9 +564,10 @@ const Game: React.FC = () => {
                         .map((match: H2HMatch) => {
                         const isHostWinner = match.status === 'finished' && match.winner_id === match.host_id;
                         const isGuestWinner = match.status === 'finished' && match.winner_id === match.guest_id;
-                        const isDraw = match.status === 'finished' && !match.winner_id;
                         
                         const isBot = match.is_bot || match.guest_id === '00000000-0000-0000-0000-000000000000' || !!match.board_state?.bot;
+                        const botWon = isBot && match.status === 'finished' && !!match.board_state?.is_checkmate && !match.winner_id;
+                        const isDraw = match.status === 'finished' && (!!match.board_state?.is_draw || (!match.winner_id && !botWon));
                         const botPersona = match.board_state?.bot;
                         const guestName = match.guest?.username || botPersona?.username || (isBot ? 'Bot' : 'Waiting...');
                         const guestAvatar = match.guest?.avatar_url || botPersona?.avatar_url;
@@ -573,9 +606,9 @@ const Game: React.FC = () => {
                                 <div className="flex flex-col items-center gap-2">
                                   <div className={`w-12 h-12 rounded-2xl ${match.guest || botPersona ? 'bg-muted' : 'bg-muted/50 border-dashed'} border ${isGuestWinner ? 'border-primary ring-2 ring-primary/20' : 'border-border'} flex items-center justify-center overflow-hidden shadow-inner relative`}>
                                     {guestAvatar ? <img src={guestAvatar} className="w-full h-full object-cover" /> : <span className={`text-sm font-black ${match.guest || botPersona ? 'text-primary' : 'text-muted-foreground'}`}>{guestName[0]}</span>}
-                                    {isGuestWinner && <div className="absolute -top-1 -right-1 p-1 bg-primary rounded-full shadow-md z-10"><MdEmojiEvents className="w-3 h-3 text-white" /></div>}
+                                    {(isGuestWinner || botWon) && <div className="absolute -top-1 -right-1 p-1 bg-primary rounded-full shadow-md z-10"><MdEmojiEvents className="w-3 h-3 text-white" /></div>}
                                   </div>
-                                  <p className={`text-[10px] font-black ${isGuestWinner ? 'text-primary' : (match.guest || botPersona ? 'text-foreground' : 'text-muted-foreground italic')} truncate w-20 text-center`}>
+                                  <p className={`text-[10px] font-black ${(isGuestWinner || botWon) ? 'text-primary' : (match.guest || botPersona ? 'text-foreground' : 'text-muted-foreground italic')} truncate w-20 text-center`}>
                                     {guestName}
                                   </p>
                                 </div>
@@ -972,8 +1005,8 @@ const Game: React.FC = () => {
                     <MdTrendingUp /> LIVE
                   </span>
                 </div>
-                <div className="text-3xl font-black text-foreground font-number tracking-tighter flex items-center gap-1">
-                  <ZASymbol />{(game.total_revenue || 0).toLocaleString()}
+                <div className={`text-3xl font-black font-number tracking-tighter flex items-center gap-1 ${isH2H ? (h2hRevenue >= 0 ? 'text-foreground' : 'text-rose-500') : 'text-foreground'}`}>
+                  <ZASymbol />{(isH2H ? h2hRevenue : (game.total_revenue || 0)).toLocaleString()}
                 </div>
                 <div className="h-12 w-full mt-4 flex items-end gap-1 opacity-60">
                   {[0.4, 0.6, 0.55, 0.8, 0.7, 0.9, 1].map((h, i) => (
