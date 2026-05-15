@@ -15,6 +15,7 @@ import {
   MdBarChart,
   MdHistory,
   MdShield,
+  MdEmojiEvents,
 } from "react-icons/md";
 import { Button } from "../components/ui/button";
 import { ZASymbol } from "../components/currency/ZASymbol";
@@ -522,51 +523,66 @@ const Game: React.FC = () => {
                     </div>
                   ) : h2hViewMode === 'board' ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {h2hMatches.map((match: H2HMatch) => (
-                        <div key={match.id} className={`group bg-card border border-border rounded-2xl p-4 hover:border-primary/50 transition-all shadow-sm relative overflow-hidden ${match.status === 'active' ? 'ring-1 ring-primary/20' : ''}`}>
-                          {match.status === 'active' && (
-                            <div className="absolute top-0 right-0 px-3 py-1 bg-primary text-primary-foreground text-[8px] font-black uppercase tracking-widest rounded-bl-xl shadow-lg flex items-center gap-1">
-                              <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
-                              LIVE
-                            </div>
-                          )}
-                          <div className="flex items-center justify-between gap-4">
-                            <div className="flex-1 flex items-center justify-center gap-3">
-                              <div className="flex flex-col items-center gap-2">
-                                <div className="w-12 h-12 rounded-2xl bg-muted border border-border flex items-center justify-center overflow-hidden shadow-inner">
-                                  {match.host?.avatar_url ? <img src={match.host.avatar_url} className="w-full h-full object-cover" /> : <span className="text-sm font-black text-primary">{match.host?.username?.[0] || 'P'}</span>}
+                      {h2hMatches.map((match: H2HMatch) => {
+                        const isHostWinner = match.status === 'finished' && match.winner_id === match.host_id;
+                        const isGuestWinner = match.status === 'finished' && match.winner_id === match.guest_id;
+                        const isDraw = match.status === 'finished' && !match.winner_id;
+                        
+                        return (
+                          <div key={match.id} className={`group bg-card border border-border rounded-2xl p-4 hover:border-primary/50 transition-all shadow-sm relative overflow-hidden ${match.status === 'active' ? 'ring-1 ring-primary/20' : ''}`}>
+                            {match.status === 'active' && (
+                              <div className="absolute top-0 right-0 px-3 py-1 bg-primary text-primary-foreground text-[8px] font-black uppercase tracking-widest rounded-bl-xl shadow-lg flex items-center gap-1">
+                                <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
+                                LIVE
+                              </div>
+                            )}
+                            {match.status === 'finished' && (
+                              <div className="absolute top-0 right-0 px-3 py-1 bg-emerald-500 text-white text-[8px] font-black uppercase tracking-widest rounded-bl-xl shadow-lg">
+                                COMPLETED
+                              </div>
+                            )}
+                            <div className="flex items-center justify-between gap-4">
+                              <div className="flex-1 flex items-center justify-center gap-3">
+                                <div className="flex flex-col items-center gap-2">
+                                  <div className={`w-12 h-12 rounded-2xl bg-muted border ${isHostWinner ? 'border-primary ring-2 ring-primary/20' : 'border-border'} flex items-center justify-center overflow-hidden shadow-inner relative`}>
+                                    {match.host?.avatar_url ? <img src={match.host.avatar_url} className="w-full h-full object-cover" /> : <span className="text-sm font-black text-primary">{match.host?.username?.[0] || 'P'}</span>}
+                                    {isHostWinner && <div className="absolute -top-1 -right-1 p-1 bg-primary rounded-full shadow-md z-10"><MdEmojiEvents className="w-3 h-3 text-white" /></div>}
+                                  </div>
+                                  <p className={`text-[10px] font-black truncate w-20 text-center ${isHostWinner ? 'text-primary' : 'text-foreground'}`}>{match.host?.username || 'Player'}</p>
                                 </div>
-                                <p className="text-[10px] font-black text-foreground truncate w-20 text-center">{match.host?.username || 'Player'}</p>
-                              </div>
-                              <div className="flex flex-col items-center">
-                                <span className="text-[10px] font-black text-muted-foreground italic mb-1">VS</span>
-                                <div className="h-0.5 w-8 bg-border rounded-full" />
-                              </div>
-                              <div className="flex flex-col items-center gap-2">
-                                <div className={`w-12 h-12 rounded-2xl ${match.guest ? 'bg-muted' : 'bg-muted/50 border-dashed'} border border-border flex items-center justify-center overflow-hidden shadow-inner`}>
-                                  {match.guest?.avatar_url ? <img src={match.guest.avatar_url} className="w-full h-full object-cover" /> : <span className="text-sm font-black text-muted-foreground">{match.guest?.username?.[0] || '?'}</span>}
+                                <div className="flex flex-col items-center">
+                                  <span className="text-[10px] font-black text-muted-foreground italic mb-1">{isDraw ? 'DRAW' : 'VS'}</span>
+                                  <div className="h-0.5 w-8 bg-border rounded-full" />
                                 </div>
-                                <p className={`text-[10px] font-black ${match.guest ? 'text-foreground' : 'text-muted-foreground italic'} truncate w-20 text-center`}>{match.guest?.username || (match.is_bot ? 'Bot' : 'Waiting...')}</p>
+                                <div className="flex flex-col items-center gap-2">
+                                  <div className={`w-12 h-12 rounded-2xl ${match.guest ? 'bg-muted' : 'bg-muted/50 border-dashed'} border ${isGuestWinner ? 'border-primary ring-2 ring-primary/20' : 'border-border'} flex items-center justify-center overflow-hidden shadow-inner relative`}>
+                                    {match.guest?.avatar_url ? <img src={match.guest.avatar_url} className="w-full h-full object-cover" /> : <span className={`text-sm font-black ${match.guest ? 'text-primary' : 'text-muted-foreground'}`}>{match.guest?.username?.[0] || '?'}</span>}
+                                    {isGuestWinner && <div className="absolute -top-1 -right-1 p-1 bg-primary rounded-full shadow-md z-10"><MdEmojiEvents className="w-3 h-3 text-white" /></div>}
+                                  </div>
+                                  <p className={`text-[10px] font-black ${isGuestWinner ? 'text-primary' : (match.guest ? 'text-foreground' : 'text-muted-foreground italic')} truncate w-20 text-center`}>{match.guest?.username || (match.is_bot ? 'Bot' : 'Waiting...')}</p>
+                                </div>
                               </div>
-                            </div>
-                            <div className="h-16 w-px bg-border hidden sm:block" />
-                            <div className="flex flex-col items-end gap-1 min-w-[80px]">
-                              <p className="text-[9px] font-black text-muted-foreground uppercase">Stake</p>
-                              <div className="flex items-center gap-1 text-lg font-black text-foreground font-number">
-                                <ZASymbol />
-                                {Number(match.stake).toLocaleString()}
+                              <div className="h-16 w-px bg-border hidden sm:block" />
+                              <div className="flex flex-col items-end gap-1 min-w-[80px]">
+                                <p className="text-[9px] font-black text-muted-foreground uppercase">{match.status === 'finished' ? 'Money Won' : 'Stake'}</p>
+                                <div className={`flex items-center gap-1 text-lg font-black font-number ${match.status === 'finished' ? 'text-emerald-500' : 'text-foreground'}`}>
+                                  <ZASymbol className="scale-75" />
+                                  {match.status === 'finished' 
+                                    ? (match.stake * 2 * (1 - (game?.platformFeePercentage || 10) / 100)).toLocaleString() 
+                                    : Number(match.stake).toLocaleString()}
+                                </div>
+                                <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-lg border ${
+                                  match.status === 'finished' ? 'bg-primary/10 text-primary border-primary/20' : 
+                                  match.status === 'waiting' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 
+                                  'bg-blue-500/10 text-blue-500 border-blue-500/20'
+                                }`}>
+                                  {match.status}
+                                </span>
                               </div>
-                              <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-lg border ${
-                                match.status === 'finished' ? 'bg-primary/10 text-primary border-primary/20' : 
-                                match.status === 'waiting' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 
-                                'bg-blue-500/10 text-blue-500 border-blue-500/20'
-                              }`}>
-                                {match.status}
-                              </span>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   ) : h2hViewMode === 'rankings' ? (
                     <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">

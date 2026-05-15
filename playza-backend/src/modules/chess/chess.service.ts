@@ -101,6 +101,16 @@ async function handleGameOver(roomId: string, winnerId: string | null, stake: nu
 }
 
 export async function listWaitingRooms() {
+  // --- CLEANUP STALE ROOMS ---
+  // Delete rooms that are 'waiting' and older than 10 minutes
+  const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+  await supabaseAdmin
+    .from("chess_rooms")
+    .delete()
+    .eq("status", "waiting")
+    .lt("created_at", tenMinutesAgo);
+  // ---------------------------
+
   const { data, error } = await supabaseAdmin
     .from("chess_rooms")
     .select(
