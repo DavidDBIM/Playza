@@ -157,7 +157,7 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
   const serverSaysMyTurn = room.current_turn === user?.id;
   const isYourTurn = serverSaysMyTurn && !pendingMoveRef.current;
 
-  const confirmResign = async () => {
+  const confirmResign = useCallback(async () => {
     setIsResigning(true);
     try {
       await resignChessGame(room.id);
@@ -180,7 +180,7 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
     } finally {
       setIsResigning(false);
     }
-  };
+  }, [room, user, toast]);
 
   // ── Network Monitoring ──────────────────────────────────────────────────────
   useEffect(() => {

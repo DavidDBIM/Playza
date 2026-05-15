@@ -283,7 +283,7 @@ export async function createBotRoom(userId: string, stakeValue: number) {
     .insert({
       code,
       host_id: userId,
-      guest_id: SYSTEM_BOT_ID,
+      guest_id: null,
       stake,
       status: "active",
       board_state: initialBoard,
@@ -354,7 +354,7 @@ export async function makeMove(
   if (!result) throw new Error("Illegal move");
 
   const nextTurn =
-    room.current_turn === room.host_id ? (room.guest_id || SYSTEM_BOT_ID) : room.host_id;
+    room.current_turn === room.host_id ? room.guest_id : room.host_id;
   const updatedBoard = {
     ...room.board_state,
     fen: chess.fen(),
@@ -384,7 +384,7 @@ export async function makeMove(
   }
 
   // Bot game: guest_id is null, so nextTurn is also null (bot's turn)
-  const isBotGame = !room.guest_id || room.guest_id === SYSTEM_BOT_ID;
+  const isBotGame = !room.guest_id;
   if (isBotGame && !chess.isGameOver()) {
     // Fire bot move asynchronously so the HTTP response is NOT delayed
     setImmediate(async () => {
@@ -433,7 +433,7 @@ export async function resignGame(roomId: string, userId: string) {
   const { data: room } = await supabaseAdmin.from('chess_rooms').select('*').eq('id', roomId).single()
   if (!room || room.status !== 'active') throw new Error('Invalid game state')
 
-  const winnerId = room.host_id === userId ? (room.guest_id || SYSTEM_BOT_ID) : room.host_id
+  const winnerId = room.host_id === userId ? (room.guest_id || null) : room.host_id
   await handleGameOver(roomId, winnerId, room.stake)
 
   return { winner_id: winnerId, message: 'Resigned' }
