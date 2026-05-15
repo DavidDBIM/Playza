@@ -16,6 +16,9 @@ export interface ChessRoom {
   board_state?: {
     fen: string;
     last_move?: { from: string; to: string; promotion?: string } | null;
+    bot?: { username: string; avatar_url: string };
+    is_checkmate?: boolean;
+    is_draw?: boolean;
   };
   host: ChessPlayer;
   guest?: ChessPlayer | null;

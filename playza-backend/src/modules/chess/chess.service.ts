@@ -69,12 +69,20 @@ async function handleGameOver(roomId: string, winnerId: string | null, stake: nu
       p_amount: winnerPrize,
     })
 
+    // Fetch current balance for tracing
+    const { data: wallet } = await supabaseAdmin
+      .from('wallets')
+      .select('balance')
+      .eq('user_id', winnerId)
+      .single();
+
     await supabaseAdmin.from('transactions').insert({
       user_id: winnerId,
       type: 'winnings',
       amount: winnerPrize,
       status: 'successful',
       reference: `PLZ-CHESS-WIN-${roomId}`,
+      meta: { post_balance: wallet?.balance || 0 }
     })
 
     // Track Revenue
@@ -210,22 +218,26 @@ export async function joinChessRoom(userId: string, code: string) {
 
     // Deduct Host
     await supabaseAdmin.rpc("decrement_wallet_balance", { p_user_id: room.host_id, p_amount: room.stake });
+    const { data: hW } = await supabaseAdmin.from('wallets').select('balance').eq('user_id', room.host_id).single();
     await supabaseAdmin.from("transactions").insert({
       user_id: room.host_id,
       type: "game_entry",
       amount: room.stake,
       status: "successful",
       reference: `PLZ-CHESS-HOST-${room.id}`,
+      meta: { post_balance: hW?.balance || 0 }
     });
 
     // Deduct Guest
     await supabaseAdmin.rpc("decrement_wallet_balance", { p_user_id: userId, p_amount: room.stake });
+    const { data: gW } = await supabaseAdmin.from('wallets').select('balance').eq('user_id', userId).single();
     await supabaseAdmin.from("transactions").insert({
       user_id: userId,
       type: "game_entry",
       amount: room.stake,
       status: "successful",
       reference: `PLZ-CHESS-JOIN-${room.id}`,
+      meta: { post_balance: gW?.balance || 0 }
     });
   }
 
@@ -295,12 +307,14 @@ export async function createBotRoom(userId: string, stakeValue: number) {
   if (error) throw error;
 
   if (stake > 0) {
+    const { data: finalW } = await supabaseAdmin.from('wallets').select('balance').eq('user_id', userId).single();
     await supabaseAdmin.from("transactions").insert({
       user_id: userId,
       type: "game_entry",
       amount: stake,
       status: "successful",
       reference: `PLZ-CHESS-BOT-${data.id}`,
+      meta: { post_balance: finalW?.balance || 0 }
     });
   }
 
@@ -360,6 +374,8 @@ export async function makeMove(
     fen: chess.fen(),
     last_move: move,
     moves: [...(room.board_state?.moves || []), result.san],
+    is_checkmate: chess.isCheckmate(),
+    is_draw: chess.isDraw(),
   };
 
   // Update DB
@@ -377,7 +393,7 @@ export async function makeMove(
   if (chess.isGameOver()) {
     let winner = null;
     if (chess.isCheckmate()) {
-      winner = room.current_turn || SYSTEM_BOT_ID;
+      winner = room.current_turn; // If current_turn is null, it means the bot won
     }
     await handleGameOver(roomId, winner, room.stake);
     return { move, next_turn: null, status: "finished" };
