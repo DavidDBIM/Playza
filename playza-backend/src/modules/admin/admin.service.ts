@@ -649,6 +649,39 @@ export async function getSoloActivityAdmin(
   }
 }
 
+// ── Send a targeted push notification to a single user ───────────────────────
+// VAPID details are already set via setVapidDetails() above, so webpush works here.
+export async function notifyUser(
+  userId: string,
+  title: string,
+  body: string,
+  url: string = '/'
+): Promise<void> {
+  try {
+    const { data: tokens } = await supabaseAdmin
+      .from('push_tokens')
+      .select('token, id')
+      .eq('user_id', userId)
 
+    if (!tokens || tokens.length === 0) return
 
+    const payload = JSON.stringify({ title, body, data: { url } })
 
+    await Promise.allSettled(
+      tokens.map(async (sub) => {
+        try {
+          const subscription = sub.token.startsWith('{') ? JSON.parse(sub.token) : null
+          if (!subscription) return
+          await webpush.sendNotification(subscription, payload)
+        } catch (err: any) {
+          // Remove expired or invalid tokens
+          if (err.statusCode === 410 || err.statusCode === 404) {
+            await supabaseAdmin.from('push_tokens').delete().eq('id', sub.id)
+          }
+        }
+      })
+    )
+  } catch (err) {
+    console.error('notifyUser error:', err)
+  }
+}
