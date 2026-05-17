@@ -278,6 +278,11 @@ export function SocialTasksSection({ claimedTaskIds }: Props) {
                     </span>
                   </div>
                   <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{task.description}</p>
+                  {sub?.status === "rejected" && (
+                    <p className="text-[11px] text-red-500 dark:text-red-400 font-medium mt-1">
+                      ⚠ {sub.admin_note ? `Rejected: ${sub.admin_note}` : "Rejected — please resubmit with a clearer screenshot."}
+                    </p>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-3 shrink-0">
@@ -357,6 +362,14 @@ export function SocialTasksSection({ claimedTaskIds }: Props) {
                 </button>
               </div>
 
+              {submissionMap[modal.id]?.status === "rejected" && (
+                <div className="mb-4 px-4 py-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl">
+                  <p className="text-xs font-bold text-red-600 dark:text-red-400 mb-0.5">Previous submission rejected</p>
+                  <p className="text-xs text-red-500 dark:text-red-400">
+                    {submissionMap[modal.id]?.admin_note || "Please upload a clearer screenshot showing your username and the completed action."}
+                  </p>
+                </div>
+              )}
               <div className="space-y-3 mb-5">
                 {/* Step 1 */}
                 <div className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
