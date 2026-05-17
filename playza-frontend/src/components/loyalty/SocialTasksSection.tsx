@@ -129,9 +129,9 @@ export function SocialTasksSection({ claimedTaskIds }: Props) {
     refetchOnMount: "always",
   });
 
-  const submissionMap: Record<string, { status: string }> = {};
+  const submissionMap: Record<string, { status: string; admin_note?: string | null }> = {};
   for (const s of mySubmissions) {
-    submissionMap[s.task_id] = { status: s.status };
+    submissionMap[s.task_id] = { status: s.status, admin_note: s.admin_note };
   }
 
   const platformsWithTasks = PLATFORM_ORDER.filter((p) =>
