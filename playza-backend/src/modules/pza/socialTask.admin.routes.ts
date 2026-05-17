@@ -1,8 +1,40 @@
 import { Router } from 'express'
 import { requireAdmin, AuthRequest } from '../../middleware/auth'
 import { supabaseAdmin } from '../../config/supabase'
+import webpush from 'web-push'
 
 const router = Router()
+
+// ── Send a push notification to a specific user ───────────────────────────────
+async function notifyUser(userId: string, title: string, body: string, url: string = '/loyalty') {
+  try {
+    const { data: tokens } = await supabaseAdmin
+      .from('push_tokens')
+      .select('token, id')
+      .eq('user_id', userId)
+
+    if (!tokens || tokens.length === 0) return
+
+    const payload = JSON.stringify({ title, body, data: { url } })
+
+    await Promise.allSettled(
+      tokens.map(async (sub) => {
+        try {
+          const subscription = sub.token.startsWith('{') ? JSON.parse(sub.token) : null
+          if (!subscription) return
+          await webpush.sendNotification(subscription, payload)
+        } catch (err: any) {
+          // Clean up expired/invalid tokens
+          if (err.statusCode === 410 || err.statusCode === 404) {
+            await supabaseAdmin.from('push_tokens').delete().eq('id', sub.id)
+          }
+        }
+      })
+    )
+  } catch (err) {
+    console.error('notifyUser error:', err)
+  }
+}
 
 const VALID_PLATFORMS = ['twitter', 'youtube', 'facebook', 'tiktok', 'instagram', 'medium']
 
@@ -169,6 +201,25 @@ router.post('/:id/review', requireAdmin, async (req: AuthRequest, res) => {
         await supabaseAdmin.from('pza_points').insert({ user_id: submission.user_id, total_points: pts })
       }
       await supabaseAdmin.from('claimed_tasks').upsert({ user_id: submission.user_id, task_id: submission.task_id, points_awarded: pts }, { onConflict: 'user_id,task_id', ignoreDuplicates: true })
+    }
+
+    // ── Send push notification to the user ──────────────────────────────────
+    const taskTitle = config?.title ?? 'Social Task'
+    if (action === 'approve') {
+      await notifyUser(
+        submission.user_id,
+        '🎉 Social Task Approved!',
+        `Your "${taskTitle}" submission was approved. +${pts} PZA has been added to your balance.`,
+        '/loyalty'
+      )
+    } else {
+      const reason = admin_note ? ` Reason: ${admin_note}` : ' Please resubmit with a clearer screenshot.'
+      await notifyUser(
+        submission.user_id,
+        '❌ Social Task Rejected',
+        `Your "${taskTitle}" submission was declined.${reason}`,
+        '/loyalty'
+      )
     }
 
     res.json({ success: true, data: { status: action === 'approve' ? 'approved' : 'rejected', points_awarded: action === 'approve' ? pts : 0 } })
