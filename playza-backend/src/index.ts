@@ -7,6 +7,7 @@ import cron from 'node-cron'
 import { createServer } from 'http'
 import { supabaseAdmin as supabase } from './config/supabase'
 import { finalizeSessionAndPayout } from './modules/gamesession/gamesession.service'
+import { runQuizReminderJob } from './lib/quizReminders'
 
 import authRoutes from './modules/auth/auth.routes'
 import referralRoutes from './modules/referral/referral.routes'
@@ -39,7 +40,7 @@ import { setupSocketIO } from './lib/socketHandler'
 dotenv.config()
 
 const app = express()
-app.set('trust proxy', 1) // Trust Render/Cloudflare reverse proxy for accurate IP tracking & rate limiting
+app.set('trust proxy', 1)
 const PORT = process.env.PORT || 5000
 
 const allowedOrigins = (process.env.FRONTEND_URL || '')
@@ -89,32 +90,25 @@ app.use((req, res) => {
   res.status(404).json({ success: false, message: 'Route not found' })
 })
 
-// ── HTTP server ───────────────────────────────────────────────────────────────
-// Wrap express so Socket.IO and the app share the same port
+// ── HTTP server + Socket.IO ───────────────────────────────────────────────────
 const httpServer = createServer(app)
-
-// setupSocketIO (pool/chess) creates the SocketServer internally and returns it
-// We reuse that same io instance for the quiz gateway — only ONE SocketServer
 const io = setupSocketIO(httpServer)
 setupQuizGateway(io)
-setQuizAdminIo(io)  // give admin launch route access to io so it can broadcast game start
+setQuizAdminIo(io)
 
 // ── Background jobs ───────────────────────────────────────────────────────────
+
+// Auto-finalize game sessions that ended 30+ minutes ago
 cron.schedule('*/5 * * * *', async () => {
   try {
     const thirtyMinsAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString()
-
     const { data: sessions, error } = await supabase
       .from('game_sessions')
       .select('id')
       .eq('status', 'active')
       .lt('end_time', thirtyMinsAgo)
 
-    if (error) {
-      console.error('[CRON] Error fetching sessions to finalize:', error)
-      return
-    }
-
+    if (error) { console.error('[CRON] Error fetching sessions to finalize:', error); return }
     for (const session of sessions) {
       console.log(`[CRON] Auto-finalizing session ${session.id}...`)
       await finalizeSessionAndPayout(session.id)
@@ -122,6 +116,12 @@ cron.schedule('*/5 * * * *', async () => {
   } catch (err) {
     console.error('[CRON] Auto-payout error:', err)
   }
+})
+
+// Quiz tournament reminders — runs every 30 minutes
+// Sends push + email at 24h before and 2h before the scheduled start
+cron.schedule('*/30 * * * *', async () => {
+  await runQuizReminderJob()
 })
 
 httpServer.listen(PORT, () => {
