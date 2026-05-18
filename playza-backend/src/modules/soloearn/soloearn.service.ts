@@ -144,19 +144,18 @@ export async function endSoloSession(
     .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
 
-  await supabase.from("game_history").insert({
+  const soloStatus = payout > session.stake ? "win" : payout === session.stake ? "draw" : "loss";
+
+  const { error: histErr } = await supabase.from("game_history").insert({
     user_id: userId,
     game_name: `Solo: ${formattedGameName}`,
-    status:
-      payout > session.stake
-        ? "win"
-        : payout === session.stake
-          ? "draw"
-          : "loss",
-    score: Math.round(cappedMultiplier * 100), // Storing the multiplier as score (e.g. 1.5x -> 150)
+    status: soloStatus,
+    score: Math.round(cappedMultiplier * 100),
     winnings: payout,
     played_at: new Date().toISOString(),
   });
+  if (histErr) console.error(`[SoloEarn] game_history insert failed for user ${userId}:`, histErr.message)
+  else console.log(`[SoloEarn] game_history recorded for user ${userId}, status=${soloStatus}`)
 
   return { payout, multiplier: cappedMultiplier };
 }

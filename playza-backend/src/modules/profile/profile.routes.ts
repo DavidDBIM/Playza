@@ -55,9 +55,12 @@ router.get('/history', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
     const page = parseInt(req.query.page as string) || 1
     const limit = parseInt(req.query.limit as string) || 20
-    const data = await getGameHistory(req.user!.id, page, limit)
+    const userId = req.user!.id
+    const data = await getGameHistory(userId, page, limit)
+    console.log(`[Profile/History] user=${userId} total=${data.total} returned=${data.history.length}`)
     res.json({ success: true, data })
   } catch (err: any) {
+    console.error('[Profile/History] Error:', err.message)
     res.status(400).json({ success: false, message: err.message })
   }
 })

@@ -111,9 +111,9 @@ router.post('/tournaments/:id/join', requireAuth, async (req: AuthRequest, res) 
       // Log transaction
       await supabaseAdmin.from('transactions').insert({
         user_id: userId,
-        type: 'quiz_entry',
+        type: 'game_entry',
         amount: tournament.entry_fee,
-        status: 'completed',
+        status: 'successful',
         reference: `QUIZ-${tournamentId}-${Date.now()}`,
         meta: { tournament_id: tournamentId, tournament_title: tournament.title },
       })

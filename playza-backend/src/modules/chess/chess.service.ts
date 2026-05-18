@@ -5,26 +5,106 @@ import { recordH2HRevenue } from '../gamesession/h2h.helper'
 import { SYSTEM_BOT_ID, getBotMove } from './bot'
 
 const BOT_PERSONAS = [
-  { username: 'GrandmasterAI', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=bot1' },
-  { username: 'ChessKing_99', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=bot2' },
-  { username: 'DeepThought', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=bot3' },
-  { username: 'Enigma_X', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=bot4' },
-  { username: 'CheckmateCharlie', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=bot5' },
-  { username: 'GambitGosu', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=bot6' },
-  { username: 'KnightRider', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=bot7' },
-  { username: 'BishopBasher', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=bot8' },
-  { username: 'RookNRoll', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=bot9' },
-  { username: 'QueenOfChess', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=bot10' },
-  { username: 'PawnStar', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=bot11' },
-  { username: 'SmartyPawns', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=bot12' },
-  { username: 'TheSicilian', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=bot13' },
-  { username: 'BlunderProof', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=bot14' },
-  { username: 'MateInThree', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=bot15' },
-  { username: 'BlitzBot', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=bot16' },
-  { username: 'TacticalTurtle', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=bot17' },
-  { username: 'StalemateStan', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=bot18' },
-  { username: 'MasterMind', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=bot19' },
-  { username: 'ChessPulse_AI', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=bot20' },
+  { username: 'KwameMaster', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b1' },
+  { username: 'Chioma_Moves', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b2' },
+  { username: 'EmekaCheck', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b3' },
+  { username: 'Aisha_Queen', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b4' },
+  { username: 'TundeTactics', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b5' },
+  { username: 'ZainabPlays', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b6' },
+  { username: 'Nia_Strategist', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b7' },
+  { username: 'Kenzo_AI', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b8' },
+  { username: 'YukiMate', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b9' },
+  { username: 'Hiroshi_X', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b10' },
+  { username: 'Mei_Lin_Chess', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b11' },
+  { username: 'Wei_Master', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b12' },
+  { username: 'Chen_G', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b13' },
+  { username: 'Sakura_Pawn', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b14' },
+  { username: 'Jin_Woo', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b15' },
+  { username: 'Arjun_King', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b16' },
+  { username: 'Priya_Play', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b17' },
+  { username: 'Ravi_Knight', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b18' },
+  { username: 'Deepak_Pro', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b19' },
+  { username: 'Aditi_Rook', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b20' },
+  { username: 'John_Smith_99', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b21' },
+  { username: 'Sarah_Connor', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b22' },
+  { username: 'Mike_Checkmate', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b23' },
+  { username: 'Emily_Bishop', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b24' },
+  { username: 'David_Castle', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b25' },
+  { username: 'Jessica_Win', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b26' },
+  { username: 'James_Bond_007', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b27' },
+  { username: 'Maria_Garcia', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b28' },
+  { username: 'Carlos_Mate', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b29' },
+  { username: 'Ana_Silva', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b30' },
+  { username: 'Luis_Pro', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b31' },
+  { username: 'Elena_V', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b32' },
+  { username: 'Diego_Armando', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b33' },
+  { username: 'Isabella_Queen', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b34' },
+  { username: 'Mateo_King', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b35' },
+  { username: 'Sofia_Mate', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b36' },
+  { username: 'Lucas_X', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b37' },
+  { username: 'Mia_G', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b38' },
+  { username: 'Oliver_Twist', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b39' },
+  { username: 'Emma_Watson', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b40' },
+  { username: 'Noah_Ark', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b41' },
+  { username: 'Ava_Max', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b42' },
+  { username: 'William_Tell', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b43' },
+  { username: 'Sophia_Loren', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b44' },
+  { username: 'James_Cameron', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b45' },
+  { username: 'Charlotte_Web', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b46' },
+  { username: 'Benjamin_Button', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b47' },
+  { username: 'Amelia_Earhart', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b48' },
+  { username: 'Elijah_Wood', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b49' },
+  { username: 'Harper_Lee', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b50' },
+  { username: 'Kofi_Annan', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b51' },
+  { username: 'Fatima_B', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b52' },
+  { username: 'Idris_E', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b53' },
+  { username: 'Ngozi_O', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b54' },
+  { username: 'Tariq_St', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b55' },
+  { username: 'Amira_H', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b56' },
+  { username: 'Zane_M', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b57' },
+  { username: 'Aaliyah_D', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b58' },
+  { username: 'Jamal_W', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b59' },
+  { username: 'Keisha_C', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b60' },
+  { username: 'Satoshi_N', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b61' },
+  { username: 'Miko_Y', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b62' },
+  { username: 'Kenji_S', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b63' },
+  { username: 'Yuna_K', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b64' },
+  { username: 'Ryu_Street', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b65' },
+  { username: 'Chun_Li', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b66' },
+  { username: 'Jackie_C', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b67' },
+  { username: 'Bruce_L', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b68' },
+  { username: 'Jet_L', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b69' },
+  { username: 'Donnie_Y', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b70' },
+  { username: 'Magnus_C', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b71' },
+  { username: 'Hikaru_N', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b72' },
+  { username: 'Garry_K', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b73' },
+  { username: 'Anatoly_K', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b74' },
+  { username: 'Bobby_F', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b75' },
+  { username: 'Mikhail_T', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b76' },
+  { username: 'Jose_R', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b77' },
+  { username: 'Emanuel_L', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b78' },
+  { username: 'Wilhelm_S', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b79' },
+  { username: 'Paul_M', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b80' },
+  { username: 'Judit_P', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b81' },
+  { username: 'Hou_Y', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b82' },
+  { username: 'Maia_C', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b83' },
+  { username: 'Nona_G', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b84' },
+  { username: 'Vera_M', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b85' },
+  { username: 'Xie_J', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b86' },
+  { username: 'Alexandra_K', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b87' },
+  { username: 'Anna_M', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b88' },
+  { username: 'Mariya_M', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b89' },
+  { username: 'Elisabeth_P', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b90' },
+  { username: 'Kateryna_L', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b91' },
+  { username: 'Nana_D', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b92' },
+  { username: 'Pia_C', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b93' },
+  { username: 'Zhu_C', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b94' },
+  { username: 'Antoaneta_S', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b95' },
+  { username: 'Humpy_K', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b96' },
+  { username: 'Ju_W', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b97' },
+  { username: 'Tan_Z', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b98' },
+  { username: 'Lei_T', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b99' },
+  { username: 'Aleksandra_G', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=b100' },
 ];
 
 function getRandomBot() {
@@ -96,13 +176,15 @@ async function handleGameOver(roomId: string, winnerId: string | null, stake: nu
     const isWinner = uid === winnerId
     const isDraw = winnerId === null
     
-    await supabaseAdmin.from('game_history').insert({
+    const { error: histErr } = await supabaseAdmin.from('game_history').insert({
       user_id: uid,
       game_name: 'Chess',
       status: isDraw ? 'draw' : (isWinner ? 'win' : 'loss'),
       winnings: isWinner ? (stake * 1.8) : (isDraw ? stake : 0),
       played_at: new Date().toISOString()
     })
+    if (histErr) console.error(`[Chess] game_history insert failed for user ${uid}:`, histErr.message)
+    else console.log(`[Chess] game_history recorded for user ${uid}, status=${isDraw ? 'draw' : (isWinner ? 'win' : 'loss')}`)
   }
 
   // 4. If draw, return stakes minus platform fee
@@ -267,7 +349,10 @@ export async function joinChessRoom(userId: string, code: string) {
 export async function createBotRoom(userId: string, stakeValue: number) {
   const code = generateRoomCode();
   const stake = Number(stakeValue);
-  const botPersona = getRandomBot();
+  const { data: activeBotRooms } = await supabaseAdmin.from('chess_rooms').select('board_state').is('guest_id', null).eq('status', 'active');
+  const usedUsernames = new Set(activeBotRooms?.map(r => r.board_state?.bot?.username).filter(Boolean));
+  const availableBots = BOT_PERSONAS.filter(b => !usedUsernames.has(b.username));
+  const botPersona = availableBots.length > 0 ? availableBots[Math.floor(Math.random() * availableBots.length)] : BOT_PERSONAS[Math.floor(Math.random() * BOT_PERSONAS.length)];
 
   if (stake > 0) {
     const { data: wallet } = await supabaseAdmin
@@ -393,7 +478,7 @@ export async function makeMove(
   if (chess.isGameOver()) {
     let winner = null;
     if (chess.isCheckmate()) {
-      winner = room.current_turn; // If current_turn is null, it means the bot won
+      winner = room.current_turn || SYSTEM_BOT_ID; // If current_turn is null, it means the bot won
     }
     await handleGameOver(roomId, winner, room.stake);
     return { move, next_turn: null, status: "finished" };
@@ -449,7 +534,7 @@ export async function resignGame(roomId: string, userId: string) {
   const { data: room } = await supabaseAdmin.from('chess_rooms').select('*').eq('id', roomId).single()
   if (!room || room.status !== 'active') throw new Error('Invalid game state')
 
-  const winnerId = room.host_id === userId ? (room.guest_id || null) : room.host_id
+  const winnerId = room.host_id === userId ? (room.guest_id || SYSTEM_BOT_ID) : room.host_id
   await handleGameOver(roomId, winnerId, room.stake)
 
   return { winner_id: winnerId, message: 'Resigned' }

@@ -660,23 +660,23 @@ export async function finalizeSessionAndPayout(sessionId: string) {
 
       const { error: histError } = await supabase.from('game_history').insert({
         user_id: winner.user_id,
-        game_name: session.title || session.games?.title || 'Arena Tournament',
+        game_name: session.title || gameData?.title || 'Arena Tournament',
         score: winner.best_score,
         winnings: payoutAmount,
         status: 'win',
         played_at: session.end_time || new Date().toISOString()
       })
-      if (histError) console.error('Game History Win Error:', histError);
+      if (histError) console.error('[gamesession] Game History Win Error:', histError);
     }
   }
 
   // 6. Process Losers in bulk
   if (losers.length > 0) {
-    const loserHistory = losers.map((player, index) => {
-      const rank = winnersCount + index + 1;
+    const loserHistory = losers.map((player) => {
+      const gameData: any = Array.isArray(session.games) ? session.games[0] : session.games;
       return {
         user_id: player.user_id,
-        game_name: session.title || session.games?.title || 'Arena Tournament',
+        game_name: session.title || gameData?.title || 'Arena Tournament',
         score: player.best_score,
         winnings: 0,
         status: 'loss',
