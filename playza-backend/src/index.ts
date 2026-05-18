@@ -33,6 +33,7 @@ import gamesessionRoutes from './modules/gamesession/gamesession.routes'
 import quizRoutes from './modules/quiz/quiz.routes'
 import quizAdminRoutes from './modules/quiz/quiz.admin.routes'
 import { setupQuizGateway } from './modules/quiz/quiz.gateway'
+import { setQuizAdminIo } from './modules/quiz/quiz.admin.routes'
 import { setupSocketIO } from './lib/socketHandler'
 
 dotenv.config()
@@ -96,6 +97,7 @@ const httpServer = createServer(app)
 // We reuse that same io instance for the quiz gateway — only ONE SocketServer
 const io = setupSocketIO(httpServer)
 setupQuizGateway(io)
+setQuizAdminIo(io)  // give admin launch route access to io so it can broadcast game start
 
 // ── Background jobs ───────────────────────────────────────────────────────────
 cron.schedule('*/5 * * * *', async () => {
