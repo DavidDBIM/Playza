@@ -2,6 +2,11 @@ import { Router } from 'express'
 import { requireAdmin, AuthRequest } from '../../middleware/auth'
 import { supabaseAdmin } from '../../config/supabase'
 import { ROUND_CONFIG } from './quiz.types'
+import { adminStartTournament } from './quiz.gateway'
+import type { Server as SocketServer } from 'socket.io'
+
+let _io: SocketServer | null = null
+export function setQuizAdminIo(io: SocketServer) { _io = io }
 
 const router = Router()
 
@@ -124,23 +129,39 @@ router.post('/tournaments/:id/start', requireAdmin, async (req, res) => {
   }
 })
 
-// ── POST /admin/quiz/tournaments/:id/launch  — actually start game (called after lobby countdown)
+// ── POST /admin/quiz/tournaments/:id/launch  — actually start game via socket
 router.post('/tournaments/:id/launch', requireAdmin, async (req, res) => {
   try {
-    // This is called when admin clicks "Start Game Now"
-    // The actual socket broadcast is handled by the gateway
-    // We just update DB here; gateway is called separately via the exported function
     const { id } = req.params
 
-    const { data } = await supabaseAdmin
+    if (!_io) {
+      res.status(500).json({ success: false, message: 'Socket server not ready' })
+      return
+    }
+
+    const { data: tournament } = await supabaseAdmin
       .from('quiz_tournaments')
-      .update({ status: 'active', started_at: new Date().toISOString(), current_round: 1 })
+      .select('status')
       .eq('id', id)
-      .select()
       .single()
 
-    res.json({ success: true, data, message: 'Game launched. Socket gateway will broadcast.' })
+    if (!tournament) {
+      res.status(404).json({ success: false, message: 'Tournament not found' })
+      return
+    }
+
+    if (tournament.status !== 'lobby') {
+      res.status(400).json({ success: false, message: `Tournament must be in lobby status to launch. Current: ${tournament.status}` })
+      return
+    }
+
+    // This calls the gateway which broadcasts quiz:game_start to all connected players
+    // then immediately fires the first question
+    await adminStartTournament(id, _io)
+
+    res.json({ success: true, message: 'Game launched! First question broadcasting to all players now.' })
   } catch (err: any) {
+    console.error('[Admin Quiz] Launch error:', err)
     res.status(400).json({ success: false, message: err.message })
   }
 })
