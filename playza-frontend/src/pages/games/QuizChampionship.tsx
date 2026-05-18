@@ -6,11 +6,10 @@ import { useQuizSocket, type LeaderboardEntry } from "@/hooks/quiz/useQuizSocket
 import { useToast } from "@/context/toast";
 import { ZASymbol } from "@/components/currency/ZASymbol";
 import {
-  MdPeople, MdEmojiEvents, MdTimer, MdCheckCircle,
-  MdCancel, MdArrowBack, MdWifi, MdWifiOff, MdStar,
-  MdLocalFireDepartment, MdBolt,
+  MdPeople, MdCheckCircle,
+  MdCancel, MdArrowBack, MdWifi, MdWifiOff,
 } from "react-icons/md";
-import { Trophy, Zap, Crown, Shield } from "lucide-react";
+import { Trophy, Zap, Crown } from "lucide-react";
 
 // ── Round config metadata ──────────────────────────────────────────────────────
 const ROUND_META = [
