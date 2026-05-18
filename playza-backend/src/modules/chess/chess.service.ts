@@ -117,7 +117,7 @@ function generateRoomCode(): string {
 
 async function handleGameOver(roomId: string, winnerId: string | null, stake: number) {
   // 1. Update room status
-  const { data: room } = await supabaseAdmin
+  const { data: room, error: updateErr } = await supabaseAdmin
     .from('chess_rooms')
     .update({ 
       status: 'finished', 
@@ -127,7 +127,14 @@ async function handleGameOver(roomId: string, winnerId: string | null, stake: nu
     .select('host_id, guest_id')
     .single()
 
-  if (!room) return
+  if (updateErr) {
+    console.error(`[Chess handleGameOver] Failed to update room ${roomId}:`, updateErr);
+    return;
+  }
+  if (!room) {
+    console.error(`[Chess handleGameOver] Room ${roomId} update returned null data without error`);
+    return;
+  }
 
   // 2. Handle Prize & Transactions for Winner
   if (stake > 0 && winnerId && winnerId !== SYSTEM_BOT_ID) {
