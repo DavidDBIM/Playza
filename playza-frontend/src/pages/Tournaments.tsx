@@ -1,17 +1,13 @@
 import { useState } from "react";
 import { Link } from "react-router";
 import { useQuery } from "@tanstack/react-query";
-import { tournaments } from "@/data/tournaments";
-import { games } from "@/data/games";
 import { getQuizTournamentsApi } from "@/api/quiz.api";
 import {
   Search,
   Trophy,
   X,
   ArrowRight,
-  Clock,
   Users,
-  PlaySquare,
   ChevronDown,
   Brain,
   Zap,
@@ -43,20 +39,25 @@ const Tournaments = () => {
     staleTime: 30_000,
   });
 
-  const featuredTournament =
-    tournaments.find((t) => t.status === "live") || tournaments[0];
-  const featuredGame = games.find((g) => g.id === featuredTournament.gameId);
+  const featuredTournament = quizTournaments.find(qt => qt.status === "active" || qt.status === "lobby") || quizTournaments[0];
+  
+  const filteredTournaments = quizTournaments.filter((qt) => {
+    const isLive = qt.status === "active";
+    const isCompleted = qt.status === "completed";
+    const isUpcoming = qt.status === "lobby" || qt.status === "draft";
 
-  const filteredTournaments = tournaments.filter((t) => {
-    const matchTab = t.status === activeTab;
-    const game = games.find((g) => g.id === t.gameId);
-    const matchSearch =
-      game?.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchTab = 
+      activeTab === "live" ? isLive : 
+      activeTab === "completed" ? isCompleted : 
+      activeTab === "upcoming" ? isUpcoming : false;
+
+    const matchSearch = qt.title.toLowerCase().includes(searchQuery.toLowerCase());
+    
     const matchPrize =
       filterPrize === "all" ||
-      (filterPrize === "high" && t.prizePool >= 100000) ||
-      (filterPrize === "low" && t.prizePool < 100000);
+      (filterPrize === "high" && qt.prize_pool >= 100000) ||
+      (filterPrize === "low" && qt.prize_pool < 100000);
+      
     return matchTab && matchSearch && matchPrize;
   });
 
@@ -73,13 +74,12 @@ const Tournaments = () => {
         </div>
 
         {/* Featured Tournament Hero */}
-        {featuredTournament && featuredGame && (
+        {featuredTournament && (
           <section className="relative w-full h-87.5 md:h-112.5 rounded-xl overflow-hidden border border-white/5 bg-slate-950 select-none mx-1 md:mx-0">
             <div className="absolute inset-0 z-0">
               <div className="absolute inset-0 bg-linear-to-t from-slate-950 via-slate-950/80 to-transparent z-10" />
               <div
-                className="absolute inset-0 w-full h-full bg-cover bg-center opacity-40"
-                style={{ backgroundImage: `url(${featuredGame.thumbnail})` }}
+                className="absolute inset-0 w-full h-full opacity-40 bg-gradient-to-br from-primary/30 to-violet-600/30"
               />
               <div className="absolute inset-0 bg-linear-to-r from-primary/30 to-transparent z-10" />
             </div>
@@ -87,27 +87,27 @@ const Tournaments = () => {
             <div className="relative z-20 h-full flex flex-col justify-end p-6 md:p-10">
               <div className="inline-flex items-center gap-2 bg-red-500/20 text-red-500 border border-red-500/30 px-2 md:px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-4 w-max">
                 <span className="w-2 h-2 rounded-full bg-red-500" />{" "}
-                LIVE EVENT
+                {featuredTournament.status === "active" ? "LIVE EVENT" : featuredTournament.status.toUpperCase()}
               </div>
 
               <h2 className="text-4xl md:text-6xl font-black font-headline text-white uppercase tracking-tighter mb-2 max-w-2xl">
-                {featuredTournament.name}
+                {featuredTournament.title}
               </h2>
 
               <div className="flex flex-wrap items-center gap-4 md:gap-6 mb-8 text-slate-300 font-bold tracking-widest text-xs uppercase">
                 <div className="flex items-center gap-2 bg-black/40 backdrop-blur-sm px-2 md:px-4 py-2 rounded-lg border border-white/10">
                   <Trophy className="text-yellow-500" size={16} />
                   Prize Pool: <ZASymbol className="text-yellow-500 scale-90" />{" "}
-                  {featuredTournament.prizePool.toLocaleString()}
+                  {featuredTournament.prize_pool.toLocaleString()}
                 </div>
                 <div className="flex items-center gap-2 bg-black/40 backdrop-blur-sm px-2 md:px-4 py-2 rounded-lg border border-white/10">
                   <Users className="text-primary" size={16} />
-                  {featuredGame.activePlayers} Participants
+                  {featuredTournament.player_count} Participants
                 </div>
               </div>
 
               <Link
-                to={`/tournaments/${featuredTournament.id}`}
+                to={`/quiz/${featuredTournament.id}`}
                 className="inline-flex items-center justify-center gap-2 bg-primary md:hover:bg-primary/90 text-white font-black uppercase tracking-widest px-8 md:px-12 py-2 md:py-4 rounded-xl w-full md:w-auto"
               >
                 Join Tournament <ArrowRight size={18} />
@@ -186,113 +186,9 @@ const Tournaments = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 md:gap-6 mt-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-4 mt-4">
             {filteredTournaments.length > 0 ? (
-              filteredTournaments.map((t) => {
-                const g = games.find((game) => game.id === t.gameId);
-                if (!g) return null;
-
-                return (
-                  <div
-                    key={t.id}
-                    className="glass-card rounded-xl border border-slate-200 dark:border-white/5 overflow-hidden flex flex-col h-full"
-                  >
-                    <div className="h-32 bg-slate-900 relative overflow-hidden">
-                      <div
-                        className="absolute inset-0 bg-cover bg-center opacity-60"
-                        style={{ backgroundImage: `url(${g.thumbnail})` }}
-                      />
-                      <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-md px-2 md:px-3 py-1 rounded border border-white/10 text-[10px] font-black uppercase text-white flex items-center gap-1.5">
-                        <ZASymbol className="text-primary scale-75" />{" "}
-                        {t.prizePool.toLocaleString()}
-                      </div>
-                      <div className="absolute inset-0 bg-linear-to-t from-slate-900 to-transparent" />
-                      <div className="absolute bottom-3 left-4 right-3">
-                        <h3 className="font-headline font-black text-base md:text-xl text-white uppercase truncate">
-                          {t.name}
-                        </h3>
-                      </div>
-                    </div>
-
-                    <div className="p-2 md:p-5 flex flex-col flex-1 justify-between bg-white dark:bg-transparent">
-                      <div className="space-y-4 mb-6">
-                        <div className="flex items-center justify-between text-xs font-bold uppercase tracking-widest text-slate-500">
-                          <span className="flex items-center gap-1.5">
-                            <PlaySquare size={14} /> {g.title}
-                          </span>
-                          <span className="text-primary bg-primary/10 px-2 py-0.5 rounded flex items-center gap-1">
-                            Entry: <ZASymbol className="scale-75" />{" "}
-                            {t.entryFee}
-                          </span>
-                        </div>
-
-                        <div className="flex items-center gap-2 md:gap-4 text-xs font-bold text-slate-600 dark:text-slate-400">
-                          <span className="flex items-center gap-1.5">
-                            <Clock size={14} className="opacity-50" />
-                            {new Date(t.startDate).toLocaleDateString()}
-                          </span>
-                          <span className="flex items-center gap-1.5">
-                            <Users size={14} className="opacity-50" />
-                            {t.status === "completed"
-                              ? "Ended"
-                              : `${g.activePlayers} registered`}
-                          </span>
-                        </div>
-                      </div>
-
-                      <Link
-                        to={`/tournaments/${t.id}`}
-                        className={`w-full py-3 rounded-xl font-black uppercase tracking-widest text-[10px] text-center ${
-                          t.status === "live"
-                            ? "bg-primary text-white md:hover:bg-primary/90"
-                            : t.status === "completed"
-                              ? "bg-slate-200 dark:bg-white/5 text-slate-500 md:hover:bg-slate-300 md:dark:hover:bg-white/10"
-                              : "bg-playza-yellow/10 text-playza-yellow md:hover:bg-playza-yellow/20"
-                        }`}
-                      >
-                        {t.status === "live"
-                          ? "ENTER TOURNAMENT"
-                          : t.status === "upcoming"
-                            ? "VIEW DETAILS"
-                            : "VIEW RESULTS"}
-                      </Link>
-                    </div>
-                  </div>
-                );
-              })
-            ) : (
-              <div className="col-span-full py-2 md:py-20 flex flex-col items-center justify-center text-center glass-card rounded-xl border border-white/5">
-                <Trophy className="text-slate-700 opacity-20 mb-4" size={64} />
-                <h3 className="font-headline font-black text-lg md:text-2xl text-slate-900 dark:text-white uppercase mb-2">
-                  No Tournaments Found
-                </h3>
-                <p className="text-xs md:text-sm font-bold tracking-widest text-slate-500 uppercase opacity-60">
-                  Try adjusting your filters or search query.
-                </p>
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* ── Quiz Championship Section ── */}
-        {quizTournaments.length > 0 && (
-          <section className="flex flex-col gap-3 mt-6 px-2 md:px-0">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-violet-600 flex items-center justify-center">
-                <Brain className="w-4 h-4 text-white" />
-              </div>
-              <div>
-                <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
-                  Quiz <span className="text-primary">Championship</span>
-                </h2>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
-                  Answer fast. Survive longer. Win big.
-                </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-4">
-              {quizTournaments.map((qt) => (
+              filteredTournaments.map((qt) => (
                 <div key={qt.id} className="glass-card rounded-xl border border-slate-200 dark:border-white/5 overflow-hidden flex flex-col bg-gradient-to-b from-slate-50 to-white dark:from-slate-900 dark:to-slate-950 hover:border-primary/30 transition-all">
                   <div className="h-28 bg-gradient-to-br from-primary/20 via-violet-500/10 to-slate-900 relative overflow-hidden flex items-center justify-center">
                     <div className="absolute top-3 right-3">
@@ -344,10 +240,20 @@ const Tournaments = () => {
                     </Link>
                   </div>
                 </div>
-              ))}
-            </div>
-          </section>
-        )}
+              ))
+            ) : (
+              <div className="col-span-full py-2 md:py-20 flex flex-col items-center justify-center text-center glass-card rounded-xl border border-white/5">
+                <Trophy className="text-slate-700 opacity-20 mb-4" size={64} />
+                <h3 className="font-headline font-black text-lg md:text-2xl text-slate-900 dark:text-white uppercase mb-2">
+                  No Tournaments Found
+                </h3>
+                <p className="text-xs md:text-sm font-bold tracking-widest text-slate-500 uppercase opacity-60">
+                  Try adjusting your filters or search query.
+                </p>
+              </div>
+            )}
+          </div>
+        </section>
       </div>
     </div>
   );
