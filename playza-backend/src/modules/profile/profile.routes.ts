@@ -58,6 +58,16 @@ router.get('/history', requireAuth, async (req: AuthRequest, res: Response) => {
     const userId = req.user!.id
     const data = await getGameHistory(userId, page, limit)
     console.log(`[Profile/History] user=${userId} total=${data.total} returned=${data.history.length}`)
+    
+    // FORENSIC DEBUGGING: Check what is actually in the game_history table
+    const { supabaseAdmin } = await import('../../config/supabase')
+    const { data: sampleRows, count: totalRows, error: dbErr } = await supabaseAdmin
+      .from('game_history')
+      .select('id, user_id, game_name, status, winnings', { count: 'exact' })
+      .limit(5);
+    console.log(`[FORENSIC game_history] DB Error: ${dbErr?.message || 'None'}, Total rows in DB: ${totalRows}`);
+    console.log(`[FORENSIC game_history] Sample rows in DB:`, JSON.stringify(sampleRows));
+
     // Prevent Cloudflare/browser from caching personal game history with stale ETags
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
     res.setHeader('Pragma', 'no-cache')

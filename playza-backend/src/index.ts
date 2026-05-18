@@ -38,6 +38,7 @@ import { setupSocketIO } from './lib/socketHandler'
 dotenv.config()
 
 const app = express()
+app.set('trust proxy', 1) // Trust Render/Cloudflare reverse proxy for accurate IP tracking & rate limiting
 const PORT = process.env.PORT || 5000
 
 const allowedOrigins = (process.env.FRONTEND_URL || '')
