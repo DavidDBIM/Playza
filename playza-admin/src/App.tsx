@@ -17,6 +17,7 @@ import Notifications from "./pages/Notifications";
 import Ambassadors from "./pages/Ambassadors";
 import SocialTasks from "./pages/SocialTasks";
 import Rewards from "./pages/Rewards";
+import QuizTournaments from "./pages/QuizTournaments";
 import SignIn from "./pages/SignIn";
 import { ThemeProvider } from "./components/theme/ThemeProvider";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
@@ -69,6 +70,7 @@ const App: React.FC = () => {
               <Route path="feedback" element={<Feedback />} />
               <Route path="security-logs" element={<SecurityLogs />} />
               <Route path="content" element={<Placeholder name="Content" />} />
+              <Route path="quiz-tournaments" element={<QuizTournaments />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
           </Route>
