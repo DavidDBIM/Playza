@@ -5,7 +5,6 @@ import dotenv from 'dotenv'
 import cookieParser from 'cookie-parser'
 import cron from 'node-cron'
 import { createServer } from 'http'
-import { Server as SocketServer } from 'socket.io'
 import { supabaseAdmin as supabase } from './config/supabase'
 import { finalizeSessionAndPayout } from './modules/gamesession/gamesession.service'
 
@@ -34,6 +33,7 @@ import gamesessionRoutes from './modules/gamesession/gamesession.routes'
 import quizRoutes from './modules/quiz/quiz.routes'
 import quizAdminRoutes from './modules/quiz/quiz.admin.routes'
 import { setupQuizGateway } from './modules/quiz/quiz.gateway'
+import { setupSocketIO } from './lib/socketHandler'
 
 dotenv.config()
 
@@ -87,28 +87,13 @@ app.use((req, res) => {
   res.status(404).json({ success: false, message: 'Route not found' })
 })
 
-// ── HTTP server + Socket.IO ───────────────────────────────────────────────────
-// Wrap express in http.Server so Socket.IO and the app share the same port.
+// ── HTTP server ───────────────────────────────────────────────────────────────
+// Wrap express so Socket.IO and the app share the same port
 const httpServer = createServer(app)
 
-const io = new SocketServer(httpServer, {
-  cors: {
-    origin: allowedOrigins,
-    methods: ['GET', 'POST'],
-    credentials: true,
-  },
-})
-
-// Attach existing socket handler (pool, chess, etc.)
-try {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { setupSocketIO } = require('./lib/socketHandler')
-  setupSocketIO(httpServer)
-} catch (_) {
-  // socketHandler not present or already initialised elsewhere
-}
-
-// Attach quiz real-time gateway on /quiz namespace
+// setupSocketIO (pool/chess) creates the SocketServer internally and returns it
+// We reuse that same io instance for the quiz gateway — only ONE SocketServer
+const io = setupSocketIO(httpServer)
 setupQuizGateway(io)
 
 // ── Background jobs ───────────────────────────────────────────────────────────
