@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { Link } from "react-router";
+import { useQuery } from "@tanstack/react-query";
 import { tournaments } from "@/data/tournaments";
 import { games } from "@/data/games";
+import { getQuizTournamentsApi } from "@/api/quiz.api";
 import {
   Search,
   Trophy,
@@ -11,7 +13,10 @@ import {
   Users,
   PlaySquare,
   ChevronDown,
+  Brain,
+  Zap,
 } from "lucide-react";
+import { MdPeople, MdTimer } from "react-icons/md";
 import { ZASymbol } from "@/components/currency/ZASymbol";
 import {
   DropdownMenu,
@@ -33,6 +38,12 @@ const Tournaments = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterPrize, setFilterPrize] = useState<string>("all");
 
+  const { data: quizTournaments = [] } = useQuery({
+    queryKey: ["quiz-tournaments-public"],
+    queryFn: getQuizTournamentsApi,
+    staleTime: 30_000,
+  });
+
   const featuredTournament =
     tournaments.find((t) => t.status === "live") || tournaments[0];
   const featuredGame = games.find((g) => g.id === featuredTournament.gameId);
@@ -51,7 +62,7 @@ const Tournaments = () => {
   });
 
   return (
-    <div className="flex flex-col flex-1 pb-24 md:pb-20 w-full overflow-x-hidden">
+    <div className="flex flex-col flex-1 pb-2 md:pb-20 w-full overflow-x-hidden">
       <div className="flex flex-col gap-2 md:gap-6 md:px-0">
         <div className="flex flex-col gap-2 mt-4 px-2 md:px-0">
           <h1 className="text-3xl md:text-5xl font-black font-headline tracking-tighter text-slate-900 dark:text-white uppercase flex items-center gap-2 md:gap-3">
