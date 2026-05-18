@@ -95,13 +95,14 @@ const User: React.FC = () => {
   const filteredMatches = useMemo((): MatchRecord[] => {
     const history = userDetails?.game_history || [];
     return history
-      .filter((match) =>
-        match.game_name.toLowerCase().includes(searchQuery.toLowerCase()),
-      )
+      .filter((match) => {
+        const gameName = match.game_name || "Unknown Game";
+        return gameName.toLowerCase().includes(searchQuery.toLowerCase());
+      })
       .map((match) => ({
         id: match.id,
-        game: match.game_name,
-        score: match.status.toUpperCase(),
+        game: match.game_name || "Unknown Game",
+        score: match.status ? match.status.toUpperCase() : "COMPLETED",
         position: match.id.slice(0, 8),
         winnings: match.winnings || 0,
         date: new Date(match.played_at).toLocaleDateString(),

@@ -38,6 +38,7 @@ export const useGameHistory = (page = 1, limit = 20) => {
     queryKey: ["profile", "history", page, limit],
     queryFn: () => getGameHistoryApi(page, limit),
     staleTime: 2 * 60 * 1000, // 2 minutes
+    enabled: !!TokenStorage.getAccessToken(),
   });
 };
 

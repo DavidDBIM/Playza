@@ -13,6 +13,7 @@ import { useAuth } from "./context/auth";
 import { CompleteProfileModal } from "./components/profile/CompleteProfileModal";
 import { FloatingSpinNotification } from "./components/loyalty/FloatingSpinNotification";
 import NotificationBanner from "./components/NotificationBanner";
+import PayoutBanner from "./components/PayoutBanner";
 import { DeactivatedAccountModal } from "./components/profile/DeactivatedAccountModal";
 import { FloatingFeedbackButton } from "./components/feedback/FloatingFeedbackButton";
 
@@ -33,7 +34,6 @@ const Deposit = lazy(() => import("./pages/Deposit"));
 const Withdrawal = lazy(() => import("./pages/Withdrawal"));
 const MyGames = lazy(() => import("./pages/MyGames"));
 const Tournaments = lazy(() => import("./pages/Tournaments"));
-const TournamentDetail = lazy(() => import("./pages/TournamentDetail"));
 const Referral = lazy(() => import("./pages/Referral"));
 const WithdrawSuccess = lazy(() => import("./pages/WithdrawSuccess"));
 const TermsAndConditions = lazy(() => import("./pages/TermsAndConditions"));
@@ -164,7 +164,7 @@ const AppContent = () => {
 
       <FloatingSpinNotification />
       <NotificationBanner />
-      <NotificationBanner />
+      <PayoutBanner />
 
       {!isHiddenPage && showFeedback && user && (
         <FloatingFeedbackButton />
@@ -200,7 +200,6 @@ const AppContent = () => {
               <Route path="/" element={<Home />} />
               <Route path="/leaderboard" element={<LeaderBoard />} />
               <Route path="/tournaments" element={<Tournaments />} />
-              <Route path="/tournaments/:id" element={<TournamentDetail />} />
               <Route
                 path="/wallet"
                 element={<Wallet onWithdrawClick={handleWithdrawClick} />}
@@ -257,14 +256,18 @@ const AppContent = () => {
   );
 };
 
+import { ConnectivityProvider } from "./context/ConnectivityContext";
+
 // ─── App root ─────────────────────────────────────────────────────────────────
 const App = () => {
   return (
     <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
       <AuthProvider>
-        <ToastProvider>
-          <AppContent />
-        </ToastProvider>
+        <ConnectivityProvider>
+          <ToastProvider>
+            <AppContent />
+          </ToastProvider>
+        </ConnectivityProvider>
       </AuthProvider>
     </ThemeProvider>
   );

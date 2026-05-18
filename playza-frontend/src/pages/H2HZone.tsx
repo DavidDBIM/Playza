@@ -1,4 +1,4 @@
-import { useEffect, lazy, Suspense } from 'react';
+import { useEffect, lazy, Suspense, useState } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import H2HLobby from '@/components/h2h/H2HLobby';
 import H2HWaitingRoom from '@/components/h2h/H2HWaitingRoom';
@@ -31,6 +31,8 @@ const H2HZone = () => {
   const { user } = useAuth() as { user: UserProfile | null };
   const currentType = gameType as GameType;
 
+  const [showVsScreen, setShowVsScreen] = useState(false);
+
   // Use the new TanStack query hook for the room state
   const { data: room, isError } = useH2HRoom(roomId, currentType);
   const { createRoom, createBotRoom, joinRoom, quickMatch } = useH2HMutations(currentType);
@@ -41,6 +43,16 @@ const H2HZone = () => {
       navigate(`/h2h/${gameType}`);
     }
   }, [isError, room, navigate, gameType, toast]);
+
+  useEffect(() => {
+    if (room?.status === "active" || room?.status === "playing") {
+      setShowVsScreen(true);
+      const timer = setTimeout(() => setShowVsScreen(false), 3000);
+      return () => clearTimeout(timer);
+    } else {
+      setShowVsScreen(false);
+    }
+  }, [room?.status]);
 
   const handleCreateRoom = async (stake: number) => {
     try {
@@ -134,6 +146,19 @@ const H2HZone = () => {
           </div>
         ) : (
           <div className="w-full">
+            {showVsScreen && room && (
+              <div className="fixed inset-0 z-[999] flex items-center justify-center bg-slate-950/90 backdrop-blur-md">
+                <div className="text-center animate-in zoom-in duration-500 flex flex-col items-center gap-6">
+                  <h2 className="text-4xl md:text-6xl font-black uppercase text-white italic tracking-tighter drop-shadow-[0_0_15px_rgba(99,102,241,0.5)]">
+                    {room.host?.username || "Player 1"}
+                  </h2>
+                  <div className="text-primary text-5xl font-black italic">VS</div>
+                  <h2 className="text-4xl md:text-6xl font-black uppercase text-white italic tracking-tighter drop-shadow-[0_0_15px_rgba(239,68,68,0.5)]">
+                    {room.guest?.username || (room.guest_id ? "Waiting..." : (room.board_state?.bot?.username || "Computer"))}
+                  </h2>
+                </div>
+              </div>
+            )}
             {(() => {
               if (gameType === "arena-duel" && !room) {
                 return <ArenaDuel />;

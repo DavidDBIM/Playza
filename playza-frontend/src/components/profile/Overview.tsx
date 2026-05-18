@@ -14,7 +14,7 @@ const Overview = () => {
   const [filterBy, setFilterBy] = useState("all");
   const [search, setSearch] = useState("");
 
-  const { data: historyData, isLoading } = useGameHistory(page, LIMIT);
+  const { data: historyData, isLoading, isError, error } = useGameHistory(page, LIMIT);
 
   const history = historyData?.history ?? [];
   const total = historyData?.total ?? 0;
@@ -26,9 +26,10 @@ const Overview = () => {
   const highestScore = history.reduce((max: number, m: GameHistoryItem) => Math.max(max, m.score || 0), 0);
 
   const filtered = history.filter((m: GameHistoryItem) => {
-    const matchesSearch = m.game_name.toLowerCase().includes(search.toLowerCase());
-    if (filterBy === "win") return matchesSearch && m.winnings > 0;
-    if (filterBy === "loss") return matchesSearch && m.winnings === 0;
+    const gameName = m.game_name || "Unknown Game";
+    const matchesSearch = gameName.toLowerCase().includes(search.toLowerCase());
+    if (filterBy === "win") return matchesSearch && m.status === 'win';
+    if (filterBy === "loss") return matchesSearch && m.status === 'loss';
     return matchesSearch;
   });
 
@@ -97,6 +98,11 @@ const Overview = () => {
               <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
               <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 animate-pulse">Loading History...</p>
             </div>
+          ) : isError ? (
+            <div className="p-8 text-center space-y-2">
+              <p className="text-red-400 text-xs font-black uppercase tracking-widest">Failed to load history</p>
+              <p className="text-slate-500 text-[10px] font-mono break-all">{(error as Error)?.message || "Unknown error"}</p>
+            </div>
           ) : filtered.length === 0 ? (
             <div className="p-12 text-center">
               <MdHistory className="text-slate-300 dark:text-white/10 text-4xl mx-auto mb-3" />
@@ -104,32 +110,33 @@ const Overview = () => {
             </div>
           ) : (
             <div className="divide-y divide-slate-100 dark:divide-white/5">
-              {filtered.map((match: GameHistoryItem, i: number) => (
+              {filtered.map((m: GameHistoryItem, i: number) => (
                 <div key={i} className="p-3 md:p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-white/2 transition-colors group">
                   <div className="flex items-center gap-2 md:gap-4 min-w-0">
-                    <div className={`size-9 rounded-xl flex items-center justify-center shrink-0 ${match.winnings > 0 ? "bg-green-500/10" : "bg-red-500/10"}`}>
-                      {match.winnings > 0
+                    <div className={`size-9 rounded-xl flex items-center justify-center shrink-0 ${m.status === 'win' ? "bg-green-500/10" : m.status === 'draw' ? "bg-yellow-500/10" : "bg-red-500/10"}`}>
+                      {m.status === 'win'
                         ? <MdCheckCircle className="text-green-500 text-base" />
+                        : m.status === 'draw' ? <MdEmojiEvents className="text-yellow-500 text-base" /> 
                         : <MdCancel className="text-red-500 text-base" />}
                     </div>
                     <div className="min-w-0">
                       <p className="text-slate-900 dark:text-white text-xs font-black italic truncate">
-                        {match.game_name}
+                        {m.game_name || "Arena Tournament"}
                       </p>
                       <p className="text-slate-500 text-[9px] uppercase font-black tracking-widest mt-0.5">
-                        {new Date(match.played_at).toLocaleDateString("en-NG", { day: "numeric", month: "short", year: "numeric" })}
-                        {match.score ? ` • Score: ${match.score.toLocaleString()}` : ""}
+                        {new Date(m.played_at).toLocaleDateString("en-NG", { day: "numeric", month: "short", year: "numeric" })}
+                        {m.score ? ` • Score: ${m.score.toLocaleString()}` : ""}
                       </p>
                     </div>
                   </div>
                   <div className="text-right shrink-0 ml-2">
-                    <div className={`flex items-center gap-1 justify-end font-black text-sm ${match.winnings > 0 ? "text-primary" : "text-slate-400"}`}>
-                      {match.winnings > 0 ? (
-                        <><span>+</span><ZASymbol className="text-xs scale-90" /><span>{match.winnings.toLocaleString()}</span></>
+                    <div className={`flex items-center gap-1 justify-end font-black text-sm ${m.status === 'win' || m.status === 'draw' ? "text-primary" : "text-slate-400"}`}>
+                      {m.winnings > 0 ? (
+                        <><span>+</span><ZASymbol className="text-xs scale-90" /><span>{m.winnings.toLocaleString()}</span></>
                       ) : "—"}
                     </div>
-                    <p className={`text-[9px] font-black uppercase tracking-widest ${match.winnings > 0 ? "text-green-500" : "text-red-400"}`}>
-                      {match.winnings > 0 ? "WIN" : "LOSS"}
+                    <p className={`text-[9px] font-black uppercase tracking-widest ${m.status === 'win' ? "text-green-500" : m.status === 'draw' ? "text-yellow-500" : "text-red-400"}`}>
+                      {m.status ? m.status.toUpperCase() : (m.winnings > 0 ? "WIN" : "LOSS")}
                     </p>
                   </div>
                 </div>

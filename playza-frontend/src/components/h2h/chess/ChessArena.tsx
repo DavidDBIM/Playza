@@ -674,7 +674,7 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
 
   // ── Render
   return (
-    <div className="flex flex-col gap-1.5 w-full max-w-full mx-auto p-2 box-border md:grid md:grid-cols-[1fr_360px] md:grid-rows-[auto_auto_auto_auto_1fr] md:gap-4 md:p-4 lg:p-6 min-h-screen bg-slate-50 dark:bg-slate-950 overflow-y-auto">
+    <div className="flex flex-col gap-1.5 w-full max-w-full mx-auto p-2 box-border md:grid md:grid-cols-[1fr_360px] md:grid-rows-[auto_auto_auto_auto_1fr] md:gap-4 md:p-4 lg:p-6 h-screen bg-slate-50 dark:bg-slate-950 overflow-y-auto">
       {/* ── Network Offline Overlay ── */}
       {!isOnline && (
         <div className="fixed inset-0 z-500 flex items-center justify-center bg-slate-950/90 backdrop-blur-sm">
@@ -820,7 +820,7 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
                 className={`font-black text-[10px] md:text-xs truncate uppercase tracking-wide leading-tight md:text-[15px] ${(!hostIsWhite && myTurn) || (hostIsWhite && oppTurn) ? "text-indigo-600 dark:text-indigo-500" : "text-slate-900 dark:text-slate-100"}`}
               >
                 {room.guest?.username ||
-                  (room.guest_id ? "Waiting..." : "COMPUTER")}
+                  (room.guest_id ? "Waiting..." : (room.board_state?.bot?.username || "COMPUTER"))}
               </span>
               <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-none">
                 ⬛ · {room.guest_id === user?.id ? "YOU" : "RIVAL"}

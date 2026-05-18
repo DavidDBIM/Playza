@@ -92,10 +92,6 @@ const Transactions = () => {
             Your detailed financial activity and gaming rewards statement.
           </p>
         </div>
-        <button className="flex items-center gap-2 px-2 md:px-6 py-2 md:py-3 bg-primary text-background-dark font-black rounded-xl hover:scale-[1.05] transition-all neon-glow group shadow-xl">
-          <MdFileDownload className="text-base md:text-xl group-hover:animate-bounce" />
-          <span>Download PDF</span>
-        </button>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-2 md:gap-4 mb-8 ">
