@@ -131,7 +131,7 @@ async function endTournament(tournamentId: string, io: SocketServer, game: GameS
     await supabaseAdmin.rpc('increment_wallet_balance', {
       p_user_id: winners[i].user_id,
       p_amount: prize,
-    }).catch(() => {})
+    })
 
     await supabaseAdmin
       .from('quiz_players')
@@ -403,14 +403,16 @@ export function setupQuizGateway(io: SocketServer) {
       game.currentQuestion.answers.set(userId, { option: selected_option, timeTakenMs })
 
       // Persist to DB
-      await supabaseAdmin.from('quiz_answers').upsert({
-        tournament_id,
-        question_id,
-        user_id: userId,
-        selected_option,
-        is_correct: isCorrect,
-        time_taken_ms: timeTakenMs,
-      }, { onConflict: 'question_id,user_id' }).catch(console.error)
+      try {
+        await supabaseAdmin.from('quiz_answers').upsert({
+          tournament_id,
+          question_id,
+          user_id: userId,
+          selected_option,
+          is_correct: isCorrect,
+          time_taken_ms: timeTakenMs,
+        }, { onConflict: 'question_id,user_id' })
+      } catch (_) {}
 
       socket.emit('quiz:answer_ack', { received: true, question_id })
 
