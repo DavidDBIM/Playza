@@ -119,20 +119,24 @@ router.post('/tournaments/:id/join', requireAuth, async (req: AuthRequest, res) 
       })
 
       // Add to prize pool
-      await supabaseAdmin
-        .from('quiz_tournaments')
-        .update({ prize_pool: supabaseAdmin.rpc as any }) // handled separately below
-        .eq('id', tournamentId)
-
-      await supabaseAdmin.rpc('increment_quiz_prize_pool', {
-        p_tournament_id: tournamentId,
-        p_amount: tournament.entry_fee,
-      }).catch(() => {
-        // RPC might not exist yet — update directly
-        supabaseAdmin.from('quiz_tournaments')
-          .update({ prize_pool: tournament.entry_fee }) // partial fallback
+      // Add entry fee to prize pool directly
+      try {
+        await supabaseAdmin.rpc('increment_quiz_prize_pool', {
+          p_tournament_id: tournamentId,
+          p_amount: tournament.entry_fee,
+        })
+      } catch (_) {
+        // RPC doesn't exist yet — update directly
+        const { data: current } = await supabaseAdmin
+          .from('quiz_tournaments')
+          .select('prize_pool')
           .eq('id', tournamentId)
-      })
+          .single()
+        await supabaseAdmin
+          .from('quiz_tournaments')
+          .update({ prize_pool: (current?.prize_pool ?? 0) + tournament.entry_fee })
+          .eq('id', tournamentId)
+      }
     }
 
     // Register player
