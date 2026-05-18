@@ -299,6 +299,18 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
     return () => document.body.classList.remove("overflow-hidden");
   }, [showWinnerDelayed, showGameOverAcknowledge]);
 
+  // ── Sync Winner Screen for Opponent when Resignation occurs ─────────────────
+  useEffect(() => {
+    if (room.status === "finished" && !showWinnerDelayed && !showGameOverAcknowledge) {
+      // If the room status is finished but we haven't shown the winner screen yet
+      // (which happens for the player who didn't resign), show it now!
+      const timer = setTimeout(() => {
+        setShowWinnerDelayed(true);
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [room.status, showWinnerDelayed, showGameOverAcknowledge]);
+
   // ── Detect check / checkmate from local game state ──────────────────────────
   useEffect(() => {
     const isInCheck = game.isCheck();

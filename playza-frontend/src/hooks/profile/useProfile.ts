@@ -37,7 +37,8 @@ export const useGameHistory = (page = 1, limit = 20) => {
   return useQuery({
     queryKey: ["profile", "history", page, limit],
     queryFn: () => getGameHistoryApi(page, limit),
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: 0, // Always fetch fresh — backend is protected from CDN caching
+    gcTime: 0,    // Don't keep in memory either — force fresh on every mount
     enabled: !!TokenStorage.getAccessToken(),
   });
 };

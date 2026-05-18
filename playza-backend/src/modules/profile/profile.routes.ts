@@ -58,6 +58,11 @@ router.get('/history', requireAuth, async (req: AuthRequest, res: Response) => {
     const userId = req.user!.id
     const data = await getGameHistory(userId, page, limit)
     console.log(`[Profile/History] user=${userId} total=${data.total} returned=${data.history.length}`)
+    // Prevent Cloudflare/browser from caching personal game history with stale ETags
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
+    res.setHeader('Pragma', 'no-cache')
+    res.setHeader('Expires', '0')
+    res.setHeader('Surrogate-Control', 'no-store')
     res.json({ success: true, data })
   } catch (err: any) {
     console.error('[Profile/History] Error:', err.message)
