@@ -16,7 +16,6 @@ import {
   Brain,
   Zap,
 } from "lucide-react";
-import { MdPeople, MdTimer } from "react-icons/md";
 import { ZASymbol } from "@/components/currency/ZASymbol";
 import {
   DropdownMenu,
@@ -274,6 +273,82 @@ const Tournaments = () => {
             )}
           </div>
         </section>
+
+        {/* ── Quiz Championship Section ── */}
+        {quizTournaments.length > 0 && (
+          <section className="flex flex-col gap-3 mt-6 px-2 md:px-0">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-violet-600 flex items-center justify-center">
+                <Brain className="w-4 h-4 text-white" />
+              </div>
+              <div>
+                <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
+                  Quiz <span className="text-primary">Championship</span>
+                </h2>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                  Answer fast. Survive longer. Win big.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-4">
+              {quizTournaments.map((qt) => (
+                <div key={qt.id} className="glass-card rounded-xl border border-slate-200 dark:border-white/5 overflow-hidden flex flex-col bg-gradient-to-b from-slate-50 to-white dark:from-slate-900 dark:to-slate-950 hover:border-primary/30 transition-all">
+                  <div className="h-28 bg-gradient-to-br from-primary/20 via-violet-500/10 to-slate-900 relative overflow-hidden flex items-center justify-center">
+                    <div className="absolute top-3 right-3">
+                      <span className={`text-[10px] font-black px-2 py-1 rounded-full ${
+                        qt.status === "active" ? "bg-red-500/90 text-white" :
+                        qt.status === "lobby" ? "bg-blue-500/90 text-white" :
+                        "bg-white/20 text-white"
+                      }`}>
+                        {qt.status === "active" ? "🔴 LIVE" : qt.status === "lobby" ? "JOIN NOW" : qt.status.toUpperCase()}
+                      </span>
+                    </div>
+                    <div className="relative z-10 text-center">
+                      <Brain className="w-8 h-8 text-white mx-auto mb-1 drop-shadow-lg" />
+                      <p className="text-xs font-black uppercase tracking-widest text-white/80">Quiz Championship</p>
+                    </div>
+                  </div>
+
+                  <div className="p-4 flex flex-col flex-1">
+                    <h3 className="font-black text-slate-900 dark:text-white text-sm mb-1">{qt.title}</h3>
+                    {qt.description && (
+                      <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mb-3">{qt.description}</p>
+                    )}
+                    <div className="flex items-center gap-3 mb-4 text-xs text-slate-500 dark:text-slate-400 font-bold">
+                      <span className="flex items-center gap-1">
+                        <Users size={12} className="opacity-60" />
+                        {qt.player_count} joined
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Trophy size={12} className="opacity-60" />
+                        {qt.prize_pool > 0 ? `${qt.prize_pool.toLocaleString()} ZA` : "Growing"}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5 mb-4">
+                      {["#22c55e","#3b82f6","#f97316","#ef4444","#a855f7"].map((c, i) => (
+                        <div key={i} className="flex-1 h-1 rounded-full" style={{ background: c }} />
+                      ))}
+                    </div>
+                    <Link
+                      to={`/quiz/${qt.id}`}
+                      className={`w-full py-2.5 rounded-xl font-black uppercase tracking-widest text-[10px] text-center transition-all mt-auto flex items-center justify-center gap-1 ${
+                        qt.status === "active" || qt.status === "lobby"
+                          ? "bg-gradient-to-r from-primary to-violet-600 text-white hover:opacity-90"
+                          : "bg-slate-100 dark:bg-white/5 text-slate-500"
+                      }`}
+                    >
+                      {qt.status === "active" ? "WATCH LIVE" :
+                       qt.status === "lobby" ? <><Zap size={12} /> JOIN NOW</> :
+                       "VIEW DETAILS"}
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+      </section>
       </div>
     </div>
   );
