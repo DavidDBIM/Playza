@@ -101,8 +101,8 @@ router.post('/tournaments/:id/start', requireAdmin, async (req, res) => {
       .single()
 
     if (!tournament) { res.status(404).json({ success: false, message: 'Not found' }); return }
-    if (!['draft', 'lobby'].includes(tournament.status)) {
-      res.status(400).json({ success: false, message: `Cannot start a tournament with status: ${tournament.status}` })
+    if (!['draft', 'registration'].includes(tournament.status)) {
+      res.status(400).json({ success: false, message: `Cannot open registration for a tournament with status: ${tournament.status}` })
       return
     }
 
@@ -117,13 +117,13 @@ router.post('/tournaments/:id/start', requireAdmin, async (req, res) => {
       return
     }
 
-    // Move to lobby first so players can join
+    // Move to registration — players can now pay and register their spot
     await supabaseAdmin
       .from('quiz_tournaments')
-      .update({ status: 'lobby' })
+      .update({ status: 'registration' })
       .eq('id', id)
 
-    res.json({ success: true, message: 'Tournament moved to lobby. Players can now join.' })
+    res.json({ success: true, message: 'Registration opened! Players can now pay and register.' })
   } catch (err: any) {
     res.status(400).json({ success: false, message: err.message })
   }
@@ -150,10 +150,23 @@ router.post('/tournaments/:id/launch', requireAdmin, async (req, res) => {
       return
     }
 
-    if (tournament.status !== 'lobby') {
-      res.status(400).json({ success: false, message: `Tournament must be in lobby status to launch. Current: ${tournament.status}` })
+    if (!['registration', 'lobby'].includes(tournament.status)) {
+      res.status(400).json({ success: false, message: `Tournament must be in registration or lobby status to launch. Current: ${tournament.status}` })
       return
     }
+
+    // Move all registered players to 'alive' status so they can play
+    await supabaseAdmin
+      .from('quiz_players')
+      .update({ status: 'alive' })
+      .eq('tournament_id', id)
+      .eq('status', 'registered')
+
+    // Move tournament to lobby briefly, then gateway sets it active
+    await supabaseAdmin
+      .from('quiz_tournaments')
+      .update({ status: 'lobby' })
+      .eq('id', id)
 
     // This calls the gateway which broadcasts quiz:game_start to all connected players
     // then immediately fires the first question
