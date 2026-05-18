@@ -348,7 +348,6 @@ const Tournaments = () => {
             </div>
           </section>
         )}
-      </section>
       </div>
     </div>
   );
