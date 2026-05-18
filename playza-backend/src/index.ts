@@ -4,6 +4,8 @@ import helmet from 'helmet'
 import dotenv from 'dotenv'
 import cookieParser from 'cookie-parser'
 import cron from 'node-cron'
+import { createServer } from 'http'
+import { Server as SocketServer } from 'socket.io'
 import { supabaseAdmin as supabase } from './config/supabase'
 import { finalizeSessionAndPayout } from './modules/gamesession/gamesession.service'
 
@@ -29,6 +31,9 @@ import notificationRoutes from './modules/notifications/notifications.routes'
 import feedbackRoutes from './modules/feedback/feedback.routes'
 import soloearnRoutes from './modules/soloearn/soloearn.routes'
 import gamesessionRoutes from './modules/gamesession/gamesession.routes'
+import quizRoutes from './modules/quiz/quiz.routes'
+import quizAdminRoutes from './modules/quiz/quiz.admin.routes'
+import { setupQuizGateway } from './modules/quiz/quiz.gateway'
 
 dotenv.config()
 
@@ -75,29 +80,53 @@ app.use('/api/notifications', notificationRoutes)
 app.use('/api/feedback', feedbackRoutes)
 app.use('/api/soloearn', soloearnRoutes)
 app.use('/api/gamesession', gamesessionRoutes)
+app.use('/api/quiz', quizRoutes)
+app.use('/api/admin/quiz', quizAdminRoutes)
 
 app.use((req, res) => {
   res.status(404).json({ success: false, message: 'Route not found' })
 })
 
-// --- BACKGROUND JOBS ---
-// Auto-finalize sessions that ended 30 minutes ago
+// ── HTTP server + Socket.IO ───────────────────────────────────────────────────
+// Wrap express in http.Server so Socket.IO and the app share the same port.
+const httpServer = createServer(app)
+
+const io = new SocketServer(httpServer, {
+  cors: {
+    origin: allowedOrigins,
+    methods: ['GET', 'POST'],
+    credentials: true,
+  },
+})
+
+// Attach existing socket handler (pool, chess, etc.)
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { setupSocketIO } = require('./lib/socketHandler')
+  setupSocketIO(httpServer)
+} catch (_) {
+  // socketHandler not present or already initialised elsewhere
+}
+
+// Attach quiz real-time gateway on /quiz namespace
+setupQuizGateway(io)
+
+// ── Background jobs ───────────────────────────────────────────────────────────
 cron.schedule('*/5 * * * *', async () => {
   try {
     const thirtyMinsAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString()
-    
-    // Find all active sessions where end_time has passed by more than 30 mins
+
     const { data: sessions, error } = await supabase
       .from('game_sessions')
       .select('id')
       .eq('status', 'active')
       .lt('end_time', thirtyMinsAgo)
-      
+
     if (error) {
       console.error('[CRON] Error fetching sessions to finalize:', error)
       return
     }
-    
+
     for (const session of sessions) {
       console.log(`[CRON] Auto-finalizing session ${session.id}...`)
       await finalizeSessionAndPayout(session.id)
@@ -107,7 +136,7 @@ cron.schedule('*/5 * * * *', async () => {
   }
 })
 
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log(`Playza backend running on port ${PORT}`)
 })
 
