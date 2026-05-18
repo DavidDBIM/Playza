@@ -1,28 +1,36 @@
 import { useEffect, lazy, Suspense, useState } from 'react';
-import { useParams, useNavigate } from 'react-router';
-import H2HLobby from '@/components/h2h/H2HLobby';
-import H2HWaitingRoom from '@/components/h2h/H2HWaitingRoom';
+import { useParams, useNavigate } from "react-router";
+import H2HLobby from "@/components/h2h/H2HLobby";
+import H2HWaitingRoom from "@/components/h2h/H2HWaitingRoom";
 // Lazy-load every game arena so their heavy dependencies (three.js, chess.js,
 // matter-js, phaser) are NOT bundled into the initial JS payload.
 // Each arena chunk is only fetched when the user actually enters that game room.
-const ChessArena = lazy(() => import('@/components/h2h/chess/ChessArena'));
-const SpeedBattleArena = lazy(() => import('@/components/h2h/speed-battle/SpeedBattleArena'));
-const WordScrambleArena = lazy(() => import('@/components/h2h/word-scramble/WordScrambleArena'));
-const PoolArena = lazy(() => import('@/components/h2h/pool/PoolArena'));
-const ArenaDuel = lazy(() => import('@/components/h2h/arena-duel/ArenaDuel'));
-const LudoArena = lazy(() => import('@/components/h2h/ludo/LudoArena'));
-const SoccerArena = lazy(() => import('@/components/h2h/soccer/SoccerArena').then(m => ({ default: m.default })));
+const ChessArena = lazy(() => import("@/components/h2h/chess/ChessArena"));
+const SpeedBattleArena = lazy(
+  () => import("@/components/h2h/speed-battle/SpeedBattleArena"),
+);
+const WordScrambleArena = lazy(
+  () => import("@/components/h2h/word-scramble/WordScrambleArena"),
+);
+const PoolArena = lazy(() => import("@/components/h2h/pool/PoolArena"));
+const ArenaDuel = lazy(() => import("@/components/h2h/arena-duel/ArenaDuel"));
+const LudoArena = lazy(() => import("@/components/h2h/ludo/LudoArena"));
+const SoccerArena = lazy(() =>
+  import("@/components/h2h/soccer/SoccerArena").then((m) => ({
+    default: m.default,
+  })),
+);
 // SoccerRoom type is only used for type annotations — import separately
-import type { SoccerRoom } from '@/components/h2h/soccer/SoccerArena';
-import * as chessApi from '@/api/chess.api';
-import { poolApi } from '@/api/poolApi';
-import * as soccerApi from '@/api/soccer.api';
-import { useH2HRoom, useH2HMutations, type GameType } from '@/hooks/h2h/useH2H';
-import { useAuth } from '@/context/auth';
-import type { PoolRoom } from '@/components/h2h/pool/game/pool/types';
-import type { UserProfile } from '@/context/auth';
-import { useToast } from '@/context/toast';
-import type { ChessRoom } from '@/types/chess';
+import type { SoccerRoom } from "@/components/h2h/soccer/SoccerArena";
+import * as chessApi from "@/api/chess.api";
+import { poolApi } from "@/api/poolApi";
+import * as soccerApi from "@/api/soccer.api";
+import { useH2HRoom, useH2HMutations, type GameType } from "@/hooks/h2h/useH2H";
+import { useAuth } from "@/context/auth";
+import type { PoolRoom } from "@/components/h2h/pool/game/pool/types";
+import type { UserProfile } from "@/context/auth";
+import { useToast } from "@/context/toast";
+import type { ChessRoom } from "@/types/chess";
 
 const H2HZone = () => {
   const toast = useToast();
@@ -35,7 +43,8 @@ const H2HZone = () => {
 
   // Use the new TanStack query hook for the room state
   const { data: room, isError } = useH2HRoom(roomId, currentType);
-  const { createRoom, createBotRoom, joinRoom, quickMatch } = useH2HMutations(currentType);
+  const { createRoom, createBotRoom, joinRoom, quickMatch } =
+    useH2HMutations(currentType);
 
   useEffect(() => {
     if (isError && !room) {
@@ -46,11 +55,15 @@ const H2HZone = () => {
 
   useEffect(() => {
     if (room?.status === "active" || room?.status === "playing") {
-      setShowVsScreen(true);
-      const timer = setTimeout(() => setShowVsScreen(false), 3000);
-      return () => clearTimeout(timer);
+      const showTimer = setTimeout(() => setShowVsScreen(true), 0);
+      const hideTimer = setTimeout(() => setShowVsScreen(false), 3000);
+      return () => {
+        clearTimeout(showTimer);
+        clearTimeout(hideTimer);
+      };
     } else {
-      setShowVsScreen(false);
+      const hideTimer = setTimeout(() => setShowVsScreen(false), 0);
+      return () => clearTimeout(hideTimer);
     }
   }, [room?.status]);
 
@@ -60,7 +73,10 @@ const H2HZone = () => {
         navigate(`/h2h/${gameType}/match-local`);
         return;
       }
-      const data = await createRoom.mutateAsync(stake) as { room_id?: string; id?: string };
+      const data = (await createRoom.mutateAsync(stake)) as {
+        room_id?: string;
+        id?: string;
+      };
       navigate(`/h2h/${gameType}/${data.room_id || data.id}`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to create room");
@@ -69,7 +85,10 @@ const H2HZone = () => {
 
   const handleJoinRoom = async (code: string) => {
     try {
-      const data = await joinRoom.mutateAsync(code) as { room_id?: string; id?: string };
+      const data = (await joinRoom.mutateAsync(code)) as {
+        room_id?: string;
+        id?: string;
+      };
       navigate(`/h2h/${gameType}/${data.room_id || data.id}`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to join room");
@@ -78,7 +97,10 @@ const H2HZone = () => {
 
   const handleQuickMatch = async (stake: number) => {
     try {
-      const data = await quickMatch.mutateAsync(stake) as { room_id?: string; id?: string };
+      const data = (await quickMatch.mutateAsync(stake)) as {
+        room_id?: string;
+        id?: string;
+      };
       navigate(`/h2h/${gameType}/${data.room_id || data.id}`, {
         state: { quickMatch: true },
       });
@@ -93,176 +115,199 @@ const H2HZone = () => {
         navigate(`/h2h/${gameType}/match-bot`);
         return;
       }
-      const data = await createBotRoom.mutateAsync(stake) as { room_id?: string; id?: string };
+      const data = (await createBotRoom.mutateAsync(stake)) as {
+        room_id?: string;
+        id?: string;
+      };
       navigate(`/h2h/${gameType}/${data.room_id || data.id}`);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to start solo match");
+      toast.error(
+        err instanceof Error ? err.message : "Failed to start solo match",
+      );
     }
   };
 
-  const loading = createRoom.isPending || createBotRoom.isPending || joinRoom.isPending || quickMatch.isPending;
+  const loading =
+    createRoom.isPending ||
+    createBotRoom.isPending ||
+    joinRoom.isPending ||
+    quickMatch.isPending;
 
   return (
-    <Suspense fallback={
-      <div className="w-full h-[60vh] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="size-10 border-[3px] border-primary/20 border-t-primary rounded-full animate-spin" />
-          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 animate-pulse">Loading arena...</span>
+    <Suspense
+      fallback={
+        <div className="w-full h-[60vh] flex items-center justify-center">
+          <div className="flex flex-col items-center gap-4">
+            <div className="size-10 border-[3px] border-primary/20 border-t-primary rounded-full animate-spin" />
+            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 animate-pulse">
+              Loading arena...
+            </span>
+          </div>
         </div>
-      </div>
-    }>
-    <div className="relative flex-1 min-w-0 overflow-x-hidden scrollbar-hide flex flex-col items-center px-2 pb-24 md:pb-10">
-      {/* Subtle Ambient Background - Optimized for Performance */}
-      <div className="fixed inset-0 pointer-events-none -z-10 bg-slate-50 dark:bg-slate-950">
-        <div className="absolute inset-0 bg-linear-to-br from-indigo-500/3 to-purple-500/3" />
-      </div>
+      }
+    >
+      <div className="relative flex-1 min-w-0 overflow-x-hidden scrollbar-hide flex flex-col items-center px-2 pb-24 md:pb-10">
+        {/* Subtle Ambient Background - Optimized for Performance */}
+        <div className="-z-10 fixed inset-0 pointer-events-none bg-slate-50 dark:bg-slate-950">
+          <div className="absolute inset-0 bg-linear-to-br from-indigo-500/3 to-purple-500/3" />
+        </div>
 
-      <main className="relative z-10 w-full">
-        {!roomId ? (
-          <H2HLobby
-            onCreate={handleCreateRoom}
-            onBotCreate={handleCreateBotRoom}
-            onJoin={handleJoinRoom}
-            onQuickMatch={handleQuickMatch}
-            getWaitingRooms={
-              gameType === "chess" ? chessApi.getWaitingRooms :
-              gameType === "pool" ? (poolApi.listRooms as unknown as () => Promise<ChessRoom[]>) :
-              gameType === "soccer" ? (soccerApi.getWaitingRooms as unknown as () => Promise<ChessRoom[]>) :
-              async () => []
-            }
-            loading={loading}
-          />
-        ) : (!room && gameType !== "arena-duel") ? (
-          <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6">
-            <div className="w-10 h-10 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-            <div className="text-center">
-              <h3 className="text-[10px] md:text-sm lg:text-xl font-black uppercase tracking-widest italic text-indigo-500 dark:text-indigo-400">
-                Loading Warzone
-              </h3>
-              <p className="text-slate-500 text-[10px] md:text-xs mt-1 uppercase font-bold tracking-widest">
-                Preparing your battle room...
-              </p>
-            </div>
-          </div>
-        ) : (
-          <div className="w-full">
-            {showVsScreen && room && (
-              <div className="fixed inset-0 z-[999] flex items-center justify-center bg-slate-950/90 backdrop-blur-md">
-                <div className="text-center animate-in zoom-in duration-500 flex flex-col items-center gap-6">
-                  <h2 className="text-4xl md:text-6xl font-black uppercase text-white italic tracking-tighter drop-shadow-[0_0_15px_rgba(99,102,241,0.5)]">
-                    {room.host?.username || "Player 1"}
-                  </h2>
-                  <div className="text-primary text-5xl font-black italic">VS</div>
-                  <h2 className="text-4xl md:text-6xl font-black uppercase text-white italic tracking-tighter drop-shadow-[0_0_15px_rgba(239,68,68,0.5)]">
-                    {room.guest?.username || (room.guest_id ? "Waiting..." : (room.board_state?.bot?.username || "Computer"))}
-                  </h2>
-                </div>
+        <main className="relative z-10 w-full">
+          {!roomId ? (
+            <H2HLobby
+              onCreate={handleCreateRoom}
+              onBotCreate={handleCreateBotRoom}
+              onJoin={handleJoinRoom}
+              onQuickMatch={handleQuickMatch}
+              getWaitingRooms={
+                gameType === "chess"
+                  ? chessApi.getWaitingRooms
+                  : gameType === "pool"
+                    ? (poolApi.listRooms as unknown as () => Promise<
+                        ChessRoom[]
+                      >)
+                    : gameType === "soccer"
+                      ? (soccerApi.getWaitingRooms as unknown as () => Promise<
+                          ChessRoom[]
+                        >)
+                      : async () => []
+              }
+              loading={loading}
+            />
+          ) : !room && gameType !== "arena-duel" ? (
+            <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6">
+              <div className="w-10 h-10 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+              <div className="text-center">
+                <h3 className="text-[10px] md:text-sm lg:text-xl font-black uppercase tracking-widest italic text-indigo-500 dark:text-indigo-400">
+                  Loading Warzone
+                </h3>
+                <p className="text-slate-500 text-[10px] md:text-xs mt-1 uppercase font-bold tracking-widest">
+                  Preparing your battle room...
+                </p>
               </div>
-            )}
-            {(() => {
-              if (gameType === "arena-duel" && !room) {
-                return <ArenaDuel />;
-              }
-              switch (room.status) {
-                case "waiting":
-                  return (
-                    <H2HWaitingRoom
-                      gameType={currentType}
-                      room={
-                        room as unknown as React.ComponentProps<
-                          typeof H2HWaitingRoom
-                        >["room"]
-                      }
-                    />
-                  );
-                case "active":
-                case "finished":
-                  if (gameType === "speed-battle")
+            </div>
+          ) : (
+            <div className="w-full">
+              {showVsScreen && room && (
+                <div className="fixed inset-0 z-[999] flex items-center justify-center bg-slate-950/90 backdrop-blur-md">
+                  <div className="text-center animate-in zoom-in duration-500 flex flex-col items-center gap-6">
+                    <h2 className="text-4xl md:text-6xl font-black uppercase text-white italic tracking-tighter drop-shadow-[0_0_15px_rgba(99,102,241,0.5)]">
+                      {room.host?.username || "Player 1"}
+                    </h2>
+                    <div className="text-primary text-5xl font-black italic">
+                      VS
+                    </div>
+                    <h2 className="text-4xl md:text-6xl font-black uppercase text-white italic tracking-tighter drop-shadow-[0_0_15px_rgba(239,68,68,0.5)]">
+                      {room.guest?.username ||
+                        (room.guest_id
+                          ? "Waiting..."
+                          : room.board_state?.bot?.username || "Computer")}
+                    </h2>
+                  </div>
+                </div>
+              )}
+              {(() => {
+                if (gameType === "arena-duel" && !room) {
+                  return <ArenaDuel />;
+                }
+                switch (room.status) {
+                  case "waiting":
                     return (
-                      <SpeedBattleArena
-                        key={room.id}
+                      <H2HWaitingRoom
+                        gameType={currentType}
                         room={
                           room as unknown as React.ComponentProps<
-                            typeof SpeedBattleArena
+                            typeof H2HWaitingRoom
                           >["room"]
                         }
                       />
                     );
-                  if (gameType === "word-scramble")
+                  case "active":
+                  case "finished":
+                    if (gameType === "speed-battle")
+                      return (
+                        <SpeedBattleArena
+                          key={room.id}
+                          room={
+                            room as unknown as React.ComponentProps<
+                              typeof SpeedBattleArena
+                            >["room"]
+                          }
+                        />
+                      );
+                    if (gameType === "word-scramble")
+                      return (
+                        <WordScrambleArena
+                          key={room.id}
+                          room={
+                            room as unknown as React.ComponentProps<
+                              typeof WordScrambleArena
+                            >["room"]
+                          }
+                        />
+                      );
+                    if (gameType === "pool")
+                      return (
+                        <PoolArena
+                          key={room.id}
+                          room={room as unknown as PoolRoom}
+                          user={user}
+                        />
+                      );
+                    if (gameType === "arena-duel")
+                      return <ArenaDuel key={room.id} />;
+                    if (gameType === "ludo")
+                      return (
+                        <LudoArena key={room.id} room={room} user={user} />
+                      );
+                    if (gameType === "soccer")
+                      return (
+                        <SoccerArena
+                          key={room.id}
+                          room={room as unknown as SoccerRoom}
+                          user={user}
+                        />
+                      );
                     return (
-                      <WordScrambleArena
+                      <ChessArena
                         key={room.id}
                         room={
                           room as unknown as React.ComponentProps<
-                            typeof WordScrambleArena
+                            typeof ChessArena
                           >["room"]
                         }
-                      />
-                    );
-                  if (gameType === "pool")
-                    return (
-                      <PoolArena
-                        key={room.id}
-                        room={room as unknown as PoolRoom}
                         user={user}
                       />
                     );
-                  if (gameType === "arena-duel")
+                  default:
                     return (
-                      <ArenaDuel key={room.id} />
-                    );
-                  if (gameType === "ludo")
-                    return (
-                      <LudoArena
-                        key={room.id}
-                        room={room}
-                        user={user}
+                      <H2HLobby
+                        onCreate={handleCreateRoom}
+                        onBotCreate={handleCreateBotRoom}
+                        onJoin={handleJoinRoom}
+                        onQuickMatch={handleQuickMatch}
+                        getWaitingRooms={
+                          gameType === "chess"
+                            ? chessApi.getWaitingRooms
+                            : gameType === "pool"
+                              ? (poolApi.listRooms as unknown as () => Promise<
+                                  ChessRoom[]
+                                >)
+                              : gameType === "soccer"
+                                ? (soccerApi.getWaitingRooms as unknown as () => Promise<
+                                    ChessRoom[]
+                                  >)
+                                : async () => []
+                        }
+                        loading={loading}
                       />
                     );
-                  if (gameType === "soccer")
-                    return (
-                      <SoccerArena
-                        key={room.id}
-                        room={room as unknown as SoccerRoom}
-                        user={user}
-                      />
-                    );
-                  return (
-                    <ChessArena
-                      key={room.id}
-                      room={
-                        room as unknown as React.ComponentProps<
-                          typeof ChessArena
-                        >["room"]
-                      }
-                      user={user}
-                    />
-                  );
-                default:
-                  return (
-                    <H2HLobby
-                      onCreate={handleCreateRoom}
-                      onBotCreate={handleCreateBotRoom}
-                      onJoin={handleJoinRoom}
-                      onQuickMatch={handleQuickMatch}
-                      getWaitingRooms={
-                        gameType === "chess"
-                          ? chessApi.getWaitingRooms :
-                        gameType === "pool"
-                          ? (poolApi.listRooms as unknown as () => Promise<ChessRoom[]>) :
-                        gameType === "soccer"
-                          ? (soccerApi.getWaitingRooms as unknown as () => Promise<ChessRoom[]>)
-                          : async () => []
-                      }
-                      loading={loading}
-                    />
-                  );
-              }
-            })()}
-          </div>
-        )}
-      </main>
-    </div>
+                }
+              })()}
+            </div>
+          )}
+        </main>
+      </div>
     </Suspense>
   );
 };

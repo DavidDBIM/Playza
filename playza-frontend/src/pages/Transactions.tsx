@@ -1,5 +1,5 @@
 import { Loader2 } from "lucide-react";
-import { MdFileDownload, MdSearch, MdFilterList } from "react-icons/md";
+import { MdSearch, MdFilterList } from "react-icons/md";
 import TransactionItem from "@/components/transactions/TransactionItem";
 import { useState, useMemo } from "react";
 import TransactionDetailModal from "@/components/transactions/TransactionDetailModal";
