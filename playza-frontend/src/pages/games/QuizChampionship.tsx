@@ -119,7 +119,7 @@ export default function QuizChampionship() {
   } = useQuizSocket(joined ? (id ?? null) : null);
 
   useEffect(() => {
-    if (tournament?.status === "active" && !joined) setJoined(true);
+    if ((tournament?.status === "active" || tournament?.status === "lobby") && tournament?.user_registered && !joined) setJoined(true);
   }, [tournament?.status, joined]);
 
   useEffect(() => {
@@ -142,7 +142,7 @@ export default function QuizChampionship() {
 
   const round     = currentQuestion?.round ?? 1;
   const roundMeta = ROUNDS[(round - 1)] ?? ROUNDS[4];
-  const canJoin   = tournament.status === "lobby" || tournament.status === "draft";
+  const canJoin   = tournament.status === "registration" || tournament.status === "lobby";
 
   // ── PRE-JOIN ─────────────────────────────────────────────────────────────────
   if (!joined || phase === "idle") {
@@ -161,9 +161,9 @@ export default function QuizChampionship() {
 
           <div className="text-center mb-6">
             <div className="inline-flex items-center gap-2 bg-purple-500/10 border border-purple-500/20 px-3 py-1 rounded-full mb-3">
-              <span className={`w-1.5 h-1.5 rounded-full ${tournament.status === "lobby" ? "bg-green-400 animate-pulse" : tournament.status === "active" ? "bg-red-400 animate-pulse" : "bg-yellow-400"}`} />
+              <span className={`w-1.5 h-1.5 rounded-full ${tournament.status === "registration" ? "bg-green-400 animate-pulse" : tournament.status === "lobby" ? "bg-blue-400 animate-pulse" : tournament.status === "active" ? "bg-red-400 animate-pulse" : "bg-yellow-400"}`} />
               <span className="text-[10px] font-black uppercase tracking-widest text-purple-300">
-                {tournament.status === "lobby" ? "Open — Join Now" : tournament.status === "active" ? "In Progress" : "Upcoming"}
+                {tournament.status === "registration" ? "Registration Open" : tournament.status === "lobby" ? "Starting Soon" : tournament.status === "active" ? "In Progress" : "Upcoming"}
               </span>
             </div>
             <h1 className="text-2xl font-black text-white mb-1">{tournament.title}</h1>
@@ -218,10 +218,15 @@ export default function QuizChampionship() {
             <span className="relative flex items-center justify-center gap-2">
               {joining ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Joining...</> :
                !canJoin ? (tournament.status === "active" ? "Game In Progress" : "Not Open Yet") :
-               tournament.entry_fee > 0 ? <>⚡ Pay {tournament.entry_fee} ZA &amp; Join</> : <>⚡ Join Free</>}
+               tournament.entry_fee > 0 ? <>⚡ Register — Pay {tournament.entry_fee} ZA</> : <>⚡ Register Free</>}
             </span>
           </button>
-          {tournament.entry_fee > 0 && <p className="text-center text-[10px] text-white/20 mt-2">Entry fee added to prize pool</p>}
+          {tournament.entry_fee > 0 && <p className="text-center text-[10px] text-white/20 mt-2">Entry fee added to prize pool · You will be reminded before game day</p>}
+          {tournament.user_registered && (
+            <div className="mt-3 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-green-500/10 border border-green-500/20">
+              <span className="text-green-400 text-xs font-black">✓ You are registered — we will notify you before game day</span>
+            </div>
+          )}
         </div>
       </div>
     );
