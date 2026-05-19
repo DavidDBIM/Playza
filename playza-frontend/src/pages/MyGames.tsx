@@ -204,7 +204,7 @@ const MyGames = () => {
                   <button
                     key={tab.value}
                     onClick={() => {
-                      setFilterBy(tab.value as any);
+                      setFilterBy(tab.value as "all" | "win" | "loss" | "draw");
                       setPage(1);
                     }}
                     className={`px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all shrink-0 border ${
