@@ -15,7 +15,7 @@ export const soloGames: SoloGame[] = [
     label: "Reaction Challenge",
     description: "Test your aim and reaction time against moving targets spawned algorithmically.",
     difficulty: "Medium",
-    thumbnail: "/images/solo/reflex_shooter.png",
+    thumbnail: "/images/solo/reflex_shooter.webp",
     path: "/gameLib/Reflex-Shooter/index.html"
   },
   {
@@ -24,7 +24,7 @@ export const soloGames: SoloGame[] = [
     label: "Survival Runner",
     description: "Navigate a rapidly escalating 3D pathway. One wrong turn means instant failure.",
     difficulty: "Hard",
-    thumbnail: "/images/solo/path_nav.png",
+    thumbnail: "/images/solo/path_nav.webp",
     path: "/gameLib/Path-Nav/index.html"
   },
   {
@@ -33,7 +33,7 @@ export const soloGames: SoloGame[] = [
     label: "Logic Puzzle",
     description: "Adapt to changing visual rules in this rapid node-state changing puzzle.",
     difficulty: "Easy",
-    thumbnail: "/images/solo/flux_tap.png",
+    thumbnail: "/images/solo/flux_tap.webp",
     path: "/gameLib/Flux-Tap/index.html"
   },
   {
@@ -42,7 +42,7 @@ export const soloGames: SoloGame[] = [
     label: "Recall Test",
     description: "Memorize random pattern sequences and recreate them flawlessly before time runs out.",
     difficulty: "Extreme",
-    thumbnail: "/images/solo/memory_rush.png",
+    thumbnail: "/images/solo/memory_rush.webp",
     path: "/gameLib/Memory-Rush/index.html"
   },
   {
@@ -51,7 +51,7 @@ export const soloGames: SoloGame[] = [
     label: "Risk vs Reward",
     description: "Charge the volatile core by holding it. Release before the stability needle hits the red danger zone. Push your luck!",
     difficulty: "Extreme",
-    thumbnail: "/images/solo/core_overload.png",
+    thumbnail: "/images/solo/core_overload.webp",
     path: "/gameLib/Core-Overload/index.html"
   },
   {
@@ -60,7 +60,7 @@ export const soloGames: SoloGame[] = [
     label: "Precision & Timing",
     description: "Stack the neon blocks perfectly. Any overhang gets sliced off, making the next block harder. Build the tower to reach 2.0x.",
     difficulty: "Hard",
-    thumbnail: "/images/solo/neon_stacker.png",
+    thumbnail: "/images/solo/neon_stacker.webp",
     path: "/gameLib/Neon-Stacker/index.html"
   }
 ];

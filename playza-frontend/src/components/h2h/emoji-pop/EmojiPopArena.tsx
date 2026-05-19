@@ -456,7 +456,7 @@ export default function EmojiPopArena({ room, user }: EmojiPopArenaProps) {
           transition={{ duration: 0.3 }}
           className="text-center space-y-6"
         >
-          <img src="/logoImage.png" alt="Playza" className="h-10 mx-auto opacity-70" loading="lazy" />
+          <img src="/logoImage.webp" alt="Playza" className="h-10 mx-auto opacity-70" loading="lazy" />
           <h2 className="text-slate-500 font-black uppercase tracking-[0.2em] text-xs md:text-sm animate-pulse">
             Emoji Pop Warzone Initializing...
           </h2>

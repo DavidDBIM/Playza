@@ -27,7 +27,7 @@ const slides = [
     icon: <Sparkles size={14} />,
     color: "from-amber-500 to-yellow-900",
     accent: "bg-amber-500",
-    image: "/hero.png"
+    image: "/hero.webp"
   },
   {
     id: 1,
@@ -40,7 +40,7 @@ const slides = [
     icon: <Play size={14} />,
     color: "from-blue-600 to-indigo-900",
     accent: "bg-blue-500",
-    image: "/hero.png"
+    image: "/hero.webp"
   },
   {
     id: 2,

@@ -35,7 +35,7 @@ export const FloatingSpinNotification = () => {
           {/* Main Button */}
           <div className="relative w-12 h-12 md:w-16 md:h-16 rounded-full bg-linear-to-br from-indigo-600/20 to-purple-700/20 shadow-xl shadow-indigo-500/40 flex items-center justify-center border-2 border-white/10 overflow-hidden group backdrop-blur-sm">
             <img 
-              src="/lucky_wheel_asset.png" 
+              src="/lucky_wheel_asset.webp" 
               alt="Spin Wheel" 
               className="w-full h-full object-contain animate-spin-slow group-hover:scale-110 transition-transform p-1"
             />
