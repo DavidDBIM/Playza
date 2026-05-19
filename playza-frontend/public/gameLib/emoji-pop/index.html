@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emoji Pop - Bounce Arena</title>
+    <!-- Outfit Font from Google Fonts for Premium Look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="game-wrapper">
+        <!-- Live Rival Header Banner -->
+        <div class="rival-banner" id="rival-banner">
+            <span class="rival-indicator"></span>
+            <span id="rival-text">Rival Score: --</span>
+        </div>
+
+        <!-- Header Controls -->
+        <header class="game-header">
+            <div class="title-container">
+                <h1>Emoji Bounce</h1>
+                <p id="mode-badge">Arena Edition</p>
+            </div>
+            
+            <div class="scores-container">
+                <div class="score-box highlight">
+                    <span class="score-label">Score</span>
+                    <span id="score-display" class="score-value">0</span>
+                </div>
+                <div class="score-box">
+                    <span class="score-label">Bounces</span>
+                    <span id="bounces-display" class="score-value">0</span>
+                </div>
+                <div class="score-box">
+                    <span class="score-label">Best</span>
+                    <span id="best-display" class="score-value">0</span>
+                </div>
+            </div>
+
+            <div class="header-actions">
+                <button class="action-btn" id="mute-btn" onclick="toggleMute()" title="Mute Audio">🔊</button>
+            </div>
+        </header>
+
+        <!-- Dynamic Game Canvas Viewport -->
+        <div class="canvas-container" id="canvas-container">
+            <canvas id="game-canvas"></canvas>
+
+            <!-- Onboarding Overlay -->
+            <div class="tap-to-start" id="start-overlay">
+                <span class="start-emoji">😂</span>
+                <h3 class="start-title">Emoji Bounce</h3>
+                <p class="start-subtitle">Slide the horizontal black box to bounce the falling laughing emoji! Don't let it touch the bottom!</p>
+                <button class="btn-start" onclick="startGame()">Start Game</button>
+            </div>
+
+            <!-- Game Over Overlay -->
+            <div class="game-over-screen" id="game-over-screen">
+                <h2 class="over-title">Game Over</h2>
+                <div class="over-card">
+                    <div class="over-row">
+                        <span class="over-label">Final Score</span>
+                        <span id="over-score" class="over-val highlight">0</span>
+                    </div>
+                    <div class="over-row">
+                        <span class="over-label">High Score</span>
+                        <span id="over-best" class="over-val">0</span>
+                    </div>
+                    <div class="over-row">
+                        <span class="over-label">Total Bounces</span>
+                        <span id="over-bounces" class="over-val">0</span>
+                    </div>
+                </div>
+                <p class="sync-status">Syncing Arena Leaderboard...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Core Game Logic Script -->
+    <script src="game.js"></script>
+</body>
+</html>
