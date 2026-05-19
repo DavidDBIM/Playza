@@ -122,7 +122,7 @@ const MyGames = () => {
           </div>
 
           {/* Summary Bento Grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 md:gap-6">
             {[
               {
                 label: "Total Deployments",
@@ -145,6 +145,14 @@ const MyGames = () => {
                 value: `${winRate}%`,
                 icon: <MdAnalytics className="text-primary" />,
                 subText: "Success ratio",
+                accent: "border-primary/20 group-hover:border-primary/50",
+                bg: "bg-primary/5 group-hover:bg-primary/10",
+              },
+              {
+                label: "Highest Score",
+                value: highestScore.toLocaleString(),
+                icon: <MdGrade className="text-primary" />,
+                subText: "Personal best rating",
                 accent: "border-primary/20 group-hover:border-primary/50",
                 bg: "bg-primary/5 group-hover:bg-primary/10",
               },
