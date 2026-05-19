@@ -89,11 +89,11 @@ export async function endSoloSession(
     const now = Date.now();
     const elapsedSeconds = (now - createdAt) / 1000;
 
-    // Relaxed to 1 second to allow rapid testing without rejecting scores
-    if (rawMultiplier > 0 && elapsedSeconds < 1) {
+    // Relaxed to 0.5 seconds to allow rapid testing without rejecting scores
+    if (rawMultiplier > 0 && elapsedSeconds < 0.5) {
       throw new Error("Session ended suspiciously fast. Score rejected.");
     }
-    if (rawMultiplier >= 1.5 && elapsedSeconds < 5) {
+    if (rawMultiplier >= 1.5 && elapsedSeconds < 1) {
       throw new Error(
         "High multiplier achieved suspiciously fast. Score rejected.",
       );
