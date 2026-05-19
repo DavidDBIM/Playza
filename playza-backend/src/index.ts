@@ -26,6 +26,7 @@ import wordscrambleRoutes from './modules/wordscramble/wordscramble.routes'
 import poolRoutes from './modules/pool/pool.routes'
 import ludoRoutes from './modules/ludo/ludo.routes'
 import soccerRoutes from './modules/soccer/soccer.routes'
+import emojipopRoutes from './modules/emojipop/emojipop.routes'
 import leaderboardRoutes from './modules/leaderboard/leaderboard.routes'
 import notificationRoutes from './modules/notifications/notifications.routes'
 import feedbackRoutes from './modules/feedback/feedback.routes'
@@ -78,6 +79,7 @@ app.use('/api/wordscramble', wordscrambleRoutes)
 app.use('/api/pool', poolRoutes)
 app.use('/api/ludo', ludoRoutes)
 app.use('/api/soccer', soccerRoutes)
+app.use('/api/emojipop', emojipopRoutes)
 app.use('/api/leaderboard', leaderboardRoutes)
 app.use('/api/notifications', notificationRoutes)
 app.use('/api/feedback', feedbackRoutes)

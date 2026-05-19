@@ -451,5 +451,31 @@ create table if not exists game_history (
 
 alter table game_history enable row level security;
 
+-- EMOJI POP H2H
+create table if not exists emojipop_rooms (
+  id uuid primary key default uuid_generate_v4(),
+  code text unique not null,
+  host_id uuid not null references users(id) on delete cascade,
+  guest_id text,
+  stake numeric(12,2) default 0,
+  status text default 'waiting' check (status in ('waiting','active','finished')),
+  is_bot boolean default false,
+  bot_difficulty text default 'medium',
+  winner_id text,
+  created_at timestamptz default now()
+);
+
+create table if not exists emojipop_results (
+  id uuid primary key default uuid_generate_v4(),
+  room_id uuid not null references emojipop_rooms(id) on delete cascade,
+  user_id text not null,
+  score integer not null,
+  finished_at timestamptz default now(),
+  unique(room_id, user_id)
+);
+
+alter table emojipop_rooms enable row level security;
+alter table emojipop_results enable row level security;
+
 
 
