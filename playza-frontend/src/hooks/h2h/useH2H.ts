@@ -5,10 +5,11 @@ import { wordScrambleApi } from "@/api/wordscramble.api";
 import { poolApi } from "@/api/poolApi";
 import * as ludoApi from "@/api/ludo.api";
 import * as soccerApi from "@/api/soccer.api";
+import { emojipopApi } from "@/api/emojipop.api";
 import { supabase } from "@/config/supabase";
 import { useEffect } from "react";
 
-export type GameType = "chess" | "speed-battle" | "word-scramble" | "pool" | "arena-duel" | "ludo" | "soccer";
+export type GameType = "chess" | "speed-battle" | "word-scramble" | "pool" | "arena-duel" | "ludo" | "soccer" | "emoji-pop";
 
 export interface GameApi {
   getRoom?: (roomId: string) => Promise<unknown>;
@@ -27,6 +28,7 @@ export const getApiForGame = (gameType: GameType): GameApi => {
   if (gameType === "ludo") return ludoApi as unknown as GameApi;
   if (gameType === "soccer") return soccerApi as unknown as GameApi;
   if (gameType === "chess") return chessApi as unknown as GameApi;
+  if (gameType === "emoji-pop") return emojipopApi as unknown as GameApi;
   return chessApi as unknown as GameApi; // Fallback
 };
 
@@ -56,6 +58,8 @@ export const useH2HRoom = (roomId: string | undefined, gameType: GameType) => {
         ? "ludo_rooms"
         : gameType === "soccer"
         ? "soccer_rooms"
+        : gameType === "emoji-pop"
+        ? "emojipop_rooms"
         : "chess_rooms";
 
     const channel = supabase
