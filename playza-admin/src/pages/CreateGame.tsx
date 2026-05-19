@@ -125,6 +125,8 @@ const CreateGame: React.FC = () => {
     scoring: "",
   });
 
+  const isIframeUrlRequired = formData.mode !== "Head to Head" || formData.slug !== "chess";
+
   // Capabilities helpers
   const setCap = <K extends keyof GameCapabilities>(
     key: K,
@@ -390,7 +392,7 @@ const CreateGame: React.FC = () => {
       return;
     }
 
-    if (formData.mode !== "Head to Head" && !formData.iframeUrl) {
+    if (isIframeUrlRequired && !formData.iframeUrl) {
       toast.error("Iframe URL is required for this game mode");
       return;
     }
@@ -681,20 +683,20 @@ const CreateGame: React.FC = () => {
                 <div className="space-y-1.5 md:col-span-2">
                   <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground ml-1">
                     Iframe URL{" "}
-                    {formData.mode !== "Head to Head" && (
+                    {isIframeUrlRequired && (
                       <span className="text-rose-500">*</span>
                     )}
                   </label>
                   <div className="flex gap-2">
                     <Input
                       name="iframeUrl"
-                      required={formData.mode !== "Head to Head"}
+                      required={isIframeUrlRequired}
                       value={formData.iframeUrl}
                       onChange={handleInputChange}
                       className="h-11 bg-muted border-border rounded-xl font-bold text-xs flex-1"
                       placeholder={
-                        formData.mode === "Head to Head"
-                          ? "Not required for internal H2H games"
+                        !isIframeUrlRequired
+                          ? "Not required for internal H2H games (e.g. Chess)"
                           : "https://cdn.playza.com/gameLib/VelocityGL/index.html"
                       }
                     />

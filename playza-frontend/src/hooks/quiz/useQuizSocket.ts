@@ -28,6 +28,7 @@ export interface LiveQuestion {
 }
 
 export interface LeaderboardEntry {
+  user_id?: string
   rank: number
   username: string
   avatar_url: string | null

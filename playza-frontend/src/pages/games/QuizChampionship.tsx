@@ -1,8 +1,8 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { getQuizTournamentApi, joinQuizTournamentApi } from "@/api/quiz.api";
-import { useQuizSocket } from "@/hooks/quiz/useQuizSocket";
+import { getQuizTournamentApi, joinQuizTournamentApi, type QuizTournament } from "@/api/quiz.api";
+import { useQuizSocket, type LeaderboardEntry } from "@/hooks/quiz/useQuizSocket";
 import { useAuth } from "@/context/auth";
 import { useToast } from "@/context/toast";
 
@@ -40,7 +40,7 @@ function TimerArc({ ms, totalMs, round }: { ms: number; totalMs: number; round: 
   );
 }
 
-function LeaderboardPanel({ entries, myId }: { entries: any[]; myId?: string }) {
+function LeaderboardPanel({ entries, myId }: { entries: LeaderboardEntry[]; myId?: string }) {
   const alive   = entries.filter(e => e.status === "alive").length;
   const myEntry = entries.find(e => e.user_id === myId);
   const myRank  = myEntry?.rank;
@@ -91,7 +91,7 @@ export default function QuizChampionship() {
   const navigate     = useNavigate();
   const toast        = useToast();
   const { user }     = useAuth();
-  const [joined, setJoined]           = useState(false);
+  const [joinedState, setJoinedState] = useState(false);
   const [showLB, setShowLB]           = useState(false);
   const prevPhase                     = useRef<string>("");
 
@@ -99,16 +99,26 @@ export default function QuizChampionship() {
     queryKey: ["quiz-tournament", id],
     queryFn:  () => getQuizTournamentApi(id!),
     enabled:  !!id,
-    refetchInterval: joined ? false : 4000,
+    refetchInterval: (query: unknown) => {
+      const q = query as { state?: { data?: QuizTournament } };
+      const t = q?.state?.data;
+      const isJoined = joinedState || !!(t?.user_registered && (t.status === "active" || t.status === "lobby"));
+      return isJoined ? false : 4000;
+    },
   });
+
+  const joined = joinedState || !!(tournament?.user_registered && (tournament.status === "active" || tournament.status === "lobby"));
 
   const { mutate: join, isPending: joining } = useMutation({
     mutationFn: () => joinQuizTournamentApi(id!),
     onSuccess: (data) => {
       toast.success(data.data?.already_joined ? "You're already in!" : "Joined! Waiting for game to start.");
-      setJoined(true);
+      setJoinedState(true);
     },
-    onError: (err: any) => toast.error(err.response?.data?.message ?? "Failed to join"),
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { message?: string } } };
+      toast.error(err.response?.data?.message ?? "Failed to join");
+    },
   });
 
   const {
@@ -117,10 +127,6 @@ export default function QuizChampionship() {
     leaderboard, roundSummary, gameOver, elimMessage,
     timeLeftMs, submitAnswer,
   } = useQuizSocket(joined ? (id ?? null) : null);
-
-  useEffect(() => {
-    if ((tournament?.status === "active" || tournament?.status === "lobby") && tournament?.user_registered && !joined) setJoined(true);
-  }, [tournament?.status, joined]);
 
   useEffect(() => {
     if (phase !== prevPhase.current) {

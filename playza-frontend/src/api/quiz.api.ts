@@ -6,11 +6,12 @@ export interface QuizTournament {
   description: string
   entry_fee: number
   prize_pool: number
-  status: 'draft' | 'lobby' | 'active' | 'completed' | 'cancelled'
+  status: 'draft' | 'registration' | 'lobby' | 'active' | 'completed' | 'cancelled'
   scheduled_at: string | null
   started_at: string | null
   current_round: number
   player_count: number
+  user_registered?: boolean
 }
 
 export async function getQuizTournamentsApi(): Promise<QuizTournament[]> {
