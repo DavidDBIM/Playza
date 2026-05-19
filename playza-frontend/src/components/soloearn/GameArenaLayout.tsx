@@ -59,6 +59,19 @@ export const GameArenaLayout = ({ game, onResult, onExit }: GameProps & { onExit
     return () => window.removeEventListener('message', handleMessage);
   }, [onResult, onExit]);
 
+  const iframeUrl = (() => {
+    if (!game.path) return "";
+    try {
+      const base = game.path.startsWith('http') ? undefined : window.location.origin;
+      const url = new URL(game.path, base);
+      url.searchParams.set("mode", "solo");
+      return url.toString();
+    } catch {
+      const separator = game.path.includes('?') ? '&' : '?';
+      return `${game.path}${separator}mode=solo`;
+    }
+  })();
+
   return (
     <div className="fixed inset-0 z-200 bg-black flex flex-col overflow-hidden">
       <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-100 pointer-events-none">
@@ -118,7 +131,7 @@ export const GameArenaLayout = ({ game, onResult, onExit }: GameProps & { onExit
         <div className="h-full w-full px-2 pb-3 pt-14 md:px-4 md:pt-16 md:pb-4 lg:pt-10 lg:px-6">
           <div className="mx-auto flex h-full w-full max-w-5xl items-center justify-center overflow-hidden rounded-2xl bg-slate-950/80 shadow-2xl ring-1 ring-white/10">
             <iframe 
-              src={game.path} 
+              src={iframeUrl} 
               className="w-full h-full border-none"
               title={game.title}
               allow="autoplay; fullscreen"

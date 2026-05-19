@@ -20,6 +20,7 @@ const SoccerArena = lazy(() =>
     default: m.default,
   })),
 );
+const EmojiPopArena = lazy(() => import("@/components/h2h/emoji-pop/EmojiPopArena"));
 // SoccerRoom type is only used for type annotations — import separately
 import type { SoccerRoom } from "@/components/h2h/soccer/SoccerArena";
 import * as chessApi from "@/api/chess.api";
@@ -265,6 +266,14 @@ const H2HZone = () => {
                         <SoccerArena
                           key={room.id}
                           room={room as unknown as SoccerRoom}
+                          user={user}
+                        />
+                      );
+                    if (gameType === "emoji-pop")
+                      return (
+                        <EmojiPopArena
+                          key={room.id}
+                          room={room}
                           user={user}
                         />
                       );
