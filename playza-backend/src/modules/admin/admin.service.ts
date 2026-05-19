@@ -506,61 +506,79 @@ export async function getH2HMatchesAdmin(slug: string, page = 1, limit = 20) {
   const from = (page - 1) * limit;
   const to = from + limit - 1;
 
-  // Most H2H tables use UUIDs for guest_id, some use text. 
-  // We'll try to join host/guest/winner info.
-  const { data, error, count } = await supabaseAdmin
-    .from(table)
-    .select(`
-      *,
-      host:host_id (id, username, avatar_url),
-      guest:guest_id (id, username, avatar_url)
-    `, { count: 'exact' })
-    .order('created_at', { ascending: false })
-    .range(from, to);
-
-  if (error) {
-    // Fallback for tables without proper foreign keys (e.g. speedbattle if it fails join)
-    const { data: rawData, error: rawError, count: rawCount } = await supabaseAdmin
+  try {
+    // Most H2H tables use UUIDs for guest_id, some use text. 
+    // We'll try to join host/guest/winner info.
+    const { data, error, count } = await supabaseAdmin
       .from(table)
-      .select('*', { count: 'exact' })
+      .select(`
+        *,
+        host:host_id (id, username, avatar_url),
+        guest:guest_id (id, username, avatar_url)
+      `, { count: 'exact' })
       .order('created_at', { ascending: false })
       .range(from, to);
-    
-    if (rawError) throw rawError;
 
-    // Manually hydrate user info if join failed
-    const userIds = new Set<string>();
-    rawData?.forEach((r: any) => {
-      if (r.host_id) userIds.add(r.host_id);
-      if (r.guest_id && r.guest_id.length > 20) userIds.add(r.guest_id); // Basic UUID check
-    });
+    if (error) {
+      // Fallback for tables without proper foreign keys (e.g. speedbattle if it fails join)
+      const { data: rawData, error: rawError, count: rawCount } = await supabaseAdmin
+        .from(table)
+        .select('*', { count: 'exact' })
+        .order('created_at', { ascending: false })
+        .range(from, to);
+      
+      if (rawError) throw rawError;
 
-    const { data: users } = await supabaseAdmin
-      .from('users')
-      .select('id, username, avatar_url')
-      .in('id', Array.from(userIds));
+      // Manually hydrate user info if join failed
+      const userIds = new Set<string>();
+      rawData?.forEach((r: any) => {
+        if (r.host_id) userIds.add(r.host_id);
+        if (r.guest_id && r.guest_id.length > 20) userIds.add(r.guest_id); // Basic UUID check
+      });
 
-    const userMap = (users || []).reduce((acc: any, u: any) => {
-      acc[u.id] = u;
-      return acc;
-    }, {});
+      let userMap: any = {};
+      if (userIds.size > 0) {
+        const { data: users, error: userError } = await supabaseAdmin
+          .from('users')
+          .select('id, username, avatar_url')
+          .in('id', Array.from(userIds));
 
-    const hydratedData = rawData?.map((r: any) => ({
-      ...r,
-      host: userMap[r.host_id] || null,
-      guest: userMap[r.guest_id] || null,
-    }));
+        if (userError) throw userError;
 
-    return { matches: hydratedData, total: rawCount ?? 0, page, limit };
+        userMap = (users || []).reduce((acc: any, u: any) => {
+          acc[u.id] = u;
+          return acc;
+        }, {});
+      }
+
+      const hydratedData = rawData?.map((r: any) => ({
+        ...r,
+        host: userMap[r.host_id] || null,
+        guest: userMap[r.guest_id] || null,
+      }));
+
+      return { matches: hydratedData, total: rawCount ?? 0, page, limit };
+    }
+
+    return {
+      matches: data,
+      total: count ?? 0,
+      page,
+      limit,
+      total_pages: Math.ceil((count ?? 0) / limit),
+    };
+  } catch (err: any) {
+    console.error(`Error in getH2HMatchesAdmin for table ${table}:`, err);
+    // Secure fallback to prevent dashboard crashes
+    return {
+      matches: [],
+      total: 0,
+      page,
+      limit,
+      total_pages: 0,
+      error: err.message
+    };
   }
-
-  return {
-    matches: data,
-    total: count ?? 0,
-    page,
-    limit,
-    total_pages: Math.ceil((count ?? 0) / limit),
-  };
 }
 
 /**
