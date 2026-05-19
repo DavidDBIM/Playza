@@ -12,7 +12,6 @@ import {
   MdChevronRight,
   MdVideogameAsset,
   MdRefresh,
-  MdFilterList,
   MdOutlineClear,
 } from "react-icons/md";
 import { useGameHistory } from "@/hooks/profile/useProfile";
