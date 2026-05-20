@@ -28,6 +28,34 @@ export async function startSoloSession(
   if (walletErr || !wallet) throw new Error("Wallet not found");
   if (wallet.balance < stake) throw new Error("Insufficient funds");
 
+  // Financial safeguard: stake cannot exceed 30% of current wallet balance.
+  // This breaks the exponential compounding loop regardless of skill level.
+  const maxAllowedStake = Math.floor(wallet.balance * 0.30);
+  if (stake > maxAllowedStake) {
+    throw new Error(
+      `Stake cannot exceed 30% of your wallet balance. Maximum allowed: ${maxAllowedStake}`
+    );
+  }
+
+  // 3-Minute Cooldown: check last completed session timestamp (uses existing table — no schema changes)
+  const { data: lastSession } = await supabase
+    .from("soloearn_sessions")
+    .select("created_at")
+    .eq("user_id", userId)
+    .eq("status", "completed")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .single();
+
+  if (lastSession) {
+    const elapsed = Date.now() - new Date(lastSession.created_at).getTime();
+    const cooldownMs = 3 * 60 * 1000; // 3 minutes
+    if (elapsed < cooldownMs) {
+      const remainingSeconds = Math.ceil((cooldownMs - elapsed) / 1000);
+      throw new Error(`Cooldown active. Please wait ${remainingSeconds} seconds before your next session.`);
+    }
+  }
+
   // 2. Deduct stake
   const { error: decErr } = await supabase.rpc("decrement_wallet_balance", {
     p_user_id: userId,
@@ -83,20 +111,28 @@ export async function endSoloSession(
   if (session.status !== "in_progress")
     throw new Error("Session already completed");
 
-  // --- Anti-Cheat: Time Validation ---
+  // --- Anti-Cheat: Calibrated Time Validation ---
+  // Thresholds aligned with new difficulty: 0.015x/bounce at ~1.5s/bounce avg
+  // 1.0x = ~67 bounces = ~100s min | 2.0x = ~133 bounces = ~200s min
   if (session.created_at) {
     const createdAt = new Date(session.created_at).getTime();
     const now = Date.now();
     const elapsedSeconds = (now - createdAt) / 1000;
 
-    // Relaxed to 0.5 seconds to allow rapid testing without rejecting scores
-    if (rawMultiplier > 0 && elapsedSeconds < 0.5) {
+    if (rawMultiplier > 0 && elapsedSeconds < 30) {
       throw new Error("Session ended suspiciously fast. Score rejected.");
     }
-    if (rawMultiplier >= 1.5 && elapsedSeconds < 1) {
-      throw new Error(
-        "High multiplier achieved suspiciously fast. Score rejected.",
-      );
+    if (rawMultiplier >= 0.5 && elapsedSeconds < 30) {
+      throw new Error("Multiplier 0.5x requires minimum 30s of gameplay.");
+    }
+    if (rawMultiplier >= 1.0 && elapsedSeconds < 90) {
+      throw new Error("Multiplier 1.0x requires minimum 90s of gameplay.");
+    }
+    if (rawMultiplier >= 1.5 && elapsedSeconds < 150) {
+      throw new Error("Multiplier 1.5x requires minimum 150s of gameplay.");
+    }
+    if (rawMultiplier >= 2.0 && elapsedSeconds < 210) {
+      throw new Error("Multiplier 2.0x requires minimum 210s of gameplay.");
     }
   }
 

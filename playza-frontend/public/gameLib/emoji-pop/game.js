@@ -526,7 +526,9 @@ function updatePhysics() {
         if (slowMoTimer <= 0) {
             balls.forEach(ball => {
                 const angle = Math.atan2(ball.vy, ball.vx);
-                ball.speed = ball.speed / 0.6;
+                // Solo Mode uses weaker slow (0.75), so reversal must match
+                const slowFactor = gameMode === 'solo' ? 0.75 : 0.6;
+                ball.speed = ball.speed / slowFactor;
                 ball.vx = Math.cos(angle) * ball.speed;
                 ball.vy = Math.sin(angle) * ball.speed;
             });
@@ -579,6 +581,12 @@ function updatePhysics() {
     clampPaddle();
 
     // ── Cloud Obstacle Drift ──
+    // Solo Mode: cloud speed scales progressively with multiplier (1.6 at 0x → 3.8 at 2.0x)
+    // The closer the player is to cashing out, the more chaotic the deflections become
+    if (gameMode === 'solo') {
+        const soloCloudMagnitude = 1.6 + (soloMultiplier * 1.1);
+        cloudVx = soloCloudMagnitude * Math.sign(cloudVx || 1);
+    }
     cloudX += cloudVx;
     if (cloudX <= 0) {
         cloudX = 0;
@@ -590,7 +598,8 @@ function updatePhysics() {
 
     // ── Periodic Power-up Spawner ──
     powerupSpawnTimer++;
-    if (powerupSpawnTimer >= 840) {
+    // Solo Mode: power-ups spawn less frequently (1400 frames ~23s vs 840 ~14s)
+    if (powerupSpawnTimer >= (gameMode === 'solo' ? 1400 : 840)) {
         powerupSpawnTimer = 0;
         const type = POWERUP_TYPES[Math.floor(Math.random() * POWERUP_TYPES.length)];
         powerups.push({
@@ -707,14 +716,22 @@ function updatePhysics() {
                 const relativeImpact = (relativeX - (paddleX + paddleWidth / 2)) / (paddleWidth / 2); // scales -1.0 to 1.0
                 
                 if (slowMoTimer <= 0 && !ball.isBoss) {
-                    ball.speed = Math.min(ball.speed + speedIncrement, maxSpeed);
+                    // Solo Mode: 2× steeper acceleration once player crosses break-even (1.0x)
+                    // Makes every bounce above 1.0x genuinely harder — this is the skill gate
+                    const activeSpeedIncrement = (gameMode === 'solo' && soloMultiplier >= 1.0)
+                        ? speedIncrement * 2.0
+                        : speedIncrement;
+                    ball.speed = Math.min(ball.speed + activeSpeedIncrement, maxSpeed);
                 }
 
                 const maxDeflectionAngle = 55 * Math.PI / 180;
                 const targetAngle = relativeImpact * maxDeflectionAngle;
 
-                ball.vx = Math.sin(targetAngle) * ball.speed;
-                ball.vy = -Math.cos(targetAngle) * ball.speed;
+                // Solo Mode: ±5° random angle variance per bounce — prevents trajectory memorisation
+                // 5° = 0.0873 radians; (random - 0.5) * 0.1745 gives ±5° spread
+                const soloAngleVariance = gameMode === 'solo' ? (Math.random() - 0.5) * 0.1745 : 0;
+                ball.vx = Math.sin(targetAngle + soloAngleVariance) * ball.speed;
+                ball.vy = -Math.cos(targetAngle + soloAngleVariance) * ball.speed;
 
                 // Score computation
                 comboStreak += 1;
@@ -722,17 +739,8 @@ function updatePhysics() {
                 ball.bouncesCount += 1;
                 if (comboStreak > maxComboStreak) maxComboStreak = comboStreak;
 
-                // Award Skill Shield for high streaks in Solo Earn Mode!
-                if (gameMode === 'solo' && comboStreak === 15) {
-                    storedShields += 1;
-                    if (!shieldActive) {
-                        shieldActive = true;
-                    }
-                    playTone(600, 'sine', 0.15, 0.15);
-                    playTone(900, 'sine', 0.25, 0.15, 0.08);
-                    spawnParticleBurst(ball.x, paddleY, 'shield');
-                    triggerBonusToast('🛡️ SKILL SHIELD AWARDED! (Combo 15+)');
-                }
+                // Note: Combo-based Skill Shield is disabled in Solo Earn Mode.
+                // Shields are only obtainable via the random falling power-up capsule.
 
                 let multiplier = 1;
                 if (comboStreak >= 10) multiplier = 3;
@@ -749,21 +757,13 @@ function updatePhysics() {
                 score += scoreGain;
                 
                 if (gameMode === 'solo') {
-                    // --- SOLO EARN MODE: Payout Multiplier Ascent ---
-                    // The player climbs towards a 2.0x stake multiplier cap.
-                    // Each standard bounce awards +0.04x progression.
-                    // Hits with active multipliers and Multi-Ball combos accelerate this gain!
-                    let multGain = ball.isBoss ? 0.25 : 0.04;
-                    
-                    // Combo streaks scale up progression speed!
-                    if (comboStreak >= 10) multGain *= 2.5;
-                    else if (comboStreak >= 5) multGain *= 1.8;
-                    
-                    // Multi-Ball chaos doubles the multiplier rate!
-                    if (balls.length > 1) {
-                        multGain *= 2.0;
-                    }
-                    
+                    // --- SOLO EARN MODE: Skill-Gated Multiplier Ascent ---
+                    // Flat, predictable curve: +0.015x per bounce. Boss: +0.06x per hit.
+                    // Combos and multi-ball NO LONGER accelerate multiplier gain —
+                    // they only boost display score. Reaching 2.0x requires ~135 bounces
+                    // of sustained skill, not just 50 easy ones with combos stacked.
+                    let multGain = ball.isBoss ? 0.06 : 0.015;
+
                     soloMultiplier = Math.min(2.0, soloMultiplier + multGain);
                     document.getElementById('score-display').textContent = soloMultiplier.toFixed(2) + 'x';
 
@@ -828,8 +828,10 @@ function updatePhysics() {
                 }
 
                 // Spawners:
-                // 1. Extra Ball at 15 Bounces
-                if (bounces === 15 && balls.length === 1) {
+                // 1. Extra Ball — delayed in Solo Mode to bounce 60 (skill gate).
+                // Only players who have practiced will reach this threshold consistently.
+                const extraBallThreshold = gameMode === 'solo' ? 60 : 15;
+                if (bounces === extraBallThreshold && balls.length === 1) {
                     spawnBall(gameWidth / 2, gameHeight / 4, false, false);
                 }
                 
@@ -904,7 +906,8 @@ function activatePowerup(type) {
             triggerBonusToast('🛡️ SHIELD ACTIVE!');
         }
     } else if (type === 'wide') {
-        paddleWidth = defaultPaddleWidth * 1.5;
+        // Solo Mode: reduced paddle expansion (1.25x vs 1.5x) to preserve skill requirement
+        paddleWidth = defaultPaddleWidth * (gameMode === 'solo' ? 1.25 : 1.5);
         if (widePaddleTimer > 0) {
             widePaddleTimer += 480; // Stack duration (8 seconds)
             triggerBonusToast('🍄 PADDLE TURBO EXTENDED!');
@@ -913,6 +916,8 @@ function activatePowerup(type) {
             triggerBonusToast('🍄 PADDLE EXPANDED!');
         }
     } else if (type === 'slow') {
+        // Solo Mode: weaker slow effect (75% speed vs 60% in other modes)
+        const slowFactor = gameMode === 'solo' ? 0.75 : 0.6;
         if (slowMoTimer > 0) {
             slowMoTimer += 360; // Stack duration (6 seconds)
             triggerBonusToast('🐢 SLOW MOTION EXTENDED!');
@@ -920,7 +925,7 @@ function activatePowerup(type) {
             slowMoTimer = 360;
             balls.forEach(ball => {
                 const angle = Math.atan2(ball.vy, ball.vx);
-                ball.speed = ball.speed * 0.6;
+                ball.speed = ball.speed * slowFactor;
                 ball.vx = Math.cos(angle) * ball.speed;
                 ball.vy = Math.sin(angle) * ball.speed;
             });
