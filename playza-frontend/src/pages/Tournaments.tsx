@@ -40,24 +40,25 @@ const Tournaments = () => {
   });
 
   const featuredTournament = quizTournaments.find(qt => qt.status === "active" || qt.status === "lobby") || quizTournaments[0];
-  
-  const filteredTournaments = quizTournaments.filter((qt) => {
-    const isLive = qt.status === "active";
-    const isCompleted = qt.status === "completed";
-    const isUpcoming = qt.status === "lobby" || qt.status === "draft";
 
-    const matchTab = 
-      activeTab === "live" ? isLive : 
-      activeTab === "completed" ? isCompleted : 
-      activeTab === "upcoming" ? isUpcoming : false;
+  const filteredTournaments = quizTournaments.filter((qt) => {
+    const isLive      = qt.status === "active";
+    const isCompleted = qt.status === "completed";
+    // FIX: registration is also "upcoming"
+    const isUpcoming  = qt.status === "lobby" || qt.status === "draft" || qt.status === "registration";
+
+    const matchTab =
+      activeTab === "live"      ? isLive :
+      activeTab === "completed" ? isCompleted :
+      activeTab === "upcoming"  ? isUpcoming : false;
 
     const matchSearch = qt.title.toLowerCase().includes(searchQuery.toLowerCase());
-    
+
     const matchPrize =
       filterPrize === "all" ||
       (filterPrize === "high" && qt.prize_pool >= 100000) ||
-      (filterPrize === "low" && qt.prize_pool < 100000);
-      
+      (filterPrize === "low"  && qt.prize_pool < 100000);
+
     return matchTab && matchSearch && matchPrize;
   });
 
@@ -78,16 +79,16 @@ const Tournaments = () => {
           <section className="relative w-full h-87.5 md:h-112.5 rounded-xl overflow-hidden border border-white/5 bg-slate-950 select-none mx-1 md:mx-0">
             <div className="absolute inset-0 z-0">
               <div className="absolute inset-0 bg-linear-to-t from-slate-950 via-slate-950/80 to-transparent z-10" />
-              <div
-                className="absolute inset-0 w-full h-full opacity-40 bg-gradient-to-br from-primary/30 to-violet-600/30"
-              />
+              <div className="absolute inset-0 w-full h-full opacity-40 bg-gradient-to-br from-primary/30 to-violet-600/30" />
               <div className="absolute inset-0 bg-linear-to-r from-primary/30 to-transparent z-10" />
             </div>
 
             <div className="relative z-20 h-full flex flex-col justify-end p-6 md:p-10">
               <div className="inline-flex items-center gap-2 bg-red-500/20 text-red-500 border border-red-500/30 px-2 md:px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-4 w-max">
                 <span className="w-2 h-2 rounded-full bg-red-500" />{" "}
-                {featuredTournament.status === "active" ? "LIVE EVENT" : featuredTournament.status.toUpperCase()}
+                {featuredTournament.status === "active" ? "LIVE EVENT" :
+                 featuredTournament.status === "registration" ? "REGISTRATION OPEN" :
+                 featuredTournament.status.toUpperCase()}
               </div>
 
               <h2 className="text-4xl md:text-6xl font-black font-headline text-white uppercase tracking-tighter mb-2 max-w-2xl">
@@ -110,7 +111,7 @@ const Tournaments = () => {
                 to={`/quiz/${featuredTournament.id}`}
                 className="inline-flex items-center justify-center gap-2 bg-primary md:hover:bg-primary/90 text-white font-black uppercase tracking-widest px-8 md:px-12 py-2 md:py-4 rounded-xl w-full md:w-auto"
               >
-                Join Tournament <ArrowRight size={18} />
+                {featuredTournament.status === "registration" ? "Register Now" : "Join Tournament"} <ArrowRight size={18} />
               </Link>
             </div>
           </section>
@@ -130,11 +131,7 @@ const Tournaments = () => {
                       : "bg-black/5 dark:bg-black/20 text-slate-500 md:hover:text-slate-900 md:dark:hover:text-white"
                   }`}
                 >
-                  {tab === "live"
-                    ? "🔴 Live Now"
-                    : tab === "upcoming"
-                      ? "🟡 Upcoming"
-                      : "⚫ Completed"}
+                  {tab === "live" ? "🔴 Live Now" : tab === "upcoming" ? "🟡 Upcoming" : "⚫ Completed"}
                 </button>
               ))}
             </div>
@@ -152,26 +149,17 @@ const Tournaments = () => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
                 {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery("")}
-                    className="absolute inset-y-0 right-3 flex items-center text-slate-400 hover:text-white"
-                  >
+                  <button onClick={() => setSearchQuery("")} className="absolute inset-y-0 right-3 flex items-center text-slate-400 hover:text-white">
                     <X className="h-4 w-4" />
                   </button>
                 )}
               </div>
               <DropdownMenu>
                 <DropdownMenuTrigger className="bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg py-3 px-4 text-xs font-bold text-slate-900 dark:text-white uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-primary/50 hover:border-primary/50 transition-colors hidden sm:flex items-center justify-between gap-2 min-w-50">
-                  <span>
-                    {PRIZE_OPTIONS.find((opt) => opt.value === filterPrize)
-                      ?.label || "All Prizes"}
-                  </span>
+                  <span>{PRIZE_OPTIONS.find((opt) => opt.value === filterPrize)?.label || "All Prizes"}</span>
                   <ChevronDown size={14} className="opacity-50" />
                 </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  className="w-50 bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl border border-slate-200 dark:border-white/10 p-2 rounded-xl"
-                  align="end"
-                >
+                <DropdownMenuContent className="w-50 bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl border border-slate-200 dark:border-white/10 p-2 rounded-xl" align="end">
                   {PRIZE_OPTIONS.map((opt) => (
                     <DropdownMenuItem
                       key={opt.value}
@@ -192,12 +180,17 @@ const Tournaments = () => {
                 <div key={qt.id} className="glass-card rounded-xl border border-slate-200 dark:border-white/5 overflow-hidden flex flex-col bg-gradient-to-b from-slate-50 to-white dark:from-slate-900 dark:to-slate-950 hover:border-primary/30 transition-all">
                   <div className="h-28 bg-gradient-to-br from-primary/20 via-violet-500/10 to-slate-900 relative overflow-hidden flex items-center justify-center">
                     <div className="absolute top-3 right-3">
+                      {/* FIX: handle registration status badge */}
                       <span className={`text-[10px] font-black px-2 py-1 rounded-full ${
-                        qt.status === "active" ? "bg-red-500/90 text-white" :
-                        qt.status === "lobby" ? "bg-blue-500/90 text-white" :
+                        qt.status === "active"       ? "bg-red-500/90 text-white" :
+                        qt.status === "lobby"        ? "bg-blue-500/90 text-white" :
+                        qt.status === "registration" ? "bg-green-500/90 text-white" :
                         "bg-white/20 text-white"
                       }`}>
-                        {qt.status === "active" ? "🔴 LIVE" : qt.status === "lobby" ? "JOIN NOW" : qt.status.toUpperCase()}
+                        {qt.status === "active"       ? "🔴 LIVE" :
+                         qt.status === "lobby"        ? "🔵 STARTING SOON" :
+                         qt.status === "registration" ? "✅ REGISTER NOW" :
+                         qt.status.toUpperCase()}
                       </span>
                     </div>
                     <div className="relative z-10 text-center">
@@ -226,16 +219,18 @@ const Tournaments = () => {
                         <div key={i} className="flex-1 h-1 rounded-full" style={{ background: c }} />
                       ))}
                     </div>
+                    {/* FIX: handle registration status CTA */}
                     <Link
                       to={`/quiz/${qt.id}`}
                       className={`w-full py-2.5 rounded-xl font-black uppercase tracking-widest text-[10px] text-center transition-all mt-auto flex items-center justify-center gap-1 ${
-                        qt.status === "active" || qt.status === "lobby"
+                        qt.status === "active" || qt.status === "lobby" || qt.status === "registration"
                           ? "bg-gradient-to-r from-primary to-violet-600 text-white hover:opacity-90"
                           : "bg-slate-100 dark:bg-white/5 text-slate-500"
                       }`}
                     >
-                      {qt.status === "active" ? "WATCH LIVE" :
-                       qt.status === "lobby" ? <><Zap size={12} /> JOIN NOW</> :
+                      {qt.status === "active"       ? "WATCH LIVE" :
+                       qt.status === "lobby"        ? <><Zap size={12} /> STARTING SOON</> :
+                       qt.status === "registration" ? <><Zap size={12} /> REGISTER NOW</> :
                        "VIEW DETAILS"}
                     </Link>
                   </div>
