@@ -87,7 +87,7 @@ const Tournaments = () => {
               <div className="inline-flex items-center gap-2 bg-red-500/20 text-red-500 border border-red-500/30 px-2 md:px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-4 w-max">
                 <span className="w-2 h-2 rounded-full bg-red-500" />{" "}
                 {featuredTournament.status === "active" ? "LIVE EVENT" :
-                 featuredTournament.status === "registration" ? "REGISTRATION OPEN" :
+                 featuredTournament.status === "registration" || featuredTournament.status === "lobby" ? "REGISTRATION OPEN" :
                  featuredTournament.status.toUpperCase()}
               </div>
 
@@ -111,7 +111,7 @@ const Tournaments = () => {
                 to={`/quiz/${featuredTournament.id}`}
                 className="inline-flex items-center justify-center gap-2 bg-primary md:hover:bg-primary/90 text-white font-black uppercase tracking-widest px-8 md:px-12 py-2 md:py-4 rounded-xl w-full md:w-auto"
               >
-                {featuredTournament.status === "registration" ? "Register Now" : "Join Tournament"} <ArrowRight size={18} />
+                {featuredTournament.status === "registration" || featuredTournament.status === "lobby" ? "Register Now" : "Join Tournament"} <ArrowRight size={18} />
               </Link>
             </div>
           </section>
@@ -183,12 +183,12 @@ const Tournaments = () => {
                       {/* FIX: handle registration status badge */}
                       <span className={`text-[10px] font-black px-2 py-1 rounded-full ${
                         qt.status === "active"       ? "bg-red-500/90 text-white" :
-                        qt.status === "lobby"        ? "bg-blue-500/90 text-white" :
+                        qt.status === "lobby"        ? "bg-green-500/90 text-white" :
                         qt.status === "registration" ? "bg-green-500/90 text-white" :
                         "bg-white/20 text-white"
                       }`}>
                         {qt.status === "active"       ? "🔴 LIVE" :
-                         qt.status === "lobby"        ? "🔵 STARTING SOON" :
+                         qt.status === "lobby"        ? "✅ REGISTER NOW" :
                          qt.status === "registration" ? "✅ REGISTER NOW" :
                          qt.status.toUpperCase()}
                       </span>
@@ -229,7 +229,7 @@ const Tournaments = () => {
                       }`}
                     >
                       {qt.status === "active"       ? "WATCH LIVE" :
-                       qt.status === "lobby"        ? <><Zap size={12} /> STARTING SOON</> :
+                       qt.status === "lobby"        ? <><Zap size={12} /> REGISTER NOW</> :
                        qt.status === "registration" ? <><Zap size={12} /> REGISTER NOW</> :
                        "VIEW DETAILS"}
                     </Link>
