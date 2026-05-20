@@ -15,7 +15,7 @@ interface QuizTournament {
   description: string;
   entry_fee: number;
   prize_pool: number;
-  status: "draft" | "lobby" | "active" | "completed" | "cancelled";
+  status: "draft" | "registration" | "lobby" | "active" | "completed" | "cancelled";
   scheduled_at: string | null;
   started_at: string | null;
   player_count: number;
@@ -47,11 +47,12 @@ const ROUND_META = [
 ];
 
 const STATUS_CFG: Record<string, { label: string; cls: string }> = {
-  draft:     { label: "Draft",     cls: "bg-slate-100 dark:bg-slate-800 text-slate-500" },
-  lobby:     { label: "Lobby",     cls: "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400" },
-  active:    { label: "Live 🔴",   cls: "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400" },
-  completed: { label: "Completed", cls: "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400" },
-  cancelled: { label: "Cancelled", cls: "bg-slate-100 dark:bg-slate-800 text-slate-400" },
+  draft:        { label: "Draft",              cls: "bg-slate-100 dark:bg-slate-800 text-slate-500" },
+  registration: { label: "Registration Open",  cls: "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400" },
+  lobby:        { label: "Lobby",              cls: "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400" },
+  active:       { label: "Live 🔴",            cls: "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400" },
+  completed:    { label: "Completed",          cls: "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400" },
+  cancelled:    { label: "Cancelled",          cls: "bg-slate-100 dark:bg-slate-800 text-slate-400" },
 };
 
 // ─── API helpers ──────────────────────────────────────────────────────────────
@@ -62,6 +63,10 @@ const api = {
   },
   createTournament: async (payload: Partial<QuizTournament>) => {
     const { data } = await apiClient.post("/admin/quiz/tournaments", payload);
+    return data.data;
+  },
+  updateTournament: async ({ id, ...payload }: Partial<QuizTournament> & { id: string }) => {
+    const { data } = await apiClient.patch(`/admin/quiz/tournaments/${id}`, payload);
     return data.data;
   },
   updateTournament: async ({ id, ...payload }: Partial<QuizTournament> & { id: string }) => {
@@ -149,6 +154,79 @@ function CreateTournamentModal({ onClose, onCreated }: { onClose: () => void; on
           >
             {isPending ? <><MdRefresh className="animate-spin" /> Creating...</> : <><MdAdd /> Create Tournament</>}
           </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Edit Tournament Modal ────────────────────────────────────────────────────
+function EditTournamentModal({ tournament, onClose, onSaved }: { tournament: QuizTournament; onClose: () => void; onSaved: () => void }) {
+  const toLocalDT = (iso: string | null) => {
+    if (!iso) return "";
+    const d = new Date(iso);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+  const [form, setForm] = useState({
+    title: tournament.title,
+    description: tournament.description ?? "",
+    entry_fee: tournament.entry_fee,
+    scheduled_at: toLocalDT(tournament.scheduled_at),
+  });
+  const [error, setError] = useState("");
+
+  const { mutate, isPending } = useMutation({
+    mutationFn: () => api.updateTournament({
+      id: tournament.id,
+      title: form.title,
+      description: form.description,
+      entry_fee: Number(form.entry_fee),
+      scheduled_at: form.scheduled_at || null,
+    } as any),
+    onSuccess: () => { onSaved(); onClose(); },
+    onError: (err: any) => setError(err.response?.data?.message ?? "Failed to save"),
+  });
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
+      <div className="bg-card border border-border rounded-2xl w-full max-w-md shadow-2xl" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+          <h3 className="font-black text-foreground flex items-center gap-2"><MdEdit className="text-primary" /> Edit Tournament</h3>
+          <button onClick={onClose} className="w-7 h-7 rounded-lg bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground"><MdClose /></button>
+        </div>
+
+        <div className="p-5 space-y-4">
+          {error && <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl px-4 py-2 text-red-600 dark:text-red-400 text-sm font-medium">{error}</div>}
+
+          {[
+            { label: "Title *",                  key: "title",        type: "text",           placeholder: "Quiz Championship #1" },
+            { label: "Description",              key: "description",  type: "text",           placeholder: "Test your knowledge..." },
+            { label: "Entry Fee (ZA Tokens)",    key: "entry_fee",    type: "number",         placeholder: "0 = Free" },
+            { label: "Scheduled At (date/time)", key: "scheduled_at", type: "datetime-local", placeholder: "" },
+          ].map(f => (
+            <div key={f.key}>
+              <label className="block text-[10px] font-black text-muted-foreground uppercase tracking-wider mb-1.5">{f.label}</label>
+              <input
+                type={f.type}
+                placeholder={f.placeholder}
+                value={(form as any)[f.key]}
+                onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))}
+                className="w-full px-3 py-2.5 rounded-xl bg-muted border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+          ))}
+
+          <div className="flex gap-2 pt-1">
+            <button onClick={onClose} className="flex-1 py-2.5 rounded-xl bg-muted text-foreground font-bold text-sm hover:bg-muted/80 transition-all">Cancel</button>
+            <button
+              onClick={() => mutate()}
+              disabled={isPending || !form.title}
+              className="flex-1 py-3 rounded-xl bg-primary text-primary-foreground font-black text-sm disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {isPending ? <><MdRefresh className="animate-spin" /> Saving...</> : <><MdCheckCircle /> Save Changes</>}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -483,6 +561,9 @@ const QuizTournaments: React.FC = () => {
   const [monitor, setMonitor] = useState<QuizTournament | null>(null);
   const [actionMsg, setActionMsg] = useState("");
 
+  const [confirmCancel, setConfirmCancel] = useState<QuizTournament | null>(null);
+  const [editT, setEditT] = useState<QuizTournament | null>(null);
+
   const { data: tournaments = [], isLoading, refetch } = useQuery({
     queryKey: ["admin-quiz-tournaments"],
     queryFn: api.listTournaments,
@@ -503,6 +584,16 @@ const QuizTournaments: React.FC = () => {
       setActionMsg("Game launched! Questions are broadcasting via WebSocket.");
       queryClient.invalidateQueries({ queryKey: ["admin-quiz-tournaments"] });
       setTimeout(() => setActionMsg(""), 5000);
+    },
+  });
+
+  const { mutate: cancelT } = useMutation({
+    mutationFn: (id: string) => api.updateTournament({ id, status: "cancelled" } as any),
+    onSuccess: () => {
+      setActionMsg("Tournament has been cancelled.");
+      setConfirmCancel(null);
+      queryClient.invalidateQueries({ queryKey: ["admin-quiz-tournaments"] });
+      setTimeout(() => setActionMsg(""), 4000);
     },
   });
 
@@ -620,6 +711,16 @@ const QuizTournaments: React.FC = () => {
                     <MdEdit className="text-sm" /> Questions
                   </button>
 
+                  {/* Edit button — available for any non-finished tournament */}
+                  {!["completed", "cancelled"].includes(t.status) && (
+                    <button
+                      onClick={() => setEditT(t)}
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-muted hover:bg-muted/80 text-foreground text-xs font-bold transition-all"
+                    >
+                      <MdEdit className="text-sm text-primary" /> Edit
+                    </button>
+                  )}
+
                   {t.status === "active" && (
                     <button
                       onClick={() => setMonitor(t)}
@@ -636,16 +737,26 @@ const QuizTournaments: React.FC = () => {
                       title={t.question_count < 5 ? "Add at least 5 questions first" : ""}
                       className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-xs font-bold border border-blue-200 dark:border-blue-800 hover:bg-blue-100 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                     >
-                      <MdPlayArrow className="text-sm" /> Open Lobby
+                      <MdPlayArrow className="text-sm" /> Open Registration
                     </button>
                   )}
 
-                  {t.status === "lobby" && (
+                  {/* FIX: backend /start sets status to 'registration', not 'lobby' */}
+                  {(t.status === "registration" || t.status === "lobby") && (
                     <button
                       onClick={() => launchT(t.id)}
                       className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-primary to-violet-600 text-white text-xs font-black hover:opacity-90 transition-all shadow-md shadow-primary/20"
                     >
                       <Zap className="w-3.5 h-3.5" /> Launch Game Now
+                    </button>
+                  )}
+
+                  {(t.status === "draft" || t.status === "registration" || t.status === "lobby" || t.status === "active") && (
+                    <button
+                      onClick={() => setConfirmCancel(t)}
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs font-bold border border-red-200 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900/30 transition-all ml-auto"
+                    >
+                      <MdClose className="text-sm" /> Disable
                     </button>
                   )}
                 </div>
@@ -664,6 +775,47 @@ const QuizTournaments: React.FC = () => {
       )}
       {manageQ && <QuestionManagerModal tournament={manageQ} onClose={() => setManageQ(null)} />}
       {monitor && <LiveMonitorModal tournament={monitor} onClose={() => setMonitor(null)} />}
+      {editT && (
+        <EditTournamentModal
+          tournament={editT}
+          onClose={() => setEditT(null)}
+          onSaved={() => queryClient.invalidateQueries({ queryKey: ["admin-quiz-tournaments"] })}
+        />
+      )}
+
+      {/* Cancel Confirmation Modal */}
+      {confirmCancel && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setConfirmCancel(null)}>
+          <div className="bg-card border border-border rounded-2xl w-full max-w-sm shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="p-6 text-center">
+              <div className="w-14 h-14 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-4">
+                <MdClose className="text-3xl text-red-500" />
+              </div>
+              <h3 className="font-black text-foreground text-lg mb-2">Disable Tournament?</h3>
+              <p className="text-sm text-muted-foreground mb-1">
+                <span className="font-bold text-foreground">"{confirmCancel.title}"</span>
+              </p>
+              <p className="text-xs text-muted-foreground mb-6">
+                This will cancel the tournament and notify registered players. This action cannot be undone.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setConfirmCancel(null)}
+                  className="flex-1 py-2.5 rounded-xl bg-muted text-foreground font-bold text-sm hover:bg-muted/80 transition-all"
+                >
+                  Keep It
+                </button>
+                <button
+                  onClick={() => cancelT(confirmCancel.id)}
+                  className="flex-1 py-2.5 rounded-xl bg-red-500 text-white font-black text-sm hover:bg-red-600 transition-all"
+                >
+                  Yes, Disable
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
