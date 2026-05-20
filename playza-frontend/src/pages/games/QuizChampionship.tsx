@@ -1,730 +1,513 @@
-import React, { useState, useRef } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiClient } from "../lib/api-client";
-import {
-  MdAdd, MdRefresh, MdPlayArrow, MdPeople, MdQuestionMark,
-  MdUpload, MdDelete, MdEdit, MdVisibility, MdClose,
-  MdCheckCircle, MdTimer, MdEmojiEvents, MdBolt,
-} from "react-icons/md";
-import { Trophy, Crown, ChevronDown, Zap, Shield, Flame, Star } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
+import { useParams, useNavigate } from "react-router";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { getQuizTournamentApi, joinQuizTournamentApi, type QuizTournament } from "@/api/quiz.api";
+import { useQuizSocket, type LeaderboardEntry } from "@/hooks/quiz/useQuizSocket";
+import { useAuth } from "@/context/auth";
+import { useToast } from "@/context/toast";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-interface QuizTournament {
-  id: string;
-  title: string;
-  description: string;
-  entry_fee: number;
-  prize_pool: number;
-  status: "draft" | "lobby" | "active" | "completed" | "cancelled";
-  scheduled_at: string | null;
-  started_at: string | null;
-  player_count: number;
-  question_count: number;
-  current_round: number;
-}
-
-interface QuizQuestion {
-  id: string;
-  round_number: number;
-  question_text: string;
-  option_a: string;
-  option_b: string;
-  option_c: string;
-  option_d: string;
-  correct_option: string;
-  difficulty: string;
-  time_limit_secs: number;
-  order_index: number;
-}
-
-// ─── Round config ─────────────────────────────────────────────────────────────
-const ROUND_META = [
-  { round: 1, name: "Warm Up",        color: "text-green-400",  bg: "bg-green-500/10 border-green-500/30",  badge: "bg-green-500",  secs: 45, icon: <Star className="w-3.5 h-3.5" /> },
-  { round: 2, name: "Rising",         color: "text-blue-400",   bg: "bg-blue-500/10 border-blue-500/30",    badge: "bg-blue-500",   secs: 35, icon: <Zap className="w-3.5 h-3.5" /> },
-  { round: 3, name: "Heat Up",        color: "text-orange-400", bg: "bg-orange-500/10 border-orange-500/30",badge: "bg-orange-500", secs: 30, icon: <Flame className="w-3.5 h-3.5" /> },
-  { round: 4, name: "Danger Zone",    color: "text-red-400",    bg: "bg-red-500/10 border-red-500/30",      badge: "bg-red-500",    secs: 25, icon: <Shield className="w-3.5 h-3.5" /> },
-  { round: 5, name: "Final Showdown", color: "text-purple-400", bg: "bg-purple-500/10 border-purple-500/30",badge: "bg-purple-500", secs: 20, icon: <Crown className="w-3.5 h-3.5" /> },
+const ROUNDS = [
+  { name: "Warm Up",        emoji: "🟢", color: "#22c55e", secs: 45 },
+  { name: "Rising",         emoji: "🔵", color: "#3b82f6", secs: 35 },
+  { name: "Heat Up",        emoji: "🟠", color: "#f97316", secs: 30 },
+  { name: "Danger Zone",    emoji: "🔴", color: "#ef4444", secs: 25 },
+  { name: "Final Showdown", emoji: "👑", color: "#a855f7", secs: 20 },
 ];
 
-const STATUS_CFG: Record<string, { label: string; cls: string }> = {
-  draft:     { label: "Draft",     cls: "bg-slate-100 dark:bg-slate-800 text-slate-500" },
-  lobby:     { label: "Lobby",     cls: "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400" },
-  active:    { label: "Live 🔴",   cls: "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400" },
-  completed: { label: "Completed", cls: "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400" },
-  cancelled: { label: "Cancelled", cls: "bg-slate-100 dark:bg-slate-800 text-slate-400" },
-};
+const OPTS = ["A", "B", "C", "D"] as const;
+const OPT_IDLE  = ["border-sky-500/30 bg-sky-500/5 hover:bg-sky-500/15 hover:border-sky-400","border-violet-500/30 bg-violet-500/5 hover:bg-violet-500/15 hover:border-violet-400","border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/15 hover:border-amber-400","border-rose-500/30 bg-rose-500/5 hover:bg-rose-500/15 hover:border-rose-400"];
+const OPT_LETTER = ["bg-sky-500","bg-violet-500","bg-amber-500","bg-rose-500"];
 
-// ─── API helpers ──────────────────────────────────────────────────────────────
-const api = {
-  listTournaments: async (): Promise<QuizTournament[]> => {
-    const { data } = await apiClient.get("/admin/quiz/tournaments");
-    return data.data ?? [];
-  },
-  createTournament: async (payload: Partial<QuizTournament>) => {
-    const { data } = await apiClient.post("/admin/quiz/tournaments", payload);
-    return data.data;
-  },
-  updateTournament: async ({ id, ...payload }: Partial<QuizTournament> & { id: string }) => {
-    const { data } = await apiClient.patch(`/admin/quiz/tournaments/${id}`, payload);
-    return data.data;
-  },
-  startTournament: async (id: string) => {
-    const { data } = await apiClient.post(`/admin/quiz/tournaments/${id}/start`);
-    return data;
-  },
-  launchTournament: async (id: string) => {
-    const { data } = await apiClient.post(`/admin/quiz/tournaments/${id}/launch`);
-    return data;
-  },
-  getQuestions: async (id: string): Promise<QuizQuestion[]> => {
-    const { data } = await apiClient.get(`/admin/quiz/tournaments/${id}/questions`);
-    return data.data ?? [];
-  },
-  addQuestion: async (tournamentId: string, q: Partial<QuizQuestion>) => {
-    const { data } = await apiClient.post(`/admin/quiz/tournaments/${tournamentId}/questions`, q);
-    return data.data;
-  },
-  bulkImport: async (tournamentId: string, questions: Partial<QuizQuestion>[]) => {
-    const { data } = await apiClient.post(`/admin/quiz/tournaments/${tournamentId}/questions/bulk`, { questions });
-    return data;
-  },
-  deleteQuestion: async (qId: string) => {
-    await apiClient.delete(`/admin/quiz/questions/${qId}`);
-  },
-  cancelTournament: async (id: string) => {
-    const { data } = await apiClient.patch(`/admin/quiz/tournaments/${id}`, { status: "cancelled" });
-    return data;
-  },
-  getLive: async (id: string) => {
-    const { data } = await apiClient.get(`/admin/quiz/tournaments/${id}/live`);
-    return data.data;
-  },
-};
-
-// ─── Create Tournament Modal ──────────────────────────────────────────────────
-function CreateTournamentModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
-  const [form, setForm] = useState({ title: "", description: "", entry_fee: 0, scheduled_at: "" });
-  const [error, setError] = useState("");
-
-  const { mutate, isPending } = useMutation({
-    mutationFn: () => api.createTournament({
-      title: form.title,
-      description: form.description,
-      entry_fee: Number(form.entry_fee),
-      scheduled_at: form.scheduled_at || null,
-    } as any),
-    onSuccess: () => { onCreated(); onClose(); },
-    onError: (err: any) => setError(err.response?.data?.message ?? "Failed to create"),
-  });
-
+function TimerArc({ ms, totalMs, round }: { ms: number; totalMs: number; round: number }) {
+  const pct  = totalMs > 0 ? Math.max(0, ms / totalMs) : 0;
+  const r    = 40;
+  const circ = 2 * Math.PI * r;
+  const col  = ROUNDS[(round - 1)]?.color ?? "#a855f7";
+  const secs = Math.ceil(ms / 1000);
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
-      <div className="bg-card border border-border rounded-2xl w-full max-w-md shadow-2xl" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
-          <h3 className="font-black text-foreground flex items-center gap-2"><Trophy className="w-4 h-4 text-primary" /> New Tournament</h3>
-          <button onClick={onClose} className="w-7 h-7 rounded-lg bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground"><MdClose /></button>
-        </div>
-
-        <div className="p-5 space-y-4">
-          {error && <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl px-4 py-2 text-red-600 dark:text-red-400 text-sm font-medium">{error}</div>}
-
-          {[
-            { label: "Title *", key: "title", type: "text", placeholder: "Quiz Championship #1" },
-            { label: "Description", key: "description", type: "text", placeholder: "Test your knowledge..." },
-            { label: "Entry Fee (ZA Tokens)", key: "entry_fee", type: "number", placeholder: "0 = Free" },
-            { label: "Scheduled At (optional)", key: "scheduled_at", type: "datetime-local", placeholder: "" },
-          ].map(f => (
-            <div key={f.key}>
-              <label className="block text-[10px] font-black text-muted-foreground uppercase tracking-wider mb-1.5">{f.label}</label>
-              <input
-                type={f.type}
-                placeholder={f.placeholder}
-                value={(form as any)[f.key]}
-                onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))}
-                className="w-full px-3 py-2.5 rounded-xl bg-muted border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-          ))}
-
-          <button
-            onClick={() => mutate()}
-            disabled={isPending || !form.title}
-            className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-black text-sm disabled:opacity-50 flex items-center justify-center gap-2"
-          >
-            {isPending ? <><MdRefresh className="animate-spin" /> Creating...</> : <><MdAdd /> Create Tournament</>}
-          </button>
-        </div>
+    <div className="relative flex items-center justify-center shrink-0" style={{ width: 88, height: 88 }}>
+      <svg className="-rotate-90 absolute inset-0" width="88" height="88" viewBox="0 0 88 88">
+        <circle cx="44" cy="44" r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="5" />
+        <circle cx="44" cy="44" r={r} fill="none" stroke={col} strokeWidth="5" strokeLinecap="round"
+          strokeDasharray={`${circ * pct} ${circ}`}
+          style={{ transition: "stroke-dasharray 0.1s linear", filter: `drop-shadow(0 0 8px ${col})` }} />
+      </svg>
+      <div className={`flex flex-col items-center z-10 ${secs <= 5 ? "animate-pulse" : ""}`}>
+        <span className="text-3xl font-black text-white leading-none tabular-nums">{secs}</span>
+        <span className="text-[9px] font-black uppercase tracking-widest text-white/30">sec</span>
       </div>
     </div>
   );
 }
 
-// ─── Question Manager Modal ───────────────────────────────────────────────────
-function QuestionManagerModal({ tournament, onClose }: { tournament: QuizTournament; onClose: () => void }) {
-  const queryClient = useQueryClient();
-  const fileRef = useRef<HTMLInputElement>(null);
-  const [activeRound, setActiveRound] = useState(1);
-  const [addMode, setAddMode] = useState(false);
-  const [importError, setImportError] = useState("");
-  const [importSuccess, setImportSuccess] = useState("");
-  const [newQ, setNewQ] = useState({
-    question_text: "", option_a: "", option_b: "", option_c: "", option_d: "", correct_option: "A",
-  });
+function LeaderboardPanel({ entries, myId }: { entries: LeaderboardEntry[]; myId?: string }) {
+  const alive   = entries.filter(e => e.status === "alive").length;
+  const myEntry = entries.find(e => e.user_id === myId);
+  const myRank  = myEntry?.rank;
+  return (
+    <div className="bg-white/[0.03] border border-white/[0.07] rounded-2xl overflow-hidden flex flex-col">
+      <div className="px-3 py-2.5 border-b border-white/[0.06] flex items-center justify-between">
+        <span className="text-[10px] font-black uppercase tracking-widest text-white/50">🏆 Live Board</span>
+        <span className="text-[9px] font-bold text-green-400 flex items-center gap-1">
+          <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse inline-block" />
+          {alive} alive
+        </span>
+      </div>
+      <div className="overflow-y-auto divide-y divide-white/[0.04]" style={{ maxHeight: 320 }}>
+        {entries.slice(0, 25).map((e, i) => {
+          const isMe    = e.user_id === myId;
+          const isAlive = e.status === "alive";
+          return (
+            <div key={i} className={`flex items-center gap-2 px-3 py-2 ${isMe ? "bg-purple-500/10 border-l-2 border-purple-500" : ""} ${!isAlive ? "opacity-30" : ""}`}>
+              <span className="text-[10px] font-black w-4 text-center text-white/20">
+                {e.rank === 1 ? "👑" : e.rank === 2 ? "🥈" : e.rank === 3 ? "🥉" : e.rank}
+              </span>
+              <div className="w-5 h-5 rounded-full bg-white/[0.08] flex items-center justify-center text-[9px] font-black text-white shrink-0">
+                {e.username?.[0]?.toUpperCase()}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className={`text-[10px] font-bold truncate ${isMe ? "text-purple-300" : "text-white/60"}`}>{isMe ? "You" : e.username}</p>
+                <p className="text-[8px] text-white/20">{e.correct_answers}✓</p>
+              </div>
+              <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${e.status === "winner" ? "bg-yellow-400" : isAlive ? "bg-green-400" : "bg-red-500/50"}`} />
+            </div>
+          );
+        })}
+      </div>
+      {myRank && myRank > 25 && myEntry && (
+        <div className="border-t border-white/[0.06] px-3 py-2 bg-purple-500/10 flex items-center gap-2">
+          <span className="text-[9px] font-black text-purple-300 w-4 text-center">#{myRank}</span>
+          <div className="w-5 h-5 rounded-full bg-purple-500/30 flex items-center justify-center text-[9px] font-black text-purple-300">{myEntry.username?.[0]?.toUpperCase()}</div>
+          <p className="text-[10px] font-bold text-purple-300 flex-1">You</p>
+          <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
+        </div>
+      )}
+    </div>
+  );
+}
 
-  const { data: questions = [], refetch } = useQuery({
-    queryKey: ["admin-quiz-questions", tournament.id],
-    queryFn: () => api.getQuestions(tournament.id),
-  });
+export default function QuizChampionship() {
+  const { id }       = useParams<{ id: string }>();
+  const navigate     = useNavigate();
+  const toast        = useToast();
+  const { user }     = useAuth();
+  const [joinedState, setJoinedState] = useState(false);
+  const [showLB, setShowLB]           = useState(false);
+  const prevPhase                     = useRef<string>("");
 
-  const { mutate: addQ, isPending: adding } = useMutation({
-    mutationFn: () => api.addQuestion(tournament.id, { ...newQ, round_number: activeRound }),
-    onSuccess: () => {
-      refetch();
-      queryClient.invalidateQueries({ queryKey: ["admin-quiz-tournaments"] });
-      setNewQ({ question_text: "", option_a: "", option_b: "", option_c: "", option_d: "", correct_option: "A" });
-      setAddMode(false);
+  const { data: tournament, isLoading } = useQuery({
+    queryKey: ["quiz-tournament", id],
+    queryFn:  () => getQuizTournamentApi(id!),
+    enabled:  !!id,
+    refetchInterval: (query: unknown) => {
+      const q = query as { state?: { data?: QuizTournament } };
+      const t = q?.state?.data;
+      const isJoined = joinedState || !!(t?.user_registered && (t.status === "active" || t.status === "lobby"));
+      return isJoined ? false : 4000;
     },
   });
 
-  const { mutate: deleteQ } = useMutation({
-    mutationFn: api.deleteQuestion,
-    onSuccess: () => { refetch(); queryClient.invalidateQueries({ queryKey: ["admin-quiz-tournaments"] }); },
-  });
+  const joined = joinedState || !!(tournament?.user_registered && (tournament.status === "active" || tournament.status === "lobby"));
 
-  const { mutate: bulkImport, isPending: importing } = useMutation({
-    mutationFn: (qs: Partial<QuizQuestion>[]) => api.bulkImport(tournament.id, qs),
+  const { mutate: join, isPending: joining } = useMutation({
+    mutationFn: () => joinQuizTournamentApi(id!),
     onSuccess: (data) => {
-      setImportSuccess(`Imported ${data.data?.length ?? 0} questions successfully!`);
-      setImportError("");
-      refetch();
-      queryClient.invalidateQueries({ queryKey: ["admin-quiz-tournaments"] });
-      setTimeout(() => setImportSuccess(""), 4000);
+      toast.success(data.data?.already_joined ? "You're already in!" : "Joined! Waiting for game to start.");
+      setJoinedState(true);
     },
-    onError: (err: any) => setImportError(err.response?.data?.message ?? "Import failed"),
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { message?: string } } };
+      toast.error(err.response?.data?.message ?? "Failed to join");
+    },
   });
 
-  function handleFileImport(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      try {
-        const parsed = JSON.parse(ev.target?.result as string);
-        const qs = Array.isArray(parsed) ? parsed : parsed.questions;
-        if (!Array.isArray(qs)) throw new Error("Expected an array of questions");
-        bulkImport(qs);
-      } catch (err: any) {
-        setImportError(err.message ?? "Invalid JSON format");
-      }
-    };
-    reader.readAsText(file);
-    e.target.value = "";
+  const {
+    connected, phase, playerCount, currentQuestion,
+    selectedOption, answerLocked, revealData,
+    leaderboard, roundSummary, gameOver, elimMessage,
+    timeLeftMs, submitAnswer,
+  } = useQuizSocket(joined ? (id ?? null) : null);
+
+  useEffect(() => {
+    if (phase !== prevPhase.current) {
+      prevPhase.current = phase;
+    }
+  }, [phase]);
+
+  if (isLoading) return (
+    <div className="min-h-screen bg-[#080810] flex items-center justify-center">
+      <div className="w-10 h-10 rounded-full border-2 border-purple-500/30 border-t-purple-500 animate-spin" />
+    </div>
+  );
+
+  if (!tournament) return (
+    <div className="min-h-screen bg-[#080810] flex items-center justify-center">
+      <p className="text-white/40 font-bold">Tournament not found</p>
+    </div>
+  );
+
+  const round     = currentQuestion?.round ?? 1;
+  const roundMeta = ROUNDS[(round - 1)] ?? ROUNDS[4];
+  const canJoin   = tournament.status === "registration" || tournament.status === "lobby";
+
+  // ── PRE-JOIN ─────────────────────────────────────────────────────────────────
+  if (!joined || phase === "idle") {
+    return (
+      <div className="min-h-screen bg-[#080810] flex flex-col items-center justify-center p-4 relative overflow-hidden">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-80 h-80 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
+        <button onClick={() => navigate("/tournaments")} className="absolute top-5 left-4 text-white/30 hover:text-white text-xs font-bold uppercase tracking-widest transition-colors">← Back</button>
+
+        <div className="w-full max-w-sm relative z-10">
+          <div className="flex justify-center mb-6">
+            <div className="relative">
+              <div className="absolute inset-0 bg-purple-500/20 rounded-2xl blur-xl animate-pulse" />
+              <div className="relative w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-500 to-violet-700 flex items-center justify-center shadow-2xl shadow-purple-500/30 text-4xl">👑</div>
+            </div>
+          </div>
+
+          <div className="text-center mb-6">
+            <div className="inline-flex items-center gap-2 bg-purple-500/10 border border-purple-500/20 px-3 py-1 rounded-full mb-3">
+              <span className={`w-1.5 h-1.5 rounded-full ${tournament.status === "registration" ? "bg-green-400 animate-pulse" : tournament.status === "lobby" ? "bg-blue-400 animate-pulse" : tournament.status === "active" ? "bg-red-400 animate-pulse" : "bg-yellow-400"}`} />
+              <span className="text-[10px] font-black uppercase tracking-widest text-purple-300">
+                {tournament.status === "registration" ? "Registration Open" : tournament.status === "lobby" ? "Starting Soon" : tournament.status === "active" ? "In Progress" : "Upcoming"}
+              </span>
+            </div>
+            <h1 className="text-2xl font-black text-white mb-1">{tournament.title}</h1>
+            {tournament.description && <p className="text-white/40 text-sm">{tournament.description}</p>}
+          </div>
+
+          <div className="grid grid-cols-3 gap-2 mb-6">
+            {[
+              { label: "Players",   value: (playerCount || tournament.player_count || 0).toLocaleString(), icon: "👥" },
+              { label: "Entry",     value: tournament.entry_fee > 0 ? `${tournament.entry_fee} ZA` : "FREE", icon: "💎" },
+              { label: "Prize",     value: tournament.prize_pool > 0 ? `${tournament.prize_pool.toLocaleString()} ZA` : "Growing", icon: "🏆" },
+            ].map((s, i) => (
+              <div key={i} className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-3 text-center">
+                <div className="text-lg mb-1">{s.icon}</div>
+                <div className="text-sm font-black text-white">{s.value}</div>
+                <div className="text-[9px] text-white/30 uppercase tracking-widest font-bold">{s.label}</div>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex gap-1.5 mb-5 justify-center">
+            {ROUNDS.map((r, i) => (
+              <div key={i} className="flex flex-col items-center gap-1.5">
+                <div className="w-full h-1.5 rounded-full" style={{ width: 48, background: r.color, boxShadow: `0 0 8px ${r.color}60` }} />
+                <span className="text-[8px] text-white/25 font-bold uppercase tracking-widest hidden sm:block">{r.name.split(" ")[0]}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4 mb-5">
+            <p className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-3">5 Rounds of Elimination</p>
+            <div className="space-y-2">
+              {ROUNDS.map((r, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <span className="text-sm">{r.emoji}</span>
+                  <div className="flex-1 flex items-center justify-between">
+                    <span className="text-xs font-bold text-white/60">Round {i + 1} — {r.name}</span>
+                    <span className="text-[10px] text-white/25 font-bold">{r.secs}s / Q</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <button
+            onClick={() => join()}
+            disabled={joining || !canJoin}
+            className="w-full py-4 rounded-2xl font-black text-sm uppercase tracking-wide transition-all disabled:opacity-40 disabled:cursor-not-allowed relative overflow-hidden group text-white"
+            style={{ background: canJoin ? "linear-gradient(135deg,#7c3aed,#a855f7)" : "#1a1a2e" }}
+          >
+            <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <span className="relative flex items-center justify-center gap-2">
+              {joining ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Joining...</> :
+               !canJoin ? (tournament.status === "active" ? "Game In Progress" : "Not Open Yet") :
+               tournament.entry_fee > 0 ? <>⚡ Register — Pay {tournament.entry_fee} ZA</> : <>⚡ Register Free</>}
+            </span>
+          </button>
+          {tournament.entry_fee > 0 && <p className="text-center text-[10px] text-white/20 mt-2">Entry fee added to prize pool · You will be reminded before game day</p>}
+          {tournament.user_registered && (
+            <div className="mt-3 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-green-500/10 border border-green-500/20">
+              <span className="text-green-400 text-xs font-black">✓ You are registered — we will notify you before game day</span>
+            </div>
+          )}
+        </div>
+      </div>
+    );
   }
 
-  const roundQuestions = questions.filter(q => q.round_number === activeRound);
-  const roundMeta = ROUND_META[activeRound - 1];
+  // ── LOBBY ────────────────────────────────────────────────────────────────────
+  if (phase === "lobby" || phase === "starting") {
+    return (
+      <div className="min-h-screen bg-[#080810] flex flex-col items-center justify-center p-4 relative overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          {[...Array(8)].map((_, i) => (
+            <div key={i} className="absolute w-1 h-1 bg-white/20 rounded-full animate-ping"
+              style={{ left: `${10 + i * 12}%`, top: `${15 + (i % 4) * 20}%`, animationDelay: `${i * 0.35}s`, animationDuration: "2s" }} />
+          ))}
+        </div>
+        <div className="relative z-10 text-center w-full max-w-sm">
+          {phase === "starting" ? (
+            <><div className="text-6xl mb-4 animate-bounce">🚀</div>
+            <h2 className="text-3xl font-black text-white mb-2">Get Ready!</h2>
+            <p className="text-white/40 text-sm mb-8">First question incoming...</p></>
+          ) : (
+            <><div className="relative w-24 h-24 mx-auto mb-6">
+              <div className="absolute inset-0 rounded-full bg-purple-500/10 animate-ping" />
+              <div className="relative w-full h-full rounded-full bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-4xl">⏳</div>
+            </div>
+            <h2 className="text-3xl font-black text-white mb-1">Lobby</h2>
+            <p className="text-white/40 text-sm mb-8">Admin will start the game shortly</p></>
+          )}
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={onClose}>
-      <div className="bg-card border border-border rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl" onClick={e => e.stopPropagation()}>
+          <div className="bg-white/[0.04] border border-white/[0.08] rounded-3xl p-6 mb-6">
+            <div className="text-5xl font-black text-white mb-1 tabular-nums">{playerCount}</div>
+            <div className="text-white/30 text-xs font-bold uppercase tracking-widest">Players Ready</div>
+          </div>
+
+          <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border text-xs font-bold mb-6 ${connected ? "bg-green-500/10 border-green-500/20 text-green-400" : "bg-red-500/10 border-red-500/20 text-red-400"}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${connected ? "bg-green-400 animate-pulse" : "bg-red-400"}`} />
+            {connected ? "Connected — Waiting for game start" : "Reconnecting..."}
+          </div>
+
+          {leaderboard.length > 0 && (
+            <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4 text-left">
+              <p className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-3">Players in Lobby</p>
+              <div className="flex flex-wrap gap-2">
+                {leaderboard.slice(0, 12).map((e, i) => (
+                  <div key={i} className="flex items-center gap-1.5 bg-white/[0.04] border border-white/[0.06] rounded-lg px-2 py-1">
+                    <div className="w-4 h-4 rounded-full bg-purple-500/30 flex items-center justify-center text-[9px] font-black text-purple-300">{e.username[0]?.toUpperCase()}</div>
+                    <span className="text-[10px] text-white/50 font-bold">{e.username}</span>
+                  </div>
+                ))}
+                {playerCount > 12 && <span className="text-[10px] text-white/30 font-bold flex items-center">+{playerCount - 12} more</span>}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ── ELIMINATED ───────────────────────────────────────────────────────────────
+  if (phase === "eliminated") {
+    return (
+      <div className="min-h-screen bg-[#080810] flex items-center justify-center p-4">
+        <div className="w-full max-w-sm text-center">
+          <div className="text-7xl mb-4">💀</div>
+          <h2 className="text-3xl font-black text-white mb-2">Eliminated!</h2>
+          <p className="text-white/40 text-sm mb-8">{elimMessage || "Wrong answer. Better luck next time!"}</p>
+          <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-4 mb-4 text-left">
+            <p className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-3">Still Fighting — {leaderboard.filter(e => e.status === "alive").length} players</p>
+            {leaderboard.filter(e => e.status === "alive").slice(0, 5).map((e, i) => (
+              <div key={i} className="flex items-center gap-3 py-2 border-b border-white/[0.05] last:border-0">
+                <span className="text-xs text-white/20 w-4">#{e.rank}</span>
+                <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center text-[10px] font-black text-green-400">{e.username[0]?.toUpperCase()}</div>
+                <span className="text-xs font-bold text-white/60 flex-1">{e.username}</span>
+                <span className="text-[10px] text-green-400 font-bold">{e.correct_answers}✓</span>
+              </div>
+            ))}
+          </div>
+          <button onClick={() => navigate("/tournaments")} className="w-full py-3.5 rounded-2xl bg-white/[0.06] border border-white/[0.1] text-white font-bold text-sm hover:bg-white/[0.1] transition-all">
+            Back to Tournaments
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── ROUND SUMMARY ────────────────────────────────────────────────────────────
+  if (phase === "round_summary" && roundSummary) {
+    const nextMeta = ROUNDS[(roundSummary.next_round - 1)];
+    return (
+      <div className="min-h-screen bg-[#080810] flex items-center justify-center p-4">
+        <div className="w-full max-w-sm text-center">
+          <div className="inline-flex items-center gap-2 bg-green-500/10 border border-green-500/20 px-4 py-1.5 rounded-full mb-6">
+            <span className="w-2 h-2 rounded-full bg-green-400" />
+            <span className="text-xs font-black text-green-400 uppercase tracking-widest">Round {roundSummary.round_completed} Complete</span>
+          </div>
+          <div className="text-6xl font-black text-white tabular-nums mb-1">{roundSummary.survivors}</div>
+          <div className="text-white/40 text-sm font-bold mb-1">survivors advancing</div>
+          <div className="text-red-400/60 text-xs font-bold mb-6">{roundSummary.eliminated_this_round} eliminated this round</div>
+          {nextMeta && (
+            <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-5 mb-6">
+              <p className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-2">Up Next</p>
+              <div className="flex items-center justify-center gap-3">
+                <div className="w-3 h-3 rounded-full animate-pulse" style={{ background: nextMeta.color, boxShadow: `0 0 12px ${nextMeta.color}` }} />
+                <p className="text-xl font-black text-white">Round {roundSummary.next_round} — {nextMeta.name}</p>
+              </div>
+              <p className="text-white/30 text-xs mt-1">{nextMeta.secs} seconds per question</p>
+            </div>
+          )}
+          <div className="flex items-center justify-center gap-2 text-white/30 text-xs font-bold">
+            <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+            Starting shortly...
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── GAME OVER ────────────────────────────────────────────────────────────────
+  if (phase === "game_over" && gameOver) {
+    return (
+      <div className="min-h-screen bg-[#080810] overflow-y-auto">
+        <div className="max-w-sm mx-auto px-4 py-10 text-center">
+          <div className="text-6xl mb-4">🏆</div>
+          <h2 className="text-3xl font-black text-white mb-1">Game Over!</h2>
+          <p className="text-white/40 text-sm mb-6">Prize Pool: <span className="text-yellow-400 font-black">{gameOver.prize_pool.toLocaleString()} ZA</span></p>
+          <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl overflow-hidden mb-4">
+            {gameOver.winners.map((w, i) => (
+              <div key={i} className={`flex items-center gap-3 px-4 py-3.5 ${i < gameOver.winners.length - 1 ? "border-b border-white/[0.05]" : ""}`}>
+                <span className="text-2xl">{i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `#${w.rank}`}</span>
+                <div className="flex-1 text-left">
+                  <p className="font-black text-white text-sm">{w.username}</p>
+                  <p className="text-[10px] text-white/30">Rank #{w.rank}</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-black text-yellow-400">+{w.prize.toLocaleString()}</p>
+                  <p className="text-[9px] text-white/30">ZA Tokens</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl overflow-hidden mb-6">
+            <div className="px-4 py-2.5 border-b border-white/[0.06]">
+              <p className="text-[10px] font-black uppercase tracking-widest text-white/30">Final Standings</p>
+            </div>
+            {gameOver.leaderboard.slice(0, 10).map((e, i) => (
+              <div key={i} className={`flex items-center gap-3 px-4 py-2.5 ${i < 9 ? "border-b border-white/[0.04]" : ""}`}>
+                <span className="text-xs text-white/20 w-4 text-center font-black">#{i + 1}</span>
+                <div className="w-6 h-6 rounded-full bg-white/[0.08] flex items-center justify-center text-[10px] font-black text-white">{e.username[0]?.toUpperCase()}</div>
+                <span className="text-xs font-bold text-white/60 flex-1 text-left">{e.username}</span>
+                <span className={`text-[10px] font-black ${e.status === "winner" ? "text-yellow-400" : e.status === "alive" ? "text-green-400" : "text-white/20"}`}>{e.correct_answers}✓</span>
+              </div>
+            ))}
+          </div>
+          <button onClick={() => navigate("/tournaments")} className="w-full py-4 rounded-2xl font-black text-sm text-white" style={{ background: "linear-gradient(135deg,#7c3aed,#a855f7)" }}>
+            Back to Tournaments
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── ACTIVE QUESTION ───────────────────────────────────────────────────────────
+  if ((phase === "question" || phase === "revealing") && currentQuestion) {
+    const isRevealing = phase === "revealing";
+    const totalMs     = currentQuestion.time_limit_ms;
+    const aliveCount  = leaderboard.filter(e => e.status === "alive").length;
+
+    return (
+      <div className="min-h-screen flex flex-col bg-[#080810] relative overflow-hidden">
+        {/* Round accent line */}
+        <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: `linear-gradient(90deg,transparent,${roundMeta.color},transparent)`, boxShadow: `0 0 20px ${roundMeta.color}60` }} />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-36 rounded-full blur-3xl pointer-events-none opacity-15" style={{ background: roundMeta.color }} />
+
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
-          <div>
-            <h3 className="font-black text-foreground">{tournament.title} — Questions</h3>
-            <p className="text-xs text-muted-foreground">{questions.length} total questions</p>
+        <div className="flex items-center gap-2 px-4 pt-5 pb-3 relative z-10">
+          <div className="flex items-center gap-1.5 bg-white/[0.05] border border-white/[0.08] rounded-xl px-2.5 py-1.5 shrink-0">
+            <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: roundMeta.color }} />
+            <span className="text-[10px] font-black uppercase tracking-widest text-white/60 whitespace-nowrap">
+              R{currentQuestion.round} · {roundMeta.name}
+            </span>
           </div>
-          <div className="flex items-center gap-2">
-            <input ref={fileRef} type="file" accept=".json" onChange={handleFileImport} className="hidden" />
-            <button
-              onClick={() => fileRef.current?.click()}
-              disabled={importing}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-muted hover:bg-muted/80 text-foreground text-xs font-bold transition-all"
-            >
-              <MdUpload className={importing ? "animate-spin" : ""} />
-              {importing ? "Importing..." : "Import JSON"}
-            </button>
-            <button onClick={onClose} className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground"><MdClose /></button>
+          <div className="bg-white/[0.04] border border-white/[0.06] rounded-xl px-2.5 py-1.5 shrink-0">
+            <span className="text-[10px] font-black text-white/40">{currentQuestion.question_index + 1}/{currentQuestion.total_questions}</span>
           </div>
+          <div className="flex-1" />
+          <div className="flex items-center gap-1.5 bg-white/[0.04] border border-white/[0.06] rounded-xl px-2.5 py-1.5 shrink-0">
+            <span className="text-[10px]">👥</span>
+            <span className="text-[10px] font-black text-white/60">{aliveCount}</span>
+          </div>
+          <button onClick={() => setShowLB(true)} className="w-8 h-8 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center text-sm hover:bg-white/[0.1] transition-all lg:hidden">
+            🏆
+          </button>
         </div>
 
-        {/* Status messages */}
-        {(importError || importSuccess) && (
-          <div className={`mx-5 mt-4 px-4 py-2.5 rounded-xl text-sm font-medium border ${
-            importSuccess ? "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400" :
-            "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400"
-          }`}>
-            {importSuccess || importError}
-          </div>
-        )}
-
-        {/* JSON format hint */}
-        <div className="mx-5 mt-3 bg-slate-50 dark:bg-slate-900/50 border border-border rounded-xl px-4 py-2.5 shrink-0">
-          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider mb-1">JSON Import Format</p>
-          <code className="text-[10px] text-muted-foreground font-mono leading-relaxed">
-            {`[{"round_number":1,"question_text":"...","option_a":"...","option_b":"...","option_c":"...","option_d":"...","correct_option":"A"}]`}
-          </code>
-        </div>
-
-        {/* Round tabs */}
-        <div className="flex gap-2 px-5 py-3 border-b border-border shrink-0 overflow-x-auto">
-          {ROUND_META.map(r => {
-            const count = questions.filter(q => q.round_number === r.round).length;
-            return (
-              <button
-                key={r.round}
-                onClick={() => { setActiveRound(r.round); setAddMode(false); }}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-black whitespace-nowrap transition-all border ${
-                  activeRound === r.round ? r.bg : "bg-muted border-transparent text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <span className={activeRound === r.round ? r.color : ""}>{r.icon}</span>
-                <span className={activeRound === r.round ? r.color : ""}>{r.name}</span>
-                <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-black ${activeRound === r.round ? r.badge + " text-white" : "bg-muted-foreground/20 text-muted-foreground"}`}>
-                  {count}/{r.secs}s
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Question list */}
-        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-2">
-          {roundQuestions.length === 0 && !addMode ? (
-            <div className="py-12 text-center text-muted-foreground">
-              <MdQuestionMark className="text-4xl mx-auto mb-2 opacity-30" />
-              <p className="font-bold text-sm">No questions for {roundMeta?.name} yet</p>
-              <p className="text-xs opacity-60 mt-1">Add one below or import a JSON file</p>
+        {/* Content */}
+        <div className="flex flex-1 gap-4 px-4 pb-6 relative z-10 min-h-0">
+          <div className="flex-1 flex flex-col min-w-0">
+            {/* Timer + Question card */}
+            <div className="flex items-start gap-3 mb-4">
+              {!isRevealing && <TimerArc ms={timeLeftMs} totalMs={totalMs} round={round} />}
+              <div className={`flex-1 bg-white/[0.04] border border-white/[0.08] rounded-2xl p-4 ${isRevealing ? "w-full" : ""}`}>
+                <p className="text-white font-black text-base md:text-lg leading-snug">{currentQuestion.question_text}</p>
+              </div>
             </div>
-          ) : (
-            roundQuestions.map((q, i) => (
-              <div key={q.id} className="bg-muted/40 border border-border rounded-xl p-3.5 group hover:border-primary/30 transition-all">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-[10px] font-black text-muted-foreground">Q{i + 1}</span>
-                      <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md ${roundMeta?.badge} text-white`}>{roundMeta?.name}</span>
-                      <span className="text-[9px] font-bold text-muted-foreground flex items-center gap-0.5"><MdTimer className="text-xs" />{q.time_limit_secs}s</span>
-                    </div>
-                    <p className="text-sm font-bold text-foreground mb-2 leading-snug">{q.question_text}</p>
-                    <div className="grid grid-cols-2 gap-1.5">
-                      {(["A", "B", "C", "D"] as const).map(opt => (
-                        <div key={opt} className={`flex items-center gap-1.5 text-xs px-2 py-1 rounded-lg ${
-                          q.correct_option === opt ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-black" : "text-muted-foreground"
-                        }`}>
-                          <span className={`font-black text-[10px] ${q.correct_option === opt ? "text-emerald-500" : "text-muted-foreground/50"}`}>{opt}</span>
-                          {(q as any)[`option_${opt.toLowerCase()}`]}
-                          {q.correct_option === opt && <MdCheckCircle className="ml-auto text-emerald-500 shrink-0" />}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => deleteQ(q.id)}
-                    className="opacity-0 group-hover:opacity-100 w-7 h-7 rounded-lg bg-red-100 dark:bg-red-900/30 text-red-500 flex items-center justify-center transition-all hover:bg-red-200 shrink-0 mt-0.5"
-                  >
-                    <MdDelete className="text-sm" />
+
+            {/* Answer options */}
+            <div className="grid grid-cols-1 gap-2.5 flex-1">
+              {OPTS.map((key, i) => {
+                const text      = currentQuestion.options[key];
+                const isSelected = selectedOption === key;
+                const isCorrect  = isRevealing && revealData?.correct_option === key;
+                const isWrong    = isRevealing && isSelected && !isCorrect;
+
+                let cardCls   = "flex items-center gap-3 p-4 rounded-2xl border-2 transition-all duration-200 w-full text-left select-none ";
+                let letterCls = "w-8 h-8 rounded-xl flex items-center justify-center font-black text-sm shrink-0 transition-all text-white ";
+
+                if (isRevealing) {
+                  if (isCorrect)   { cardCls += "border-green-400 bg-green-500/10 shadow-lg shadow-green-500/20"; letterCls += "bg-green-500"; }
+                  else if (isWrong){ cardCls += "border-red-400 bg-red-500/10"; letterCls += "bg-red-500"; }
+                  else             { cardCls += "border-white/[0.05] bg-white/[0.02] opacity-40"; letterCls += "bg-white/10"; }
+                } else if (isSelected) {
+                  cardCls   += `border-white/30 bg-white/10 shadow-lg ring-1 ring-white/20`;
+                  letterCls += OPT_LETTER[i];
+                } else {
+                  cardCls   += `${OPT_IDLE[i]} cursor-pointer active:scale-[0.98]`;
+                  letterCls += "bg-white/[0.08] text-white/50";
+                }
+
+                return (
+                  <button key={key} className={cardCls} onClick={() => !answerLocked && !isRevealing && submitAnswer(key)} disabled={answerLocked || isRevealing}>
+                    <span className={letterCls}>{key}</span>
+                    <span className="font-bold text-sm text-white flex-1 leading-snug text-left">{text}</span>
+                    {isCorrect && <span className="text-green-400 text-lg shrink-0">✓</span>}
+                    {isWrong   && <span className="text-red-400 text-lg shrink-0">✗</span>}
                   </button>
-                </div>
-              </div>
-            ))
-          )}
-
-          {/* Add question form */}
-          {addMode && (
-            <div className={`border rounded-2xl p-4 space-y-3 ${roundMeta?.bg}`}>
-              <p className="text-xs font-black text-foreground uppercase tracking-wider">Add Question — {roundMeta?.name}</p>
-              <textarea
-                rows={2}
-                placeholder="Question text..."
-                value={newQ.question_text}
-                onChange={e => setNewQ(p => ({ ...p, question_text: e.target.value }))}
-                className="w-full px-3 py-2.5 rounded-xl bg-card border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
-              />
-              <div className="grid grid-cols-2 gap-2">
-                {(["a", "b", "c", "d"] as const).map(k => (
-                  <div key={k} className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-muted-foreground uppercase">{k}</span>
-                    <input
-                      type="text"
-                      placeholder={`Option ${k.toUpperCase()}`}
-                      value={(newQ as any)[`option_${k}`]}
-                      onChange={e => setNewQ(p => ({ ...p, [`option_${k}`]: e.target.value }))}
-                      className="w-full pl-7 pr-3 py-2 rounded-xl bg-card border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                    />
-                  </div>
-                ))}
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <label className="text-[10px] font-black text-muted-foreground uppercase tracking-wider mr-2">Correct:</label>
-                  <select
-                    value={newQ.correct_option}
-                    onChange={e => setNewQ(p => ({ ...p, correct_option: e.target.value }))}
-                    className="appearance-none px-3 py-2 pr-7 rounded-xl bg-card border border-border text-sm font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                  >
-                    {["A", "B", "C", "D"].map(o => <option key={o} value={o}>{o}</option>)}
-                  </select>
-                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground pointer-events-none" />
-                </div>
-                <button
-                  onClick={() => addQ()}
-                  disabled={adding || !newQ.question_text || !newQ.option_a || !newQ.option_b || !newQ.option_c || !newQ.option_d}
-                  className="flex-1 py-2 rounded-xl bg-primary text-primary-foreground font-black text-xs disabled:opacity-50 flex items-center justify-center gap-1"
-                >
-                  {adding ? <MdRefresh className="animate-spin" /> : <MdAdd />}
-                  {adding ? "Adding..." : "Add Question"}
-                </button>
-                <button onClick={() => setAddMode(false)} className="px-3 py-2 rounded-xl bg-muted text-muted-foreground font-bold text-xs hover:bg-muted/80">
-                  Cancel
-                </button>
-              </div>
+                );
+              })}
             </div>
-          )}
+
+            {/* Status */}
+            <div className="mt-3">
+              {answerLocked && !isRevealing && (
+                <div className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-purple-500/10 border border-purple-500/20">
+                  <div className="w-3 h-3 border-2 border-purple-400/40 border-t-purple-400 rounded-full animate-spin" />
+                  <p className="text-purple-300 font-bold text-xs">Locked in — waiting for others</p>
+                </div>
+              )}
+              {isRevealing && revealData && (
+                <div className={`flex items-center justify-center gap-2 py-2.5 rounded-xl ${selectedOption === revealData.correct_option ? "bg-green-500/10 border border-green-500/20" : "bg-red-500/10 border border-red-500/20"}`}>
+                  {selectedOption === revealData.correct_option
+                    ? <p className="text-green-400 font-bold text-xs">✅ Correct! {revealData.eliminated_count} eliminated · Next question soon</p>
+                    : <p className="text-red-400 font-bold text-xs">❌ Wrong answer</p>}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Desktop leaderboard */}
+          <div className="w-52 hidden lg:block shrink-0">
+            <LeaderboardPanel entries={leaderboard} myId={user?.id} />
+          </div>
         </div>
 
-        {/* Footer */}
-        {!addMode && (
-          <div className="px-5 py-3 border-t border-border shrink-0">
-            <button
-              onClick={() => setAddMode(true)}
-              className="w-full py-2.5 rounded-xl border-2 border-dashed border-primary/30 text-primary font-bold text-sm hover:border-primary/60 hover:bg-primary/5 transition-all flex items-center justify-center gap-2"
-            >
-              <MdAdd /> Add Question to {roundMeta?.name}
-            </button>
+        {/* Mobile leaderboard sheet */}
+        {showLB && (
+          <div className="fixed inset-0 z-50 flex items-end bg-black/70 backdrop-blur-sm lg:hidden" onClick={() => setShowLB(false)}>
+            <div className="w-full bg-[#0e0e1a] border-t border-white/[0.08] rounded-t-3xl p-5 max-h-[72vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+              <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-5" />
+              <LeaderboardPanel entries={leaderboard} myId={user?.id} />
+            </div>
           </div>
         )}
       </div>
-    </div>
-  );
+    );
+  }
+
+  return null;
 }
-
-// ─── Live Monitor Modal ───────────────────────────────────────────────────────
-function LiveMonitorModal({ tournament, onClose }: { tournament: QuizTournament; onClose: () => void }) {
-  const { data: live, isLoading } = useQuery({
-    queryKey: ["admin-quiz-live", tournament.id],
-    queryFn: () => api.getLive(tournament.id),
-    refetchInterval: 3000,
-  });
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={onClose}>
-      <div className="bg-card border border-border rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
-          <div className="flex items-center gap-2">
-            <div className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
-            <h3 className="font-black text-foreground">Live Monitor — {tournament.title}</h3>
-          </div>
-          <button onClick={onClose} className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground"><MdClose /></button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-5 space-y-4">
-          {isLoading ? (
-            <div className="py-10 flex items-center justify-center text-muted-foreground">
-              <MdRefresh className="animate-spin text-2xl mr-2" /> Loading live data...
-            </div>
-          ) : (
-            <>
-              {/* Stats */}
-              <div className="grid grid-cols-3 gap-3">
-                {[
-                  { label: "Round", value: live?.tournament?.current_round ?? 0, color: "text-primary" },
-                  { label: "Alive", value: live?.stats?.alive ?? 0, color: "text-green-500" },
-                  { label: "Eliminated", value: live?.stats?.eliminated ?? 0, color: "text-red-500" },
-                ].map(s => (
-                  <div key={s.label} className="bg-muted/50 rounded-2xl p-4 border border-border text-center">
-                    <p className={`text-3xl font-black ${s.color}`}>{s.value}</p>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mt-1">{s.label}</p>
-                  </div>
-                ))}
-              </div>
-
-              {/* Leaderboard */}
-              <div className="bg-muted/30 rounded-2xl border border-border overflow-hidden">
-                <div className="px-4 py-3 border-b border-border">
-                  <p className="text-xs font-black text-muted-foreground uppercase tracking-wider">Live Leaderboard</p>
-                </div>
-                <div className="divide-y divide-border">
-                  {live?.leaderboard?.slice(0, 20).map((entry: any, i: number) => (
-                    <div key={i} className="flex items-center gap-3 px-4 py-2.5">
-                      <span className="text-sm font-black text-muted-foreground w-5 text-center">
-                        {i === 0 ? "👑" : i + 1}
-                      </span>
-                      <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center text-xs font-black text-primary">
-                        {entry.username?.[0]?.toUpperCase()}
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-bold text-foreground">{entry.username}</p>
-                        <p className="text-[10px] text-muted-foreground">{entry.correct_answers} correct</p>
-                      </div>
-                      <div className={`w-2 h-2 rounded-full ${
-                        entry.status === "winner" ? "bg-yellow-400" :
-                        entry.status === "alive" ? "bg-green-400" : "bg-red-500"
-                      }`} />
-                      <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
-                        entry.status === "winner" ? "bg-yellow-100 text-yellow-700" :
-                        entry.status === "alive" ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400" :
-                        "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400"
-                      }`}>
-                        {entry.status}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Main Component ───────────────────────────────────────────────────────────
-const QuizTournaments: React.FC = () => {
-  const queryClient = useQueryClient();
-  const [createOpen, setCreateOpen] = useState(false);
-  const [manageQ, setManageQ] = useState<QuizTournament | null>(null);
-  const [monitor, setMonitor] = useState<QuizTournament | null>(null);
-  const [actionMsg, setActionMsg] = useState("");
-
-  const [confirmCancel, setConfirmCancel] = useState<QuizTournament | null>(null);
-
-  const { data: tournaments = [], isLoading, refetch } = useQuery({
-    queryKey: ["admin-quiz-tournaments"],
-    queryFn: api.listTournaments,
-  });
-
-  const { mutate: startT } = useMutation({
-    mutationFn: api.startTournament,
-    onSuccess: (data) => {
-      setActionMsg(data.message ?? "Tournament opened to lobby");
-      queryClient.invalidateQueries({ queryKey: ["admin-quiz-tournaments"] });
-      setTimeout(() => setActionMsg(""), 4000);
-    },
-  });
-
-  const { mutate: launchT } = useMutation({
-    mutationFn: api.launchTournament,
-    onSuccess: () => {
-      setActionMsg("Game launched! Questions are broadcasting via WebSocket.");
-      queryClient.invalidateQueries({ queryKey: ["admin-quiz-tournaments"] });
-      setTimeout(() => setActionMsg(""), 5000);
-    },
-  });
-
-  const { mutate: cancelT } = useMutation({
-    mutationFn: api.cancelTournament,
-    onSuccess: () => {
-      setActionMsg("Tournament has been cancelled.");
-      setConfirmCancel(null);
-      queryClient.invalidateQueries({ queryKey: ["admin-quiz-tournaments"] });
-      setTimeout(() => setActionMsg(""), 4000);
-    },
-  });
-
-  return (
-    <div className="p-4 space-y-5 max-w-6xl">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary to-violet-600 flex items-center justify-center shadow-md shadow-primary/30">
-            <Crown className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-black text-foreground tracking-tight">Quiz Tournaments</h1>
-            <p className="text-sm text-muted-foreground font-medium">Create, manage, and monitor live quiz games</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <button onClick={() => refetch()} className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-muted hover:bg-muted/80 text-foreground text-sm font-bold transition-all">
-            <MdRefresh className={`text-lg ${isLoading ? "animate-spin" : ""}`} /> Refresh
-          </button>
-          <button
-            onClick={() => setCreateOpen(true)}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-black hover:bg-primary/90 transition-all"
-          >
-            <MdAdd className="text-lg" /> New Tournament
-          </button>
-        </div>
-      </div>
-
-      {/* Action message */}
-      {actionMsg && (
-        <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl px-4 py-3">
-          <MdCheckCircle className="text-emerald-500 shrink-0" />
-          <p className="text-sm font-bold text-emerald-700 dark:text-emerald-400">{actionMsg}</p>
-        </div>
-      )}
-
-      {/* Tournament cards */}
-      {isLoading ? (
-        <div className="py-16 flex items-center justify-center text-muted-foreground">
-          <MdRefresh className="animate-spin text-2xl mr-2" /> Loading tournaments...
-        </div>
-      ) : tournaments.length === 0 ? (
-        <div className="py-20 text-center">
-          <Trophy className="w-16 h-16 text-muted-foreground/20 mx-auto mb-4" />
-          <p className="font-black text-foreground text-xl mb-2">No tournaments yet</p>
-          <p className="text-muted-foreground text-sm mb-6">Create your first quiz tournament to get started</p>
-          <button onClick={() => setCreateOpen(true)} className="px-6 py-3 rounded-xl bg-primary text-primary-foreground font-black text-sm">
-            <MdAdd className="inline mr-1" /> Create Tournament
-          </button>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {tournaments.map(t => {
-            const sc = STATUS_CFG[t.status];
-            return (
-              <div key={t.id} className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden hover:border-primary/20 transition-all">
-                {/* Card header */}
-                <div className="p-5 border-b border-border">
-                  <div className="flex items-start justify-between gap-3 mb-3">
-                    <h3 className="font-black text-foreground text-base leading-tight flex-1">{t.title}</h3>
-                    <span className={`text-[10px] font-black px-2.5 py-1 rounded-full shrink-0 ${sc.cls}`}>{sc.label}</span>
-                  </div>
-                  {t.description && <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{t.description}</p>}
-
-                  {/* Stats row */}
-                  <div className="flex items-center gap-4 text-xs">
-                    <div className="flex items-center gap-1 text-muted-foreground">
-                      <MdPeople className="text-sm" />
-                      <span className="font-bold">{t.player_count}</span>
-                      <span>players</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-muted-foreground">
-                      <MdQuestionMark className="text-sm" />
-                      <span className="font-bold">{t.question_count}</span>
-                      <span>questions</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-muted-foreground">
-                      <MdEmojiEvents className="text-sm" />
-                      <span className="font-bold">{t.prize_pool.toLocaleString()}</span>
-                      <span>ZA prize</span>
-                    </div>
-                    {t.entry_fee > 0 && (
-                      <div className="flex items-center gap-1 text-muted-foreground">
-                        <MdBolt className="text-sm" />
-                        <span className="font-bold">{t.entry_fee}</span>
-                        <span>ZA entry</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Round progress dots */}
-                <div className="px-5 py-3 flex items-center gap-2 border-b border-border">
-                  {ROUND_META.map(r => (
-                    <div key={r.round} className="flex items-center gap-1.5">
-                      <div className={`w-2 h-2 rounded-full ${
-                        t.status === "active" && t.current_round === r.round ? r.badge + " animate-pulse" :
-                        t.status === "completed" || (t.status === "active" && t.current_round > r.round) ? r.badge :
-                        "bg-muted-foreground/20"
-                      }`} />
-                      <span className={`text-[9px] font-bold hidden sm:block ${
-                        t.status === "active" && t.current_round === r.round ? r.color : "text-muted-foreground/40"
-                      }`}>{r.name}</span>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Actions */}
-                <div className="p-4 flex items-center gap-2 flex-wrap">
-                  <button
-                    onClick={() => setManageQ(t)}
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-muted hover:bg-muted/80 text-foreground text-xs font-bold transition-all"
-                  >
-                    <MdEdit className="text-sm" /> Questions
-                  </button>
-
-                  {t.status === "active" && (
-                    <button
-                      onClick={() => setMonitor(t)}
-                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs font-bold border border-red-200 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900/30 transition-all"
-                    >
-                      <MdVisibility className="text-sm" /> Monitor Live
-                    </button>
-                  )}
-
-                  {t.status === "draft" && (
-                    <button
-                      onClick={() => startT(t.id)}
-                      disabled={t.question_count < 5}
-                      title={t.question_count < 5 ? "Add at least 5 questions first" : ""}
-                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-xs font-bold border border-blue-200 dark:border-blue-800 hover:bg-blue-100 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                    >
-                      <MdPlayArrow className="text-sm" /> Open Lobby
-                    </button>
-                  )}
-
-                  {t.status === "lobby" && (
-                    <button
-                      onClick={() => launchT(t.id)}
-                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-primary to-violet-600 text-white text-xs font-black hover:opacity-90 transition-all shadow-md shadow-primary/20"
-                    >
-                      <Zap className="w-3.5 h-3.5" /> Launch Game Now
-                    </button>
-                  )}
-
-                  {(t.status === "draft" || t.status === "lobby" || t.status === "active") && (
-                    <button
-                      onClick={() => setConfirmCancel(t)}
-                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs font-bold border border-red-200 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900/30 transition-all ml-auto"
-                    >
-                      <MdClose className="text-sm" /> Disable
-                    </button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Modals */}
-      {createOpen && (
-        <CreateTournamentModal
-          onClose={() => setCreateOpen(false)}
-          onCreated={() => queryClient.invalidateQueries({ queryKey: ["admin-quiz-tournaments"] })}
-        />
-      )}
-      {manageQ && <QuestionManagerModal tournament={manageQ} onClose={() => setManageQ(null)} />}
-      {monitor && <LiveMonitorModal tournament={monitor} onClose={() => setMonitor(null)} />}
-
-      {/* Cancel Confirmation Modal */}
-      {confirmCancel && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setConfirmCancel(null)}>
-          <div className="bg-card border border-border rounded-2xl w-full max-w-sm shadow-2xl" onClick={e => e.stopPropagation()}>
-            <div className="p-6 text-center">
-              <div className="w-14 h-14 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-4">
-                <MdClose className="text-3xl text-red-500" />
-              </div>
-              <h3 className="font-black text-foreground text-lg mb-2">Disable Tournament?</h3>
-              <p className="text-sm text-muted-foreground mb-1">
-                <span className="font-bold text-foreground">"{confirmCancel.title}"</span>
-              </p>
-              <p className="text-xs text-muted-foreground mb-6">
-                This will cancel the tournament and notify registered players. This action cannot be undone.
-              </p>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setConfirmCancel(null)}
-                  className="flex-1 py-2.5 rounded-xl bg-muted text-foreground font-bold text-sm hover:bg-muted/80 transition-all"
-                >
-                  Keep It
-                </button>
-                <button
-                  onClick={() => cancelT(confirmCancel.id)}
-                  className="flex-1 py-2.5 rounded-xl bg-red-500 text-white font-black text-sm hover:bg-red-600 transition-all"
-                >
-                  Yes, Disable
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-export default QuizTournaments;
