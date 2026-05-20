@@ -28,8 +28,8 @@ export interface LiveQuestion {
 }
 
 export interface LeaderboardEntry {
-  user_id?: string
   rank: number
+  user_id: string
   username: string
   avatar_url: string | null
   correct_answers: number
