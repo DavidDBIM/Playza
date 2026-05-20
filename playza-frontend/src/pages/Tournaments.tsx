@@ -39,7 +39,7 @@ const Tournaments = () => {
     staleTime: 30_000,
   });
 
-  const featuredTournament = quizTournaments.find(qt => qt.status === "active" || qt.status === "lobby") || quizTournaments[0];
+  const featuredTournament = quizTournaments.find(qt => qt.status === "active" || qt.status === "registration" || qt.status === "lobby") || quizTournaments[0];
 
   const filteredTournaments = quizTournaments.filter((qt) => {
     const isLive      = qt.status === "active";
