@@ -69,10 +69,6 @@ const api = {
     const { data } = await apiClient.patch(`/admin/quiz/tournaments/${id}`, payload);
     return data.data;
   },
-  updateTournament: async ({ id, ...payload }: Partial<QuizTournament> & { id: string }) => {
-    const { data } = await apiClient.patch(`/admin/quiz/tournaments/${id}`, payload);
-    return data.data;
-  },
   startTournament: async (id: string) => {
     const { data } = await apiClient.post(`/admin/quiz/tournaments/${id}/start`);
     return data;
