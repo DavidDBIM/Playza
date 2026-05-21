@@ -92,6 +92,10 @@ const api = {
   deleteQuestion: async (qId: string) => {
     await apiClient.delete(`/admin/quiz/questions/${qId}`);
   },
+  deleteTournament: async (id: string) => {
+    const { data } = await apiClient.delete(`/admin/quiz/tournaments/${id}`);
+    return data;
+  },
   getLive: async (id: string) => {
     const { data } = await apiClient.get(`/admin/quiz/tournaments/${id}/live`);
     return data.data;
@@ -429,12 +433,12 @@ function LiveMonitorModal({ tournament, onClose }: { tournament: QuizTournament;
 // ─── Tournament Card ──────────────────────────────────────────────────────────
 function TournamentCard({
   t,
-  onManageQ, onEdit, onMonitor, onStart, onLaunch, onDisable,
+  onManageQ, onEdit, onMonitor, onStart, onLaunch, onDisable, onDelete,
   startPending, launchPending,
 }: {
   t: QuizTournament;
   onManageQ: () => void; onEdit: () => void; onMonitor: () => void;
-  onStart: () => void; onLaunch: () => void; onDisable: () => void;
+  onStart: () => void; onLaunch: () => void; onDisable: () => void; onDelete: () => void;
   startPending: boolean; launchPending: boolean;
 }) {
   const sc = STATUS_CFG[t.status] ?? STATUS_CFG.draft;
@@ -569,8 +573,16 @@ function TournamentCard({
           </button>
         )}
 
-        {/* Disable — pushed to the right */}
-        {!isDone && (
+        {/* Delete — only for cancelled or completed */}
+        {isDone && (
+          <button
+            onClick={onDelete}
+            className="flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-black transition-all ml-auto"
+            style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171" }}
+          >
+            <MdDelete className="text-sm" /> Delete
+          </button>
+        )}
           <button onClick={onDisable} className="flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold transition-all ml-auto" style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#f87171" }}>
             <MdClose className="text-sm" /> Disable
           </button>
@@ -588,6 +600,7 @@ const QuizTournaments: React.FC = () => {
   const [monitor,       setMonitor]       = useState<QuizTournament | null>(null);
   const [editT,         setEditT]         = useState<QuizTournament | null>(null);
   const [confirmCancel,   setConfirmCancel]   = useState<QuizTournament | null>(null);
+  const [confirmDelete,   setConfirmDelete]   = useState<QuizTournament | null>(null);
   const [needsQuestions,  setNeedsQuestions]  = useState<QuizTournament | null>(null);
   const [startError,      setStartError]      = useState<string | null>(null);
   const [toast,           setToast]           = useState<{ msg: string; type: "ok" | "err" } | null>(null);
@@ -654,11 +667,24 @@ const QuizTournaments: React.FC = () => {
     onSuccess: () => {
       setConfirmCancel(null);
       showToast("Tournament has been cancelled.");
-      queryClient.invalidateQueries({ queryKey: ["admin-quiz-tournaments"] });
     },
     onError: (err: any) => {
       queryClient.invalidateQueries({ queryKey: ["admin-quiz-tournaments"] });
       showToast(err.response?.data?.message ?? "Failed to cancel", "err");
+    },
+  });
+
+  const { mutate: deleteT } = useMutation({
+    mutationFn: (id: string) => api.deleteTournament(id),
+    onSuccess: (_data, id) => {
+      queryClient.setQueryData<QuizTournament[]>(["admin-quiz-tournaments"],
+        old => (old ?? []).filter(t => t.id !== id)
+      );
+      setConfirmDelete(null);
+      showToast("Tournament deleted permanently.");
+    },
+    onError: (err: any) => {
+      showToast(err?.response?.data?.message ?? "Failed to delete tournament", "err");
     },
   });
 
@@ -754,6 +780,7 @@ const QuizTournaments: React.FC = () => {
                 }}
                 onLaunch={() => launchT(t.id)}
                 onDisable={() => setConfirmCancel(t)}
+                onDelete={() => setConfirmDelete(t)}
                 startPending={pendingStart === t.id}
                 launchPending={pendingLaunch === t.id}
               />
@@ -820,7 +847,37 @@ const QuizTournaments: React.FC = () => {
         </div>
       )}
 
-      {/* Disable Confirm */}
+      {/* ── Delete Confirmation ── */}
+      {confirmDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(16px)" }} onClick={() => setConfirmDelete(null)}>
+          <div className="w-full max-w-sm rounded-2xl overflow-hidden" style={{ background: "linear-gradient(135deg, rgba(25,5,5,0.99), rgba(10,2,2,0.99))", border: "1px solid rgba(239,68,68,0.3)", boxShadow: "0 0 60px rgba(239,68,68,0.12)" }} onClick={e => e.stopPropagation()}>
+            <div className="p-6 text-center">
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)" }}>
+                <MdDelete className="text-3xl text-red-400" />
+              </div>
+              <h3 className="font-black text-white text-lg mb-1">Delete Tournament?</h3>
+              <p className="text-sm font-bold text-white/50 mb-1">"{confirmDelete.title}"</p>
+              <p className="text-xs text-white/30 mb-6">
+                This will permanently delete the tournament and all its questions, players, and leaderboard data. <span className="text-red-400 font-bold">This cannot be undone.</span>
+              </p>
+              <div className="flex gap-3">
+                <button onClick={() => setConfirmDelete(null)} className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white/50 hover:text-white transition-all" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                  Keep It
+                </button>
+                <button
+                  onClick={() => deleteT(confirmDelete.id)}
+                  className="flex-1 py-2.5 rounded-xl font-black text-sm text-white hover:opacity-90 transition-all"
+                  style={{ background: "linear-gradient(135deg, #dc2626, #991b1b)", boxShadow: "0 0 20px rgba(220,38,38,0.3)" }}
+                >
+                  <MdDelete className="inline mr-1" /> Yes, Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Disable Confirm ── */}
       {confirmCancel && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(16px)" }} onClick={() => setConfirmCancel(null)}>
           <div className="w-full max-w-sm rounded-2xl overflow-hidden" style={{ background: "linear-gradient(135deg, rgba(25,8,8,0.99), rgba(10,3,3,0.99))", border: "1px solid rgba(239,68,68,0.2)", boxShadow: "0 0 60px rgba(239,68,68,0.1)" }} onClick={e => e.stopPropagation()}>
