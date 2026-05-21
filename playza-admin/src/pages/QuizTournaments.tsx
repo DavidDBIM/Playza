@@ -583,6 +583,7 @@ function TournamentCard({
             <MdDelete className="text-sm" /> Delete
           </button>
         )}
+        {!isDone && (
           <button onClick={onDisable} className="flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold transition-all ml-auto" style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#f87171" }}>
             <MdClose className="text-sm" /> Disable
           </button>
