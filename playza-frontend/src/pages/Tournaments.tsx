@@ -190,7 +190,8 @@ const Tournaments = () => {
   const { data: quizTournaments = [] } = useQuery({
     queryKey: ["quiz-tournaments-public"],
     queryFn: getQuizTournamentsApi,
-    staleTime: 30_000,
+    staleTime: 5_000,   // 5s — picks up new registrations quickly
+    refetchInterval: 15_000, // auto-refresh every 15s
   });
 
   const featured = quizTournaments.find(qt =>
