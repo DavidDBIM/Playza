@@ -544,10 +544,24 @@ function TournamentCard({
           </button>
         )}
         {isDraft && (
-          <button onClick={onStart} disabled={t.question_count < 5 || startPending} title={t.question_count < 5 ? "Add at least 5 questions first" : ""} className="flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-black text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed" style={{ background: "linear-gradient(135deg, rgba(34,197,94,0.3), rgba(16,185,129,0.2))", border: "1px solid rgba(34,197,94,0.4)" }}>
-            {startPending ? <MdRefresh className="animate-spin" /> : <MdPlayArrow />}
-            {startPending ? "Opening..." : "Open Registration"}
-          </button>
+          <>
+            {/* Prominent warning when not enough questions */}
+            {(t.question_count ?? 0) < 5 && (
+              <div className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold" style={{ background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.3)", color: "#fbbf24" }}>
+                <MdWarning className="text-sm shrink-0" />
+                <span>Need {5 - (t.question_count ?? 0)} more question{5 - (t.question_count ?? 0) !== 1 ? "s" : ""} — click Questions to add</span>
+              </div>
+            )}
+            <button
+              onClick={onStart}
+              disabled={(t.question_count ?? 0) < 5 || startPending}
+              className="flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-black text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              style={{ background: "linear-gradient(135deg, rgba(34,197,94,0.3), rgba(16,185,129,0.2))", border: "1px solid rgba(34,197,94,0.4)" }}
+            >
+              {startPending ? <MdRefresh className="animate-spin" /> : <MdPlayArrow />}
+              {startPending ? "Opening..." : "Open Registration"}
+            </button>
+          </>
         )}
         {(isReg || isLobby) && (
           <button onClick={onLaunch} disabled={launchPending} className="flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-black text-white transition-all disabled:opacity-40 hover:opacity-90" style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)", boxShadow: "0 0 20px rgba(124,58,237,0.3)" }}>
@@ -598,27 +612,43 @@ const QuizTournaments: React.FC = () => {
 
   const { mutate: startT } = useMutation({
     mutationFn: api.startTournament,
-    onMutate: (id) => { setPendingStart(id); patchCache(id, { status: "registration" }); },
-    onSuccess: (data, _id) => {
+    onMutate: (id) => {
+      setPendingStart(id);
+      patchCache(id, { status: "registration" });
+      return { id };
+    },
+    onSuccess: (data, id) => {
       setPendingStart(null);
+      // Keep the optimistic state — re-apply so it can't be overwritten
+      patchCache(id, { status: "registration" });
       showToast(data.message ?? "Registration is now open! Players can register.");
-      queryClient.invalidateQueries({ queryKey: ["admin-quiz-tournaments"] });
+      // Delay refetch by 2s to let Supabase replica catch up.
+      // Without this, the immediate refetch returns stale 'draft' and reverts the UI.
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["admin-quiz-tournaments"] });
+      }, 2000);
     },
     onError: (err: any, _id) => {
       setPendingStart(null);
-      // rollback
       queryClient.invalidateQueries({ queryKey: ["admin-quiz-tournaments"] });
-      showToast(err.response?.data?.message ?? "Failed to open registration", "err");
+      showToast(err.response?.data?.message ?? "Failed to open registration — check questions count", "err");
     },
   });
 
   const { mutate: launchT } = useMutation({
     mutationFn: api.launchTournament,
-    onMutate: (id) => { setPendingLaunch(id); patchCache(id, { status: "active" }); },
-    onSuccess: (_data, _id) => {
+    onMutate: (id) => {
+      setPendingLaunch(id);
+      patchCache(id, { status: "active" });
+      return { id };
+    },
+    onSuccess: (_data, id) => {
       setPendingLaunch(null);
+      patchCache(id, { status: "active" });
       showToast("🚀 Game launched! Questions broadcasting to all players.");
-      queryClient.invalidateQueries({ queryKey: ["admin-quiz-tournaments"] });
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["admin-quiz-tournaments"] });
+      }, 2000);
     },
     onError: (err: any, _id) => {
       setPendingLaunch(null);
