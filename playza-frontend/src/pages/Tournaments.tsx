@@ -95,7 +95,7 @@ function TCard({ qt }: { qt: QuizTournament }) {
             <p className="text-2xl font-black leading-none" style={{ color: "var(--foreground)" }}>
               {qt.prize_pool > 0 ? (
                 <span className="flex items-baseline gap-1">
-                  <ZASymbol className="scale-90" style={{ color: sc.accent }} />
+                  <span style={{ color: sc.accent }}><ZASymbol className="scale-90" /></span>
                   <span>{qt.prize_pool.toLocaleString()}</span>
                 </span>
               ) : (
@@ -305,7 +305,7 @@ const Tournaments = () => {
                     <Trophy className="w-3.5 h-3.5" style={{ color: fsc.accent }} />
                     Prize:
                     <span className="font-black flex items-center gap-0.5">
-                      <ZASymbol className="scale-90" style={{ color: fsc.accent }} />
+                      <span style={{ color: fsc.accent }}><ZASymbol className="scale-90" /></span>
                       {featured.prize_pool.toLocaleString()}
                     </span>
                   </div>
