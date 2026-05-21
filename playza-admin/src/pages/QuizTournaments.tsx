@@ -545,17 +545,16 @@ function TournamentCard({
         )}
         {isDraft && (
           <>
-            {/* Prominent warning when not enough questions */}
             {(t.question_count ?? 0) < 5 && (
               <div className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold" style={{ background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.3)", color: "#fbbf24" }}>
                 <MdWarning className="text-sm shrink-0" />
-                <span>Need {5 - (t.question_count ?? 0)} more question{5 - (t.question_count ?? 0) !== 1 ? "s" : ""} — click Questions to add</span>
+                <span>{(t.question_count ?? 0)} / 5 questions added — add more to open registration</span>
               </div>
             )}
             <button
               onClick={onStart}
-              disabled={(t.question_count ?? 0) < 5 || startPending}
-              className="flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-black text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              disabled={startPending}
+              className="flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-black text-white transition-all disabled:opacity-50"
               style={{ background: "linear-gradient(135deg, rgba(34,197,94,0.3), rgba(16,185,129,0.2))", border: "1px solid rgba(34,197,94,0.4)" }}
             >
               {startPending ? <MdRefresh className="animate-spin" /> : <MdPlayArrow />}
@@ -588,10 +587,12 @@ const QuizTournaments: React.FC = () => {
   const [manageQ,       setManageQ]       = useState<QuizTournament | null>(null);
   const [monitor,       setMonitor]       = useState<QuizTournament | null>(null);
   const [editT,         setEditT]         = useState<QuizTournament | null>(null);
-  const [confirmCancel, setConfirmCancel] = useState<QuizTournament | null>(null);
-  const [toast,         setToast]         = useState<{ msg: string; type: "ok" | "err" } | null>(null);
-  const [pendingStart,  setPendingStart]  = useState<string | null>(null);
-  const [pendingLaunch, setPendingLaunch] = useState<string | null>(null);
+  const [confirmCancel,   setConfirmCancel]   = useState<QuizTournament | null>(null);
+  const [needsQuestions,  setNeedsQuestions]  = useState<QuizTournament | null>(null);
+  const [startError,      setStartError]      = useState<string | null>(null);
+  const [toast,           setToast]           = useState<{ msg: string; type: "ok" | "err" } | null>(null);
+  const [pendingStart,    setPendingStart]     = useState<string | null>(null);
+  const [pendingLaunch,   setPendingLaunch]    = useState<string | null>(null);
 
   const showToast = (msg: string, type: "ok" | "err" = "ok") => {
     setToast({ msg, type });
@@ -631,7 +632,9 @@ const QuizTournaments: React.FC = () => {
     onError: (err: any, _id) => {
       setPendingStart(null);
       queryClient.invalidateQueries({ queryKey: ["admin-quiz-tournaments"] });
-      showToast(err.response?.data?.message ?? "Failed to open registration — check questions count", "err");
+      const msg = err.response?.data?.message ?? err.message ?? "Failed to open registration";
+      setStartError(msg);
+      showToast(msg, "err");
     },
   });
 
@@ -753,7 +756,14 @@ const QuizTournaments: React.FC = () => {
                 onManageQ={() => setManageQ(t)}
                 onEdit={() => setEditT(t)}
                 onMonitor={() => setMonitor(t)}
-                onStart={() => startT(t.id)}
+                onStart={() => {
+                  if ((t.question_count ?? 0) < 5) {
+                    setNeedsQuestions(t);
+                  } else {
+                    setStartError(null);
+                    startT(t.id);
+                  }
+                }}
                 onLaunch={() => launchT(t.id)}
                 onDisable={() => setConfirmCancel(t)}
                 startPending={pendingStart === t.id}
@@ -766,9 +776,61 @@ const QuizTournaments: React.FC = () => {
 
       {/* Modals */}
       {createOpen && <CreateTournamentModal onClose={() => setCreateOpen(false)} onCreated={() => queryClient.invalidateQueries({ queryKey: ["admin-quiz-tournaments"] })} />}
-      {manageQ   && <QuestionManagerModal   tournament={manageQ}       onClose={() => setManageQ(null)} />}
-      {monitor   && <LiveMonitorModal       tournament={monitor}       onClose={() => setMonitor(null)} />}
-      {editT     && <EditTournamentModal    tournament={editT}         onClose={() => setEditT(null)} onSaved={() => { queryClient.invalidateQueries({ queryKey: ["admin-quiz-tournaments"] }); showToast("Tournament updated!"); }} />}
+      {manageQ   && <QuestionManagerModal   tournament={manageQ}  onClose={() => setManageQ(null)} />}
+      {monitor   && <LiveMonitorModal       tournament={monitor}  onClose={() => setMonitor(null)} />}
+      {editT     && <EditTournamentModal    tournament={editT}    onClose={() => setEditT(null)} onSaved={() => { queryClient.invalidateQueries({ queryKey: ["admin-quiz-tournaments"] }); showToast("Tournament updated!"); }} />}
+
+      {/* ── Not enough questions modal ── */}
+      {needsQuestions && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(16px)" }} onClick={() => setNeedsQuestions(null)}>
+          <div className="w-full max-w-sm rounded-2xl overflow-hidden" style={{ background: "linear-gradient(135deg, rgba(20,15,8,0.99), rgba(10,8,3,0.99))", border: "1px solid rgba(245,158,11,0.25)", boxShadow: "0 0 60px rgba(245,158,11,0.1)" }} onClick={e => e.stopPropagation()}>
+            <div className="p-6 text-center">
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: "rgba(245,158,11,0.15)", border: "1px solid rgba(245,158,11,0.3)" }}>
+                <MdQuestionMark className="text-3xl text-amber-400" />
+              </div>
+              <h3 className="font-black text-white text-lg mb-1">Questions Needed</h3>
+              <p className="text-sm text-white/50 mb-1">
+                <span className="font-bold text-white">"{needsQuestions.title}"</span>
+              </p>
+              <p className="text-sm text-white/40 mb-2">
+                You have <span className="font-black text-amber-400">{needsQuestions.question_count ?? 0}</span> question{needsQuestions.question_count !== 1 ? "s" : ""}.
+                You need at least <span className="font-black text-white">5</span> across all 5 rounds before opening registration.
+              </p>
+              <p className="text-xs text-white/25 mb-6">Click "Add Questions" below to open the question manager for this tournament.</p>
+              <div className="flex gap-3">
+                <button onClick={() => setNeedsQuestions(null)} className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white/50 hover:text-white transition-all" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                  Cancel
+                </button>
+                <button
+                  onClick={() => { setManageQ(needsQuestions); setNeedsQuestions(null); }}
+                  className="flex-1 py-2.5 rounded-xl font-black text-sm text-white hover:opacity-90 transition-all"
+                  style={{ background: "linear-gradient(135deg, #d97706, #b45309)", boxShadow: "0 0 20px rgba(217,119,6,0.3)" }}
+                >
+                  <MdAdd className="inline mr-1" /> Add Questions
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── API error modal ── */}
+      {startError && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(16px)" }} onClick={() => setStartError(null)}>
+          <div className="w-full max-w-sm rounded-2xl overflow-hidden" style={{ background: "linear-gradient(135deg, rgba(25,5,5,0.99), rgba(10,2,2,0.99))", border: "1px solid rgba(239,68,68,0.25)", boxShadow: "0 0 60px rgba(239,68,68,0.1)" }} onClick={e => e.stopPropagation()}>
+            <div className="p-6 text-center">
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)" }}>
+                <MdWarning className="text-3xl text-red-400" />
+              </div>
+              <h3 className="font-black text-white text-lg mb-3">Could Not Open Registration</h3>
+              <p className="text-sm font-bold text-red-300 mb-6 px-2 leading-relaxed">{startError}</p>
+              <button onClick={() => setStartError(null)} className="w-full py-2.5 rounded-xl font-black text-sm text-white hover:opacity-90 transition-all" style={{ background: "linear-gradient(135deg, #dc2626, #b91c1c)" }}>
+                Got It
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Disable Confirm */}
       {confirmCancel && (
