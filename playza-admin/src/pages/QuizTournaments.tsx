@@ -2,11 +2,11 @@ import React, { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "../lib/api-client";
 import {
-  MdAdd, MdRefresh, MdPlayArrow, MdPeople, MdQuestionMark,
-  MdUpload, MdDelete, MdEdit, MdVisibility, MdClose,
-  MdCheckCircle, MdTimer, MdEmojiEvents, MdBolt, MdWarning,
+  MdAdd, MdRefresh, MdPlayArrow, MdQuestionMark,
+  MdUpload, MdDelete, MdEdit, MdClose,
+  MdCheckCircle, MdTimer, MdBolt, MdWarning,
 } from "react-icons/md";
-import { Trophy, Crown, ChevronDown, Zap, Shield, Flame, Star, Users, Calendar, DollarSign, Eye } from "lucide-react";
+import { Trophy, Crown, ChevronDown, Zap, Shield, Flame, Star, Users, Calendar, Eye } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface QuizTournament {
@@ -599,12 +599,12 @@ const QuizTournaments: React.FC = () => {
   const { mutate: startT } = useMutation({
     mutationFn: api.startTournament,
     onMutate: (id) => { setPendingStart(id); patchCache(id, { status: "registration" }); },
-    onSuccess: (data, id) => {
+    onSuccess: (data, _id) => {
       setPendingStart(null);
       showToast(data.message ?? "Registration is now open! Players can register.");
       queryClient.invalidateQueries({ queryKey: ["admin-quiz-tournaments"] });
     },
-    onError: (err: any, id) => {
+    onError: (err: any, _id) => {
       setPendingStart(null);
       // rollback
       queryClient.invalidateQueries({ queryKey: ["admin-quiz-tournaments"] });
@@ -620,7 +620,7 @@ const QuizTournaments: React.FC = () => {
       showToast("🚀 Game launched! Questions broadcasting to all players.");
       queryClient.invalidateQueries({ queryKey: ["admin-quiz-tournaments"] });
     },
-    onError: (err: any, id) => {
+    onError: (err: any, _id) => {
       setPendingLaunch(null);
       queryClient.invalidateQueries({ queryKey: ["admin-quiz-tournaments"] });
       showToast(err.response?.data?.message ?? "Failed to launch game", "err");
