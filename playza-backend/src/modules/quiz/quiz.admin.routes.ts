@@ -299,6 +299,39 @@ router.post('/tournaments/:id/questions/bulk', requireAdmin, async (req, res) =>
   }
 })
 
+// ── DELETE /admin/quiz/tournaments/:id  — permanently remove a cancelled/completed tournament
+router.delete('/tournaments/:id', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params
+
+    const { data: tournament } = await supabaseAdmin
+      .from('quiz_tournaments')
+      .select('status')
+      .eq('id', id)
+      .single()
+
+    if (!tournament) {
+      res.status(404).json({ success: false, message: 'Tournament not found' })
+      return
+    }
+
+    if (!['cancelled', 'completed'].includes(tournament.status)) {
+      res.status(400).json({ success: false, message: 'Only cancelled or completed tournaments can be deleted.' })
+      return
+    }
+
+    // Cascade delete all related data
+    await supabaseAdmin.from('quiz_leaderboard').delete().eq('tournament_id', id)
+    await supabaseAdmin.from('quiz_players').delete().eq('tournament_id', id)
+    await supabaseAdmin.from('quiz_questions').delete().eq('tournament_id', id)
+    await supabaseAdmin.from('quiz_tournaments').delete().eq('id', id)
+
+    res.json({ success: true, message: 'Tournament deleted successfully.' })
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message })
+  }
+})
+
 // ── DELETE /admin/quiz/questions/:id
 router.delete('/questions/:id', requireAdmin, async (req, res) => {
   try {
