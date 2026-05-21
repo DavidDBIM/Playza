@@ -616,25 +616,17 @@ const QuizTournaments: React.FC = () => {
     onMutate: (id) => {
       setPendingStart(id);
       patchCache(id, { status: "registration" });
-      return { id };
     },
-    onSuccess: (data, id) => {
+    onSuccess: (_data, id) => {
       setPendingStart(null);
-      // Keep the optimistic state — re-apply so it can't be overwritten
-      patchCache(id, { status: "registration" });
-      showToast(data.message ?? "Registration is now open! Players can register.");
-      // Delay refetch by 2s to let Supabase replica catch up.
-      // Without this, the immediate refetch returns stale 'draft' and reverts the UI.
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ["admin-quiz-tournaments"] });
-      }, 2000);
+      patchCache(id, { status: "registration" }); // lock in — no refetch, avoids replica lag revert
+      showToast("Registration is now open! Players can register.");
     },
     onError: (err: any, _id) => {
       setPendingStart(null);
       queryClient.invalidateQueries({ queryKey: ["admin-quiz-tournaments"] });
-      const msg = err.response?.data?.message ?? err.message ?? "Failed to open registration";
+      const msg = err?.response?.data?.message ?? err?.message ?? "Failed to open registration";
       setStartError(msg);
-      showToast(msg, "err");
     },
   });
 
@@ -643,20 +635,16 @@ const QuizTournaments: React.FC = () => {
     onMutate: (id) => {
       setPendingLaunch(id);
       patchCache(id, { status: "active" });
-      return { id };
     },
     onSuccess: (_data, id) => {
       setPendingLaunch(null);
-      patchCache(id, { status: "active" });
-      showToast("🚀 Game launched! Questions broadcasting to all players.");
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ["admin-quiz-tournaments"] });
-      }, 2000);
+      patchCache(id, { status: "active" }); // lock in — no refetch
+      showToast("🚀 Game launched! Questions are broadcasting to all players.");
     },
     onError: (err: any, _id) => {
       setPendingLaunch(null);
       queryClient.invalidateQueries({ queryKey: ["admin-quiz-tournaments"] });
-      showToast(err.response?.data?.message ?? "Failed to launch game", "err");
+      showToast(err?.response?.data?.message ?? "Failed to launch game", "err");
     },
   });
 
