@@ -187,7 +187,7 @@ const Tournaments = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterPrize, setFilterPrize] = useState("all");
 
-  const { data: quizTournaments = [] } = useQuery({
+  const { data: quizTournaments = [], isError, isLoading: tournamentsLoading } = useQuery({
     queryKey: ["quiz-tournaments-public"],
     queryFn: getQuizTournamentsApi,
     staleTime: 5_000,   // 5s — picks up new registrations quickly
@@ -443,7 +443,18 @@ const Tournaments = () => {
 
           {/* ── Card Grid ─────────────────────────────────────────── */}
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {filtered.length > 0 ? (
+            {tournamentsLoading ? (
+              <div className="col-span-full py-20 flex flex-col items-center gap-3" style={{ border: "2px dashed var(--border)", borderRadius: 16 }}>
+                <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: "var(--primary)", borderTopColor: "transparent" }} />
+                <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "var(--muted-foreground)" }}>Loading tournaments...</p>
+              </div>
+            ) : isError ? (
+              <div className="col-span-full py-20 flex flex-col items-center gap-3 text-center" style={{ border: "2px dashed var(--border)", borderRadius: 16 }}>
+                <Trophy className="w-12 h-12 opacity-20" style={{ color: "var(--foreground)" }} />
+                <p className="font-black text-lg" style={{ color: "var(--foreground)" }}>Could Not Load Tournaments</p>
+                <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "var(--muted-foreground)" }}>Please log in or try refreshing the page.</p>
+              </div>
+            ) : filtered.length > 0 ? (
               filtered.map(qt => <TCard key={qt.id} qt={qt} />)
             ) : (
               <div
