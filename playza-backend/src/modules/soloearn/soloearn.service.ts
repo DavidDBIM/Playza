@@ -5,8 +5,12 @@ export async function startSoloSession(
   gameId: string,
   stake: number,
 ) {
-  if (stake <= 0) {
-    throw new Error("Stake must be greater than 0");
+  // Input validation: stake must be a finite whole number of at least 100
+  if (!Number.isFinite(stake) || stake !== Math.round(stake)) {
+    throw new Error("Stake must be a whole number.");
+  }
+  if (stake < 100) {
+    throw new Error("Minimum stake is 100.");
   }
 
   // Fetch game details to get slug
@@ -28,32 +32,16 @@ export async function startSoloSession(
   if (walletErr || !wallet) throw new Error("Wallet not found");
   if (wallet.balance < stake) throw new Error("Insufficient funds");
 
-  // Financial safeguard: stake cannot exceed 30% of current wallet balance.
-  // This breaks the exponential compounding loop regardless of skill level.
-  const maxAllowedStake = Math.floor(wallet.balance * 0.30);
-  if (stake > maxAllowedStake) {
-    throw new Error(
-      `Stake cannot exceed 30% of your wallet balance. Maximum allowed: ${maxAllowedStake}`
-    );
-  }
-
-  // 3-Minute Cooldown: check last completed session timestamp (uses existing table — no schema changes)
-  const { data: lastSession } = await supabase
-    .from("soloearn_sessions")
-    .select("created_at")
-    .eq("user_id", userId)
-    .eq("status", "completed")
-    .order("created_at", { ascending: false })
-    .limit(1)
+  // Concurrent session prevention: block multiple active sessions per user
+  const { data: existingSession } = await supabase
+    .from('soloearn_sessions')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('status', 'in_progress')
     .single();
 
-  if (lastSession) {
-    const elapsed = Date.now() - new Date(lastSession.created_at).getTime();
-    const cooldownMs = 3 * 60 * 1000; // 3 minutes
-    if (elapsed < cooldownMs) {
-      const remainingSeconds = Math.ceil((cooldownMs - elapsed) / 1000);
-      throw new Error(`Cooldown active. Please wait ${remainingSeconds} seconds before your next session.`);
-    }
+  if (existingSession) {
+    throw new Error('You already have an active session in progress. Complete it before starting a new one.');
   }
 
   // 2. Deduct stake
@@ -111,13 +99,23 @@ export async function endSoloSession(
   if (session.status !== "in_progress")
     throw new Error("Session already completed");
 
+  // rawMultiplier type guard: reject NaN, Infinity and non-numeric values
+  if (typeof rawMultiplier !== 'number' || !isFinite(rawMultiplier)) {
+    throw new Error('Invalid multiplier value received.');
+  }
+
   // --- Anti-Cheat: Calibrated Time Validation ---
-  // Thresholds aligned with new difficulty: 0.015x/bounce at ~1.5s/bounce avg
-  // 1.0x = ~67 bounces = ~100s min | 2.0x = ~133 bounces = ~200s min
+  // Thresholds aligned with game difficulty: 0.012x/bounce at ~1.5s/bounce avg
+  // Break-even (1.0x) = ~84 bounces = ~126s min | Max (2.0x) = ~167 bounces = ~250s min
   if (session.created_at) {
     const createdAt = new Date(session.created_at).getTime();
     const now = Date.now();
     const elapsedSeconds = (now - createdAt) / 1000;
+
+    // Maximum session duration: 20 minutes — closes the API bypass attack vector
+    if (elapsedSeconds > 1200) {
+      throw new Error('Session has expired. Sessions must be completed within 20 minutes.');
+    }
 
     if (rawMultiplier > 0 && elapsedSeconds < 30) {
       throw new Error("Session ended suspiciously fast. Score rejected.");

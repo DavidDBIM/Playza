@@ -414,6 +414,7 @@ function startGame() {
     widePaddleTimer = 0;
     slowMoTimer = 0;
     speedPaddleTimer = 0;
+    defaultPaddleWidth = 100; // Reset from any per-session shrinkage (solo mode fatigue mechanic)
     paddleWidth = defaultPaddleWidth;
     paddleVelocity = 0;
     beatTimer = 0;
@@ -601,7 +602,12 @@ function updatePhysics() {
     // Solo Mode: power-ups spawn less frequently (1400 frames ~23s vs 840 ~14s)
     if (powerupSpawnTimer >= (gameMode === 'solo' ? 1400 : 840)) {
         powerupSpawnTimer = 0;
-        const type = POWERUP_TYPES[Math.floor(Math.random() * POWERUP_TYPES.length)];
+        // Solo Mode: slow-mo is removed from the available pool — it's the strongest assist
+        // and its absence increases the chance players miss the ball under speed pressure
+        const availableTypes = gameMode === 'solo'
+            ? POWERUP_TYPES.filter(t => t !== 'slow')
+            : POWERUP_TYPES;
+        const type = availableTypes[Math.floor(Math.random() * availableTypes.length)];
         powerups.push({
             x: Math.random() * (gameWidth - 40) + 20,
             y: -20,
@@ -758,11 +764,11 @@ function updatePhysics() {
                 
                 if (gameMode === 'solo') {
                     // --- SOLO EARN MODE: Skill-Gated Multiplier Ascent ---
-                    // Flat, predictable curve: +0.015x per bounce. Boss: +0.06x per hit.
+                    // Flat, predictable curve: +0.012x per bounce. Boss: +0.06x per hit.
+                    // Break-even (1.0x) requires ~84 bounces. Max (2.0x) requires ~167 bounces.
                     // Combos and multi-ball NO LONGER accelerate multiplier gain —
-                    // they only boost display score. Reaching 2.0x requires ~135 bounces
-                    // of sustained skill, not just 50 easy ones with combos stacked.
-                    let multGain = ball.isBoss ? 0.06 : 0.015;
+                    // they only boost display score.
+                    let multGain = ball.isBoss ? 0.06 : 0.012;
 
                     soloMultiplier = Math.min(2.0, soloMultiplier + multGain);
                     document.getElementById('score-display').textContent = soloMultiplier.toFixed(2) + 'x';
@@ -835,6 +841,28 @@ function updatePhysics() {
                     spawnBall(gameWidth / 2, gameHeight / 4, false, false);
                 }
                 
+                // 1a. Solo Mode: Paddle shrinks -2px every 14 bounces, floor 80px
+                // Applied to defaultPaddleWidth so wide-paddle restore stays proportional
+                if (gameMode === 'solo' && bounces > 0 && bounces % 14 === 0) {
+                    defaultPaddleWidth = Math.max(80, defaultPaddleWidth - 2);
+                    if (widePaddleTimer <= 0) {
+                        paddleWidth = defaultPaddleWidth;
+                    }
+                }
+
+                // 1b. Solo Mode: Danger Surge at bounce 50 — 20% speed spike
+                // Trap right before extra ball (bounce 60) and break-even (bounce 84)
+                if (gameMode === 'solo' && bounces === 50) {
+                    balls.forEach(b => {
+                        b.speed = Math.min(b.speed * 1.20, maxSpeed);
+                        const angle = Math.atan2(b.vy, b.vx);
+                        b.vx = Math.cos(angle) * b.speed;
+                        b.vy = Math.sin(angle) * b.speed;
+                    });
+                    shakeScreen(8, 16);
+                    triggerBonusToast('⚡ VELOCITY SURGE!');
+                }
+
                 // 2. Mega-Boss at every 50 Bounces (50, 100, 150...)
                 if (bounces % 50 === 0 && bounces > 0) {
                     spawnBall(gameWidth / 2, gameHeight / 5, false, true);
