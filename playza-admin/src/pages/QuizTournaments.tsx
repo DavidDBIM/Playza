@@ -629,11 +629,11 @@ const QuizTournaments: React.FC = () => {
     mutationFn: api.startTournament,
     onMutate: (id) => {
       setPendingStart(id);
-      patchCache(id, { status: "registration" });
+      patchCache(id, { status: "lobby" });
     },
     onSuccess: (_data, id) => {
       setPendingStart(null);
-      patchCache(id, { status: "registration" }); // lock in — no refetch, avoids replica lag revert
+      patchCache(id, { status: "lobby" }); // lock in — no refetch, avoids replica lag revert
       showToast("Registration is now open! Players can register.");
     },
     onError: (err: any, _id) => {
