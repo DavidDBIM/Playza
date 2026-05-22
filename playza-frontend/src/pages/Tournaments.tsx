@@ -187,23 +187,12 @@ const Tournaments = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterPrize, setFilterPrize] = useState("all");
 
-  const { data: quizTournaments = [], isError, isLoading: tournamentsLoading } = useQuery({
+  const { data: quizTournaments = [], isError, isLoading: tournamentsLoading, refetch } = useQuery({
     queryKey: ["quiz-tournaments-public"],
-    queryFn: async (): Promise<QuizTournament[]> => {
-      try {
-        return await getQuizTournamentsApi();
-      } catch {
-        const res = await fetch(
-          `${import.meta.env.VITE_API_URL}/quiz/tournaments`,
-          { headers: { "Content-Type": "application/json" } }
-        );
-        if (!res.ok) return [];
-        const json = await res.json();
-        return (json.data ?? []) as QuizTournament[];
-      }
-    },
-    staleTime: 5_000,   // 5s — picks up new registrations quickly
-    refetchInterval: 15_000, // auto-refresh every 15s
+    queryFn: getQuizTournamentsApi,
+    staleTime: 5_000,
+    refetchInterval: 15_000,
+    retry: 1,
   });
 
   const featured = quizTournaments.find(qt =>
@@ -461,10 +450,13 @@ const Tournaments = () => {
                 <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "var(--muted-foreground)" }}>Loading tournaments...</p>
               </div>
             ) : isError ? (
-              <div className="col-span-full py-20 flex flex-col items-center gap-3 text-center" style={{ border: "2px dashed var(--border)", borderRadius: 16 }}>
+              <div className="col-span-full py-20 flex flex-col items-center gap-4 text-center" style={{ border: "2px dashed var(--border)", borderRadius: 16 }}>
                 <Trophy className="w-12 h-12 opacity-20" style={{ color: "var(--foreground)" }} />
                 <p className="font-black text-lg" style={{ color: "var(--foreground)" }}>Could Not Load Tournaments</p>
-                <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "var(--muted-foreground)" }}>Please log in or try refreshing the page.</p>
+                <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "var(--muted-foreground)" }}>Check your connection or log in and try again.</p>
+                <button onClick={() => refetch()} className="px-5 py-2.5 rounded-xl font-black text-sm text-white" style={{ background: "var(--primary)" }}>
+                  Retry
+                </button>
               </div>
             ) : filtered.length > 0 ? (
               filtered.map(qt => <TCard key={qt.id} qt={qt} />)
