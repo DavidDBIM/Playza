@@ -1,4 +1,5 @@
 import axiosInstance from '@/api/axiosInstance'
+import { supabase } from '@/config/supabase'
 
 export interface QuizTournament {
   id: string
@@ -14,9 +15,33 @@ export interface QuizTournament {
   user_registered?: boolean
 }
 
+// Public listing — queries Supabase directly so it works for everyone
+// without needing a backend auth token
 export async function getQuizTournamentsApi(): Promise<QuizTournament[]> {
-  const { data } = await axiosInstance.get('/quiz/tournaments')
-  return data.data ?? []
+  const { data, error } = await supabase
+    .from('quiz_tournaments')
+    .select('*')
+    .in('status', ['registration', 'lobby', 'active', 'completed'])
+    .order('scheduled_at', { ascending: true })
+
+  if (error) {
+    // Fall back to authenticated backend call if Supabase RLS blocks it
+    const { data: res } = await axiosInstance.get('/quiz/tournaments')
+    return res.data ?? []
+  }
+
+  // Enrich with player count
+  const enriched = await Promise.all(
+    (data ?? []).map(async (t) => {
+      const { count } = await supabase
+        .from('quiz_players')
+        .select('id', { count: 'exact', head: true })
+        .eq('tournament_id', t.id)
+      return { ...t, player_count: count ?? 0 } as QuizTournament
+    })
+  )
+
+  return enriched
 }
 
 export async function getQuizTournamentApi(id: string): Promise<QuizTournament> {
