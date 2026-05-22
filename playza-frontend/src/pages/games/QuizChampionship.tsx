@@ -109,15 +109,18 @@ export default function QuizChampionship() {
 
   const joined = joinedState || !!(tournament?.user_registered && (tournament.status === "active" || tournament.status === "lobby"));
 
+  // ── FIXED: axiosInstance converts 4xx errors to plain Error objects,
+  // so we read err.message directly instead of err.response.data.message
   const { mutate: join, isPending: joining } = useMutation({
     mutationFn: () => joinQuizTournamentApi(id!),
     onSuccess: (data) => {
-      toast.success(data.data?.already_joined ? "You're already in!" : "Joined! Waiting for game to start.");
+      toast.success(data.data?.already_joined ? "You're already registered!" : (data.message ?? "Registered! We'll notify you before game day."));
       setJoinedState(true);
     },
     onError: (error: unknown) => {
-      const err = error as { response?: { data?: { message?: string } } };
-      toast.error(err.response?.data?.message ?? "Failed to join");
+      const err = error as Error & { response?: { data?: { message?: string } } };
+      const msg = err?.response?.data?.message ?? err?.message ?? "Failed to join. Please try again.";
+      toast.error(msg);
     },
   });
 
@@ -169,7 +172,7 @@ export default function QuizChampionship() {
             <div className="inline-flex items-center gap-2 bg-purple-500/10 border border-purple-500/20 px-3 py-1 rounded-full mb-3">
               <span className={`w-1.5 h-1.5 rounded-full ${tournament.status === "registration" ? "bg-green-400 animate-pulse" : tournament.status === "lobby" ? "bg-blue-400 animate-pulse" : tournament.status === "active" ? "bg-red-400 animate-pulse" : "bg-yellow-400"}`} />
               <span className="text-[10px] font-black uppercase tracking-widest text-purple-300">
-                {tournament.status === "registration" ? "Registration Open" : tournament.status === "lobby" ? "Starting Soon" : tournament.status === "active" ? "In Progress" : "Upcoming"}
+                {tournament.status === "registration" ? "Registration Open" : tournament.status === "lobby" ? "Registration Open" : tournament.status === "active" ? "In Progress" : "Upcoming"}
               </span>
             </div>
             <h1 className="text-2xl font-black text-white mb-1">{tournament.title}</h1>
@@ -402,11 +405,9 @@ export default function QuizChampionship() {
 
     return (
       <div className="min-h-screen flex flex-col bg-[#080810] relative overflow-hidden">
-        {/* Round accent line */}
         <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: `linear-gradient(90deg,transparent,${roundMeta.color},transparent)`, boxShadow: `0 0 20px ${roundMeta.color}60` }} />
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-36 rounded-full blur-3xl pointer-events-none opacity-15" style={{ background: roundMeta.color }} />
 
-        {/* Header */}
         <div className="flex items-center gap-2 px-4 pt-5 pb-3 relative z-10">
           <div className="flex items-center gap-1.5 bg-white/[0.05] border border-white/[0.08] rounded-xl px-2.5 py-1.5 shrink-0">
             <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: roundMeta.color }} />
@@ -427,10 +428,8 @@ export default function QuizChampionship() {
           </button>
         </div>
 
-        {/* Content */}
         <div className="flex flex-1 gap-4 px-4 pb-6 relative z-10 min-h-0">
           <div className="flex-1 flex flex-col min-w-0">
-            {/* Timer + Question card */}
             <div className="flex items-start gap-3 mb-4">
               {!isRevealing && <TimerArc ms={timeLeftMs} totalMs={totalMs} round={round} />}
               <div className={`flex-1 bg-white/[0.04] border border-white/[0.08] rounded-2xl p-4 ${isRevealing ? "w-full" : ""}`}>
@@ -438,10 +437,9 @@ export default function QuizChampionship() {
               </div>
             </div>
 
-            {/* Answer options */}
             <div className="grid grid-cols-1 gap-2.5 flex-1">
               {OPTS.map((key, i) => {
-                const text      = currentQuestion.options[key];
+                const text       = currentQuestion.options[key];
                 const isSelected = selectedOption === key;
                 const isCorrect  = isRevealing && revealData?.correct_option === key;
                 const isWrong    = isRevealing && isSelected && !isCorrect;
@@ -472,7 +470,6 @@ export default function QuizChampionship() {
               })}
             </div>
 
-            {/* Status */}
             <div className="mt-3">
               {answerLocked && !isRevealing && (
                 <div className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-purple-500/10 border border-purple-500/20">
@@ -490,13 +487,11 @@ export default function QuizChampionship() {
             </div>
           </div>
 
-          {/* Desktop leaderboard */}
           <div className="w-52 hidden lg:block shrink-0">
             <LeaderboardPanel entries={leaderboard} myId={user?.id} />
           </div>
         </div>
 
-        {/* Mobile leaderboard sheet */}
         {showLB && (
           <div className="fixed inset-0 z-50 flex items-end bg-black/70 backdrop-blur-sm lg:hidden" onClick={() => setShowLB(false)}>
             <div className="w-full bg-[#0e0e1a] border-t border-white/[0.08] rounded-t-3xl p-5 max-h-[72vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
