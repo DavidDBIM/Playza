@@ -101,7 +101,7 @@ router.post('/tournaments/:id/start', requireAdmin, async (req, res) => {
       .single()
 
     if (!tournament) { res.status(404).json({ success: false, message: 'Not found' }); return }
-    if (!['draft', 'registration'].includes(tournament.status)) {
+    if (!['draft', 'lobby'].includes(tournament.status)) {
       res.status(400).json({ success: false, message: `Cannot open registration for a tournament with status: ${tournament.status}` })
       return
     }
@@ -117,13 +117,18 @@ router.post('/tournaments/:id/start', requireAdmin, async (req, res) => {
       return
     }
 
-    // Move to registration — players can now pay and register their spot
-    await supabaseAdmin
+    // Move to lobby — players can now register their spot
+    const { error: updateErr } = await supabaseAdmin
       .from('quiz_tournaments')
-      .update({ status: 'registration' })
+      .update({ status: 'lobby' })
       .eq('id', id)
 
-    res.json({ success: true, message: 'Registration opened! Players can now pay and register.' })
+    if (updateErr) {
+      res.status(500).json({ success: false, message: `Database update failed: ${updateErr.message}` })
+      return
+    }
+
+    res.json({ success: true, message: 'Registration opened! Players can now register.' })
   } catch (err: any) {
     res.status(400).json({ success: false, message: err.message })
   }
