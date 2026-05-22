@@ -149,14 +149,14 @@ router.post('/tournaments/:id/join', requireAuth, async (req: AuthRequest, res) 
       } catch (_) {}
     }
 
-    // Register player (status: 'registered' — waiting for game day)
+    // Register player — 'alive' is the valid DB status for an active participant
     const { data: player, error: pErr } = await supabaseAdmin
       .from('quiz_players')
       .insert({
         tournament_id: tournamentId,
         user_id: userId,
         entry_fee_paid: tournament.entry_fee,
-        status: 'registered',
+        status: 'alive',
       })
       .select()
       .single()
