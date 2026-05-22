@@ -189,7 +189,20 @@ const Tournaments = () => {
 
   const { data: quizTournaments = [], isError, isLoading: tournamentsLoading } = useQuery({
     queryKey: ["quiz-tournaments-public"],
-    queryFn: getQuizTournamentsApi,
+    queryFn: async () => {
+      try {
+        return await getQuizTournamentsApi();
+      } catch {
+        // Auth token missing/expired — fall back to a bare fetch so public browsing still works
+        const res = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/api/quiz/tournaments`,
+          { headers: { "Content-Type": "application/json" } }
+        );
+        if (!res.ok) return [];
+        const json = await res.json();
+        return json.data ?? [];
+      }
+    },
     staleTime: 5_000,   // 5s — picks up new registrations quickly
     refetchInterval: 15_000, // auto-refresh every 15s
   });
