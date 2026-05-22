@@ -189,7 +189,7 @@ const Tournaments = () => {
 
   const { data: quizTournaments = [], isError, isLoading: tournamentsLoading } = useQuery({
     queryKey: ["quiz-tournaments-public"],
-    queryFn: async () => {
+    queryFn: async (): Promise<QuizTournament[]> => {
       try {
         return await getQuizTournamentsApi();
       } catch {
@@ -200,7 +200,7 @@ const Tournaments = () => {
         );
         if (!res.ok) return [];
         const json = await res.json();
-        return json.data ?? [];
+        return (json.data ?? []) as QuizTournament[];
       }
     },
     staleTime: 5_000,   // 5s — picks up new registrations quickly
