@@ -193,9 +193,8 @@ const Tournaments = () => {
       try {
         return await getQuizTournamentsApi();
       } catch {
-        // Auth token missing/expired — fall back to a bare fetch so public browsing still works
         const res = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/api/quiz/tournaments`,
+          `${import.meta.env.VITE_API_URL}/quiz/tournaments`,
           { headers: { "Content-Type": "application/json" } }
         );
         if (!res.ok) return [];
