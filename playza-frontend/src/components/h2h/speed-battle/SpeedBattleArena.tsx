@@ -76,7 +76,7 @@ export default function SpeedBattleArena({ room }: SpeedBattleArenaProps) {
   return (
     <div className="w-full max-w-2xl mx-auto space-y-6 py-4 px-2 md:px-0">
       <div className="flex items-center justify-between">
-        <img src="/logoImage.webp" alt="Playza" className="h-6 opacity-60" loading="lazy" />
+        <img src="/logo.png" alt="Playza" className="h-6 opacity-60" loading="lazy" />
         <div className="flex items-center gap-4 text-[10px] md:text-sm font-bold">
           <span className="text-primary">{wpm} WPM</span>
           <span className="text-slate-500">{accuracy}% accuracy</span>

@@ -100,7 +100,7 @@ export default function WordScrambleArena({ room }: WordScrambleArenaProps) {
   if (phase === 'playing' && currentWord) return (
     <div className="w-full max-w-lg mx-auto space-y-6 py-4 px-2 md:px-0">
       <div className="flex items-center justify-between">
-        <img src="/logoImage.webp" alt="Playza" className="h-6 opacity-60" loading="lazy" />
+        <img src="/logo.png" alt="Playza" className="h-6 opacity-60" loading="lazy" />
         <div className="flex items-center gap-3">
           <span className="text-[10px] md:text-xs text-slate-500 font-bold">Round {currentRound + 1}/{rounds.length}</span>
           <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-lg ${timeLeft <= 5 ? 'bg-red-500/20 text-red-500 font-bold' : 'bg-black/5 dark:bg-white/10 text-slate-900 dark:text-white'}`}>{timeLeft}</div>
@@ -120,7 +120,7 @@ export default function WordScrambleArena({ room }: WordScrambleArenaProps) {
         </div>
         <p className="text-3xl md:text-5xl font-black tracking-[0.3em] text-primary font-mono">{currentWord.scrambled}</p>
         <p className="text-slate-500 text-[10px] md:text-sm"><span className="font-bold">Hint:</span> {currentWord.hint}</p>
-        {feedback && <p className={`font-black uppercase text-[10px] md:text-sm ${feedback === 'correct' ? 'text-green-500' : 'text-red-500'}`}>{feedback === 'correct' ? `✓ Correct! (+${timeLeft * 100} pts)` : `✗ Wrong! It was: ${currentWord.word}`}</p>}
+        {feedback && <p className={`font-black uppercase text-[10px] md:text-sm ${feedback === 'correct' ? 'text-green-500' : 'text-red-500'}`}>{feedback === 'correct' ? `âœ“ Correct! (+${timeLeft * 100} pts)` : `âœ— Wrong! It was: ${currentWord.word}`}</p>}
       </div>
 
       <form onSubmit={handleAnswer} className="flex gap-3">
@@ -137,9 +137,9 @@ export default function WordScrambleArena({ room }: WordScrambleArenaProps) {
 
   if (phase === 'submitted') return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center px-4">
-      <img src="/logoImage.webp" alt="Playza" className="h-8 opacity-60" loading="lazy" />
+      <img src="/logo.png" alt="Playza" className="h-8 opacity-60" loading="lazy" />
       <p className="text-xl font-black uppercase italic text-slate-900 dark:text-white">Waiting for opponent...</p>
-      <p className="text-slate-500 text-[10px] md:text-sm">You scored <span className="text-primary font-bold">{score} pts</span> · Won {roundsWon}/{rounds.length} rounds</p>
+      <p className="text-slate-500 text-[10px] md:text-sm">You scored <span className="text-primary font-bold">{score} pts</span> Â· Won {roundsWon}/{rounds.length} rounds</p>
       <div className="flex gap-1 mt-4">
         <div className="w-2 h-2 bg-primary rounded-full opacity-30" />
         <div className="w-2 h-2 bg-primary rounded-full opacity-60" />

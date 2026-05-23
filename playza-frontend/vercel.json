@@ -3,7 +3,7 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
-      "source": "/((?!gameLib|assets|thumbnails|logoImage.png|hero.png).*)",
+      "source": "/((?!gameLib|assets|thumbnails|logo.png|hero.png).*)",
       "destination": "/"
     }
   ]

@@ -130,7 +130,7 @@ export default function SpeedBattle() {
 
   function handleShare() {
     if (!room) return
-    const text = `Race me in Speed Battle on Playza! Room: ${room.code} — playza.games/speed-battle`
+    const text = `Race me in Speed Battle on Playza! Room: ${room.code} â€” playza.games/speed-battle`
     if (navigator.share) navigator.share({ title: 'Playza Speed Battle', text })
     else { navigator.clipboard.writeText(text); toast.success('Link copied!') }
   }
@@ -144,7 +144,7 @@ export default function SpeedBattle() {
   if (phase === 'lobby') return (
     <div className="w-full max-w-2xl mx-auto space-y-6 py-4 px-2">
       <header className="text-center space-y-2">
-        <img src="/logoImage.webp" alt="Playza" className="h-8 mx-auto mb-2 opacity-80" loading="lazy" />
+        <img src="/logo.png" alt="Playza" className="h-8 mx-auto mb-2 opacity-80" loading="lazy" />
         <h1 className="text-3xl md:text-5xl font-black uppercase italic tracking-tighter text-slate-900 dark:text-white">
           Speed <span className="text-primary">Battle</span>
         </h1>
@@ -168,11 +168,11 @@ export default function SpeedBattle() {
 
       <div className="bg-white/80 dark:bg-slate-900/40 rounded-xl p-5 border border-black/5 dark:border-white/10 space-y-4">
         <div>
-          <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2 block">Stake (₦)</label>
+          <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2 block">Stake (â‚¦)</label>
           <div className="grid grid-cols-4 gap-2">
             {[0, 100, 500, 1000].map(v => (
               <button key={v} onClick={() => setStake(v)} className={`py-2 rounded-xl font-black text-[10px] md:text-sm border ${stake === v ? 'bg-primary text-slate-950 border-transparent' : 'bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10'}`}>
-                {v === 0 ? 'Free' : `₦${v}`}
+                {v === 0 ? 'Free' : `â‚¦${v}`}
               </button>
             ))}
           </div>
@@ -195,14 +195,14 @@ export default function SpeedBattle() {
 
   if (phase === 'waiting') return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] gap-8 text-center px-4">
-      <img src="/logoImage.webp" alt="Playza" className="h-8 opacity-60" loading="lazy" />
+      <img src="/logo.png" alt="Playza" className="h-8 opacity-60" loading="lazy" />
       <div>
         <h2 className="text-2xl md:text-3xl font-black uppercase italic text-slate-900 dark:text-white">Waiting for opponent</h2>
         <p className="text-slate-500 text-[10px] md:text-sm mt-1">Share this code with your friend</p>
       </div>
       <div className="bg-white/80 dark:bg-slate-900/40 p-8 rounded-xl border border-primary/30 space-y-4">
         <p className="text-3xl md:text-5xl font-black tracking-[0.3em] text-primary">{room?.code}</p>
-        {(room?.stake ?? 0) > 0 && <p className="text-slate-500 text-[10px] md:text-sm">Stake: <span className="text-slate-900 dark:text-white font-bold">₦{room?.stake?.toLocaleString()}</span></p>}
+        {(room?.stake ?? 0) > 0 && <p className="text-slate-500 text-[10px] md:text-sm">Stake: <span className="text-slate-900 dark:text-white font-bold">â‚¦{room?.stake?.toLocaleString()}</span></p>}
         <button onClick={handleShare} className="flex items-center gap-2 mx-auto bg-emerald-500 text-white font-bold px-6 py-2 rounded-xl text-[10px] md:text-sm"><Share2 className="w-4 h-4" /> Share</button>
       </div>
       <div className="flex gap-1 items-center">
@@ -213,7 +213,7 @@ export default function SpeedBattle() {
 
   if (phase === 'countdown') return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-      <img src="/logoImage.webp" alt="Playza" className="h-8 opacity-60" loading="lazy" />
+      <img src="/logo.png" alt="Playza" className="h-8 opacity-60" loading="lazy" />
       <p className="text-slate-500 font-black uppercase tracking-widest text-[10px] md:text-sm">Get ready to type!</p>
       <div className="text-[80px] md:text-[120px] font-black text-primary leading-none">{countdown === 0 ? 'GO!' : countdown}</div>
     </div>
@@ -222,7 +222,7 @@ export default function SpeedBattle() {
   if (phase === 'playing' || phase === 'submitted') return (
     <div className="w-full max-w-2xl mx-auto space-y-6 py-2 px-2 md:px-0">
       <div className="flex items-center justify-between">
-        <img src="/logoImage.webp" alt="Playza" className="h-6 opacity-60" loading="lazy" />
+        <img src="/logo.png" alt="Playza" className="h-6 opacity-60" loading="lazy" />
         <div className="flex items-center gap-4 text-[10px] md:text-sm font-bold">
           <span className="text-primary">{wpm} WPM</span>
           <span className="text-slate-500">{accuracy}% accuracy</span>
@@ -269,13 +269,13 @@ export default function SpeedBattle() {
 
   if (phase === 'finished') return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6 text-center px-4">
-      <img src="/logoImage.webp" alt="Playza" className="h-8" loading="lazy" />
-      <div className="text-6xl">{iWon ? '🏆' : room?.winner_id === 'bot' ? '🤖' : '💀'}</div>
+      <img src="/logo.png" alt="Playza" className="h-8" loading="lazy" />
+      <div className="text-6xl">{iWon ? 'ðŸ†' : room?.winner_id === 'bot' ? 'ðŸ¤–' : 'ðŸ’€'}</div>
       <h1 className="text-2xl md:text-4xl font-black uppercase italic text-slate-900 dark:text-white">{iWon ? 'You Won!' : room?.winner_id === 'bot' ? 'Bot Wins' : 'You Lost'}</h1>
       <div className="bg-white/80 dark:bg-slate-900/40 p-6 rounded-xl border border-black/5 dark:border-white/10 space-y-3 w-full max-w-sm">
         {myResult && <div className="flex justify-between text-[10px] md:text-sm"><span className="text-slate-500 font-bold">Your WPM</span><span className="text-primary font-black">{myResult.wpm}</span></div>}
         {opponentResult && <div className="flex justify-between text-[10px] md:text-sm"><span className="text-slate-500 font-bold">{room?.is_bot ? 'Bot WPM' : 'Opponent WPM'}</span><span className="font-black text-slate-900 dark:text-white">{opponentResult.wpm}</span></div>}
-        {iWon && (room?.stake ?? 0) > 0 && <div className="text-primary font-bold text-[10px] md:text-sm pt-2 border-t border-black/5 dark:border-white/10">+₦{(room!.stake * 2 * 0.9).toFixed(0)} credited to wallet</div>}
+        {iWon && (room?.stake ?? 0) > 0 && <div className="text-primary font-bold text-[10px] md:text-sm pt-2 border-t border-black/5 dark:border-white/10">+â‚¦{(room!.stake * 2 * 0.9).toFixed(0)} credited to wallet</div>}
       </div>
       <div className="flex gap-3">
         <button onClick={() => { setPhase('lobby'); setRoom(null); setTyped(''); navigate('/speed-battle') }} className="bg-primary text-slate-950 font-black uppercase tracking-widest px-8 py-3 rounded-xl text-[10px] md:text-sm">Play Again</button>

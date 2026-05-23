@@ -141,7 +141,7 @@ export default function WordScramble() {
 
   function handleShare() {
     if (!room) return
-    const text = `Unscramble words faster than me on Playza! Room: ${room.code} — playza.games/word-scramble`
+    const text = `Unscramble words faster than me on Playza! Room: ${room.code} â€” playza.games/word-scramble`
     if (navigator.share) navigator.share({ title: 'Playza Word Scramble', text })
     else { navigator.clipboard.writeText(text); toast.success('Link copied!') }
   }
@@ -155,7 +155,7 @@ export default function WordScramble() {
   if (phase === 'lobby') return (
     <div className="w-full max-w-2xl mx-auto space-y-6 py-6 px-4">
       <header className="text-center space-y-2">
-        <img src="/logoImage.webp" alt="Playza" className="h-8 mx-auto mb-2 opacity-80" loading="lazy" />
+        <img src="/logo.png" alt="Playza" className="h-8 mx-auto mb-2 opacity-80" loading="lazy" />
         <h1 className="text-3xl md:text-5xl font-black uppercase italic tracking-tighter text-slate-900 dark:text-white">
           Word <span className="text-primary">Scramble</span>
         </h1>
@@ -179,11 +179,11 @@ export default function WordScramble() {
 
       <div className="bg-white/80 dark:bg-slate-900/40 rounded-xl p-5 border border-black/5 dark:border-white/10 space-y-4">
         <div>
-          <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2 block">Stake (₦)</label>
+          <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2 block">Stake (â‚¦)</label>
           <div className="grid grid-cols-4 gap-2">
             {[0, 100, 500, 1000].map(v => (
               <button key={v} onClick={() => setStake(v)} className={`py-2 rounded-xl font-black text-[10px] md:text-sm border ${stake === v ? 'bg-primary text-slate-950 border-transparent' : 'bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10'}`}>
-                {v === 0 ? 'Free' : `₦${v}`}
+                {v === 0 ? 'Free' : `â‚¦${v}`}
               </button>
             ))}
           </div>
@@ -206,7 +206,7 @@ export default function WordScramble() {
 
   if (phase === 'waiting') return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] gap-8 text-center bg-transparent">
-      <img src="/logoImage.webp" alt="Playza" className="h-8 opacity-60" loading="lazy" />
+      <img src="/logo.png" alt="Playza" className="h-8 opacity-60" loading="lazy" />
       <h2 className="text-2xl md:text-3xl font-black uppercase italic text-slate-900 dark:text-white">Waiting for opponent...</h2>
       <div className="bg-white/80 dark:bg-slate-900/40 p-8 rounded-xl border border-primary/30 space-y-4">
         <p className="text-3xl md:text-5xl font-black tracking-[0.3em] text-primary">{room?.code}</p>
@@ -223,7 +223,7 @@ export default function WordScramble() {
   if (phase === 'playing' && currentWord) return (
     <div className="w-full max-w-lg mx-auto space-y-6 py-6 px-4">
       <div className="flex items-center justify-between">
-        <img src="/logoImage.webp" alt="Playza" className="h-6 opacity-60" loading="lazy" />
+        <img src="/logo.png" alt="Playza" className="h-6 opacity-60" loading="lazy" />
         <div className="flex items-center gap-3">
           <span className="text-[10px] md:text-xs text-slate-500 font-bold">Round {currentRound + 1}/{rounds.length}</span>
           <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-lg ${timeLeft <= 5 ? 'bg-red-500/20 text-red-500' : 'bg-black/5 dark:bg-white/10 text-slate-900 dark:text-white'}`}>{timeLeft}</div>
@@ -238,7 +238,7 @@ export default function WordScramble() {
         </div>
         <p className="text-3xl md:text-5xl font-black tracking-[0.3em] text-primary font-mono">{currentWord.scrambled}</p>
         <p className="text-slate-500 text-[10px] md:text-sm"><span className="font-bold">Hint:</span> {currentWord.hint}</p>
-        {feedback && <p className={`font-black uppercase text-[10px] md:text-sm ${feedback === 'correct' ? 'text-green-500' : 'text-red-500'}`}>{feedback === 'correct' ? `✓ Correct! (+${timeLeft * 100} pts)` : `✗ Wrong! It was: ${currentWord.word}`}</p>}
+        {feedback && <p className={`font-black uppercase text-[10px] md:text-sm ${feedback === 'correct' ? 'text-green-500' : 'text-red-500'}`}>{feedback === 'correct' ? `âœ“ Correct! (+${timeLeft * 100} pts)` : `âœ— Wrong! It was: ${currentWord.word}`}</p>}
       </div>
 
       <form onSubmit={handleAnswer} className="flex gap-3">
@@ -255,9 +255,9 @@ export default function WordScramble() {
 
   if (phase === 'submitted') return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center">
-      <img src="/logoImage.webp" alt="Playza" className="h-8 opacity-60" loading="lazy" />
+      <img src="/logo.png" alt="Playza" className="h-8 opacity-60" loading="lazy" />
       <p className="text-xl font-black uppercase italic text-slate-900 dark:text-white">Waiting for opponent...</p>
-      <p className="text-slate-500 text-[10px] md:text-sm">You scored <span className="text-primary font-bold">{score} pts</span> · Won {roundsWon}/{rounds.length} rounds</p>
+      <p className="text-slate-500 text-[10px] md:text-sm">You scored <span className="text-primary font-bold">{score} pts</span> Â· Won {roundsWon}/{rounds.length} rounds</p>
       <div className="flex gap-1 mt-4">
         <div className="w-2 h-2 bg-primary rounded-full opacity-30" />
         <div className="w-2 h-2 bg-primary rounded-full opacity-60" />
@@ -268,13 +268,13 @@ export default function WordScramble() {
 
   if (phase === 'finished') return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6 text-center px-4">
-      <img src="/logoImage.webp" alt="Playza" className="h-8" loading="lazy" />
-      <div className="text-6xl">{iWon ? '🏆' : room?.winner_id === 'bot' ? '🤖' : !room?.winner_id ? '🤝' : '💀'}</div>
+      <img src="/logo.png" alt="Playza" className="h-8" loading="lazy" />
+      <div className="text-6xl">{iWon ? 'ðŸ†' : room?.winner_id === 'bot' ? 'ðŸ¤–' : !room?.winner_id ? 'ðŸ¤' : 'ðŸ’€'}</div>
       <h1 className="text-2xl md:text-4xl font-black uppercase italic text-slate-900 dark:text-white">{iWon ? 'You Won!' : room?.winner_id === 'bot' ? 'Bot Wins' : !room?.winner_id ? "It's a Draw!" : 'You Lost'}</h1>
       <div className="bg-white/80 dark:bg-slate-900/40 p-6 rounded-xl border border-black/5 dark:border-white/10 space-y-3 w-full max-w-sm">
         {myScore && <div className="flex justify-between text-[10px] md:text-sm"><span className="text-slate-500">Your rounds won</span><span className="text-primary font-black">{myScore.rounds_won}</span></div>}
         {opponentScore && <div className="flex justify-between text-[10px] md:text-sm"><span className="text-slate-500">{room?.is_bot ? 'Bot rounds won' : 'Opponent rounds won'}</span><span className="font-black text-slate-900 dark:text-white">{opponentScore.rounds_won}</span></div>}
-        {iWon && (room?.stake ?? 0) > 0 && <div className="text-primary font-bold text-[10px] md:text-sm pt-2 border-t border-black/5 dark:border-white/10">+₦{((room?.stake ?? 0) * 2 * 0.9).toFixed(0)} credited to wallet</div>}
+        {iWon && (room?.stake ?? 0) > 0 && <div className="text-primary font-bold text-[10px] md:text-sm pt-2 border-t border-black/5 dark:border-white/10">+â‚¦{((room?.stake ?? 0) * 2 * 0.9).toFixed(0)} credited to wallet</div>}
       </div>
       <div className="flex gap-3">
         <button onClick={() => { setPhase('lobby'); setRoom(null); setCurrentRound(0); setRoundsWon(0); setScore(0); navigate('/word-scramble') }} className="bg-primary text-slate-950 font-black uppercase tracking-widest px-8 py-3 rounded-xl text-[10px] md:text-sm">Play Again</button>

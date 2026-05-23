@@ -5,44 +5,60 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>Neon Stacker</title>
   <link rel="stylesheet" href="styles.css">
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700;900&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700;900&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
   <div class="shell" id="shell">
-    
-    <!-- Canvas for rendering blocks -->
+
     <canvas id="gameCanvas"></canvas>
 
-    <!-- Game HUD -->
+    <!-- HUD -->
     <div id="gameHud" class="hidden">
-      <div class="hud-box">
+      <div class="hud-left">
         <span class="hud-label">TOWER</span>
-        <span class="hud-value" id="hudScore">0</span>
+        <span class="hud-value" id="hudScore">0 / 28</span>
       </div>
-      <div class="hud-box highlight">
+      <div class="hud-center">
+        <div class="progress-track">
+          <div class="progress-fill" id="hudProgressFill"></div>
+          <div class="progress-marker" style="left:50%">
+            <span class="marker-label">1.0×</span>
+          </div>
+        </div>
+      </div>
+      <div class="hud-right">
         <span class="hud-label">PAYOUT</span>
-        <span class="hud-value" id="hudMult">x0.00</span>
+        <span class="hud-value accent" id="hudMult">0.00×</span>
       </div>
     </div>
+    <!-- Best score strip -->
+    <div id="hudBest" style="position:absolute;top:60px;left:50%;transform:translateX(-50%);z-index:20;pointer-events:none;font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:700;color:rgba(255,255,255,0.3);letter-spacing:2px;">BEST: <span id="hudHS">0</span></div>
+    </div>
 
-    <!-- UI Overlay: Start -->
+    <!-- Toast -->
+    <div id="toast" class="toast"></div>
+
+    <!-- Overlay: Start -->
     <div id="overlayStart" class="overlay">
       <div class="panel">
-        <div class="icon">🏗️</div>
-        <h1 class="glitch-text">NEON STACKER</h1>
-        <p class="subtitle">PRECISION TIMING</p>
-        <p class="desc">Tap anywhere to drop the neon block. Align it perfectly to keep your width. Overhanging edges will be sliced off. Stack 20 blocks to reach Escape Velocity.</p>
-        
+        <div class="game-icon">🏗️</div>
+        <h1 class="game-title">NEON STACKER</h1>
+        <p class="game-sub">PRECISION TIMING</p>
+        <p class="game-desc">
+          Tap to drop each neon block. Perfect alignment = keep your full width.
+          Overhanging edges are sliced off permanently.<br><br>
+          Stack <strong>28 blocks</strong> to reach <strong>2.0× payout</strong>.
+          Break-even at block 17. Every miss narrows your margin.
+        </p>
         <button id="btnStartGame" class="btn-primary">START CONSTRUCTION</button>
       </div>
     </div>
 
-    <!-- UI Overlay: Result -->
+    <!-- Overlay: Result -->
     <div id="overlayResult" class="overlay hidden">
-      <div class="panel result-panel">
+      <div class="panel">
         <h2 id="resTitle" class="res-title">COLLAPSE</h2>
-        
         <div class="stats-grid">
           <div class="stat-item">
             <span class="stat-label">BLOCKS</span>
@@ -52,16 +68,20 @@
             <span class="stat-label">PERFECTS</span>
             <span class="stat-value" id="resPerfects">0</span>
           </div>
+          <div class="stat-item" style="grid-column:1/-1">
+            <span class="stat-label">BEST EVER</span>
+            <span class="stat-value" id="resHighScore">0</span>
+          </div>
         </div>
-
         <div class="mult-display">
           <span class="mult-label">FINAL PAYOUT</span>
-          <span class="mult-value" id="resMult">x0.00</span>
+          <span class="mult-value" id="resMult">0.00×</span>
         </div>
-
-        <p id="resKicker" class="kicker">The tower fell.</p>
-
-        <button id="btnPlayAgain" class="btn-primary">TRY AGAIN</button>
+        <p id="resKicker" class="kicker"></p>
+        <div class="btn-row">
+          <button id="btnPlayAgain" class="btn-primary">PLAY AGAIN</button>
+          <button id="btnExit" class="btn-secondary">EXIT</button>
+        </div>
       </div>
     </div>
 
