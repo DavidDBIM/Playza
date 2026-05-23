@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, type ComponentType } from 'react';
 import { useNavigate, useLocation } from 'react-router';
 import { Zap, Swords, Trophy } from 'lucide-react';
 import H2HLobbySkeleton from '../skeletons/H2HLobbySkeleton';
@@ -28,7 +28,7 @@ interface H2HLobbyProps {
 interface GameType {
   id: string;
   name: string;
-  icon: React.ComponentType<{ className?: string; size?: number }>;
+  icon: ComponentType<{ className?: string; size?: string | number }>;
   players: string;
   color: string;
   thumbnailUrl: string;

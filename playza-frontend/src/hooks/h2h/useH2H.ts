@@ -73,8 +73,11 @@ export const useH2HRoom = (roomId: string | undefined, gameType: GameType) => {
           filter: `id=eq.${roomId}`,
         },
         (payload) => {
-          // Manually update the query cache when a change is detected
-          queryClient.setQueryData(["h2h", "room", roomId], payload.new);
+          // Manually update the query cache when a change is detected, merging to keep host/guest relations intact
+          queryClient.setQueryData(["h2h", "room", roomId], (oldData: Record<string, unknown> | null | undefined) => {
+            if (!oldData) return payload.new;
+            return { ...oldData, ...payload.new };
+          });
         }
       )
       .subscribe();

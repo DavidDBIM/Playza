@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState, type ComponentType } from "react";
 import { Link } from "react-router";
 import { useAuth } from "@/context/auth";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { MdLogin, MdClose } from "react-icons/md";
 interface GameType {
   id: string;
   name: string;
-  icon: React.ComponentType<{ className?: string; size?: number }>;
+  icon: ComponentType<{ className?: string; size?: string | number }>;
   players: string;
   color: string;
   thumbnailUrl: string;
