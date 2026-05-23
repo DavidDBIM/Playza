@@ -13,6 +13,7 @@ export type QuizPhase =
   | 'round_summary'
   | 'eliminated'
   | 'game_over'
+  | 'cancelled'
 
 export interface LiveQuestion {
   question_id: string
@@ -145,6 +146,12 @@ export function useQuizSocket(tournamentId: string | null) {
       clearTimer()
       setElimMessage(message)
       setPhase('eliminated')
+    })
+
+    socket.on('quiz:cancelled', ({ message }) => {
+      clearTimer()
+      setElimMessage(message)
+      setPhase('cancelled')
     })
 
     socket.on('quiz:game_over', (data: GameOverData) => {
