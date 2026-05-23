@@ -118,23 +118,28 @@ export async function endSoloSession(
 
     // Maximum session duration: 20 minutes for all games
     if (elapsedSeconds > 1200) {
-      throw new Error('Session has expired. Sessions must be completed within 20 minutes.');
+      console.warn(`[SoloEarn Anti-Cheat] Session ${sessionId} expired (>20 mins).`);
+      rawMultiplier = 0;
     }
 
     const gameTitle = session.games?.title || '';
     
+    let violation = false;
     if (gameTitle === 'Memory Rush') {
-      // Memory Rush specific strict thresholds
-      if (rawMultiplier > 0 && elapsedSeconds < 10) throw new Error("Session ended suspiciously fast. Score rejected.");
-      if (rawMultiplier >= 0.5 && elapsedSeconds < 15) throw new Error("Multiplier 0.5x requires minimum 15s of gameplay.");
-      if (rawMultiplier >= 1.0 && elapsedSeconds < 30) throw new Error("Multiplier 1.0x requires minimum 30s of gameplay.");
-      if (rawMultiplier >= 1.5 && elapsedSeconds < 80) throw new Error("Multiplier 1.5x requires minimum 80s of gameplay.");
-      if (rawMultiplier >= 2.0 && elapsedSeconds < 130) throw new Error("Multiplier 2.0x requires minimum 130s of gameplay.");
+      if (rawMultiplier > 0 && elapsedSeconds < 10) violation = true;
+      if (rawMultiplier >= 0.5 && elapsedSeconds < 15) violation = true;
+      if (rawMultiplier >= 1.0 && elapsedSeconds < 30) violation = true;
+      if (rawMultiplier >= 1.5 && elapsedSeconds < 80) violation = true;
+      if (rawMultiplier >= 2.0 && elapsedSeconds < 130) violation = true;
     } else {
-      // Generic loose thresholds for other fast-paced arcade games (Emoji Pop, Stack Ball, Snake Earn)
-      if (rawMultiplier > 0 && elapsedSeconds < 3) throw new Error("Session ended suspiciously fast. Score rejected.");
-      if (rawMultiplier >= 1.0 && elapsedSeconds < 8) throw new Error("Multiplier 1.0x requires minimum 8s of gameplay.");
-      if (rawMultiplier >= 2.0 && elapsedSeconds < 15) throw new Error("Multiplier 2.0x requires minimum 15s of gameplay.");
+      if (rawMultiplier > 0 && elapsedSeconds < 3) violation = true;
+      if (rawMultiplier >= 1.0 && elapsedSeconds < 8) violation = true;
+      if (rawMultiplier >= 2.0 && elapsedSeconds < 15) violation = true;
+    }
+
+    if (violation) {
+      console.warn(`[SoloEarn Anti-Cheat] Violation on ${sessionId}. Mult: ${rawMultiplier}, Time: ${elapsedSeconds}s. Forcing 0x.`);
+      rawMultiplier = 0;
     }
   }
 
