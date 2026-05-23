@@ -7,7 +7,7 @@ export const SoloGameCard = ({ game, onSelect }: GameProps) => (
     className="group flex flex-col gap-3 cursor-pointer"
   >
     {/* Image Container (No borders or padding around it) */}
-    <div className="w-full aspect-video md:aspect-[4/3] rounded-2xl md:rounded-3xl overflow-hidden relative shadow-[0_8px_30px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.4)]">
+    <div className="w-full aspect-[3/4] rounded-2xl md:rounded-3xl overflow-hidden relative shadow-[0_8px_30px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.4)]">
       <img
         src={game.thumbnail}
         alt={game.title}
