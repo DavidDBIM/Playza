@@ -341,24 +341,25 @@ export function setupQuizGateway(io: SocketServer) {
 
       game.socketToUser.set(socket.id, userId)
       game.userToSocket.set(userId, socket.id)
-      game.alivePlayers.add(userId)
+      // Don't add to alivePlayers here — only add when game launches
+      // alivePlayers is populated from DB (registered players) at launch time
 
-      // Count real players from DB
+      // Count registered players from DB for the lobby counter
       const { count } = await supabaseAdmin
         .from('quiz_players')
         .select('id', { count: 'exact', head: true })
         .eq('tournament_id', tournament_id)
-        .eq('status', 'alive')
+        .in('status', ['registered', 'alive'])
 
       quizNs.to(`quiz:${tournament_id}`).emit('quiz:lobby_update', {
-        player_count: count ?? game.alivePlayers.size,
+        player_count: count ?? 0,
         status: game.status,
       })
 
       // Send current leaderboard on join
       const { data: lb } = await supabaseAdmin
         .from('quiz_leaderboard')
-        .select('rank, username, avatar_url, correct_answers, avg_time_ms, status')
+        .select('rank, user_id, username, avatar_url, correct_answers, avg_time_ms, status')
         .eq('tournament_id', tournament_id)
         .order('rank', { ascending: true })
         .limit(50)
@@ -457,12 +458,13 @@ export async function adminStartTournament(tournamentId: string, io: SocketServe
     games.set(tournamentId, game)
   }
 
-  // Load all alive players into memory
+  // Load all registered/alive players into memory
+  // Players have status='registered' before launch, 'alive' after
   const { data: players } = await supabaseAdmin
     .from('quiz_players')
     .select('user_id')
     .eq('tournament_id', tournamentId)
-    .eq('status', 'alive')
+    .in('status', ['registered', 'alive'])
 
   for (const p of players ?? []) game.alivePlayers.add(p.user_id)
 
