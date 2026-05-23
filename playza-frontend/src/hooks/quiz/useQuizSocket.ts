@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { io, Socket } from 'socket.io-client'
 import { useAuth } from '@/context/auth'
 
-const SOCKET_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000'
+const SOCKET_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
 
 export type QuizPhase =
   | 'idle'
