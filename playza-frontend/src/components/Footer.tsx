@@ -23,6 +23,7 @@ const Footer = ({ showAbout = true }: { showAbout?: boolean }) => {
         {/* Bottom Bar */}
         <div className="pt-2 md:pt-10 border-t border-slate-200 dark:border-white/5 flex flex-col md:flex-row justify-between items-center gap-2 md:gap-8 relative z-10">
           <div className="flex flex-col items-center md:items-start gap-2">
+             <img src="/logo.webp" alt="Playza" className="h-8 md:h-10 w-auto object-contain mb-1" />
              <p className="text-xs md:text-base text-[11px] font-black text-slate-900 dark:text-white uppercase tracking-widest italic opacity-80">
                © {year} PlayZa Arena
              </p>

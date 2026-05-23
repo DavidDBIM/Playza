@@ -37,11 +37,7 @@ const Header = () => {
         <div className="flex items-center gap-2 md:gap-12">
           <div className="flex items-center gap-2">
             <Link to="/">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <span className="material-icons text-slate-900 dark:text-white text-base md:text-xl font-bold">
-                  PZ
-                </span>
-              </div>
+              <img src="/logo.webp" alt="Playza" className="h-8 md:h-10 w-auto object-contain" />
             </Link>
           </div>
         </div>

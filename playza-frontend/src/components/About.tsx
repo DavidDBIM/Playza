@@ -36,9 +36,12 @@ const socials = [
 const About = () => {
   return (
     <div className="glass p-2 md:p-6 rounded-xl">
-      <h3 className="font-heading text-base md:text-xl font-bold text-slate-900 dark:text-white mb-4">
-        About PLAYZA
-      </h3>
+      <div className="flex flex-col md:flex-row md:items-center gap-3 mb-4">
+        <img src="/logo.webp" alt="Playza" className="h-8 md:h-10 w-auto object-contain" />
+        <h3 className="font-heading text-base md:text-xl font-bold text-slate-900 dark:text-white">
+          About PLAYZA
+        </h3>
+      </div>
       <p className="text-slate-600 dark:text-slate-400 text-xs md:text-sm leading-relaxed mb-6">
         PLAYZA is a leading competitive skill gaming platform. We
         believe that gaming should be rewarding. Our mission is to provide a
