@@ -21,8 +21,8 @@ body {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background: #f4f6fb;
-  color: var(--text);
+  background: #0f172a;
+  color: #ffffff;
   font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   touch-action: none;
 }
@@ -75,11 +75,11 @@ canvas {
   height: 44px;
   border: 0;
   border-radius: 50%;
-  background: var(--surface);
-  box-shadow: 0 8px 28px var(--shadow);
+  background: rgba(255,255,255,0.12);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
   font-size: 20px;
   font-weight: 900;
-  letter-spacing: 2px;
+  color: #fff;
   cursor: pointer;
 }
 
@@ -90,8 +90,9 @@ canvas {
   width: 142px;
   padding: 8px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 12px 34px var(--shadow);
+  background: rgba(20,30,55,0.95);
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow: 0 12px 34px rgba(0,0,0,0.5);
 }
 
 .settings-action {
@@ -140,7 +141,7 @@ canvas {
   color: #fff;
   font-size: 18px;
   font-weight: 900;
-  box-shadow: 0 8px 24px rgba(26, 30, 42, 0.16);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
 }
 
 .level-pill.next {
@@ -154,7 +155,7 @@ canvas {
   height: 8px;
   overflow: hidden;
   border-radius: 999px;
-  background: rgba(36, 40, 51, 0.12);
+  background: rgba(255,255,255,0.15);
 }
 
 .level-progress {
@@ -205,10 +206,11 @@ canvas {
   left: 0;
   right: 0;
   bottom: 66px;
-  color: #3c414d;
+  color: rgba(255,255,255,0.85);
   font-size: 24px;
   font-weight: 900;
   text-align: center;
+  text-shadow: 0 0 20px rgba(255,255,255,0.3);
   animation: tapPulse 0.8s ease-in-out infinite alternate;
 }
 
@@ -225,14 +227,15 @@ canvas {
 
 .score-text {
   position: absolute;
-  top: 82px;
+  top: 80px;  /* below the level bar at top:22px + 42px pill height */
   left: 0;
   right: 0;
-  color: var(--active);
-  font-size: 42px;
+  color: #ffffff;
+  font-size: 48px;
   font-weight: 900;
   text-align: center;
-  text-shadow: 0 8px 28px rgba(0, 0, 0, 0.08);
+  text-shadow: 0 0 20px rgba(255,255,255,0.35), 0 4px 12px rgba(0,0,0,0.6);
+  letter-spacing: -1px;
 }
 
 .overpower-wrap {
@@ -268,10 +271,10 @@ canvas {
   align-items: center;
   justify-content: center;
   gap: 14px;
-  background: rgba(244, 246, 251, 0.52);
-  -webkit-backdrop-filter: blur(3px);
-  -moz-backdrop-filter: blur(3px);
-  backdrop-filter: blur(3px);
+  background: rgba(10, 15, 30, 0.88);
+  -webkit-backdrop-filter: blur(8px);
+  -moz-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
   text-align: center;
 }
 
@@ -284,21 +287,21 @@ canvas {
 }
 
 .result-ui p {
-  color: #242833;
+  color: rgba(255,255,255,0.85);
   font-size: 24px;
   font-weight: 900;
 }
 
 .result-ui > span {
-  color: var(--muted);
+  color: rgba(255,255,255,0.5);
   font-size: 15px;
-  font-weight: 900;
+  font-weight: 700;
   letter-spacing: 1px;
   text-transform: uppercase;
 }
 
 .game-over h1 {
-  color: #1d1f27;
+  color: #f87171;
 }
 
 .result-grid {
@@ -314,12 +317,20 @@ canvas {
   gap: 4px;
   padding: 16px 12px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.78);
-  box-shadow: 0 8px 24px var(--shadow);
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.result-grid span {
+  color: rgba(255,255,255,0.5);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  text-transform: uppercase;
 }
 
 .result-grid strong {
-  color: var(--active);
+  color: #ffffff;
   font-size: 30px;
   font-weight: 900;
 }
