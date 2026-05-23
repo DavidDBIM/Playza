@@ -115,13 +115,13 @@ const AppContent = () => {
     if (!isProfileComplete) {
       setShowVerificationModal(true);
     } else {
-      startTransition(() => navigate("?modal=withdraw"));
+      startTransition(() => { navigate("?modal=withdraw"); });
     }
   };
 
   const handleVerificationSuccess = () => {
     setShowVerificationModal(false);
-    startTransition(() => navigate("?modal=withdraw"));
+    startTransition(() => { navigate("?modal=withdraw"); });
   };
 
   // Prefetch the most-visited pages in the background after mount
