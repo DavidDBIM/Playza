@@ -119,9 +119,19 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
   const [resignationWinnerId, setResignationWinnerId] = useState<string | null>(null);
 
   // ── Timing State (10+5 Format) ──────────────────────────────────────────
-  const [whiteTime, setWhiteTime] = useState(600); // 10 minutes
-  const [blackTime, setBlackTime] = useState(600);
+  const [whiteTime, setWhiteTime] = useState(() => room.board_state?.white_time ?? 600);
+  const [blackTime, setBlackTime] = useState(() => room.board_state?.black_time ?? 600);
   const [timeoutWinnerId, setTimeoutWinnerId] = useState<string | null>(null);
+
+  // Sync timers from authoritative server changes
+  useEffect(() => {
+    if (room.board_state?.white_time !== undefined) {
+      setWhiteTime(room.board_state.white_time);
+    }
+    if (room.board_state?.black_time !== undefined) {
+      setBlackTime(room.board_state.black_time);
+    }
+  }, [room.board_state?.white_time, room.board_state?.black_time]);
 
   // ── Promotion State ────────────────────────────────────────────────────────
   const [promotionMove, setPromotionMove] = useState<{
@@ -340,31 +350,35 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
 
     const interval = setInterval(() => {
       const turn = game.turn();
+      const turnStartedAt = room.board_state?.turn_started_at;
+      if (!turnStartedAt) return;
+
+      const elapsedMs = Date.now() - new Date(turnStartedAt).getTime();
+      const elapsedSeconds = Math.max(0, Math.floor(elapsedMs / 1000));
+
       if (turn === "w") {
-        setWhiteTime((t) => {
-          if (t <= 1) {
-            clearInterval(interval);
-            setTimeoutWinnerId(room.guest_id || "GUEST_WIN");
-            toast.error("White ran out of time!");
-            return 0;
-          }
-          return t - 1;
-        });
+        const baseTime = room.board_state?.white_time ?? 600;
+        const currentRemaining = Math.max(0, baseTime - elapsedSeconds);
+        setWhiteTime(currentRemaining);
+        if (currentRemaining <= 0) {
+          clearInterval(interval);
+          setTimeoutWinnerId(room.guest_id || "GUEST_WIN");
+          toast.error("White ran out of time!");
+        }
       } else {
-        setBlackTime((t) => {
-          if (t <= 1) {
-            clearInterval(interval);
-            setTimeoutWinnerId(room.host_id || "HOST_WIN");
-            toast.error("Black ran out of time!");
-            return 0;
-          }
-          return t - 1;
-        });
+        const baseTime = room.board_state?.black_time ?? 600;
+        const currentRemaining = Math.max(0, baseTime - elapsedSeconds);
+        setBlackTime(currentRemaining);
+        if (currentRemaining <= 0) {
+          clearInterval(interval);
+          setTimeoutWinnerId(room.host_id || "HOST_WIN");
+          toast.error("Black ran out of time!");
+        }
       }
-    }, 1000);
+    }, 500);
 
     return () => clearInterval(interval);
-  }, [game, room.status, room.host_id, room.guest_id, timeoutWinnerId, toast, phase]);
+  }, [game, room.status, room.board_state?.white_time, room.board_state?.black_time, room.board_state?.turn_started_at, room.host_id, room.guest_id, timeoutWinnerId, toast, phase]);
 
   // ── Sync opponent move from server ─────────────────────────────────────────
   useEffect(() => {
@@ -412,11 +426,12 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
             );
           }
 
-          // Apply +5s increment to the person who just moved (the opponent)
-          if (copy.turn() === "w") {
-            setBlackTime(prev => prev + 5);
-          } else {
-            setWhiteTime(prev => prev + 5);
+          // Apply +5s increment to the person who just moved (the opponent) from database state
+          if (room.board_state?.white_time !== undefined) {
+            setWhiteTime(room.board_state.white_time);
+          }
+          if (room.board_state?.black_time !== undefined) {
+            setBlackTime(room.board_state.black_time);
           }
 
           return copy;
@@ -471,12 +486,12 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
         setPromotionMove(null);
         pendingMoveRef.current = true;
 
-        // Apply +5s increment
-        if (game.turn() === "w") {
-          setWhiteTime(prev => prev + 5);
-        } else {
-          setBlackTime(prev => prev + 5);
-        }
+        // Keep client side optimistic time values ready before server responds
+          if (game.turn() === "w") {
+            setWhiteTime(prev => prev + 5);
+          } else {
+            setBlackTime(prev => prev + 5);
+          }
 
         const { isCheck, isCheckmate, isCapture, isCastle, pieceChar } =
           parseSAN(move.san);
