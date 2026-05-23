@@ -7,51 +7,38 @@
     <meta name="description" content="Memorize the pattern, then recall it perfectly. Fast-paced memory challenge with dynamic difficulty." />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap"
-      rel="stylesheet"
-    />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
     <div class="page" id="page">
 
       <!-- ═══════════════ TOP HUD ═══════════════ -->
-      <header class="topbar">
-        <div class="topbar-header">
-            <div class="brand">
-              <p class="eyebrow">PLAYZA.games</p>
-              <h1>Memory Rush</h1>
-            </div>
-            
-            <div class="hud-controls">
-              <button class="icon-btn" id="btnSound" aria-label="Toggle sound">🔊</button>
-              <button class="icon-btn" id="btnHelp" aria-label="How to play">ⓘ</button>
-            </div>
+      <header class="game-header">
+        <div class="title-container">
+          <h1>Memory Rush</h1>
+          <p id="mode-badge">Solo Cashout</p>
+        </div>
+        
+        <div class="scores-container">
+          <div class="score-box highlight">
+            <span class="score-label">Multiplier</span>
+            <span id="statMultiplier" class="score-value">0.00x</span>
+          </div>
+          <div class="score-box">
+            <span class="score-label">Round</span>
+            <span id="statRound" class="score-value">1</span>
+          </div>
+          <div class="score-box">
+            <span class="score-label">Score</span>
+            <span id="statScore" class="score-value">0</span>
+          </div>
         </div>
 
-        <div class="hud-stats">
-          <div class="stat-chip">
-            <span class="stat-label">Round</span>
-            <span class="stat-value" id="statRound">1</span>
-          </div>
-          <div class="stat-chip">
-            <span class="stat-label">Score</span>
-            <span class="stat-value" id="statScore">0</span>
-          </div>
-          <div class="stat-chip streak-chip">
-            <span class="stat-label">Streak</span>
-            <span class="stat-value" id="statStreak">0</span>
-            <span class="streak-fire" id="streakFire">🔥</span>
-          </div>
-          <div class="stat-chip timer-chip">
-            <span class="stat-label">Time</span>
-            <span class="stat-value" id="statTimer">—</span>
-          </div>
-          <div class="stat-chip">
-            <span class="stat-label">Multiplier</span>
-            <span class="stat-value" id="statMultiplier">×1.0</span>
-          </div>
+        <div class="header-actions">
+          <button class="btn-primary cashout hidden" id="btnCashOut" style="padding: 0.25rem 0.75rem; font-size: 0.85rem; margin-right: 0.5rem; background: linear-gradient(135deg, #10b981, #059669); border: none; color: white; border-radius: 0.5rem; cursor: pointer; font-weight: bold; transition: all 0.2s;">Cash Out</button>
+          <button class="action-btn" id="btnSound" aria-label="Toggle sound">🔊</button>
+          <button class="action-btn" id="btnHelp" aria-label="How to play">ⓘ</button>
         </div>
       </header>
 
@@ -87,12 +74,7 @@
           </div>
         </section>
 
-        <!-- Difficulty selector (visible on start screen) -->
-        <div class="difficulty-row" id="difficultyRow">
-          <button class="diff-btn active" id="diffEasy" data-diff="easy">Easy</button>
-          <button class="diff-btn" id="diffMedium" data-diff="medium">Medium</button>
-          <button class="diff-btn" id="diffHard" data-diff="hard">Hard</button>
-        </div>
+
 
       </main>
     </div>
@@ -109,86 +91,16 @@
           from the tile grid — in the exact order. Miss too many and it's over.
         </p>
 
-        <div class="diff-select-row">
-          <button class="diff-pill active" data-diff="easy">🟢 Easy</button>
-          <button class="diff-pill" data-diff="medium">🟡 Medium</button>
-          <button class="diff-pill" data-diff="hard">🔴 Hard</button>
-        </div>
-
         <button class="btn-primary" id="btnStart">Start Game</button>
         <p class="modal-hint">Pattern length grows each round. Memorize fast!</p>
       </div>
     </div>
 
-    <!-- Result panel overlay -->
-    <div class="overlay hidden" id="overlayResult">
-      <div class="modal result-modal">
-        <div class="tier-badge" id="tierBadge">S</div>
-        <h2 class="result-title" id="resultTitle">Perfect Recall!</h2>
-
-        <div class="result-stats">
-          <div class="result-stat">
-            <span class="rs-label">Accuracy</span>
-            <span class="rs-value" id="resAccuracy">100%</span>
-          </div>
-          <div class="result-stat">
-            <span class="rs-label">Time</span>
-            <span class="rs-value" id="resTime">3.2s</span>
-          </div>
-          <div class="result-stat">
-            <span class="rs-label">Length</span>
-            <span class="rs-value" id="resLength">5</span>
-          </div>
-          <div class="result-stat">
-            <span class="rs-label">Round Score</span>
-            <span class="rs-value" id="resRoundScore">+350</span>
-          </div>
-        </div>
-
-        <div class="multiplier-panel">
-          <p class="mp-label">Potential Multiplier</p>
-          <div class="mp-bar">
-            <div class="mp-fill" id="mpFill"></div>
-          </div>
-          <p class="mp-value" id="mpValue">×1.5</p>
-          <p class="mp-range">Range: 1.2× – 2.0×</p>
-        </div>
-
-        <div class="result-actions">
-          <button class="btn-primary" id="btnNextRound">Next Round →</button>
-          <button class="btn-ghost" id="btnRestart">Restart</button>
-        </div>
-      </div>
+    <!-- Dedicated transition countdown -->
+    <div class="overlay hidden" id="overlayCountdown" style="background: rgba(11, 11, 15, 0.85); z-index: 100;">
+      <div style="font-size: 150px; font-weight: 900; color: #fff; text-shadow: 0 0 40px rgba(99, 102, 241, 0.9); animation: pulse 0.5s infinite alternate;" id="countdownText">3</div>
     </div>
 
-    <!-- Game over overlay -->
-    <div class="overlay hidden" id="overlayGameOver">
-      <div class="modal">
-        <p class="kicker">Game Over</p>
-        <h2 class="modal-title" id="goTitle">Round Failed</h2>
-        <p class="modal-body" id="goBody">You ran out of time or made too many mistakes.</p>
-
-        <div class="result-stats">
-          <div class="result-stat">
-            <span class="rs-label">Final Score</span>
-            <span class="rs-value" id="goScore">0</span>
-          </div>
-          <div class="result-stat">
-            <span class="rs-label">Rounds</span>
-            <span class="rs-value" id="goRounds">0</span>
-          </div>
-          <div class="result-stat">
-            <span class="rs-label">Best Streak</span>
-            <span class="rs-value" id="goStreak">0</span>
-          </div>
-        </div>
-
-        <div class="result-actions">
-          <button class="btn-primary" id="btnPlayAgain">Play Again</button>
-          <button class="btn-ghost" id="btnQuit">Quit</button>
-        </div>
-      </div>
-    </div>
 
     <!-- Help overlay -->
     <div class="overlay hidden" id="overlayHelp">

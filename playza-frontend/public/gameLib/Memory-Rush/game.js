@@ -62,37 +62,37 @@ const DIFFICULTY_CONFIG = {
 // ─── Game State ───────────────────────────────────────────────────────────────
 
 const G = {
-    phase: 'idle',       // idle | memorize | recall | result | gameover
-    difficulty: 'easy',
-    round: 1,
-    score: 0,
-    streak: 0,
-    bestStreak: 0,
-    lives: 3,
-    maxLives: 3,
-    multiplier: 1.0,
-    pattern: [],          // array of tile defs for current round
-    playerSequence: [],   // player's taps so far
-    mistakes: 0,
-    recallStartTime: 0,
-    recallElapsed: 0,
-    timerInterval: null,
-    progressInterval: null,
-    soundEnabled: true,
-    // ─── Advanced Mechanics ───
-    lastTapTime: 0,          // Anti-cheat: rate limiter timestamp
-    sTierStreak: 0,          // Combo counter for Frenzy mode
-    frenzyActive: false,     // Is Frenzy mode currently running?
-    frenzyTimeout: null,     // Frenzy mode expiry timer
-    trapTileId: null,        // ID of the current Trap tile (if any)
-    // Backend-ready session data
-    session: {
-        id: crypto.randomUUID(),
-        seed: null,
-        inputLog: [],
-        timingData: [],
-        accuracy: 0,
-    },
+  phase: "idle", // idle | memorize | recall | result | gameover
+  difficulty: "medium",
+  round: 1,
+  score: 0,
+  streak: 0,
+  bestStreak: 0,
+  lives: 3,
+  maxLives: 3,
+  multiplier: 1.0,
+  pattern: [], // array of tile defs for current round
+  playerSequence: [], // player's taps so far
+  mistakes: 0,
+  recallStartTime: 0,
+  recallElapsed: 0,
+  timerInterval: null,
+  progressInterval: null,
+  soundEnabled: true,
+  // ─── Advanced Mechanics ───
+  lastTapTime: 0, // Anti-cheat: rate limiter timestamp
+  sTierStreak: 0, // Combo counter for Frenzy mode
+  frenzyActive: false, // Is Frenzy mode currently running?
+  frenzyTimeout: null, // Frenzy mode expiry timer
+  trapTileId: null, // ID of the current Trap tile (if any)
+  // Backend-ready session data
+  session: {
+    id: crypto.randomUUID(),
+    seed: null,
+    inputLog: [],
+    timingData: [],
+    accuracy: 0,
+  },
 };
 
 // ─── DOM References ───────────────────────────────────────────────────────────
@@ -100,746 +100,766 @@ const G = {
 const $ = (id) => document.getElementById(id);
 
 const DOM = {
-    statRound:    $('statRound'),
-    statScore:    $('statScore'),
-    statStreak:   $('statStreak'),
-    streakFire:   $('streakFire'),
-    streakChip:   document.querySelector('.streak-chip'),
-    statTimer:    $('statTimer'),
-    statMulti:    $('statMultiplier'),
-    phaseLabel:   $('phaseLabel'),
-    phaseFill:    $('phaseProgressFill'),
-    patternGrid:  $('patternGrid'),
-    patternArena: $('patternArena'),
-    recallPrompt: $('recallPrompt'),
-    inputSeq:     $('inputSequence'),
-    tileGrid:     $('tileGrid'),
-    btnUndo:      $('btnUndo'),
-    btnClear:     $('btnClear'),
-    btnSubmit:    $('btnSubmit'),
-    diffRow:      $('difficultyRow'),
-    overlayStart: $('overlayStart'),
-    overlayResult:  $('overlayResult'),
-    overlayGameOver:$('overlayGameOver'),
-    overlayHelp:  $('overlayHelp'),
-    toast:        $('toast'),
-    btnSound:     $('btnSound'),
-    btnHelp:      $('btnHelp'),
+  statRound: $("statRound"),
+  statScore: $("statScore"),
+  statMulti: $("statMultiplier"),
+  phaseLabel: $("phaseLabel"),
+  phaseFill: $("phaseProgressFill"),
+  patternGrid: $("patternGrid"),
+  patternArena: $("patternArena"),
+  recallPrompt: $("recallPrompt"),
+  inputSeq: $("inputSequence"),
+  tileGrid: $("tileGrid"),
+  btnUndo: $("btnUndo"),
+  btnClear: $("btnClear"),
+  btnSubmit: $("btnSubmit"),
+  overlayStart: $("overlayStart"),
+  overlayCountdown: $("overlayCountdown"),
+  countdownText: $("countdownText"),
+  btnCashOut: $("btnCashOut"),
+  overlayHelp: $("overlayHelp"),
+  toast: $("toast"),
+  btnSound: $("btnSound"),
+  btnHelp: $("btnHelp"),
 };
 
 // ─── Pattern Generator ────────────────────────────────────────────────────────
 
 function buildTilePool(type) {
-    if (type === 'color')  return [...COLORS];
-    if (type === 'shape')  return [...SHAPES];
-    // mixed
-    return [...COLORS.slice(0, 4), ...SHAPES.slice(0, 4)];
+  if (type === "color") return [...COLORS];
+  if (type === "shape") return [...SHAPES];
+  // mixed
+  return [...COLORS.slice(0, 4), ...SHAPES.slice(0, 4)];
 }
 
 function generatePattern(length, type) {
-    const pool = buildTilePool(type);
-    // Allow repeats but avoid 3+ in a row of same id
-    const pattern = [];
-    for (let i = 0; i < length; i++) {
-        let tile;
-        let attempts = 0;
-        do {
-            tile = pool[Math.floor(Math.random() * pool.length)];
-            attempts++;
-        } while (
-            attempts < 10 &&
-            pattern.length >= 2 &&
-            pattern.at(-1).id === tile.id &&
-            pattern.at(-2).id === tile.id
-        );
-        pattern.push(tile);
-    }
-    return pattern;
+  const pool = buildTilePool(type);
+  // Allow repeats but avoid 3+ in a row of same id
+  const pattern = [];
+  for (let i = 0; i < length; i++) {
+    let tile;
+    let attempts = 0;
+    do {
+      tile = pool[Math.floor(Math.random() * pool.length)];
+      attempts++;
+    } while (
+      attempts < 10 &&
+      pattern.length >= 2 &&
+      pattern.at(-1).id === tile.id &&
+      pattern.at(-2).id === tile.id
+    );
+    pattern.push(tile);
+  }
+  return pattern;
 }
 
 // ─── Utility ──────────────────────────────────────────────────────────────────
 
 function randInt(min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
+  return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 function shuffle(arr) {
-    const a = [...arr];
-    for (let i = a.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [a[i], a[j]] = [a[j], a[i]];
-    }
-    return a;
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
 }
 
-function showToast(msg, type = '', duration = 1800) {
-    const t = DOM.toast;
-    t.textContent = msg;
-    t.className = `toast ${type}`;
-    clearTimeout(t._hide);
-    t._hide = setTimeout(() => { t.className = 'toast hidden'; }, duration);
+function showToast(msg, type = "", duration = 1800) {
+  const t = DOM.toast;
+  t.textContent = msg;
+  t.className = `toast ${type}`;
+  clearTimeout(t._hide);
+  t._hide = setTimeout(() => {
+    t.className = "toast hidden";
+  }, duration);
 }
 
-function playTone(freq, dur = 120, type = 'sine') {
-    if (!G.soundEnabled) return;
-    try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.type = type;
-        osc.frequency.value = freq;
-        gain.gain.setValueAtTime(0.15, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur / 1000);
-        osc.start();
-        osc.stop(ctx.currentTime + dur / 1000);
-    } catch (_) {}
+function playTone(freq, dur = 120, type = "sine") {
+  if (!G.soundEnabled) return;
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = type;
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur / 1000);
+    osc.start();
+    osc.stop(ctx.currentTime + dur / 1000);
+  } catch (_) {}
 }
 
-function playCorrect() { playTone(660, 90); }
-function playWrong()   { playTone(180, 200, 'square'); }
-function playSuccess() { playTone(880, 80); setTimeout(() => playTone(1100, 100), 100); }
-function playFail()    { playTone(200, 300, 'sawtooth'); }
-function playReveal()  { playTone(440, 60, 'triangle'); }
+function playCorrect() {
+  playTone(660, 90);
+}
+function playWrong() {
+  playTone(180, 200, "square");
+}
+function playSuccess() {
+  playTone(880, 80);
+  setTimeout(() => playTone(1100, 100), 100);
+}
+function playFail() {
+  playTone(200, 300, "sawtooth");
+}
+function playReveal() {
+  playTone(440, 60, "triangle");
+}
 
 // ─── HUD Updater ──────────────────────────────────────────────────────────────
 
 function updateHUD() {
-    DOM.statRound.textContent  = G.round;
-    DOM.statScore.textContent  = G.score.toLocaleString();
-    DOM.statStreak.textContent = G.streak;
-    DOM.statMulti.textContent  = `×${G.multiplier.toFixed(1)}`;
-    DOM.streakChip.classList.toggle('active', G.streak >= 3);
+  DOM.statRound.textContent = G.round;
+  DOM.statScore.textContent = G.score.toLocaleString();
+  DOM.statMulti.textContent = `${G.multiplier.toFixed(2)}x`;
 
-    if (window.parent) {
-        window.parent.postMessage({ type: 'SCORE_UPDATE', payload: { multiplier: G.multiplier } }, '*');
-    }
+  if (window.parent) {
+    window.parent.postMessage(
+      { type: "SCORE_UPDATE", payload: { multiplier: G.multiplier } },
+      "*",
+    );
+  }
 }
 
-function setPhaseLabel(text, color = '') {
-    DOM.phaseLabel.textContent = text;
-    DOM.phaseLabel.style.color  = color || '';
-    DOM.phaseLabel.style.borderColor = color ? color + '55' : '';
-    DOM.phaseLabel.style.backgroundColor = color ? color + '12' : '';
+function setPhaseLabel(text, color = "") {
+  DOM.phaseLabel.textContent = text;
+  DOM.phaseLabel.style.color = color || "";
+  DOM.phaseLabel.style.borderColor = color ? color + "55" : "";
+  DOM.phaseLabel.style.backgroundColor = color ? color + "12" : "";
 }
 
 // ─── Lives renderer ──────────────────────────────────────────────────────────
 
 function renderLives() {
-    let bar = document.getElementById('livesBar');
-    if (!bar) {
-        bar = document.createElement('div');
-        bar.id = 'livesBar';
-        bar.className = 'lives-bar';
-        DOM.phaseFill.parentElement.parentElement.appendChild(bar);
-    }
-    bar.innerHTML = Array.from({ length: G.maxLives }, (_, i) =>
-        `<div class="life-dot ${i >= G.lives ? 'lost' : ''}"></div>`
-    ).join('');
+  let bar = document.getElementById("livesBar");
+  if (!bar) {
+    bar = document.createElement("div");
+    bar.id = "livesBar";
+    bar.className = "lives-bar";
+    DOM.phaseFill.parentElement.parentElement.appendChild(bar);
+  }
+  bar.innerHTML = Array.from(
+    { length: G.maxLives },
+    (_, i) => `<div class="life-dot ${i >= G.lives ? "lost" : ""}"></div>`,
+  ).join("");
 }
 
 // ─── Pattern Display ──────────────────────────────────────────────────────────
 
 function renderPattern(tiles, visible) {
-    DOM.patternGrid.innerHTML = '';
-    DOM.recallPrompt.classList.add('hidden');
+  DOM.patternGrid.innerHTML = "";
+  DOM.recallPrompt.classList.add("hidden");
 
-    tiles.forEach((tile, i) => {
-        const el = document.createElement('div');
-        el.className = 'ptile hidden-tile';
-        el.textContent = tile.emoji;
-        el.style.background   = tile.bg;
-        el.style.borderColor  = tile.border;
-        el.style.setProperty('--tile-glow', tile.glow);
-        el.setAttribute('aria-label', tile.id);
-        DOM.patternGrid.appendChild(el);
+  tiles.forEach((tile, i) => {
+    const el = document.createElement("div");
+    el.className = "ptile hidden-tile";
+    el.textContent = tile.emoji;
+    el.style.background = tile.bg;
+    el.style.borderColor = tile.border;
+    el.style.setProperty("--tile-glow", tile.glow);
+    el.setAttribute("aria-label", tile.id);
+    DOM.patternGrid.appendChild(el);
 
-        if (visible) {
-            // Sequential flash reveal
-            setTimeout(() => {
-                el.classList.remove('hidden-tile');
-                el.classList.add('reveal-tile', 'flash-tile');
-                playReveal();
-                setTimeout(() => el.classList.remove('flash-tile'), 320);
-            }, i * 180);
-        }
-    });
+    if (visible) {
+      // Sequential flash reveal
+      setTimeout(() => {
+        el.classList.remove("hidden-tile");
+        el.classList.add("reveal-tile", "flash-tile");
+        playReveal();
+        setTimeout(() => el.classList.remove("flash-tile"), 320);
+      }, i * 180);
+    }
+  });
 }
 
 function hidePattern() {
-    DOM.patternGrid.querySelectorAll('.ptile').forEach((el) => {
-        el.classList.add('hidden-tile');
-        el.classList.remove('reveal-tile');
-    });
-    setTimeout(() => {
-        DOM.patternGrid.innerHTML = '';
-        DOM.recallPrompt.classList.remove('hidden');
-    }, 280);
+  DOM.patternGrid.querySelectorAll(".ptile").forEach((el) => {
+    el.classList.add("hidden-tile");
+    el.classList.remove("reveal-tile");
+  });
+  setTimeout(() => {
+    DOM.patternGrid.innerHTML = "";
+    DOM.recallPrompt.classList.remove("hidden");
+  }, 280);
 }
 
 // ─── Tile Grid (input) ────────────────────────────────────────────────────────
 
 // ─── Floating combat text ─────────────────────────────────────────────────────
-function spawnFloatText(text, x, y, cls = '') {
-    const el = document.createElement('div');
-    el.className = `float-text ${cls}`;
-    el.textContent = text;
-    el.style.left = `${x}px`;
-    el.style.top  = `${y}px`;
-    document.body.appendChild(el);
-    setTimeout(() => el.remove(), 1000);
+function spawnFloatText(text, x, y, cls = "") {
+  const el = document.createElement("div");
+  el.className = `float-text ${cls}`;
+  el.textContent = text;
+  el.style.left = `${x}px`;
+  el.style.top = `${y}px`;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1000);
 }
 
 function buildTileGrid(pool, distractorCount = 0) {
-    const cfg = DIFFICULTY_CONFIG[G.difficulty];
+  const cfg = DIFFICULTY_CONFIG[G.difficulty];
 
-    // The grid must always include all unique tiles from the pattern
-    const patternIds = new Set(G.pattern.map((t) => t.id));
-    const inPattern  = pool.filter((t) => patternIds.has(t.id));
-    const extras     = shuffle(pool.filter((t) => !patternIds.has(t.id)));
-    const distractors = extras.slice(0, distractorCount);
+  // The grid must always include all unique tiles from the pattern
+  const patternIds = new Set(G.pattern.map((t) => t.id));
+  const inPattern = pool.filter((t) => patternIds.has(t.id));
+  const extras = shuffle(pool.filter((t) => !patternIds.has(t.id)));
+  const distractors = extras.slice(0, distractorCount);
 
-    const gridTiles = shuffle([...inPattern, ...distractors]);
+  const gridTiles = shuffle([...inPattern, ...distractors]);
 
-    // ─── Trap Tile: one distractor becomes a trap from round 5 ───────────────
-    G.trapTileId = null;
-    let trapCandidate = null;
-    if (G.round >= 5 && distractors.length > 0 && !G.frenzyActive) {
-        // Pick a random distractor to be the trap (30% chance per round)
-        if (Math.random() < 0.30) {
-            trapCandidate = distractors[Math.floor(Math.random() * distractors.length)];
-            G.trapTileId = trapCandidate.id;
-        }
+  // ─── Trap Tile: one distractor becomes a trap from round 5 ───────────────
+  G.trapTileId = null;
+  let trapCandidate = null;
+  if (G.round >= 5 && distractors.length > 0 && !G.frenzyActive) {
+    // Pick a random distractor to be the trap (30% chance per round)
+    if (Math.random() < 0.3) {
+      trapCandidate =
+        distractors[Math.floor(Math.random() * distractors.length)];
+      G.trapTileId = trapCandidate.id;
+    }
+  }
+
+  DOM.tileGrid.innerHTML = "";
+  gridTiles.forEach((tile) => {
+    const btn = document.createElement("button");
+    btn.className = "itile";
+    btn.type = "button";
+    btn.textContent = tile.emoji;
+    btn.style.background = tile.bg;
+    btn.style.borderColor = tile.border;
+    btn.style.setProperty("--tile-glow", tile.glow);
+    btn.setAttribute("aria-label", `Select ${tile.id}`);
+    btn.dataset.tileId = tile.id;
+
+    if (distractors.includes(tile)) {
+      const badge = document.createElement("span");
+      badge.className = "distractor-badge";
+      btn.appendChild(badge);
     }
 
-    DOM.tileGrid.innerHTML = '';
-    gridTiles.forEach((tile) => {
-        const btn = document.createElement('button');
-        btn.className = 'itile';
-        btn.type = 'button';
-        btn.textContent = tile.emoji;
-        btn.style.background  = tile.bg;
-        btn.style.borderColor = tile.border;
-        btn.style.setProperty('--tile-glow', tile.glow);
-        btn.setAttribute('aria-label', `Select ${tile.id}`);
-        btn.dataset.tileId = tile.id;
+    // Mark trap tile
+    if (trapCandidate && tile.id === trapCandidate.id) {
+      btn.classList.add("trap-tile");
+      const skull = document.createElement("span");
+      skull.className = "trap-skull";
+      skull.textContent = "💀";
+      btn.appendChild(skull);
+    }
 
-        if (distractors.includes(tile)) {
-            const badge = document.createElement('span');
-            badge.className = 'distractor-badge';
-            btn.appendChild(badge);
-        }
-
-        // Mark trap tile
-        if (trapCandidate && tile.id === trapCandidate.id) {
-            btn.classList.add('trap-tile');
-            const skull = document.createElement('span');
-            skull.className = 'trap-skull';
-            skull.textContent = '💀';
-            btn.appendChild(skull);
-        }
-
-        // Anti-cheat: isTrusted + 150ms rate limiter on every tile tap
-        btn.addEventListener('click', (e) => {
-            if (!e.isTrusted) { console.warn('[MemoryRush] Synthetic click blocked.'); return; }
-            const now = performance.now();
-            if (now - G.lastTapTime < 150) return;
-            G.lastTapTime = now;
-            onTileTap(tile, btn, e);
-        });
-        DOM.tileGrid.appendChild(btn);
+    // Anti-cheat: isTrusted + 150ms rate limiter on every tile tap
+    btn.addEventListener("click", (e) => {
+      if (!e.isTrusted) {
+        console.warn("[MemoryRush] Synthetic click blocked.");
+        return;
+      }
+      const now = performance.now();
+      if (now - G.lastTapTime < 150) return;
+      G.lastTapTime = now;
+      onTileTap(tile, btn, e);
     });
+    DOM.tileGrid.appendChild(btn);
+  });
 }
 
 function setGridEnabled(enabled) {
-    DOM.tileGrid.querySelectorAll('.itile').forEach((btn) => {
-        btn.classList.toggle('disabled', !enabled);
-        btn.disabled = !enabled;
-    });
+  DOM.tileGrid.querySelectorAll(".itile").forEach((btn) => {
+    btn.classList.toggle("disabled", !enabled);
+    btn.disabled = !enabled;
+  });
 }
 
 // ─── Player Sequence Rendering ────────────────────────────────────────────────
 
 function renderSequence() {
-    DOM.inputSeq.innerHTML = '';
-    G.playerSequence.forEach((tile) => {
-        const slot = document.createElement('div');
-        slot.className = 'seq-slot';
-        slot.textContent = tile.emoji;
-        slot.style.background   = tile.bg;
-        slot.style.borderColor  = tile.border;
-        DOM.inputSeq.appendChild(slot);
-    });
+  DOM.inputSeq.innerHTML = "";
+  G.playerSequence.forEach((tile) => {
+    const slot = document.createElement("div");
+    slot.className = "seq-slot";
+    slot.textContent = tile.emoji;
+    slot.style.background = tile.bg;
+    slot.style.borderColor = tile.border;
+    DOM.inputSeq.appendChild(slot);
+  });
 
-    const remaining = G.pattern.length - G.playerSequence.length;
-    // Placeholder dots
-    for (let i = 0; i < remaining; i++) {
-        const dot = document.createElement('div');
-        dot.className = 'seq-slot';
-        dot.style.background  = 'rgba(99,179,237,0.05)';
-        dot.style.borderColor = 'rgba(99,179,237,0.15)';
-        dot.style.borderStyle = 'dashed';
-        DOM.inputSeq.appendChild(dot);
-    }
+  const remaining = G.pattern.length - G.playerSequence.length;
+  // Placeholder dots
+  for (let i = 0; i < remaining; i++) {
+    const dot = document.createElement("div");
+    dot.className = "seq-slot";
+    dot.style.background = "rgba(99,179,237,0.05)";
+    dot.style.borderColor = "rgba(99,179,237,0.15)";
+    dot.style.borderStyle = "dashed";
+    DOM.inputSeq.appendChild(dot);
+  }
 }
 
 // ─── Tap Handler ──────────────────────────────────────────────────────────────
 
 function onTileTap(tile, btn, e) {
-    if (G.phase !== 'recall') return;
+  if (G.phase !== "recall") return;
 
-    const idx      = G.playerSequence.length;
-    const expected = G.pattern[idx];
+  const idx = G.playerSequence.length;
+  const expected = G.pattern[idx];
 
-    // ─── Trap Tile Check ─────────────────────────────────────────────────────
-    // If the player taps a Trap tile, it's an instant mistake regardless of sequence.
-    if (G.trapTileId && tile.id === G.trapTileId) {
-        G.mistakes++;
-        G.trapTileId = null; // The trap is disarmed after triggering
-        playWrong();
-        btn.classList.remove('trap-tile');
-        btn.style.boxShadow = `0 0 28px rgba(239,68,68,0.8)`;
-        btn.style.borderColor = '#ef4444';
-        setTimeout(() => { btn.style.boxShadow = ''; btn.style.borderColor = tile.border; }, 500);
-        if (e) spawnFloatText('TRAP! -1', e.clientX, e.clientY, 'bad');
+  // ─── Trap Tile Check ─────────────────────────────────────────────────────
+  // If the player taps a Trap tile, it's an instant mistake regardless of sequence.
+  if (G.trapTileId && tile.id === G.trapTileId) {
+    G.mistakes++;
+    G.trapTileId = null; // The trap is disarmed after triggering
+    playWrong();
+    btn.classList.remove("trap-tile");
+    btn.style.boxShadow = `0 0 28px rgba(239,68,68,0.8)`;
+    btn.style.borderColor = "#ef4444";
+    setTimeout(() => {
+      btn.style.boxShadow = "";
+      btn.style.borderColor = tile.border;
+    }, 500);
+    if (e) spawnFloatText("TRAP! -1", e.clientX, e.clientY, "bad");
 
-        const cfg = DIFFICULTY_CONFIG[G.difficulty];
-        if (G.mistakes >= cfg.maxMistakes) {
-            setTimeout(() => onRoundFail('Triggered a Trap!'), 400);
-        } else {
-            setTimeout(() => {
-                G.playerSequence = [];
-                renderSequence();
-                showToast(`Trap! ${cfg.maxMistakes - G.mistakes} left`, 'error', 1600);
-            }, 450);
-        }
-        DOM.btnUndo.disabled  = G.playerSequence.length === 0;
-        DOM.btnClear.disabled = G.playerSequence.length === 0;
-        DOM.btnSubmit.disabled = G.playerSequence.length < G.pattern.length;
-        return;
-    }
-
-    const correct  = expected && expected.id === tile.id;
-
-    // Animate press
-    btn.classList.add('pressed');
-    setTimeout(() => btn.classList.remove('pressed'), 250);
-
-    // Log for backend hook
-    G.session.inputLog.push({ idx, tileId: tile.id, correct, t: Date.now() });
-
-    if (correct) {
-        G.playerSequence.push(tile);
-        playCorrect();
-        renderSequence();
-        // Mark last seq slot green
-        const slots = DOM.inputSeq.querySelectorAll('.seq-slot');
-        if (slots[idx]) slots[idx].classList.add('correct');
-
-        if (G.playerSequence.length === G.pattern.length) {
-            onRoundSuccess();
-        }
+    const cfg = DIFFICULTY_CONFIG[G.difficulty];
+    if (G.mistakes >= cfg.maxMistakes) {
+      setTimeout(() => onRoundFail("Triggered a Trap!"), 400);
     } else {
-        G.mistakes++;
-        playWrong();
-        if (e) spawnFloatText('✗ Wrong', e.clientX, e.clientY, 'bad');
-
-        // Flash red on tile button
-        btn.style.boxShadow = `0 0 18px var(--red-glow, rgba(239,68,68,0.5))`;
-        btn.style.borderColor = '#ef4444';
-        setTimeout(() => {
-            btn.style.boxShadow = '';
-            btn.style.borderColor = tile.border;
-        }, 380);
-
-        // Shake last seq slot
-        const slots = DOM.inputSeq.querySelectorAll('.seq-slot');
-        if (slots[idx]) slots[idx].classList.add('wrong');
-
-        const cfg = DIFFICULTY_CONFIG[G.difficulty];
-        if (G.mistakes >= cfg.maxMistakes) {
-            onRoundFail('Too many mistakes');
-        } else {
-            setTimeout(() => {
-                G.playerSequence = [];
-                renderSequence();
-                showToast(`Mistake! ${cfg.maxMistakes - G.mistakes} left`, 'error', 1200);
-            }, 400);
-        }
+      setTimeout(() => {
+        G.playerSequence = [];
+        renderSequence();
+        showToast(`Trap! ${cfg.maxMistakes - G.mistakes} left`, "error", 1600);
+      }, 450);
     }
-
-    // Enable/disable controls
-    const hasInput = G.playerSequence.length > 0;
-    DOM.btnUndo.disabled  = !hasInput;
-    DOM.btnClear.disabled = !hasInput;
+    DOM.btnUndo.disabled = G.playerSequence.length === 0;
+    DOM.btnClear.disabled = G.playerSequence.length === 0;
     DOM.btnSubmit.disabled = G.playerSequence.length < G.pattern.length;
+    return;
+  }
+
+  const correct = expected && expected.id === tile.id;
+
+  // Animate press
+  btn.classList.add("pressed");
+  setTimeout(() => btn.classList.remove("pressed"), 250);
+
+  // Log for backend hook
+  G.session.inputLog.push({ idx, tileId: tile.id, correct, t: Date.now() });
+
+  if (correct) {
+    G.playerSequence.push(tile);
+    playCorrect();
+    renderSequence();
+    // Mark last seq slot green
+    const slots = DOM.inputSeq.querySelectorAll(".seq-slot");
+    if (slots[idx]) slots[idx].classList.add("correct");
+
+    if (G.playerSequence.length === G.pattern.length) {
+      onRoundSuccess();
+    }
+  } else {
+    G.mistakes++;
+    playWrong();
+    if (e) spawnFloatText("✗ Wrong", e.clientX, e.clientY, "bad");
+
+    // Flash red on tile button
+    btn.style.boxShadow = `0 0 18px var(--red-glow, rgba(239,68,68,0.5))`;
+    btn.style.borderColor = "#ef4444";
+    setTimeout(() => {
+      btn.style.boxShadow = "";
+      btn.style.borderColor = tile.border;
+    }, 380);
+
+    // Shake last seq slot
+    const slots = DOM.inputSeq.querySelectorAll(".seq-slot");
+    if (slots[idx]) slots[idx].classList.add("wrong");
+
+    const cfg = DIFFICULTY_CONFIG[G.difficulty];
+    if (G.mistakes >= cfg.maxMistakes) {
+      onRoundFail("Too many mistakes");
+    } else {
+      setTimeout(() => {
+        G.playerSequence = [];
+        renderSequence();
+        showToast(
+          `Mistake! ${cfg.maxMistakes - G.mistakes} left`,
+          "error",
+          1200,
+        );
+      }, 400);
+    }
+  }
+
+  // Enable/disable controls
+  const hasInput = G.playerSequence.length > 0;
+  DOM.btnUndo.disabled = !hasInput;
+  DOM.btnClear.disabled = !hasInput;
+  DOM.btnSubmit.disabled = G.playerSequence.length < G.pattern.length;
 }
 
 // ─── Timer ────────────────────────────────────────────────────────────────────
 
 function startRecallTimer(totalMs) {
-    clearInterval(G.timerInterval);
-    clearInterval(G.progressInterval);
+  clearInterval(G.timerInterval);
+  clearInterval(G.progressInterval);
 
-    const end = Date.now() + totalMs;
-    G.recallStartTime = Date.now();
+  const end = Date.now() + totalMs;
+  G.recallStartTime = Date.now();
 
-    G.timerInterval = setInterval(() => {
-        const remaining = Math.max(0, end - Date.now());
-        const secs = (remaining / 1000).toFixed(1);
-        DOM.statTimer.textContent = secs + 's';
+  G.timerInterval = setInterval(() => {
+    const remaining = end - Date.now();
+    if (remaining <= 0) {
+      stopTimer();
+      if (G.phase === "recall") onRoundFail("Time expired");
+    }
+  }, 100);
 
-        if (remaining <= 3000) {
-            DOM.statTimer.style.color = '#ef4444';
-        }
-
-        if (remaining <= 0) {
-            clearInterval(G.timerInterval);
-            if (G.phase === 'recall') onRoundFail('Time expired');
-        }
-    }, 100);
-
-    // Shrink progress bar from 100% to 0%
-    G.progressInterval = setInterval(() => {
-        const pct = Math.max(0, ((end - Date.now()) / totalMs) * 100);
-        DOM.phaseFill.style.width = pct + '%';
-    }, 50);
+  // Shrink progress bar from 100% to 0%
+  G.progressInterval = setInterval(() => {
+    const pct = Math.max(0, ((end - Date.now()) / totalMs) * 100);
+    DOM.phaseFill.style.width = pct + "%";
+  }, 50);
 }
 
 function stopTimer() {
-    clearInterval(G.timerInterval);
-    clearInterval(G.progressInterval);
-    DOM.statTimer.textContent  = '—';
-    DOM.statTimer.style.color  = '';
-    DOM.phaseFill.style.width  = '100%';
+  clearInterval(G.timerInterval);
+  clearInterval(G.progressInterval);
+  DOM.phaseFill.style.width = "100%";
 }
 
 // ─── Round Lifecycle ──────────────────────────────────────────────────────────
 
 function beginRound() {
-    const cfg = DIFFICULTY_CONFIG[G.difficulty];
+  const cfg = DIFFICULTY_CONFIG[G.difficulty];
 
-    // ─── Frenzy Mode: shorter pattern, faster display ─────────────────────────
-    let patternLen = Math.min(cfg.startLength + G.round - 1, cfg.maxLength);
-    let displayMs;
-    if (G.frenzyActive) {
-        patternLen = Math.max(cfg.startLength, Math.floor(patternLen * 0.5)); // Half the pattern length
-        displayMs  = Math.max(800, cfg.displayTime(patternLen) * 0.5);        // Half the display time
-    } else {
-        displayMs = cfg.displayTime(patternLen);
-    }
+  // ─── Frenzy Mode: shorter pattern, faster display ─────────────────────────
+  let patternLen = Math.min(cfg.startLength + G.round - 1, cfg.maxLength);
+  let displayMs;
+  if (G.frenzyActive) {
+    patternLen = Math.max(cfg.startLength, Math.floor(patternLen * 0.5)); // Half the pattern length
+    displayMs = Math.max(800, cfg.displayTime(patternLen) * 0.5); // Half the display time
+  } else {
+    displayMs = cfg.displayTime(patternLen);
+  }
 
-    G.phase          = 'memorize';
-    G.playerSequence = [];
-    G.mistakes       = 0;
-    G.trapTileId     = null;
-    G.session.seed   = `${G.session.id}-r${G.round}`;
-    G.session.inputLog   = [];
-    G.session.timingData = [];
-    G.pattern = generatePattern(patternLen, resolvePatternType());
+  G.phase = "memorize";
+  G.playerSequence = [];
+  G.mistakes = 0;
+  G.trapTileId = null;
+  G.session.seed = `${G.session.id}-r${G.round}`;
+  G.session.inputLog = [];
+  G.session.timingData = [];
+  G.pattern = generatePattern(patternLen, resolvePatternType());
 
-    updateHUD();
-    renderLives();
-    setPhaseLabel(G.frenzyActive ? '⚡ FRENZY' : 'MEMORIZE', G.frenzyActive ? '#fbbf24' : '#38bdf8');
-    DOM.phaseFill.style.width = '100%';
-    DOM.btnUndo.disabled   = true;
-    DOM.btnClear.disabled  = true;
-    DOM.btnSubmit.disabled = true;
-    setGridEnabled(false);
+  updateHUD();
+  renderLives();
+  setPhaseLabel(
+    G.frenzyActive ? "⚡ FRENZY" : "MEMORIZE",
+    G.frenzyActive ? "#fbbf24" : "#38bdf8",
+  );
+  DOM.phaseFill.style.width = "100%";
+  DOM.btnUndo.disabled = true;
+  DOM.btnClear.disabled = true;
+  DOM.btnSubmit.disabled = true;
+  setGridEnabled(false);
 
-    // Show pattern
-    renderPattern(G.pattern, true);
-    DOM.recallPrompt.classList.add('hidden');
-    DOM.inputSeq.innerHTML = '';
+  // Show pattern
+  renderPattern(G.pattern, true);
+  DOM.recallPrompt.classList.add("hidden");
+  DOM.inputSeq.innerHTML = "";
 
-    // Build tile grid while pattern is showing (player can't tap)
-    const pool = buildTilePool(resolvePatternType());
-    buildTileGrid(pool, cfg.distractors);
+  // Build tile grid while pattern is showing (player can't tap)
+  const pool = buildTilePool(resolvePatternType());
+  buildTileGrid(pool, cfg.distractors);
 
-    // Countdown in phase bar
-    let elapsed = 0;
-    G.progressInterval = setInterval(() => {
-        elapsed += 50;
-        DOM.phaseFill.style.width = (100 - (elapsed / displayMs) * 100) + '%';
-    }, 50);
+  // Countdown in phase bar
+  let elapsed = 0;
+  G.progressInterval = setInterval(() => {
+    elapsed += 50;
+    DOM.phaseFill.style.width = 100 - (elapsed / displayMs) * 100 + "%";
+  }, 50);
 
-    setTimeout(() => {
-        clearInterval(G.progressInterval);
-        transitionToRecall();
-    }, displayMs);
+  setTimeout(() => {
+    clearInterval(G.progressInterval);
+    transitionToRecall();
+  }, displayMs);
 }
 
 function resolvePatternType() {
-    const cfg = DIFFICULTY_CONFIG[G.difficulty];
-    if (cfg.patternType !== 'mixed') return cfg.patternType;
-    // Randomly alternate as rounds progress
-    return G.round % 2 === 0 ? 'shape' : 'color';
+  const cfg = DIFFICULTY_CONFIG[G.difficulty];
+  if (cfg.patternType !== "mixed") return cfg.patternType;
+  // Randomly alternate as rounds progress
+  return G.round % 2 === 0 ? "shape" : "color";
 }
 
 function transitionToRecall() {
-    G.phase = 'recall';
-    hidePattern();
-    setPhaseLabel('RECALL', '#a855f7');
-    setGridEnabled(true);
-    renderSequence();
+  G.phase = "recall";
+  hidePattern();
+  setPhaseLabel("RECALL", "#a855f7");
+  setGridEnabled(true);
+  renderSequence();
 
-    const cfg = DIFFICULTY_CONFIG[G.difficulty];
-    const recallMs = cfg.recallTime(G.pattern.length);
-    startRecallTimer(recallMs);
+  const cfg = DIFFICULTY_CONFIG[G.difficulty];
+  const recallMs = cfg.recallTime(G.pattern.length);
+  startRecallTimer(recallMs);
 }
 
 // ─── Frenzy Mode ──────────────────────────────────────────────────────────────
 function activateFrenzy() {
-    G.frenzyActive = true;
-    G.sTierStreak  = 0;
-    document.querySelector('.shell').classList.add('frenzy-mode');
-    showToast('⚡ FRENZY MODE! ⚡', 'success', 2500);
+  G.frenzyActive = true;
+  G.sTierStreak = 0;
+  document.querySelector(".shell").classList.add("frenzy-mode");
+  showToast("⚡ FRENZY MODE! ⚡", "success", 2500);
 
-    // Inject frenzy banner if not already present
-    let banner = document.getElementById('frenzyBanner');
-    if (!banner) {
-        banner = document.createElement('div');
-        banner.id = 'frenzyBanner';
-        banner.className = 'frenzy-banner';
-        banner.textContent = '⚡ COMBO FRENZY — SHORTER PATTERNS, FASTER REVEAL ⚡';
-        document.querySelector('.shell').prepend(banner);
-    }
+  // Inject frenzy banner if not already present
+  let banner = document.getElementById("frenzyBanner");
+  if (!banner) {
+    banner = document.createElement("div");
+    banner.id = "frenzyBanner";
+    banner.className = "frenzy-banner";
+    banner.textContent = "⚡ COMBO FRENZY — SHORTER PATTERNS, FASTER REVEAL ⚡";
+    document.querySelector(".shell").prepend(banner);
+  }
 
-    // Frenzy lasts 10 seconds (3 rounds at ~3s each)
-    clearTimeout(G.frenzyTimeout);
-    G.frenzyTimeout = setTimeout(() => {
-        G.frenzyActive = false;
-        document.querySelector('.shell').classList.remove('frenzy-mode');
-    }, 10000);
+  // Frenzy lasts 10 seconds (3 rounds at ~3s each)
+  clearTimeout(G.frenzyTimeout);
+  G.frenzyTimeout = setTimeout(() => {
+    G.frenzyActive = false;
+    document.querySelector(".shell").classList.remove("frenzy-mode");
+  }, 10000);
 }
 
 function onRoundSuccess() {
-    G.phase = 'result';
-    stopTimer();
-    setGridEnabled(false);
-    playSuccess();
+  G.phase = "result";
+  stopTimer();
+  setGridEnabled(false);
+  playSuccess();
 
-    G.streak++;
-    if (G.streak > G.bestStreak) G.bestStreak = G.streak;
+  G.streak++;
+  if (G.streak > G.bestStreak) G.bestStreak = G.streak;
 
-    const elapsed    = (Date.now() - G.recallStartTime) / 1000;
-    const accuracy   = ((G.pattern.length - G.mistakes) / G.pattern.length * 100).toFixed(0);
-    const multiplier = calcMultiplier();
-    const roundPts   = Math.round((G.pattern.length * 100 + (G.streak * 50)) * multiplier);
+  const elapsed = (Date.now() - G.recallStartTime) / 1000;
+  const accuracy = (
+    ((G.pattern.length - G.mistakes) / G.pattern.length) *
+    100
+  ).toFixed(0);
+  const multiplier = calcMultiplier();
+  const roundPts = Math.round(
+    (G.pattern.length * 100 + G.streak * 50) * multiplier,
+  );
 
-    G.score      += roundPts;
-    G.multiplier  = multiplier;
-    G.session.accuracy = accuracy;
-    G.session.timingData.push({ round: G.round, elapsed, accuracy, multiplier });
+  G.score += roundPts;
+  G.multiplier = multiplier;
+  G.session.accuracy = accuracy;
+  G.session.timingData.push({ round: G.round, elapsed, accuracy, multiplier });
 
-    // Tier
-    const tier = accuracy == 100 && G.mistakes === 0 && elapsed < 5 ? 'S'
-               : accuracy == 100 ? 'A'
-               : accuracy >= 70  ? 'B'
-               : 'C';
+  // Tier
+  const tier =
+    accuracy == 100 && G.mistakes === 0 && elapsed < 5
+      ? "S"
+      : accuracy == 100
+        ? "A"
+        : accuracy >= 70
+          ? "B"
+          : "C";
 
-    // ─── Combo Frenzy trigger ───
-    if (tier === 'S' && !G.frenzyActive) {
-        G.sTierStreak++;
-        if (G.sTierStreak >= 3) activateFrenzy();
-    } else if (tier !== 'S') {
-        G.sTierStreak = 0;
-    }
+  // ─── Combo Frenzy trigger ───
+  if (tier === "S" && !G.frenzyActive) {
+    G.sTierStreak++;
+    if (G.sTierStreak >= 3) activateFrenzy();
+  } else if (tier !== "S") {
+    G.sTierStreak = 0;
+  }
 
-    // Floating score text at center screen
-    spawnFloatText(`+${roundPts.toLocaleString()}`, window.innerWidth / 2, window.innerHeight / 2,
-        tier === 'S' ? 'gold' : '');
+  // Floating score text at center screen
+  spawnFloatText(
+    `+${roundPts.toLocaleString()}`,
+    window.innerWidth / 2,
+    window.innerHeight / 2,
+    tier === "S" ? "gold" : "",
+  );
 
-    updateHUD();
-    showResultPanel(tier, accuracy, elapsed, roundPts, multiplier);
+  updateHUD();
+  showResultPanel(tier, accuracy, elapsed, roundPts, multiplier);
 }
 
 function onRoundFail(reason) {
-    G.phase = 'result';
-    stopTimer();
-    setGridEnabled(false);
-    playFail();
+  G.phase = "result";
+  stopTimer();
+  setGridEnabled(false);
+  playFail();
 
-    G.lives--;
-    G.streak = 0;
-    G.sTierStreak = 0; // Reset frenzy combo on any failure
-    G.multiplier = Math.max(1.0, G.multiplier - 0.2);
+  G.lives--;
+  G.streak = 0;
+  G.sTierStreak = 0; // Reset frenzy combo on any failure
+  G.multiplier = Math.max(0.0, G.multiplier - 0.2);
 
-    updateHUD();
-    renderLives();
-    setPhaseLabel('FAILED', '#ef4444');
+  updateHUD();
+  renderLives();
+  setPhaseLabel("FAILED", "#ef4444");
 
-    if (G.lives <= 0) {
-        setTimeout(showGameOver, 900);
-    } else {
-        showToast(`${reason}! ${G.lives} ${G.lives === 1 ? 'life' : 'lives'} left`, 'error', 2000);
-        setTimeout(beginRound, 2200);
-    }
+  if (G.lives <= 0) {
+    setTimeout(showGameOver, 900);
+  } else {
+    showToast(
+      `${reason}! ${G.lives} ${G.lives === 1 ? "life" : "lives"} left`,
+      "error",
+      2000,
+    );
+    setTimeout(beginRound, 2200);
+  }
 }
 
 function calcMultiplier() {
-    const base  = 1.2;
-    const bonus = Math.min(G.streak * 0.1, 0.8);
-    return Math.min(parseFloat((base + bonus).toFixed(1)), 2.0);
+  const factor =
+    G.difficulty === "hard" ? 0.25 : G.difficulty === "medium" ? 0.2 : 0.15;
+  // Multiplier grows based on completed rounds
+  const completedRounds = G.round;
+  return Math.min(2.0, parseFloat((completedRounds * factor).toFixed(2)));
 }
 
 // ─── Result Panel ─────────────────────────────────────────────────────────────
 
 function showResultPanel(tier, accuracy, elapsed, roundPts, multiplier) {
-    setPhaseLabel('ROUND COMPLETE', '#22c55e');
+  setPhaseLabel("ROUND COMPLETE", "#22c55e");
 
-    const badge = $('tierBadge');
-    badge.textContent = tier;
-    badge.className = `tier-badge grade-${tier.toLowerCase()}`;
+  // Make the Cash Out button prominent only if multiplier > 0.0
+  if (DOM.btnCashOut) {
+    if (multiplier > 0.0) {
+      DOM.btnCashOut.classList.remove("hidden");
+      DOM.btnCashOut.textContent = `Cash Out (${multiplier.toFixed(2)}x)`;
+    } else {
+      DOM.btnCashOut.classList.add("hidden");
+    }
+  }
 
-    $('resultTitle').textContent  = tier === 'S' ? 'Perfect Recall! 🏆'
-                                  : tier === 'A' ? 'Excellent! 🎉'
-                                  : tier === 'B' ? 'Good job!'
-                                  : 'Pattern Recalled';
+  DOM.overlayCountdown.classList.remove("hidden");
+  let count = 3;
+  DOM.countdownText.textContent = count;
 
-    $('resAccuracy').textContent  = accuracy + '%';
-    $('resTime').textContent      = elapsed.toFixed(1) + 's';
-    $('resLength').textContent    = G.pattern.length;
-    $('resRoundScore').textContent = '+' + roundPts.toLocaleString();
-    $('mpValue').textContent      = `×${multiplier.toFixed(1)}`;
-
-    // Multiplier bar: map 1.2–2.0 to 0–100%
-    const pct = ((multiplier - 1.2) / 0.8) * 100;
-    setTimeout(() => { $('mpFill').style.width = pct + '%'; }, 100);
-
-    DOM.overlayResult.classList.remove('hidden');
+  const countInt = setInterval(() => {
+    count--;
+    if (count > 0) {
+      DOM.countdownText.textContent = count;
+    } else {
+      clearInterval(countInt);
+      DOM.overlayCountdown.classList.add("hidden");
+      nextRound();
+    }
+  }, 800);
 }
 
 function showGameOver() {
-    G.phase = 'gameover';
-    playFail();
+  if (G.phase === "gameover") return;
+  G.phase = "gameover";
+  playFail();
 
-    $('goScore').textContent  = G.score.toLocaleString();
-    $('goRounds').textContent = G.round;
-    $('goStreak').textContent = G.bestStreak;
-    $('goTitle').textContent  = 'Game Over';
-    $('goBody').textContent   = `You reached Round ${G.round} with a score of ${G.score.toLocaleString()}.`;
-
-    DOM.overlayGameOver.classList.remove('hidden');
-
-    // --- PARENT COMMUNICATION LOGIC ---
-    // Sends the calculated multiplier and game stats to the parent React app (SoloEarn.tsx)
-    // so the platform can process the user's final payout based on their performance.
-    if (window.parent) {
-        window.parent.postMessage({ type: 'GAME_OVER', payload: { multiplier: G.multiplier } }, '*');
-    }
+  // --- PARENT COMMUNICATION LOGIC ---
+  // Sends a multiplier of 0.0 to the parent React app (SoloEarn.tsx)
+  // because the player failed/busted and loses their stake.
+  if (window.parent) {
+    window.parent.postMessage(
+      { type: "GAME_OVER", payload: { multiplier: 0.0 } },
+      "*",
+    );
+  }
 }
 
 // ─── Start / Reset ────────────────────────────────────────────────────────────
 
 function startGame() {
-    G.round        = 1;
-    G.score        = 0;
-    G.streak       = 0;
-    G.bestStreak   = 0;
-    G.lives        = DIFFICULTY_CONFIG[G.difficulty].maxMistakes + 1;
-    G.maxLives     = G.lives;
-    G.multiplier   = 1.0;
-    G.phase        = 'idle';
-    G.sTierStreak  = 0;
-    G.frenzyActive = false;
-    G.trapTileId   = null;
-    G.session.id   = crypto.randomUUID();
-    clearTimeout(G.frenzyTimeout);
-    document.querySelector('.shell').classList.remove('frenzy-mode');
-    const banner = document.getElementById('frenzyBanner');
-    if (banner) banner.remove();
+  G.round = 1;
+  G.score = 0;
+  G.streak = 0;
+  G.bestStreak = 0;
+  G.lives = DIFFICULTY_CONFIG[G.difficulty].maxMistakes + 1;
+  G.maxLives = G.lives;
+  G.multiplier = 0.0;
+  G.phase = "idle";
+  G.sTierStreak = 0;
+  G.frenzyActive = false;
+  G.trapTileId = null;
+  G.session.id = crypto.randomUUID();
+  clearTimeout(G.frenzyTimeout);
+  document.querySelector(".shell").classList.remove("frenzy-mode");
+  const banner = document.getElementById("frenzyBanner");
+  if (banner) banner.remove();
 
-    DOM.overlayStart.classList.add('hidden');
-    DOM.overlayResult.classList.add('hidden');
-    DOM.overlayGameOver.classList.add('hidden');
-    DOM.overlayHelp.classList.add('hidden');
+  DOM.overlayStart.classList.add("hidden");
+  if (DOM.overlayCountdown) DOM.overlayCountdown.classList.add("hidden");
+  DOM.overlayHelp.classList.add("hidden");
 
-    beginRound();
+  beginRound();
 }
 
 function nextRound() {
-    G.round++;
-    DOM.overlayResult.classList.add('hidden');
-    $('mpFill').style.width = '0%';
-    beginRound();
+  G.round++;
+  beginRound();
 }
 
 function restartGame() {
-    DOM.overlayResult.classList.add('hidden');
-    DOM.overlayGameOver.classList.add('hidden');
+  if (DOM.overlayCountdown) DOM.overlayCountdown.classList.add("hidden");
 
-    // Reset pattern view
-    DOM.patternGrid.innerHTML = '';
-    DOM.recallPrompt.classList.add('hidden');
-    DOM.inputSeq.innerHTML = '';
-    DOM.tileGrid.innerHTML = '';
+  // Reset pattern view
+  DOM.patternGrid.innerHTML = "";
+  DOM.recallPrompt.classList.add("hidden");
+  DOM.inputSeq.innerHTML = "";
+  DOM.tileGrid.innerHTML = "";
 
-    stopTimer();
-    DOM.overlayStart.classList.remove('hidden');
-}
-
-// ─── Difficulty Selector ──────────────────────────────────────────────────────
-
-function selectDifficulty(diff) {
-    G.difficulty = diff;
-
-    // Sync top HUD buttons
-    document.querySelectorAll('.diff-btn').forEach((b) => {
-        b.classList.toggle('active', b.dataset.diff === diff);
-    });
-    // Sync start overlay pills
-    document.querySelectorAll('.diff-pill').forEach((b) => {
-        b.classList.toggle('active', b.dataset.diff === diff);
-    });
+  stopTimer();
+  DOM.overlayStart.classList.remove("hidden");
 }
 
 // ─── Undo / Clear / Submit ───────────────────────────────────────────────────
 
-DOM.btnUndo.addEventListener('click', () => {
-    if (G.phase !== 'recall' || !G.playerSequence.length) return;
-    G.playerSequence.pop();
-    renderSequence();
-    DOM.btnUndo.disabled  = G.playerSequence.length === 0;
-    DOM.btnClear.disabled = G.playerSequence.length === 0;
-    DOM.btnSubmit.disabled = true;
+DOM.btnUndo.addEventListener("click", () => {
+  if (G.phase !== "recall" || !G.playerSequence.length) return;
+  G.playerSequence.pop();
+  renderSequence();
+  DOM.btnUndo.disabled = G.playerSequence.length === 0;
+  DOM.btnClear.disabled = G.playerSequence.length === 0;
+  DOM.btnSubmit.disabled = true;
 });
 
-DOM.btnClear.addEventListener('click', () => {
-    if (G.phase !== 'recall') return;
-    G.playerSequence = [];
-    renderSequence();
-    DOM.btnUndo.disabled   = true;
-    DOM.btnClear.disabled  = true;
-    DOM.btnSubmit.disabled = true;
+DOM.btnClear.addEventListener("click", () => {
+  if (G.phase !== "recall") return;
+  G.playerSequence = [];
+  renderSequence();
+  DOM.btnUndo.disabled = true;
+  DOM.btnClear.disabled = true;
+  DOM.btnSubmit.disabled = true;
 });
 
-DOM.btnSubmit.addEventListener('click', () => {
-    if (G.phase !== 'recall') return;
-    if (G.playerSequence.length < G.pattern.length) return;
+DOM.btnSubmit.addEventListener("click", () => {
+  if (G.phase !== "recall") return;
+  if (G.playerSequence.length < G.pattern.length) return;
 
-    // Submit full sequence — already validated tap-by-tap
-    onRoundSuccess();
+  // Submit full sequence — already validated tap-by-tap
+  onRoundSuccess();
 });
 
 // ─── Event wiring ─────────────────────────────────────────────────────────────
 
-$('btnStart').addEventListener('click', startGame);
+$("btnStart").addEventListener("click", startGame);
 
-$('btnNextRound').addEventListener('click', nextRound);
+if ($("btnCashOut")) {
+  $("btnCashOut").addEventListener("click", () => {
+    if (window.parent) {
+      window.parent.postMessage(
+        { type: "GAME_OVER", payload: { multiplier: G.multiplier } },
+        "*",
+      );
+    }
+  });
+}
 
-$('btnRestart').addEventListener('click', () => {
-    if (window.parent) window.parent.postMessage({ type: 'EXIT_GAME' }, '*');
-});
-
-$('btnPlayAgain').addEventListener('click', () => {
-    if (window.parent) window.parent.postMessage({ type: 'EXIT_GAME' }, '*');
-});
-
-$('btnQuit').addEventListener('click', () => {
-    DOM.overlayGameOver.classList.add('hidden');
-    DOM.overlayStart.classList.remove('hidden');
+// Anti-Screenshot / Anti-Cheat protection:
+// If the player tries to use Snipping Tool or switch tabs while active, instantly fail the round.
+window.addEventListener("blur", () => {
+  if (G.phase === "show" || G.phase === "recall") {
+    showGameOver();
+  }
 });
 
 $('btnHelp').addEventListener('click', () => {
@@ -855,15 +875,7 @@ $('btnSound').addEventListener('click', () => {
     $('btnSound').textContent = G.soundEnabled ? '🔊' : '🔇';
 });
 
-// Top HUD difficulty buttons
-document.querySelectorAll('.diff-btn').forEach((btn) => {
-    btn.addEventListener('click', () => selectDifficulty(btn.dataset.diff));
-});
 
-// Start overlay difficulty pills
-document.querySelectorAll('.diff-pill').forEach((btn) => {
-    btn.addEventListener('click', () => selectDifficulty(btn.dataset.diff));
-});
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
