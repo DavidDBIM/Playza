@@ -32,7 +32,7 @@ export async function startSoloSession(
   if (walletErr || !wallet) throw new Error("Wallet not found");
   if (wallet.balance < stake) throw new Error("Insufficient funds");
 
-  // Concurrent session prevention: block multiple active sessions per user
+  // Concurrent session prevention: auto-abandon any previous active sessions
   const { data: existingSession } = await supabase
     .from('soloearn_sessions')
     .select('id')
@@ -41,7 +41,13 @@ export async function startSoloSession(
     .single();
 
   if (existingSession) {
-    throw new Error('You already have an active session in progress. Complete it before starting a new one.');
+    // Forfeit previous stuck session
+    await supabase.from('soloearn_sessions').update({ 
+      status: 'completed', 
+      multiplier: 0,
+      payout_amount: 0,
+      end_time: new Date().toISOString()
+    }).eq('id', existingSession.id);
   }
 
   // 2. Deduct stake

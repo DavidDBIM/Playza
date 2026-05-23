@@ -7,8 +7,9 @@ const router = Router()
 router.post('/start', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
     const { gameId, stake } = req.body
-    if (!gameId || typeof stake !== 'number') {
-      return res.status(400).json({ success: false, message: 'Invalid payload' })
+    if (gameId === undefined || typeof stake !== 'number') {
+      console.error('[SoloEarn] Invalid payload:', req.body);
+      return res.status(400).json({ success: false, message: 'Invalid payload provided.' })
     }
     const session = await startSoloSession(req.user!.id, gameId, stake)
     res.json({ success: true, session })
