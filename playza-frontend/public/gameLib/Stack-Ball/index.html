@@ -3,15 +3,50 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Stack Ball 3D - Playza</title>
-  <meta name="description" content="Smash through rotating stack platforms in Playza Stack Ball 3D.">
+  <title>Stack Ball 3D - Playza Arena</title>
+  <meta name="description" content="Smash through rotating stack platforms in Playza Stack Ball 3D Arena.">
   <link rel="stylesheet" href="styles.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;900&display=swap" rel="stylesheet">
+  <style>
+
+
+    /* Rival Banner */
+    #rivalBanner {
+      position: fixed;
+      top: 50px; left: 50%; transform: translateX(-50%);
+      background: rgba(0,0,0,0.7);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 12px;
+      padding: 5px 14px;
+      display: none;
+      align-items: center;
+      gap: 8px;
+      z-index: 60;
+      backdrop-filter: blur(10px);
+      pointer-events: none;
+    }
+    #rivalBanner.visible { display: flex; }
+    #rivalBanner .rival-label { font-size:9px; font-weight:700; color:rgba(255,255,255,0.5); text-transform:uppercase; letter-spacing:0.1em; font-family:'Inter',sans-serif; }
+    #rivalBanner .rival-name { font-size:10px; font-weight:900; color:#fff; font-family:'Inter',sans-serif; }
+    #rivalBanner .rival-score { font-size:11px; font-weight:900; font-family:'Inter',sans-serif; }
+    #rivalBanner.trailing .rival-score { color: #f87171; }
+    #rivalBanner.leading .rival-score  { color: #4ade80; }
+  </style>
 </head>
 <body>
+
+
+  <!-- Rival Banner -->
+  <div id="rivalBanner">
+    <span class="rival-label">Rival</span>
+    <span class="rival-name" id="rivalName">—</span>
+    <span class="rival-score" id="rivalScore">0</span>
+  </div>
+
   <main id="shell" class="shell">
+    <!-- Home / Tap to Start Screen -->
     <section id="firstUI" class="home-ui">
-      <button id="settingsButton" class="icon-button" type="button" aria-label="Settings">...</button>
+      <button id="settingsButton" class="icon-button" type="button" aria-label="Settings">⚙</button>
       <div id="settingsPanel" class="settings-panel hidden">
         <button id="soundButton" class="settings-action" type="button">Sound On</button>
       </div>
@@ -26,14 +61,10 @@
         </div>
       </div>
 
-      <div class="score-card">
-        <span class="score-label">BEST</span>
-        <span id="bestScoreText" class="best-score">0</span>
-      </div>
-
       <div id="tapStart" class="tap-start">Tap to play</div>
     </section>
 
+    <!-- In-Game HUD -->
     <section id="inGameUI" class="game-ui hidden">
       <div class="top-row">
         <div class="level-pair compact">
@@ -54,25 +85,31 @@
       </div>
     </section>
 
+    <!-- Level Complete -->
     <section id="finishUI" class="result-ui hidden">
-      <h1>Completed</h1>
+      <h1>Level Clear! 🎉</h1>
       <p id="finishLevelText">Level 1</p>
       <span>Tap to continue</span>
     </section>
 
+    <!-- Game Over — no restart, submits score to arena -->
     <section id="gameOverUI" class="result-ui game-over hidden">
       <h1>Game Over</h1>
-      <div class="result-grid">
+      <div class="result-grid" style="grid-template-columns: repeat(3, minmax(92px, 1fr)); width: min(350px, calc(100vw - 44px));">
         <div>
-          <span>Score</span>
+          <span>Rings</span>
           <strong id="gameOverScoreText">0</strong>
         </div>
         <div>
-          <span>Best</span>
-          <strong id="gameOverBestText">0</strong>
+          <span>Level</span>
+          <strong id="gameOverLevelBonusText">0</strong>
+        </div>
+        <div>
+          <span>Total</span>
+          <strong id="gameOverArenaScoreText" style="color: #4ade80;">0</strong>
         </div>
       </div>
-      <span>Tap to restart</span>
+      <p id="gameOverMsg" style="font-size:11px;opacity:0.6;margin-top:8px;">Submitting to arena...</p>
     </section>
   </main>
 
