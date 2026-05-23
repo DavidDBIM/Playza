@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "build:prerender": "tsc -b && vite build",
-    "prerender:check": "node -e \"const fs=require('fs');const routes=['','games','leaderboard','tournaments','registration','terms','privacy','referral','solo-earn','loyalty'];routes.forEach(r=>{const p=r?`dist/${r}/index.html`:'dist/index.html';console.log(fs.existsSync(p)?'\u2705':'\u274c',p)})\"",
+    "prerender:check": "node -e \"const fs=require('fs');const routes=['','games','leaderboard','tournaments','registration','terms','privacy','referral','solo-earn','loyalty'];routes.forEach(r=>{const p=r?`dist/${r}/index.html`:'dist/index.html';console.log(fs.existsSync(p)?'✅':'❌',p)})\"",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -52,6 +52,7 @@
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^5.1.1",
     "ajv": "^8.20.0",
+    "esbuild": "^0.28.0",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
