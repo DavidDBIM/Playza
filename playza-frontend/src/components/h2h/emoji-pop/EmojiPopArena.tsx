@@ -76,18 +76,18 @@ export default function EmojiPopArena({ room, user }: EmojiPopArenaProps) {
 
   // Opponent Details
   const opponentName = roomData.is_bot 
-    ? `Playza Bot (${roomData.bot_difficulty || "medium"})`
+    ? roomData.guest?.username || `PLAYZA Bot`
     : isHost 
       ? roomData.guest?.username || "Opponent"
       : roomData.host?.username || "Host";
 
   const opponentAvatar = roomData.is_bot 
-    ? null 
+    ? roomData.guest?.avatar_url || null
     : isHost 
       ? roomData.guest?.avatar_url 
       : roomData.host?.avatar_url;
 
-  // ── Fullscreen Handlers ──────────────────────────────────────────────────
+  // â”€â”€ Fullscreen Handlers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const toggleFullscreen = useCallback(() => {
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen().catch(() => {});
@@ -100,7 +100,7 @@ export default function EmojiPopArena({ room, user }: EmojiPopArenaProps) {
     }
   }, []);
 
-  // ── Match Polling and Completion ─────────────────────────────────────────
+  // â”€â”€ Match Polling and Completion â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
     if (phase === "finished" || phase === "countdown") return;
 
@@ -121,7 +121,7 @@ export default function EmojiPopArena({ room, user }: EmojiPopArenaProps) {
     return () => clearInterval(pollMatch);
   }, [phase, roomData.id]);
 
-  // ── Countdown Tick ────────────────────────────────────────────────────────
+  // â”€â”€ Countdown Tick â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
     if (phase !== "countdown") return;
     if (countdown === 0) {
@@ -132,7 +132,7 @@ export default function EmojiPopArena({ room, user }: EmojiPopArenaProps) {
     return () => clearTimeout(timer);
   }, [countdown, phase]);
 
-  // ── Real-time Score & State Broadcast Sync (Supabase) ─────────────────────
+  // â”€â”€ Real-time Score & State Broadcast Sync (Supabase) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
     if (phase !== "playing") return;
 
@@ -163,7 +163,7 @@ export default function EmojiPopArena({ room, user }: EmojiPopArenaProps) {
     };
   }, [phase, roomData.id, user?.id]);
 
-  // ── Local Physics Simulator for AI Bot Preview ────────────────────────────
+  // â”€â”€ Local Physics Simulator for AI Bot Preview â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
     if (phase !== "playing" || !roomData.is_bot) return;
 
@@ -244,7 +244,7 @@ export default function EmojiPopArena({ room, user }: EmojiPopArenaProps) {
           xRatio: simBallX,
           yRatio: simBallY,
           radiusRatio: 0.025,
-          emoji: "😀",
+          emoji: "ðŸ˜€",
           isBoss: false
         }],
         score: simScore,
@@ -263,7 +263,7 @@ export default function EmojiPopArena({ room, user }: EmojiPopArenaProps) {
     return () => clearInterval(simInterval);
   }, [phase, roomData.is_bot, roomData.bot_difficulty]);
 
-  // ── Spectator Canvas Drawing Context ──────────────────────────────────────
+  // â”€â”€ Spectator Canvas Drawing Context â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
     const canvas = miniCanvasRef.current;
     if (!canvas) return;
@@ -301,7 +301,7 @@ export default function EmojiPopArena({ room, user }: EmojiPopArenaProps) {
       return;
     }
 
-    // ── ACTIVE GAMEPLAY SPECTATOR RENDERING ──
+    // â”€â”€ ACTIVE GAMEPLAY SPECTATOR RENDERING â”€â”€
     ctx.fillStyle = "#030712";
     ctx.fillRect(0, 0, w, h);
 
@@ -321,7 +321,7 @@ export default function EmojiPopArena({ room, user }: EmojiPopArenaProps) {
       ctx.fillRect(0, 0, w, h);
     }
 
-    // ── Draw Rival Paddle ──
+    // â”€â”€ Draw Rival Paddle â”€â”€
     const padW = rivalGameState.paddleWidthRatio * w;
     const padX = rivalGameState.paddleXRatio * w;
     const padY = h - 16;
@@ -336,7 +336,7 @@ export default function EmojiPopArena({ room, user }: EmojiPopArenaProps) {
     ctx.roundRect(padX, padY, padW, padH, 2);
     ctx.fill();
 
-    // ── Draw Safety Shield ──
+    // â”€â”€ Draw Safety Shield â”€â”€
     if (rivalGameState.shieldActive) {
       ctx.shadowColor = "#00e5ff";
       ctx.strokeStyle = "rgba(0, 229, 255, 0.8)";
@@ -350,7 +350,7 @@ export default function EmojiPopArena({ room, user }: EmojiPopArenaProps) {
     // Reset shadow for text drawing
     ctx.shadowBlur = 0;
 
-    // ── Draw Emojis/Balls ──
+    // â”€â”€ Draw Emojis/Balls â”€â”€
     rivalGameState.balls.forEach((ball) => {
       const bx = ball.xRatio * w;
       const by = ball.yRatio * h;
@@ -361,19 +361,19 @@ export default function EmojiPopArena({ room, user }: EmojiPopArenaProps) {
         ctx.arc(bx, by, 8, 0, Math.PI * 2);
         ctx.fill();
         ctx.font = "8px Arial";
-        ctx.fillText("👿", bx - 4, by + 3);
+        ctx.fillText("ðŸ‘¿", bx - 4, by + 3);
       } else {
         // Draw active emoji
         ctx.font = "10px Arial";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText(ball.emoji || "😀", bx, by);
+        ctx.fillText(ball.emoji || "ðŸ˜€", bx, by);
       }
     });
 
   }, [rivalGameState, phase, roomData.is_bot]);
 
-  // ── Listen for state/score messages from within iframe ─────────────────────
+  // â”€â”€ Listen for state/score messages from within iframe â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
     const handleGameMessage = async (e: MessageEvent) => {
       if (phase !== "playing") return;
@@ -446,7 +446,7 @@ export default function EmojiPopArena({ room, user }: EmojiPopArenaProps) {
   const totalScore = myScore + rivalScore || 1;
   const ratio = (myScore / totalScore) * 100;
 
-  // ── Render States ─────────────────────────────────────────────────────────
+  // â”€â”€ Render States â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (phase === "countdown") {
     return (
       <div className="fixed inset-0 flex flex-col items-center justify-center bg-slate-950 z-[999]">
@@ -456,7 +456,7 @@ export default function EmojiPopArena({ room, user }: EmojiPopArenaProps) {
           transition={{ duration: 0.3 }}
           className="text-center space-y-6"
         >
-          <img src="/logoImage.webp" alt="Playza" className="h-10 mx-auto opacity-70" loading="lazy" />
+          <img src="/logo.png" alt="Playza" className="h-10 mx-auto opacity-70" loading="lazy" />
           <h2 className="text-slate-500 font-black uppercase tracking-[0.2em] text-xs md:text-sm animate-pulse">
             Emoji Pop Warzone Initializing...
           </h2>
@@ -484,7 +484,7 @@ export default function EmojiPopArena({ room, user }: EmojiPopArenaProps) {
   return (
     <div className="fixed inset-0 z-200 bg-slate-950 flex flex-col overflow-hidden select-none">
       
-      {/* ── Glassmorphic Dual Score HUD Header ── */}
+      {/* â”€â”€ Glassmorphic Dual Score HUD Header â”€â”€ */}
       <div className="absolute top-4 left-4 right-4 flex flex-col gap-2 z-100 pointer-events-none">
         <div className="flex justify-between items-center w-full">
           
@@ -503,7 +503,7 @@ export default function EmojiPopArena({ room, user }: EmojiPopArenaProps) {
             </div>
             {leading === "me" && (
               <span className="bg-primary/20 text-primary text-[8px] font-black uppercase px-2 py-0.5 rounded-full border border-primary/20 animate-pulse hidden sm:inline">
-                👑 LEADING
+                ðŸ‘‘ LEADING
               </span>
             )}
           </div>
@@ -514,7 +514,7 @@ export default function EmojiPopArena({ room, user }: EmojiPopArenaProps) {
             <span className="text-[10px] md:text-xs font-black text-slate-400 tracking-widest italic">VS</span>
             {roomData.stake > 0 && (
               <span className="text-emerald-400 text-[10px] font-black uppercase tracking-wider hidden sm:inline">
-                💰 {roomData.stake} ZA
+                ðŸ’° {roomData.stake} ZA
               </span>
             )}
           </div>
@@ -523,7 +523,7 @@ export default function EmojiPopArena({ room, user }: EmojiPopArenaProps) {
           <div className="bg-black/60 backdrop-blur-md px-3 md:px-5 py-2 rounded-full border border-white/10 shadow-xl flex items-center gap-2 md:gap-3 pointer-events-auto">
             {leading === "rival" && (
               <span className="bg-red-500/20 text-red-400 text-[8px] font-black uppercase px-2 py-0.5 rounded-full border border-red-500/20 animate-pulse hidden sm:inline">
-                👑 LEADING
+                ðŸ‘‘ LEADING
               </span>
             )}
             <div className="flex flex-col items-end">
@@ -545,7 +545,7 @@ export default function EmojiPopArena({ room, user }: EmojiPopArenaProps) {
 
         </div>
 
-        {/* 🏆 Neon Split Progress Score Bar */}
+        {/* ðŸ† Neon Split Progress Score Bar */}
         <div className="w-full h-2 bg-slate-900/60 backdrop-blur-md rounded-full overflow-hidden border border-white/5 relative flex">
           <div 
             className="h-full bg-primary transition-all duration-300 ease-out shadow-[0_0_10px_rgba(59,130,246,0.6)]" 
@@ -558,7 +558,7 @@ export default function EmojiPopArena({ room, user }: EmojiPopArenaProps) {
         </div>
       </div>
 
-      {/* ── Sandboxed Game Iframe ── */}
+      {/* â”€â”€ Sandboxed Game Iframe â”€â”€ */}
       <div className="flex-1 min-h-0 w-full relative pt-20">
         <div className="h-full w-full px-2 pb-3 md:px-4 md:pb-4">
           <div className="mx-auto flex h-full w-full max-w-5xl items-center justify-center overflow-hidden rounded-2xl bg-slate-950/80 shadow-2xl ring-1 ring-white/10 relative">
@@ -570,7 +570,7 @@ export default function EmojiPopArena({ room, user }: EmojiPopArenaProps) {
               allow="autoplay; fullscreen"
             />
             
-            {/* 🎥 E-Sports Spectator Mini-Canvas Live Preview (Bottom-Left Corner) */}
+            {/* ðŸŽ¥ E-Sports Spectator Mini-Canvas Live Preview (Bottom-Left Corner) */}
             <div className="absolute bottom-4 left-4 z-100 w-[120px] h-[180px] md:w-[140px] md:h-[210px] bg-black/75 backdrop-blur-md border border-white/10 rounded-2xl overflow-hidden shadow-2xl flex flex-col pointer-events-auto group hover:scale-105 transition-all">
               <div className="px-2.5 py-1.5 bg-red-950/20 border-b border-white/5 flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-1.5">
@@ -598,7 +598,7 @@ export default function EmojiPopArena({ room, user }: EmojiPopArenaProps) {
         </div>
       </div>
 
-      {/* ── Submitting Overlay ── */}
+      {/* â”€â”€ Submitting Overlay â”€â”€ */}
       <AnimatePresence>
         {isSubmitting && (
           <motion.div 
@@ -618,7 +618,7 @@ export default function EmojiPopArena({ room, user }: EmojiPopArenaProps) {
         )}
       </AnimatePresence>
 
-      {/* ── Bottom Floating Controls ── */}
+      {/* â”€â”€ Bottom Floating Controls â”€â”€ */}
       <div className="absolute bottom-4 right-4 z-100 flex gap-2 pointer-events-auto">
         <button
           onClick={toggleFullscreen}
