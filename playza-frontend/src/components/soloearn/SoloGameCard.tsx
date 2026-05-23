@@ -4,35 +4,27 @@ import { Play } from "lucide-react";
 export const SoloGameCard = ({ game, onSelect }: GameProps) => (
   <div
     onClick={() => onSelect?.(game)}
-    className="group relative glass-card bg-background/40 hover:bg-muted/60 transition-all duration-500 border border-border hover:border-primary/40 rounded-2xl md:rounded-3xl p-2 md:p-4 flex flex-col cursor-pointer overflow-hidden shadow-xl hover:shadow-primary/10 hover:-translate-y-1 h-full"
+    className="group flex flex-col gap-3 cursor-pointer"
   >
-    {/* Image Container */}
-    <div className="relative w-full aspect-16/10 md:aspect-video rounded-xl md:rounded-2xl overflow-hidden mb-3 md:mb-5 bg-slate-950 ring-1 ring-white/5">
+    {/* Image Container (No borders or padding around it) */}
+    <div className="w-full aspect-video md:aspect-[4/3] rounded-2xl md:rounded-3xl overflow-hidden relative shadow-[0_8px_30px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.4)]">
       <img
         src={game.thumbnail}
         alt={game.title}
-        className="w-full h-full object-cover opacity-60 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700 ease-out"
+        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
       />
-
-      {/* Play Overlay */}
-      <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
-        <div className="w-10 h-10 md:w-14 md:h-14 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-2xl scale-75 group-hover:scale-100 transition-transform duration-500">
-          <Play
-            fill="currentColor"
-            className="w-5 h-5 md:w-7 md:h-7 translate-x-0.5"
-          />
+      
+      {/* Play Button Overlay */}
+      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-500 flex items-center justify-center">
+        <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-primary text-slate-900 flex items-center justify-center opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 transition-all duration-300 shadow-[0_0_20px_rgba(var(--primary),0.5)]">
+          <Play fill="currentColor" className="w-6 h-6 md:w-8 md:h-8 ml-1" />
         </div>
       </div>
     </div>
 
-    {/* Content */}
-    <div className="flex-1 flex flex-col items-center justify-center mt-2">
-      <h3 className="font-heading font-black text-sm md:text-xl text-foreground uppercase tracking-tight group-hover:text-primary transition-colors truncate w-full text-center">
-        {game.title}
-      </h3>
-    </div>
-
-    {/* Subtle Glow Background */}
-    <div className="absolute -bottom-10 -right-10 w-24 h-24 bg-primary/10 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+    {/* Title centered below the image */}
+    <h3 className="font-heading font-black text-base md:text-xl text-slate-900 dark:text-white uppercase tracking-wide text-center group-hover:text-primary transition-colors">
+      {game.title}
+    </h3>
   </div>
 );
