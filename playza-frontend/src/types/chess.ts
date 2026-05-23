@@ -19,6 +19,9 @@ export interface ChessRoom {
     bot?: { username: string; avatar_url: string };
     is_checkmate?: boolean;
     is_draw?: boolean;
+    white_time?: number;
+    black_time?: number;
+    turn_started_at?: string;
   };
   host: ChessPlayer;
   guest?: ChessPlayer | null;

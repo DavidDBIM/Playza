@@ -461,6 +461,42 @@ export async function makeMove(
 
   const nextTurn =
     room.current_turn === room.host_id ? room.guest_id : room.host_id;
+
+  const now = new Date();
+  const turnColor = room.current_turn === room.host_id ? "w" : "b";
+  let whiteTime = room.board_state?.white_time ?? 600;
+  let blackTime = room.board_state?.black_time ?? 600;
+  const turnStartedAt = room.board_state?.turn_started_at;
+
+  if (turnStartedAt) {
+    const elapsedMs = now.getTime() - new Date(turnStartedAt).getTime();
+    const elapsedSeconds = Math.max(0, Math.floor(elapsedMs / 1000));
+    if (turnColor === "w") {
+      whiteTime = Math.max(0, whiteTime - elapsedSeconds);
+    } else {
+      blackTime = Math.max(0, blackTime - elapsedSeconds);
+    }
+  }
+
+  // Enforce Timeout forfeits
+  if (turnColor === "w" && whiteTime <= 0) {
+    whiteTime = 0;
+    await handleGameOver(roomId, room.guest_id || SYSTEM_BOT_ID, room.stake);
+    return { move, next_turn: null, status: "finished", message: "White ran out of time" };
+  }
+  if (turnColor === "b" && blackTime <= 0) {
+    blackTime = 0;
+    await handleGameOver(roomId, room.host_id, room.stake);
+    return { move, next_turn: null, status: "finished", message: "Black ran out of time" };
+  }
+
+  // Apply +5s increment
+  if (turnColor === "w") {
+    whiteTime += 5;
+  } else {
+    blackTime += 5;
+  }
+
   const updatedBoard = {
     ...room.board_state,
     fen: chess.fen(),
@@ -468,6 +504,9 @@ export async function makeMove(
     moves: [...(room.board_state?.moves || []), result.san],
     is_checkmate: chess.isCheckmate(),
     is_draw: chess.isDraw(),
+    white_time: whiteTime,
+    black_time: blackTime,
+    turn_started_at: now.toISOString(),
   };
 
   // Update DB
@@ -481,7 +520,7 @@ export async function makeMove(
 
   if (updateError) throw updateError;
 
-  // Check Game Over
+  // Check Game Over (Checkmate or Draw)
   if (chess.isGameOver()) {
     let winner = null;
     if (chess.isCheckmate()) {
@@ -561,5 +600,8 @@ function getInitialBoard() {
     fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
     moves: [],
     last_move: null,
+    white_time: 600,
+    black_time: 600,
+    turn_started_at: new Date().toISOString(),
   }
 }
