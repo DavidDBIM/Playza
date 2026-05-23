@@ -1,8 +1,8 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { getQuizTournamentApi, joinQuizTournamentApi, type QuizTournament } from "@/api/quiz.api";
-import { useQuizSocket, type LeaderboardEntry } from "@/hooks/quiz/useQuizSocket";
+import { getQuizTournamentApi, joinQuizTournamentApi } from "@/api/quiz.api";
+import { useQuizSocket } from "@/hooks/quiz/useQuizSocket";
 import { useAuth } from "@/context/auth";
 import { useToast } from "@/context/toast";
 
@@ -40,7 +40,7 @@ function TimerArc({ ms, totalMs, round }: { ms: number; totalMs: number; round: 
   );
 }
 
-function LeaderboardPanel({ entries, myId }: { entries: LeaderboardEntry[]; myId?: string }) {
+function LeaderboardPanel({ entries, myId }: { entries: any[]; myId?: string }) {
   const alive   = entries.filter(e => e.status === "alive").length;
   const myEntry = entries.find(e => e.user_id === myId);
   const myRank  = myEntry?.rank;
@@ -91,7 +91,7 @@ export default function QuizChampionship() {
   const navigate     = useNavigate();
   const toast        = useToast();
   const { user }     = useAuth();
-  const [joinedState, setJoinedState] = useState(false);
+  const [joined, setJoined]           = useState(false);
   const [showLB, setShowLB]           = useState(false);
   const prevPhase                     = useRef<string>("");
 
@@ -99,29 +99,16 @@ export default function QuizChampionship() {
     queryKey: ["quiz-tournament", id],
     queryFn:  () => getQuizTournamentApi(id!),
     enabled:  !!id,
-    refetchInterval: (query: unknown) => {
-      const q = query as { state?: { data?: QuizTournament } };
-      const t = q?.state?.data;
-      const isJoined = joinedState || !!(t?.user_registered && (t.status === "active" || t.status === "lobby"));
-      return isJoined ? false : 4000;
-    },
+    refetchInterval: joined ? false : 4000,
   });
 
-  const joined = joinedState || !!(tournament?.user_registered && (tournament.status === "active" || tournament.status === "lobby"));
-
-  // ── FIXED: axiosInstance converts 4xx errors to plain Error objects,
-  // so we read err.message directly instead of err.response.data.message
   const { mutate: join, isPending: joining } = useMutation({
     mutationFn: () => joinQuizTournamentApi(id!),
     onSuccess: (data) => {
-      toast.success(data.data?.already_joined ? "You're already registered!" : (data.message ?? "Registered! We'll notify you before game day."));
-      setJoinedState(true);
+      toast.success(data.data?.already_joined ? "You're already in!" : "Joined! Waiting for game to start.");
+      setJoined(true);
     },
-    onError: (error: unknown) => {
-      const err = error as Error & { response?: { data?: { message?: string } } };
-      const msg = err?.response?.data?.message ?? err?.message ?? "Failed to join. Please try again.";
-      toast.error(msg);
-    },
+    onError: (err: any) => toast.error(err.response?.data?.message ?? "Failed to join"),
   });
 
   const {
@@ -130,6 +117,10 @@ export default function QuizChampionship() {
     leaderboard, roundSummary, gameOver, elimMessage,
     timeLeftMs, submitAnswer,
   } = useQuizSocket(joined ? (id ?? null) : null);
+
+  useEffect(() => {
+    if ((tournament?.status === "active" || tournament?.status === "lobby") && tournament?.user_registered && !joined) setJoined(true);
+  }, [tournament?.status, joined]);
 
   useEffect(() => {
     if (phase !== prevPhase.current) {
@@ -151,7 +142,20 @@ export default function QuizChampionship() {
 
   const round     = currentQuestion?.round ?? 1;
   const roundMeta = ROUNDS[(round - 1)] ?? ROUNDS[4];
-  const canJoin   = tournament.status === "registration" || tournament.status === "lobby";
+  const canJoin   = (tournament.status === "registration" || tournament.status === "lobby") && !tournament.user_registered;
+
+  // ── CONNECTING (registered + active but socket not yet synced) ──────────────
+  if (joined && phase === "idle" && (tournament.status === "active" || tournament.status === "lobby")) {
+    return (
+      <div className="min-h-screen bg-[#080810] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 rounded-full border-2 border-purple-500/30 border-t-purple-500 animate-spin" />
+          <p className="text-white/50 text-sm font-bold">Connecting to game...</p>
+          <p className="text-white/20 text-xs">{connected ? "Connected — syncing game state" : "Establishing connection..."}</p>
+        </div>
+      </div>
+    );
+  }
 
   // ── PRE-JOIN ─────────────────────────────────────────────────────────────────
   if (!joined || phase === "idle") {
@@ -172,7 +176,7 @@ export default function QuizChampionship() {
             <div className="inline-flex items-center gap-2 bg-purple-500/10 border border-purple-500/20 px-3 py-1 rounded-full mb-3">
               <span className={`w-1.5 h-1.5 rounded-full ${tournament.status === "registration" ? "bg-green-400 animate-pulse" : tournament.status === "lobby" ? "bg-blue-400 animate-pulse" : tournament.status === "active" ? "bg-red-400 animate-pulse" : "bg-yellow-400"}`} />
               <span className="text-[10px] font-black uppercase tracking-widest text-purple-300">
-                {tournament.status === "registration" ? "Registration Open" : tournament.status === "lobby" ? "Registration Open" : tournament.status === "active" ? "In Progress" : "Upcoming"}
+                {tournament.status === "registration" ? "Registration Open" : tournament.status === "lobby" ? "Starting Soon" : tournament.status === "active" ? "In Progress" : "Upcoming"}
               </span>
             </div>
             <h1 className="text-2xl font-black text-white mb-1">{tournament.title}</h1>
@@ -217,24 +221,40 @@ export default function QuizChampionship() {
             </div>
           </div>
 
-          <button
-            onClick={() => join()}
-            disabled={joining || !canJoin}
-            className="w-full py-4 rounded-2xl font-black text-sm uppercase tracking-wide transition-all disabled:opacity-40 disabled:cursor-not-allowed relative overflow-hidden group text-white"
-            style={{ background: canJoin ? "linear-gradient(135deg,#7c3aed,#a855f7)" : "#1a1a2e" }}
-          >
-            <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-            <span className="relative flex items-center justify-center gap-2">
-              {joining ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Joining...</> :
-               !canJoin ? (tournament.status === "active" ? "Game In Progress" : "Not Open Yet") :
-               tournament.entry_fee > 0 ? <>⚡ Register — Pay {tournament.entry_fee} ZA</> : <>⚡ Register Free</>}
-            </span>
-          </button>
-          {tournament.entry_fee > 0 && <p className="text-center text-[10px] text-white/20 mt-2">Entry fee added to prize pool · You will be reminded before game day</p>}
-          {tournament.user_registered && (
-            <div className="mt-3 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-green-500/10 border border-green-500/20">
-              <span className="text-green-400 text-xs font-black">✓ You are registered — we will notify you before game day</span>
+          {tournament.user_registered ? (
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center justify-center gap-2 py-4 rounded-2xl bg-green-500/10 border border-green-500/20">
+                <span className="text-green-400 text-base font-black">✓ You are registered!</span>
+              </div>
+              <p className="text-center text-[10px] text-white/30">
+                {tournament.scheduled_at
+                  ? `Game day: ${new Date(tournament.scheduled_at).toLocaleDateString("en-NG", { weekday: "long", day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}`
+                  : "Game date TBA — you will be notified"}
+              </p>
+              <p className="text-center text-[10px] text-white/20">We will send you a reminder 24h and 2h before the game starts</p>
             </div>
+          ) : (
+            <>
+              <button
+                onClick={() => join()}
+                disabled={joining || !canJoin}
+                className="w-full py-4 rounded-2xl font-black text-sm uppercase tracking-wide transition-all disabled:opacity-40 disabled:cursor-not-allowed relative overflow-hidden group text-white"
+                style={{ background: canJoin ? "linear-gradient(135deg,#7c3aed,#a855f7)" : "#1a1a2e" }}
+              >
+                <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <span className="relative flex items-center justify-center gap-2">
+                  {joining ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Joining...</> :
+                   !canJoin ? (tournament.status === "active" ? "Game In Progress" : tournament.status === "cancelled" ? "Cancelled" : "Not Open Yet") :
+                   tournament.entry_fee > 0 ? <>⚡ Register — Pay {tournament.entry_fee} ZA</> : <>⚡ Register Free</>}
+                </span>
+              </button>
+              {tournament.entry_fee > 0 && canJoin && <p className="text-center text-[10px] text-white/20 mt-2">Entry fee added to prize pool · You will be reminded before game day</p>}
+              {tournament.status === "cancelled" && (
+                <div className="mt-3 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-red-500/10 border border-red-500/20">
+                  <span className="text-red-400 text-xs font-black">🚫 This tournament has been cancelled</span>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -405,9 +425,11 @@ export default function QuizChampionship() {
 
     return (
       <div className="min-h-screen flex flex-col bg-[#080810] relative overflow-hidden">
+        {/* Round accent line */}
         <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: `linear-gradient(90deg,transparent,${roundMeta.color},transparent)`, boxShadow: `0 0 20px ${roundMeta.color}60` }} />
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-36 rounded-full blur-3xl pointer-events-none opacity-15" style={{ background: roundMeta.color }} />
 
+        {/* Header */}
         <div className="flex items-center gap-2 px-4 pt-5 pb-3 relative z-10">
           <div className="flex items-center gap-1.5 bg-white/[0.05] border border-white/[0.08] rounded-xl px-2.5 py-1.5 shrink-0">
             <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: roundMeta.color }} />
@@ -428,8 +450,10 @@ export default function QuizChampionship() {
           </button>
         </div>
 
+        {/* Content */}
         <div className="flex flex-1 gap-4 px-4 pb-6 relative z-10 min-h-0">
           <div className="flex-1 flex flex-col min-w-0">
+            {/* Timer + Question card */}
             <div className="flex items-start gap-3 mb-4">
               {!isRevealing && <TimerArc ms={timeLeftMs} totalMs={totalMs} round={round} />}
               <div className={`flex-1 bg-white/[0.04] border border-white/[0.08] rounded-2xl p-4 ${isRevealing ? "w-full" : ""}`}>
@@ -437,9 +461,10 @@ export default function QuizChampionship() {
               </div>
             </div>
 
+            {/* Answer options */}
             <div className="grid grid-cols-1 gap-2.5 flex-1">
               {OPTS.map((key, i) => {
-                const text       = currentQuestion.options[key];
+                const text      = currentQuestion.options[key];
                 const isSelected = selectedOption === key;
                 const isCorrect  = isRevealing && revealData?.correct_option === key;
                 const isWrong    = isRevealing && isSelected && !isCorrect;
@@ -470,6 +495,7 @@ export default function QuizChampionship() {
               })}
             </div>
 
+            {/* Status */}
             <div className="mt-3">
               {answerLocked && !isRevealing && (
                 <div className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-purple-500/10 border border-purple-500/20">
@@ -487,11 +513,13 @@ export default function QuizChampionship() {
             </div>
           </div>
 
+          {/* Desktop leaderboard */}
           <div className="w-52 hidden lg:block shrink-0">
             <LeaderboardPanel entries={leaderboard} myId={user?.id} />
           </div>
         </div>
 
+        {/* Mobile leaderboard sheet */}
         {showLB && (
           <div className="fixed inset-0 z-50 flex items-end bg-black/70 backdrop-blur-sm lg:hidden" onClick={() => setShowLB(false)}>
             <div className="w-full bg-[#0e0e1a] border-t border-white/[0.08] rounded-t-3xl p-5 max-h-[72vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
@@ -500,6 +528,25 @@ export default function QuizChampionship() {
             </div>
           </div>
         )}
+      </div>
+    );
+  }
+
+  // ── CANCELLED ────────────────────────────────────────────────────────────────
+  if (phase === "cancelled") {
+    return (
+      <div className="min-h-screen bg-[#080810] flex items-center justify-center p-4">
+        <div className="w-full max-w-sm text-center">
+          <div className="text-7xl mb-4">🚫</div>
+          <h2 className="text-3xl font-black text-white mb-2">Tournament Cancelled</h2>
+          <p className="text-white/40 text-sm mb-6">{elimMessage || "This tournament has been cancelled by the admin."}</p>
+          <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl px-4 py-3 mb-6">
+            <p className="text-amber-400 text-xs font-bold">If you paid an entry fee, your ZA tokens have been refunded to your wallet.</p>
+          </div>
+          <button onClick={() => navigate("/tournaments")} className="w-full py-3.5 rounded-2xl bg-white/[0.06] border border-white/[0.1] text-white font-bold text-sm hover:bg-white/[0.1] transition-all">
+            Back to Tournaments
+          </button>
+        </div>
       </div>
     );
   }
