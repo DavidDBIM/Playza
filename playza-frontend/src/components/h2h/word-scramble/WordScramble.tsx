@@ -155,7 +155,7 @@ export default function WordScramble() {
   if (phase === 'lobby') return (
     <div className="w-full max-w-2xl mx-auto space-y-6 py-6 px-4">
       <header className="text-center space-y-2">
-        <img src="/logo.png" alt="Playza" className="h-8 mx-auto mb-2 opacity-80" loading="lazy" />
+        <img src="/logo.webp" alt="Playza" className="h-8 mx-auto mb-2 opacity-80" loading="lazy" />
         <h1 className="text-3xl md:text-5xl font-black uppercase italic tracking-tighter text-slate-900 dark:text-white">
           Word <span className="text-primary">Scramble</span>
         </h1>
@@ -206,7 +206,7 @@ export default function WordScramble() {
 
   if (phase === 'waiting') return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] gap-8 text-center bg-transparent">
-      <img src="/logo.png" alt="Playza" className="h-8 opacity-60" loading="lazy" />
+      <img src="/logo.webp" alt="Playza" className="h-8 opacity-60" loading="lazy" />
       <h2 className="text-2xl md:text-3xl font-black uppercase italic text-slate-900 dark:text-white">Waiting for opponent...</h2>
       <div className="bg-white/80 dark:bg-slate-900/40 p-8 rounded-xl border border-primary/30 space-y-4">
         <p className="text-3xl md:text-5xl font-black tracking-[0.3em] text-primary">{room?.code}</p>
@@ -223,7 +223,7 @@ export default function WordScramble() {
   if (phase === 'playing' && currentWord) return (
     <div className="w-full max-w-lg mx-auto space-y-6 py-6 px-4">
       <div className="flex items-center justify-between">
-        <img src="/logo.png" alt="Playza" className="h-6 opacity-60" loading="lazy" />
+        <img src="/logo.webp" alt="Playza" className="h-6 opacity-60" loading="lazy" />
         <div className="flex items-center gap-3">
           <span className="text-[10px] md:text-xs text-slate-500 font-bold">Round {currentRound + 1}/{rounds.length}</span>
           <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-lg ${timeLeft <= 5 ? 'bg-red-500/20 text-red-500' : 'bg-black/5 dark:bg-white/10 text-slate-900 dark:text-white'}`}>{timeLeft}</div>
@@ -255,7 +255,7 @@ export default function WordScramble() {
 
   if (phase === 'submitted') return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center">
-      <img src="/logo.png" alt="Playza" className="h-8 opacity-60" loading="lazy" />
+      <img src="/logo.webp" alt="Playza" className="h-8 opacity-60" loading="lazy" />
       <p className="text-xl font-black uppercase italic text-slate-900 dark:text-white">Waiting for opponent...</p>
       <p className="text-slate-500 text-[10px] md:text-sm">You scored <span className="text-primary font-bold">{score} pts</span> Â· Won {roundsWon}/{rounds.length} rounds</p>
       <div className="flex gap-1 mt-4">
@@ -268,7 +268,7 @@ export default function WordScramble() {
 
   if (phase === 'finished') return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6 text-center px-4">
-      <img src="/logo.png" alt="Playza" className="h-8" loading="lazy" />
+      <img src="/logo.webp" alt="Playza" className="h-8" loading="lazy" />
       <div className="text-6xl">{iWon ? 'ðŸ†' : room?.winner_id === 'bot' ? 'ðŸ¤–' : !room?.winner_id ? 'ðŸ¤' : 'ðŸ’€'}</div>
       <h1 className="text-2xl md:text-4xl font-black uppercase italic text-slate-900 dark:text-white">{iWon ? 'You Won!' : room?.winner_id === 'bot' ? 'Bot Wins' : !room?.winner_id ? "It's a Draw!" : 'You Lost'}</h1>
       <div className="bg-white/80 dark:bg-slate-900/40 p-6 rounded-xl border border-black/5 dark:border-white/10 space-y-3 w-full max-w-sm">
