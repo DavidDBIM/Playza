@@ -183,7 +183,6 @@ const Referral = () => {
   /* ── Authenticated view ── */
   return (
     <div className="flex-1 w-full pb-24 md:pb-10 flex flex-col gap-3">
-
       {/* ── Header ── */}
       <div className="flex items-center justify-between">
         <div>
@@ -198,15 +197,20 @@ const Referral = () => {
           to="/leaderboard?tab=Referral"
           className="flex items-center gap-1.5 text-primary text-[10px] font-black uppercase tracking-widest bg-primary/10 border border-primary/20 px-3 py-2 rounded-xl hover:bg-primary/20 transition-all"
         >
-          <MdEmojiEvents className="text-sm" /> Leaderboard <MdArrowForward className="text-xs" />
+          <MdEmojiEvents className="text-sm" /> Leaderboard{" "}
+          <MdArrowForward className="text-xs" />
         </Link>
       </div>
 
       {/* ── Invite bar ── */}
       <div className="glass-card rounded-xl p-3 flex items-center gap-2">
         <div className="flex-1 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 overflow-hidden">
-          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-0.5">Your link</p>
-          <p className="text-xs text-slate-600 dark:text-slate-300 truncate font-mono">{referralLink}</p>
+          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-0.5">
+            Your link
+          </p>
+          <p className="text-xs text-slate-600 dark:text-slate-300 truncate font-mono">
+            {referralLink}
+          </p>
         </div>
         <button
           onClick={handleCopy}
@@ -228,12 +232,27 @@ const Referral = () => {
         {[
           { label: "Total", value: stats?.total_referrals ?? 0 },
           { label: "Verified", value: stats?.verified_referrals ?? 0 },
-          { label: "Pending", value: (stats?.total_referrals ?? 0) - (stats?.verified_referrals ?? 0) },
-          { label: "Earned", value: (stats?.verified_referrals ?? 0) * 15, currency: true },
+          {
+            label: "Pending",
+            value:
+              (stats?.total_referrals ?? 0) - (stats?.verified_referrals ?? 0),
+          },
+          {
+            label: "Earned",
+            value: (stats?.verified_referrals ?? 0) * 15,
+            currency: true,
+          },
         ].map((s, i) => (
-          <div key={i} className="glass-card rounded-xl p-2.5 flex flex-col gap-0.5">
-            <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest">{s.label}</p>
-            <p className={`font-black text-base md:text-xl leading-none flex items-center gap-0.5 ${i === 3 ? "text-primary" : "text-slate-900 dark:text-white"}`}>
+          <div
+            key={i}
+            className="glass-card rounded-xl p-2.5 flex flex-col gap-0.5"
+          >
+            <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest">
+              {s.label}
+            </p>
+            <p
+              className={`font-black text-base md:text-xl leading-none flex items-center gap-0.5 ${i === 3 ? "text-primary" : "text-slate-900 dark:text-white"}`}
+            >
               {s.currency && <ZASymbol className="text-xs" />}
               {s.value}
             </p>
@@ -246,18 +265,29 @@ const Referral = () => {
         {/* Header strip */}
         <div className="bg-primary/8 dark:bg-primary/10 px-4 py-3 border-b border-primary/10 flex items-center gap-2">
           <MdAccountBalanceWallet className="text-primary text-base" />
-          <p className="text-[10px] font-black uppercase tracking-widest text-primary">Referral Earnings</p>
+          <p className="text-[10px] font-black uppercase tracking-widest text-primary">
+            Referral Earnings
+          </p>
         </div>
 
         <div className="p-4 space-y-4">
           {/* Balance row */}
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <p className="text-[9px] text-slate-500 dark:text-slate-400 font-black uppercase tracking-widest">Available to Request</p>
-              <p className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-1">
-                <ZASymbol className="text-lg" />{pendingZa.toLocaleString()}
+              <p className="text-[9px] text-slate-500 dark:text-slate-400 font-black uppercase tracking-widest">
+                Available to Request
               </p>
-              <p className="text-[9px] text-slate-400 font-bold">All-time earned: <span className="text-primary"><ZASymbol className="inline text-[8px]" />{totalZaEarned.toLocaleString()}</span></p>
+              <p className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-1">
+                <ZASymbol className="text-lg" />
+                {pendingZa.toLocaleString()}
+              </p>
+              <p className="text-[9px] text-slate-400 font-bold">
+                All-time earned:{" "}
+                <span className="text-primary">
+                  <ZASymbol className="inline text-[8px]" />
+                  {totalZaEarned.toLocaleString()}
+                </span>
+              </p>
             </div>
             <div className="size-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center">
               <MdAccountBalanceWallet className="text-primary text-2xl" />
@@ -268,7 +298,8 @@ const Referral = () => {
           <div className="flex items-start gap-2 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/40 rounded-lg px-3 py-2">
             <MdInfoOutline className="text-amber-500 text-sm shrink-0 mt-0.5" />
             <p className="text-[10px] text-amber-700 dark:text-amber-400 font-medium leading-relaxed">
-              Referral ZA is credited to your main wallet after admin review. Requests are usually processed within 24 hours.
+              Referral ZA is credited to your main wallet after admin review.
+              Requests are usually processed within 24 hours.
             </p>
           </div>
 
@@ -276,13 +307,17 @@ const Referral = () => {
           {payoutError && (
             <div className="flex items-center gap-2 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800/40 rounded-lg px-3 py-2">
               <MdCancel className="text-red-500 text-sm shrink-0" />
-              <p className="text-[10px] text-red-600 dark:text-red-400 font-medium">{payoutError}</p>
+              <p className="text-[10px] text-red-600 dark:text-red-400 font-medium">
+                {payoutError}
+              </p>
             </div>
           )}
           {payoutSuccess && (
             <div className="flex items-center gap-2 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800/40 rounded-lg px-3 py-2">
               <MdCheckCircle className="text-green-500 text-sm shrink-0" />
-              <p className="text-[10px] text-green-600 dark:text-green-400 font-bold">Request submitted! We'll review and credit your wallet shortly.</p>
+              <p className="text-[10px] text-green-600 dark:text-green-400 font-bold">
+                Request submitted! We'll review and credit your wallet shortly.
+              </p>
             </div>
           )}
 
@@ -290,7 +325,9 @@ const Referral = () => {
           {hasPendingRequest ? (
             <div className="flex items-center gap-2 h-11 px-4 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-700/40">
               <MdHourglassEmpty className="text-amber-500 text-sm shrink-0" />
-              <p className="text-[10px] text-amber-700 dark:text-amber-400 font-black uppercase tracking-widest">Request pending review…</p>
+              <p className="text-[10px] text-amber-700 dark:text-amber-400 font-black uppercase tracking-widest">
+                Request pending review…
+              </p>
             </div>
           ) : (
             <button
@@ -306,34 +343,56 @@ const Referral = () => {
               {requestingPayout
                 ? "Submitting…"
                 : pendingZa <= 0
-                ? "No ZA available yet"
-                : `Request ${pendingZa.toLocaleString()} ZA`}
+                  ? "No ZA available yet"
+                  : `Request ${pendingZa.toLocaleString()} ZA`}
             </button>
           )}
 
           {/* Past payout requests mini-log */}
           {(payoutRequests ?? []).length > 0 && (
             <div className="space-y-1.5 pt-1">
-              <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest">Request History</p>
-              {(payoutRequests ?? []).slice(0, 3).map(r => (
-                <div key={r.id} className="flex items-center justify-between py-1.5 border-t border-slate-100 dark:border-white/5">
+              <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest">
+                Request History
+              </p>
+              {(payoutRequests ?? []).slice(0, 3).map((r) => (
+                <div
+                  key={r.id}
+                  className="flex items-center justify-between py-1.5 border-t border-slate-100 dark:border-white/5"
+                >
                   <div className="flex items-center gap-2">
-                    {r.status === "approved" && <MdCheckCircle className="text-green-500 text-sm" />}
-                    {r.status === "pending"  && <MdHourglassEmpty className="text-amber-500 text-sm" />}
-                    {r.status === "rejected" && <MdCancel className="text-red-500 text-sm" />}
+                    {r.status === "approved" && (
+                      <MdCheckCircle className="text-green-500 text-sm" />
+                    )}
+                    {r.status === "pending" && (
+                      <MdHourglassEmpty className="text-amber-500 text-sm" />
+                    )}
+                    {r.status === "rejected" && (
+                      <MdCancel className="text-red-500 text-sm" />
+                    )}
                     <span className="text-[10px] text-slate-600 dark:text-slate-400 font-bold">
-                      {new Date(r.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "2-digit" })}
+                      {new Date(r.created_at).toLocaleDateString("en-GB", {
+                        day: "numeric",
+                        month: "short",
+                        year: "2-digit",
+                      })}
                     </span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="font-black text-xs text-slate-900 dark:text-white flex items-center gap-0.5">
-                      <ZASymbol className="text-[9px]" />{r.amount.toLocaleString()}
+                      <ZASymbol className="text-[9px]" />
+                      {r.amount.toLocaleString()}
                     </span>
-                    <span className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md ${
-                      r.status === "approved" ? "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400"
-                      : r.status === "pending"  ? "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400"
-                      : "bg-red-100 dark:bg-red-900/30 text-red-500"
-                    }`}>{r.status}</span>
+                    <span
+                      className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md ${
+                        r.status === "approved"
+                          ? "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400"
+                          : r.status === "pending"
+                            ? "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400"
+                            : "bg-red-100 dark:bg-red-900/30 text-red-500"
+                      }`}
+                    >
+                      {r.status}
+                    </span>
                   </div>
                 </div>
               ))}
@@ -345,7 +404,9 @@ const Referral = () => {
       {/* ── How it works ── vertical steps ── */}
       <div className="glass-card rounded-xl overflow-hidden">
         <div className="px-4 pt-4 pb-2">
-          <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">How it works</p>
+          <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">
+            How it works
+          </p>
         </div>
         <div className="divide-y divide-slate-100 dark:divide-white/5">
           {[
@@ -359,7 +420,7 @@ const Referral = () => {
               n: "2",
               emoji: "📲",
               title: "Join",
-              desc: "They sign up using your referral link and make a minimum deposit of ₦1,000 ZA to activate their account.",
+              desc: "They sign up using your referral link and make a minimum deposit of ₦500 ZA to activate their account.",
             },
             {
               n: "3",
@@ -370,21 +431,33 @@ const Referral = () => {
           ].map((s, i, arr) => (
             <div key={s.n} className="flex items-start gap-4 px-4 py-4">
               {/* Step number + connector line */}
-              <div className="flex flex-col items-center shrink-0" style={{ minWidth: 32 }}>
+              <div
+                className="flex flex-col items-center shrink-0"
+                style={{ minWidth: 32 }}
+              >
                 <span className="size-8 rounded-xl bg-primary/10 border border-primary/20 text-primary text-xs font-black flex items-center justify-center">
                   {s.emoji}
                 </span>
                 {i < arr.length - 1 && (
-                  <div className="w-px flex-1 bg-primary/20 mt-1" style={{ minHeight: 20 }} />
+                  <div
+                    className="w-px flex-1 bg-primary/20 mt-1"
+                    style={{ minHeight: 20 }}
+                  />
                 )}
               </div>
               {/* Content */}
               <div className="flex-1 pb-1">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-[9px] font-black text-primary uppercase tracking-widest">Step {s.n}</span>
+                  <span className="text-[9px] font-black text-primary uppercase tracking-widest">
+                    Step {s.n}
+                  </span>
                 </div>
-                <p className="text-slate-900 dark:text-white text-sm font-black mb-0.5">{s.title}</p>
-                <p className="text-slate-500 dark:text-slate-400 text-xs font-medium leading-relaxed">{s.desc}</p>
+                <p className="text-slate-900 dark:text-white text-sm font-black mb-0.5">
+                  {s.title}
+                </p>
+                <p className="text-slate-500 dark:text-slate-400 text-xs font-medium leading-relaxed">
+                  {s.desc}
+                </p>
               </div>
             </div>
           ))}
@@ -398,10 +471,13 @@ const Referral = () => {
           <div className="flex items-center gap-2 p-3 border-b border-slate-100 dark:border-white/5">
             {/* Filter pills — no heading */}
             <div className="flex gap-1 flex-1">
-              {["All", "Verified", "Pending"].map(f => (
+              {["All", "Verified", "Pending"].map((f) => (
                 <button
                   key={f}
-                  onClick={() => { setFilter(f); setPage(1); }}
+                  onClick={() => {
+                    setFilter(f);
+                    setPage(1);
+                  }}
                   className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${filter === f ? "bg-primary text-white" : "bg-slate-100 dark:bg-white/5 text-slate-500 border border-slate-200 dark:border-white/10"}`}
                 >
                   {f}
@@ -414,7 +490,10 @@ const Referral = () => {
               <input
                 type="text"
                 value={search}
-                onChange={e => { setSearch(e.target.value); setPage(1); }}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
                 placeholder="Search…"
                 className="h-8 pl-8 pr-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-[11px] font-bold text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-primary/40 w-28"
               />
@@ -427,27 +506,49 @@ const Referral = () => {
               No recruits yet
             </div>
           ) : (
-            paginated.map(r => (
-              <div key={r.id} className="flex items-center gap-3 px-3 py-2.5 border-b border-slate-50 dark:border-white/5 last:border-0 hover:bg-slate-50 dark:hover:bg-white/5 transition-all">
+            paginated.map((r) => (
+              <div
+                key={r.id}
+                className="flex items-center gap-3 px-3 py-2.5 border-b border-slate-50 dark:border-white/5 last:border-0 hover:bg-slate-50 dark:hover:bg-white/5 transition-all"
+              >
                 {/* Avatar */}
                 <div className="size-8 rounded-lg bg-primary/10 border border-primary/20 text-primary text-xs font-black flex items-center justify-center shrink-0">
                   {r.initial}
                 </div>
                 {/* Name + date */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-slate-900 dark:text-white text-xs font-black truncate">{r.name}</p>
-                  <p className="text-slate-400 text-[9px] font-bold">{r.date}</p>
+                  <p className="text-slate-900 dark:text-white text-xs font-black truncate">
+                    {r.name}
+                  </p>
+                  <p className="text-slate-400 text-[9px] font-bold">
+                    {r.date}
+                  </p>
                 </div>
                 {/* Status */}
-                <div className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest ${r.status === "done" ? "bg-green-500/10 text-green-500" : r.status === "pending" ? "bg-amber-500/10 text-amber-500" : "bg-slate-100 dark:bg-white/5 text-slate-400"}`}>
+                <div
+                  className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest ${r.status === "done" ? "bg-green-500/10 text-green-500" : r.status === "pending" ? "bg-amber-500/10 text-amber-500" : "bg-slate-100 dark:bg-white/5 text-slate-400"}`}
+                >
                   {r.status === "done" && <MdCheckCircle className="text-xs" />}
                   {r.status === "pending" && <MdPending className="text-xs" />}
                   {r.status === "failed" && <MdCancel className="text-xs" />}
-                  {r.status === "done" ? "Done" : r.status === "pending" ? "Pending" : "Failed"}
+                  {r.status === "done"
+                    ? "Done"
+                    : r.status === "pending"
+                      ? "Pending"
+                      : "Failed"}
                 </div>
                 {/* Reward */}
-                <div className={`text-xs font-black w-12 text-right ${r.reward > 0 ? "text-primary" : "text-slate-400"}`}>
-                  {r.reward > 0 ? <span className="flex items-center gap-0.5 justify-end"><ZASymbol className="text-[9px]" />{r.reward}</span> : "—"}
+                <div
+                  className={`text-xs font-black w-12 text-right ${r.reward > 0 ? "text-primary" : "text-slate-400"}`}
+                >
+                  {r.reward > 0 ? (
+                    <span className="flex items-center gap-0.5 justify-end">
+                      <ZASymbol className="text-[9px]" />
+                      {r.reward}
+                    </span>
+                  ) : (
+                    "—"
+                  )}
                 </div>
               </div>
             ))
@@ -456,14 +557,22 @@ const Referral = () => {
           {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex items-center justify-between px-3 py-2 border-t border-slate-100 dark:border-white/5">
-              <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">{page}/{totalPages}</span>
+              <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">
+                {page}/{totalPages}
+              </span>
               <div className="flex gap-1">
-                <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-                  className="size-7 rounded-lg bg-slate-100 dark:bg-white/5 text-slate-500 text-xs font-black disabled:opacity-30 border border-slate-200 dark:border-white/10 flex items-center justify-center">
+                <button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className="size-7 rounded-lg bg-slate-100 dark:bg-white/5 text-slate-500 text-xs font-black disabled:opacity-30 border border-slate-200 dark:border-white/10 flex items-center justify-center"
+                >
                   ‹
                 </button>
-                <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-                  className="size-7 rounded-lg bg-slate-100 dark:bg-white/5 text-slate-500 text-xs font-black disabled:opacity-30 border border-slate-200 dark:border-white/10 flex items-center justify-center">
+                <button
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                  className="size-7 rounded-lg bg-slate-100 dark:bg-white/5 text-slate-500 text-xs font-black disabled:opacity-30 border border-slate-200 dark:border-white/10 flex items-center justify-center"
+                >
                   ›
                 </button>
               </div>
@@ -478,8 +587,12 @@ const Referral = () => {
           <div className="size-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
             <MdGroupAdd className="text-xl text-primary" />
           </div>
-          <p className="text-slate-900 dark:text-white font-black text-sm uppercase tracking-tight">No recruits yet</p>
-          <p className="text-slate-500 text-xs font-bold">Share your link and start earning</p>
+          <p className="text-slate-900 dark:text-white font-black text-sm uppercase tracking-tight">
+            No recruits yet
+          </p>
+          <p className="text-slate-500 text-xs font-bold">
+            Share your link and start earning
+          </p>
           <button
             onClick={() => setShareOpen(true)}
             className="mt-1 h-10 px-6 bg-primary text-white rounded-xl font-black text-xs uppercase tracking-widest hover:brightness-110 transition-all flex items-center gap-2 shadow-md glow-accent"
@@ -489,7 +602,12 @@ const Referral = () => {
         </div>
       )}
 
-      {shareOpen && <ShareModal referralLink={referralLink} onClose={() => setShareOpen(false)} />}
+      {shareOpen && (
+        <ShareModal
+          referralLink={referralLink}
+          onClose={() => setShareOpen(false)}
+        />
+      )}
     </div>
   );
 };
