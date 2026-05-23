@@ -87,10 +87,10 @@ export async function endSoloSession(
   sessionId: string,
   rawMultiplier: number,
 ) {
-  // 1. Fetch session
+  // 1. Fetch session and game details for dynamic anti-cheat
   const { data: session, error: sessErr } = await supabase
     .from("soloearn_sessions")
-    .select("*")
+    .select("*, games(title)")
     .eq("id", sessionId)
     .eq("user_id", userId)
     .single();
@@ -105,32 +105,30 @@ export async function endSoloSession(
   }
 
   // --- Anti-Cheat: Calibrated Time Validation ---
-  // Thresholds aligned with game difficulty: 0.012x/bounce at ~1.5s/bounce avg
-  // Break-even (1.0x) = ~84 bounces = ~126s min | Max (2.0x) = ~167 bounces = ~250s min
   if (session.created_at) {
     const createdAt = new Date(session.created_at).getTime();
     const now = Date.now();
     const elapsedSeconds = (now - createdAt) / 1000;
 
-    // Maximum session duration: 20 minutes — closes the API bypass attack vector
+    // Maximum session duration: 20 minutes for all games
     if (elapsedSeconds > 1200) {
       throw new Error('Session has expired. Sessions must be completed within 20 minutes.');
     }
 
-    if (rawMultiplier > 0 && elapsedSeconds < 30) {
-      throw new Error("Session ended suspiciously fast. Score rejected.");
-    }
-    if (rawMultiplier >= 0.5 && elapsedSeconds < 30) {
-      throw new Error("Multiplier 0.5x requires minimum 30s of gameplay.");
-    }
-    if (rawMultiplier >= 1.0 && elapsedSeconds < 90) {
-      throw new Error("Multiplier 1.0x requires minimum 90s of gameplay.");
-    }
-    if (rawMultiplier >= 1.5 && elapsedSeconds < 150) {
-      throw new Error("Multiplier 1.5x requires minimum 150s of gameplay.");
-    }
-    if (rawMultiplier >= 2.0 && elapsedSeconds < 210) {
-      throw new Error("Multiplier 2.0x requires minimum 210s of gameplay.");
+    const gameTitle = session.games?.title || '';
+    
+    if (gameTitle === 'Memory Rush') {
+      // Memory Rush specific strict thresholds
+      if (rawMultiplier > 0 && elapsedSeconds < 10) throw new Error("Session ended suspiciously fast. Score rejected.");
+      if (rawMultiplier >= 0.5 && elapsedSeconds < 15) throw new Error("Multiplier 0.5x requires minimum 15s of gameplay.");
+      if (rawMultiplier >= 1.0 && elapsedSeconds < 30) throw new Error("Multiplier 1.0x requires minimum 30s of gameplay.");
+      if (rawMultiplier >= 1.5 && elapsedSeconds < 80) throw new Error("Multiplier 1.5x requires minimum 80s of gameplay.");
+      if (rawMultiplier >= 2.0 && elapsedSeconds < 130) throw new Error("Multiplier 2.0x requires minimum 130s of gameplay.");
+    } else {
+      // Generic loose thresholds for other fast-paced arcade games (Emoji Pop, Stack Ball, Snake Earn)
+      if (rawMultiplier > 0 && elapsedSeconds < 3) throw new Error("Session ended suspiciously fast. Score rejected.");
+      if (rawMultiplier >= 1.0 && elapsedSeconds < 8) throw new Error("Multiplier 1.0x requires minimum 8s of gameplay.");
+      if (rawMultiplier >= 2.0 && elapsedSeconds < 15) throw new Error("Multiplier 2.0x requires minimum 15s of gameplay.");
     }
   }
 
