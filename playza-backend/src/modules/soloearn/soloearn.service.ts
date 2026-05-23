@@ -45,8 +45,7 @@ export async function startSoloSession(
     await supabase.from('soloearn_sessions').update({ 
       status: 'completed', 
       multiplier: 0,
-      payout_amount: 0,
-      end_time: new Date().toISOString()
+      payout: 0
     }).eq('id', existingSession.id);
   }
 
@@ -93,17 +92,21 @@ export async function endSoloSession(
   sessionId: string,
   rawMultiplier: number,
 ) {
-  // 1. Fetch session and game details for dynamic anti-cheat
+  // 1. Fetch session for dynamic anti-cheat
   const { data: session, error: sessErr } = await supabase
     .from("soloearn_sessions")
-    .select("*, games(title)")
+    .select("*")
     .eq("id", sessionId)
     .eq("user_id", userId)
     .single();
 
-  if (sessErr || !session) throw new Error("Session not found");
+  if (sessErr || !session) throw new Error("Session not found: " + (sessErr?.message || 'Unknown DB error'));
   if (session.status !== "in_progress")
     throw new Error("Session already completed");
+
+  // Fetch game title separately
+  const { data: gameData } = await supabase.from("games").select("title").eq("slug", session.game_id).single();
+  const gameTitle = gameData?.title || session.game_id;
 
   // rawMultiplier type guard: reject NaN, Infinity and non-numeric values
   if (typeof rawMultiplier !== 'number' || !isFinite(rawMultiplier)) {
@@ -121,8 +124,6 @@ export async function endSoloSession(
       console.warn(`[SoloEarn Anti-Cheat] Session ${sessionId} expired (>20 mins).`);
       rawMultiplier = 0;
     }
-
-    const gameTitle = session.games?.title || '';
     
     let violation = false;
     if (gameTitle === 'Memory Rush') {
@@ -192,11 +193,7 @@ export async function endSoloSession(
   }
 
   // 5. Log Game History for User Profile
-  const { data: gameInfo } = await supabase.from("games").select("title").eq("slug", session.game_id).single();
-  const gameTitle = gameInfo?.title || session.game_id
-    .split("-")
-    .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
+  // We already fetched gameTitle at the top of endSoloSession
 
   const soloStatus = payout > session.stake ? "win" : payout === session.stake ? "draw" : "loss";
 
