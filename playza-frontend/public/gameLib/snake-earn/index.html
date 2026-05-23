@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Snake Earn</title>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700;900&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <div class="shell" id="shell">
+
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- HUD -->
+    <div id="gameHud" class="hidden">
+      <div class="hud-box">
+        <span class="hud-label">LENGTH</span>
+        <span class="hud-value" id="hudLength">3</span>
+      </div>
+      <div class="hud-center">
+        <div class="progress-track">
+          <div class="progress-fill" id="hudFill"></div>
+          <div class="progress-marker" style="left:50%"><span class="marker-tip">1.0×</span></div>
+        </div>
+      </div>
+      <div class="hud-box accent-box">
+        <span class="hud-label">PAYOUT</span>
+        <span class="hud-value accent" id="hudMult">0.00×</span>
+      </div>
+    </div>
+    <div style="position:absolute;top:62px;left:50%;transform:translateX(-50%);z-index:20;pointer-events:none;font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:700;color:rgba(255,255,255,0.28);letter-spacing:2px;">BEST: <span id="hudHS">0</span> food</div>
+
+    <!-- Toast -->
+    <div id="toast" class="toast"></div>
+
+    <!-- D-Pad (mobile) — bottom center horizontal strip -->
+    <div id="dpad" class="dpad hidden">
+      <button class="dpad-btn" id="dUp">▲</button>
+      <button class="dpad-btn" id="dLeft">◀</button>
+      <button class="dpad-btn" id="dDown">▼</button>
+      <button class="dpad-btn" id="dRight">▶</button>
+    </div>
+
+    <!-- Overlay: Start -->
+    <div id="overlayStart" class="overlay">
+      <div class="panel">
+        <div class="game-icon">🐍</div>
+        <h1 class="game-title">SNAKE EARN</h1>
+        <p class="game-sub">GROW · SURVIVE · CASH OUT</p>
+        <p class="game-desc">
+          Eat food to grow your snake and raise your payout multiplier.
+          Avoid walls and your own tail — one wrong move ends everything.<br><br>
+          Eat <strong>27 food</strong> to hit <strong>1.0× break-even</strong>.
+          Reach <strong>54 food</strong> for the maximum <strong>2.0× payout</strong>.
+          Watch for 🟣 poison — it shrinks you.
+        </p>
+        <button id="btnStart" class="btn-primary">START GAME</button>
+      </div>
+    </div>
+
+    <!-- Overlay: Result -->
+    <div id="overlayResult" class="overlay hidden">
+      <div class="panel">
+        <h2 id="resTitle" class="res-title">GAME OVER</h2>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <span class="stat-label">FOOD EATEN</span>
+            <span class="stat-value" id="resFood">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">LENGTH</span>
+            <span class="stat-value" id="resLength">0</span>
+          </div>
+        </div>
+        <div class="mult-display">
+          <span class="mult-label">FINAL PAYOUT</span>
+          <span class="mult-value" id="resMult">0.00×</span>
+        </div>
+        <p id="resKicker" class="kicker"></p>
+        <p id="resHS" style="font-size:11px;color:rgba(255,255,255,0.35);font-weight:700;letter-spacing:1px;margin-bottom:16px;"></p>
+        <div class="btn-col">
+          <button id="btnAgain" class="btn-primary">PLAY AGAIN</button>
+          <button id="btnExit" class="btn-secondary">EXIT</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
