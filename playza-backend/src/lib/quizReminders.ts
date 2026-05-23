@@ -1,13 +1,21 @@
 import { supabaseAdmin } from '../config/supabase'
+import { Resend } from 'resend'
 
-// ── Send email via Supabase (uses your existing SMTP setup) ──────────────────
+const resend = new Resend(process.env.RESEND_API_KEY)
+
+// ── Send email via Resend ─────────────────────────────────────────────────────
 async function sendReminderEmail(to: string, subject: string, html: string) {
-  // Supabase doesn't expose a direct send-email API, so we use the admin
-  // invite flow as a transport, OR you can add resend/nodemailer here.
-  // For now we log and use push notifications as fallback.
-  console.log(`[QuizReminder] Email to ${to}: ${subject}`)
-  // TODO: plug in your SMTP here e.g. resend, nodemailer
-  // e.g. await resend.emails.send({ from: 'noreply@playza.games', to, subject, html })
+  try {
+    const { error } = await resend.emails.send({
+      from: 'Playza <noreply@playza.games>',
+      to,
+      subject,
+      html,
+    })
+    if (error) console.error('[QuizReminder] Resend error:', error)
+  } catch (err) {
+    console.error('[QuizReminder] Email failed:', err)
+  }
 }
 
 // ── Send push notification via web-push ──────────────────────────────────────
@@ -39,12 +47,11 @@ async function sendPushToUser(userId: string, title: string, body: string, url?:
   }
 }
 
-// ── Main reminder job — run every 30 minutes ─────────────────────────────────
+// ── Main reminder job — run every 30 minutes ──────────────────────────────────
 export async function runQuizReminderJob() {
   try {
     const now = new Date()
 
-    // Fetch all registration-phase tournaments with a scheduled_at date
     const { data: tournaments } = await supabaseAdmin
       .from('quiz_tournaments')
       .select('id, title, scheduled_at, prize_pool, entry_fee')
@@ -58,24 +65,20 @@ export async function runQuizReminderJob() {
       const diffMs    = scheduled.getTime() - now.getTime()
       const diffHours = diffMs / (1000 * 60 * 60)
 
-      // 24-hour reminder  (send between 23.5h and 24.5h before)
       const is24h = diffHours >= 23.5 && diffHours <= 24.5
-      // 2-hour reminder   (send between 1.75h and 2.25h before)
       const is2h  = diffHours >= 1.75 && diffHours <= 2.25
 
       if (!is24h && !is2h) continue
 
-      // Fetch all registered players for this tournament
       const { data: players } = await supabaseAdmin
         .from('quiz_players')
         .select('user_id, users!inner(email, username)')
         .eq('tournament_id', t.id)
-        .in('status', ['registered', 'alive'])
+        .eq('status', 'alive')
 
       if (!players || players.length === 0) continue
 
-      const timeLabel   = is24h ? '24 hours' : '2 hours'
-      const prizeText   = t.prize_pool > 0 ? ` Prize pool: ${t.prize_pool.toLocaleString()} ZA.` : ''
+      const prizeText    = t.prize_pool > 0 ? ` Prize pool: ${t.prize_pool.toLocaleString()} ZA.` : ''
       const scheduledStr = scheduled.toLocaleString('en-NG', {
         weekday: 'long', day: 'numeric', month: 'long',
         year: 'numeric', hour: '2-digit', minute: '2-digit',
@@ -83,7 +86,7 @@ export async function runQuizReminderJob() {
 
       for (const p of players) {
         const user = (p as any).users
-        if (!user) continue
+        if (!user?.email) continue
 
         const pushTitle = is24h
           ? `⏰ ${t.title} starts tomorrow!`
@@ -93,11 +96,8 @@ export async function runQuizReminderJob() {
           ? `Don't forget — your quiz tournament is tomorrow at ${scheduledStr}.${prizeText} Be ready!`
           : `Final call! ${t.title} starts in 2 hours (${scheduledStr}).${prizeText} Open the app now!`
 
-        // Push notification
         await sendPushToUser(p.user_id, pushTitle, pushBody, `/quiz/${t.id}`)
 
-        // Email reminder
-        const subject = pushTitle
         const html = `
           <div style="font-family:sans-serif;max-width:480px;margin:auto;background:#0e0e1a;color:#fff;border-radius:16px;overflow:hidden;">
             <div style="background:linear-gradient(135deg,#7c3aed,#a855f7);padding:32px 24px;text-align:center;">
@@ -118,7 +118,7 @@ export async function runQuizReminderJob() {
                 ${t.prize_pool > 0 ? `<p style="margin:4px 0;font-weight:700;">🏆 Prize Pool: ${t.prize_pool.toLocaleString()} ZA</p>` : ''}
                 <p style="margin:4px 0;font-weight:700;">⚡ 5 rounds of elimination</p>
               </div>
-              <p style="font-size:13px;opacity:0.6;">Open the Playza app and navigate to Tournaments when the game goes live. Wrong answer = eliminated. Last one standing wins!</p>
+              <p style="font-size:13px;opacity:0.6;">Open the Playza app when the game goes live. Wrong answer = eliminated. Last one standing wins!</p>
               <a href="https://playza.games/quiz/${t.id}" style="display:block;text-align:center;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;text-decoration:none;padding:14px;border-radius:12px;font-weight:900;font-size:14px;margin-top:16px;">
                 View Tournament →
               </a>
@@ -129,9 +129,8 @@ export async function runQuizReminderJob() {
           </div>
         `
 
-        await sendReminderEmail(user.email, subject, html)
-
-        console.log(`[QuizReminder] ${timeLabel} reminder sent to ${user.username} for "${t.title}"`)
+        await sendReminderEmail(user.email, pushTitle, html)
+        console.log(`[QuizReminder] ${is24h ? '24h' : '2h'} reminder sent to ${user.username} (${user.email}) for "${t.title}"`)
       }
     }
   } catch (err) {
