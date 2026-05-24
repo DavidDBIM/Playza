@@ -310,20 +310,23 @@ const Tournaments = () => {
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
             {/* Tabs */}
-            <div style={{ display: "flex", gap: 2, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: 3 }}>
+            <div className="flex gap-1" style={{ borderBottom: "2px solid var(--border)" }}>
               {([
-                { id: "live",      label: "🔴 Live"      },
+                { id: "live",      label: "🔴 Live Now"  },
                 { id: "upcoming",  label: "🟢 Upcoming"  },
                 { id: "completed", label: "⚫ Completed"  },
               ] as const).map(tab => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  style={{
-                    fontSize: 11, fontWeight: 600, padding: "6px 14px", borderRadius: 7, border: "none", cursor: "pointer",
-                    letterSpacing: "0.04em", textTransform: "uppercase", transition: "all 0.2s ease",
-                    background: activeTab === tab.id ? "rgba(168,85,247,0.25)" : "transparent",
-                    color: activeTab === tab.id ? "#c084fc" : "rgba(255,255,255,0.3)",
+                  className="px-4 pb-3 pt-1 text-xs font-black uppercase tracking-widest transition-all -mb-[2px]"
+                  style={activeTab === tab.id ? {
+                    color: "var(--primary)",
+                    borderBottom: "2px solid var(--primary)",
+                    background: "none", border: "none", cursor: "pointer",
+                  } : {
+                    color: "var(--muted-foreground)",
+                    background: "none", border: "none", cursor: "pointer",
                   }}
                 >
                   {tab.label}
