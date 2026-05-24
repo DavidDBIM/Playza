@@ -2,8 +2,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { Link } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { getQuizTournamentsApi, type QuizTournament } from "@/api/quiz.api";
-import { Search, Trophy, X, Users, ChevronDown, Zap, Eye, Brain, ArrowRight } from "lucide-react";
-import { ZASymbol } from "@/components/currency/ZASymbol";
+import { Search, Trophy, X, Users, ChevronDown, Zap, Eye, Brain } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent,
   DropdownMenuItem, DropdownMenuTrigger,
