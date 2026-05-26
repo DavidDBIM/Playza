@@ -7,6 +7,7 @@ import { ROUND_CONFIG, PRIZE_SPLIT } from './quiz.types'
 interface QuestionState {
   questionId: string
   questionText: string
+  imageUrl: string | null
   options: { A: string; B: string; C: string; D: string }
   correctOption: string
   timeLimitMs: number
@@ -280,6 +281,7 @@ async function sendNextQuestion(tournamentId: string, io: SocketServer, game: Ga
   game.currentQuestion = {
     questionId: q.id,
     questionText: q.question_text,
+    imageUrl: q.image_url ?? null,
     options: { A: q.option_a, B: q.option_b, C: q.option_c, D: q.option_d },
     correctOption: q.correct_option,
     timeLimitMs,
@@ -295,6 +297,7 @@ async function sendNextQuestion(tournamentId: string, io: SocketServer, game: Ga
     question_index: game.currentQuestionIndex,
     total_questions: questions.length,
     question_text: q.question_text,
+    image_url: q.image_url ?? null,
     options: { A: q.option_a, B: q.option_b, C: q.option_c, D: q.option_d },
     time_limit_ms: timeLimitMs,
     alive_count: game.alivePlayers.size,
@@ -379,6 +382,7 @@ export function setupQuizGateway(io: SocketServer) {
           question_index: game.currentQuestionIndex,
           total_questions: questions.length,
           question_text: game.currentQuestion.questionText,
+          image_url: game.currentQuestion.imageUrl,
           options: game.currentQuestion.options,
           time_limit_ms: remaining,
           alive_count: game.alivePlayers.size,
