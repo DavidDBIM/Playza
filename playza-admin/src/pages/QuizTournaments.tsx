@@ -2,11 +2,11 @@ import React, { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "../lib/api-client";
 import {
-  MdAdd, MdRefresh, MdPlayArrow, MdPeople, MdQuestionMark,
-  MdUpload, MdDelete, MdEdit, MdVisibility, MdClose,
-  MdCheckCircle, MdTimer, MdEmojiEvents, MdBolt,
+  MdAdd, MdRefresh, MdPlayArrow, MdQuestionMark,
+  MdUpload, MdDelete, MdEdit, MdClose,
+  MdCheckCircle, MdTimer, MdBolt, MdWarning,
 } from "react-icons/md";
-import { Trophy, Crown, ChevronDown, Zap, Shield, Flame, Star } from "lucide-react";
+import { Trophy, Crown, ChevronDown, Zap, Shield, Flame, Star, Users, Calendar, Eye } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface QuizTournament {
@@ -15,7 +15,7 @@ interface QuizTournament {
   description: string;
   entry_fee: number;
   prize_pool: number;
-  status: "draft" | "lobby" | "active" | "completed" | "cancelled";
+  status: "draft" | "registration" | "lobby" | "active" | "completed" | "cancelled";
   scheduled_at: string | null;
   started_at: string | null;
   player_count: number;
@@ -40,22 +40,23 @@ interface QuizQuestion {
 
 // ─── Round config ─────────────────────────────────────────────────────────────
 const ROUND_META = [
-  { round: 1, name: "Warm Up",        color: "text-green-400",  bg: "bg-green-500/10 border-green-500/30",  badge: "bg-green-500",  secs: 45, icon: <Star className="w-3.5 h-3.5" /> },
-  { round: 2, name: "Rising",         color: "text-blue-400",   bg: "bg-blue-500/10 border-blue-500/30",    badge: "bg-blue-500",   secs: 35, icon: <Zap className="w-3.5 h-3.5" /> },
-  { round: 3, name: "Heat Up",        color: "text-orange-400", bg: "bg-orange-500/10 border-orange-500/30",badge: "bg-orange-500", secs: 30, icon: <Flame className="w-3.5 h-3.5" /> },
-  { round: 4, name: "Danger Zone",    color: "text-red-400",    bg: "bg-red-500/10 border-red-500/30",      badge: "bg-red-500",    secs: 25, icon: <Shield className="w-3.5 h-3.5" /> },
-  { round: 5, name: "Final Showdown", color: "text-purple-400", bg: "bg-purple-500/10 border-purple-500/30",badge: "bg-purple-500", secs: 20, icon: <Crown className="w-3.5 h-3.5" /> },
+  { round: 1, name: "Warm Up",        color: "#22c55e", bg: "rgba(34,197,94,0.1)",   border: "rgba(34,197,94,0.3)",  secs: 45, icon: <Star  className="w-3 h-3" /> },
+  { round: 2, name: "Rising",         color: "#3b82f6", bg: "rgba(59,130,246,0.1)",  border: "rgba(59,130,246,0.3)", secs: 35, icon: <Zap   className="w-3 h-3" /> },
+  { round: 3, name: "Heat Up",        color: "#f97316", bg: "rgba(249,115,22,0.1)",  border: "rgba(249,115,22,0.3)", secs: 30, icon: <Flame className="w-3 h-3" /> },
+  { round: 4, name: "Danger Zone",    color: "#ef4444", bg: "rgba(239,68,68,0.1)",   border: "rgba(239,68,68,0.3)",  secs: 25, icon: <Shield className="w-3 h-3" /> },
+  { round: 5, name: "Final Showdown", color: "#a855f7", bg: "rgba(168,85,247,0.1)",  border: "rgba(168,85,247,0.3)", secs: 20, icon: <Crown className="w-3 h-3" /> },
 ];
 
-const STATUS_CFG: Record<string, { label: string; cls: string }> = {
-  draft:     { label: "Draft",     cls: "bg-slate-100 dark:bg-slate-800 text-slate-500" },
-  lobby:     { label: "Lobby",     cls: "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400" },
-  active:    { label: "Live 🔴",   cls: "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400" },
-  completed: { label: "Completed", cls: "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400" },
-  cancelled: { label: "Cancelled", cls: "bg-slate-100 dark:bg-slate-800 text-slate-400" },
-};
+const STATUS_CFG = {
+  draft:        { label: "Draft",             color: "#64748b", glow: "rgba(100,116,139,0.3)",  dot: "#64748b" },
+  registration: { label: "Registration Open", color: "#22c55e", glow: "rgba(34,197,94,0.35)",   dot: "#22c55e" },
+  lobby:        { label: "Lobby Open",        color: "#3b82f6", glow: "rgba(59,130,246,0.35)",  dot: "#3b82f6" },
+  active:       { label: "Live Now",          color: "#ef4444", glow: "rgba(239,68,68,0.4)",    dot: "#ef4444" },
+  completed:    { label: "Completed",         color: "#10b981", glow: "rgba(16,185,129,0.3)",   dot: "#10b981" },
+  cancelled:    { label: "Cancelled",         color: "#475569", glow: "rgba(71,85,105,0.2)",    dot: "#475569" },
+} as const;
 
-// ─── API helpers ──────────────────────────────────────────────────────────────
+// ─── API ──────────────────────────────────────────────────────────────────────
 const api = {
   listTournaments: async (): Promise<QuizTournament[]> => {
     const { data } = await apiClient.get("/admin/quiz/tournaments");
@@ -92,64 +93,120 @@ const api = {
   deleteQuestion: async (qId: string) => {
     await apiClient.delete(`/admin/quiz/questions/${qId}`);
   },
+  deleteTournament: async (id: string) => {
+    const { data } = await apiClient.delete(`/admin/quiz/tournaments/${id}`);
+    return data;
+  },
+  cancelTournament: async ({ id, reason }: { id: string; reason: string }) => {
+    const { data } = await apiClient.post(`/admin/quiz/tournaments/${id}/cancel`, { reason });
+    return data;
+  },
   getLive: async (id: string) => {
     const { data } = await apiClient.get(`/admin/quiz/tournaments/${id}/live`);
     return data.data;
   },
 };
 
-// ─── Create Tournament Modal ──────────────────────────────────────────────────
+// ─── Shared Input style ───────────────────────────────────────────────────────
+const inputCls = "w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-violet-500/60 focus:border-violet-500/40 transition-all";
+const labelCls = "block text-[10px] font-black text-white/40 uppercase tracking-widest mb-1.5";
+
+// ─── Create Modal ─────────────────────────────────────────────────────────────
 function CreateTournamentModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
   const [form, setForm] = useState({ title: "", description: "", entry_fee: 0, scheduled_at: "" });
   const [error, setError] = useState("");
 
   const { mutate, isPending } = useMutation({
-    mutationFn: () => api.createTournament({
-      title: form.title,
-      description: form.description,
-      entry_fee: Number(form.entry_fee),
-      scheduled_at: form.scheduled_at || null,
-    } as any),
+    mutationFn: () => api.createTournament({ title: form.title, description: form.description, entry_fee: Number(form.entry_fee), scheduled_at: form.scheduled_at || null } as any),
     onSuccess: () => { onCreated(); onClose(); },
     onError: (err: any) => setError(err.response?.data?.message ?? "Failed to create"),
   });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
-      <div className="bg-card border border-border rounded-2xl w-full max-w-md shadow-2xl" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
-          <h3 className="font-black text-foreground flex items-center gap-2"><Trophy className="w-4 h-4 text-primary" /> New Tournament</h3>
-          <button onClick={onClose} className="w-7 h-7 rounded-lg bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground"><MdClose /></button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.8)", backdropFilter: "blur(16px)" }} onClick={onClose}>
+      <div className="w-full max-w-md rounded-2xl overflow-hidden" style={{ background: "linear-gradient(135deg, rgba(30,20,60,0.98) 0%, rgba(15,10,40,0.98) 100%)", border: "1px solid rgba(139,92,246,0.3)", boxShadow: "0 0 60px rgba(139,92,246,0.2), inset 0 1px 0 rgba(255,255,255,0.05)" }} onClick={e => e.stopPropagation()}>
+        <div className="px-6 py-5 border-b border-white/5 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)", boxShadow: "0 0 20px rgba(124,58,237,0.4)" }}>
+              <Trophy className="w-4 h-4 text-white" />
+            </div>
+            <h3 className="font-black text-white text-base tracking-tight">New Tournament</h3>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 rounded-xl flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-all"><MdClose /></button>
         </div>
-
-        <div className="p-5 space-y-4">
-          {error && <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl px-4 py-2 text-red-600 dark:text-red-400 text-sm font-medium">{error}</div>}
-
+        <div className="p-6 space-y-4">
+          {error && <div className="rounded-xl px-4 py-3 text-sm font-bold" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171" }}>{error}</div>}
           {[
-            { label: "Title *", key: "title", type: "text", placeholder: "Quiz Championship #1" },
-            { label: "Description", key: "description", type: "text", placeholder: "Test your knowledge..." },
-            { label: "Entry Fee (ZA Tokens)", key: "entry_fee", type: "number", placeholder: "0 = Free" },
-            { label: "Scheduled At (optional)", key: "scheduled_at", type: "datetime-local", placeholder: "" },
+            { label: "Title *",               key: "title",        type: "text",           placeholder: "Quiz Championship #1" },
+            { label: "Description",           key: "description",  type: "text",           placeholder: "Test your knowledge..." },
+            { label: "Entry Fee (ZA Tokens)", key: "entry_fee",    type: "number",         placeholder: "0 = Free" },
+            { label: "Scheduled At",          key: "scheduled_at", type: "datetime-local", placeholder: "" },
           ].map(f => (
             <div key={f.key}>
-              <label className="block text-[10px] font-black text-muted-foreground uppercase tracking-wider mb-1.5">{f.label}</label>
-              <input
-                type={f.type}
-                placeholder={f.placeholder}
-                value={(form as any)[f.key]}
-                onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))}
-                className="w-full px-3 py-2.5 rounded-xl bg-muted border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-              />
+              <label className={labelCls}>{f.label}</label>
+              <input type={f.type} placeholder={f.placeholder} value={(form as any)[f.key]} onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))} className={inputCls} />
             </div>
           ))}
-
-          <button
-            onClick={() => mutate()}
-            disabled={isPending || !form.title}
-            className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-black text-sm disabled:opacity-50 flex items-center justify-center gap-2"
-          >
+          <button onClick={() => mutate()} disabled={isPending || !form.title} className="w-full py-3 rounded-xl font-black text-sm text-white disabled:opacity-40 flex items-center justify-center gap-2 transition-all hover:opacity-90" style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)", boxShadow: "0 0 24px rgba(124,58,237,0.35)" }}>
             {isPending ? <><MdRefresh className="animate-spin" /> Creating...</> : <><MdAdd /> Create Tournament</>}
           </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Edit Modal ───────────────────────────────────────────────────────────────
+function EditTournamentModal({ tournament, onClose, onSaved }: { tournament: QuizTournament; onClose: () => void; onSaved: () => void }) {
+  const toLocalDT = (iso: string | null) => {
+    if (!iso) return "";
+    const d = new Date(iso);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+  const [form, setForm] = useState({ title: tournament.title, description: tournament.description ?? "", entry_fee: tournament.entry_fee, scheduled_at: toLocalDT(tournament.scheduled_at) });
+  const [error, setError] = useState("");
+
+  const { mutate, isPending } = useMutation({
+    mutationFn: () => api.updateTournament({ id: tournament.id, title: form.title, description: form.description, entry_fee: Number(form.entry_fee), scheduled_at: form.scheduled_at || null } as any),
+    onSuccess: () => { onSaved(); onClose(); },
+    onError: (err: any) => setError(err.response?.data?.message ?? "Failed to save"),
+  });
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.8)", backdropFilter: "blur(16px)" }} onClick={onClose}>
+      <div className="w-full max-w-md rounded-2xl overflow-hidden" style={{ background: "linear-gradient(135deg, rgba(20,30,60,0.98) 0%, rgba(10,15,40,0.98) 100%)", border: "1px solid rgba(59,130,246,0.3)", boxShadow: "0 0 60px rgba(59,130,246,0.15), inset 0 1px 0 rgba(255,255,255,0.05)" }} onClick={e => e.stopPropagation()}>
+        <div className="px-6 py-5 border-b border-white/5 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #2563eb, #0ea5e9)", boxShadow: "0 0 20px rgba(37,99,235,0.4)" }}>
+              <MdEdit className="text-white text-lg" />
+            </div>
+            <div>
+              <h3 className="font-black text-white text-base tracking-tight">Edit Tournament</h3>
+              <p className="text-white/40 text-[10px] font-bold uppercase tracking-wider">{tournament.title}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 rounded-xl flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-all"><MdClose /></button>
+        </div>
+        <div className="p-6 space-y-4">
+          {error && <div className="rounded-xl px-4 py-3 text-sm font-bold" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171" }}>{error}</div>}
+          {[
+            { label: "Title *",               key: "title",        type: "text",           placeholder: "Quiz Championship #1" },
+            { label: "Description",           key: "description",  type: "text",           placeholder: "Test your knowledge..." },
+            { label: "Entry Fee (ZA Tokens)", key: "entry_fee",    type: "number",         placeholder: "0 = Free" },
+            { label: "Reschedule Date/Time",  key: "scheduled_at", type: "datetime-local", placeholder: "" },
+          ].map(f => (
+            <div key={f.key}>
+              <label className={labelCls}>{f.label}</label>
+              <input type={f.type} placeholder={f.placeholder} value={(form as any)[f.key]} onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))} className={inputCls} />
+            </div>
+          ))}
+          <div className="flex gap-2 pt-1">
+            <button onClick={onClose} className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white/60 hover:text-white transition-all" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>Cancel</button>
+            <button onClick={() => mutate()} disabled={isPending || !form.title} className="flex-1 py-2.5 rounded-xl font-black text-sm text-white disabled:opacity-40 flex items-center justify-center gap-2 transition-all hover:opacity-90" style={{ background: "linear-gradient(135deg, #2563eb, #0ea5e9)", boxShadow: "0 0 20px rgba(37,99,235,0.3)" }}>
+              {isPending ? <><MdRefresh className="animate-spin" /> Saving...</> : <><MdCheckCircle /> Save Changes</>}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -164,45 +221,25 @@ function QuestionManagerModal({ tournament, onClose }: { tournament: QuizTournam
   const [addMode, setAddMode] = useState(false);
   const [importError, setImportError] = useState("");
   const [importSuccess, setImportSuccess] = useState("");
-  const [newQ, setNewQ] = useState({
-    question_text: "", option_a: "", option_b: "", option_c: "", option_d: "", correct_option: "A", image_url: "",
-  });
+  const [newQ, setNewQ] = useState({ question_text: "", option_a: "", option_b: "", option_c: "", option_d: "", correct_option: "A", image_url: "" });
 
-  const { data: questions = [], refetch } = useQuery({
-    queryKey: ["admin-quiz-questions", tournament.id],
-    queryFn: () => api.getQuestions(tournament.id),
-  });
-
+  const { data: questions = [], refetch } = useQuery({ queryKey: ["admin-quiz-questions", tournament.id], queryFn: () => api.getQuestions(tournament.id) });
   const { mutate: addQ, isPending: adding } = useMutation({
     mutationFn: () => api.addQuestion(tournament.id, { ...newQ, round_number: activeRound, image_url: newQ.image_url?.trim() || null }),
-    onSuccess: () => {
-      refetch();
-      queryClient.invalidateQueries({ queryKey: ["admin-quiz-tournaments"] });
-      setNewQ({ question_text: "", option_a: "", option_b: "", option_c: "", option_d: "", correct_option: "A", image_url: "" });
-      setAddMode(false);
-    },
+    onSuccess: () => { refetch(); queryClient.invalidateQueries({ queryKey: ["admin-quiz-tournaments"] }); setNewQ({ question_text: "", option_a: "", option_b: "", option_c: "", option_d: "", correct_option: "A", image_url: "" }); setAddMode(false); },
   });
-
   const { mutate: deleteQ } = useMutation({
     mutationFn: api.deleteQuestion,
     onSuccess: () => { refetch(); queryClient.invalidateQueries({ queryKey: ["admin-quiz-tournaments"] }); },
   });
-
   const { mutate: bulkImport, isPending: importing } = useMutation({
     mutationFn: (qs: Partial<QuizQuestion>[]) => api.bulkImport(tournament.id, qs),
-    onSuccess: (data) => {
-      setImportSuccess(`Imported ${data.data?.length ?? 0} questions successfully!`);
-      setImportError("");
-      refetch();
-      queryClient.invalidateQueries({ queryKey: ["admin-quiz-tournaments"] });
-      setTimeout(() => setImportSuccess(""), 4000);
-    },
+    onSuccess: (data) => { setImportSuccess(`Imported ${data.data?.length ?? 0} questions!`); setImportError(""); refetch(); queryClient.invalidateQueries({ queryKey: ["admin-quiz-tournaments"] }); setTimeout(() => setImportSuccess(""), 4000); },
     onError: (err: any) => setImportError(err.response?.data?.message ?? "Import failed"),
   });
 
   function handleFileImport(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const file = e.target.files?.[0]; if (!file) return;
     const reader = new FileReader();
     reader.onload = (ev) => {
       try {
@@ -210,115 +247,90 @@ function QuestionManagerModal({ tournament, onClose }: { tournament: QuizTournam
         const qs = Array.isArray(parsed) ? parsed : parsed.questions;
         if (!Array.isArray(qs)) throw new Error("Expected an array of questions");
         bulkImport(qs);
-      } catch (err: any) {
-        setImportError(err.message ?? "Invalid JSON format");
-      }
+      } catch (err: any) { setImportError(err.message ?? "Invalid JSON"); }
     };
-    reader.readAsText(file);
-    e.target.value = "";
+    reader.readAsText(file); e.target.value = "";
   }
 
   const roundQuestions = questions.filter(q => q.round_number === activeRound);
-  const roundMeta = ROUND_META[activeRound - 1];
+  const rm = ROUND_META[activeRound - 1];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={onClose}>
-      <div className="bg-card border border-border rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl" onClick={e => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(16px)" }} onClick={onClose}>
+      <div className="w-full max-w-3xl max-h-[90vh] flex flex-col rounded-2xl overflow-hidden" style={{ background: "linear-gradient(160deg, rgba(15,10,35,0.99) 0%, rgba(5,5,20,0.99) 100%)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 0 80px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.04)" }} onClick={e => e.stopPropagation()}>
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 shrink-0">
           <div>
-            <h3 className="font-black text-foreground">{tournament.title} — Questions</h3>
-            <p className="text-xs text-muted-foreground">{questions.length} total questions</p>
+            <h3 className="font-black text-white text-base">{tournament.title}</h3>
+            <p className="text-white/30 text-xs font-bold">{questions.length} questions total</p>
           </div>
           <div className="flex items-center gap-2">
             <input ref={fileRef} type="file" accept=".json" onChange={handleFileImport} className="hidden" />
-            <button
-              onClick={() => fileRef.current?.click()}
-              disabled={importing}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-muted hover:bg-muted/80 text-foreground text-xs font-bold transition-all"
-            >
-              <MdUpload className={importing ? "animate-spin" : ""} />
-              {importing ? "Importing..." : "Import JSON"}
+            <button onClick={() => fileRef.current?.click()} disabled={importing} className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-white/60 hover:text-white transition-all" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
+              <MdUpload className={importing ? "animate-spin" : ""} />{importing ? "Importing..." : "Import JSON"}
             </button>
-            <button onClick={onClose} className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground"><MdClose /></button>
+            <button onClick={onClose} className="w-8 h-8 rounded-xl flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-all"><MdClose /></button>
           </div>
         </div>
 
         {/* Status messages */}
         {(importError || importSuccess) && (
-          <div className={`mx-5 mt-4 px-4 py-2.5 rounded-xl text-sm font-medium border ${
-            importSuccess ? "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400" :
-            "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400"
-          }`}>
+          <div className={`mx-6 mt-4 px-4 py-2.5 rounded-xl text-sm font-bold border shrink-0`} style={importSuccess ? { background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", color: "#34d399" } : { background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171" }}>
             {importSuccess || importError}
           </div>
         )}
 
-        {/* JSON format hint */}
-        <div className="mx-5 mt-3 bg-slate-50 dark:bg-slate-900/50 border border-border rounded-xl px-4 py-2.5 shrink-0">
-          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider mb-1">JSON Import Format</p>
-          <code className="text-[10px] text-muted-foreground font-mono leading-relaxed">
-            {`[{"round_number":1,"question_text":"...","option_a":"...","option_b":"...","option_c":"...","option_d":"...","correct_option":"A"}]`}
-          </code>
+        {/* JSON hint */}
+        <div className="mx-6 mt-3 px-4 py-2.5 rounded-xl shrink-0" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}>
+          <p className="text-[9px] font-black text-white/25 uppercase tracking-widest mb-1">JSON Format</p>
+          <code className="text-[9px] text-white/30 font-mono">{`[{"round_number":1,"question_text":"...","option_a":"...","option_b":"...","option_c":"...","option_d":"...","correct_option":"A"}]`}</code>
         </div>
 
         {/* Round tabs */}
-        <div className="flex gap-2 px-5 py-3 border-b border-border shrink-0 overflow-x-auto">
+        <div className="flex gap-2 px-6 py-3 border-b border-white/5 shrink-0 overflow-x-auto">
           {ROUND_META.map(r => {
             const count = questions.filter(q => q.round_number === r.round).length;
+            const active = activeRound === r.round;
             return (
-              <button
-                key={r.round}
-                onClick={() => { setActiveRound(r.round); setAddMode(false); }}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-black whitespace-nowrap transition-all border ${
-                  activeRound === r.round ? r.bg : "bg-muted border-transparent text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <span className={activeRound === r.round ? r.color : ""}>{r.icon}</span>
-                <span className={activeRound === r.round ? r.color : ""}>{r.name}</span>
-                <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-black ${activeRound === r.round ? r.badge + " text-white" : "bg-muted-foreground/20 text-muted-foreground"}`}>
-                  {count}/{r.secs}s
-                </span>
+              <button key={r.round} onClick={() => { setActiveRound(r.round); setAddMode(false); }} className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-black whitespace-nowrap transition-all" style={active ? { background: r.bg, border: `1px solid ${r.border}`, color: r.color } : { background: "rgba(255,255,255,0.03)", border: "1px solid transparent", color: "rgba(255,255,255,0.3)" }}>
+                <span style={active ? { color: r.color } : {}}>{r.icon}</span>
+                <span>{r.name}</span>
+                <span className="text-[9px] px-1.5 py-0.5 rounded-md font-black" style={active ? { background: r.color, color: "#000" } : { background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.3)" }}>{count}</span>
               </button>
             );
           })}
         </div>
 
-        {/* Question list */}
-        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-2">
+        {/* Questions */}
+        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-2">
           {roundQuestions.length === 0 && !addMode ? (
-            <div className="py-12 text-center text-muted-foreground">
-              <MdQuestionMark className="text-4xl mx-auto mb-2 opacity-30" />
-              <p className="font-bold text-sm">No questions for {roundMeta?.name} yet</p>
-              <p className="text-xs opacity-60 mt-1">Add one below or import a JSON file</p>
+            <div className="py-12 text-center">
+              <MdQuestionMark className="text-4xl mx-auto mb-2 opacity-10 text-white" />
+              <p className="font-bold text-sm text-white/30">No questions for {rm?.name}</p>
+              <p className="text-xs text-white/20 mt-1">Add one below or import a JSON file</p>
             </div>
           ) : (
             roundQuestions.map((q, i) => (
-              <div key={q.id} className="bg-muted/40 border border-border rounded-xl p-3.5 group hover:border-primary/30 transition-all">
+              <div key={q.id} className="rounded-xl p-3.5 group transition-all" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="text-[10px] font-black text-muted-foreground">Q{i + 1}</span>
-                      <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md ${roundMeta?.badge} text-white`}>{roundMeta?.name}</span>
-                      <span className="text-[9px] font-bold text-muted-foreground flex items-center gap-0.5"><MdTimer className="text-xs" />{q.time_limit_secs}s</span>
+                      <span className="text-[10px] font-black text-white/30">Q{i + 1}</span>
+                      <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md" style={{ background: rm?.color, color: "#000" }}>{rm?.name}</span>
+                      <span className="text-[9px] font-bold text-white/30 flex items-center gap-0.5"><MdTimer className="text-xs" />{q.time_limit_secs}s</span>
                     </div>
-                    <p className="text-sm font-bold text-foreground mb-2 leading-snug">{q.question_text}</p>
+                    <p className="text-sm font-bold text-white mb-2 leading-snug">{q.question_text}</p>
                     <div className="grid grid-cols-2 gap-1.5">
                       {(["A", "B", "C", "D"] as const).map(opt => (
-                        <div key={opt} className={`flex items-center gap-1.5 text-xs px-2 py-1 rounded-lg ${
-                          q.correct_option === opt ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-black" : "text-muted-foreground"
-                        }`}>
-                          <span className={`font-black text-[10px] ${q.correct_option === opt ? "text-emerald-500" : "text-muted-foreground/50"}`}>{opt}</span>
+                        <div key={opt} className={`flex items-center gap-1.5 text-xs px-2 py-1 rounded-lg`} style={q.correct_option === opt ? { background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)", color: "#4ade80" } : { color: "rgba(255,255,255,0.3)" }}>
+                          <span className="font-black text-[10px]">{opt}</span>
                           {(q as any)[`option_${opt.toLowerCase()}`]}
-                          {q.correct_option === opt && <MdCheckCircle className="ml-auto text-emerald-500 shrink-0" />}
+                          {q.correct_option === opt && <MdCheckCircle className="ml-auto text-green-400 shrink-0" />}
                         </div>
                       ))}
                     </div>
                   </div>
-                  <button
-                    onClick={() => deleteQ(q.id)}
-                    className="opacity-0 group-hover:opacity-100 w-7 h-7 rounded-lg bg-red-100 dark:bg-red-900/30 text-red-500 flex items-center justify-center transition-all hover:bg-red-200 shrink-0 mt-0.5"
-                  >
+                  <button onClick={() => deleteQ(q.id)} className="opacity-0 group-hover:opacity-100 w-7 h-7 rounded-lg flex items-center justify-center transition-all" style={{ background: "rgba(239,68,68,0.15)", color: "#f87171" }}>
                     <MdDelete className="text-sm" />
                   </button>
                 </div>
@@ -326,88 +338,49 @@ function QuestionManagerModal({ tournament, onClose }: { tournament: QuizTournam
             ))
           )}
 
-          {/* Add question form */}
           {addMode && (
-            <div className={`border rounded-2xl p-4 space-y-3 ${roundMeta?.bg}`}>
-              <p className="text-xs font-black text-foreground uppercase tracking-wider">Add Question — {roundMeta?.name}</p>
-              <textarea
-                rows={2}
-                placeholder="Question text..."
-                value={newQ.question_text}
-                onChange={e => setNewQ(p => ({ ...p, question_text: e.target.value }))}
-                className="w-full px-3 py-2.5 rounded-xl bg-card border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
-              />
+            <div className="rounded-2xl p-4 space-y-3" style={{ background: rm?.bg, border: `1px solid ${rm?.border}` }}>
+              <p className="text-xs font-black uppercase tracking-wider" style={{ color: rm?.color }}>Add Question — {rm?.name}</p>
+              <textarea rows={2} placeholder="Question text..." value={newQ.question_text} onChange={e => setNewQ(p => ({ ...p, question_text: e.target.value }))} className={inputCls + " resize-none"} />
+
               {/* Optional image URL */}
               <div>
-                <label className="block text-[10px] font-black text-muted-foreground uppercase tracking-wider mb-1">
-                  Image URL <span className="font-normal normal-case text-muted-foreground/40">(optional)</span>
-                </label>
-                <input
-                  type="url"
-                  placeholder="https://example.com/image.png"
-                  value={newQ.image_url}
-                  onChange={e => setNewQ(p => ({ ...p, image_url: e.target.value }))}
-                  className="w-full px-3 py-2 rounded-xl bg-card border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                />
+                <label className={labelCls}>Image URL <span style={{ fontWeight: 400, textTransform: "none", opacity: 0.5 }}>(optional)</span></label>
+                <input type="url" placeholder="https://example.com/image.png" value={newQ.image_url} onChange={e => setNewQ(p => ({ ...p, image_url: e.target.value }))} className={inputCls} />
                 {newQ.image_url && (
-                  <img
-                    src={newQ.image_url} alt="preview"
-                    className="mt-2 w-full max-h-28 object-cover rounded-xl border border-border"
-                    onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-                  />
+                  <img src={newQ.image_url} alt="preview" className="mt-2 w-full max-h-28 object-cover rounded-xl" style={{ border: "1px solid rgba(255,255,255,0.1)" }}
+                    onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
                 )}
               </div>
-
               <div className="grid grid-cols-2 gap-2">
                 {(["a", "b", "c", "d"] as const).map(k => (
                   <div key={k} className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-muted-foreground uppercase">{k}</span>
-                    <input
-                      type="text"
-                      placeholder={`Option ${k.toUpperCase()}`}
-                      value={(newQ as any)[`option_${k}`]}
-                      onChange={e => setNewQ(p => ({ ...p, [`option_${k}`]: e.target.value }))}
-                      className="w-full pl-7 pr-3 py-2 rounded-xl bg-card border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                    />
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-white/30 uppercase">{k}</span>
+                    <input type="text" placeholder={`Option ${k.toUpperCase()}`} value={(newQ as any)[`option_${k}`]} onChange={e => setNewQ(p => ({ ...p, [`option_${k}`]: e.target.value }))} className={inputCls + " pl-7"} />
                   </div>
                 ))}
               </div>
               <div className="flex items-center gap-3">
                 <div className="relative">
-                  <label className="text-[10px] font-black text-muted-foreground uppercase tracking-wider mr-2">Correct:</label>
-                  <select
-                    value={newQ.correct_option}
-                    onChange={e => setNewQ(p => ({ ...p, correct_option: e.target.value }))}
-                    className="appearance-none px-3 py-2 pr-7 rounded-xl bg-card border border-border text-sm font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                  >
-                    {["A", "B", "C", "D"].map(o => <option key={o} value={o}>{o}</option>)}
+                  <label className="text-[10px] font-black text-white/40 uppercase mr-2">Correct:</label>
+                  <select value={newQ.correct_option} onChange={e => setNewQ(p => ({ ...p, correct_option: e.target.value }))} className="appearance-none px-3 py-2 pr-7 rounded-xl text-sm font-bold text-white focus:outline-none" style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                    {["A", "B", "C", "D"].map(o => <option key={o} value={o} style={{ background: "#1e1035" }}>{o}</option>)}
                   </select>
-                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground pointer-events-none" />
+                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-white/30 pointer-events-none" />
                 </div>
-                <button
-                  onClick={() => addQ()}
-                  disabled={adding || !newQ.question_text || !newQ.option_a || !newQ.option_b || !newQ.option_c || !newQ.option_d}
-                  className="flex-1 py-2 rounded-xl bg-primary text-primary-foreground font-black text-xs disabled:opacity-50 flex items-center justify-center gap-1"
-                >
-                  {adding ? <MdRefresh className="animate-spin" /> : <MdAdd />}
-                  {adding ? "Adding..." : "Add Question"}
+                <button onClick={() => addQ()} disabled={adding || !newQ.question_text || !newQ.option_a || !newQ.option_b || !newQ.option_c || !newQ.option_d} className="flex-1 py-2 rounded-xl font-black text-xs text-white disabled:opacity-40 flex items-center justify-center gap-1 transition-all" style={{ background: rm?.color, color: "#000" }}>
+                  {adding ? <MdRefresh className="animate-spin" /> : <MdAdd />}{adding ? "Adding..." : "Add Question"}
                 </button>
-                <button onClick={() => setAddMode(false)} className="px-3 py-2 rounded-xl bg-muted text-muted-foreground font-bold text-xs hover:bg-muted/80">
-                  Cancel
-                </button>
+                <button onClick={() => setAddMode(false)} className="px-3 py-2 rounded-xl font-bold text-xs text-white/50 hover:text-white transition-all" style={{ background: "rgba(255,255,255,0.05)" }}>Cancel</button>
               </div>
             </div>
           )}
         </div>
 
-        {/* Footer */}
         {!addMode && (
-          <div className="px-5 py-3 border-t border-border shrink-0">
-            <button
-              onClick={() => setAddMode(true)}
-              className="w-full py-2.5 rounded-xl border-2 border-dashed border-primary/30 text-primary font-bold text-sm hover:border-primary/60 hover:bg-primary/5 transition-all flex items-center justify-center gap-2"
-            >
-              <MdAdd /> Add Question to {roundMeta?.name}
+          <div className="px-6 py-4 border-t border-white/5 shrink-0">
+            <button onClick={() => setAddMode(true)} className="w-full py-2.5 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2" style={{ background: "rgba(255,255,255,0.03)", border: `1px dashed ${rm?.border}`, color: rm?.color }}>
+              <MdAdd /> Add Question to {rm?.name}
             </button>
           </div>
         )}
@@ -418,71 +391,46 @@ function QuestionManagerModal({ tournament, onClose }: { tournament: QuizTournam
 
 // ─── Live Monitor Modal ───────────────────────────────────────────────────────
 function LiveMonitorModal({ tournament, onClose }: { tournament: QuizTournament; onClose: () => void }) {
-  const { data: live, isLoading } = useQuery({
-    queryKey: ["admin-quiz-live", tournament.id],
-    queryFn: () => api.getLive(tournament.id),
-    refetchInterval: 3000,
-  });
-
+  const { data: live, isLoading } = useQuery({ queryKey: ["admin-quiz-live", tournament.id], queryFn: () => api.getLive(tournament.id), refetchInterval: 3000 });
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={onClose}>
-      <div className="bg-card border border-border rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
-          <div className="flex items-center gap-2">
-            <div className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
-            <h3 className="font-black text-foreground">Live Monitor — {tournament.title}</h3>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(16px)" }} onClick={onClose}>
+      <div className="w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl overflow-hidden" style={{ background: "linear-gradient(160deg, rgba(20,5,5,0.99) 0%, rgba(8,2,2,0.99) 100%)", border: "1px solid rgba(239,68,68,0.2)", boxShadow: "0 0 60px rgba(239,68,68,0.1)" }} onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
+          <div className="flex items-center gap-3">
+            <div className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" style={{ boxShadow: "0 0 8px #ef4444" }} />
+            <h3 className="font-black text-white">Live Monitor — {tournament.title}</h3>
           </div>
-          <button onClick={onClose} className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground"><MdClose /></button>
+          <button onClick={onClose} className="w-8 h-8 rounded-xl flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-all"><MdClose /></button>
         </div>
-
-        <div className="flex-1 overflow-y-auto p-5 space-y-4">
+        <div className="flex-1 overflow-y-auto p-6 space-y-4">
           {isLoading ? (
-            <div className="py-10 flex items-center justify-center text-muted-foreground">
-              <MdRefresh className="animate-spin text-2xl mr-2" /> Loading live data...
-            </div>
+            <div className="py-10 flex items-center justify-center text-white/40"><MdRefresh className="animate-spin text-2xl mr-2" /> Loading...</div>
           ) : (
             <>
-              {/* Stats */}
               <div className="grid grid-cols-3 gap-3">
                 {[
-                  { label: "Round", value: live?.tournament?.current_round ?? 0, color: "text-primary" },
-                  { label: "Alive", value: live?.stats?.alive ?? 0, color: "text-green-500" },
-                  { label: "Eliminated", value: live?.stats?.eliminated ?? 0, color: "text-red-500" },
+                  { label: "Round",      value: live?.tournament?.current_round ?? 0, color: "#a855f7" },
+                  { label: "Alive",      value: live?.stats?.alive ?? 0,              color: "#22c55e" },
+                  { label: "Eliminated", value: live?.stats?.eliminated ?? 0,         color: "#ef4444" },
                 ].map(s => (
-                  <div key={s.label} className="bg-muted/50 rounded-2xl p-4 border border-border text-center">
-                    <p className={`text-3xl font-black ${s.color}`}>{s.value}</p>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mt-1">{s.label}</p>
+                  <div key={s.label} className="rounded-2xl p-4 text-center" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                    <p className="text-3xl font-black" style={{ color: s.color }}>{s.value}</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-white/30 mt-1">{s.label}</p>
                   </div>
                 ))}
               </div>
-
-              {/* Leaderboard */}
-              <div className="bg-muted/30 rounded-2xl border border-border overflow-hidden">
-                <div className="px-4 py-3 border-b border-border">
-                  <p className="text-xs font-black text-muted-foreground uppercase tracking-wider">Live Leaderboard</p>
-                </div>
-                <div className="divide-y divide-border">
+              <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.06)" }}>
+                <div className="px-4 py-3 border-b border-white/5"><p className="text-xs font-black text-white/30 uppercase tracking-wider">Live Leaderboard</p></div>
+                <div className="divide-y divide-white/5">
                   {live?.leaderboard?.slice(0, 20).map((entry: any, i: number) => (
                     <div key={i} className="flex items-center gap-3 px-4 py-2.5">
-                      <span className="text-sm font-black text-muted-foreground w-5 text-center">
-                        {i === 0 ? "👑" : i + 1}
-                      </span>
-                      <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center text-xs font-black text-primary">
-                        {entry.username?.[0]?.toUpperCase()}
-                      </div>
+                      <span className="text-sm font-black text-white/30 w-5 text-center">{i === 0 ? "👑" : i + 1}</span>
+                      <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black text-white" style={{ background: "rgba(124,58,237,0.3)" }}>{entry.username?.[0]?.toUpperCase()}</div>
                       <div className="flex-1">
-                        <p className="text-sm font-bold text-foreground">{entry.username}</p>
-                        <p className="text-[10px] text-muted-foreground">{entry.correct_answers} correct</p>
+                        <p className="text-sm font-bold text-white">{entry.username}</p>
+                        <p className="text-[10px] text-white/30">{entry.correct_answers} correct</p>
                       </div>
-                      <div className={`w-2 h-2 rounded-full ${
-                        entry.status === "winner" ? "bg-yellow-400" :
-                        entry.status === "alive" ? "bg-green-400" : "bg-red-500"
-                      }`} />
-                      <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
-                        entry.status === "winner" ? "bg-yellow-100 text-yellow-700" :
-                        entry.status === "alive" ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400" :
-                        "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400"
-                      }`}>
+                      <span className="text-[10px] font-black px-2 py-0.5 rounded-full" style={entry.status === "winner" ? { background: "rgba(234,179,8,0.15)", color: "#fbbf24" } : entry.status === "alive" ? { background: "rgba(34,197,94,0.15)", color: "#4ade80" } : { background: "rgba(239,68,68,0.15)", color: "#f87171" }}>
                         {entry.status}
                       </span>
                     </div>
@@ -497,195 +445,486 @@ function LiveMonitorModal({ tournament, onClose }: { tournament: QuizTournament;
   );
 }
 
-// ─── Main Component ───────────────────────────────────────────────────────────
+// ─── Tournament Card ──────────────────────────────────────────────────────────
+function TournamentCard({
+  t,
+  onManageQ, onEdit, onMonitor, onStart, onLaunch, onDisable, onDelete,
+  startPending, launchPending,
+}: {
+  t: QuizTournament;
+  onManageQ: () => void; onEdit: () => void; onMonitor: () => void;
+  onStart: () => void; onLaunch: () => void; onDisable: () => void; onDelete: () => void;
+  startPending: boolean; launchPending: boolean;
+}) {
+  const sc = STATUS_CFG[t.status] ?? STATUS_CFG.draft;
+  const isLive = t.status === "active";
+  const isReg  = t.status === "registration";
+  const isLobby = t.status === "lobby";
+  const isDraft = t.status === "draft";
+  const isDone  = t.status === "completed" || t.status === "cancelled";
+
+  return (
+    <div
+      className="relative rounded-2xl overflow-hidden flex flex-col transition-all duration-300 group"
+      style={{
+        background: "linear-gradient(160deg, rgba(20,15,40,0.95) 0%, rgba(10,8,25,0.95) 100%)",
+        border: `1px solid ${isLive ? "rgba(239,68,68,0.4)" : isReg ? "rgba(34,197,94,0.3)" : "rgba(255,255,255,0.07)"}`,
+        boxShadow: isLive
+          ? "0 0 40px rgba(239,68,68,0.12), 0 8px 32px rgba(0,0,0,0.4)"
+          : isReg
+          ? "0 0 40px rgba(34,197,94,0.1), 0 8px 32px rgba(0,0,0,0.4)"
+          : "0 8px 32px rgba(0,0,0,0.3)",
+      }}
+    >
+      {/* Glow line at top */}
+      <div className="absolute top-0 left-0 right-0 h-px" style={{ background: `linear-gradient(90deg, transparent, ${sc.color}, transparent)`, opacity: isDone ? 0.2 : 0.7 }} />
+
+      {/* Live pulse background */}
+      {isLive && <div className="absolute inset-0 opacity-5" style={{ background: "radial-gradient(circle at 50% 0%, #ef4444 0%, transparent 70%)" }} />}
+
+      {/* Header */}
+      <div className="px-5 pt-5 pb-4">
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div className="flex-1 min-w-0">
+            <h3 className="font-black text-white text-base leading-tight truncate">{t.title}</h3>
+            {t.description && <p className="text-white/35 text-xs mt-1 line-clamp-1">{t.description}</p>}
+          </div>
+          {/* Status badge */}
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full shrink-0" style={{ background: `${sc.color}18`, border: `1px solid ${sc.color}40` }}>
+            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: sc.color, boxShadow: `0 0 6px ${sc.color}`, ...(isLive ? { animation: "pulse 1.5s infinite" } : {}) }} />
+            <span className="text-[10px] font-black uppercase tracking-wider" style={{ color: sc.color }}>{sc.label}</span>
+          </div>
+        </div>
+
+        {/* Scheduled date */}
+        {t.scheduled_at && (
+          <div className="flex items-center gap-1.5 mb-3">
+            <Calendar className="w-3 h-3 text-white/25" />
+            <span className="text-[11px] font-bold text-white/30">
+              {new Date(t.scheduled_at).toLocaleDateString("en-NG", { weekday: "short", day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+            </span>
+          </div>
+        )}
+
+        {/* Stats row */}
+        <div className="grid grid-cols-3 gap-2">
+          {[
+            { icon: <Users className="w-3 h-3" />,       value: t.player_count,                label: "Players",   color: "#a855f7" },
+            { icon: <MdQuestionMark className="text-xs"/>, value: t.question_count,              label: "Questions", color: "#3b82f6" },
+            { icon: <Trophy className="w-3 h-3" />,       value: `${t.prize_pool.toLocaleString()} ZA`, label: "Prize", color: "#f59e0b" },
+          ].map(s => (
+            <div key={s.label} className="rounded-xl px-2.5 py-2 text-center" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)" }}>
+              <div className="flex items-center justify-center gap-1 mb-0.5" style={{ color: s.color }}>{s.icon}</div>
+              <p className="text-xs font-black text-white">{s.value}</p>
+              <p className="text-[9px] text-white/25 font-bold uppercase">{s.label}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Round progress bar */}
+      <div className="px-5 py-3 border-t border-white/5">
+        <div className="flex items-center gap-1">
+          {ROUND_META.map(r => {
+            const done    = t.status === "completed" || (isLive && t.current_round > r.round);
+            const current = isLive && t.current_round === r.round;
+            return (
+              <div key={r.round} className="flex-1 flex flex-col items-center gap-1">
+                <div className="w-full h-1 rounded-full transition-all" style={{ background: done || current ? r.color : "rgba(255,255,255,0.06)", boxShadow: current ? `0 0 8px ${r.color}` : "none", opacity: current ? 1 : done ? 0.7 : 1 }} />
+                <span className="text-[8px] font-bold hidden sm:block" style={{ color: current ? r.color : "rgba(255,255,255,0.2)" }}>{r.name.split(" ")[0]}</span>
+              </div>
+            );
+          })}
+        </div>
+        {t.entry_fee > 0 && (
+          <div className="flex items-center gap-1 mt-2">
+            <MdBolt className="text-amber-400 text-xs" />
+            <span className="text-[10px] font-bold text-white/30">{t.entry_fee} ZA entry fee</span>
+          </div>
+        )}
+      </div>
+
+      {/* Actions */}
+      <div className="px-4 pb-4 pt-1 flex flex-wrap gap-2 mt-auto">
+        {/* Always visible */}
+        <button onClick={onManageQ} className="flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold text-white/60 hover:text-white transition-all" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
+          <MdEdit className="text-sm" /> Questions
+        </button>
+        {!isDone && (
+          <button onClick={onEdit} className="flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold transition-all" style={{ background: "rgba(59,130,246,0.1)", border: "1px solid rgba(59,130,246,0.2)", color: "#60a5fa" }}>
+            <MdEdit className="text-sm" /> Edit
+          </button>
+        )}
+
+        {/* Status-based primary action */}
+        {isLive && (
+          <button onClick={onMonitor} className="flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold transition-all" style={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171" }}>
+            <Eye className="w-3 h-3" /> Monitor Live
+          </button>
+        )}
+        {isDraft && (
+          <>
+            {(t.question_count ?? 0) < 5 && (
+              <div className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold" style={{ background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.3)", color: "#fbbf24" }}>
+                <MdWarning className="text-sm shrink-0" />
+                <span>{(t.question_count ?? 0)} / 5 questions added — add more to open registration</span>
+              </div>
+            )}
+            <button
+              onClick={onStart}
+              disabled={startPending}
+              className="flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-black text-white transition-all disabled:opacity-50"
+              style={{ background: "linear-gradient(135deg, rgba(34,197,94,0.3), rgba(16,185,129,0.2))", border: "1px solid rgba(34,197,94,0.4)" }}
+            >
+              {startPending ? <MdRefresh className="animate-spin" /> : <MdPlayArrow />}
+              {startPending ? "Opening..." : "Open Registration"}
+            </button>
+          </>
+        )}
+        {(isReg || isLobby) && (
+          <button onClick={onLaunch} disabled={launchPending} className="flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-black text-white transition-all disabled:opacity-40 hover:opacity-90" style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)", boxShadow: "0 0 20px rgba(124,58,237,0.3)" }}>
+            {launchPending ? <MdRefresh className="animate-spin" /> : <Zap className="w-3 h-3" />}
+            {launchPending ? "Launching..." : "Launch Game Now"}
+          </button>
+        )}
+
+        {/* Delete — only for cancelled or completed */}
+        {isDone && (
+          <button
+            onClick={onDelete}
+            className="flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-black transition-all ml-auto"
+            style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171" }}
+          >
+            <MdDelete className="text-sm" /> Delete
+          </button>
+        )}
+        {!isDone && (
+          <button onClick={onDisable} className="flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold transition-all ml-auto" style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#f87171" }}>
+            <MdClose className="text-sm" /> Disable
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Page ────────────────────────────────────────────────────────────────
 const QuizTournaments: React.FC = () => {
   const queryClient = useQueryClient();
-  const [createOpen, setCreateOpen] = useState(false);
-  const [manageQ, setManageQ] = useState<QuizTournament | null>(null);
-  const [monitor, setMonitor] = useState<QuizTournament | null>(null);
-  const [actionMsg, setActionMsg] = useState("");
+  const [createOpen,    setCreateOpen]    = useState(false);
+  const [manageQ,       setManageQ]       = useState<QuizTournament | null>(null);
+  const [monitor,       setMonitor]       = useState<QuizTournament | null>(null);
+  const [editT,         setEditT]         = useState<QuizTournament | null>(null);
+  const [confirmCancel,   setConfirmCancel]   = useState<QuizTournament | null>(null);
+  const [confirmDelete,   setConfirmDelete]   = useState<QuizTournament | null>(null);
+  const [needsQuestions,  setNeedsQuestions]  = useState<QuizTournament | null>(null);
+  const [cancelReason,    setCancelReason]    = useState("");
+  const [startError,      setStartError]      = useState<string | null>(null);
+  const [toast,           setToast]           = useState<{ msg: string; type: "ok" | "err" } | null>(null);
+  const [pendingStart,    setPendingStart]     = useState<string | null>(null);
+  const [pendingLaunch,   setPendingLaunch]    = useState<string | null>(null);
+
+  const showToast = (msg: string, type: "ok" | "err" = "ok") => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 4000);
+  };
 
   const { data: tournaments = [], isLoading, refetch } = useQuery({
     queryKey: ["admin-quiz-tournaments"],
     queryFn: api.listTournaments,
   });
 
+  // ── optimistic helper: immediately patch status in cache ──
+  const patchCache = (id: string, patch: Partial<QuizTournament>) => {
+    queryClient.setQueryData<QuizTournament[]>(["admin-quiz-tournaments"], old =>
+      (old ?? []).map(t => t.id === id ? { ...t, ...patch } : t)
+    );
+  };
+
   const { mutate: startT } = useMutation({
     mutationFn: api.startTournament,
-    onSuccess: (data) => {
-      setActionMsg(data.message ?? "Tournament opened to lobby");
+    onMutate: (id) => {
+      setPendingStart(id);
+      patchCache(id, { status: "lobby" });
+    },
+    onSuccess: (_data, id) => {
+      setPendingStart(null);
+      patchCache(id, { status: "lobby" }); // lock in — no refetch, avoids replica lag revert
+      showToast("Registration is now open! Players can register.");
+    },
+    onError: (err: any, _id) => {
+      setPendingStart(null);
       queryClient.invalidateQueries({ queryKey: ["admin-quiz-tournaments"] });
-      setTimeout(() => setActionMsg(""), 4000);
+      const msg = err?.response?.data?.message ?? err?.message ?? "Failed to open registration";
+      setStartError(msg);
     },
   });
 
   const { mutate: launchT } = useMutation({
     mutationFn: api.launchTournament,
-    onSuccess: () => {
-      setActionMsg("Game launched! Questions are broadcasting via WebSocket.");
+    onMutate: (id) => {
+      setPendingLaunch(id);
+      patchCache(id, { status: "active" });
+    },
+    onSuccess: (_data, id) => {
+      setPendingLaunch(null);
+      patchCache(id, { status: "active" }); // lock in — no refetch
+      showToast("🚀 Game launched! Questions are broadcasting to all players.");
+    },
+    onError: (err: any, _id) => {
+      setPendingLaunch(null);
       queryClient.invalidateQueries({ queryKey: ["admin-quiz-tournaments"] });
-      setTimeout(() => setActionMsg(""), 5000);
+      showToast(err?.response?.data?.message ?? "Failed to launch game", "err");
     },
   });
 
+  const { mutate: cancelT } = useMutation({
+    mutationFn: (id: string) => api.cancelTournament({ id, reason: cancelReason || "Tournament cancelled by admin" }),
+    onMutate: (id) => { patchCache(id, { status: "cancelled" }); },
+    onSuccess: () => {
+      setConfirmCancel(null);
+      setCancelReason("");
+      showToast("Tournament has been cancelled.");
+    },
+    onError: (err: any) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-quiz-tournaments"] });
+      showToast(err?.response?.data?.message ?? "Failed to cancel", "err");
+    },
+  });
+
+  const { mutate: deleteT } = useMutation({
+    mutationFn: (id: string) => api.deleteTournament(id),
+    onSuccess: (_data, id) => {
+      queryClient.setQueryData<QuizTournament[]>(["admin-quiz-tournaments"],
+        old => (old ?? []).filter(t => t.id !== id)
+      );
+      setConfirmDelete(null);
+      showToast("Tournament deleted permanently.");
+    },
+    onError: (err: any) => {
+      showToast(err?.response?.data?.message ?? "Failed to delete tournament", "err");
+    },
+  });
+
+  const stats = {
+    total:    tournaments.length,
+    live:     tournaments.filter(t => t.status === "active").length,
+    reg:      tournaments.filter(t => t.status === "registration" || t.status === "lobby").length,
+    players:  tournaments.reduce((s, t) => s + t.player_count, 0),
+  };
+
   return (
-    <div className="p-4 space-y-5 max-w-6xl">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary to-violet-600 flex items-center justify-center shadow-md shadow-primary/30">
-            <Crown className="w-5 h-5 text-white" />
+    <div className="min-h-screen p-6" style={{ background: "linear-gradient(160deg, #0a0618 0%, #050310 50%, #080515 100%)" }}>
+      {/* Toast */}
+      {toast && (
+        <div className="fixed top-6 right-6 z-[100] px-5 py-3 rounded-2xl font-bold text-sm flex items-center gap-2 transition-all" style={toast.type === "ok" ? { background: "rgba(16,185,129,0.15)", border: "1px solid rgba(16,185,129,0.35)", color: "#34d399", boxShadow: "0 0 30px rgba(16,185,129,0.15)" } : { background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.35)", color: "#f87171", boxShadow: "0 0 30px rgba(239,68,68,0.15)" }}>
+          {toast.type === "ok" ? <MdCheckCircle className="text-lg shrink-0" /> : <MdWarning className="text-lg shrink-0" />}
+          {toast.msg}
+        </div>
+      )}
+
+      <div className="max-w-6xl mx-auto space-y-6">
+
+        {/* Header */}
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <div className="flex items-center gap-4">
+            <div className="relative w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)", boxShadow: "0 0 30px rgba(124,58,237,0.5), inset 0 1px 0 rgba(255,255,255,0.2)" }}>
+              <Crown className="w-6 h-6 text-white" />
+              <div className="absolute inset-0 rounded-2xl" style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 60%)" }} />
+            </div>
+            <div>
+              <h1 className="text-2xl font-black text-white tracking-tight">Quiz Tournaments</h1>
+              <p className="text-white/35 text-sm font-medium">Create, manage and monitor live quiz games</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-black text-foreground tracking-tight">Quiz Tournaments</h1>
-            <p className="text-sm text-muted-foreground font-medium">Create, manage, and monitor live quiz games</p>
+          <div className="flex items-center gap-2">
+            <button onClick={() => refetch()} className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold text-white/60 hover:text-white transition-all" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
+              <MdRefresh className={`text-lg ${isLoading ? "animate-spin" : ""}`} /> Refresh
+            </button>
+            <button onClick={() => setCreateOpen(true)} className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-sm font-black text-white transition-all hover:opacity-90" style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)", boxShadow: "0 0 24px rgba(124,58,237,0.4)" }}>
+              <MdAdd className="text-lg" /> New Tournament
+            </button>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button onClick={() => refetch()} className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-muted hover:bg-muted/80 text-foreground text-sm font-bold transition-all">
-            <MdRefresh className={`text-lg ${isLoading ? "animate-spin" : ""}`} /> Refresh
-          </button>
-          <button
-            onClick={() => setCreateOpen(true)}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-black hover:bg-primary/90 transition-all"
-          >
-            <MdAdd className="text-lg" /> New Tournament
-          </button>
+
+        {/* Stats strip */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[
+            { label: "Total",         value: stats.total,   color: "#a855f7", icon: <Trophy className="w-4 h-4" /> },
+            { label: "Live Now",      value: stats.live,    color: "#ef4444", icon: <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" /> },
+            { label: "Registration",  value: stats.reg,     color: "#22c55e", icon: <MdPlayArrow className="text-base" /> },
+            { label: "Total Players", value: stats.players, color: "#f59e0b", icon: <Users className="w-4 h-4" /> },
+          ].map(s => (
+            <div key={s.label} className="rounded-2xl px-4 py-3 flex items-center gap-3" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: `${s.color}18`, color: s.color }}>{s.icon}</div>
+              <div>
+                <p className="text-xl font-black text-white leading-none">{s.value}</p>
+                <p className="text-[10px] font-bold text-white/30 uppercase tracking-wider mt-0.5">{s.label}</p>
+              </div>
+            </div>
+          ))}
         </div>
+
+        {/* Cards */}
+        {isLoading ? (
+          <div className="py-20 flex items-center justify-center text-white/30">
+            <MdRefresh className="animate-spin text-3xl mr-3" /> Loading tournaments...
+          </div>
+        ) : tournaments.length === 0 ? (
+          <div className="py-24 text-center rounded-2xl" style={{ border: "1px dashed rgba(255,255,255,0.08)" }}>
+            <Trophy className="w-16 h-16 text-white/10 mx-auto mb-4" />
+            <p className="font-black text-white text-xl mb-2">No tournaments yet</p>
+            <p className="text-white/30 text-sm mb-6">Create your first quiz tournament to get started</p>
+            <button onClick={() => setCreateOpen(true)} className="px-6 py-3 rounded-xl font-black text-sm text-white" style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)" }}>
+              <MdAdd className="inline mr-1" /> Create Tournament
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {tournaments.map(t => (
+              <TournamentCard
+                key={t.id}
+                t={t}
+                onManageQ={() => setManageQ(t)}
+                onEdit={() => setEditT(t)}
+                onMonitor={() => setMonitor(t)}
+                onStart={() => {
+                  if ((t.question_count ?? 0) < 5) {
+                    setNeedsQuestions(t);
+                  } else {
+                    setStartError(null);
+                    startT(t.id);
+                  }
+                }}
+                onLaunch={() => launchT(t.id)}
+                onDisable={() => setConfirmCancel(t)}
+                onDelete={() => setConfirmDelete(t)}
+                startPending={pendingStart === t.id}
+                launchPending={pendingLaunch === t.id}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Action message */}
-      {actionMsg && (
-        <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl px-4 py-3">
-          <MdCheckCircle className="text-emerald-500 shrink-0" />
-          <p className="text-sm font-bold text-emerald-700 dark:text-emerald-400">{actionMsg}</p>
-        </div>
-      )}
-
-      {/* Tournament cards */}
-      {isLoading ? (
-        <div className="py-16 flex items-center justify-center text-muted-foreground">
-          <MdRefresh className="animate-spin text-2xl mr-2" /> Loading tournaments...
-        </div>
-      ) : tournaments.length === 0 ? (
-        <div className="py-20 text-center">
-          <Trophy className="w-16 h-16 text-muted-foreground/20 mx-auto mb-4" />
-          <p className="font-black text-foreground text-xl mb-2">No tournaments yet</p>
-          <p className="text-muted-foreground text-sm mb-6">Create your first quiz tournament to get started</p>
-          <button onClick={() => setCreateOpen(true)} className="px-6 py-3 rounded-xl bg-primary text-primary-foreground font-black text-sm">
-            <MdAdd className="inline mr-1" /> Create Tournament
-          </button>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {tournaments.map(t => {
-            const sc = STATUS_CFG[t.status];
-            return (
-              <div key={t.id} className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden hover:border-primary/20 transition-all">
-                {/* Card header */}
-                <div className="p-5 border-b border-border">
-                  <div className="flex items-start justify-between gap-3 mb-3">
-                    <h3 className="font-black text-foreground text-base leading-tight flex-1">{t.title}</h3>
-                    <span className={`text-[10px] font-black px-2.5 py-1 rounded-full shrink-0 ${sc.cls}`}>{sc.label}</span>
-                  </div>
-                  {t.description && <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{t.description}</p>}
-
-                  {/* Stats row */}
-                  <div className="flex items-center gap-4 text-xs">
-                    <div className="flex items-center gap-1 text-muted-foreground">
-                      <MdPeople className="text-sm" />
-                      <span className="font-bold">{t.player_count}</span>
-                      <span>players</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-muted-foreground">
-                      <MdQuestionMark className="text-sm" />
-                      <span className="font-bold">{t.question_count}</span>
-                      <span>questions</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-muted-foreground">
-                      <MdEmojiEvents className="text-sm" />
-                      <span className="font-bold">{t.prize_pool.toLocaleString()}</span>
-                      <span>ZA prize</span>
-                    </div>
-                    {t.entry_fee > 0 && (
-                      <div className="flex items-center gap-1 text-muted-foreground">
-                        <MdBolt className="text-sm" />
-                        <span className="font-bold">{t.entry_fee}</span>
-                        <span>ZA entry</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Round progress dots */}
-                <div className="px-5 py-3 flex items-center gap-2 border-b border-border">
-                  {ROUND_META.map(r => (
-                    <div key={r.round} className="flex items-center gap-1.5">
-                      <div className={`w-2 h-2 rounded-full ${
-                        t.status === "active" && t.current_round === r.round ? r.badge + " animate-pulse" :
-                        t.status === "completed" || (t.status === "active" && t.current_round > r.round) ? r.badge :
-                        "bg-muted-foreground/20"
-                      }`} />
-                      <span className={`text-[9px] font-bold hidden sm:block ${
-                        t.status === "active" && t.current_round === r.round ? r.color : "text-muted-foreground/40"
-                      }`}>{r.name}</span>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Actions */}
-                <div className="p-4 flex items-center gap-2 flex-wrap">
-                  <button
-                    onClick={() => setManageQ(t)}
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-muted hover:bg-muted/80 text-foreground text-xs font-bold transition-all"
-                  >
-                    <MdEdit className="text-sm" /> Questions
-                  </button>
-
-                  {t.status === "active" && (
-                    <button
-                      onClick={() => setMonitor(t)}
-                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs font-bold border border-red-200 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900/30 transition-all"
-                    >
-                      <MdVisibility className="text-sm" /> Monitor Live
-                    </button>
-                  )}
-
-                  {t.status === "draft" && (
-                    <button
-                      onClick={() => startT(t.id)}
-                      disabled={t.question_count < 5}
-                      title={t.question_count < 5 ? "Add at least 5 questions first" : ""}
-                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-xs font-bold border border-blue-200 dark:border-blue-800 hover:bg-blue-100 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                    >
-                      <MdPlayArrow className="text-sm" /> Open Lobby
-                    </button>
-                  )}
-
-                  {t.status === "lobby" && (
-                    <button
-                      onClick={() => launchT(t.id)}
-                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-primary to-violet-600 text-white text-xs font-black hover:opacity-90 transition-all shadow-md shadow-primary/20"
-                    >
-                      <Zap className="w-3.5 h-3.5" /> Launch Game Now
-                    </button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
       {/* Modals */}
-      {createOpen && (
-        <CreateTournamentModal
-          onClose={() => setCreateOpen(false)}
-          onCreated={() => queryClient.invalidateQueries({ queryKey: ["admin-quiz-tournaments"] })}
-        />
+      {createOpen && <CreateTournamentModal onClose={() => setCreateOpen(false)} onCreated={() => queryClient.invalidateQueries({ queryKey: ["admin-quiz-tournaments"] })} />}
+      {manageQ   && <QuestionManagerModal   tournament={manageQ}  onClose={() => setManageQ(null)} />}
+      {monitor   && <LiveMonitorModal       tournament={monitor}  onClose={() => setMonitor(null)} />}
+      {editT     && <EditTournamentModal    tournament={editT}    onClose={() => setEditT(null)} onSaved={() => { queryClient.invalidateQueries({ queryKey: ["admin-quiz-tournaments"] }); showToast("Tournament updated!"); }} />}
+
+      {/* ── Not enough questions modal ── */}
+      {needsQuestions && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(16px)" }} onClick={() => setNeedsQuestions(null)}>
+          <div className="w-full max-w-sm rounded-2xl overflow-hidden" style={{ background: "linear-gradient(135deg, rgba(20,15,8,0.99), rgba(10,8,3,0.99))", border: "1px solid rgba(245,158,11,0.25)", boxShadow: "0 0 60px rgba(245,158,11,0.1)" }} onClick={e => e.stopPropagation()}>
+            <div className="p-6 text-center">
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: "rgba(245,158,11,0.15)", border: "1px solid rgba(245,158,11,0.3)" }}>
+                <MdQuestionMark className="text-3xl text-amber-400" />
+              </div>
+              <h3 className="font-black text-white text-lg mb-1">Questions Needed</h3>
+              <p className="text-sm text-white/50 mb-1">
+                <span className="font-bold text-white">"{needsQuestions.title}"</span>
+              </p>
+              <p className="text-sm text-white/40 mb-2">
+                You have <span className="font-black text-amber-400">{needsQuestions.question_count ?? 0}</span> question{needsQuestions.question_count !== 1 ? "s" : ""}.
+                You need at least <span className="font-black text-white">5</span> across all 5 rounds before opening registration.
+              </p>
+              <p className="text-xs text-white/25 mb-6">Click "Add Questions" below to open the question manager for this tournament.</p>
+              <div className="flex gap-3">
+                <button onClick={() => setNeedsQuestions(null)} className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white/50 hover:text-white transition-all" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                  Cancel
+                </button>
+                <button
+                  onClick={() => { setManageQ(needsQuestions); setNeedsQuestions(null); }}
+                  className="flex-1 py-2.5 rounded-xl font-black text-sm text-white hover:opacity-90 transition-all"
+                  style={{ background: "linear-gradient(135deg, #d97706, #b45309)", boxShadow: "0 0 20px rgba(217,119,6,0.3)" }}
+                >
+                  <MdAdd className="inline mr-1" /> Add Questions
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
-      {manageQ && <QuestionManagerModal tournament={manageQ} onClose={() => setManageQ(null)} />}
-      {monitor && <LiveMonitorModal tournament={monitor} onClose={() => setMonitor(null)} />}
+
+      {/* ── API error modal ── */}
+      {startError && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(16px)" }} onClick={() => setStartError(null)}>
+          <div className="w-full max-w-sm rounded-2xl overflow-hidden" style={{ background: "linear-gradient(135deg, rgba(25,5,5,0.99), rgba(10,2,2,0.99))", border: "1px solid rgba(239,68,68,0.25)", boxShadow: "0 0 60px rgba(239,68,68,0.1)" }} onClick={e => e.stopPropagation()}>
+            <div className="p-6 text-center">
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)" }}>
+                <MdWarning className="text-3xl text-red-400" />
+              </div>
+              <h3 className="font-black text-white text-lg mb-3">Could Not Open Registration</h3>
+              <p className="text-sm font-bold text-red-300 mb-6 px-2 leading-relaxed">{startError}</p>
+              <button onClick={() => setStartError(null)} className="w-full py-2.5 rounded-xl font-black text-sm text-white hover:opacity-90 transition-all" style={{ background: "linear-gradient(135deg, #dc2626, #b91c1c)" }}>
+                Got It
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Delete Confirmation ── */}
+      {confirmDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(16px)" }} onClick={() => setConfirmDelete(null)}>
+          <div className="w-full max-w-sm rounded-2xl overflow-hidden" style={{ background: "linear-gradient(135deg, rgba(25,5,5,0.99), rgba(10,2,2,0.99))", border: "1px solid rgba(239,68,68,0.3)", boxShadow: "0 0 60px rgba(239,68,68,0.12)" }} onClick={e => e.stopPropagation()}>
+            <div className="p-6 text-center">
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)" }}>
+                <MdDelete className="text-3xl text-red-400" />
+              </div>
+              <h3 className="font-black text-white text-lg mb-1">Delete Tournament?</h3>
+              <p className="text-sm font-bold text-white/50 mb-1">"{confirmDelete.title}"</p>
+              <p className="text-xs text-white/30 mb-6">
+                This will permanently delete the tournament and all its questions, players, and leaderboard data. <span className="text-red-400 font-bold">This cannot be undone.</span>
+              </p>
+              <div className="flex gap-3">
+                <button onClick={() => setConfirmDelete(null)} className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white/50 hover:text-white transition-all" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                  Keep It
+                </button>
+                <button
+                  onClick={() => deleteT(confirmDelete.id)}
+                  className="flex-1 py-2.5 rounded-xl font-black text-sm text-white hover:opacity-90 transition-all"
+                  style={{ background: "linear-gradient(135deg, #dc2626, #991b1b)", boxShadow: "0 0 20px rgba(220,38,38,0.3)" }}
+                >
+                  <MdDelete className="inline mr-1" /> Yes, Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Disable Confirm ── */}
+      {confirmCancel && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(16px)" }} onClick={() => { setConfirmCancel(null); setCancelReason(""); }}>
+          <div className="w-full max-w-sm rounded-2xl overflow-hidden" style={{ background: "linear-gradient(135deg, rgba(25,8,8,0.99), rgba(10,3,3,0.99))", border: "1px solid rgba(239,68,68,0.2)", boxShadow: "0 0 60px rgba(239,68,68,0.1)" }} onClick={e => e.stopPropagation()}>
+            <div className="p-6 text-center">
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.25)" }}>
+                <MdWarning className="text-3xl text-red-400" />
+              </div>
+              <h3 className="font-black text-white text-lg mb-1">Disable Tournament?</h3>
+              <p className="text-sm font-bold text-white/50 mb-1">"{confirmCancel.title}"</p>
+              <p className="text-xs text-white/30 mb-4">This will cancel the tournament. Registered players will be notified. This cannot be undone.</p>
+              <div className="mb-5 text-left">
+                <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-1.5">Reason <span style={{ opacity: 0.5, fontWeight: 400, textTransform: "none" }}>(optional — sent to players)</span></label>
+                <input
+                  type="text"
+                  placeholder="e.g. Event postponed to next week"
+                  value={cancelReason}
+                  onChange={e => setCancelReason(e.target.value)}
+                  className="w-full px-3 py-2.5 rounded-xl text-sm text-white placeholder:text-white/25 focus:outline-none focus:ring-2 focus:ring-red-500/40"
+                  style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}
+                />
+              </div>
+              <div className="flex gap-3">
+                <button onClick={() => { setConfirmCancel(null); setCancelReason(""); }} className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white/50 hover:text-white transition-all" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>Keep It</button>
+                <button onClick={() => cancelT(confirmCancel.id)} className="flex-1 py-2.5 rounded-xl font-black text-sm text-white hover:opacity-90 transition-all" style={{ background: "linear-gradient(135deg, #dc2626, #b91c1c)", boxShadow: "0 0 20px rgba(220,38,38,0.3)" }}>Yes, Disable</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
