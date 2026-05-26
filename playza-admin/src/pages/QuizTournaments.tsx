@@ -98,7 +98,11 @@ const api = {
     return data;
   },
   cancelTournament: async ({ id, reason }: { id: string; reason: string }) => {
-    const { data } = await apiClient.post(`/admin/quiz/tournaments/${id}/cancel`, { reason });
+    // Uses PATCH since POST /cancel doesn't exist on backend yet
+    const { data } = await apiClient.patch(`/admin/quiz/tournaments/${id}`, {
+      status: "cancelled",
+      cancel_reason: reason,
+    });
     return data;
   },
   getLive: async (id: string) => {
@@ -343,13 +347,57 @@ function QuestionManagerModal({ tournament, onClose }: { tournament: QuizTournam
               <p className="text-xs font-black uppercase tracking-wider" style={{ color: rm?.color }}>Add Question — {rm?.name}</p>
               <textarea rows={2} placeholder="Question text..." value={newQ.question_text} onChange={e => setNewQ(p => ({ ...p, question_text: e.target.value }))} className={inputCls + " resize-none"} />
 
-              {/* Optional image URL */}
+              {/* Image — URL or upload from PC */}
               <div>
-                <label className={labelCls}>Image URL <span style={{ fontWeight: 400, textTransform: "none", opacity: 0.5 }}>(optional)</span></label>
-                <input type="url" placeholder="https://example.com/image.png" value={newQ.image_url} onChange={e => setNewQ(p => ({ ...p, image_url: e.target.value }))} className={inputCls} />
+                <label className={labelCls}>Question Image <span style={{ fontWeight: 400, textTransform: "none", opacity: 0.5 }}>(optional)</span></label>
+                <div className="flex gap-2 mb-2">
+                  <input
+                    type="url"
+                    placeholder="Paste image URL..."
+                    value={newQ.image_url}
+                    onChange={e => setNewQ(p => ({ ...p, image_url: e.target.value }))}
+                    className={inputCls}
+                    style={{ flex: 1 }}
+                  />
+                  <label
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl cursor-pointer shrink-0 text-xs font-bold text-white/60 hover:text-white transition-all"
+                    style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", whiteSpace: "nowrap" }}
+                  >
+                    <MdUpload className="text-sm" /> Upload
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={e => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        const reader = new FileReader();
+                        reader.onload = ev => {
+                          setNewQ(p => ({ ...p, image_url: ev.target?.result as string }));
+                        };
+                        reader.readAsDataURL(file);
+                        e.target.value = "";
+                      }}
+                    />
+                  </label>
+                </div>
                 {newQ.image_url && (
-                  <img src={newQ.image_url} alt="preview" className="mt-2 w-full max-h-28 object-cover rounded-xl" style={{ border: "1px solid rgba(255,255,255,0.1)" }}
-                    onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+                  <div className="relative">
+                    <img
+                      src={newQ.image_url}
+                      alt="preview"
+                      className="w-full max-h-32 object-cover rounded-xl"
+                      style={{ border: "1px solid rgba(255,255,255,0.1)" }}
+                      onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                    />
+                    <button
+                      onClick={() => setNewQ(p => ({ ...p, image_url: "" }))}
+                      className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-black"
+                      style={{ background: "rgba(0,0,0,0.6)" }}
+                    >
+                      ✕
+                    </button>
+                  </div>
                 )}
               </div>
               <div className="grid grid-cols-2 gap-2">
@@ -702,7 +750,11 @@ const QuizTournaments: React.FC = () => {
       showToast("Tournament deleted permanently.");
     },
     onError: (err: any) => {
-      showToast(err?.response?.data?.message ?? "Failed to delete tournament", "err");
+      const status = err?.response?.status;
+      const msg = status === 404
+        ? "Delete endpoint not found — push quiz.admin.routes.ts to Render and redeploy."
+        : err?.response?.data?.message ?? "Failed to delete tournament";
+      showToast(msg, "err");
     },
   });
 
