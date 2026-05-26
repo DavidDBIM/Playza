@@ -22,6 +22,7 @@ export interface LiveQuestion {
   question_index: number
   total_questions: number
   question_text: string
+  image_url: string | null
   options: { A: string; B: string; C: string; D: string }
   time_limit_ms: number
   alive_count: number
