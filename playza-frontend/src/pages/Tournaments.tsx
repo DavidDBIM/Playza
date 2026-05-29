@@ -64,7 +64,6 @@ function TCard({ qt, featured, onRegistered }: {
   const toast = useToast();
   const navigate = useNavigate();
   const sc  = STATUS[qt.status as keyof typeof STATUS] ?? STATUS.draft;
-  const hot = qt.status === "active" || qt.status === "registration" || qt.status === "lobby";
   const canRegister = qt.status === "registration" || qt.status === "lobby";
   const [registered, setRegistered] = useState(!!qt.user_registered);
 
