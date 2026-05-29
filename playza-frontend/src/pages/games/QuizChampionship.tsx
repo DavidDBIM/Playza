@@ -93,7 +93,6 @@ export default function QuizChampionship() {
   const { user } = useAuth();
 
   const [joinedState, setJoinedState] = useState(false);
-  const [showLB, setShowLB]           = useState(false);
   const [countdown, setCountdown]     = useState<string | null>(null);
   const prevPhase                     = useRef<string>("");
 
@@ -503,117 +502,160 @@ export default function QuizChampionship() {
     const isRevealing = phase === "revealing";
     const totalMs     = currentQuestion.time_limit_ms;
     const aliveCount  = leaderboard.filter(e => e.status === "alive").length;
+    // Top 5 alive for the mobile mini-strip
+    const topAlive    = leaderboard.filter(e => e.status === "alive").slice(0, 5);
+    const myEntry     = leaderboard.find(e => e.user_id === user?.id);
 
     return (
       <div className="min-h-screen flex flex-col bg-[#080810] relative overflow-hidden">
+        {/* Round colour accent */}
         <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: `linear-gradient(90deg,transparent,${roundMeta.color},transparent)`, boxShadow: `0 0 20px ${roundMeta.color}60` }} />
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-36 rounded-full blur-3xl pointer-events-none opacity-15" style={{ background: roundMeta.color }} />
 
-        {/* Header */}
-        <div className="flex items-center gap-2 px-4 pt-5 pb-3 relative z-10">
-          <div className="flex items-center gap-1.5 bg-white/[0.05] border border-white/[0.08] rounded-xl px-2.5 py-1.5 shrink-0">
+        {/* ── Header ─────────────────────────────────────────────────────── */}
+        <div className="flex items-center gap-2 px-3 pt-4 pb-2 relative z-10">
+          {/* Round pill */}
+          <div className="flex items-center gap-1.5 bg-white/[0.05] border border-white/[0.08] rounded-xl px-2 py-1 shrink-0">
             <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: roundMeta.color }} />
-            <span className="text-[10px] font-black uppercase tracking-widest text-white/60 whitespace-nowrap">
+            <span className="text-[9px] font-black uppercase tracking-widest text-white/60 whitespace-nowrap">
               R{currentQuestion.round} · {roundMeta.name}
             </span>
           </div>
-          <div className="bg-white/[0.04] border border-white/[0.06] rounded-xl px-2.5 py-1.5 shrink-0">
-            <span className="text-[10px] font-black text-white/40">{currentQuestion.question_index + 1}/{currentQuestion.total_questions}</span>
+          {/* Q index */}
+          <div className="bg-white/[0.04] border border-white/[0.06] rounded-xl px-2 py-1 shrink-0">
+            <span className="text-[9px] font-black text-white/40">{currentQuestion.question_index + 1}/{currentQuestion.total_questions}</span>
           </div>
           <div className="flex-1" />
-          <div className="flex items-center gap-1.5 bg-white/[0.04] border border-white/[0.06] rounded-xl px-2.5 py-1.5 shrink-0">
-            <span className="text-[10px]">👥</span>
-            <span className="text-[10px] font-black text-white/60">{aliveCount}</span>
+          {/* Alive count */}
+          <div className="flex items-center gap-1 bg-white/[0.04] border border-white/[0.06] rounded-xl px-2 py-1 shrink-0">
+            <span className="text-[9px]">👥</span>
+            <span className="text-[9px] font-black text-white/60">{aliveCount}</span>
           </div>
-          <button onClick={() => setShowLB(true)} className="w-8 h-8 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center text-sm hover:bg-white/[0.1] transition-all lg:hidden">
-            🏆
-          </button>
         </div>
 
-        {/* Content */}
-        <div className="flex flex-1 gap-4 px-4 pb-6 relative z-10 min-h-0">
+        {/* ── Mobile live strip (visible only on mobile, always shown) ─── */}
+        <div className="lg:hidden px-3 pb-2 relative z-10">
+          <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl px-2 py-1.5 flex items-center gap-2 overflow-x-auto">
+            <span className="text-[9px] font-black text-white/30 uppercase tracking-widest shrink-0">Live</span>
+            <div className="flex items-center gap-1.5 flex-1 min-w-0">
+              {topAlive.map((e, i) => {
+                const isMe = e.user_id === user?.id;
+                return (
+                  <div key={i} className={`flex items-center gap-1 shrink-0 px-1.5 py-0.5 rounded-lg ${isMe ? "bg-purple-500/20" : ""}`}>
+                    <span className="text-[8px] text-white/30 font-black">#{e.rank}</span>
+                    <div className="w-4 h-4 rounded-full bg-white/[0.1] flex items-center justify-center text-[8px] font-black text-white shrink-0">
+                      {e.username[0]?.toUpperCase()}
+                    </div>
+                    <span className={`text-[9px] font-bold truncate max-w-[48px] ${isMe ? "text-purple-300" : "text-white/50"}`}>
+                      {isMe ? "You" : e.username}
+                    </span>
+                    <div className="w-1.5 h-1.5 rounded-full bg-green-400 shrink-0" />
+                  </div>
+                );
+              })}
+              {/* Eliminated count */}
+              {leaderboard.filter(e => e.status === "eliminated").length > 0 && (
+                <div className="flex items-center gap-1 shrink-0 ml-1">
+                  <div className="w-1.5 h-1.5 rounded-full bg-red-500/60" />
+                  <span className="text-[8px] text-red-400/60 font-bold">
+                    {leaderboard.filter(e => e.status === "eliminated").length} out
+                  </span>
+                </div>
+              )}
+            </div>
+            {/* My rank if outside top 5 */}
+            {myEntry && !topAlive.find(e => e.user_id === user?.id) && (
+              <div className="flex items-center gap-1 shrink-0 bg-purple-500/20 px-1.5 py-0.5 rounded-lg">
+                <span className="text-[8px] font-black text-purple-300">#{myEntry.rank}</span>
+                <span className="text-[8px] font-bold text-purple-300">You</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ── Main content ────────────────────────────────────────────────── */}
+        <div className="flex flex-1 gap-3 px-3 pb-4 relative z-10 min-h-0">
+
+          {/* Quiz column */}
           <div className="flex-1 flex flex-col min-w-0">
-            {/* Timer + Question */}
-            <div className="flex items-start gap-3 mb-4">
-              {!isRevealing && <TimerArc ms={timeLeftMs} totalMs={totalMs} round={round} />}
-              <div className={`flex-1 bg-white/[0.04] border border-white/[0.08] rounded-2xl overflow-hidden ${isRevealing ? "w-full" : ""}`}>
+
+            {/* Timer + Question card */}
+            <div className="flex items-start gap-2 mb-3">
+              {!isRevealing && (
+                <div className="shrink-0 scale-75 origin-top-left -ml-1">
+                  <TimerArc ms={timeLeftMs} totalMs={totalMs} round={round} />
+                </div>
+              )}
+              <div className={`flex-1 bg-white/[0.04] border border-white/[0.08] rounded-xl overflow-hidden ${isRevealing ? "w-full" : ""}`}>
                 {currentQuestion.image_url && (
-                  <img
-                    src={currentQuestion.image_url}
-                    alt="Question"
-                    className="w-full max-h-40 object-cover border-b border-white/[0.08]"
-                  />
+                  <img src={currentQuestion.image_url} alt="Question"
+                    className="w-full max-h-32 object-cover border-b border-white/[0.08]" />
                 )}
-                <div className="p-4">
-                  <p className="text-white font-black text-base md:text-lg leading-snug">{currentQuestion.question_text}</p>
+                <div className="p-3">
+                  <p className="text-white font-black text-sm md:text-base leading-snug">{currentQuestion.question_text}</p>
                 </div>
               </div>
             </div>
 
-            {/* Options */}
-            <div className="grid grid-cols-1 gap-2.5 flex-1">
+            {/* Answer options — 2 columns on mobile to save vertical space */}
+            <div className="grid grid-cols-2 lg:grid-cols-1 gap-2 flex-1">
               {OPTS.map((key, i) => {
                 const text       = currentQuestion.options[key];
                 const isSelected = selectedOption === key;
                 const isCorrect  = isRevealing && revealData?.correct_option === key;
                 const isWrong    = isRevealing && isSelected && !isCorrect;
-                let cardCls   = "flex items-center gap-3 p-4 rounded-2xl border-2 transition-all duration-200 w-full text-left select-none ";
-                let letterCls = "w-8 h-8 rounded-xl flex items-center justify-center font-black text-sm shrink-0 transition-all text-white ";
+
+                let cardCls   = "flex items-center gap-2 p-2.5 lg:p-4 rounded-xl border-2 transition-all duration-200 w-full text-left select-none ";
+                let letterCls = "w-6 h-6 lg:w-8 lg:h-8 rounded-lg flex items-center justify-center font-black text-xs lg:text-sm shrink-0 transition-all text-white ";
+
                 if (isRevealing) {
-                  if (isCorrect)    { cardCls += "border-green-400 bg-green-500/10 shadow-lg shadow-green-500/20"; letterCls += "bg-green-500"; }
+                  if (isCorrect)    { cardCls += "border-green-400 bg-green-500/10"; letterCls += "bg-green-500"; }
                   else if (isWrong) { cardCls += "border-red-400 bg-red-500/10"; letterCls += "bg-red-500"; }
                   else              { cardCls += "border-white/[0.05] bg-white/[0.02] opacity-40"; letterCls += "bg-white/10"; }
                 } else if (isSelected) {
-                  cardCls   += "border-white/30 bg-white/10 shadow-lg ring-1 ring-white/20";
+                  cardCls   += "border-white/30 bg-white/10 ring-1 ring-white/20";
                   letterCls += OPT_LETTER[i];
                 } else {
-                  cardCls   += `${OPT_IDLE[i]} cursor-pointer active:scale-[0.98]`;
+                  cardCls   += `${OPT_IDLE[i]} cursor-pointer active:scale-[0.97]`;
                   letterCls += "bg-white/[0.08] text-white/50";
                 }
+
                 return (
-                  <button key={key} className={cardCls} onClick={() => !answerLocked && !isRevealing && submitAnswer(key)} disabled={answerLocked || isRevealing}>
+                  <button key={key} className={cardCls}
+                    onClick={() => !answerLocked && !isRevealing && submitAnswer(key)}
+                    disabled={answerLocked || isRevealing}>
                     <span className={letterCls}>{key}</span>
-                    <span className="font-bold text-sm text-white flex-1 leading-snug text-left">{text}</span>
-                    {isCorrect && <span className="text-green-400 text-lg shrink-0">✓</span>}
-                    {isWrong   && <span className="text-red-400 text-lg shrink-0">✗</span>}
+                    <span className="font-bold text-xs lg:text-sm text-white flex-1 leading-snug text-left line-clamp-3">{text}</span>
+                    {isCorrect && <span className="text-green-400 shrink-0 text-sm">✓</span>}
+                    {isWrong   && <span className="text-red-400 shrink-0 text-sm">✗</span>}
                   </button>
                 );
               })}
             </div>
 
             {/* Status bar */}
-            <div className="mt-3">
+            <div className="mt-2">
               {answerLocked && !isRevealing && (
-                <div className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-purple-500/10 border border-purple-500/20">
+                <div className="flex items-center justify-center gap-2 py-2 rounded-xl bg-purple-500/10 border border-purple-500/20">
                   <div className="w-3 h-3 border-2 border-purple-400/40 border-t-purple-400 rounded-full animate-spin" />
                   <p className="text-purple-300 font-bold text-xs">Locked in — waiting for others</p>
                 </div>
               )}
               {isRevealing && revealData && (
-                <div className={`flex items-center justify-center gap-2 py-2.5 rounded-xl ${selectedOption === revealData.correct_option ? "bg-green-500/10 border border-green-500/20" : "bg-red-500/10 border border-red-500/20"}`}>
+                <div className={`flex items-center justify-center gap-1.5 py-2 rounded-xl ${selectedOption === revealData.correct_option ? "bg-green-500/10 border border-green-500/20" : "bg-red-500/10 border border-red-500/20"}`}>
                   {selectedOption === revealData.correct_option
-                    ? <p className="text-green-400 font-bold text-xs">✅ Correct! {revealData.eliminated_count} eliminated · Next question soon</p>
+                    ? <p className="text-green-400 font-bold text-xs">✅ Correct! {revealData.eliminated_count} eliminated</p>
                     : <p className="text-red-400 font-bold text-xs">❌ Wrong answer</p>}
                 </div>
               )}
             </div>
           </div>
 
-          {/* Desktop leaderboard */}
-          <div className="w-52 hidden lg:block shrink-0">
+          {/* ── Desktop leaderboard sidebar ─────────────────────────────── */}
+          <div className="w-52 hidden lg:flex flex-col shrink-0">
             <LeaderboardPanel entries={leaderboard} myId={user?.id} />
           </div>
         </div>
-
-        {/* Mobile leaderboard sheet */}
-        {showLB && (
-          <div className="fixed inset-0 z-50 flex items-end bg-black/70 backdrop-blur-sm lg:hidden" onClick={() => setShowLB(false)}>
-            <div className="w-full bg-[#0e0e1a] border-t border-white/[0.08] rounded-t-3xl p-5 max-h-[72vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-              <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-5" />
-              <LeaderboardPanel entries={leaderboard} myId={user?.id} />
-            </div>
-          </div>
-        )}
       </div>
     );
   }
