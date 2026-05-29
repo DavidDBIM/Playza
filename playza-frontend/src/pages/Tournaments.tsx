@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { Link, useNavigate } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getQuizTournamentsApi, joinQuizTournamentApi, type QuizTournament } from "@/api/quiz.api";
-import { Search, Trophy, X, Users, ChevronDown, Zap, Eye, Brain, CheckCircle, Loader2 } from "lucide-react";
+import { Search, Trophy, X, Users, ChevronDown, Zap, Eye, Brain, CheckCircle, Loader2, Info, Calendar, Clock, Shield } from "lucide-react";
 import { useAuth } from "@/context/auth";
 import { useToast } from "@/context/toast";
 import {
@@ -12,26 +12,26 @@ import {
 
 // ─── Status config ─────────────────────────────────────────────────────────────
 const STATUS = {
-  active:       { label: "LIVE NOW",          short: "LIVE",     color: "#ef4444", bg: "rgba(239,68,68,0.12)",  border: "rgba(239,68,68,0.3)",  live: true  },
-  registration: { label: "REGISTER NOW",      short: "REGISTER", color: "#16a34a", bg: "rgba(22,163,74,0.12)", border: "rgba(22,163,74,0.3)",  live: false },
-  lobby:        { label: "REGISTER NOW",      short: "REGISTER", color: "#16a34a", bg: "rgba(22,163,74,0.12)", border: "rgba(22,163,74,0.3)",  live: false },
-  draft:        { label: "COMING SOON",       short: "SOON",     color: "#6366f1", bg: "rgba(99,102,241,0.1)", border: "rgba(99,102,241,0.25)", live: false },
-  completed:    { label: "ENDED",             short: "ENDED",    color: "#64748b", bg: "rgba(100,116,139,0.1)",border: "rgba(100,116,139,0.2)", live: false },
-  cancelled:    { label: "CANCELLED",         short: "OFF",      color: "#64748b", bg: "rgba(100,116,139,0.1)",border: "rgba(100,116,139,0.2)", live: false },
+  active:       { label: "LIVE NOW",     short: "LIVE",     color: "#ef4444", bg: "rgba(239,68,68,0.12)",   border: "rgba(239,68,68,0.3)",   live: true  },
+  registration: { label: "REGISTER NOW", short: "REGISTER", color: "#16a34a", bg: "rgba(22,163,74,0.12)",  border: "rgba(22,163,74,0.3)",   live: false },
+  lobby:        { label: "REGISTER NOW", short: "REGISTER", color: "#16a34a", bg: "rgba(22,163,74,0.12)",  border: "rgba(22,163,74,0.3)",   live: false },
+  draft:        { label: "COMING SOON",  short: "SOON",     color: "#6366f1", bg: "rgba(99,102,241,0.1)",  border: "rgba(99,102,241,0.25)", live: false },
+  completed:    { label: "ENDED",        short: "ENDED",    color: "#64748b", bg: "rgba(100,116,139,0.1)", border: "rgba(100,116,139,0.2)", live: false },
+  cancelled:    { label: "CANCELLED",    short: "OFF",      color: "#64748b", bg: "rgba(100,116,139,0.1)", border: "rgba(100,116,139,0.2)", live: false },
 } as const;
 
 const ROUNDS = [
-  { name: "Warm Up",        color: "#22c55e" },
-  { name: "Rising",         color: "#3b82f6" },
-  { name: "Heat Up",        color: "#f97316" },
-  { name: "Danger Zone",    color: "#ef4444" },
-  { name: "Final Showdown", color: "#a855f7" },
+  { name: "Warm Up",        color: "#22c55e", secs: 45, emoji: "🟢" },
+  { name: "Rising",         color: "#3b82f6", secs: 35, emoji: "🔵" },
+  { name: "Heat Up",        color: "#f97316", secs: 30, emoji: "🟠" },
+  { name: "Danger Zone",    color: "#ef4444", secs: 25, emoji: "🔴" },
+  { name: "Final Showdown", color: "#a855f7", secs: 20, emoji: "👑" },
 ];
 
 const PRIZE_OPTIONS = [
-  { value: "all",  label: "All Prizes"         },
-  { value: "high", label: "High Stakes (100k+)" },
-  { value: "low",  label: "Standard"            },
+  { value: "all",  label: "All Prizes"          },
+  { value: "high", label: "High Stakes (100k+)"  },
+  { value: "low",  label: "Standard"             },
 ];
 
 // ─── 3-D tilt ──────────────────────────────────────────────────────────────────
@@ -53,7 +53,267 @@ function useTilt() {
   return { ref, onMove, onLeave };
 }
 
-// ─── Tournament Card with one-click register ───────────────────────────────────
+// ─── Tournament Detail Modal ───────────────────────────────────────────────────
+function TournamentDetailModal({
+  qt,
+  onClose,
+  onRegister,
+  isRegistering,
+  registered,
+}: {
+  qt: QuizTournament;
+  onClose: () => void;
+  onRegister: () => void;
+  isRegistering: boolean;
+  registered: boolean;
+}) {
+  const sc = STATUS[qt.status as keyof typeof STATUS] ?? STATUS.draft;
+  const canRegister = (qt.status === "registration" || qt.status === "lobby") && !registered;
+
+  // Close on backdrop click
+  function handleBackdrop(e: React.MouseEvent<HTMLDivElement>) {
+    if (e.target === e.currentTarget) onClose();
+  }
+
+  // Close on Escape
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [onClose]);
+
+  // Prevent body scroll while open
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
+
+  const scheduledDate = qt.scheduled_at
+    ? new Date(qt.scheduled_at).toLocaleDateString("en-NG", {
+        weekday: "long", day: "numeric", month: "long",
+        year: "numeric", hour: "2-digit", minute: "2-digit",
+      })
+    : null;
+
+  return (
+    <div
+      onClick={handleBackdrop}
+      style={{
+        position: "fixed", inset: 0, zIndex: 1000,
+        background: "rgba(0,0,0,0.7)",
+        backdropFilter: "blur(6px)",
+        display: "flex", alignItems: "flex-end", justifyContent: "center",
+        padding: "0",
+        animation: "fadeInBackdrop 0.2s ease",
+      }}
+    >
+      <style>{`
+        @keyframes fadeInBackdrop { from { opacity: 0 } to { opacity: 1 } }
+        @keyframes slideUp { from { transform: translateY(100%) } to { transform: translateY(0) } }
+        @keyframes modalFadeIn { from { opacity: 0; transform: translateY(40px) scale(0.97) } to { opacity: 1; transform: translateY(0) scale(1) } }
+      `}</style>
+      <div
+        style={{
+          width: "100%", maxWidth: 520,
+          maxHeight: "92vh",
+          background: "var(--card)",
+          borderRadius: "24px 24px 0 0",
+          overflow: "hidden",
+          display: "flex", flexDirection: "column",
+          animation: "slideUp 0.3s cubic-bezier(0.23,1,0.32,1)",
+          boxShadow: "0 -8px 60px rgba(0,0,0,0.5)",
+        }}
+      >
+        {/* Accent bar */}
+        <div style={{ height: 4, background: `linear-gradient(90deg, ${sc.color}, ${sc.color}80)`, flexShrink: 0 }} />
+
+        {/* Drag handle */}
+        <div style={{ display: "flex", justifyContent: "center", padding: "10px 0 0", flexShrink: 0 }}>
+          <div style={{ width: 36, height: 4, borderRadius: 2, background: "var(--border)" }} />
+        </div>
+
+        {/* Header */}
+        <div style={{ padding: "16px 20px 0", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexShrink: 0 }}>
+          <div style={{ flex: 1 }}>
+            {/* Status badge */}
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 5, background: sc.bg, border: `1px solid ${sc.border}`, borderRadius: 20, padding: "3px 10px", marginBottom: 10 }}>
+              {sc.live && <span style={{ width: 5, height: 5, borderRadius: "50%", background: sc.color, display: "block", animation: "pulse 1.2s ease-in-out infinite" }} />}
+              <span style={{ fontSize: 9, fontWeight: 700, color: sc.color, letterSpacing: "0.12em", textTransform: "uppercase" }}>{sc.label}</span>
+            </div>
+            <h2 style={{ fontSize: 20, fontWeight: 800, color: "var(--foreground)", margin: "0 0 6px", lineHeight: 1.2 }}>{qt.title}</h2>
+            {qt.description && (
+              <p style={{ fontSize: 13, color: "var(--muted-foreground)", lineHeight: 1.6, margin: 0 }}>{qt.description}</p>
+            )}
+          </div>
+          <button
+            onClick={onClose}
+            style={{ background: "var(--muted)", border: "1px solid var(--border)", borderRadius: "50%", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, marginTop: 2 }}
+          >
+            <X size={14} style={{ color: "var(--muted-foreground)" }} />
+          </button>
+        </div>
+
+        {/* Scrollable body */}
+        <div style={{ flex: 1, overflowY: "auto", padding: "20px 20px 0" }}>
+
+          {/* Stats grid */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8, marginBottom: 20 }}>
+            {[
+              { icon: "🏆", val: qt.prize_pool > 0 ? `${qt.prize_pool.toLocaleString()} ZA` : "TBD", lbl: "Prize Pool" },
+              { icon: "👥", val: qt.player_count.toLocaleString(), lbl: "Registered" },
+              { icon: "💎", val: qt.entry_fee > 0 ? `${qt.entry_fee} ZA` : "FREE", lbl: "Entry Fee" },
+            ].map((s, i) => (
+              <div key={i} style={{ background: "var(--muted)", borderRadius: 12, padding: "12px 8px", textAlign: "center" }}>
+                <div style={{ fontSize: 18, marginBottom: 4 }}>{s.icon}</div>
+                <p style={{ fontSize: 13, fontWeight: 700, color: "var(--foreground)", margin: 0, lineHeight: 1 }}>{s.val}</p>
+                <p style={{ fontSize: 9, color: "var(--muted-foreground)", margin: "4px 0 0", textTransform: "uppercase", letterSpacing: "0.06em" }}>{s.lbl}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Schedule */}
+          {scheduledDate && (
+            <div style={{ background: "var(--muted)", borderRadius: 12, padding: "14px 16px", marginBottom: 16, display: "flex", gap: 12, alignItems: "flex-start" }}>
+              <Calendar size={16} style={{ color: sc.color, marginTop: 2, flexShrink: 0 }} />
+              <div>
+                <p style={{ fontSize: 10, fontWeight: 700, color: "var(--muted-foreground)", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 3px" }}>Scheduled</p>
+                <p style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", margin: 0 }}>{scheduledDate}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Rounds breakdown */}
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+              <Shield size={13} style={{ color: "var(--muted-foreground)" }} />
+              <span style={{ fontSize: 10, fontWeight: 700, color: "var(--muted-foreground)", textTransform: "uppercase", letterSpacing: "0.1em" }}>5 Rounds of Elimination</span>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {ROUNDS.map((r, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, background: "var(--muted)", borderRadius: 10, padding: "10px 14px" }}>
+                  <div style={{ width: 4, height: 32, borderRadius: 2, background: r.color, flexShrink: 0 }} />
+                  <span style={{ fontSize: 14 }}>{r.emoji}</span>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontSize: 12, fontWeight: 700, color: "var(--foreground)", margin: 0 }}>Round {i + 1} — {r.name}</p>
+                    <p style={{ fontSize: 10, color: "var(--muted-foreground)", margin: "2px 0 0" }}>Answer within {r.secs} seconds</p>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 4, background: `${r.color}15`, border: `1px solid ${r.color}30`, borderRadius: 8, padding: "3px 8px" }}>
+                    <Clock size={10} style={{ color: r.color }} />
+                    <span style={{ fontSize: 10, fontWeight: 700, color: r.color }}>{r.secs}s</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* How it works */}
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+              <Info size={13} style={{ color: "var(--muted-foreground)" }} />
+              <span style={{ fontSize: 10, fontWeight: 700, color: "var(--muted-foreground)", textTransform: "uppercase", letterSpacing: "0.1em" }}>How It Works</span>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {[
+                { step: "01", title: "Register & wait",   desc: "Register before the tournament starts. You'll get a reminder before game day." },
+                { step: "02", title: "Answer fast",        desc: "Each question has a time limit. Wrong answer or timeout = eliminated." },
+                { step: "03", title: "Outlast everyone",   desc: "Survive all 5 rounds to win. The last players standing split the prize pool." },
+                { step: "04", title: "Collect prize",      desc: qt.prize_pool > 0 ? `Winners share ${qt.prize_pool.toLocaleString()} ZA tokens, added to your wallet instantly.` : "Prize pool grows with every registered player." },
+              ].map((s, i) => (
+                <div key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                  <span style={{ fontSize: 10, fontWeight: 800, color: sc.color, width: 20, flexShrink: 0, paddingTop: 2 }}>{s.step}</span>
+                  <div>
+                    <p style={{ fontSize: 12, fontWeight: 700, color: "var(--foreground)", margin: "0 0 2px" }}>{s.title}</p>
+                    <p style={{ fontSize: 11, color: "var(--muted-foreground)", margin: 0, lineHeight: 1.5 }}>{s.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+        </div>
+
+        {/* Sticky footer CTA */}
+        <div style={{ padding: "16px 20px 20px", borderTop: "1px solid var(--border)", flexShrink: 0, background: "var(--card)" }}>
+          {qt.status === "active" ? (
+            <Link
+              to={`/quiz/${qt.id}`}
+              onClick={onClose}
+              style={{
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                padding: "14px", borderRadius: 12, fontSize: 13, fontWeight: 800,
+                textTransform: "uppercase", letterSpacing: "0.06em", textDecoration: "none",
+                background: sc.color, color: "#fff",
+                boxShadow: `0 4px 20px ${sc.color}40`,
+              }}
+            >
+              <Eye size={14} /> Watch Live
+            </Link>
+          ) : registered ? (
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+              padding: "14px", borderRadius: 12, fontSize: 13, fontWeight: 800,
+              textTransform: "uppercase", letterSpacing: "0.06em",
+              background: "rgba(22,163,74,0.1)", color: "#16a34a",
+              border: "1px solid rgba(22,163,74,0.3)",
+            }}>
+              <CheckCircle size={14} /> You're Registered!
+            </div>
+          ) : canRegister ? (
+            <button
+              onClick={onRegister}
+              disabled={isRegistering}
+              style={{
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                padding: "14px", borderRadius: 12, fontSize: 13, fontWeight: 800,
+                textTransform: "uppercase", letterSpacing: "0.06em",
+                background: isRegistering ? `${sc.color}80` : sc.color,
+                color: "#fff", border: "none", cursor: isRegistering ? "not-allowed" : "pointer",
+                boxShadow: `0 4px 20px ${sc.color}40`,
+                width: "100%", transition: "all 0.2s",
+              }}
+            >
+              {isRegistering
+                ? <><Loader2 size={14} className="animate-spin" /> Registering...</>
+                : qt.entry_fee > 0
+                ? <><Zap size={14} /> Register — Pay {qt.entry_fee} ZA</>
+                : <><Zap size={14} /> Register Free</>}
+            </button>
+          ) : qt.status === "completed" ? (
+            <Link
+              to={`/quiz/${qt.id}`}
+              onClick={onClose}
+              style={{
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                padding: "14px", borderRadius: 12, fontSize: 13, fontWeight: 800,
+                textTransform: "uppercase", letterSpacing: "0.06em", textDecoration: "none",
+                background: "var(--muted)", color: "var(--muted-foreground)",
+              }}
+            >
+              View Results
+            </Link>
+          ) : (
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+              padding: "14px", borderRadius: 12, fontSize: 12, fontWeight: 700,
+              textTransform: "uppercase", letterSpacing: "0.06em",
+              background: "var(--muted)", color: "var(--muted-foreground)",
+              border: "1px solid var(--border)",
+            }}>
+              Registration Not Open Yet
+            </div>
+          )}
+          {qt.entry_fee > 0 && canRegister && (
+            <p style={{ textAlign: "center", fontSize: 10, color: "var(--muted-foreground)", margin: "8px 0 0" }}>
+              Entry fee is added to the prize pool · Reminder sent before game day
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Tournament Card ───────────────────────────────────────────────────────────
 function TCard({ qt, featured, onRegistered }: {
   qt: QuizTournament;
   featured?: boolean;
@@ -63,9 +323,10 @@ function TCard({ qt, featured, onRegistered }: {
   const { user } = useAuth();
   const toast = useToast();
   const navigate = useNavigate();
-  const sc  = STATUS[qt.status as keyof typeof STATUS] ?? STATUS.draft;
+  const sc = STATUS[qt.status as keyof typeof STATUS] ?? STATUS.draft;
   const canRegister = qt.status === "registration" || qt.status === "lobby";
   const [registered, setRegistered] = useState(!!qt.user_registered);
+  const [showDetail, setShowDetail] = useState(false);
 
   const { mutate: join, isPending } = useMutation({
     mutationFn: () => joinQuizTournamentApi(qt.id),
@@ -77,11 +338,11 @@ function TCard({ qt, featured, onRegistered }: {
       }
       setRegistered(true);
       onRegistered(qt.id);
+      setShowDetail(false);
     },
     onError: (err: unknown) => {
       const e = err as Error & { response?: { data?: { message?: string } } };
-      const msg = e?.response?.data?.message ?? e?.message ?? "Registration failed";
-      toast.error(msg);
+      toast.error(e?.response?.data?.message ?? e?.message ?? "Registration failed");
     },
   });
 
@@ -91,7 +352,6 @@ function TCard({ qt, featured, onRegistered }: {
       navigate("/login");
       return;
     }
-    // Balance check — reject before hitting API
     const balance = user.wallet?.balance ?? 0;
     if (qt.entry_fee > 0 && balance < qt.entry_fee) {
       toast.error(`Insufficient ZA balance. You need ${qt.entry_fee} ZA but have ${balance} ZA.`);
@@ -101,134 +361,177 @@ function TCard({ qt, featured, onRegistered }: {
   }
 
   return (
-    <div
-      ref={ref} onMouseMove={onMove} onMouseLeave={onLeave}
-      style={{ transformStyle: "preserve-3d", willChange: "transform",
-        transform: featured ? "perspective(700px) rotateX(-1deg) translateY(-4px)" : undefined }}
-    >
-      <div style={{
-        background: "var(--card)",
-        border: `1px solid ${featured ? sc.color + "50" : "var(--border)"}`,
-        borderRadius: 16,
-        overflow: "hidden",
-        display: "flex",
-        flexDirection: "column",
-        height: "100%",
-        boxShadow: featured
-          ? `0 0 30px ${sc.color}18, 0 4px 24px rgba(0,0,0,0.08)`
-          : "0 2px 8px rgba(0,0,0,0.06)",
-        transition: "box-shadow 0.3s ease, border-color 0.3s ease",
-      }}>
-        {/* Top accent bar */}
-        <div style={{ height: 3, background: sc.color, width: "100%" }} />
-
-        {/* Card image area */}
+    <>
+      <div
+        ref={ref} onMouseMove={onMove} onMouseLeave={onLeave}
+        style={{
+          transformStyle: "preserve-3d", willChange: "transform",
+          transform: featured ? "perspective(700px) rotateX(-1deg) translateY(-4px)" : undefined,
+        }}
+      >
         <div style={{
-          height: 72,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          position: "relative", overflow: "hidden",
-          background: `linear-gradient(135deg, ${sc.color}08, ${sc.color}03)`,
+          background: "var(--card)",
+          border: `1px solid ${featured ? sc.color + "50" : "var(--border)"}`,
+          borderRadius: 16, overflow: "hidden",
+          display: "flex", flexDirection: "column", height: "100%",
+          boxShadow: featured
+            ? `0 0 30px ${sc.color}18, 0 4px 24px rgba(0,0,0,0.08)`
+            : "0 2px 8px rgba(0,0,0,0.06)",
+          transition: "box-shadow 0.3s ease, border-color 0.3s ease",
         }}>
-          <div style={{ position: "relative", zIndex: 1 }}>
-            {qt.status === "active" ? <Zap size={30} style={{ color: sc.color }} />
-              : qt.status === "completed" ? <Trophy size={30} style={{ color: sc.color }} />
-              : <Brain size={30} style={{ color: sc.color }} />}
-          </div>
-          {/* Status badge */}
+          {/* Accent bar */}
+          <div style={{ height: 3, background: sc.color, width: "100%" }} />
+
+          {/* Image area */}
           <div style={{
-            position: "absolute", top: 8, right: 10,
-            display: "flex", alignItems: "center", gap: 4,
-            background: sc.bg, border: `1px solid ${sc.border}`,
-            borderRadius: 20, padding: "3px 8px",
+            height: 72, display: "flex", alignItems: "center", justifyContent: "center",
+            position: "relative", overflow: "hidden",
+            background: `linear-gradient(135deg, ${sc.color}08, ${sc.color}03)`,
           }}>
-            {sc.live && <span style={{ width: 5, height: 5, borderRadius: "50%", background: sc.color, display: "block", animation: "pulse 1.2s ease-in-out infinite" }} />}
-            <span style={{ fontSize: 9, fontWeight: 700, color: sc.color, letterSpacing: "0.1em", textTransform: "uppercase" }}>{sc.short}</span>
-          </div>
-          {featured && (
-            <div style={{ position: "absolute", top: 8, left: 10, background: "var(--primary)", borderRadius: 6, padding: "2px 8px", fontSize: 9, fontWeight: 700, color: "#fff", letterSpacing: "0.1em", textTransform: "uppercase" }}>
-              Featured
+            <div style={{ position: "relative", zIndex: 1 }}>
+              {qt.status === "active"
+                ? <Zap size={30} style={{ color: sc.color }} />
+                : qt.status === "completed"
+                ? <Trophy size={30} style={{ color: sc.color }} />
+                : <Brain size={30} style={{ color: sc.color }} />}
             </div>
-          )}
-        </div>
-
-        {/* Body */}
-        <div style={{ padding: "14px 16px 16px", display: "flex", flexDirection: "column", flex: 1, gap: 10 }}>
-          {/* Title */}
-          <div>
-            <h3 style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)", lineHeight: 1.3, margin: "0 0 4px" }}>{qt.title}</h3>
-            {qt.description && <p style={{ fontSize: 11, color: "var(--muted-foreground)", lineHeight: 1.5, margin: 0 }} className="line-clamp-2">{qt.description}</p>}
-          </div>
-
-          {/* Stats */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 6 }}>
-            {[
-              { val: qt.prize_pool > 0 ? qt.prize_pool.toLocaleString() : "TBD", lbl: "ZA Prize" },
-              { val: qt.player_count.toString(), lbl: "Players" },
-              { val: qt.entry_fee > 0 ? `${qt.entry_fee} ZA` : "Free", lbl: "Entry" },
-            ].map((s, i) => (
-              <div key={i} style={{ background: "var(--muted)", borderRadius: 8, padding: "6px 8px", textAlign: "center" }}>
-                <p style={{ fontSize: 12, fontWeight: 700, color: "var(--foreground)", margin: 0, lineHeight: 1 }}>{s.val}</p>
-                <p style={{ fontSize: 9, color: "var(--muted-foreground)", margin: "3px 0 0", textTransform: "uppercase", letterSpacing: "0.06em" }}>{s.lbl}</p>
+            {/* Status badge */}
+            <div style={{
+              position: "absolute", top: 8, right: 10,
+              display: "flex", alignItems: "center", gap: 4,
+              background: sc.bg, border: `1px solid ${sc.border}`,
+              borderRadius: 20, padding: "3px 8px",
+            }}>
+              {sc.live && <span style={{ width: 5, height: 5, borderRadius: "50%", background: sc.color, display: "block", animation: "pulse 1.2s ease-in-out infinite" }} />}
+              <span style={{ fontSize: 9, fontWeight: 700, color: sc.color, letterSpacing: "0.1em", textTransform: "uppercase" }}>{sc.short}</span>
+            </div>
+            {featured && (
+              <div style={{ position: "absolute", top: 8, left: 10, background: "var(--primary)", borderRadius: 6, padding: "2px 8px", fontSize: 9, fontWeight: 700, color: "#fff", letterSpacing: "0.1em", textTransform: "uppercase" }}>
+                Featured
               </div>
-            ))}
+            )}
           </div>
 
-          {/* Round segments */}
-          <div style={{ display: "flex", gap: 3 }}>
-            {ROUNDS.map((r, i) => (
-              <div key={i} style={{ flex: 1, height: 3, borderRadius: 2, background: r.color, opacity: 0.5 }} title={r.name} />
-            ))}
-          </div>
+          {/* Body */}
+          <div style={{ padding: "14px 16px 16px", display: "flex", flexDirection: "column", flex: 1, gap: 10 }}>
+            {/* Title */}
+            <div>
+              <h3 style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)", lineHeight: 1.3, margin: "0 0 4px" }}>{qt.title}</h3>
+              {qt.description && (
+                <p style={{ fontSize: 11, color: "var(--muted-foreground)", lineHeight: 1.5, margin: 0 }} className="line-clamp-2">{qt.description}</p>
+              )}
+            </div>
 
-          {/* CTA — one click or link */}
-          {canRegister ? (
-            registered ? (
-              <div style={{
-                display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                padding: "10px", borderRadius: 10, fontSize: 11, fontWeight: 700,
-                textTransform: "uppercase", letterSpacing: "0.06em",
-                background: "rgba(22,163,74,0.1)", color: "#16a34a",
-                border: "1px solid rgba(22,163,74,0.3)",
-              }}>
-                <CheckCircle size={13} /> Registered
-              </div>
-            ) : (
+            {/* Stats */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 6 }}>
+              {[
+                { val: qt.prize_pool > 0 ? qt.prize_pool.toLocaleString() : "TBD", lbl: "ZA Prize" },
+                { val: qt.player_count.toString(), lbl: "Players" },
+                { val: qt.entry_fee > 0 ? `${qt.entry_fee} ZA` : "Free", lbl: "Entry" },
+              ].map((s, i) => (
+                <div key={i} style={{ background: "var(--muted)", borderRadius: 8, padding: "6px 8px", textAlign: "center" }}>
+                  <p style={{ fontSize: 12, fontWeight: 700, color: "var(--foreground)", margin: 0, lineHeight: 1 }}>{s.val}</p>
+                  <p style={{ fontSize: 9, color: "var(--muted-foreground)", margin: "3px 0 0", textTransform: "uppercase", letterSpacing: "0.06em" }}>{s.lbl}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Round bar */}
+            <div style={{ display: "flex", gap: 3 }}>
+              {ROUNDS.map((r, i) => (
+                <div key={i} style={{ flex: 1, height: 3, borderRadius: 2, background: r.color, opacity: 0.5 }} title={r.name} />
+              ))}
+            </div>
+
+            {/* ── CTA row ── */}
+            <div style={{ display: "flex", gap: 6, marginTop: "auto" }}>
+              {/* Details button — always visible */}
               <button
-                onClick={handleRegister}
-                disabled={isPending}
+                onClick={() => setShowDetail(true)}
                 style={{
-                  display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                  padding: "10px", borderRadius: 10, fontSize: 11, fontWeight: 700,
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
+                  padding: "10px 12px", borderRadius: 10, fontSize: 11, fontWeight: 700,
                   textTransform: "uppercase", letterSpacing: "0.06em",
-                  background: isPending ? `${sc.color}80` : sc.color,
-                  color: "#fff", border: "none", cursor: isPending ? "not-allowed" : "pointer",
-                  boxShadow: `0 4px 14px ${sc.color}35`,
-                  transition: "all 0.2s ease",
-                  width: "100%", marginTop: "auto",
+                  background: "var(--muted)", color: "var(--muted-foreground)",
+                  border: "1px solid var(--border)", cursor: "pointer",
+                  flexShrink: 0, transition: "all 0.2s",
                 }}
               >
-                {isPending ? <><Loader2 size={12} className="animate-spin" /> Registering...</> : <><Zap size={12} /> Register Now</>}
+                <Info size={12} />
+                <span>Details</span>
               </button>
-            )
-          ) : (
-            <Link
-              to={`/quiz/${qt.id}`}
-              style={{
-                display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                padding: "10px", borderRadius: 10, fontSize: 11, fontWeight: 700,
-                textTransform: "uppercase", letterSpacing: "0.06em", textDecoration: "none",
-                marginTop: "auto",
-                background: qt.status === "active" ? sc.color : "var(--muted)",
-                color: qt.status === "active" ? "#fff" : "var(--muted-foreground)",
-                boxShadow: qt.status === "active" ? `0 4px 14px ${sc.color}35` : "none",
-              }}
-            >
-              {qt.status === "active" ? <><Eye size={12} /> Watch Live</> : "View Details"}
-            </Link>
-          )}
+
+              {/* Primary action */}
+              {qt.status === "active" ? (
+                <Link
+                  to={`/quiz/${qt.id}`}
+                  style={{
+                    flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
+                    padding: "10px", borderRadius: 10, fontSize: 11, fontWeight: 700,
+                    textTransform: "uppercase", letterSpacing: "0.06em", textDecoration: "none",
+                    background: sc.color, color: "#fff",
+                    boxShadow: `0 4px 14px ${sc.color}35`,
+                  }}
+                >
+                  <Eye size={12} /> Watch Live
+                </Link>
+              ) : registered ? (
+                <div style={{
+                  flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
+                  padding: "10px", borderRadius: 10, fontSize: 11, fontWeight: 700,
+                  textTransform: "uppercase", letterSpacing: "0.06em",
+                  background: "rgba(22,163,74,0.1)", color: "#16a34a",
+                  border: "1px solid rgba(22,163,74,0.3)",
+                }}>
+                  <CheckCircle size={12} /> Registered
+                </div>
+              ) : canRegister ? (
+                <button
+                  onClick={handleRegister}
+                  disabled={isPending}
+                  style={{
+                    flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
+                    padding: "10px", borderRadius: 10, fontSize: 11, fontWeight: 700,
+                    textTransform: "uppercase", letterSpacing: "0.06em",
+                    background: isPending ? `${sc.color}80` : sc.color,
+                    color: "#fff", border: "none", cursor: isPending ? "not-allowed" : "pointer",
+                    boxShadow: `0 4px 14px ${sc.color}35`,
+                    transition: "all 0.2s",
+                  }}
+                >
+                  {isPending
+                    ? <><Loader2 size={12} className="animate-spin" /> Joining...</>
+                    : <><Zap size={12} /> Register Now</>}
+                </button>
+              ) : (
+                <Link
+                  to={`/quiz/${qt.id}`}
+                  style={{
+                    flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
+                    padding: "10px", borderRadius: 10, fontSize: 11, fontWeight: 700,
+                    textTransform: "uppercase", letterSpacing: "0.06em", textDecoration: "none",
+                    background: "var(--muted)", color: "var(--muted-foreground)",
+                  }}
+                >
+                  View Results
+                </Link>
+              )}
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* Detail modal */}
+      {showDetail && (
+        <TournamentDetailModal
+          qt={qt}
+          onClose={() => setShowDetail(false)}
+          onRegister={handleRegister}
+          isRegistering={isPending}
+          registered={registered}
+        />
+      )}
+    </>
   );
 }
 
@@ -314,7 +617,6 @@ const Tournaments = () => {
   const liveCount    = quizTournaments.filter(t => t.status === "active").length;
 
   function handleRegistered(id: string) {
-    // Bump player count in cache immediately
     queryClient.setQueryData<QuizTournament[]>(["quiz-tournaments-public"], old =>
       (old ?? []).map(t => t.id === id ? { ...t, player_count: t.player_count + 1, user_registered: true } : t)
     );
@@ -370,10 +672,8 @@ const Tournaments = () => {
         </div>
       </div>
 
-      {/* ── Below hero — uses theme vars, visible in light + dark ─── */}
+      {/* ── Below hero ─────────────────────────────────────────────── */}
       <div style={{ padding: "0 4px", display: "flex", flexDirection: "column", gap: 16 }}>
-
-        {/* Tabs + search */}
         <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
           <div className="flex gap-1" style={{ borderBottom: "2px solid var(--border)" }}>
             {([
