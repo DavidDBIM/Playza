@@ -108,10 +108,8 @@ export default function QuizChampionship() {
     },
   });
 
-  // User is joined if they clicked register this session OR they are already registered
   const joined = joinedState || !!tournament?.user_registered;
 
-  // ── Countdown to scheduled_at ─────────────────────────────────────────────
   useEffect(() => {
     if (!tournament?.scheduled_at) return;
     const tick = () => {
@@ -169,7 +167,6 @@ export default function QuizChampionship() {
   const roundMeta = ROUNDS[(round - 1)] ?? ROUNDS[4];
   const canJoin   = (tournament.status === "registration" || tournament.status === "lobby") && !tournament.user_registered;
 
-  // ── CONNECTING (registered + active but socket not yet synced) ─────────────
   if (joined && phase === "idle" && (tournament.status === "active" || tournament.status === "lobby")) {
     return (
       <div className="min-h-screen bg-[#080810] flex items-center justify-center">
@@ -182,13 +179,12 @@ export default function QuizChampionship() {
     );
   }
 
-  // ── PRE-JOIN / REGISTRATION ─────────────────────────────────────────────────
+  // ── PRE-JOIN ────────────────────────────────────────────────────────────────
   if (!joined || phase === "idle") {
     return (
-      <div className="min-h-screen bg-[#080810] flex flex-col items-center justify-center p-4 relative overflow-hidden">
+      <div className="min-h-screen bg-[#080810] flex flex-col items-center justify-center p-4 relative overflow-hidden pb-28">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-80 h-80 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
         <button onClick={() => navigate("/tournaments")} className="absolute top-5 left-4 text-white/30 hover:text-white text-xs font-bold uppercase tracking-widest transition-colors z-10">← Back</button>
-
         <div className="w-full max-w-sm relative z-10">
           <div className="flex justify-center mb-6">
             <div className="relative">
@@ -196,7 +192,6 @@ export default function QuizChampionship() {
               <div className="relative w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-500 to-violet-700 flex items-center justify-center shadow-2xl shadow-purple-500/30 text-4xl">👑</div>
             </div>
           </div>
-
           <div className="text-center mb-6">
             <div className="inline-flex items-center gap-2 bg-purple-500/10 border border-purple-500/20 px-3 py-1 rounded-full mb-3">
               <span className={`w-1.5 h-1.5 rounded-full ${tournament.status === "registration" ? "bg-green-400 animate-pulse" : tournament.status === "lobby" ? "bg-blue-400 animate-pulse" : tournament.status === "active" ? "bg-red-400 animate-pulse" : "bg-yellow-400"}`} />
@@ -207,8 +202,6 @@ export default function QuizChampionship() {
             <h1 className="text-2xl font-black text-white mb-1">{tournament.title}</h1>
             {tournament.description && <p className="text-white/40 text-sm">{tournament.description}</p>}
           </div>
-
-          {/* Stats */}
           <div className="grid grid-cols-3 gap-2 mb-5">
             {[
               { label: "Players", value: (playerCount || tournament.player_count || 0).toLocaleString(), icon: "👥" },
@@ -222,24 +215,15 @@ export default function QuizChampionship() {
               </div>
             ))}
           </div>
-
-          {/* Countdown */}
           {countdown && tournament.scheduled_at && tournament.status !== "active" && tournament.status !== "cancelled" && (
             <div className="bg-purple-500/10 border border-purple-500/20 rounded-2xl p-4 mb-5 text-center">
-              <p className="text-[10px] font-black uppercase tracking-widest text-purple-300/60 mb-1">
-                {tournament.status === "registration" ? "Game Starts In" : "Scheduled For"}
-              </p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-purple-300/60 mb-1">{tournament.status === "registration" ? "Game Starts In" : "Scheduled For"}</p>
               <p className="text-3xl font-black text-white tabular-nums">{countdown}</p>
               <p className="text-[10px] text-white/30 mt-1">
-                {new Date(tournament.scheduled_at).toLocaleDateString("en-NG", {
-                  weekday: "short", day: "numeric", month: "short",
-                  hour: "2-digit", minute: "2-digit"
-                })}
+                {new Date(tournament.scheduled_at).toLocaleDateString("en-NG", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
               </p>
             </div>
           )}
-
-          {/* Round pills */}
           <div className="flex gap-1.5 mb-5 justify-center">
             {ROUNDS.map((r, i) => (
               <div key={i} className="flex flex-col items-center gap-1.5">
@@ -248,8 +232,6 @@ export default function QuizChampionship() {
               </div>
             ))}
           </div>
-
-          {/* Round breakdown */}
           <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4 mb-5">
             <p className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-3">5 Rounds of Elimination</p>
             <div className="space-y-2">
@@ -264,17 +246,13 @@ export default function QuizChampionship() {
               ))}
             </div>
           </div>
-
-          {/* CTA */}
           {tournament.user_registered ? (
             <div className="space-y-3">
               <div className="flex items-center justify-center gap-2 py-4 rounded-2xl bg-green-500/10 border border-green-500/20">
                 <span className="text-green-400 font-black">✓ Registered</span>
               </div>
               <p className="text-center text-[10px] text-white/30">
-                {tournament.status === "active" ? "Game is live — connecting you now..." :
-                 tournament.status === "lobby"  ? "Game starting soon — stay on this page" :
-                 "You will be notified 24h and 2h before game day"}
+                {tournament.status === "active" ? "Game is live — connecting you now..." : tournament.status === "lobby" ? "Game starting soon — stay on this page" : "You will be notified 24h and 2h before game day"}
               </p>
             </div>
           ) : tournament.status === "cancelled" ? (
@@ -283,12 +261,9 @@ export default function QuizChampionship() {
             </div>
           ) : (
             <>
-              <button
-                onClick={() => join()}
-                disabled={joining || !canJoin}
+              <button onClick={() => join()} disabled={joining || !canJoin}
                 className="w-full py-4 rounded-2xl font-black text-sm uppercase tracking-wide transition-all disabled:opacity-40 disabled:cursor-not-allowed relative overflow-hidden group text-white"
-                style={{ background: canJoin ? "linear-gradient(135deg,#7c3aed,#a855f7)" : "#1a1a2e" }}
-              >
+                style={{ background: canJoin ? "linear-gradient(135deg,#7c3aed,#a855f7)" : "#1a1a2e" }}>
                 <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
                 <span className="relative flex items-center justify-center gap-2">
                   {joining ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Joining...</> :
@@ -306,22 +281,17 @@ export default function QuizChampionship() {
     );
   }
 
-  // ── LOBBY ──────────────────────────────────────────────────────────────────
+  // ── LOBBY ───────────────────────────────────────────────────────────────────
   if (phase === "lobby" || phase === "starting") {
     return (
-      <div className="min-h-screen bg-[#080810] flex flex-col items-center justify-center p-4 relative overflow-hidden">
-        {/* Back button */}
-        <button onClick={() => navigate("/tournaments")} className="absolute top-5 left-4 text-white/30 hover:text-white text-xs font-bold uppercase tracking-widest transition-colors z-10">
-          ← Back
-        </button>
-
+      <div className="min-h-screen bg-[#080810] flex flex-col items-center justify-center p-4 relative overflow-hidden pb-28">
+        <button onClick={() => navigate("/tournaments")} className="absolute top-5 left-4 text-white/30 hover:text-white text-xs font-bold uppercase tracking-widest transition-colors z-10">← Back</button>
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           {[...Array(8)].map((_, i) => (
             <div key={i} className="absolute w-1 h-1 bg-white/20 rounded-full animate-ping"
               style={{ left: `${10 + i * 12}%`, top: `${15 + (i % 4) * 20}%`, animationDelay: `${i * 0.35}s`, animationDuration: "2s" }} />
           ))}
         </div>
-
         <div className="relative z-10 text-center w-full max-w-sm">
           {phase === "starting" ? (
             <><div className="text-6xl mb-4 animate-bounce">🚀</div>
@@ -335,8 +305,6 @@ export default function QuizChampionship() {
               </div>
               <h2 className="text-3xl font-black text-white mb-1">Lobby</h2>
               <p className="text-white/40 text-sm mb-3">Waiting for admin to start the game</p>
-
-              {/* Countdown in lobby */}
               {countdown && tournament.scheduled_at && (
                 <div className="inline-flex items-center gap-2 bg-purple-500/10 border border-purple-500/20 px-4 py-2 rounded-full mb-6">
                   <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
@@ -345,17 +313,14 @@ export default function QuizChampionship() {
               )}
             </>
           )}
-
           <div className="bg-white/[0.04] border border-white/[0.08] rounded-3xl p-6 mb-6">
             <div className="text-5xl font-black text-white mb-1 tabular-nums">{playerCount}</div>
             <div className="text-white/30 text-xs font-bold uppercase tracking-widest">Players Ready</div>
           </div>
-
           <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border text-xs font-bold mb-6 ${connected ? "bg-green-500/10 border-green-500/20 text-green-400" : "bg-red-500/10 border-red-500/20 text-red-400"}`}>
             <span className={`w-1.5 h-1.5 rounded-full ${connected ? "bg-green-400 animate-pulse" : "bg-red-400"}`} />
             {connected ? "Connected — Waiting for game start" : "Reconnecting..."}
           </div>
-
           {leaderboard.length > 0 && (
             <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4 text-left">
               <p className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-3">Players in Lobby</p>
@@ -375,10 +340,10 @@ export default function QuizChampionship() {
     );
   }
 
-  // ── CANCELLED ──────────────────────────────────────────────────────────────
+  // ── CANCELLED ───────────────────────────────────────────────────────────────
   if (phase === "cancelled") {
     return (
-      <div className="min-h-screen bg-[#080810] flex items-center justify-center p-4">
+      <div className="min-h-screen bg-[#080810] flex items-center justify-center p-4 pb-28">
         <div className="w-full max-w-sm text-center">
           <div className="text-7xl mb-4">🚫</div>
           <h2 className="text-3xl font-black text-white mb-2">Tournament Cancelled</h2>
@@ -386,18 +351,16 @@ export default function QuizChampionship() {
           <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl px-4 py-3 mb-6">
             <p className="text-amber-400 text-xs font-bold">If you paid an entry fee, your ZA tokens have been refunded to your wallet.</p>
           </div>
-          <button onClick={() => navigate("/tournaments")} className="w-full py-3.5 rounded-2xl bg-white/[0.06] border border-white/[0.1] text-white font-bold text-sm hover:bg-white/[0.1] transition-all">
-            Back to Tournaments
-          </button>
+          <button onClick={() => navigate("/tournaments")} className="w-full py-3.5 rounded-2xl bg-white/[0.06] border border-white/[0.1] text-white font-bold text-sm">Back to Tournaments</button>
         </div>
       </div>
     );
   }
 
-  // ── ELIMINATED ─────────────────────────────────────────────────────────────
+  // ── ELIMINATED ──────────────────────────────────────────────────────────────
   if (phase === "eliminated") {
     return (
-      <div className="min-h-screen bg-[#080810] flex items-center justify-center p-4">
+      <div className="min-h-screen bg-[#080810] flex items-center justify-center p-4 pb-28">
         <div className="w-full max-w-sm text-center">
           <div className="text-7xl mb-4">💀</div>
           <h2 className="text-3xl font-black text-white mb-2">Eliminated!</h2>
@@ -413,19 +376,17 @@ export default function QuizChampionship() {
               </div>
             ))}
           </div>
-          <button onClick={() => navigate("/tournaments")} className="w-full py-3.5 rounded-2xl bg-white/[0.06] border border-white/[0.1] text-white font-bold text-sm hover:bg-white/[0.1] transition-all">
-            Back to Tournaments
-          </button>
+          <button onClick={() => navigate("/tournaments")} className="w-full py-3.5 rounded-2xl bg-white/[0.06] border border-white/[0.1] text-white font-bold text-sm">Back to Tournaments</button>
         </div>
       </div>
     );
   }
 
-  // ── ROUND SUMMARY ──────────────────────────────────────────────────────────
+  // ── ROUND SUMMARY ───────────────────────────────────────────────────────────
   if (phase === "round_summary" && roundSummary) {
     const nextMeta = ROUNDS[(roundSummary.next_round - 1)];
     return (
-      <div className="min-h-screen bg-[#080810] flex items-center justify-center p-4">
+      <div className="min-h-screen bg-[#080810] flex items-center justify-center p-4 pb-28">
         <div className="w-full max-w-sm text-center">
           <div className="inline-flex items-center gap-2 bg-green-500/10 border border-green-500/20 px-4 py-1.5 rounded-full mb-6">
             <span className="w-2 h-2 rounded-full bg-green-400" />
@@ -453,10 +414,10 @@ export default function QuizChampionship() {
     );
   }
 
-  // ── GAME OVER ──────────────────────────────────────────────────────────────
+  // ── GAME OVER ───────────────────────────────────────────────────────────────
   if (phase === "game_over" && gameOver) {
     return (
-      <div className="min-h-screen bg-[#080810] overflow-y-auto">
+      <div className="min-h-screen bg-[#080810] overflow-y-auto pb-28">
         <div className="max-w-sm mx-auto px-4 py-10 text-center">
           <div className="text-6xl mb-4">🏆</div>
           <h2 className="text-3xl font-black text-white mb-1">Game Over!</h2>
@@ -497,43 +458,36 @@ export default function QuizChampionship() {
     );
   }
 
-  // ── ACTIVE QUESTION ────────────────────────────────────────────────────────
+  // ── ACTIVE QUESTION ─────────────────────────────────────────────────────────
   if ((phase === "question" || phase === "revealing") && currentQuestion) {
     const isRevealing = phase === "revealing";
     const totalMs     = currentQuestion.time_limit_ms;
     const aliveCount  = leaderboard.filter(e => e.status === "alive").length;
-    // Top 5 alive for the mobile mini-strip
     const topAlive    = leaderboard.filter(e => e.status === "alive").slice(0, 5);
     const myEntry     = leaderboard.find(e => e.user_id === user?.id);
 
     return (
       <div className="min-h-screen flex flex-col bg-[#080810] relative overflow-hidden">
-        {/* Round colour accent */}
         <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: `linear-gradient(90deg,transparent,${roundMeta.color},transparent)`, boxShadow: `0 0 20px ${roundMeta.color}60` }} />
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-36 rounded-full blur-3xl pointer-events-none opacity-15" style={{ background: roundMeta.color }} />
 
-        {/* ── Header ─────────────────────────────────────────────────────── */}
+        {/* Header */}
         <div className="flex items-center gap-2 px-3 pt-4 pb-2 relative z-10">
-          {/* Round pill */}
           <div className="flex items-center gap-1.5 bg-white/[0.05] border border-white/[0.08] rounded-xl px-2 py-1 shrink-0">
             <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: roundMeta.color }} />
-            <span className="text-[9px] font-black uppercase tracking-widest text-white/60 whitespace-nowrap">
-              R{currentQuestion.round} · {roundMeta.name}
-            </span>
+            <span className="text-[9px] font-black uppercase tracking-widest text-white/60 whitespace-nowrap">R{currentQuestion.round} · {roundMeta.name}</span>
           </div>
-          {/* Q index */}
           <div className="bg-white/[0.04] border border-white/[0.06] rounded-xl px-2 py-1 shrink-0">
             <span className="text-[9px] font-black text-white/40">{currentQuestion.question_index + 1}/{currentQuestion.total_questions}</span>
           </div>
           <div className="flex-1" />
-          {/* Alive count */}
           <div className="flex items-center gap-1 bg-white/[0.04] border border-white/[0.06] rounded-xl px-2 py-1 shrink-0">
             <span className="text-[9px]">👥</span>
             <span className="text-[9px] font-black text-white/60">{aliveCount}</span>
           </div>
         </div>
 
-        {/* ── Mobile live strip (visible only on mobile, always shown) ─── */}
+        {/* Mobile live strip */}
         <div className="lg:hidden px-3 pb-2 relative z-10">
           <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl px-2 py-1.5 flex items-center gap-2 overflow-x-auto">
             <span className="text-[9px] font-black text-white/30 uppercase tracking-widest shrink-0">Live</span>
@@ -543,27 +497,19 @@ export default function QuizChampionship() {
                 return (
                   <div key={i} className={`flex items-center gap-1 shrink-0 px-1.5 py-0.5 rounded-lg ${isMe ? "bg-purple-500/20" : ""}`}>
                     <span className="text-[8px] text-white/30 font-black">#{e.rank}</span>
-                    <div className="w-4 h-4 rounded-full bg-white/[0.1] flex items-center justify-center text-[8px] font-black text-white shrink-0">
-                      {e.username[0]?.toUpperCase()}
-                    </div>
-                    <span className={`text-[9px] font-bold truncate max-w-[48px] ${isMe ? "text-purple-300" : "text-white/50"}`}>
-                      {isMe ? "You" : e.username}
-                    </span>
+                    <div className="w-4 h-4 rounded-full bg-white/[0.1] flex items-center justify-center text-[8px] font-black text-white shrink-0">{e.username[0]?.toUpperCase()}</div>
+                    <span className={`text-[9px] font-bold truncate max-w-[48px] ${isMe ? "text-purple-300" : "text-white/50"}`}>{isMe ? "You" : e.username}</span>
                     <div className="w-1.5 h-1.5 rounded-full bg-green-400 shrink-0" />
                   </div>
                 );
               })}
-              {/* Eliminated count */}
               {leaderboard.filter(e => e.status === "eliminated").length > 0 && (
                 <div className="flex items-center gap-1 shrink-0 ml-1">
                   <div className="w-1.5 h-1.5 rounded-full bg-red-500/60" />
-                  <span className="text-[8px] text-red-400/60 font-bold">
-                    {leaderboard.filter(e => e.status === "eliminated").length} out
-                  </span>
+                  <span className="text-[8px] text-red-400/60 font-bold">{leaderboard.filter(e => e.status === "eliminated").length} out</span>
                 </div>
               )}
             </div>
-            {/* My rank if outside top 5 */}
             {myEntry && !topAlive.find(e => e.user_id === user?.id) && (
               <div className="flex items-center gap-1 shrink-0 bg-purple-500/20 px-1.5 py-0.5 rounded-lg">
                 <span className="text-[8px] font-black text-purple-300">#{myEntry.rank}</span>
@@ -573,40 +519,40 @@ export default function QuizChampionship() {
           </div>
         </div>
 
-        {/* ── Main content ────────────────────────────────────────────────── */}
-        <div className="flex flex-1 gap-3 px-3 pb-4 relative z-10 min-h-0">
+        {/* Main content — pb-28 on mobile to clear the nav bar */}
+        <div className="flex flex-1 gap-3 px-3 pb-28 lg:pb-6 relative z-10 min-h-0">
 
           {/* Quiz column */}
           <div className="flex-1 flex flex-col min-w-0">
 
-            {/* Timer + Question card */}
-            <div className="flex items-start gap-2 mb-3">
+            {/* Timer + Question */}
+            <div className="flex items-start gap-2 mb-2">
               {!isRevealing && (
-                <div className="shrink-0 scale-75 origin-top-left -ml-1">
+                <div className="shrink-0 scale-[0.65] origin-top-left -ml-2 -mr-4">
                   <TimerArc ms={timeLeftMs} totalMs={totalMs} round={round} />
                 </div>
               )}
               <div className={`flex-1 bg-white/[0.04] border border-white/[0.08] rounded-xl overflow-hidden ${isRevealing ? "w-full" : ""}`}>
                 {currentQuestion.image_url && (
-                  <img src={currentQuestion.image_url} alt="Question"
-                    className="w-full max-h-32 object-cover border-b border-white/[0.08]" />
+                  <img src={currentQuestion.image_url} alt="Question" className="w-full max-h-28 object-cover border-b border-white/[0.08]" />
                 )}
-                <div className="p-3">
-                  <p className="text-white font-black text-sm md:text-base leading-snug">{currentQuestion.question_text}</p>
+                <div className="p-2.5">
+                  <p className="text-white font-black text-xs md:text-sm leading-snug">{currentQuestion.question_text}</p>
                 </div>
               </div>
             </div>
 
-            {/* Answer options — 2 columns on mobile to save vertical space */}
-            <div className="grid grid-cols-2 lg:grid-cols-1 gap-2 flex-1">
+            {/* ── Answer options — 2 cols, compact on mobile ── */}
+            <div className="grid grid-cols-2 lg:grid-cols-1 gap-1.5 lg:gap-2">
               {OPTS.map((key, i) => {
                 const text       = currentQuestion.options[key];
                 const isSelected = selectedOption === key;
                 const isCorrect  = isRevealing && revealData?.correct_option === key;
                 const isWrong    = isRevealing && isSelected && !isCorrect;
 
-                let cardCls   = "flex items-center gap-2 p-2.5 lg:p-4 rounded-xl border-2 transition-all duration-200 w-full text-left select-none ";
-                let letterCls = "w-6 h-6 lg:w-8 lg:h-8 rounded-lg flex items-center justify-center font-black text-xs lg:text-sm shrink-0 transition-all text-white ";
+                // Smaller padding/text on mobile
+                let cardCls   = "flex items-center gap-1.5 lg:gap-3 p-2 lg:p-4 rounded-lg lg:rounded-2xl border-2 transition-all duration-200 w-full text-left select-none ";
+                let letterCls = "w-5 h-5 lg:w-8 lg:h-8 rounded-md lg:rounded-xl flex items-center justify-center font-black text-[10px] lg:text-sm shrink-0 transition-all text-white ";
 
                 if (isRevealing) {
                   if (isCorrect)    { cardCls += "border-green-400 bg-green-500/10"; letterCls += "bg-green-500"; }
@@ -625,7 +571,7 @@ export default function QuizChampionship() {
                     onClick={() => !answerLocked && !isRevealing && submitAnswer(key)}
                     disabled={answerLocked || isRevealing}>
                     <span className={letterCls}>{key}</span>
-                    <span className="font-bold text-xs lg:text-sm text-white flex-1 leading-snug text-left line-clamp-3">{text}</span>
+                    <span className="font-bold text-[11px] lg:text-sm text-white flex-1 leading-snug text-left line-clamp-2">{text}</span>
                     {isCorrect && <span className="text-green-400 shrink-0 text-sm">✓</span>}
                     {isWrong   && <span className="text-red-400 shrink-0 text-sm">✗</span>}
                   </button>
@@ -651,7 +597,7 @@ export default function QuizChampionship() {
             </div>
           </div>
 
-          {/* ── Desktop leaderboard sidebar ─────────────────────────────── */}
+          {/* Desktop leaderboard */}
           <div className="w-52 hidden lg:flex flex-col shrink-0">
             <LeaderboardPanel entries={leaderboard} myId={user?.id} />
           </div>
