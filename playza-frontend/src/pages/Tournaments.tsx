@@ -1,19 +1,21 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Link } from "react-router";
-import { useQuery } from "@tanstack/react-query";
-import { getQuizTournamentsApi, type QuizTournament } from "@/api/quiz.api";
-import { Search, Trophy, X, Users, ChevronDown, Zap, Eye, Brain } from "lucide-react";
+import { Link, useNavigate } from "react-router";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getQuizTournamentsApi, joinQuizTournamentApi, type QuizTournament } from "@/api/quiz.api";
+import { Search, Trophy, X, Users, ChevronDown, Zap, Eye, Brain, CheckCircle, Loader2 } from "lucide-react";
+import { useAuth } from "@/context/auth";
+import { useToast } from "@/context/toast";
 import {
   DropdownMenu, DropdownMenuContent,
   DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-// ─── Config ────────────────────────────────────────────────────────────────────
+// ─── Status config ─────────────────────────────────────────────────────────────
 const STATUS = {
   active:       { label: "LIVE NOW",          short: "LIVE",     color: "#ef4444", bg: "rgba(239,68,68,0.12)",  border: "rgba(239,68,68,0.3)",  live: true  },
-  registration: { label: "REGISTER NOW",      short: "REGISTER", color: "#22c55e", bg: "rgba(34,197,94,0.12)", border: "rgba(34,197,94,0.3)",  live: false },
-  lobby:        { label: "REGISTER NOW",      short: "REGISTER", color: "#22c55e", bg: "rgba(34,197,94,0.12)", border: "rgba(34,197,94,0.3)",  live: false },
-  draft:        { label: "COMING SOON",       short: "SOON",     color: "#818cf8", bg: "rgba(99,102,241,0.1)", border: "rgba(99,102,241,0.25)", live: false },
+  registration: { label: "REGISTER NOW",      short: "REGISTER", color: "#16a34a", bg: "rgba(22,163,74,0.12)", border: "rgba(22,163,74,0.3)",  live: false },
+  lobby:        { label: "REGISTER NOW",      short: "REGISTER", color: "#16a34a", bg: "rgba(22,163,74,0.12)", border: "rgba(22,163,74,0.3)",  live: false },
+  draft:        { label: "COMING SOON",       short: "SOON",     color: "#6366f1", bg: "rgba(99,102,241,0.1)", border: "rgba(99,102,241,0.25)", live: false },
   completed:    { label: "ENDED",             short: "ENDED",    color: "#64748b", bg: "rgba(100,116,139,0.1)",border: "rgba(100,116,139,0.2)", live: false },
   cancelled:    { label: "CANCELLED",         short: "OFF",      color: "#64748b", bg: "rgba(100,116,139,0.1)",border: "rgba(100,116,139,0.2)", live: false },
 } as const;
@@ -32,15 +34,15 @@ const PRIZE_OPTIONS = [
   { value: "low",  label: "Standard"            },
 ];
 
-// ─── 3-D tilt hook ────────────────────────────────────────────────────────────
+// ─── 3-D tilt ──────────────────────────────────────────────────────────────────
 function useTilt() {
   const ref = useRef<HTMLDivElement>(null);
   const onMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     const el = ref.current; if (!el) return;
     const { left, top, width, height } = el.getBoundingClientRect();
-    const x = ((e.clientX - left) / width  - 0.5) * 12;
-    const y = ((e.clientY - top)  / height - 0.5) * -12;
-    el.style.transform  = `perspective(700px) rotateY(${x}deg) rotateX(${y}deg) translateY(-6px)`;
+    const x = ((e.clientX - left) / width  - 0.5) * 10;
+    const y = ((e.clientY - top)  / height - 0.5) * -10;
+    el.style.transform  = `perspective(700px) rotateY(${x}deg) rotateX(${y}deg) translateY(-4px)`;
     el.style.transition = "transform 0.06s linear";
   }, []);
   const onLeave = useCallback(() => {
@@ -51,72 +53,123 @@ function useTilt() {
   return { ref, onMove, onLeave };
 }
 
-// ─── Tournament Card ───────────────────────────────────────────────────────────
-function TCard({ qt, featured }: { qt: QuizTournament; featured?: boolean }) {
+// ─── Tournament Card with one-click register ───────────────────────────────────
+function TCard({ qt, featured, onRegistered }: {
+  qt: QuizTournament;
+  featured?: boolean;
+  onRegistered: (id: string) => void;
+}) {
   const { ref, onMove, onLeave } = useTilt();
+  const { user } = useAuth();
+  const toast = useToast();
+  const navigate = useNavigate();
   const sc  = STATUS[qt.status as keyof typeof STATUS] ?? STATUS.draft;
   const hot = qt.status === "active" || qt.status === "registration" || qt.status === "lobby";
+  const canRegister = qt.status === "registration" || qt.status === "lobby";
+  const [registered, setRegistered] = useState(!!qt.user_registered);
+
+  const { mutate: join, isPending } = useMutation({
+    mutationFn: () => joinQuizTournamentApi(qt.id),
+    onSuccess: (data) => {
+      if (data.data?.already_joined) {
+        toast.info("You are already registered for this tournament!");
+      } else {
+        toast.success(data.message ?? "Registered! We'll remind you before game day. 🎉");
+      }
+      setRegistered(true);
+      onRegistered(qt.id);
+    },
+    onError: (err: unknown) => {
+      const e = err as Error & { response?: { data?: { message?: string } } };
+      const msg = e?.response?.data?.message ?? e?.message ?? "Registration failed";
+      toast.error(msg);
+    },
+  });
+
+  function handleRegister() {
+    if (!user) {
+      toast.error("Please log in to register for tournaments.");
+      navigate("/login");
+      return;
+    }
+    // Balance check — reject before hitting API
+    const balance = user.wallet?.balance ?? 0;
+    if (qt.entry_fee > 0 && balance < qt.entry_fee) {
+      toast.error(`Insufficient ZA balance. You need ${qt.entry_fee} ZA but have ${balance} ZA.`);
+      return;
+    }
+    join();
+  }
 
   return (
     <div
       ref={ref} onMouseMove={onMove} onMouseLeave={onLeave}
       style={{ transformStyle: "preserve-3d", willChange: "transform",
-        transform: featured
-          ? "perspective(700px) rotateY(0deg) rotateX(-1deg) translateY(-6px)"
-          : "perspective(700px) rotateY(-2deg) rotateX(1.5deg)" }}
+        transform: featured ? "perspective(700px) rotateX(-1deg) translateY(-4px)" : undefined }}
     >
       <div style={{
-        background: featured ? "rgba(124,58,237,0.1)" : "rgba(255,255,255,0.03)",
-        border: `1px solid ${featured ? "rgba(168,85,247,0.45)" : hot ? sc.color + "30" : "rgba(255,255,255,0.07)"}`,
+        background: "var(--card)",
+        border: `1px solid ${featured ? sc.color + "50" : "var(--border)"}`,
         borderRadius: 16,
         overflow: "hidden",
         display: "flex",
         flexDirection: "column",
         height: "100%",
-        boxShadow: featured ? "0 0 40px rgba(124,58,237,0.2), 0 12px 40px rgba(0,0,0,0.5)" : "0 8px 32px rgba(0,0,0,0.4)",
-        transition: "box-shadow 0.3s ease",
+        boxShadow: featured
+          ? `0 0 30px ${sc.color}18, 0 4px 24px rgba(0,0,0,0.08)`
+          : "0 2px 8px rgba(0,0,0,0.06)",
+        transition: "box-shadow 0.3s ease, border-color 0.3s ease",
       }}>
         {/* Top accent bar */}
         <div style={{ height: 3, background: sc.color, width: "100%" }} />
 
         {/* Card image area */}
-        <div style={{ height: 76, display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden" }}>
-          <div style={{ position: "absolute", inset: 0, background: `radial-gradient(circle at 50% 60%, ${sc.color}20, transparent 70%)` }} />
+        <div style={{
+          height: 72,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          position: "relative", overflow: "hidden",
+          background: `linear-gradient(135deg, ${sc.color}08, ${sc.color}03)`,
+        }}>
           <div style={{ position: "relative", zIndex: 1 }}>
-            {qt.status === "active"
-              ? <Zap size={32} style={{ color: sc.color }} />
-              : qt.status === "completed"
-              ? <Trophy size={32} style={{ color: sc.color }} />
-              : <Brain size={32} style={{ color: sc.color }} />}
+            {qt.status === "active" ? <Zap size={30} style={{ color: sc.color }} />
+              : qt.status === "completed" ? <Trophy size={30} style={{ color: sc.color }} />
+              : <Brain size={30} style={{ color: sc.color }} />}
+          </div>
+          {/* Status badge */}
+          <div style={{
+            position: "absolute", top: 8, right: 10,
+            display: "flex", alignItems: "center", gap: 4,
+            background: sc.bg, border: `1px solid ${sc.border}`,
+            borderRadius: 20, padding: "3px 8px",
+          }}>
+            {sc.live && <span style={{ width: 5, height: 5, borderRadius: "50%", background: sc.color, display: "block", animation: "pulse 1.2s ease-in-out infinite" }} />}
+            <span style={{ fontSize: 9, fontWeight: 700, color: sc.color, letterSpacing: "0.1em", textTransform: "uppercase" }}>{sc.short}</span>
           </div>
           {featured && (
-            <div style={{ position: "absolute", top: 8, right: 10, background: "rgba(168,85,247,0.2)", border: "1px solid rgba(168,85,247,0.4)", borderRadius: 6, padding: "2px 8px", fontSize: 9, fontWeight: 700, color: "#c084fc", letterSpacing: "0.1em", textTransform: "uppercase" }}>
+            <div style={{ position: "absolute", top: 8, left: 10, background: "var(--primary)", borderRadius: 6, padding: "2px 8px", fontSize: 9, fontWeight: 700, color: "#fff", letterSpacing: "0.1em", textTransform: "uppercase" }}>
               Featured
             </div>
           )}
         </div>
 
         {/* Body */}
-        <div style={{ padding: "12px 14px 16px", display: "flex", flexDirection: "column", flex: 1, gap: 10 }}>
-          {/* Status badge */}
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 5, background: sc.bg, border: `1px solid ${sc.border}`, borderRadius: 20, padding: "3px 9px", width: "fit-content" }}>
-            <span style={{ width: 5, height: 5, borderRadius: "50%", background: sc.color, flexShrink: 0, animation: sc.live ? "pulse-glow 1s ease-in-out infinite" : "none", display: "block" }} />
-            <span style={{ fontSize: 9, fontWeight: 700, color: sc.color, letterSpacing: "0.1em", textTransform: "uppercase" }}>{sc.short}</span>
+        <div style={{ padding: "14px 16px 16px", display: "flex", flexDirection: "column", flex: 1, gap: 10 }}>
+          {/* Title */}
+          <div>
+            <h3 style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)", lineHeight: 1.3, margin: "0 0 4px" }}>{qt.title}</h3>
+            {qt.description && <p style={{ fontSize: 11, color: "var(--muted-foreground)", lineHeight: 1.5, margin: 0 }} className="line-clamp-2">{qt.description}</p>}
           </div>
 
-          {/* Title */}
-          <p style={{ fontSize: 13, fontWeight: 600, color: "#fff", lineHeight: 1.3, margin: 0 }}>{qt.title}</p>
-
-          {/* Stats row */}
+          {/* Stats */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 6 }}>
             {[
-              { val: qt.prize_pool > 0 ? `${qt.prize_pool.toLocaleString()}` : "TBD", lbl: "ZA Prize" },
+              { val: qt.prize_pool > 0 ? qt.prize_pool.toLocaleString() : "TBD", lbl: "ZA Prize" },
               { val: qt.player_count.toString(), lbl: "Players" },
               { val: qt.entry_fee > 0 ? `${qt.entry_fee} ZA` : "Free", lbl: "Entry" },
             ].map((s, i) => (
-              <div key={i} style={{ background: "rgba(255,255,255,0.04)", borderRadius: 8, padding: "6px 8px", textAlign: "center" }}>
-                <p style={{ fontSize: 12, fontWeight: 600, color: "#fff", margin: 0, lineHeight: 1 }}>{s.val}</p>
-                <p style={{ fontSize: 9, color: "rgba(255,255,255,0.3)", margin: "3px 0 0", textTransform: "uppercase", letterSpacing: "0.06em" }}>{s.lbl}</p>
+              <div key={i} style={{ background: "var(--muted)", borderRadius: 8, padding: "6px 8px", textAlign: "center" }}>
+                <p style={{ fontSize: 12, fontWeight: 700, color: "var(--foreground)", margin: 0, lineHeight: 1 }}>{s.val}</p>
+                <p style={{ fontSize: 9, color: "var(--muted-foreground)", margin: "3px 0 0", textTransform: "uppercase", letterSpacing: "0.06em" }}>{s.lbl}</p>
               </div>
             ))}
           </div>
@@ -124,41 +177,65 @@ function TCard({ qt, featured }: { qt: QuizTournament; featured?: boolean }) {
           {/* Round segments */}
           <div style={{ display: "flex", gap: 3 }}>
             {ROUNDS.map((r, i) => (
-              <div key={i} style={{ flex: 1, height: 2, borderRadius: 1, background: r.color, opacity: 0.5 }} />
+              <div key={i} style={{ flex: 1, height: 3, borderRadius: 2, background: r.color, opacity: 0.5 }} title={r.name} />
             ))}
           </div>
 
-          {/* CTA */}
-          <Link
-            to={`/quiz/${qt.id}`}
-            style={{
-              display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-              padding: "9px 12px", borderRadius: 9, fontSize: 11, fontWeight: 700,
-              textTransform: "uppercase", letterSpacing: "0.06em", textDecoration: "none",
-              marginTop: "auto",
-              background: hot
-                ? `linear-gradient(135deg, ${sc.color}dd, ${sc.color}99)`
-                : "rgba(255,255,255,0.06)",
-              color: hot ? "#fff" : "rgba(255,255,255,0.35)",
-              border: hot ? "none" : "1px solid rgba(255,255,255,0.08)",
-              boxShadow: hot ? `0 4px 16px ${sc.color}35` : "none",
-            }}
-          >
-            {qt.status === "active"
-              ? <><Eye size={12} /> Watch Live</>
-              : hot
-              ? <><Zap size={12} /> Register Now</>
-              : "View Details"}
-          </Link>
+          {/* CTA — one click or link */}
+          {canRegister ? (
+            registered ? (
+              <div style={{
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                padding: "10px", borderRadius: 10, fontSize: 11, fontWeight: 700,
+                textTransform: "uppercase", letterSpacing: "0.06em",
+                background: "rgba(22,163,74,0.1)", color: "#16a34a",
+                border: "1px solid rgba(22,163,74,0.3)",
+              }}>
+                <CheckCircle size={13} /> Registered
+              </div>
+            ) : (
+              <button
+                onClick={handleRegister}
+                disabled={isPending}
+                style={{
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                  padding: "10px", borderRadius: 10, fontSize: 11, fontWeight: 700,
+                  textTransform: "uppercase", letterSpacing: "0.06em",
+                  background: isPending ? `${sc.color}80` : sc.color,
+                  color: "#fff", border: "none", cursor: isPending ? "not-allowed" : "pointer",
+                  boxShadow: `0 4px 14px ${sc.color}35`,
+                  transition: "all 0.2s ease",
+                  width: "100%", marginTop: "auto",
+                }}
+              >
+                {isPending ? <><Loader2 size={12} className="animate-spin" /> Registering...</> : <><Zap size={12} /> Register Now</>}
+              </button>
+            )
+          ) : (
+            <Link
+              to={`/quiz/${qt.id}`}
+              style={{
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                padding: "10px", borderRadius: 10, fontSize: 11, fontWeight: 700,
+                textTransform: "uppercase", letterSpacing: "0.06em", textDecoration: "none",
+                marginTop: "auto",
+                background: qt.status === "active" ? sc.color : "var(--muted)",
+                color: qt.status === "active" ? "#fff" : "var(--muted-foreground)",
+                boxShadow: qt.status === "active" ? `0 4px 14px ${sc.color}35` : "none",
+              }}
+            >
+              {qt.status === "active" ? <><Eye size={12} /> Watch Live</> : "View Details"}
+            </Link>
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-// ─── Drop animation hero heading ──────────────────────────────────────────────
+// ─── Drop animation ────────────────────────────────────────────────────────────
 function DropTitle() {
-  const [phase, setPhase] = useState<"drop"|"shake"|"settled">("drop");
+  const [phase, setPhase] = useState<"drop" | "shake" | "settled">("drop");
   const wrapRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const t = setTimeout(() => {
@@ -202,11 +279,12 @@ function DropTitle() {
   );
 }
 
-// ─── Main Page ─────────────────────────────────────────────────────────────────
+// ─── Main Page ──────────────────────────────────────────────────────────────────
 const Tournaments = () => {
   const [activeTab,   setActiveTab]   = useState<"live" | "upcoming" | "completed">("upcoming");
   const [searchQuery, setSearchQuery] = useState("");
   const [filterPrize, setFilterPrize] = useState("all");
+  const queryClient = useQueryClient();
 
   const { data: quizTournaments = [], isError, isLoading, refetch } = useQuery({
     queryKey: ["quiz-tournaments-public"],
@@ -228,7 +306,7 @@ const Tournaments = () => {
     const matchSearch = qt.title.toLowerCase().includes(searchQuery.toLowerCase());
     const matchPrize  =
       filterPrize === "high" ? qt.prize_pool >= 100_000 :
-      filterPrize === "low"  ? qt.prize_pool < 100_000 : true;
+      filterPrize === "low"  ? qt.prize_pool < 100_000  : true;
     return matchTab && matchSearch && matchPrize;
   });
 
@@ -236,28 +314,24 @@ const Tournaments = () => {
   const totalPrize   = quizTournaments.reduce((s, t) => s + t.prize_pool, 0);
   const liveCount    = quizTournaments.filter(t => t.status === "active").length;
 
+  function handleRegistered(id: string) {
+    // Bump player count in cache immediately
+    queryClient.setQueryData<QuizTournament[]>(["quiz-tournaments-public"], old =>
+      (old ?? []).map(t => t.id === id ? { ...t, player_count: t.player_count + 1, user_registered: true } : t)
+    );
+  }
+
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1, paddingBottom: 64, overflowX: "hidden" }}>
 
-      {/* ── Dark hero ──────────────────────────────────────────────────── */}
-      <div style={{
-        position: "relative",
-        background: "#07041a",
-        borderRadius: "0 0 24px 24px",
-        overflow: "hidden",
-        padding: "40px 24px 32px",
-        marginBottom: 28,
-      }}>
-        {/* Background orbs */}
+      {/* ── Dark hero ─────────────────────────────────────────────── */}
+      <div style={{ position: "relative", background: "#07041a", borderRadius: "0 0 24px 24px", overflow: "hidden", padding: "40px 24px 32px", marginBottom: 28 }}>
         <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
           <div style={{ position: "absolute", width: 380, height: 380, borderRadius: "50%", background: "#3b0764", opacity: 0.5, top: -100, left: -80, filter: "blur(90px)" }} />
           <div style={{ position: "absolute", width: 280, height: 280, borderRadius: "50%", background: "#1e3a5f", opacity: 0.45, top: -50, right: 0, filter: "blur(80px)" }} />
           <div style={{ position: "absolute", width: 200, height: 200, borderRadius: "50%", background: "#4c1d95", opacity: 0.3, bottom: -40, left: "40%", filter: "blur(60px)" }} />
-          {/* Dot grid */}
           <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(rgba(255,255,255,0.08) 1px,transparent 1px)", backgroundSize: "28px 28px" }} />
         </div>
-
-        {/* Eyebrow */}
         <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28, flexWrap: "wrap", gap: 12 }}>
           <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(168,85,247,0.15)", border: "1px solid rgba(168,85,247,0.3)", borderRadius: 20, padding: "4px 12px" }}>
             <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#a855f7", display: "block", animation: "pulse-glow 1.4s ease-in-out infinite" }} />
@@ -270,13 +344,7 @@ const Tournaments = () => {
             </div>
           )}
         </div>
-
-        {/* Drop title */}
-        <div style={{ position: "relative", zIndex: 1, marginBottom: 28 }}>
-          <DropTitle />
-        </div>
-
-        {/* Stats row */}
+        <div style={{ position: "relative", zIndex: 1, marginBottom: 28 }}><DropTitle /></div>
         <div style={{ position: "relative", zIndex: 1, display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 24 }}>
           {[
             { icon: <Trophy size={16} style={{ color: "#c084fc" }} />, val: `${totalPrize.toLocaleString()} ZA`, lbl: "Total prize pool", bg: "rgba(168,85,247,0.15)", border: "rgba(168,85,247,0.25)" },
@@ -292,95 +360,81 @@ const Tournaments = () => {
             </div>
           ))}
         </div>
-
-        {/* 5-round bar */}
         <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", gap: 8 }}>
           <span style={{ fontSize: 9, fontWeight: 600, color: "rgba(255,255,255,0.2)", textTransform: "uppercase", letterSpacing: "0.1em", whiteSpace: "nowrap" }}>5 Rounds</span>
           <div style={{ display: "flex", gap: 4, flex: 1 }}>
-            {ROUNDS.map((r, i) => (
-              <div key={i} style={{ flex: 1, height: 3, borderRadius: 2, background: r.color, opacity: 0.7 }} title={r.name} />
+            {["#22c55e","#3b82f6","#f97316","#ef4444","#a855f7"].map((c, i) => (
+              <div key={i} style={{ flex: 1, height: 3, borderRadius: 2, background: c, opacity: 0.7 }} />
             ))}
           </div>
           <span style={{ fontSize: 9, color: "rgba(255,255,255,0.2)", whiteSpace: "nowrap" }}>Warm Up → Final Showdown</span>
         </div>
       </div>
 
-      {/* ── Filters ─────────────────────────────────────────────────────── */}
+      {/* ── Below hero — uses theme vars, visible in light + dark ─── */}
       <div style={{ padding: "0 4px", display: "flex", flexDirection: "column", gap: 16 }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
-            {/* Tabs */}
-            <div className="flex gap-1" style={{ borderBottom: "2px solid var(--border)" }}>
-              {([
-                { id: "live",      label: "🔴 Live Now"  },
-                { id: "upcoming",  label: "🟢 Upcoming"  },
-                { id: "completed", label: "⚫ Completed"  },
-              ] as const).map(tab => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className="px-4 pb-3 pt-1 text-xs font-black uppercase tracking-widest transition-all -mb-[2px]"
-                  style={activeTab === tab.id ? {
-                    color: "var(--primary)",
-                    borderBottom: "2px solid var(--primary)",
-                    background: "none", border: "none", cursor: "pointer",
-                  } : {
-                    color: "var(--muted-foreground)",
-                    background: "none", border: "none", cursor: "pointer",
-                  }}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
 
-            {/* Search + filter */}
-            <div style={{ display: "flex", gap: 8, flex: 1, maxWidth: 340 }}>
-              <div style={{ position: "relative", flex: 1 }}>
-                <Search size={14} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "var(--muted-foreground)" }} />
-                <input
-                  type="text" placeholder="Search tournaments..."
-                  value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-                  style={{ width: "100%", paddingLeft: 32, paddingRight: searchQuery ? 32 : 10, paddingTop: 9, paddingBottom: 9, borderRadius: 10, fontSize: 13, background: "var(--muted)", border: "1px solid var(--border)", color: "var(--foreground)", outline: "none" }}
-                />
-                {searchQuery && <button onClick={() => setSearchQuery("")} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "var(--muted-foreground)", display: "flex" }}><X size={14} /></button>}
-              </div>
-              <DropdownMenu>
-                <DropdownMenuTrigger className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold focus:outline-none" style={{ background: "var(--muted)", border: "1px solid var(--border)", color: "var(--muted-foreground)", whiteSpace: "nowrap", minWidth: 130 }}>
-                  {PRIZE_OPTIONS.find(o => o.value === filterPrize)?.label} <ChevronDown size={11} />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-44 rounded-xl p-1" align="end" style={{ background: "var(--card)", border: "1px solid var(--border)" }}>
-                  {PRIZE_OPTIONS.map(opt => (
-                    <DropdownMenuItem key={opt.value} onClick={() => setFilterPrize(opt.value)} className="text-xs font-bold uppercase tracking-wider cursor-pointer py-2 px-3 rounded-lg outline-none transition-all"
-                      style={filterPrize === opt.value ? { background: "var(--primary)", color: "var(--primary-foreground)" } : { color: "var(--muted-foreground)" }}>
-                      {opt.label}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
+        {/* Tabs + search */}
+        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+          <div className="flex gap-1" style={{ borderBottom: "2px solid var(--border)" }}>
+            {([
+              { id: "live",      label: "🔴 Live Now"  },
+              { id: "upcoming",  label: "🟢 Upcoming"  },
+              { id: "completed", label: "⚫ Completed"  },
+            ] as const).map(tab => (
+              <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+                className="px-4 pb-3 pt-1 text-xs font-black uppercase tracking-widest transition-all -mb-[2px]"
+                style={activeTab === tab.id
+                  ? { color: "var(--primary)", borderBottom: "2px solid var(--primary)", background: "none", border: "none", cursor: "pointer" }
+                  : { color: "var(--muted-foreground)", background: "none", border: "none", cursor: "pointer" }}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+          <div style={{ display: "flex", gap: 8, flex: 1, maxWidth: 340 }}>
+            <div style={{ position: "relative", flex: 1 }}>
+              <Search size={14} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "var(--muted-foreground)" }} />
+              <input type="text" placeholder="Search..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+                style={{ width: "100%", paddingLeft: 32, paddingRight: searchQuery ? 32 : 10, paddingTop: 9, paddingBottom: 9, borderRadius: 10, fontSize: 13, background: "var(--muted)", border: "1px solid var(--border)", color: "var(--foreground)", outline: "none", boxSizing: "border-box" }} />
+              {searchQuery && <button onClick={() => setSearchQuery("")} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "var(--muted-foreground)", display: "flex" }}><X size={14} /></button>}
             </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold focus:outline-none" style={{ background: "var(--muted)", border: "1px solid var(--border)", color: "var(--muted-foreground)", whiteSpace: "nowrap", minWidth: 130 }}>
+                {PRIZE_OPTIONS.find(o => o.value === filterPrize)?.label} <ChevronDown size={11} />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-44 rounded-xl p-1" align="end" style={{ background: "var(--card)", border: "1px solid var(--border)" }}>
+                {PRIZE_OPTIONS.map(opt => (
+                  <DropdownMenuItem key={opt.value} onClick={() => setFilterPrize(opt.value)} className="text-xs font-bold uppercase tracking-wider cursor-pointer py-2 px-3 rounded-lg outline-none transition-all"
+                    style={filterPrize === opt.value ? { background: "var(--primary)", color: "var(--primary-foreground)" } : { color: "var(--muted-foreground)" }}>
+                    {opt.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
-        {/* ── Cards ───────────────────────────────────────────────────── */}
+        {/* Cards */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 14 }}>
           {isLoading ? (
-            <div className="col-span-full" style={{ gridColumn: "1/-1", padding: "80px 0", display: "flex", flexDirection: "column", alignItems: "center", gap: 12, border: "1px dashed var(--border)", borderRadius: 16 }}>
+            <div style={{ gridColumn: "1/-1", padding: "80px 0", display: "flex", flexDirection: "column", alignItems: "center", gap: 12, border: "2px dashed var(--border)", borderRadius: 16 }}>
               <div style={{ width: 32, height: 32, borderRadius: "50%", border: "2px solid var(--primary)", borderTopColor: "transparent", animation: "spin 0.8s linear infinite" }} />
-              <p style={{ fontSize: 11, fontWeight: 600, color: "var(--muted-foreground)", textTransform: "uppercase", letterSpacing: "0.1em" }}>Loading tournaments...</p>
+              <p style={{ fontSize: 11, fontWeight: 600, color: "var(--muted-foreground)", textTransform: "uppercase", letterSpacing: "0.1em" }}>Loading...</p>
             </div>
           ) : isError ? (
-            <div style={{ gridColumn: "1/-1", padding: "80px 0", display: "flex", flexDirection: "column", alignItems: "center", gap: 16, textAlign: "center", border: "1px dashed var(--border)", borderRadius: 16 }}>
-              <Trophy size={40} style={{ opacity: 0.15, color: "var(--foreground)" }} />
+            <div style={{ gridColumn: "1/-1", padding: "80px 0", display: "flex", flexDirection: "column", alignItems: "center", gap: 16, textAlign: "center", border: "2px dashed var(--border)", borderRadius: 16 }}>
+              <Trophy size={40} style={{ opacity: 0.2, color: "var(--foreground)" }} />
               <p style={{ fontSize: 16, fontWeight: 600, color: "var(--foreground)", margin: 0 }}>Could Not Load Tournaments</p>
-              <p style={{ fontSize: 11, color: "var(--muted-foreground)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Check your connection and try again</p>
               <button onClick={() => refetch()} style={{ padding: "10px 20px", borderRadius: 10, background: "var(--primary)", color: "#fff", fontSize: 13, fontWeight: 600, border: "none", cursor: "pointer" }}>Retry</button>
             </div>
           ) : filtered.length > 0 ? (
-            filtered.map(qt => <TCard key={qt.id} qt={qt} featured={featuredT?.id === qt.id} />)
+            filtered.map(qt => (
+              <TCard key={qt.id} qt={qt} featured={featuredT?.id === qt.id} onRegistered={handleRegistered} />
+            ))
           ) : (
-            <div style={{ gridColumn: "1/-1", padding: "80px 0", display: "flex", flexDirection: "column", alignItems: "center", gap: 12, textAlign: "center", border: "1px dashed var(--border)", borderRadius: 16 }}>
-              <Trophy size={40} style={{ opacity: 0.15, color: "var(--foreground)" }} />
+            <div style={{ gridColumn: "1/-1", padding: "80px 0", display: "flex", flexDirection: "column", alignItems: "center", gap: 12, textAlign: "center", border: "2px dashed var(--border)", borderRadius: 16 }}>
+              <Trophy size={40} style={{ opacity: 0.2, color: "var(--foreground)" }} />
               <p style={{ fontSize: 16, fontWeight: 600, color: "var(--foreground)", margin: 0 }}>No Tournaments Found</p>
               <p style={{ fontSize: 11, color: "var(--muted-foreground)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Try adjusting your filters or check back later</p>
             </div>
