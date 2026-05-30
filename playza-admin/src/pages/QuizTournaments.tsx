@@ -285,7 +285,7 @@ function CreateTournamentModal({ onClose, onCreated }: { onClose: () => void; on
 }
 
 // ─── Edit Modal ───────────────────────────────────────────────────────────────
-function EditTournamentModal({ tournament, onClose, onSaved }: { tournament: QuizTournament; onClose: () => void; onSaved: () => void }) {
+function EditTournamentModal({ tournament, onClose, onSaved }: { tournament: QuizTournament; onClose: () => void; onSaved: (updated: QuizTournament) => void }) {
   const toLocalDT = (iso: string | null) => {
     if (!iso) return "";
     const d = new Date(iso);
@@ -315,7 +315,7 @@ function EditTournamentModal({ tournament, onClose, onSaved }: { tournament: Qui
       max_players: form.max_players !== "" ? Number(form.max_players) : null,
       prize_distribution: tiers.length > 0 ? tiers : null,
     } as any),
-    onSuccess: () => { onSaved(); onClose(); },
+    onSuccess: (updated) => { onSaved(updated); onClose(); },
     onError: (err: any) => setError(err.response?.data?.message ?? "Failed to save"),
   });
 
@@ -849,7 +849,13 @@ const QuizTournaments: React.FC = () => {
       {createOpen && <CreateTournamentModal onClose={() => setCreateOpen(false)} onCreated={() => queryClient.invalidateQueries({ queryKey: ["admin-quiz-tournaments"] })} />}
       {manageQ    && <QuestionManagerModal  tournament={manageQ} onClose={() => setManageQ(null)} />}
       {monitor    && <LiveMonitorModal      tournament={monitor} onClose={() => setMonitor(null)} />}
-      {editT      && <EditTournamentModal   tournament={editT}   onClose={() => setEditT(null)} onSaved={() => { queryClient.invalidateQueries({ queryKey: ["admin-quiz-tournaments"] }); showToast("Tournament updated!"); }} />}
+      {editT      && <EditTournamentModal   tournament={editT}   onClose={() => setEditT(null)} onSaved={(updated) => {
+        setEditT(updated);
+        queryClient.setQueryData<QuizTournament[]>(["admin-quiz-tournaments"], old =>
+          (old ?? []).map(t => t.id === updated.id ? { ...t, ...updated } : t)
+        );
+        showToast("Tournament updated!");
+      }} />}
 
       {needsQuestions && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(16px)" }} onClick={() => setNeedsQuestions(null)}>
