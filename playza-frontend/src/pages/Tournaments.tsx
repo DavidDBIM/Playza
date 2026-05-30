@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Link, useNavigate } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getQuizTournamentsApi, joinQuizTournamentApi, type QuizTournament } from "@/api/quiz.api";
+import { getQuizTournamentsApi, joinQuizTournamentApi, type QuizTournament, type PrizeTier } from "@/api/quiz.api";
 import { Search, Trophy, X, Users, ChevronDown, Zap, Eye, Brain, CheckCircle, Loader2, Info, Calendar, Clock, Shield } from "lucide-react";
 import { useAuth } from "@/context/auth";
 import { useToast } from "@/context/toast";
@@ -160,7 +160,7 @@ function TournamentDetailModal({
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8, marginBottom: 20 }}>
             {[
               { icon: "🏆", val: qt.prize_pool > 0 ? `${qt.prize_pool.toLocaleString()} ZA` : "TBD", lbl: "Prize Pool" },
-              { icon: "👥", val: qt.max_players ? `${qt.player_count}/${qt.max_players}` : qt.player_count.toLocaleString(), lbl: "Players" },
+              { icon: "👥", val: (qt as any).max_players ? `${qt.player_count}/${(qt as any).max_players}` : qt.player_count.toLocaleString(), lbl: "Players" },
               { icon: "💎", val: qt.entry_fee > 0 ? `${qt.entry_fee} ZA` : "FREE", lbl: "Entry Fee" },
             ].map((s, i) => (
               <div key={i} style={{ background: "var(--muted)", borderRadius: 12, padding: "12px 8px", textAlign: "center" }}>
@@ -172,7 +172,7 @@ function TournamentDetailModal({
           </div>
 
           {/* Prize distribution */}
-          {qt.prize_distribution && qt.prize_distribution.length > 0 && qt.prize_pool > 0 && (
+          {(qt as any).prize_distribution && (qt as any).prize_distribution.length > 0 && qt.prize_pool > 0 && (
             <div style={{ marginBottom: 20 }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -182,20 +182,21 @@ function TournamentDetailModal({
                 <span style={{ fontSize: 9, color: "var(--muted-foreground)", fontWeight: 600 }}>10% platform fee applied</span>
               </div>
               <div style={{ background: "var(--muted)", borderRadius: 12, overflow: "hidden" }}>
-                {qt.prize_distribution
+                {((qt as any).prize_distribution as PrizeTier[])
                   .slice()
-                  .sort((a, b) => a.rank - b.rank)
-                  .map((tier, i) => {
+                  .sort((a: PrizeTier, b: PrizeTier) => a.rank - b.rank)
+                  .map((tier: PrizeTier, i: number) => {
                     const medal = tier.rank === 1 ? "🥇" : tier.rank === 2 ? "🥈" : tier.rank === 3 ? "🥉" : `#${tier.rank}`;
                     const amount = Math.round(qt.prize_pool * tier.percentage / 100);
                     const isTop = tier.rank === 1;
+                    const allTiers = (qt as any).prize_distribution as PrizeTier[];
                     return (
                       <div
                         key={tier.rank}
                         style={{
                           display: "flex", alignItems: "center", gap: 12,
                           padding: "11px 14px",
-                          borderBottom: i < qt.prize_distribution!.length - 1 ? "1px solid var(--border)" : "none",
+                          borderBottom: i < allTiers.length - 1 ? "1px solid var(--border)" : "none",
                           background: isTop ? `${sc.color}08` : "transparent",
                         }}
                       >
@@ -477,7 +478,7 @@ function TCard({ qt, featured, onRegistered }: {
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 6 }}>
               {[
                 { val: qt.prize_pool > 0 ? qt.prize_pool.toLocaleString() : "TBD", lbl: "ZA Prize" },
-                { val: qt.max_players ? `${qt.player_count}/${qt.max_players}` : qt.player_count.toString(), lbl: "Players" },
+                { val: (qt as any).max_players ? `${qt.player_count}/${(qt as any).max_players}` : qt.player_count.toString(), lbl: "Players" },
                 { val: qt.entry_fee > 0 ? `${qt.entry_fee} ZA` : "Free", lbl: "Entry" },
               ].map((s, i) => (
                 <div key={i} style={{ background: "var(--muted)", borderRadius: 8, padding: "6px 8px", textAlign: "center" }}>
