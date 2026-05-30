@@ -88,6 +88,7 @@ router.get('/tournaments', async (_req, res) => {
         // ensure these fields are always present even if column not yet added
         max_players: t.max_players ?? null,
         prize_distribution: t.prize_distribution ?? null,
+        platform_fee_percentage: t.platform_fee_percentage ?? 10,
       }
     }))
 
@@ -135,6 +136,7 @@ router.get('/tournaments/:id', requireAuth, async (req: AuthRequest, res) => {
         user_registered: userRegistered,
         max_players: tournament.max_players ?? null,
         prize_distribution: tournament.prize_distribution ?? null,
+        platform_fee_percentage: tournament.platform_fee_percentage ?? 10,
       },
     })
   } catch (err: any) {
