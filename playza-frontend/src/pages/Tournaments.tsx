@@ -201,29 +201,28 @@ function TournamentDetailModal({
           {/* Prize distribution */}
           {(qt as any).prize_distribution && (qt as any).prize_distribution.length > 0 && qt.prize_pool > 0 && (
             <div style={{ marginBottom: 20 }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <span style={{ fontSize: 13 }}>🎯</span>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: "var(--muted-foreground)", textTransform: "uppercase", letterSpacing: "0.1em" }}>Prize Breakdown</span>
-                </div>
-                <span style={{ fontSize: 9, color: "var(--muted-foreground)", fontWeight: 600 }}>10% platform fee applied</span>
+              <div style={{ display: "flex", alignItems: "center", marginBottom: 10 }}>
+                <span style={{ fontSize: 13, marginRight: 6 }}>🎯</span>
+                <span style={{ fontSize: 10, fontWeight: 700, color: "var(--muted-foreground)", textTransform: "uppercase", letterSpacing: "0.1em" }}>Prize Breakdown</span>
               </div>
               <div style={{ background: "var(--muted)", borderRadius: 12, overflow: "hidden" }}>
-                {((qt as any).prize_distribution as PrizeTier[])
-                  .slice()
-                  .sort((a: PrizeTier, b: PrizeTier) => a.rank - b.rank)
-                  .map((tier: PrizeTier, i: number) => {
+                {(() => {
+                  const feePct = (qt as any).platform_fee_percentage ?? 10;
+                  const distributablePool = Math.round(qt.prize_pool * (1 - feePct / 100));
+                  const tiers = ((qt as any).prize_distribution as PrizeTier[])
+                    .slice()
+                    .sort((a: PrizeTier, b: PrizeTier) => a.rank - b.rank);
+                  return tiers.map((tier: PrizeTier, i: number) => {
                     const medal = tier.rank === 1 ? "🥇" : tier.rank === 2 ? "🥈" : tier.rank === 3 ? "🥉" : `#${tier.rank}`;
-                    const amount = Math.round(qt.prize_pool * tier.percentage / 100);
+                    const amount = Math.round(distributablePool * tier.percentage / 100);
                     const isTop = tier.rank === 1;
-                    const allTiers = (qt as any).prize_distribution as PrizeTier[];
                     return (
                       <div
                         key={tier.rank}
                         style={{
                           display: "flex", alignItems: "center", gap: 12,
                           padding: "11px 14px",
-                          borderBottom: i < allTiers.length - 1 ? "1px solid var(--border)" : "none",
+                          borderBottom: i < tiers.length - 1 ? "1px solid var(--border)" : "none",
                           background: isTop ? `${sc.color}08` : "transparent",
                         }}
                       >
@@ -235,17 +234,12 @@ function TournamentDetailModal({
                           </div>
                         </div>
                         <div style={{ textAlign: "right", flexShrink: 0 }}>
-                          <p style={{ fontSize: 13, fontWeight: 800, color: isTop ? sc.color : "var(--foreground)", margin: 0 }}>{amount.toLocaleString()} ZA</p>
-                          <p style={{ fontSize: 9, color: "var(--muted-foreground)", margin: "2px 0 0" }}>{tier.percentage}% of pool</p>
+                          <p style={{ fontSize: 14, fontWeight: 800, color: isTop ? sc.color : "var(--foreground)", margin: 0 }}>{amount.toLocaleString()} ZA</p>
                         </div>
                       </div>
                     );
-                  })}
-                {/* Platform fee row */}
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 14px", borderTop: "1px solid var(--border)", background: "rgba(0,0,0,0.1)" }}>
-                  <span style={{ fontSize: 10, color: "var(--muted-foreground)" }}>🏛️ Platform fee</span>
-                  <span style={{ fontSize: 10, color: "var(--muted-foreground)" }}>{Math.round(qt.prize_pool * 0.1).toLocaleString()} ZA (10%)</span>
-                </div>
+                  });
+                })()}
               </div>
             </div>
           )}
