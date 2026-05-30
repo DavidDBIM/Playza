@@ -62,7 +62,6 @@ async function sendRegistrationEmail(
       `,
     })
   } catch (err) {
-    // Don't fail registration if email fails — just log
     console.error('[Quiz] Registration email failed:', err)
   }
 }
@@ -83,7 +82,13 @@ router.get('/tournaments', async (_req, res) => {
         .from('quiz_players')
         .select('id', { count: 'exact', head: true })
         .eq('tournament_id', t.id)
-      return { ...t, player_count: count ?? 0 }
+      return {
+        ...t,
+        player_count: count ?? 0,
+        // ensure these fields are always present even if column not yet added
+        max_players: t.max_players ?? null,
+        prize_distribution: t.prize_distribution ?? null,
+      }
     }))
 
     res.json({ success: true, data: enriched })
@@ -122,7 +127,16 @@ router.get('/tournaments/:id', requireAuth, async (req: AuthRequest, res) => {
       userRegistered = !!existing
     }
 
-    res.json({ success: true, data: { ...tournament, player_count: playerCount ?? 0, user_registered: userRegistered } })
+    res.json({
+      success: true,
+      data: {
+        ...tournament,
+        player_count: playerCount ?? 0,
+        user_registered: userRegistered,
+        max_players: tournament.max_players ?? null,
+        prize_distribution: tournament.prize_distribution ?? null,
+      },
+    })
   } catch (err: any) {
     res.status(400).json({ success: false, message: err.message })
   }
@@ -136,7 +150,7 @@ router.post('/tournaments/:id/join', requireAuth, async (req: AuthRequest, res) 
 
     const { data: tournament, error: tErr } = await supabaseAdmin
       .from('quiz_tournaments')
-      .select('id, status, entry_fee, title, scheduled_at, prize_pool')
+      .select('id, status, entry_fee, title, scheduled_at, prize_pool, max_players')
       .eq('id', tournamentId)
       .single()
 
@@ -155,6 +169,23 @@ router.post('/tournaments/:id/join', requireAuth, async (req: AuthRequest, res) 
       return
     }
 
+    // ── Check max players cap ─────────────────────────────────────────────────
+    if (tournament.max_players) {
+      const { count: currentCount } = await supabaseAdmin
+        .from('quiz_players')
+        .select('id', { count: 'exact', head: true })
+        .eq('tournament_id', tournamentId)
+
+      if ((currentCount ?? 0) >= tournament.max_players) {
+        res.status(400).json({
+          success: false,
+          message: `This tournament is full! Maximum ${tournament.max_players} players allowed.`,
+        })
+        return
+      }
+    }
+
+    // ── Check already registered ──────────────────────────────────────────────
     const { data: existing } = await supabaseAdmin
       .from('quiz_players')
       .select('id')
@@ -167,7 +198,7 @@ router.post('/tournaments/:id/join', requireAuth, async (req: AuthRequest, res) 
       return
     }
 
-    // Deduct entry fee
+    // ── Deduct entry fee ──────────────────────────────────────────────────────
     if (tournament.entry_fee > 0) {
       const { data: wallet } = await supabaseAdmin
         .from('wallets')
@@ -207,7 +238,7 @@ router.post('/tournaments/:id/join', requireAuth, async (req: AuthRequest, res) 
       } catch (_) {}
     }
 
-    // Register player
+    // ── Register player ───────────────────────────────────────────────────────
     const { data: player, error: pErr } = await supabaseAdmin
       .from('quiz_players')
       .insert({
@@ -221,7 +252,7 @@ router.post('/tournaments/:id/join', requireAuth, async (req: AuthRequest, res) 
 
     if (pErr) throw pErr
 
-    // Init leaderboard row
+    // ── Init leaderboard row ──────────────────────────────────────────────────
     const { data: profile } = await supabaseAdmin
       .from('users')
       .select('username, avatar_url, email')
