@@ -1,10 +1,73 @@
 import { Router } from 'express'
 import { requireAuth, AuthRequest } from '../../middleware/auth'
 import { supabaseAdmin } from '../../config/supabase'
+import { Resend } from 'resend'
 
 const router = Router()
+const resend = new Resend(process.env.RESEND_API_KEY)
 
-// ── GET /quiz/tournaments  — list registration-open + upcoming + active (public, no auth needed)
+// ── Send registration confirmation email ──────────────────────────────────────
+async function sendRegistrationEmail(
+  to: string,
+  username: string,
+  tournament: { title: string; scheduled_at: string | null; entry_fee: number; prize_pool: number; id: string }
+) {
+  try {
+    const scheduledStr = tournament.scheduled_at
+      ? new Date(tournament.scheduled_at).toLocaleDateString('en-NG', {
+          weekday: 'long', day: 'numeric', month: 'long',
+          year: 'numeric', hour: '2-digit', minute: '2-digit',
+        })
+      : 'TBA'
+
+    await resend.emails.send({
+      from: 'Playza <noreply@playza.games>',
+      to,
+      subject: `✅ You're registered — ${tournament.title}`,
+      html: `
+        <div style="font-family:sans-serif;max-width:480px;margin:auto;background:#0e0e1a;color:#fff;border-radius:16px;overflow:hidden;">
+          <div style="background:linear-gradient(135deg,#7c3aed,#a855f7);padding:32px 24px;text-align:center;">
+            <div style="font-size:48px;margin-bottom:8px;">🎉</div>
+            <h1 style="margin:0;font-size:22px;font-weight:900;">You're In!</h1>
+            <p style="margin:8px 0 0;opacity:0.8;font-size:13px;">Registration Confirmed</p>
+          </div>
+          <div style="padding:24px;">
+            <p style="font-size:15px;line-height:1.6;margin:0 0 16px;">
+              Hey <strong>${username}</strong>,<br><br>
+              Your spot in <strong>${tournament.title}</strong> is confirmed. Get ready to compete!
+            </p>
+            <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:16px;margin-bottom:20px;">
+              <p style="margin:0 0 8px;font-size:12px;opacity:0.5;text-transform:uppercase;letter-spacing:0.1em;">Tournament Details</p>
+              <p style="margin:6px 0;font-weight:700;">🏆 ${tournament.title}</p>
+              <p style="margin:6px 0;font-weight:700;">📅 ${scheduledStr}</p>
+              ${tournament.prize_pool > 0 ? `<p style="margin:6px 0;font-weight:700;">💰 Prize Pool: ${tournament.prize_pool.toLocaleString()} ZA</p>` : ''}
+              ${tournament.entry_fee > 0 ? `<p style="margin:6px 0;font-weight:700;">⚡ Entry Fee Paid: ${tournament.entry_fee} ZA</p>` : '<p style="margin:6px 0;font-weight:700;color:#4ade80;">🎁 Free Entry</p>'}
+              <p style="margin:6px 0;font-weight:700;">🔥 5 Rounds of Elimination</p>
+            </div>
+            <div style="background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.25);border-radius:12px;padding:14px;margin-bottom:20px;">
+              <p style="margin:0;font-size:13px;font-weight:700;color:#c084fc;">⏰ You'll receive reminders 24 hours and 2 hours before the game starts.</p>
+            </div>
+            <p style="font-size:13px;opacity:0.6;margin-bottom:20px;">
+              Wrong answer = eliminated. Answer fast to survive all 5 rounds. Last one standing wins the prize pool!
+            </p>
+            <a href="https://playza.games/quiz/${tournament.id}"
+              style="display:block;text-align:center;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;text-decoration:none;padding:14px;border-radius:12px;font-weight:900;font-size:14px;">
+              View Tournament →
+            </a>
+          </div>
+          <div style="padding:16px 24px;text-align:center;opacity:0.4;font-size:11px;">
+            Playza Games · You registered for this tournament
+          </div>
+        </div>
+      `,
+    })
+  } catch (err) {
+    // Don't fail registration if email fails — just log
+    console.error('[Quiz] Registration email failed:', err)
+  }
+}
+
+// ── GET /quiz/tournaments  — public listing
 router.get('/tournaments', async (_req, res) => {
   try {
     const { data, error } = await supabaseAdmin
@@ -48,7 +111,6 @@ router.get('/tournaments/:id', requireAuth, async (req: AuthRequest, res) => {
       .select('id', { count: 'exact', head: true })
       .eq('tournament_id', tournament.id)
 
-    // Check if current user already registered
     let userRegistered = false
     if (req.user?.id) {
       const { data: existing } = await supabaseAdmin
@@ -66,8 +128,7 @@ router.get('/tournaments/:id', requireAuth, async (req: AuthRequest, res) => {
   }
 })
 
-// ── POST /quiz/tournaments/:id/join  — pay entry fee and register
-// Works when status is 'registration' (pre-event sign-up) or 'lobby' (day-of)
+// ── POST /quiz/tournaments/:id/join
 router.post('/tournaments/:id/join', requireAuth, async (req: AuthRequest, res) => {
   try {
     const userId = req.user!.id
@@ -75,7 +136,7 @@ router.post('/tournaments/:id/join', requireAuth, async (req: AuthRequest, res) 
 
     const { data: tournament, error: tErr } = await supabaseAdmin
       .from('quiz_tournaments')
-      .select('id, status, entry_fee, title, scheduled_at')
+      .select('id, status, entry_fee, title, scheduled_at, prize_pool')
       .eq('id', tournamentId)
       .single()
 
@@ -84,7 +145,6 @@ router.post('/tournaments/:id/join', requireAuth, async (req: AuthRequest, res) 
       return
     }
 
-    // Only allow joining during registration or lobby phase
     if (!['registration', 'lobby'].includes(tournament.status)) {
       const msg =
         tournament.status === 'draft'     ? 'This tournament is not open for registration yet.' :
@@ -95,7 +155,6 @@ router.post('/tournaments/:id/join', requireAuth, async (req: AuthRequest, res) 
       return
     }
 
-    // Check already registered
     const { data: existing } = await supabaseAdmin
       .from('quiz_players')
       .select('id')
@@ -135,7 +194,6 @@ router.post('/tournaments/:id/join', requireAuth, async (req: AuthRequest, res) 
         meta: { tournament_id: tournamentId, tournament_title: tournament.title },
       })
 
-      // Add entry to prize pool
       try {
         const { data: current } = await supabaseAdmin
           .from('quiz_tournaments')
@@ -149,7 +207,7 @@ router.post('/tournaments/:id/join', requireAuth, async (req: AuthRequest, res) 
       } catch (_) {}
     }
 
-    // Register player — 'alive' is the valid DB status for an active participant
+    // Register player
     const { data: player, error: pErr } = await supabaseAdmin
       .from('quiz_players')
       .insert({
@@ -166,7 +224,7 @@ router.post('/tournaments/:id/join', requireAuth, async (req: AuthRequest, res) 
     // Init leaderboard row
     const { data: profile } = await supabaseAdmin
       .from('users')
-      .select('username, avatar_url')
+      .select('username, avatar_url, email')
       .eq('id', userId)
       .single()
 
@@ -181,8 +239,16 @@ router.post('/tournaments/:id/join', requireAuth, async (req: AuthRequest, res) 
     }, { onConflict: 'tournament_id,user_id' })
 
     const scheduledDate = tournament.scheduled_at
-      ? new Date(tournament.scheduled_at).toLocaleDateString('en-NG', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+      ? new Date(tournament.scheduled_at).toLocaleDateString('en-NG', {
+          weekday: 'long', day: 'numeric', month: 'long',
+          year: 'numeric', hour: '2-digit', minute: '2-digit',
+        })
       : 'TBA'
+
+    // ── Send confirmation email (non-blocking) ────────────────────────────────
+    if (profile?.email) {
+      sendRegistrationEmail(profile.email, profile.username ?? 'Player', tournament)
+    }
 
     res.json({
       success: true,
