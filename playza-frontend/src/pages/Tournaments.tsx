@@ -157,7 +157,7 @@ function TournamentDetailModal({
         <div style={{ flex: 1, overflowY: "auto", padding: "20px 20px 0" }}>
 
           {/* Stats grid */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8, marginBottom: 20 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8, marginBottom: 12 }}>
             {[
               { icon: "🏆", val: qt.prize_pool > 0 ? `${qt.prize_pool.toLocaleString()} ZA` : "TBD", lbl: "Prize Pool" },
               { icon: "👥", val: (qt as any).max_players ? `${qt.player_count}/${(qt as any).max_players}` : qt.player_count.toLocaleString(), lbl: "Players" },
@@ -170,6 +170,33 @@ function TournamentDetailModal({
               </div>
             ))}
           </div>
+
+          {/* Player capacity bar — only when max_players set */}
+          {(qt as any).max_players && (() => {
+            const max = (qt as any).max_players as number;
+            const pct = Math.min(qt.player_count / max * 100, 100);
+            const isFull = qt.player_count >= max;
+            const isAlmostFull = pct >= 80;
+            const barColor = isFull ? "#ef4444" : isAlmostFull ? "#f97316" : sc.color;
+            return (
+              <div style={{ background: "var(--muted)", borderRadius: 12, padding: "12px 14px", marginBottom: 16 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: "var(--foreground)" }}>
+                    {isFull ? "🔴 Tournament Full" : isAlmostFull ? "🟠 Almost Full" : "🟢 Spots Available"}
+                  </span>
+                  <span style={{ fontSize: 11, fontWeight: 800, color: barColor }}>
+                    {qt.player_count} / {max}
+                  </span>
+                </div>
+                <div style={{ height: 6, borderRadius: 3, background: "var(--border)", overflow: "hidden" }}>
+                  <div style={{ height: "100%", width: `${pct}%`, borderRadius: 3, background: barColor, transition: "width 0.4s ease" }} />
+                </div>
+                <p style={{ fontSize: 10, color: "var(--muted-foreground)", margin: "6px 0 0" }}>
+                  {isFull ? "No spots remaining" : `${max - qt.player_count} spot${max - qt.player_count !== 1 ? "s" : ""} remaining`}
+                </p>
+              </div>
+            );
+          })()}
 
           {/* Prize distribution */}
           {(qt as any).prize_distribution && (qt as any).prize_distribution.length > 0 && qt.prize_pool > 0 && (
@@ -376,7 +403,9 @@ function TCard({ qt, featured, onRegistered }: {
   const toast = useToast();
   const navigate = useNavigate();
   const sc = STATUS[qt.status as keyof typeof STATUS] ?? STATUS.draft;
-  const canRegister = qt.status === "registration" || qt.status === "lobby";
+  const maxPlayers = (qt as any).max_players as number | null;
+  const isFull = maxPlayers !== null && qt.player_count >= maxPlayers;
+  const canRegister = (qt.status === "registration" || qt.status === "lobby") && !isFull;
   const [registered, setRegistered] = useState(!!qt.user_registered);
   const [showDetail, setShowDetail] = useState(false);
 
@@ -488,6 +517,30 @@ function TCard({ qt, featured, onRegistered }: {
               ))}
             </div>
 
+            {/* Player fill bar — only shows when max_players is set */}
+            {(qt as any).max_players && (() => {
+              const max = (qt as any).max_players as number;
+              const pct = Math.min(qt.player_count / max * 100, 100);
+              const isFull = qt.player_count >= max;
+              const isAlmostFull = pct >= 80;
+              const barColor = isFull ? "#ef4444" : isAlmostFull ? "#f97316" : sc.color;
+              return (
+                <div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                    <span style={{ fontSize: 9, fontWeight: 700, color: "var(--muted-foreground)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                      {isFull ? "🔴 Full" : isAlmostFull ? "🟠 Almost Full" : "🟢 Spots Left"}
+                    </span>
+                    <span style={{ fontSize: 9, fontWeight: 700, color: barColor }}>
+                      {max - qt.player_count > 0 ? `${max - qt.player_count} left` : "No spots"}
+                    </span>
+                  </div>
+                  <div style={{ height: 4, borderRadius: 2, background: "var(--muted)", overflow: "hidden" }}>
+                    <div style={{ height: "100%", width: `${pct}%`, borderRadius: 2, background: barColor, transition: "width 0.4s ease" }} />
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* Round bar */}
             <div style={{ display: "flex", gap: 3 }}>
               {ROUNDS.map((r, i) => (
@@ -555,6 +608,16 @@ function TCard({ qt, featured, onRegistered }: {
                     ? <><Loader2 size={12} className="animate-spin" /> Joining...</>
                     : <><Zap size={12} /> Register Now</>}
                 </button>
+              ) : isFull ? (
+                <div style={{
+                  flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
+                  padding: "10px", borderRadius: 10, fontSize: 11, fontWeight: 700,
+                  textTransform: "uppercase", letterSpacing: "0.06em",
+                  background: "rgba(239,68,68,0.1)", color: "#ef4444",
+                  border: "1px solid rgba(239,68,68,0.3)",
+                }}>
+                  🔴 Full
+                </div>
               ) : (
                 <Link
                   to={`/quiz/${qt.id}`}
