@@ -831,9 +831,219 @@ function TournamentCard({ t, onManageQ, onEdit, onMonitor, onStart, onLaunch, on
   );
 }
 
+// ─── Revenue Tab ─────────────────────────────────────────────────────────────
+function RevenueTab({ tournaments }: { tournaments: QuizTournament[] }) {
+  const completed = tournaments.filter(t => t.status === "completed" || t.status === "active" || t.status === "cancelled");
+  const totalRevenue = tournaments.reduce((s, t) => {
+    const feePct = (t as any).platform_fee_percentage ?? 10;
+    return s + Math.round(t.prize_pool * feePct / 100);
+  }, 0);
+  const totalPool    = tournaments.reduce((s, t) => s + t.prize_pool, 0);
+  const totalPlayers = tournaments.reduce((s, t) => s + t.player_count, 0);
+  const totalPaid    = tournaments.reduce((s, t) => {
+    const feePct = (t as any).platform_fee_percentage ?? 10;
+    return s + Math.round(t.prize_pool * (1 - feePct / 100));
+  }, 0);
+
+  return (
+    <div className="space-y-5">
+      {/* Summary cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {[
+          { label: "Total Revenue",    value: `${totalRevenue.toLocaleString()} ZA`, color: "#4ade80",  icon: "💰" },
+          { label: "Total Entry Fees", value: `${totalPool.toLocaleString()} ZA`,    color: "#a855f7",  icon: "🎯" },
+          { label: "Prizes Paid Out",  value: `${totalPaid.toLocaleString()} ZA`,    color: "#f87171",  icon: "🏆" },
+          { label: "Total Players",    value: totalPlayers.toLocaleString(),          color: "#fbbf24",  icon: "👥" },
+        ].map(s => (
+          <div key={s.label} className="rounded-2xl p-4" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
+            <div className="text-2xl mb-2">{s.icon}</div>
+            <p className="text-xl font-black text-white leading-none">{s.value}</p>
+            <p className="text-[10px] font-bold uppercase tracking-wider mt-1" style={{ color: s.color }}>{s.label}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Per-tournament table */}
+      <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.07)" }}>
+        <div className="px-5 py-3 border-b border-white/5 flex items-center justify-between" style={{ background: "rgba(255,255,255,0.02)" }}>
+          <p className="text-xs font-black text-white/40 uppercase tracking-widest">Per Tournament Breakdown</p>
+          <p className="text-xs text-white/20 font-bold">{tournaments.length} total</p>
+        </div>
+        {tournaments.length === 0 ? (
+          <div className="py-12 text-center">
+            <p className="text-white/20 text-sm font-bold">No tournaments yet</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-white/5">
+            {/* Header row */}
+            <div className="grid px-5 py-2" style={{ gridTemplateColumns: "1fr 60px 80px 60px 90px 80px" }}>
+              {["Tournament", "Players", "Pool", "Fee %", "Revenue", "Status"].map(h => (
+                <p key={h} className="text-[9px] font-black text-white/20 uppercase tracking-widest">{h}</p>
+              ))}
+            </div>
+            {tournaments.map(t => {
+              const feePct = (t as any).platform_fee_percentage ?? 10;
+              const revenue = Math.round(t.prize_pool * feePct / 100);
+              const sc = STATUS_CFG[t.status] ?? STATUS_CFG.draft;
+              return (
+                <div key={t.id} className="grid px-5 py-3 items-center hover:bg-white/[0.02] transition-all" style={{ gridTemplateColumns: "1fr 60px 80px 60px 90px 80px" }}>
+                  <div className="min-w-0 pr-3">
+                    <p className="text-sm font-bold text-white truncate">{t.title}</p>
+                    {t.scheduled_at && <p className="text-[10px] text-white/25 mt-0.5">{new Date(t.scheduled_at).toLocaleDateString("en-NG", { day: "numeric", month: "short", year: "numeric" })}</p>}
+                  </div>
+                  <p className="text-sm font-black text-white/70">{t.player_count}</p>
+                  <p className="text-sm font-black text-white/70">{t.prize_pool.toLocaleString()} ZA</p>
+                  <p className="text-sm font-black" style={{ color: "#fbbf24" }}>{feePct}%</p>
+                  <p className="text-sm font-black" style={{ color: revenue > 0 ? "#4ade80" : "rgba(255,255,255,0.3)" }}>
+                    {revenue > 0 ? `+${revenue.toLocaleString()} ZA` : "—"}
+                  </p>
+                  <span className="text-[10px] font-black px-2 py-1 rounded-full w-fit" style={{ background: `${sc.color}18`, color: sc.color }}>
+                    {t.status}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Leaderboard Tab ──────────────────────────────────────────────────────────
+function LeaderboardTab({ tournaments }: { tournaments: QuizTournament[] }) {
+  const [lbTab, setLbTab] = useState<"global" | "per-tournament">("global");
+  const [selectedT, setSelectedT] = useState<string>(tournaments[0]?.id ?? "");
+
+  const completedTs = tournaments.filter(t => t.status === "completed" || t.status === "active");
+
+  const { data: globalLb = [], isLoading: globalLoading } = useQuery({
+    queryKey: ["admin-global-leaderboard"],
+    queryFn: async () => {
+      const { data } = await apiClient.get("/admin/quiz/leaderboard/global");
+      return data.data ?? [];
+    },
+    retry: 1,
+  });
+
+  const { data: tournamentLb = [], isLoading: tLoading } = useQuery({
+    queryKey: ["admin-tournament-leaderboard", selectedT],
+    queryFn: async () => {
+      if (!selectedT) return [];
+      const { data } = await apiClient.get(`/admin/quiz/tournaments/${selectedT}/leaderboard`);
+      return data.data ?? [];
+    },
+    enabled: !!selectedT && lbTab === "per-tournament",
+    retry: 1,
+  });
+
+  const MEDALS: Record<number, string> = { 0: "👑", 1: "🥈", 2: "🥉" };
+
+  return (
+    <div className="space-y-4">
+      {/* Sub-tabs */}
+      <div className="flex gap-1 border-b border-white/10">
+        {([
+          { id: "global",         label: "🌍 All-Time Global" },
+          { id: "per-tournament", label: "🏆 Per Tournament"  },
+        ] as const).map(tab => (
+          <button key={tab.id} onClick={() => setLbTab(tab.id)}
+            className="px-4 py-2.5 text-xs font-black uppercase tracking-widest transition-all -mb-px"
+            style={{ background: "none", border: "none", cursor: "pointer", borderBottom: lbTab === tab.id ? "2px solid #a855f7" : "2px solid transparent", color: lbTab === tab.id ? "#a855f7" : "rgba(255,255,255,0.3)" }}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {lbTab === "per-tournament" && (
+        <div className="relative">
+          <select
+            value={selectedT}
+            onChange={e => setSelectedT(e.target.value)}
+            className="w-full px-4 py-2.5 rounded-xl text-sm font-bold text-white appearance-none focus:outline-none"
+            style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}
+          >
+            {tournaments.length === 0
+              ? <option value="">No tournaments yet</option>
+              : tournaments.map(t => <option key={t.id} value={t.id} style={{ background: "#1e1035" }}>{t.title} ({t.status})</option>)
+            }
+          </select>
+          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 pointer-events-none" />
+        </div>
+      )}
+
+      {/* Leaderboard table */}
+      <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.07)" }}>
+        <div className="px-5 py-3 border-b border-white/5 flex items-center justify-between" style={{ background: "rgba(255,255,255,0.02)" }}>
+          <p className="text-xs font-black text-white/40 uppercase tracking-widest">
+            {lbTab === "global" ? "All-Time Top Players" : "Tournament Leaderboard"}
+          </p>
+          {lbTab === "global" && globalLb.length > 0 && (
+            <p className="text-xs text-white/20 font-bold">{globalLb.length} players</p>
+          )}
+        </div>
+
+        {(lbTab === "global" ? globalLoading : tLoading) ? (
+          <div className="py-12 flex items-center justify-center gap-2 text-white/30">
+            <MdRefresh className="animate-spin text-xl" />
+            <span className="text-sm font-bold">Loading...</span>
+          </div>
+        ) : (lbTab === "global" ? globalLb : tournamentLb).length === 0 ? (
+          <div className="py-12 text-center space-y-2">
+            <p className="text-3xl">🏆</p>
+            <p className="text-sm font-black text-white/30">
+              {lbTab === "global" ? "No global data yet" : "No leaderboard data for this tournament"}
+            </p>
+            <p className="text-xs text-white/15">
+              {lbTab === "global" ? "Complete a tournament to see all-time rankings" : "Players appear here once the game starts"}
+            </p>
+          </div>
+        ) : (
+          <div className="divide-y divide-white/5">
+            {/* Column headers */}
+            <div className="grid px-5 py-2" style={{ gridTemplateColumns: "40px 1fr 80px 80px 80px" }}>
+              {["#", "Player", "Correct", lbTab === "global" ? "Wins" : "Avg Time", "Status"].map(h => (
+                <p key={h} className="text-[9px] font-black text-white/20 uppercase tracking-widest">{h}</p>
+              ))}
+            </div>
+            {(lbTab === "global" ? globalLb : tournamentLb).map((entry: any, i: number) => (
+              <div key={i} className="grid px-5 py-3 items-center hover:bg-white/[0.02] transition-all" style={{ gridTemplateColumns: "40px 1fr 80px 80px 80px", background: i === 0 ? "rgba(168,85,247,0.04)" : "transparent" }}>
+                <span className="text-base">{MEDALS[i] ?? <span className="text-xs font-black text-white/30">{i + 1}</span>}</span>
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black text-white shrink-0" style={{ background: i === 0 ? "rgba(168,85,247,0.4)" : "rgba(255,255,255,0.08)" }}>
+                    {entry.username?.[0]?.toUpperCase() ?? "?"}
+                  </div>
+                  <p className="text-sm font-bold text-white truncate">{entry.username ?? "Unknown"}</p>
+                </div>
+                <p className="text-sm font-black" style={{ color: "#4ade80" }}>{entry.correct_answers ?? 0}</p>
+                <p className="text-sm font-black text-white/50">
+                  {lbTab === "global"
+                    ? (entry.total_wins ?? 0)
+                    : entry.avg_time_ms ? `${(entry.avg_time_ms / 1000).toFixed(1)}s` : "—"}
+                </p>
+                <span className="text-[10px] font-black px-2 py-0.5 rounded-full w-fit"
+                  style={
+                    entry.status === "winner"     ? { background: "rgba(234,179,8,0.15)",   color: "#fbbf24" } :
+                    entry.status === "alive"      ? { background: "rgba(34,197,94,0.15)",   color: "#4ade80" } :
+                    entry.status === "eliminated" ? { background: "rgba(239,68,68,0.12)",   color: "#f87171" } :
+                                                    { background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.3)" }
+                  }>
+                  {entry.status ?? "—"}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 const QuizTournaments: React.FC = () => {
   const queryClient = useQueryClient();
+  const [activeTab,     setActiveTab]     = useState<"tournaments" | "revenue" | "leaderboard">("tournaments");
   const [createOpen,    setCreateOpen]    = useState(false);
   const [manageQ,       setManageQ]       = useState<QuizTournament | null>(null);
   const [monitor,       setMonitor]       = useState<QuizTournament | null>(null);
@@ -894,6 +1104,7 @@ const QuizTournaments: React.FC = () => {
       )}
 
       <div className="max-w-6xl mx-auto space-y-6">
+        {/* Header */}
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-4">
             <div className="relative w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)", boxShadow: "0 0 30px rgba(124,58,237,0.5), inset 0 1px 0 rgba(255,255,255,0.2)" }}>
@@ -914,6 +1125,7 @@ const QuizTournaments: React.FC = () => {
           </div>
         </div>
 
+        {/* Stats row */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
             { label: "Total",         value: stats.total,   color: "#a855f7", icon: <Trophy className="w-4 h-4" /> },
@@ -931,7 +1143,30 @@ const QuizTournaments: React.FC = () => {
           ))}
         </div>
 
-        {isLoading ? (
+        {/* ── Tabs ── */}
+        <div className="border-b border-white/10">
+          <div className="flex gap-0">
+            {([
+              { id: "tournaments", label: "🏟️ Tournaments" },
+              { id: "revenue",     label: "💰 Revenue"     },
+              { id: "leaderboard", label: "🏆 Leaderboard" },
+            ] as const).map(tab => (
+              <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+                className="px-5 py-3 text-xs font-black uppercase tracking-widest transition-all -mb-px"
+                style={{ background: "none", border: "none", cursor: "pointer", borderBottom: activeTab === tab.id ? "2px solid #7c3aed" : "2px solid transparent", color: activeTab === tab.id ? "#a855f7" : "rgba(255,255,255,0.3)" }}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Tab content ── */}
+        {activeTab === "revenue" ? (
+          <RevenueTab tournaments={tournaments} />
+        ) : activeTab === "leaderboard" ? (
+          <LeaderboardTab tournaments={tournaments} />
+        ) : isLoading ? (
           <div className="py-20 flex items-center justify-center text-white/30"><MdRefresh className="animate-spin text-3xl mr-3" /> Loading...</div>
         ) : tournaments.length === 0 ? (
           <div className="py-24 text-center rounded-2xl" style={{ border: "1px dashed rgba(255,255,255,0.08)" }}>
