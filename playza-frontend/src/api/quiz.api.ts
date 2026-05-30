@@ -1,11 +1,18 @@
 import axiosInstance from '@/api/axiosInstance'
 
+export interface PrizeTier {
+  rank: number
+  percentage: number
+}
+
 export interface QuizTournament {
   id: string
   title: string
   description: string
   entry_fee: number
   prize_pool: number
+  max_players: number | null
+  prize_distribution: PrizeTier[] | null
   status: 'draft' | 'registration' | 'lobby' | 'active' | 'completed' | 'cancelled'
   scheduled_at: string | null
   started_at: string | null
