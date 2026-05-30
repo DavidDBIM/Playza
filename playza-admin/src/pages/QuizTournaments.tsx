@@ -9,12 +9,19 @@ import {
 import { Trophy, Crown, ChevronDown, Zap, Shield, Flame, Star, Users, Calendar, Eye } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
+interface PrizeTier {
+  rank: number;
+  percentage: number;
+}
+
 interface QuizTournament {
   id: string;
   title: string;
   description: string;
   entry_fee: number;
   prize_pool: number;
+  max_players: number | null;
+  prize_distribution: PrizeTier[] | null;
   status: "draft" | "registration" | "lobby" | "active" | "completed" | "cancelled";
   scheduled_at: string | null;
   started_at: string | null;
@@ -56,6 +63,8 @@ const STATUS_CFG = {
   cancelled:    { label: "Cancelled",         color: "#475569", glow: "rgba(71,85,105,0.2)",    dot: "#475569" },
 } as const;
 
+const RANK_MEDALS: Record<number, string> = { 1: "🥇", 2: "🥈", 3: "🥉" };
+
 // ─── API ──────────────────────────────────────────────────────────────────────
 const api = {
   listTournaments: async (): Promise<QuizTournament[]> => {
@@ -70,66 +79,165 @@ const api = {
     const { data } = await apiClient.patch(`/admin/quiz/tournaments/${id}`, payload);
     return data.data;
   },
-  startTournament: async (id: string) => {
-    const { data } = await apiClient.post(`/admin/quiz/tournaments/${id}/start`);
-    return data;
-  },
-  launchTournament: async (id: string) => {
-    const { data } = await apiClient.post(`/admin/quiz/tournaments/${id}/launch`);
-    return data;
-  },
-  getQuestions: async (id: string): Promise<QuizQuestion[]> => {
-    const { data } = await apiClient.get(`/admin/quiz/tournaments/${id}/questions`);
-    return data.data ?? [];
-  },
-  addQuestion: async (tournamentId: string, q: Partial<QuizQuestion>) => {
-    const { data } = await apiClient.post(`/admin/quiz/tournaments/${tournamentId}/questions`, q);
-    return data.data;
-  },
-  bulkImport: async (tournamentId: string, questions: Partial<QuizQuestion>[]) => {
-    const { data } = await apiClient.post(`/admin/quiz/tournaments/${tournamentId}/questions/bulk`, { questions });
-    return data;
-  },
-  deleteQuestion: async (qId: string) => {
-    await apiClient.delete(`/admin/quiz/questions/${qId}`);
-  },
-  deleteTournament: async (id: string) => {
-    const { data } = await apiClient.delete(`/admin/quiz/tournaments/${id}`);
-    return data;
-  },
-  cancelTournament: async ({ id, reason }: { id: string; reason: string }) => {
-    // Uses PATCH since POST /cancel doesn't exist on backend yet
-    const { data } = await apiClient.patch(`/admin/quiz/tournaments/${id}`, {
-      status: "cancelled",
-      cancel_reason: reason,
-    });
-    return data;
-  },
-  getLive: async (id: string) => {
-    const { data } = await apiClient.get(`/admin/quiz/tournaments/${id}/live`);
-    return data.data;
-  },
+  startTournament:  async (id: string) => { const { data } = await apiClient.post(`/admin/quiz/tournaments/${id}/start`);  return data; },
+  launchTournament: async (id: string) => { const { data } = await apiClient.post(`/admin/quiz/tournaments/${id}/launch`); return data; },
+  getQuestions:     async (id: string): Promise<QuizQuestion[]> => { const { data } = await apiClient.get(`/admin/quiz/tournaments/${id}/questions`); return data.data ?? []; },
+  addQuestion:      async (tournamentId: string, q: Partial<QuizQuestion>) => { const { data } = await apiClient.post(`/admin/quiz/tournaments/${tournamentId}/questions`, q); return data.data; },
+  bulkImport:       async (tournamentId: string, questions: Partial<QuizQuestion>[]) => { const { data } = await apiClient.post(`/admin/quiz/tournaments/${tournamentId}/questions/bulk`, { questions }); return data; },
+  deleteQuestion:   async (qId: string) => { await apiClient.delete(`/admin/quiz/questions/${qId}`); },
+  deleteTournament: async (id: string) => { const { data } = await apiClient.delete(`/admin/quiz/tournaments/${id}`); return data; },
+  cancelTournament: async ({ id, reason }: { id: string; reason: string }) => { const { data } = await apiClient.patch(`/admin/quiz/tournaments/${id}`, { status: "cancelled", cancel_reason: reason }); return data; },
+  getLive:          async (id: string) => { const { data } = await apiClient.get(`/admin/quiz/tournaments/${id}/live`); return data.data; },
 };
 
-// ─── Shared Input style ───────────────────────────────────────────────────────
+// ─── Shared styles ────────────────────────────────────────────────────────────
 const inputCls = "w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-violet-500/60 focus:border-violet-500/40 transition-all";
 const labelCls = "block text-[10px] font-black text-white/40 uppercase tracking-widest mb-1.5";
 
+// ─── Prize Distribution Builder ───────────────────────────────────────────────
+function PrizeDistributionBuilder({
+  tiers,
+  onChange,
+}: {
+  tiers: PrizeTier[];
+  onChange: (t: PrizeTier[]) => void;
+}) {
+  const totalPct  = tiers.reduce((s, t) => s + t.percentage, 0);
+  const remaining = 90 - totalPct; // platform keeps 10%
+  const isValid   = totalPct <= 90 && tiers.length > 0;
+
+  function addTier() {
+    const nextRank = tiers.length > 0 ? Math.max(...tiers.map(t => t.rank)) + 1 : 1;
+    onChange([...tiers, { rank: nextRank, percentage: 0 }]);
+  }
+
+  function removeTier(rank: number) {
+    onChange(tiers.filter(t => t.rank !== rank));
+  }
+
+  function updatePct(rank: number, pct: number) {
+    onChange(tiers.map(t => t.rank === rank ? { ...t, percentage: Math.max(0, Math.min(90, pct)) } : t));
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <label className={labelCls} style={{ margin: 0 }}>Prize Distribution (platform keeps 10%)</label>
+        <span className="text-[10px] font-black" style={{ color: totalPct > 90 ? "#f87171" : totalPct === 90 ? "#4ade80" : "#fbbf24" }}>
+          {totalPct}% / 90% allocated
+        </span>
+      </div>
+
+      {/* Visual bar */}
+      <div className="h-2 rounded-full overflow-hidden mb-3" style={{ background: "rgba(255,255,255,0.06)" }}>
+        <div
+          className="h-full rounded-full transition-all"
+          style={{
+            width: `${Math.min(totalPct / 90 * 100, 100)}%`,
+            background: totalPct > 90 ? "#ef4444" : "linear-gradient(90deg, #7c3aed, #a855f7)",
+          }}
+        />
+      </div>
+
+      {/* Tier rows */}
+      <div className="space-y-2 mb-3">
+        {tiers.length === 0 && (
+          <p className="text-center text-xs text-white/25 py-3">No tiers yet — click Add Rank below</p>
+        )}
+        {tiers.map((tier) => (
+          <div key={tier.rank} className="flex items-center gap-2 rounded-xl px-3 py-2" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}>
+            <span className="text-sm w-6 text-center shrink-0">{RANK_MEDALS[tier.rank] ?? `#${tier.rank}`}</span>
+            <span className="text-xs font-black text-white/60 w-14 shrink-0">Rank {tier.rank}</span>
+            <div className="relative flex-1">
+              <input
+                type="number"
+                min={0}
+                max={90}
+                value={tier.percentage}
+                onChange={e => updatePct(tier.rank, Number(e.target.value))}
+                className={inputCls + " pr-8"}
+                style={{ paddingTop: 6, paddingBottom: 6 }}
+                placeholder="0"
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-black text-white/30">%</span>
+            </div>
+            <button
+              onClick={() => removeTier(tier.rank)}
+              className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-all"
+              style={{ background: "rgba(239,68,68,0.12)", color: "#f87171" }}
+            >
+              <MdClose className="text-sm" />
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex items-center gap-2">
+        <button
+          onClick={addTier}
+          type="button"
+          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-white/60 hover:text-white transition-all"
+          style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}
+        >
+          <MdAdd /> Add Rank
+        </button>
+        {tiers.length > 0 && remaining > 0 && (
+          <span className="text-[10px] text-white/25">{remaining}% unallocated (will go back to prize pool)</span>
+        )}
+        {totalPct > 90 && (
+          <span className="text-[10px] font-black text-red-400">⚠ Exceeds 90% limit</span>
+        )}
+      </div>
+
+      {isValid && totalPct > 0 && (
+        <div className="mt-3 rounded-xl px-3 py-2 space-y-1" style={{ background: "rgba(168,85,247,0.06)", border: "1px solid rgba(168,85,247,0.15)" }}>
+          <p className="text-[9px] font-black text-white/25 uppercase tracking-widest mb-1.5">Preview (based on 1,000 ZA pool)</p>
+          {tiers.map(tier => (
+            <div key={tier.rank} className="flex items-center justify-between">
+              <span className="text-xs text-white/50">{RANK_MEDALS[tier.rank] ?? `#${tier.rank}`} Rank {tier.rank}</span>
+              <span className="text-xs font-black text-white">{Math.round(1000 * tier.percentage / 100).toLocaleString()} ZA</span>
+            </div>
+          ))}
+          <div className="flex items-center justify-between border-t border-white/5 pt-1 mt-1">
+            <span className="text-[10px] text-white/25">Platform fee</span>
+            <span className="text-[10px] text-white/25">100 ZA (10%)</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Create Modal ─────────────────────────────────────────────────────────────
 function CreateTournamentModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
-  const [form, setForm] = useState({ title: "", description: "", entry_fee: 0, scheduled_at: "" });
+  const [form, setForm] = useState({
+    title: "", description: "", entry_fee: 0,
+    scheduled_at: "", max_players: "" as string | number,
+  });
+  const [tiers, setTiers] = useState<PrizeTier[]>([]);
   const [error, setError] = useState("");
 
+  const totalPct = tiers.reduce((s, t) => s + t.percentage, 0);
+
   const { mutate, isPending } = useMutation({
-    mutationFn: () => api.createTournament({ title: form.title, description: form.description, entry_fee: Number(form.entry_fee), scheduled_at: form.scheduled_at || null } as any),
+    mutationFn: () => api.createTournament({
+      title: form.title,
+      description: form.description,
+      entry_fee: Number(form.entry_fee),
+      scheduled_at: form.scheduled_at || null,
+      max_players: form.max_players !== "" ? Number(form.max_players) : null,
+      prize_distribution: tiers.length > 0 ? tiers : null,
+    } as any),
     onSuccess: () => { onCreated(); onClose(); },
     onError: (err: any) => setError(err.response?.data?.message ?? "Failed to create"),
   });
 
+  const canSubmit = !!form.title && totalPct <= 90;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.8)", backdropFilter: "blur(16px)" }} onClick={onClose}>
-      <div className="w-full max-w-md rounded-2xl overflow-hidden" style={{ background: "linear-gradient(135deg, rgba(30,20,60,0.98) 0%, rgba(15,10,40,0.98) 100%)", border: "1px solid rgba(139,92,246,0.3)", boxShadow: "0 0 60px rgba(139,92,246,0.2), inset 0 1px 0 rgba(255,255,255,0.05)" }} onClick={e => e.stopPropagation()}>
-        <div className="px-6 py-5 border-b border-white/5 flex items-center justify-between">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(16px)" }} onClick={onClose}>
+      <div className="w-full max-w-lg max-h-[90vh] flex flex-col rounded-2xl overflow-hidden" style={{ background: "linear-gradient(135deg, rgba(30,20,60,0.98) 0%, rgba(15,10,40,0.98) 100%)", border: "1px solid rgba(139,92,246,0.3)", boxShadow: "0 0 60px rgba(139,92,246,0.2), inset 0 1px 0 rgba(255,255,255,0.05)" }} onClick={e => e.stopPropagation()}>
+        <div className="px-6 py-5 border-b border-white/5 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)", boxShadow: "0 0 20px rgba(124,58,237,0.4)" }}>
               <Trophy className="w-4 h-4 text-white" />
@@ -138,20 +246,36 @@ function CreateTournamentModal({ onClose, onCreated }: { onClose: () => void; on
           </div>
           <button onClick={onClose} className="w-8 h-8 rounded-xl flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-all"><MdClose /></button>
         </div>
-        <div className="p-6 space-y-4">
+        <div className="flex-1 overflow-y-auto p-6 space-y-5">
           {error && <div className="rounded-xl px-4 py-3 text-sm font-bold" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171" }}>{error}</div>}
-          {[
-            { label: "Title *",               key: "title",        type: "text",           placeholder: "Quiz Championship #1" },
-            { label: "Description",           key: "description",  type: "text",           placeholder: "Test your knowledge..." },
-            { label: "Entry Fee (ZA Tokens)", key: "entry_fee",    type: "number",         placeholder: "0 = Free" },
-            { label: "Scheduled At",          key: "scheduled_at", type: "datetime-local", placeholder: "" },
-          ].map(f => (
-            <div key={f.key}>
-              <label className={labelCls}>{f.label}</label>
-              <input type={f.type} placeholder={f.placeholder} value={(form as any)[f.key]} onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))} className={inputCls} />
+
+          {/* Basic fields */}
+          <div className="space-y-4">
+            {[
+              { label: "Title *",               key: "title",        type: "text",           placeholder: "Quiz Championship #1" },
+              { label: "Description",           key: "description",  type: "text",           placeholder: "Test your knowledge..." },
+              { label: "Entry Fee (ZA Tokens)", key: "entry_fee",    type: "number",         placeholder: "0 = Free" },
+              { label: "Scheduled At",          key: "scheduled_at", type: "datetime-local", placeholder: "" },
+            ].map(f => (
+              <div key={f.key}>
+                <label className={labelCls}>{f.label}</label>
+                <input type={f.type} placeholder={f.placeholder} value={(form as any)[f.key]} onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))} className={inputCls} />
+              </div>
+            ))}
+            <div>
+              <label className={labelCls}>Max Players <span style={{ fontWeight: 400, textTransform: "none", opacity: 0.5 }}>(leave blank = unlimited)</span></label>
+              <input type="number" placeholder="e.g. 500" min={1} value={form.max_players} onChange={e => setForm(p => ({ ...p, max_players: e.target.value }))} className={inputCls} />
             </div>
-          ))}
-          <button onClick={() => mutate()} disabled={isPending || !form.title} className="w-full py-3 rounded-xl font-black text-sm text-white disabled:opacity-40 flex items-center justify-center gap-2 transition-all hover:opacity-90" style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)", boxShadow: "0 0 24px rgba(124,58,237,0.35)" }}>
+          </div>
+
+          {/* Divider */}
+          <div style={{ height: 1, background: "rgba(255,255,255,0.06)" }} />
+
+          {/* Prize distribution */}
+          <PrizeDistributionBuilder tiers={tiers} onChange={setTiers} />
+        </div>
+        <div className="px-6 py-4 border-t border-white/5 shrink-0">
+          <button onClick={() => mutate()} disabled={isPending || !canSubmit} className="w-full py-3 rounded-xl font-black text-sm text-white disabled:opacity-40 flex items-center justify-center gap-2 transition-all hover:opacity-90" style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)", boxShadow: "0 0 24px rgba(124,58,237,0.35)" }}>
             {isPending ? <><MdRefresh className="animate-spin" /> Creating...</> : <><MdAdd /> Create Tournament</>}
           </button>
         </div>
@@ -168,19 +292,37 @@ function EditTournamentModal({ tournament, onClose, onSaved }: { tournament: Qui
     const pad = (n: number) => String(n).padStart(2, "0");
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   };
-  const [form, setForm] = useState({ title: tournament.title, description: tournament.description ?? "", entry_fee: tournament.entry_fee, scheduled_at: toLocalDT(tournament.scheduled_at) });
+
+  const [form, setForm] = useState({
+    title: tournament.title,
+    description: tournament.description ?? "",
+    entry_fee: tournament.entry_fee,
+    scheduled_at: toLocalDT(tournament.scheduled_at),
+    max_players: tournament.max_players ?? ("" as string | number),
+  });
+  const [tiers, setTiers] = useState<PrizeTier[]>(tournament.prize_distribution ?? []);
   const [error, setError] = useState("");
 
+  const totalPct = tiers.reduce((s, t) => s + t.percentage, 0);
+
   const { mutate, isPending } = useMutation({
-    mutationFn: () => api.updateTournament({ id: tournament.id, title: form.title, description: form.description, entry_fee: Number(form.entry_fee), scheduled_at: form.scheduled_at || null } as any),
+    mutationFn: () => api.updateTournament({
+      id: tournament.id,
+      title: form.title,
+      description: form.description,
+      entry_fee: Number(form.entry_fee),
+      scheduled_at: form.scheduled_at || null,
+      max_players: form.max_players !== "" ? Number(form.max_players) : null,
+      prize_distribution: tiers.length > 0 ? tiers : null,
+    } as any),
     onSuccess: () => { onSaved(); onClose(); },
     onError: (err: any) => setError(err.response?.data?.message ?? "Failed to save"),
   });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.8)", backdropFilter: "blur(16px)" }} onClick={onClose}>
-      <div className="w-full max-w-md rounded-2xl overflow-hidden" style={{ background: "linear-gradient(135deg, rgba(20,30,60,0.98) 0%, rgba(10,15,40,0.98) 100%)", border: "1px solid rgba(59,130,246,0.3)", boxShadow: "0 0 60px rgba(59,130,246,0.15), inset 0 1px 0 rgba(255,255,255,0.05)" }} onClick={e => e.stopPropagation()}>
-        <div className="px-6 py-5 border-b border-white/5 flex items-center justify-between">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(16px)" }} onClick={onClose}>
+      <div className="w-full max-w-lg max-h-[90vh] flex flex-col rounded-2xl overflow-hidden" style={{ background: "linear-gradient(135deg, rgba(20,30,60,0.98) 0%, rgba(10,15,40,0.98) 100%)", border: "1px solid rgba(59,130,246,0.3)", boxShadow: "0 0 60px rgba(59,130,246,0.15), inset 0 1px 0 rgba(255,255,255,0.05)" }} onClick={e => e.stopPropagation()}>
+        <div className="px-6 py-5 border-b border-white/5 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #2563eb, #0ea5e9)", boxShadow: "0 0 20px rgba(37,99,235,0.4)" }}>
               <MdEdit className="text-white text-lg" />
@@ -192,25 +334,36 @@ function EditTournamentModal({ tournament, onClose, onSaved }: { tournament: Qui
           </div>
           <button onClick={onClose} className="w-8 h-8 rounded-xl flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-all"><MdClose /></button>
         </div>
-        <div className="p-6 space-y-4">
+        <div className="flex-1 overflow-y-auto p-6 space-y-5">
           {error && <div className="rounded-xl px-4 py-3 text-sm font-bold" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171" }}>{error}</div>}
-          {[
-            { label: "Title *",               key: "title",        type: "text",           placeholder: "Quiz Championship #1" },
-            { label: "Description",           key: "description",  type: "text",           placeholder: "Test your knowledge..." },
-            { label: "Entry Fee (ZA Tokens)", key: "entry_fee",    type: "number",         placeholder: "0 = Free" },
-            { label: "Reschedule Date/Time",  key: "scheduled_at", type: "datetime-local", placeholder: "" },
-          ].map(f => (
-            <div key={f.key}>
-              <label className={labelCls}>{f.label}</label>
-              <input type={f.type} placeholder={f.placeholder} value={(form as any)[f.key]} onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))} className={inputCls} />
+
+          <div className="space-y-4">
+            {[
+              { label: "Title *",               key: "title",        type: "text",           placeholder: "Quiz Championship #1" },
+              { label: "Description",           key: "description",  type: "text",           placeholder: "Test your knowledge..." },
+              { label: "Entry Fee (ZA Tokens)", key: "entry_fee",    type: "number",         placeholder: "0 = Free" },
+              { label: "Reschedule Date/Time",  key: "scheduled_at", type: "datetime-local", placeholder: "" },
+            ].map(f => (
+              <div key={f.key}>
+                <label className={labelCls}>{f.label}</label>
+                <input type={f.type} placeholder={f.placeholder} value={(form as any)[f.key]} onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))} className={inputCls} />
+              </div>
+            ))}
+            <div>
+              <label className={labelCls}>Max Players <span style={{ fontWeight: 400, textTransform: "none", opacity: 0.5 }}>(leave blank = unlimited)</span></label>
+              <input type="number" placeholder="e.g. 500" min={1} value={form.max_players} onChange={e => setForm(p => ({ ...p, max_players: e.target.value }))} className={inputCls} />
             </div>
-          ))}
-          <div className="flex gap-2 pt-1">
-            <button onClick={onClose} className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white/60 hover:text-white transition-all" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>Cancel</button>
-            <button onClick={() => mutate()} disabled={isPending || !form.title} className="flex-1 py-2.5 rounded-xl font-black text-sm text-white disabled:opacity-40 flex items-center justify-center gap-2 transition-all hover:opacity-90" style={{ background: "linear-gradient(135deg, #2563eb, #0ea5e9)", boxShadow: "0 0 20px rgba(37,99,235,0.3)" }}>
-              {isPending ? <><MdRefresh className="animate-spin" /> Saving...</> : <><MdCheckCircle /> Save Changes</>}
-            </button>
           </div>
+
+          <div style={{ height: 1, background: "rgba(255,255,255,0.06)" }} />
+
+          <PrizeDistributionBuilder tiers={tiers} onChange={setTiers} />
+        </div>
+        <div className="px-6 py-4 border-t border-white/5 shrink-0 flex gap-2">
+          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white/60 hover:text-white transition-all" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>Cancel</button>
+          <button onClick={() => mutate()} disabled={isPending || !form.title || totalPct > 90} className="flex-1 py-2.5 rounded-xl font-black text-sm text-white disabled:opacity-40 flex items-center justify-center gap-2 transition-all hover:opacity-90" style={{ background: "linear-gradient(135deg, #2563eb, #0ea5e9)", boxShadow: "0 0 20px rgba(37,99,235,0.3)" }}>
+            {isPending ? <><MdRefresh className="animate-spin" /> Saving...</> : <><MdCheckCircle /> Save Changes</>}
+          </button>
         </div>
       </div>
     </div>
@@ -262,7 +415,6 @@ function QuestionManagerModal({ tournament, onClose }: { tournament: QuizTournam
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(16px)" }} onClick={onClose}>
       <div className="w-full max-w-3xl max-h-[90vh] flex flex-col rounded-2xl overflow-hidden" style={{ background: "linear-gradient(160deg, rgba(15,10,35,0.99) 0%, rgba(5,5,20,0.99) 100%)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 0 80px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.04)" }} onClick={e => e.stopPropagation()}>
-        {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 shrink-0">
           <div>
             <h3 className="font-black text-white text-base">{tournament.title}</h3>
@@ -276,21 +428,15 @@ function QuestionManagerModal({ tournament, onClose }: { tournament: QuizTournam
             <button onClick={onClose} className="w-8 h-8 rounded-xl flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-all"><MdClose /></button>
           </div>
         </div>
-
-        {/* Status messages */}
         {(importError || importSuccess) && (
-          <div className={`mx-6 mt-4 px-4 py-2.5 rounded-xl text-sm font-bold border shrink-0`} style={importSuccess ? { background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", color: "#34d399" } : { background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171" }}>
+          <div className="mx-6 mt-4 px-4 py-2.5 rounded-xl text-sm font-bold border shrink-0" style={importSuccess ? { background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", color: "#34d399" } : { background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171" }}>
             {importSuccess || importError}
           </div>
         )}
-
-        {/* JSON hint */}
         <div className="mx-6 mt-3 px-4 py-2.5 rounded-xl shrink-0" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}>
           <p className="text-[9px] font-black text-white/25 uppercase tracking-widest mb-1">JSON Format</p>
           <code className="text-[9px] text-white/30 font-mono">{`[{"round_number":1,"question_text":"...","option_a":"...","option_b":"...","option_c":"...","option_d":"...","correct_option":"A"}]`}</code>
         </div>
-
-        {/* Round tabs */}
         <div className="flex gap-2 px-6 py-3 border-b border-white/5 shrink-0 overflow-x-auto">
           {ROUND_META.map(r => {
             const count = questions.filter(q => q.round_number === r.round).length;
@@ -304,14 +450,11 @@ function QuestionManagerModal({ tournament, onClose }: { tournament: QuizTournam
             );
           })}
         </div>
-
-        {/* Questions */}
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-2">
           {roundQuestions.length === 0 && !addMode ? (
             <div className="py-12 text-center">
               <MdQuestionMark className="text-4xl mx-auto mb-2 opacity-10 text-white" />
               <p className="font-bold text-sm text-white/30">No questions for {rm?.name}</p>
-              <p className="text-xs text-white/20 mt-1">Add one below or import a JSON file</p>
             </div>
           ) : (
             roundQuestions.map((q, i) => (
@@ -326,7 +469,7 @@ function QuestionManagerModal({ tournament, onClose }: { tournament: QuizTournam
                     <p className="text-sm font-bold text-white mb-2 leading-snug">{q.question_text}</p>
                     <div className="grid grid-cols-2 gap-1.5">
                       {(["A", "B", "C", "D"] as const).map(opt => (
-                        <div key={opt} className={`flex items-center gap-1.5 text-xs px-2 py-1 rounded-lg`} style={q.correct_option === opt ? { background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)", color: "#4ade80" } : { color: "rgba(255,255,255,0.3)" }}>
+                        <div key={opt} className="flex items-center gap-1.5 text-xs px-2 py-1 rounded-lg" style={q.correct_option === opt ? { background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)", color: "#4ade80" } : { color: "rgba(255,255,255,0.3)" }}>
                           <span className="font-black text-[10px]">{opt}</span>
                           {(q as any)[`option_${opt.toLowerCase()}`]}
                           {q.correct_option === opt && <MdCheckCircle className="ml-auto text-green-400 shrink-0" />}
@@ -341,62 +484,23 @@ function QuestionManagerModal({ tournament, onClose }: { tournament: QuizTournam
               </div>
             ))
           )}
-
           {addMode && (
             <div className="rounded-2xl p-4 space-y-3" style={{ background: rm?.bg, border: `1px solid ${rm?.border}` }}>
               <p className="text-xs font-black uppercase tracking-wider" style={{ color: rm?.color }}>Add Question — {rm?.name}</p>
               <textarea rows={2} placeholder="Question text..." value={newQ.question_text} onChange={e => setNewQ(p => ({ ...p, question_text: e.target.value }))} className={inputCls + " resize-none"} />
-
-              {/* Image — URL or upload from PC */}
               <div>
                 <label className={labelCls}>Question Image <span style={{ fontWeight: 400, textTransform: "none", opacity: 0.5 }}>(optional)</span></label>
                 <div className="flex gap-2 mb-2">
-                  <input
-                    type="url"
-                    placeholder="Paste image URL..."
-                    value={newQ.image_url}
-                    onChange={e => setNewQ(p => ({ ...p, image_url: e.target.value }))}
-                    className={inputCls}
-                    style={{ flex: 1 }}
-                  />
-                  <label
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl cursor-pointer shrink-0 text-xs font-bold text-white/60 hover:text-white transition-all"
-                    style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", whiteSpace: "nowrap" }}
-                  >
+                  <input type="url" placeholder="Paste image URL..." value={newQ.image_url} onChange={e => setNewQ(p => ({ ...p, image_url: e.target.value }))} className={inputCls} style={{ flex: 1 }} />
+                  <label className="flex items-center gap-1.5 px-3 py-2 rounded-xl cursor-pointer shrink-0 text-xs font-bold text-white/60 hover:text-white transition-all" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", whiteSpace: "nowrap" }}>
                     <MdUpload className="text-sm" /> Upload
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={e => {
-                        const file = e.target.files?.[0];
-                        if (!file) return;
-                        const reader = new FileReader();
-                        reader.onload = ev => {
-                          setNewQ(p => ({ ...p, image_url: ev.target?.result as string }));
-                        };
-                        reader.readAsDataURL(file);
-                        e.target.value = "";
-                      }}
-                    />
+                    <input type="file" accept="image/*" className="hidden" onChange={e => { const file = e.target.files?.[0]; if (!file) return; const reader = new FileReader(); reader.onload = ev => { setNewQ(p => ({ ...p, image_url: ev.target?.result as string })); }; reader.readAsDataURL(file); e.target.value = ""; }} />
                   </label>
                 </div>
                 {newQ.image_url && (
                   <div className="relative">
-                    <img
-                      src={newQ.image_url}
-                      alt="preview"
-                      className="w-full max-h-32 object-cover rounded-xl"
-                      style={{ border: "1px solid rgba(255,255,255,0.1)" }}
-                      onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-                    />
-                    <button
-                      onClick={() => setNewQ(p => ({ ...p, image_url: "" }))}
-                      className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-black"
-                      style={{ background: "rgba(0,0,0,0.6)" }}
-                    >
-                      ✕
-                    </button>
+                    <img src={newQ.image_url} alt="preview" className="w-full max-h-32 object-cover rounded-xl" style={{ border: "1px solid rgba(255,255,255,0.1)" }} onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+                    <button onClick={() => setNewQ(p => ({ ...p, image_url: "" }))} className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-black" style={{ background: "rgba(0,0,0,0.6)" }}>✕</button>
                   </div>
                 )}
               </div>
@@ -424,7 +528,6 @@ function QuestionManagerModal({ tournament, onClose }: { tournament: QuizTournam
             </div>
           )}
         </div>
-
         {!addMode && (
           <div className="px-6 py-4 border-t border-white/5 shrink-0">
             <button onClick={() => setAddMode(true)} className="w-full py-2.5 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2" style={{ background: "rgba(255,255,255,0.03)", border: `1px dashed ${rm?.border}`, color: rm?.color }}>
@@ -494,83 +597,61 @@ function LiveMonitorModal({ tournament, onClose }: { tournament: QuizTournament;
 }
 
 // ─── Tournament Card ──────────────────────────────────────────────────────────
-function TournamentCard({
-  t,
-  onManageQ, onEdit, onMonitor, onStart, onLaunch, onDisable, onDelete,
-  startPending, launchPending,
-}: {
+function TournamentCard({ t, onManageQ, onEdit, onMonitor, onStart, onLaunch, onDisable, onDelete, startPending, launchPending }: {
   t: QuizTournament;
   onManageQ: () => void; onEdit: () => void; onMonitor: () => void;
   onStart: () => void; onLaunch: () => void; onDisable: () => void; onDelete: () => void;
   startPending: boolean; launchPending: boolean;
 }) {
-  const sc = STATUS_CFG[t.status] ?? STATUS_CFG.draft;
-  const isLive = t.status === "active";
-  const isReg  = t.status === "registration";
+  const sc     = STATUS_CFG[t.status] ?? STATUS_CFG.draft;
+  const isLive  = t.status === "active";
+  const isReg   = t.status === "registration";
   const isLobby = t.status === "lobby";
   const isDraft = t.status === "draft";
   const isDone  = t.status === "completed" || t.status === "cancelled";
 
   return (
-    <div
-      className="relative rounded-2xl overflow-hidden flex flex-col transition-all duration-300 group"
-      style={{
-        background: "linear-gradient(160deg, rgba(20,15,40,0.95) 0%, rgba(10,8,25,0.95) 100%)",
-        border: `1px solid ${isLive ? "rgba(239,68,68,0.4)" : isReg ? "rgba(34,197,94,0.3)" : "rgba(255,255,255,0.07)"}`,
-        boxShadow: isLive
-          ? "0 0 40px rgba(239,68,68,0.12), 0 8px 32px rgba(0,0,0,0.4)"
-          : isReg
-          ? "0 0 40px rgba(34,197,94,0.1), 0 8px 32px rgba(0,0,0,0.4)"
-          : "0 8px 32px rgba(0,0,0,0.3)",
-      }}
-    >
-      {/* Glow line at top */}
+    <div className="relative rounded-2xl overflow-hidden flex flex-col transition-all duration-300 group" style={{ background: "linear-gradient(160deg, rgba(20,15,40,0.95) 0%, rgba(10,8,25,0.95) 100%)", border: `1px solid ${isLive ? "rgba(239,68,68,0.4)" : isReg ? "rgba(34,197,94,0.3)" : "rgba(255,255,255,0.07)"}`, boxShadow: isLive ? "0 0 40px rgba(239,68,68,0.12), 0 8px 32px rgba(0,0,0,0.4)" : isReg ? "0 0 40px rgba(34,197,94,0.1), 0 8px 32px rgba(0,0,0,0.4)" : "0 8px 32px rgba(0,0,0,0.3)" }}>
       <div className="absolute top-0 left-0 right-0 h-px" style={{ background: `linear-gradient(90deg, transparent, ${sc.color}, transparent)`, opacity: isDone ? 0.2 : 0.7 }} />
-
-      {/* Live pulse background */}
       {isLive && <div className="absolute inset-0 opacity-5" style={{ background: "radial-gradient(circle at 50% 0%, #ef4444 0%, transparent 70%)" }} />}
 
-      {/* Header */}
       <div className="px-5 pt-5 pb-4">
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex-1 min-w-0">
             <h3 className="font-black text-white text-base leading-tight truncate">{t.title}</h3>
             {t.description && <p className="text-white/35 text-xs mt-1 line-clamp-1">{t.description}</p>}
           </div>
-          {/* Status badge */}
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full shrink-0" style={{ background: `${sc.color}18`, border: `1px solid ${sc.color}40` }}>
             <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: sc.color, boxShadow: `0 0 6px ${sc.color}`, ...(isLive ? { animation: "pulse 1.5s infinite" } : {}) }} />
             <span className="text-[10px] font-black uppercase tracking-wider" style={{ color: sc.color }}>{sc.label}</span>
           </div>
         </div>
 
-        {/* Scheduled date */}
         {t.scheduled_at && (
           <div className="flex items-center gap-1.5 mb-3">
             <Calendar className="w-3 h-3 text-white/25" />
-            <span className="text-[11px] font-bold text-white/30">
-              {new Date(t.scheduled_at).toLocaleDateString("en-NG", { weekday: "short", day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
-            </span>
+            <span className="text-[11px] font-bold text-white/30">{new Date(t.scheduled_at).toLocaleDateString("en-NG", { weekday: "short", day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
           </div>
         )}
 
-        {/* Stats row */}
-        <div className="grid grid-cols-3 gap-2">
+        {/* Stats */}
+        <div className="grid grid-cols-4 gap-2">
           {[
-            { icon: <Users className="w-3 h-3" />,       value: t.player_count,                label: "Players",   color: "#a855f7" },
-            { icon: <MdQuestionMark className="text-xs"/>, value: t.question_count,              label: "Questions", color: "#3b82f6" },
-            { icon: <Trophy className="w-3 h-3" />,       value: `${t.prize_pool.toLocaleString()} ZA`, label: "Prize", color: "#f59e0b" },
+            { icon: <Users className="w-3 h-3" />,        value: t.max_players ? `${t.player_count}/${t.max_players}` : t.player_count, label: "Players",   color: "#a855f7" },
+            { icon: <MdQuestionMark className="text-xs"/>, value: t.question_count,  label: "Questions", color: "#3b82f6" },
+            { icon: <Trophy className="w-3 h-3" />,        value: `${t.prize_pool.toLocaleString()} ZA`, label: "Prize", color: "#f59e0b" },
+            { icon: <span className="text-[10px]">🎯</span>, value: t.prize_distribution?.length ? `${t.prize_distribution.length} tiers` : "—", label: "Payout", color: "#22c55e" },
           ].map(s => (
-            <div key={s.label} className="rounded-xl px-2.5 py-2 text-center" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)" }}>
+            <div key={s.label} className="rounded-xl px-2 py-2 text-center" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)" }}>
               <div className="flex items-center justify-center gap-1 mb-0.5" style={{ color: s.color }}>{s.icon}</div>
-              <p className="text-xs font-black text-white">{s.value}</p>
-              <p className="text-[9px] text-white/25 font-bold uppercase">{s.label}</p>
+              <p className="text-[11px] font-black text-white leading-none">{s.value}</p>
+              <p className="text-[8px] text-white/25 font-bold uppercase mt-0.5">{s.label}</p>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Round progress bar */}
+      {/* Round bar */}
       <div className="px-5 py-3 border-t border-white/5">
         <div className="flex items-center gap-1">
           {ROUND_META.map(r => {
@@ -578,7 +659,7 @@ function TournamentCard({
             const current = isLive && t.current_round === r.round;
             return (
               <div key={r.round} className="flex-1 flex flex-col items-center gap-1">
-                <div className="w-full h-1 rounded-full transition-all" style={{ background: done || current ? r.color : "rgba(255,255,255,0.06)", boxShadow: current ? `0 0 8px ${r.color}` : "none", opacity: current ? 1 : done ? 0.7 : 1 }} />
+                <div className="w-full h-1 rounded-full transition-all" style={{ background: done || current ? r.color : "rgba(255,255,255,0.06)", boxShadow: current ? `0 0 8px ${r.color}` : "none" }} />
                 <span className="text-[8px] font-bold hidden sm:block" style={{ color: current ? r.color : "rgba(255,255,255,0.2)" }}>{r.name.split(" ")[0]}</span>
               </div>
             );
@@ -594,7 +675,6 @@ function TournamentCard({
 
       {/* Actions */}
       <div className="px-4 pb-4 pt-1 flex flex-wrap gap-2 mt-auto">
-        {/* Always visible */}
         <button onClick={onManageQ} className="flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold text-white/60 hover:text-white transition-all" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
           <MdEdit className="text-sm" /> Questions
         </button>
@@ -603,8 +683,6 @@ function TournamentCard({
             <MdEdit className="text-sm" /> Edit
           </button>
         )}
-
-        {/* Status-based primary action */}
         {isLive && (
           <button onClick={onMonitor} className="flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold transition-all" style={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171" }}>
             <Eye className="w-3 h-3" /> Monitor Live
@@ -615,15 +693,10 @@ function TournamentCard({
             {(t.question_count ?? 0) < 5 && (
               <div className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold" style={{ background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.3)", color: "#fbbf24" }}>
                 <MdWarning className="text-sm shrink-0" />
-                <span>{(t.question_count ?? 0)} / 5 questions added — add more to open registration</span>
+                <span>{(t.question_count ?? 0)} / 5 questions — add more to open registration</span>
               </div>
             )}
-            <button
-              onClick={onStart}
-              disabled={startPending}
-              className="flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-black text-white transition-all disabled:opacity-50"
-              style={{ background: "linear-gradient(135deg, rgba(34,197,94,0.3), rgba(16,185,129,0.2))", border: "1px solid rgba(34,197,94,0.4)" }}
-            >
+            <button onClick={onStart} disabled={startPending} className="flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-black text-white transition-all disabled:opacity-50" style={{ background: "linear-gradient(135deg, rgba(34,197,94,0.3), rgba(16,185,129,0.2))", border: "1px solid rgba(34,197,94,0.4)" }}>
               {startPending ? <MdRefresh className="animate-spin" /> : <MdPlayArrow />}
               {startPending ? "Opening..." : "Open Registration"}
             </button>
@@ -635,14 +708,8 @@ function TournamentCard({
             {launchPending ? "Launching..." : "Launch Game Now"}
           </button>
         )}
-
-        {/* Delete — only for cancelled or completed */}
         {isDone && (
-          <button
-            onClick={onDelete}
-            className="flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-black transition-all ml-auto"
-            style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171" }}
-          >
+          <button onClick={onDelete} className="flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-black transition-all ml-auto" style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171" }}>
             <MdDelete className="text-sm" /> Delete
           </button>
         )}
@@ -663,111 +730,54 @@ const QuizTournaments: React.FC = () => {
   const [manageQ,       setManageQ]       = useState<QuizTournament | null>(null);
   const [monitor,       setMonitor]       = useState<QuizTournament | null>(null);
   const [editT,         setEditT]         = useState<QuizTournament | null>(null);
-  const [confirmCancel,   setConfirmCancel]   = useState<QuizTournament | null>(null);
-  const [confirmDelete,   setConfirmDelete]   = useState<QuizTournament | null>(null);
-  const [needsQuestions,  setNeedsQuestions]  = useState<QuizTournament | null>(null);
-  const [cancelReason,    setCancelReason]    = useState("");
-  const [startError,      setStartError]      = useState<string | null>(null);
-  const [toast,           setToast]           = useState<{ msg: string; type: "ok" | "err" } | null>(null);
-  const [pendingStart,    setPendingStart]     = useState<string | null>(null);
-  const [pendingLaunch,   setPendingLaunch]    = useState<string | null>(null);
+  const [confirmCancel, setConfirmCancel] = useState<QuizTournament | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<QuizTournament | null>(null);
+  const [needsQuestions,setNeedsQuestions]= useState<QuizTournament | null>(null);
+  const [cancelReason,  setCancelReason]  = useState("");
+  const [startError,    setStartError]    = useState<string | null>(null);
+  const [toast,         setToast]         = useState<{ msg: string; type: "ok" | "err" } | null>(null);
+  const [pendingStart,  setPendingStart]  = useState<string | null>(null);
+  const [pendingLaunch, setPendingLaunch] = useState<string | null>(null);
 
-  const showToast = (msg: string, type: "ok" | "err" = "ok") => {
-    setToast({ msg, type });
-    setTimeout(() => setToast(null), 4000);
-  };
+  const showToast = (msg: string, type: "ok" | "err" = "ok") => { setToast({ msg, type }); setTimeout(() => setToast(null), 4000); };
 
-  const { data: tournaments = [], isLoading, refetch } = useQuery({
-    queryKey: ["admin-quiz-tournaments"],
-    queryFn: api.listTournaments,
-  });
+  const { data: tournaments = [], isLoading, refetch } = useQuery({ queryKey: ["admin-quiz-tournaments"], queryFn: api.listTournaments });
 
-  // ── optimistic helper: immediately patch status in cache ──
   const patchCache = (id: string, patch: Partial<QuizTournament>) => {
-    queryClient.setQueryData<QuizTournament[]>(["admin-quiz-tournaments"], old =>
-      (old ?? []).map(t => t.id === id ? { ...t, ...patch } : t)
-    );
+    queryClient.setQueryData<QuizTournament[]>(["admin-quiz-tournaments"], old => (old ?? []).map(t => t.id === id ? { ...t, ...patch } : t));
   };
 
   const { mutate: startT } = useMutation({
     mutationFn: api.startTournament,
-    onMutate: (id) => {
-      setPendingStart(id);
-      patchCache(id, { status: "lobby" });
-    },
-    onSuccess: (_data, id) => {
-      setPendingStart(null);
-      patchCache(id, { status: "lobby" }); // lock in — no refetch, avoids replica lag revert
-      showToast("Registration is now open! Players can register.");
-    },
-    onError: (err: any, _id) => {
-      setPendingStart(null);
-      queryClient.invalidateQueries({ queryKey: ["admin-quiz-tournaments"] });
-      const msg = err?.response?.data?.message ?? err?.message ?? "Failed to open registration";
-      setStartError(msg);
-    },
+    onMutate: (id) => { setPendingStart(id); patchCache(id, { status: "lobby" }); },
+    onSuccess: (_data, id) => { setPendingStart(null); patchCache(id, { status: "lobby" }); showToast("Registration is now open!"); },
+    onError: (err: any, _id) => { setPendingStart(null); queryClient.invalidateQueries({ queryKey: ["admin-quiz-tournaments"] }); setStartError(err?.response?.data?.message ?? err?.message ?? "Failed to open registration"); },
   });
 
   const { mutate: launchT } = useMutation({
     mutationFn: api.launchTournament,
-    onMutate: (id) => {
-      setPendingLaunch(id);
-      patchCache(id, { status: "active" });
-    },
-    onSuccess: (_data, id) => {
-      setPendingLaunch(null);
-      patchCache(id, { status: "active" }); // lock in — no refetch
-      showToast("🚀 Game launched! Questions are broadcasting to all players.");
-    },
-    onError: (err: any, _id) => {
-      setPendingLaunch(null);
-      queryClient.invalidateQueries({ queryKey: ["admin-quiz-tournaments"] });
-      showToast(err?.response?.data?.message ?? "Failed to launch game", "err");
-    },
+    onMutate: (id) => { setPendingLaunch(id); patchCache(id, { status: "active" }); },
+    onSuccess: (_data, id) => { setPendingLaunch(null); patchCache(id, { status: "active" }); showToast("🚀 Game launched!"); },
+    onError: (err: any, _id) => { setPendingLaunch(null); queryClient.invalidateQueries({ queryKey: ["admin-quiz-tournaments"] }); showToast(err?.response?.data?.message ?? "Failed to launch game", "err"); },
   });
 
   const { mutate: cancelT } = useMutation({
     mutationFn: (id: string) => api.cancelTournament({ id, reason: cancelReason || "Tournament cancelled by admin" }),
     onMutate: (id) => { patchCache(id, { status: "cancelled" }); },
-    onSuccess: () => {
-      setConfirmCancel(null);
-      setCancelReason("");
-      showToast("Tournament has been cancelled.");
-    },
-    onError: (err: any) => {
-      queryClient.invalidateQueries({ queryKey: ["admin-quiz-tournaments"] });
-      showToast(err?.response?.data?.message ?? "Failed to cancel", "err");
-    },
+    onSuccess: () => { setConfirmCancel(null); setCancelReason(""); showToast("Tournament cancelled."); },
+    onError: (err: any) => { queryClient.invalidateQueries({ queryKey: ["admin-quiz-tournaments"] }); showToast(err?.response?.data?.message ?? "Failed to cancel", "err"); },
   });
 
   const { mutate: deleteT } = useMutation({
     mutationFn: (id: string) => api.deleteTournament(id),
-    onSuccess: (_data, id) => {
-      queryClient.setQueryData<QuizTournament[]>(["admin-quiz-tournaments"],
-        old => (old ?? []).filter(t => t.id !== id)
-      );
-      setConfirmDelete(null);
-      showToast("Tournament deleted permanently.");
-    },
-    onError: (err: any) => {
-      const status = err?.response?.status;
-      const msg = status === 404
-        ? "Delete endpoint not found — push quiz.admin.routes.ts to Render and redeploy."
-        : err?.response?.data?.message ?? "Failed to delete tournament";
-      showToast(msg, "err");
-    },
+    onSuccess: (_data, id) => { queryClient.setQueryData<QuizTournament[]>(["admin-quiz-tournaments"], old => (old ?? []).filter(t => t.id !== id)); setConfirmDelete(null); showToast("Tournament deleted."); },
+    onError: (err: any) => { const msg = err?.response?.status === 404 ? "Delete endpoint not found — redeploy backend." : err?.response?.data?.message ?? "Failed to delete"; showToast(msg, "err"); },
   });
 
-  const stats = {
-    total:    tournaments.length,
-    live:     tournaments.filter(t => t.status === "active").length,
-    reg:      tournaments.filter(t => t.status === "registration" || t.status === "lobby").length,
-    players:  tournaments.reduce((s, t) => s + t.player_count, 0),
-  };
+  const stats = { total: tournaments.length, live: tournaments.filter(t => t.status === "active").length, reg: tournaments.filter(t => t.status === "registration" || t.status === "lobby").length, players: tournaments.reduce((s, t) => s + t.player_count, 0) };
 
   return (
     <div className="min-h-screen p-6" style={{ background: "linear-gradient(160deg, #0a0618 0%, #050310 50%, #080515 100%)" }}>
-      {/* Toast */}
       {toast && (
         <div className="fixed top-6 right-6 z-[100] px-5 py-3 rounded-2xl font-bold text-sm flex items-center gap-2 transition-all" style={toast.type === "ok" ? { background: "rgba(16,185,129,0.15)", border: "1px solid rgba(16,185,129,0.35)", color: "#34d399", boxShadow: "0 0 30px rgba(16,185,129,0.15)" } : { background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.35)", color: "#f87171", boxShadow: "0 0 30px rgba(239,68,68,0.15)" }}>
           {toast.type === "ok" ? <MdCheckCircle className="text-lg shrink-0" /> : <MdWarning className="text-lg shrink-0" />}
@@ -776,13 +786,10 @@ const QuizTournaments: React.FC = () => {
       )}
 
       <div className="max-w-6xl mx-auto space-y-6">
-
-        {/* Header */}
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-4">
             <div className="relative w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)", boxShadow: "0 0 30px rgba(124,58,237,0.5), inset 0 1px 0 rgba(255,255,255,0.2)" }}>
               <Crown className="w-6 h-6 text-white" />
-              <div className="absolute inset-0 rounded-2xl" style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 60%)" }} />
             </div>
             <div>
               <h1 className="text-2xl font-black text-white tracking-tight">Quiz Tournaments</h1>
@@ -799,7 +806,6 @@ const QuizTournaments: React.FC = () => {
           </div>
         </div>
 
-        {/* Stats strip */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
             { label: "Total",         value: stats.total,   color: "#a855f7", icon: <Trophy className="w-4 h-4" /> },
@@ -817,42 +823,22 @@ const QuizTournaments: React.FC = () => {
           ))}
         </div>
 
-        {/* Cards */}
         {isLoading ? (
-          <div className="py-20 flex items-center justify-center text-white/30">
-            <MdRefresh className="animate-spin text-3xl mr-3" /> Loading tournaments...
-          </div>
+          <div className="py-20 flex items-center justify-center text-white/30"><MdRefresh className="animate-spin text-3xl mr-3" /> Loading...</div>
         ) : tournaments.length === 0 ? (
           <div className="py-24 text-center rounded-2xl" style={{ border: "1px dashed rgba(255,255,255,0.08)" }}>
             <Trophy className="w-16 h-16 text-white/10 mx-auto mb-4" />
             <p className="font-black text-white text-xl mb-2">No tournaments yet</p>
-            <p className="text-white/30 text-sm mb-6">Create your first quiz tournament to get started</p>
-            <button onClick={() => setCreateOpen(true)} className="px-6 py-3 rounded-xl font-black text-sm text-white" style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)" }}>
-              <MdAdd className="inline mr-1" /> Create Tournament
-            </button>
+            <button onClick={() => setCreateOpen(true)} className="px-6 py-3 rounded-xl font-black text-sm text-white" style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)" }}><MdAdd className="inline mr-1" /> Create Tournament</button>
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {tournaments.map(t => (
-              <TournamentCard
-                key={t.id}
-                t={t}
-                onManageQ={() => setManageQ(t)}
-                onEdit={() => setEditT(t)}
-                onMonitor={() => setMonitor(t)}
-                onStart={() => {
-                  if ((t.question_count ?? 0) < 5) {
-                    setNeedsQuestions(t);
-                  } else {
-                    setStartError(null);
-                    startT(t.id);
-                  }
-                }}
-                onLaunch={() => launchT(t.id)}
-                onDisable={() => setConfirmCancel(t)}
-                onDelete={() => setConfirmDelete(t)}
-                startPending={pendingStart === t.id}
-                launchPending={pendingLaunch === t.id}
+              <TournamentCard key={t.id} t={t}
+                onManageQ={() => setManageQ(t)} onEdit={() => setEditT(t)} onMonitor={() => setMonitor(t)}
+                onStart={() => { if ((t.question_count ?? 0) < 5) { setNeedsQuestions(t); } else { setStartError(null); startT(t.id); } }}
+                onLaunch={() => launchT(t.id)} onDisable={() => setConfirmCancel(t)} onDelete={() => setConfirmDelete(t)}
+                startPending={pendingStart === t.id} launchPending={pendingLaunch === t.id}
               />
             ))}
           </div>
@@ -861,117 +847,70 @@ const QuizTournaments: React.FC = () => {
 
       {/* Modals */}
       {createOpen && <CreateTournamentModal onClose={() => setCreateOpen(false)} onCreated={() => queryClient.invalidateQueries({ queryKey: ["admin-quiz-tournaments"] })} />}
-      {manageQ   && <QuestionManagerModal   tournament={manageQ}  onClose={() => setManageQ(null)} />}
-      {monitor   && <LiveMonitorModal       tournament={monitor}  onClose={() => setMonitor(null)} />}
-      {editT     && <EditTournamentModal    tournament={editT}    onClose={() => setEditT(null)} onSaved={() => { queryClient.invalidateQueries({ queryKey: ["admin-quiz-tournaments"] }); showToast("Tournament updated!"); }} />}
+      {manageQ    && <QuestionManagerModal  tournament={manageQ} onClose={() => setManageQ(null)} />}
+      {monitor    && <LiveMonitorModal      tournament={monitor} onClose={() => setMonitor(null)} />}
+      {editT      && <EditTournamentModal   tournament={editT}   onClose={() => setEditT(null)} onSaved={() => { queryClient.invalidateQueries({ queryKey: ["admin-quiz-tournaments"] }); showToast("Tournament updated!"); }} />}
 
-      {/* ── Not enough questions modal ── */}
       {needsQuestions && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(16px)" }} onClick={() => setNeedsQuestions(null)}>
-          <div className="w-full max-w-sm rounded-2xl overflow-hidden" style={{ background: "linear-gradient(135deg, rgba(20,15,8,0.99), rgba(10,8,3,0.99))", border: "1px solid rgba(245,158,11,0.25)", boxShadow: "0 0 60px rgba(245,158,11,0.1)" }} onClick={e => e.stopPropagation()}>
+          <div className="w-full max-w-sm rounded-2xl overflow-hidden" style={{ background: "linear-gradient(135deg, rgba(20,15,8,0.99), rgba(10,8,3,0.99))", border: "1px solid rgba(245,158,11,0.25)" }} onClick={e => e.stopPropagation()}>
             <div className="p-6 text-center">
-              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: "rgba(245,158,11,0.15)", border: "1px solid rgba(245,158,11,0.3)" }}>
-                <MdQuestionMark className="text-3xl text-amber-400" />
-              </div>
-              <h3 className="font-black text-white text-lg mb-1">Questions Needed</h3>
-              <p className="text-sm text-white/50 mb-1">
-                <span className="font-bold text-white">"{needsQuestions.title}"</span>
-              </p>
-              <p className="text-sm text-white/40 mb-2">
-                You have <span className="font-black text-amber-400">{needsQuestions.question_count ?? 0}</span> question{needsQuestions.question_count !== 1 ? "s" : ""}.
-                You need at least <span className="font-black text-white">5</span> across all 5 rounds before opening registration.
-              </p>
-              <p className="text-xs text-white/25 mb-6">Click "Add Questions" below to open the question manager for this tournament.</p>
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: "rgba(245,158,11,0.15)", border: "1px solid rgba(245,158,11,0.3)" }}><MdQuestionMark className="text-3xl text-amber-400" /></div>
+              <h3 className="font-black text-white text-lg mb-2">Questions Needed</h3>
+              <p className="text-sm text-white/40 mb-6">You have <span className="font-black text-amber-400">{needsQuestions.question_count ?? 0}</span> questions. You need at least <span className="font-black text-white">5</span> to open registration.</p>
               <div className="flex gap-3">
-                <button onClick={() => setNeedsQuestions(null)} className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white/50 hover:text-white transition-all" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                  Cancel
-                </button>
-                <button
-                  onClick={() => { setManageQ(needsQuestions); setNeedsQuestions(null); }}
-                  className="flex-1 py-2.5 rounded-xl font-black text-sm text-white hover:opacity-90 transition-all"
-                  style={{ background: "linear-gradient(135deg, #d97706, #b45309)", boxShadow: "0 0 20px rgba(217,119,6,0.3)" }}
-                >
-                  <MdAdd className="inline mr-1" /> Add Questions
-                </button>
+                <button onClick={() => setNeedsQuestions(null)} className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white/50" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>Cancel</button>
+                <button onClick={() => { setManageQ(needsQuestions); setNeedsQuestions(null); }} className="flex-1 py-2.5 rounded-xl font-black text-sm text-white" style={{ background: "linear-gradient(135deg, #d97706, #b45309)" }}><MdAdd className="inline mr-1" /> Add Questions</button>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* ── API error modal ── */}
       {startError && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(16px)" }} onClick={() => setStartError(null)}>
-          <div className="w-full max-w-sm rounded-2xl overflow-hidden" style={{ background: "linear-gradient(135deg, rgba(25,5,5,0.99), rgba(10,2,2,0.99))", border: "1px solid rgba(239,68,68,0.25)", boxShadow: "0 0 60px rgba(239,68,68,0.1)" }} onClick={e => e.stopPropagation()}>
+          <div className="w-full max-w-sm rounded-2xl overflow-hidden" style={{ background: "linear-gradient(135deg, rgba(25,5,5,0.99), rgba(10,2,2,0.99))", border: "1px solid rgba(239,68,68,0.25)" }} onClick={e => e.stopPropagation()}>
             <div className="p-6 text-center">
-              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)" }}>
-                <MdWarning className="text-3xl text-red-400" />
-              </div>
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)" }}><MdWarning className="text-3xl text-red-400" /></div>
               <h3 className="font-black text-white text-lg mb-3">Could Not Open Registration</h3>
               <p className="text-sm font-bold text-red-300 mb-6 px-2 leading-relaxed">{startError}</p>
-              <button onClick={() => setStartError(null)} className="w-full py-2.5 rounded-xl font-black text-sm text-white hover:opacity-90 transition-all" style={{ background: "linear-gradient(135deg, #dc2626, #b91c1c)" }}>
-                Got It
-              </button>
+              <button onClick={() => setStartError(null)} className="w-full py-2.5 rounded-xl font-black text-sm text-white" style={{ background: "linear-gradient(135deg, #dc2626, #b91c1c)" }}>Got It</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ── Delete Confirmation ── */}
       {confirmDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(16px)" }} onClick={() => setConfirmDelete(null)}>
-          <div className="w-full max-w-sm rounded-2xl overflow-hidden" style={{ background: "linear-gradient(135deg, rgba(25,5,5,0.99), rgba(10,2,2,0.99))", border: "1px solid rgba(239,68,68,0.3)", boxShadow: "0 0 60px rgba(239,68,68,0.12)" }} onClick={e => e.stopPropagation()}>
+          <div className="w-full max-w-sm rounded-2xl overflow-hidden" style={{ background: "linear-gradient(135deg, rgba(25,5,5,0.99), rgba(10,2,2,0.99))", border: "1px solid rgba(239,68,68,0.3)" }} onClick={e => e.stopPropagation()}>
             <div className="p-6 text-center">
-              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)" }}>
-                <MdDelete className="text-3xl text-red-400" />
-              </div>
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)" }}><MdDelete className="text-3xl text-red-400" /></div>
               <h3 className="font-black text-white text-lg mb-1">Delete Tournament?</h3>
               <p className="text-sm font-bold text-white/50 mb-1">"{confirmDelete.title}"</p>
-              <p className="text-xs text-white/30 mb-6">
-                This will permanently delete the tournament and all its questions, players, and leaderboard data. <span className="text-red-400 font-bold">This cannot be undone.</span>
-              </p>
+              <p className="text-xs text-white/30 mb-6">Permanently deletes all questions, players, and leaderboard data. <span className="text-red-400 font-bold">Cannot be undone.</span></p>
               <div className="flex gap-3">
-                <button onClick={() => setConfirmDelete(null)} className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white/50 hover:text-white transition-all" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                  Keep It
-                </button>
-                <button
-                  onClick={() => deleteT(confirmDelete.id)}
-                  className="flex-1 py-2.5 rounded-xl font-black text-sm text-white hover:opacity-90 transition-all"
-                  style={{ background: "linear-gradient(135deg, #dc2626, #991b1b)", boxShadow: "0 0 20px rgba(220,38,38,0.3)" }}
-                >
-                  <MdDelete className="inline mr-1" /> Yes, Delete
-                </button>
+                <button onClick={() => setConfirmDelete(null)} className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white/50" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>Keep It</button>
+                <button onClick={() => deleteT(confirmDelete.id)} className="flex-1 py-2.5 rounded-xl font-black text-sm text-white" style={{ background: "linear-gradient(135deg, #dc2626, #991b1b)" }}><MdDelete className="inline mr-1" /> Yes, Delete</button>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* ── Disable Confirm ── */}
       {confirmCancel && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(16px)" }} onClick={() => { setConfirmCancel(null); setCancelReason(""); }}>
-          <div className="w-full max-w-sm rounded-2xl overflow-hidden" style={{ background: "linear-gradient(135deg, rgba(25,8,8,0.99), rgba(10,3,3,0.99))", border: "1px solid rgba(239,68,68,0.2)", boxShadow: "0 0 60px rgba(239,68,68,0.1)" }} onClick={e => e.stopPropagation()}>
+          <div className="w-full max-w-sm rounded-2xl overflow-hidden" style={{ background: "linear-gradient(135deg, rgba(25,8,8,0.99), rgba(10,3,3,0.99))", border: "1px solid rgba(239,68,68,0.2)" }} onClick={e => e.stopPropagation()}>
             <div className="p-6 text-center">
-              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.25)" }}>
-                <MdWarning className="text-3xl text-red-400" />
-              </div>
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.25)" }}><MdWarning className="text-3xl text-red-400" /></div>
               <h3 className="font-black text-white text-lg mb-1">Disable Tournament?</h3>
-              <p className="text-sm font-bold text-white/50 mb-1">"{confirmCancel.title}"</p>
-              <p className="text-xs text-white/30 mb-4">This will cancel the tournament. Registered players will be notified. This cannot be undone.</p>
+              <p className="text-sm font-bold text-white/50 mb-3">"{confirmCancel.title}"</p>
               <div className="mb-5 text-left">
-                <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-1.5">Reason <span style={{ opacity: 0.5, fontWeight: 400, textTransform: "none" }}>(optional — sent to players)</span></label>
-                <input
-                  type="text"
-                  placeholder="e.g. Event postponed to next week"
-                  value={cancelReason}
-                  onChange={e => setCancelReason(e.target.value)}
-                  className="w-full px-3 py-2.5 rounded-xl text-sm text-white placeholder:text-white/25 focus:outline-none focus:ring-2 focus:ring-red-500/40"
-                  style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}
-                />
+                <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-1.5">Reason <span style={{ opacity: 0.5, fontWeight: 400, textTransform: "none" }}>(optional)</span></label>
+                <input type="text" placeholder="e.g. Event postponed" value={cancelReason} onChange={e => setCancelReason(e.target.value)} className="w-full px-3 py-2.5 rounded-xl text-sm text-white placeholder:text-white/25 focus:outline-none" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }} />
               </div>
               <div className="flex gap-3">
-                <button onClick={() => { setConfirmCancel(null); setCancelReason(""); }} className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white/50 hover:text-white transition-all" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>Keep It</button>
-                <button onClick={() => cancelT(confirmCancel.id)} className="flex-1 py-2.5 rounded-xl font-black text-sm text-white hover:opacity-90 transition-all" style={{ background: "linear-gradient(135deg, #dc2626, #b91c1c)", boxShadow: "0 0 20px rgba(220,38,38,0.3)" }}>Yes, Disable</button>
+                <button onClick={() => { setConfirmCancel(null); setCancelReason(""); }} className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white/50" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>Keep It</button>
+                <button onClick={() => cancelT(confirmCancel.id)} className="flex-1 py-2.5 rounded-xl font-black text-sm text-white" style={{ background: "linear-gradient(135deg, #dc2626, #b91c1c)" }}>Yes, Disable</button>
               </div>
             </div>
           </div>
