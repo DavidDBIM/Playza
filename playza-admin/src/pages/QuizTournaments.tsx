@@ -98,33 +98,41 @@ const labelCls = "block text-[10px] font-black text-white/40 uppercase tracking-
 function PrizeDistributionBuilder({
   tiers,
   onChange,
+  platformFeePct,
 }: {
   tiers: PrizeTier[];
   onChange: (t: PrizeTier[]) => void;
+  platformFeePct: number;
 }) {
+  const maxAllocatable = 100 - platformFeePct;
   const totalPct  = tiers.reduce((s, t) => s + t.percentage, 0);
-  const remaining = 90 - totalPct; // platform keeps 10%
-  const isValid   = totalPct <= 90 && tiers.length > 0;
+  const remaining = maxAllocatable - totalPct;
+  const isValid   = totalPct <= maxAllocatable && tiers.length > 0;
+  const previewPool = 1000;
+  const distributablePreview = Math.round(previewPool * (1 - platformFeePct / 100));
 
   function addTier() {
     const nextRank = tiers.length > 0 ? Math.max(...tiers.map(t => t.rank)) + 1 : 1;
     onChange([...tiers, { rank: nextRank, percentage: 0 }]);
   }
-
   function removeTier(rank: number) {
     onChange(tiers.filter(t => t.rank !== rank));
   }
-
   function updatePct(rank: number, pct: number) {
-    onChange(tiers.map(t => t.rank === rank ? { ...t, percentage: Math.max(0, Math.min(90, pct)) } : t));
+    onChange(tiers.map(t => t.rank === rank ? { ...t, percentage: Math.max(0, Math.min(maxAllocatable, pct)) } : t));
   }
 
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
-        <label className={labelCls} style={{ margin: 0 }}>Prize Distribution (platform keeps 10%)</label>
-        <span className="text-[10px] font-black" style={{ color: totalPct > 90 ? "#f87171" : totalPct === 90 ? "#4ade80" : "#fbbf24" }}>
-          {totalPct}% / 90% allocated
+        <label className={labelCls} style={{ margin: 0 }}>
+          Prize Distribution
+          <span style={{ fontWeight: 400, textTransform: "none", opacity: 0.5, marginLeft: 4 }}>
+            ({maxAllocatable}% distributable after {platformFeePct}% fee)
+          </span>
+        </label>
+        <span className="text-[10px] font-black" style={{ color: totalPct > maxAllocatable ? "#f87171" : totalPct === maxAllocatable ? "#4ade80" : "#fbbf24" }}>
+          {totalPct}% / {maxAllocatable}% allocated
         </span>
       </div>
 
@@ -133,8 +141,8 @@ function PrizeDistributionBuilder({
         <div
           className="h-full rounded-full transition-all"
           style={{
-            width: `${Math.min(totalPct / 90 * 100, 100)}%`,
-            background: totalPct > 90 ? "#ef4444" : "linear-gradient(90deg, #7c3aed, #a855f7)",
+            width: `${Math.min(totalPct / maxAllocatable * 100, 100)}%`,
+            background: totalPct > maxAllocatable ? "#ef4444" : "linear-gradient(90deg, #7c3aed, #a855f7)",
           }}
         />
       </div>
@@ -152,7 +160,7 @@ function PrizeDistributionBuilder({
               <input
                 type="number"
                 min={0}
-                max={90}
+                max={maxAllocatable}
                 value={tier.percentage}
                 onChange={e => updatePct(tier.rank, Number(e.target.value))}
                 className={inputCls + " pr-8"}
@@ -182,26 +190,26 @@ function PrizeDistributionBuilder({
           <MdAdd /> Add Rank
         </button>
         {tiers.length > 0 && remaining > 0 && (
-          <span className="text-[10px] text-white/25">{remaining}% unallocated (will go back to prize pool)</span>
+          <span className="text-[10px] text-white/25">{remaining}% unallocated</span>
         )}
-        {totalPct > 90 && (
-          <span className="text-[10px] font-black text-red-400">⚠ Exceeds 90% limit</span>
+        {totalPct > maxAllocatable && (
+          <span className="text-[10px] font-black text-red-400">⚠ Exceeds {maxAllocatable}% limit</span>
         )}
       </div>
 
       {isValid && totalPct > 0 && (
         <div className="mt-3 rounded-xl px-3 py-2 space-y-1" style={{ background: "rgba(168,85,247,0.06)", border: "1px solid rgba(168,85,247,0.15)" }}>
-          <p className="text-[9px] font-black text-white/25 uppercase tracking-widest mb-1.5">Preview (based on 1,000 ZA pool)</p>
+          <p className="text-[9px] font-black text-white/25 uppercase tracking-widest mb-1.5">
+            Preview (based on 1,000 ZA pool · {distributablePreview} ZA after {platformFeePct}% fee)
+          </p>
           {tiers.map(tier => (
             <div key={tier.rank} className="flex items-center justify-between">
               <span className="text-xs text-white/50">{RANK_MEDALS[tier.rank] ?? `#${tier.rank}`} Rank {tier.rank}</span>
-              <span className="text-xs font-black text-white">{Math.round(1000 * tier.percentage / 100).toLocaleString()} ZA</span>
+              <span className="text-xs font-black text-white">
+                {Math.round(distributablePreview * tier.percentage / 100).toLocaleString()} ZA
+              </span>
             </div>
           ))}
-          <div className="flex items-center justify-between border-t border-white/5 pt-1 mt-1">
-            <span className="text-[10px] text-white/25">Platform fee</span>
-            <span className="text-[10px] text-white/25">100 ZA (10%)</span>
-          </div>
         </div>
       )}
     </div>
@@ -213,11 +221,13 @@ function CreateTournamentModal({ onClose, onCreated }: { onClose: () => void; on
   const [form, setForm] = useState({
     title: "", description: "", entry_fee: 0,
     scheduled_at: "", max_players: "" as string | number,
+    platform_fee_percentage: 10,
   });
   const [tiers, setTiers] = useState<PrizeTier[]>([]);
   const [error, setError] = useState("");
 
   const totalPct = tiers.reduce((s, t) => s + t.percentage, 0);
+  const maxAllocatable = 100 - form.platform_fee_percentage;
 
   const { mutate, isPending } = useMutation({
     mutationFn: () => api.createTournament({
@@ -227,12 +237,13 @@ function CreateTournamentModal({ onClose, onCreated }: { onClose: () => void; on
       scheduled_at: form.scheduled_at || null,
       max_players: form.max_players !== "" ? Number(form.max_players) : null,
       prize_distribution: tiers.length > 0 ? tiers : null,
+      platform_fee_percentage: form.platform_fee_percentage,
     } as any),
     onSuccess: () => { onCreated(); onClose(); },
     onError: (err: any) => setError(err.response?.data?.message ?? "Failed to create"),
   });
 
-  const canSubmit = !!form.title && totalPct <= 90;
+  const canSubmit = !!form.title && totalPct <= maxAllocatable;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(16px)" }} onClick={onClose}>
@@ -266,13 +277,18 @@ function CreateTournamentModal({ onClose, onCreated }: { onClose: () => void; on
               <label className={labelCls}>Max Players <span style={{ fontWeight: 400, textTransform: "none", opacity: 0.5 }}>(leave blank = unlimited)</span></label>
               <input type="number" placeholder="e.g. 500" min={1} value={form.max_players} onChange={e => setForm(p => ({ ...p, max_players: e.target.value }))} className={inputCls} />
             </div>
+            <div>
+              <label className={labelCls}>Platform Fee % <span style={{ fontWeight: 400, textTransform: "none", opacity: 0.5 }}>(taken before prize distribution)</span></label>
+              <div className="relative">
+                <input type="number" min={0} max={50} placeholder="10" value={form.platform_fee_percentage} onChange={e => setForm(p => ({ ...p, platform_fee_percentage: Math.max(0, Math.min(50, Number(e.target.value))) }))} className={inputCls + " pr-8"} />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-black text-white/30">%</span>
+              </div>
+            </div>
           </div>
 
-          {/* Divider */}
           <div style={{ height: 1, background: "rgba(255,255,255,0.06)" }} />
 
-          {/* Prize distribution */}
-          <PrizeDistributionBuilder tiers={tiers} onChange={setTiers} />
+          <PrizeDistributionBuilder tiers={tiers} onChange={setTiers} platformFeePct={form.platform_fee_percentage} />
         </div>
         <div className="px-6 py-4 border-t border-white/5 shrink-0">
           <button onClick={() => mutate()} disabled={isPending || !canSubmit} className="w-full py-3 rounded-xl font-black text-sm text-white disabled:opacity-40 flex items-center justify-center gap-2 transition-all hover:opacity-90" style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)", boxShadow: "0 0 24px rgba(124,58,237,0.35)" }}>
@@ -299,11 +315,13 @@ function EditTournamentModal({ tournament, onClose, onSaved }: { tournament: Qui
     entry_fee: tournament.entry_fee,
     scheduled_at: toLocalDT(tournament.scheduled_at),
     max_players: tournament.max_players ?? ("" as string | number),
+    platform_fee_percentage: (tournament as any).platform_fee_percentage ?? 10,
   });
   const [tiers, setTiers] = useState<PrizeTier[]>(tournament.prize_distribution ?? []);
   const [error, setError] = useState("");
 
   const totalPct = tiers.reduce((s, t) => s + t.percentage, 0);
+  const maxAllocatable = 100 - form.platform_fee_percentage;
 
   const { mutate, isPending } = useMutation({
     mutationFn: () => api.updateTournament({
@@ -314,6 +332,7 @@ function EditTournamentModal({ tournament, onClose, onSaved }: { tournament: Qui
       scheduled_at: form.scheduled_at || null,
       max_players: form.max_players !== "" ? Number(form.max_players) : null,
       prize_distribution: tiers.length > 0 ? tiers : null,
+      platform_fee_percentage: form.platform_fee_percentage,
     } as any),
     onSuccess: (updated) => { onSaved(updated); onClose(); },
     onError: (err: any) => setError(err.response?.data?.message ?? "Failed to save"),
@@ -353,15 +372,22 @@ function EditTournamentModal({ tournament, onClose, onSaved }: { tournament: Qui
               <label className={labelCls}>Max Players <span style={{ fontWeight: 400, textTransform: "none", opacity: 0.5 }}>(leave blank = unlimited)</span></label>
               <input type="number" placeholder="e.g. 500" min={1} value={form.max_players} onChange={e => setForm(p => ({ ...p, max_players: e.target.value }))} className={inputCls} />
             </div>
+            <div>
+              <label className={labelCls}>Platform Fee % <span style={{ fontWeight: 400, textTransform: "none", opacity: 0.5 }}>(taken before prize distribution)</span></label>
+              <div className="relative">
+                <input type="number" min={0} max={50} placeholder="10" value={form.platform_fee_percentage} onChange={e => setForm(p => ({ ...p, platform_fee_percentage: Math.max(0, Math.min(50, Number(e.target.value))) }))} className={inputCls + " pr-8"} />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-black text-white/30">%</span>
+              </div>
+            </div>
           </div>
 
           <div style={{ height: 1, background: "rgba(255,255,255,0.06)" }} />
 
-          <PrizeDistributionBuilder tiers={tiers} onChange={setTiers} />
+          <PrizeDistributionBuilder tiers={tiers} onChange={setTiers} platformFeePct={form.platform_fee_percentage} />
         </div>
         <div className="px-6 py-4 border-t border-white/5 shrink-0 flex gap-2">
           <button onClick={onClose} className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white/60 hover:text-white transition-all" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>Cancel</button>
-          <button onClick={() => mutate()} disabled={isPending || !form.title || totalPct > 90} className="flex-1 py-2.5 rounded-xl font-black text-sm text-white disabled:opacity-40 flex items-center justify-center gap-2 transition-all hover:opacity-90" style={{ background: "linear-gradient(135deg, #2563eb, #0ea5e9)", boxShadow: "0 0 20px rgba(37,99,235,0.3)" }}>
+          <button onClick={() => mutate()} disabled={isPending || !form.title || totalPct > maxAllocatable} className="flex-1 py-2.5 rounded-xl font-black text-sm text-white disabled:opacity-40 flex items-center justify-center gap-2 transition-all hover:opacity-90" style={{ background: "linear-gradient(135deg, #2563eb, #0ea5e9)", boxShadow: "0 0 20px rgba(37,99,235,0.3)" }}>
             {isPending ? <><MdRefresh className="animate-spin" /> Saving...</> : <><MdCheckCircle /> Save Changes</>}
           </button>
         </div>
