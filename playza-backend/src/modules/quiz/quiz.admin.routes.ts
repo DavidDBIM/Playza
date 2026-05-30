@@ -388,4 +388,52 @@ router.get('/tournaments/:id/live', requireAdmin, async (req, res) => {
   }
 })
 
+// ── GET /admin/quiz/leaderboard/global  — all-time top players
+router.get('/leaderboard/global', requireAdmin, async (_req, res) => {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('quiz_leaderboard')
+      .select('username, avatar_url, correct_answers, avg_time_ms, status, tournament_id')
+      .order('correct_answers', { ascending: false })
+      .limit(100)
+
+    if (error) throw error
+
+    // Aggregate by username — sum correct answers, count wins
+    const playerMap: Record<string, { username: string; avatar_url: string | null; correct_answers: number; total_wins: number; tournaments_played: number; status: string }> = {}
+
+    for (const row of (data ?? [])) {
+      const key = row.username ?? "Unknown"
+      if (!playerMap[key]) {
+        playerMap[key] = { username: key, avatar_url: row.avatar_url, correct_answers: 0, total_wins: 0, tournaments_played: 0, status: row.status ?? "—" }
+      }
+      playerMap[key].correct_answers += row.correct_answers ?? 0
+      playerMap[key].tournaments_played += 1
+      if (row.status === "winner") playerMap[key].total_wins += 1
+    }
+
+    const sorted = Object.values(playerMap).sort((a, b) => b.correct_answers - a.correct_answers)
+    res.json({ success: true, data: sorted })
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message })
+  }
+})
+
+// ── GET /admin/quiz/tournaments/:id/leaderboard
+router.get('/tournaments/:id/leaderboard', requireAdmin, async (req, res) => {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('quiz_leaderboard')
+      .select('*')
+      .eq('tournament_id', req.params.id)
+      .order('correct_answers', { ascending: false })
+      .limit(100)
+
+    if (error) throw error
+    res.json({ success: true, data: data ?? [] })
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message })
+  }
+})
+
 export default router
