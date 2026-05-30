@@ -568,52 +568,134 @@ function QuestionManagerModal({ tournament, onClose }: { tournament: QuizTournam
 
 // ─── Live Monitor Modal ───────────────────────────────────────────────────────
 function LiveMonitorModal({ tournament, onClose }: { tournament: QuizTournament; onClose: () => void }) {
-  const { data: live, isLoading } = useQuery({ queryKey: ["admin-quiz-live", tournament.id], queryFn: () => api.getLive(tournament.id), refetchInterval: 3000 });
+  const { data: live, isLoading, isError, error } = useQuery({
+    queryKey: ["admin-quiz-live", tournament.id],
+    queryFn: () => api.getLive(tournament.id),
+    refetchInterval: 3000,
+    retry: 2,
+  });
+
+  const isActive = tournament.status === "active";
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(16px)" }} onClick={onClose}>
       <div className="w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl overflow-hidden" style={{ background: "linear-gradient(160deg, rgba(20,5,5,0.99) 0%, rgba(8,2,2,0.99) 100%)", border: "1px solid rgba(239,68,68,0.2)", boxShadow: "0 0 60px rgba(239,68,68,0.1)" }} onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" style={{ boxShadow: "0 0 8px #ef4444" }} />
-            <h3 className="font-black text-white">Live Monitor — {tournament.title}</h3>
+            <div className="w-2.5 h-2.5 rounded-full bg-red-500" style={{ boxShadow: "0 0 8px #ef4444", animation: isActive ? "pulse 1.5s infinite" : "none" }} />
+            <div>
+              <h3 className="font-black text-white text-base">{tournament.title}</h3>
+              <p className="text-white/30 text-xs font-bold uppercase tracking-wider mt-0.5">
+                {isActive ? "🔴 Live Now" : tournament.status === "lobby" ? "🟡 In Lobby" : tournament.status === "registration" ? "🟢 Registration Open" : tournament.status}
+              </p>
+            </div>
           </div>
-          <button onClick={onClose} className="w-8 h-8 rounded-xl flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-all"><MdClose /></button>
+          <button onClick={onClose} className="w-8 h-8 rounded-xl flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-all">
+            <MdClose />
+          </button>
         </div>
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto p-5 space-y-4">
           {isLoading ? (
-            <div className="py-10 flex items-center justify-center text-white/40"><MdRefresh className="animate-spin text-2xl mr-2" /> Loading...</div>
+            <div className="py-16 flex flex-col items-center justify-center gap-3 text-white/40">
+              <MdRefresh className="animate-spin text-3xl" />
+              <p className="text-sm font-bold">Loading tournament data...</p>
+            </div>
+          ) : isError ? (
+            <div className="py-16 flex flex-col items-center justify-center gap-3 text-center">
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)" }}>
+                <MdWarning className="text-3xl text-red-400" />
+              </div>
+              <p className="font-black text-white text-base">Failed to load data</p>
+              <p className="text-sm text-white/40 max-w-xs">{(error as any)?.response?.data?.message ?? (error as any)?.message ?? "Could not reach the server"}</p>
+            </div>
           ) : (
             <>
+              {/* Stats */}
               <div className="grid grid-cols-3 gap-3">
                 {[
-                  { label: "Round",      value: live?.tournament?.current_round ?? 0, color: "#a855f7" },
-                  { label: "Alive",      value: live?.stats?.alive ?? 0,              color: "#22c55e" },
-                  { label: "Eliminated", value: live?.stats?.eliminated ?? 0,         color: "#ef4444" },
+                  { label: "Round",       value: isActive ? (live?.tournament?.current_round ?? 0) : "—",      color: "#a855f7" },
+                  { label: "Registered",  value: live?.stats ? (live.stats.alive + live.stats.eliminated) : (tournament as any).player_count ?? 0, color: "#3b82f6" },
+                  { label: isActive ? "Eliminated" : "Players", value: isActive ? (live?.stats?.eliminated ?? 0) : (tournament as any).max_players ? `${(tournament as any).player_count}/${(tournament as any).max_players}` : (tournament as any).player_count ?? 0, color: isActive ? "#ef4444" : "#22c55e" },
                 ].map(s => (
                   <div key={s.label} className="rounded-2xl p-4 text-center" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                    <p className="text-3xl font-black" style={{ color: s.color }}>{s.value}</p>
+                    <p className="text-2xl font-black" style={{ color: s.color }}>{s.value}</p>
                     <p className="text-[10px] font-black uppercase tracking-widest text-white/30 mt-1">{s.label}</p>
                   </div>
                 ))}
               </div>
-              <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.06)" }}>
-                <div className="px-4 py-3 border-b border-white/5"><p className="text-xs font-black text-white/30 uppercase tracking-wider">Live Leaderboard</p></div>
-                <div className="divide-y divide-white/5">
-                  {live?.leaderboard?.slice(0, 20).map((entry: any, i: number) => (
-                    <div key={i} className="flex items-center gap-3 px-4 py-2.5">
-                      <span className="text-sm font-black text-white/30 w-5 text-center">{i === 0 ? "👑" : i + 1}</span>
-                      <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black text-white" style={{ background: "rgba(124,58,237,0.3)" }}>{entry.username?.[0]?.toUpperCase()}</div>
-                      <div className="flex-1">
-                        <p className="text-sm font-bold text-white">{entry.username}</p>
-                        <p className="text-[10px] text-white/30">{entry.correct_answers} correct</p>
-                      </div>
-                      <span className="text-[10px] font-black px-2 py-0.5 rounded-full" style={entry.status === "winner" ? { background: "rgba(234,179,8,0.15)", color: "#fbbf24" } : entry.status === "alive" ? { background: "rgba(34,197,94,0.15)", color: "#4ade80" } : { background: "rgba(239,68,68,0.15)", color: "#f87171" }}>
-                        {entry.status}
-                      </span>
-                    </div>
-                  ))}
+
+              {/* Alive count if active */}
+              {isActive && (
+                <div className="rounded-xl px-4 py-3 flex items-center justify-between" style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.15)" }}>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                    <span className="text-sm font-black text-green-400">Still Alive</span>
+                  </div>
+                  <span className="text-2xl font-black text-green-400">{live?.stats?.alive ?? 0}</span>
                 </div>
+              )}
+
+              {/* Leaderboard / Players list */}
+              <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.06)" }}>
+                <div className="px-4 py-3 border-b border-white/5 flex items-center justify-between">
+                  <p className="text-xs font-black text-white/30 uppercase tracking-wider">
+                    {isActive ? "Live Leaderboard" : "Registered Players"}
+                  </p>
+                  <span className="text-xs font-black text-white/20">
+                    {live?.leaderboard?.length ?? 0} players
+                  </span>
+                </div>
+
+                {!live?.leaderboard || live.leaderboard.length === 0 ? (
+                  <div className="py-12 flex flex-col items-center gap-2 text-center px-4">
+                    <p className="text-2xl">👥</p>
+                    <p className="text-sm font-black text-white/30">
+                      {isActive ? "No players in leaderboard yet" : "No players registered yet"}
+                    </p>
+                    <p className="text-xs text-white/20">
+                      {isActive ? "Players appear here once they answer their first question" : "Share the tournament to get players to register"}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-white/5 max-h-72 overflow-y-auto">
+                    {live.leaderboard.slice(0, 50).map((entry: any, i: number) => (
+                      <div key={i} className="flex items-center gap-3 px-4 py-2.5">
+                        <span className="text-sm font-black text-white/30 w-5 text-center shrink-0">
+                          {i === 0 ? "👑" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1}
+                        </span>
+                        <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black text-white shrink-0" style={{ background: "rgba(124,58,237,0.3)" }}>
+                          {entry.username?.[0]?.toUpperCase() ?? "?"}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-white truncate">{entry.username ?? "Unknown"}</p>
+                          {isActive && <p className="text-[10px] text-white/30">{entry.correct_answers ?? 0} correct · {entry.avg_time_ms ? `${Math.round(entry.avg_time_ms / 1000)}s avg` : "—"}</p>}
+                        </div>
+                        <span className="text-[10px] font-black px-2 py-0.5 rounded-full shrink-0"
+                          style={
+                            entry.status === "winner"    ? { background: "rgba(234,179,8,0.15)",    color: "#fbbf24" } :
+                            entry.status === "alive"     ? { background: "rgba(34,197,94,0.15)",    color: "#4ade80" } :
+                            entry.status === "eliminated"? { background: "rgba(239,68,68,0.15)",    color: "#f87171" } :
+                                                           { background: "rgba(255,255,255,0.06)",   color: "rgba(255,255,255,0.3)" }
+                          }>
+                          {entry.status ?? "registered"}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
+
+              {/* Entry fee collected */}
+              {tournament.entry_fee > 0 && (
+                <div className="rounded-xl px-4 py-3 flex items-center justify-between" style={{ background: "rgba(251,191,36,0.06)", border: "1px solid rgba(251,191,36,0.15)" }}>
+                  <span className="text-xs font-black text-amber-400/70 uppercase tracking-wider">Prize Pool Collected</span>
+                  <span className="text-base font-black text-amber-400">{tournament.prize_pool.toLocaleString()} ZA</span>
+                </div>
+              )}
             </>
           )}
         </div>
@@ -709,9 +791,9 @@ function TournamentCard({ t, onManageQ, onEdit, onMonitor, onStart, onLaunch, on
             <MdEdit className="text-sm" /> Edit
           </button>
         )}
-        {isLive && (
+        {(isLive || isReg || isLobby) && (
           <button onClick={onMonitor} className="flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold transition-all" style={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171" }}>
-            <Eye className="w-3 h-3" /> Monitor Live
+            <Eye className="w-3 h-3" /> {isLive ? "Monitor Live" : "View Players"}
           </button>
         )}
         {isDraft && (
