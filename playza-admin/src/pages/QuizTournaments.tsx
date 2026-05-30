@@ -833,7 +833,6 @@ function TournamentCard({ t, onManageQ, onEdit, onMonitor, onStart, onLaunch, on
 
 // ─── Revenue Tab ─────────────────────────────────────────────────────────────
 function RevenueTab({ tournaments }: { tournaments: QuizTournament[] }) {
-  const completed = tournaments.filter(t => t.status === "completed" || t.status === "active" || t.status === "cancelled");
   const totalRevenue = tournaments.reduce((s, t) => {
     const feePct = (t as any).platform_fee_percentage ?? 10;
     return s + Math.round(t.prize_pool * feePct / 100);
@@ -914,8 +913,6 @@ function RevenueTab({ tournaments }: { tournaments: QuizTournament[] }) {
 function LeaderboardTab({ tournaments }: { tournaments: QuizTournament[] }) {
   const [lbTab, setLbTab] = useState<"global" | "per-tournament">("global");
   const [selectedT, setSelectedT] = useState<string>(tournaments[0]?.id ?? "");
-
-  const completedTs = tournaments.filter(t => t.status === "completed" || t.status === "active");
 
   const { data: globalLb = [], isLoading: globalLoading } = useQuery({
     queryKey: ["admin-global-leaderboard"],
