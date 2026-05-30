@@ -28,7 +28,13 @@ router.get('/tournaments', requireAdmin, async (_req, res) => {
         .from('quiz_questions')
         .select('id', { count: 'exact', head: true })
         .eq('tournament_id', t.id)
-      return { ...t, player_count: count ?? 0, question_count: qCount ?? 0 }
+      return {
+        ...t,
+        player_count: count ?? 0,
+        question_count: qCount ?? 0,
+        max_players: t.max_players ?? null,
+        prize_distribution: t.prize_distribution ?? null,
+      }
     }))
 
     res.json({ success: true, data: enriched })
@@ -40,7 +46,7 @@ router.get('/tournaments', requireAdmin, async (_req, res) => {
 // ── POST /admin/quiz/tournaments  — create
 router.post('/tournaments', requireAdmin, async (req: AuthRequest, res) => {
   try {
-    const { title, description, entry_fee, scheduled_at } = req.body
+    const { title, description, entry_fee, scheduled_at, max_players, prize_distribution } = req.body
     if (!title) { res.status(400).json({ success: false, message: 'title is required' }); return }
 
     const { data, error } = await supabaseAdmin
@@ -55,6 +61,8 @@ router.post('/tournaments', requireAdmin, async (req: AuthRequest, res) => {
         created_by: req.user!.id,
         current_round: 0,
         current_question: 0,
+        max_players: max_players ?? null,
+        prize_distribution: prize_distribution ?? null,
       })
       .select()
       .single()
@@ -69,7 +77,7 @@ router.post('/tournaments', requireAdmin, async (req: AuthRequest, res) => {
 // ── PATCH /admin/quiz/tournaments/:id  — update status / settings
 router.patch('/tournaments/:id', requireAdmin, async (req, res) => {
   try {
-    const allowed = ['title', 'description', 'entry_fee', 'scheduled_at', 'status']
+    const allowed = ['title', 'description', 'entry_fee', 'scheduled_at', 'status', 'max_players', 'prize_distribution', 'cancel_reason']
     const updates: Record<string, any> = {}
     for (const k of allowed) {
       if (req.body[k] !== undefined) updates[k] = req.body[k]
@@ -89,7 +97,7 @@ router.patch('/tournaments/:id', requireAdmin, async (req, res) => {
   }
 })
 
-// ── POST /admin/quiz/tournaments/:id/start  — launch the game
+// ── POST /admin/quiz/tournaments/:id/start  — open registration
 router.post('/tournaments/:id/start', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params
@@ -106,7 +114,6 @@ router.post('/tournaments/:id/start', requireAdmin, async (req, res) => {
       return
     }
 
-    // Validate questions exist
     const { count: qCount } = await supabaseAdmin
       .from('quiz_questions')
       .select('id', { count: 'exact', head: true })
@@ -117,7 +124,6 @@ router.post('/tournaments/:id/start', requireAdmin, async (req, res) => {
       return
     }
 
-    // Move to lobby — players can now register their spot
     const { error: updateErr } = await supabaseAdmin
       .from('quiz_tournaments')
       .update({ status: 'lobby' })
@@ -160,21 +166,17 @@ router.post('/tournaments/:id/launch', requireAdmin, async (req, res) => {
       return
     }
 
-    // Move all registered players to 'alive' status so they can play
     await supabaseAdmin
       .from('quiz_players')
       .update({ status: 'alive' })
       .eq('tournament_id', id)
       .eq('status', 'registered')
 
-    // Move tournament to lobby briefly, then gateway sets it active
     await supabaseAdmin
       .from('quiz_tournaments')
       .update({ status: 'lobby' })
       .eq('id', id)
 
-    // This calls the gateway which broadcasts quiz:game_start to all connected players
-    // then immediately fires the first question
     await adminStartTournament(id, _io)
 
     res.json({ success: true, message: 'Game launched! First question broadcasting to all players now.' })
@@ -242,7 +244,7 @@ router.post('/tournaments/:id/questions', requireAdmin, async (req, res) => {
   }
 })
 
-// ── POST /admin/quiz/tournaments/:id/questions/bulk  — import JSON question bank
+// ── POST /admin/quiz/tournaments/:id/questions/bulk
 router.post('/tournaments/:id/questions/bulk', requireAdmin, async (req, res) => {
   try {
     const { questions } = req.body as {
@@ -262,13 +264,11 @@ router.post('/tournaments/:id/questions/bulk', requireAdmin, async (req, res) =>
       return
     }
 
-    // Delete existing questions for this tournament first
     await supabaseAdmin
       .from('quiz_questions')
       .delete()
       .eq('tournament_id', req.params.id)
 
-    // Count per round for ordering
     const roundCounts: Record<number, number> = {}
 
     const rows = questions.map((q) => {
@@ -304,7 +304,7 @@ router.post('/tournaments/:id/questions/bulk', requireAdmin, async (req, res) =>
   }
 })
 
-// ── DELETE /admin/quiz/tournaments/:id  — permanently remove a cancelled/completed tournament
+// ── DELETE /admin/quiz/tournaments/:id
 router.delete('/tournaments/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params
@@ -325,7 +325,6 @@ router.delete('/tournaments/:id', requireAdmin, async (req, res) => {
       return
     }
 
-    // Cascade delete all related data
     await supabaseAdmin.from('quiz_leaderboard').delete().eq('tournament_id', id)
     await supabaseAdmin.from('quiz_players').delete().eq('tournament_id', id)
     await supabaseAdmin.from('quiz_questions').delete().eq('tournament_id', id)
@@ -347,7 +346,7 @@ router.delete('/questions/:id', requireAdmin, async (req, res) => {
   }
 })
 
-// ── GET /admin/quiz/tournaments/:id/live  — live game stats for admin monitor
+// ── GET /admin/quiz/tournaments/:id/live
 router.get('/tournaments/:id/live', requireAdmin, async (req, res) => {
   try {
     const { data: tournament } = await supabaseAdmin
