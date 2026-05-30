@@ -160,7 +160,7 @@ function TournamentDetailModal({
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8, marginBottom: 20 }}>
             {[
               { icon: "🏆", val: qt.prize_pool > 0 ? `${qt.prize_pool.toLocaleString()} ZA` : "TBD", lbl: "Prize Pool" },
-              { icon: "👥", val: qt.player_count.toLocaleString(), lbl: "Registered" },
+              { icon: "👥", val: qt.max_players ? `${qt.player_count}/${qt.max_players}` : qt.player_count.toLocaleString(), lbl: "Players" },
               { icon: "💎", val: qt.entry_fee > 0 ? `${qt.entry_fee} ZA` : "FREE", lbl: "Entry Fee" },
             ].map((s, i) => (
               <div key={i} style={{ background: "var(--muted)", borderRadius: 12, padding: "12px 8px", textAlign: "center" }}>
@@ -170,6 +170,57 @@ function TournamentDetailModal({
               </div>
             ))}
           </div>
+
+          {/* Prize distribution */}
+          {qt.prize_distribution && qt.prize_distribution.length > 0 && qt.prize_pool > 0 && (
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ fontSize: 13 }}>🎯</span>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: "var(--muted-foreground)", textTransform: "uppercase", letterSpacing: "0.1em" }}>Prize Breakdown</span>
+                </div>
+                <span style={{ fontSize: 9, color: "var(--muted-foreground)", fontWeight: 600 }}>10% platform fee applied</span>
+              </div>
+              <div style={{ background: "var(--muted)", borderRadius: 12, overflow: "hidden" }}>
+                {qt.prize_distribution
+                  .slice()
+                  .sort((a, b) => a.rank - b.rank)
+                  .map((tier, i) => {
+                    const medal = tier.rank === 1 ? "🥇" : tier.rank === 2 ? "🥈" : tier.rank === 3 ? "🥉" : `#${tier.rank}`;
+                    const amount = Math.round(qt.prize_pool * tier.percentage / 100);
+                    const isTop = tier.rank === 1;
+                    return (
+                      <div
+                        key={tier.rank}
+                        style={{
+                          display: "flex", alignItems: "center", gap: 12,
+                          padding: "11px 14px",
+                          borderBottom: i < qt.prize_distribution!.length - 1 ? "1px solid var(--border)" : "none",
+                          background: isTop ? `${sc.color}08` : "transparent",
+                        }}
+                      >
+                        <span style={{ fontSize: 16, width: 24, textAlign: "center", flexShrink: 0 }}>{medal}</span>
+                        <div style={{ flex: 1 }}>
+                          <p style={{ fontSize: 12, fontWeight: 700, color: "var(--foreground)", margin: 0 }}>Rank {tier.rank}</p>
+                          <div style={{ height: 3, borderRadius: 2, background: "var(--border)", marginTop: 4, overflow: "hidden" }}>
+                            <div style={{ height: "100%", width: `${tier.percentage}%`, background: isTop ? sc.color : `${sc.color}80`, borderRadius: 2 }} />
+                          </div>
+                        </div>
+                        <div style={{ textAlign: "right", flexShrink: 0 }}>
+                          <p style={{ fontSize: 13, fontWeight: 800, color: isTop ? sc.color : "var(--foreground)", margin: 0 }}>{amount.toLocaleString()} ZA</p>
+                          <p style={{ fontSize: 9, color: "var(--muted-foreground)", margin: "2px 0 0" }}>{tier.percentage}% of pool</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                {/* Platform fee row */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 14px", borderTop: "1px solid var(--border)", background: "rgba(0,0,0,0.1)" }}>
+                  <span style={{ fontSize: 10, color: "var(--muted-foreground)" }}>🏛️ Platform fee</span>
+                  <span style={{ fontSize: 10, color: "var(--muted-foreground)" }}>{Math.round(qt.prize_pool * 0.1).toLocaleString()} ZA (10%)</span>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Schedule */}
           {scheduledDate && (
@@ -426,7 +477,7 @@ function TCard({ qt, featured, onRegistered }: {
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 6 }}>
               {[
                 { val: qt.prize_pool > 0 ? qt.prize_pool.toLocaleString() : "TBD", lbl: "ZA Prize" },
-                { val: qt.player_count.toString(), lbl: "Players" },
+                { val: qt.max_players ? `${qt.player_count}/${qt.max_players}` : qt.player_count.toString(), lbl: "Players" },
                 { val: qt.entry_fee > 0 ? `${qt.entry_fee} ZA` : "Free", lbl: "Entry" },
               ].map((s, i) => (
                 <div key={i} style={{ background: "var(--muted)", borderRadius: 8, padding: "6px 8px", textAlign: "center" }}>
