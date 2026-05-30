@@ -46,7 +46,7 @@ router.get('/tournaments', requireAdmin, async (_req, res) => {
 // ── POST /admin/quiz/tournaments  — create
 router.post('/tournaments', requireAdmin, async (req: AuthRequest, res) => {
   try {
-    const { title, description, entry_fee, scheduled_at, max_players, prize_distribution } = req.body
+    const { title, description, entry_fee, scheduled_at, max_players, prize_distribution, platform_fee_percentage } = req.body
     if (!title) { res.status(400).json({ success: false, message: 'title is required' }); return }
 
     const { data, error } = await supabaseAdmin
@@ -63,6 +63,7 @@ router.post('/tournaments', requireAdmin, async (req: AuthRequest, res) => {
         current_question: 0,
         max_players: max_players ?? null,
         prize_distribution: prize_distribution ?? null,
+        platform_fee_percentage: platform_fee_percentage ?? 10,
       })
       .select()
       .single()
@@ -77,7 +78,7 @@ router.post('/tournaments', requireAdmin, async (req: AuthRequest, res) => {
 // ── PATCH /admin/quiz/tournaments/:id  — update status / settings
 router.patch('/tournaments/:id', requireAdmin, async (req, res) => {
   try {
-    const allowed = ['title', 'description', 'entry_fee', 'scheduled_at', 'status', 'max_players', 'prize_distribution', 'cancel_reason']
+    const allowed = ['title', 'description', 'entry_fee', 'scheduled_at', 'status', 'max_players', 'prize_distribution', 'platform_fee_percentage', 'cancel_reason']
     const updates: Record<string, any> = {}
     for (const k of allowed) {
       if (req.body[k] !== undefined) updates[k] = req.body[k]
