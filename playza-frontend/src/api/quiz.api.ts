@@ -13,6 +13,7 @@ export interface QuizTournament {
   prize_pool: number
   max_players: number | null
   prize_distribution: PrizeTier[] | null
+  platform_fee_percentage: number | null
   status: 'draft' | 'registration' | 'lobby' | 'active' | 'completed' | 'cancelled'
   scheduled_at: string | null
   started_at: string | null
