@@ -66,9 +66,20 @@ async function sendRegistrationEmail(
   }
 }
 
-// ── GET /quiz/tournaments  — public listing
-router.get('/tournaments', async (_req, res) => {
+// ── GET /quiz/tournaments  — public listing (auth optional)
+router.get('/tournaments', async (req, res) => {
   try {
+    // Optionally extract user from auth header without blocking unauthenticated requests
+    let userId: string | null = null
+    const authHeader = req.headers.authorization
+    if (authHeader?.startsWith('Bearer ')) {
+      try {
+        const token = authHeader.split(' ')[1]
+        const { data: { user } } = await supabaseAdmin.auth.getUser(token)
+        userId = user?.id ?? null
+      } catch (_) {}
+    }
+
     const { data, error } = await supabaseAdmin
       .from('quiz_tournaments')
       .select('*')
@@ -82,10 +93,22 @@ router.get('/tournaments', async (_req, res) => {
         .from('quiz_players')
         .select('id', { count: 'exact', head: true })
         .eq('tournament_id', t.id)
+
+      let userRegistered = false
+      if (userId) {
+        const { data: existing } = await supabaseAdmin
+          .from('quiz_players')
+          .select('id')
+          .eq('tournament_id', t.id)
+          .eq('user_id', userId)
+          .single()
+        userRegistered = !!existing
+      }
+
       return {
         ...t,
         player_count: count ?? 0,
-        // ensure these fields are always present even if column not yet added
+        user_registered: userRegistered,
         max_players: t.max_players ?? null,
         prize_distribution: t.prize_distribution ?? null,
         platform_fee_percentage: t.platform_fee_percentage ?? 10,
