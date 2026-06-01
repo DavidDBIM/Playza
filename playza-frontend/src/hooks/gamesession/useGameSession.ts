@@ -7,6 +7,8 @@ export const useGames = () => {
   const queryClient = useQueryClient();
 
   useEffect(() => {
+    // Games list rarely changes — only subscribe once and keep the channel alive.
+    // Using a named channel prevents duplicate subscriptions on re-renders.
     const channel = supabase
       .channel('games_all')
       .on(
@@ -26,6 +28,8 @@ export const useGames = () => {
   return useQuery({
     queryKey: ["all-games"],
     queryFn: () => GameSessionApi.getGames(),
+    staleTime: 5 * 60 * 1000,  // cache for 5 min — games don't change often
+    gcTime: 10 * 60 * 1000,    // keep in memory for 10 min
   });
 };
 
@@ -55,6 +59,7 @@ export const useActiveSession = (slug: string) => {
     queryKey: ["active-session", slug],
     queryFn: () => GameSessionApi.getActiveSession(slug),
     enabled: !!slug,
+    staleTime: 30 * 1000, // 30s — active session changes are handled by realtime
   });
 };
 
@@ -64,11 +69,9 @@ export const useSessionLeaderboard = (sessionId: string) => {
   useEffect(() => {
     if (!sessionId) return;
 
-    // Listen for real-time updates
     const channel = supabase
       .channel(`session_${sessionId}`)
       .on("broadcast", { event: "LEADERBOARD_UPDATE" }, () => {
-        // Refetch the leaderboard and user stats when a new score is submitted
         queryClient.invalidateQueries({ queryKey: ["leaderboard", sessionId] });
         queryClient.invalidateQueries({ queryKey: ["my-stats", sessionId] });
       })
@@ -83,6 +86,7 @@ export const useSessionLeaderboard = (sessionId: string) => {
     queryKey: ["leaderboard", sessionId],
     queryFn: () => GameSessionApi.getSessionLeaderboard(sessionId),
     enabled: !!sessionId,
+    staleTime: 30 * 1000, // realtime handles updates, no need for short stale
   });
 };
 
@@ -91,6 +95,7 @@ export const useMySessionStats = (sessionId: string) => {
     queryKey: ["my-stats", sessionId],
     queryFn: () => GameSessionApi.getMySessionStats(sessionId),
     enabled: !!sessionId,
+    staleTime: 30 * 1000,
   });
 };
 
@@ -120,10 +125,10 @@ export const useGameSessions = (gameId: string) => {
     queryKey: ["game-sessions", gameId],
     queryFn: () => GameSessionApi.getGameSessions(gameId),
     enabled: !!gameId,
+    staleTime: 60 * 1000, // 1 min — realtime handles live updates
+    gcTime: 5 * 60 * 1000,
   });
 };
-
-
 
 export const useJoinSession = () => {
   const queryClient = useQueryClient();
