@@ -3,7 +3,6 @@ import {
   MdEdit,
   MdShare,
   MdPerson,
-  MdEmojiEvents,
   MdSettings,
   MdSecurity,
   MdCardGiftcard,
@@ -33,7 +32,6 @@ const Profile = () => {
 
   const menuItems = [
     { label: "Overview", icon: <MdPerson />, to: "overview" },
-    { label: "Achievements", icon: <MdEmojiEvents />, to: "achievements" },
     { label: "Settings", icon: <MdSettings />, to: "settings" },
     { label: "Security", icon: <MdSecurity />, to: "security" },
   ];
