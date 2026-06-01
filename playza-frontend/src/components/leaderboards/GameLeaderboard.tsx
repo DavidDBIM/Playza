@@ -305,13 +305,16 @@ function GameLeaderboard() {
 
   const activeGameId = useMemo(() => {
     if (filteredGames.length === 0) return null;
+    // Only use selectedGameId if explicitly chosen by user
+    // Don't auto-select first game — avoids triggering sessions + leaderboard
+    // API calls on every leaderboard page visit
     if (
       selectedGameId &&
       filteredGames.some((g: Game) => g.id === selectedGameId)
     ) {
       return selectedGameId;
     }
-    return filteredGames[0].id;
+    return null; // user must click a game to load its data
   }, [filteredGames, selectedGameId]);
 
   return (
