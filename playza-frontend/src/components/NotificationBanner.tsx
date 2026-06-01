@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { IoClose } from 'react-icons/io5';
-
 import { useActiveBanner } from '../hooks/notifications/useNotifications';
 import { useNavigate } from 'react-router';
 import { useAuth } from '../context/auth';
 
-
-const NotificationBanner: React.FC = () => {
-  const { user } = useAuth();
+// Inner component — only mounts when user is confirmed, preventing
+// useActiveBanner from firing for unauthenticated users
+const NotificationBannerInner: React.FC = () => {
   const { data: banner, isSuccess } = useActiveBanner();
   const navigate = useNavigate();
   const [isDismissed, setIsDismissed] = useState(false);
@@ -47,7 +46,7 @@ const NotificationBanner: React.FC = () => {
     handleClose();
   };
 
-  if (!user || user.is_active === false || !isSuccess || !banner) return null;
+  if (!isSuccess || !banner) return null;
 
   const isPreviouslyDismissed = lastDismissedId === banner.id;
   const showBanner = !isDismissed && !isPreviouslyDismissed;
@@ -99,6 +98,13 @@ const NotificationBanner: React.FC = () => {
       )}
     </AnimatePresence>
   );
+};
+
+// Auth-gated wrapper — prevents useActiveBanner firing before user loads
+const NotificationBanner: React.FC = () => {
+  const { user } = useAuth();
+  if (!user || user.is_active === false) return null;
+  return <NotificationBannerInner />;
 };
 
 export default NotificationBanner;
