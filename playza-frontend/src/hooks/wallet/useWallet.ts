@@ -7,7 +7,7 @@ export const useWallet = () => {
   return useQuery({
     queryKey: ["wallet", "balance"],
     queryFn: walletApi.getWallet,
-    staleTime: 1000 * 30, // 30 seconds
+    staleTime: 1000 * 60 * 2, // 2 minutes
   });
 };
 
