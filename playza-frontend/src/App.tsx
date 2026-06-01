@@ -51,7 +51,7 @@ const FAQ = lazy(() => import("./pages/FAQ"));
 // Profile sub-pages
 const Overview = lazy(() => import("./components/profile/Overview"));
 const History = lazy(() => import("./components/profile/History"));
-const Achievements = lazy(() => import("./components/profile/Achievements"));
+
 const Settings = lazy(() => import("./components/profile/Settings"));
 const Security = lazy(() => import("./components/profile/Security"));
 
@@ -241,7 +241,6 @@ const AppContent = () => {
                 <Route index element={<Overview />} />
                 <Route path="overview" element={<Overview />} />
                 <Route path="history" element={<History />} />
-                <Route path="achievements" element={<Achievements />} />
                 <Route path="settings" element={<Settings />} />
                 <Route path="security" element={<Security />} />
               </Route>
