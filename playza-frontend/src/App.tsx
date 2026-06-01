@@ -124,19 +124,29 @@ const AppContent = () => {
     startTransition(() => { navigate("?modal=withdraw"); });
   };
 
-  // Prefetch the most-visited pages in the background after mount
-  // So that navigation to those pages is zero-latency on first visit
+  // Prefetch pages in priority order — lightest/most-visited first
+  // H2HZone loads last because it pulls vendor-chess (~200KB extra)
   useEffect(() => {
-    const timer = setTimeout(() => {
-      // Prefetch after a short idle
-      import("./pages/Home");
+    // Tier 1: Most visited, no heavy deps — prefetch almost immediately
+    const t1 = setTimeout(() => {
       import("./pages/Games");
-      import("./pages/H2HZone");
       import("./pages/Wallet");
       import("./pages/Tournaments");
+    }, 500);
+
+    // Tier 2: Moderate — prefetch after page is interactive
+    const t2 = setTimeout(() => {
       import("./pages/LeaderBoard");
-    }, 1500);
-    return () => clearTimeout(timer);
+      import("./pages/Profile");
+      import("./pages/MyGames");
+    }, 2000);
+
+    // Tier 3: Heavy (chess vendor) — prefetch last, only if idle
+    const t3 = setTimeout(() => {
+      import("./pages/H2HZone");
+    }, 4000);
+
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, []);
 
   return (
