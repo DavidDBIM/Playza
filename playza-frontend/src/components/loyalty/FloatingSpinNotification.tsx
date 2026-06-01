@@ -3,18 +3,16 @@ import { useAuth } from "@/context/auth";
 import { useNavigate, useLocation } from "react-router";
 import { motion, AnimatePresence } from "framer-motion";
 
-export const FloatingSpinNotification = () => {
-  const { user } = useAuth();
+// Inner component — only mounts when user is confirmed logged in
+const SpinNotificationInner = () => {
   const { data: loyaltyData } = useLoyaltyMe();
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Only show on home page
   if (location.pathname !== "/") return null;
-  
-  // Only show if logged in and has spins left
+
   const spinsLeft = loyaltyData?.spins_left_today ?? 0;
-  if (!user || spinsLeft <= 0) return null;
+  if (spinsLeft <= 0) return null;
 
   return (
     <AnimatePresence>
@@ -56,4 +54,11 @@ export const FloatingSpinNotification = () => {
       </motion.div>
     </AnimatePresence>
   );
+};
+
+// Auth-gated wrapper — prevents useLoyaltyMe from firing before user is loaded
+export const FloatingSpinNotification = () => {
+  const { user } = useAuth();
+  if (!user) return null;
+  return <SpinNotificationInner />;
 };
