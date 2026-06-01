@@ -12,8 +12,8 @@ export const useLoyaltyLeaderboard = (
   return useQuery({
     queryKey: ["leaderboard", "loyalty", period, limit],
     queryFn: () => getLoyaltyLeaderboardApi(period, limit),
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchInterval: 60 * 1000, // Poll every minute for sync
+    staleTime: 5 * 60 * 1000,      // fresh for 5 minutes
+    refetchInterval: 5 * 60 * 1000, // poll every 5 min (was every 1 min)
   });
 };
 
@@ -24,7 +24,7 @@ export const useReferralLeaderboard = (
   return useQuery({
     queryKey: ["leaderboard", "referral", period, limit],
     queryFn: () => getReferralLeaderboardApi(period, limit),
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchInterval: 60 * 1000, // Poll every minute for sync
+    staleTime: 5 * 60 * 1000,      // fresh for 5 minutes
+    refetchInterval: 5 * 60 * 1000, // poll every 5 min (was every 1 min)
   });
 };
