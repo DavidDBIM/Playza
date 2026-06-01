@@ -19,6 +19,7 @@ const axiosInstance = axios.create({
   baseURL: `${import.meta.env.VITE_BACKEND_URL}/api`,
   headers: { "Content-Type": "application/json" },
   withCredentials: true,
+  timeout: 15000, // 15s timeout — prevents requests hanging forever
 });
 
 // ── Request interceptor: attach access token
@@ -143,4 +144,3 @@ axiosInstance.interceptors.response.use(
 );
 
 export default axiosInstance;
-
