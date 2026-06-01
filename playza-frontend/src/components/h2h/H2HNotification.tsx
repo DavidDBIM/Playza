@@ -38,6 +38,8 @@ const H2HNotification = () => {
 
 
   useEffect(() => {
+    // Don't subscribe or fetch if user is not logged in — saves API call + Supabase connection
+    if (!user) return;
     let mounted = true;
 
     const loadRooms = async () => {
@@ -240,4 +242,3 @@ const H2HNotification = () => {
 };
 
 export default H2HNotification;
-
