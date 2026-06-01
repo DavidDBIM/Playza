@@ -165,6 +165,18 @@ const NavFooter = () => {
       <div key={item.label} className="flex justify-center relative">
         <NavLink
           to={item.path}
+          onMouseEnter={() => {
+            // Prefetch page chunk on hover — by the time user clicks, it's loaded
+            const map: Record<string, () => Promise<unknown>> = {
+              "/":             () => import("../pages/Home"),
+              "/games":        () => import("../pages/Games"),
+              "/h2h":          () => import("../pages/H2HZone"),
+              "/wallet":       () => import("../pages/Wallet"),
+              "/leaderboard":  () => import("../pages/LeaderBoard"),
+              "/tournaments":  () => import("../pages/Tournaments"),
+            };
+            map[item.path]?.();
+          }}
           className={({ isActive: active }) =>
             `flex flex-col items-center justify-center relative py-2 transition-colors duration-100 ${
               active
