@@ -42,8 +42,8 @@ export const useWaitingRooms = (gameType: GameType) => {
       if (gameType === "soccer") return soccerApi.getWaitingRooms();
       return [];
     },
-    staleTime: 1000 * 5, // 5 seconds
-    refetchInterval: 1000 * 5,
+    staleTime: 1000 * 15, // 15 seconds — realtime handles live updates
+    refetchInterval: 1000 * 15,
   });
 };
 
