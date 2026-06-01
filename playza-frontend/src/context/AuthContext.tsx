@@ -27,7 +27,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
-  // Sync user state with query data
   useEffect(() => {
     if (profile) {
       setUser({
@@ -47,29 +46,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         is_active: profile.is_active,
       });
 
-      // Prefetch only the data that is needed on virtually every session.
-      // Heavy/optional pages (Loyalty, Referral, Profile History) fetch their own
-      // data on demand — prefetching them here wastes bandwidth on users who won't visit.
-      queryClient.prefetchQuery({
-        queryKey: ["profile"],
-        queryFn: getProfileApi,
-        staleTime: 5 * 60 * 1000,
-      });
-      queryClient.prefetchQuery({
-        queryKey: ["wallet", "balance"],
-        queryFn: walletApi.getWallet,
-        staleTime: 2 * 60 * 1000,
-      });
-      queryClient.prefetchQuery({
-        queryKey: ["profile", "bank-accounts"],
-        queryFn: getBankAccountsApi,
-        staleTime: 5 * 60 * 1000,
-      });
-      queryClient.prefetchQuery({
-        queryKey: ["wallet", "banks"],
-        queryFn: walletApi.getBankList,
-        staleTime: 60 * 60 * 1000,
-      });
+      // Defer non-critical prefetches so they don't compete with the initial render
+      // Only prefetch wallet (needed in header) — profile and banks load on-demand
+      const timer = setTimeout(() => {
+        queryClient.prefetchQuery({
+          queryKey: ["wallet", "balance"],
+          queryFn: walletApi.getWallet,
+          staleTime: 2 * 60 * 1000,
+        });
+        // Prefetch profile and bank accounts after a longer delay
+        setTimeout(() => {
+          queryClient.prefetchQuery({
+            queryKey: ["profile"],
+            queryFn: getProfileApi,
+            staleTime: 5 * 60 * 1000,
+          });
+          queryClient.prefetchQuery({
+            queryKey: ["profile", "bank-accounts"],
+            queryFn: getBankAccountsApi,
+            staleTime: 5 * 60 * 1000,
+          });
+          queryClient.prefetchQuery({
+            queryKey: ["wallet", "banks"],
+            queryFn: walletApi.getBankList,
+            staleTime: 60 * 60 * 1000,
+          });
+        }, 3000); // 3s delay for lower-priority data
+      }, 800); // 800ms delay — let first paint complete first
+
+      return () => clearTimeout(timer);
     } else if (isError) {
       TokenStorage.clearTokens();
       setUser(null);
@@ -77,10 +82,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [profile, isError, queryClient]);
 
-  /**
-   * Persists both the access token and refresh token, then updates the user state.
-   * The refresh token is needed so axiosInstance can silently renew the session.
-   */
   const setAuth = useCallback(
     (newUser: UserProfile, token: string, refreshToken?: string) => {
       if (refreshToken) {
@@ -93,10 +94,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     [],
   );
 
-  /**
-   * Calls the backend logout endpoint (best‑effort) to invalidate the Supabase
-   * session server‑side, then always clears local storage and user state.
-   */
   const logout = useCallback(async () => {
     try {
       await logoutApi();
