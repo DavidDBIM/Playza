@@ -220,7 +220,8 @@ function PrizeDistributionBuilder({
 function CreateTournamentModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
   const [form, setForm] = useState({
     title: "", description: "", entry_fee: 0,
-    scheduled_at: "", max_players: "" as string | number,
+    scheduled_at: "", registration_end: "",
+    max_players: "" as string | number,
     platform_fee_percentage: 10,
   });
   const [tiers, setTiers] = useState<PrizeTier[]>([]);
@@ -235,6 +236,7 @@ function CreateTournamentModal({ onClose, onCreated }: { onClose: () => void; on
       description: form.description,
       entry_fee: Number(form.entry_fee),
       scheduled_at: form.scheduled_at || null,
+      registration_end: form.registration_end || null,
       max_players: form.max_players !== "" ? Number(form.max_players) : null,
       prize_distribution: tiers.length > 0 ? tiers : null,
       platform_fee_percentage: form.platform_fee_percentage,
@@ -263,10 +265,11 @@ function CreateTournamentModal({ onClose, onCreated }: { onClose: () => void; on
           {/* Basic fields */}
           <div className="space-y-4">
             {[
-              { label: "Title *",               key: "title",        type: "text",           placeholder: "Quiz Championship #1" },
-              { label: "Description",           key: "description",  type: "text",           placeholder: "Test your knowledge..." },
-              { label: "Entry Fee (ZA Tokens)", key: "entry_fee",    type: "number",         placeholder: "0 = Free" },
-              { label: "Scheduled At",          key: "scheduled_at", type: "datetime-local", placeholder: "" },
+              { label: "Title *",                   key: "title",             type: "text",           placeholder: "Quiz Championship #1" },
+              { label: "Description",               key: "description",       type: "text",           placeholder: "Test your knowledge..." },
+              { label: "Entry Fee (ZA Tokens)",     key: "entry_fee",         type: "number",         placeholder: "0 = Free" },
+              { label: "Registration Closes At",    key: "registration_end",  type: "datetime-local", placeholder: "" },
+              { label: "Game Starts At (Scheduled)", key: "scheduled_at",     type: "datetime-local", placeholder: "" },
             ].map(f => (
               <div key={f.key}>
                 <label className={labelCls}>{f.label}</label>
@@ -314,6 +317,7 @@ function EditTournamentModal({ tournament, onClose, onSaved }: { tournament: Qui
     description: tournament.description ?? "",
     entry_fee: tournament.entry_fee,
     scheduled_at: toLocalDT(tournament.scheduled_at),
+    registration_end: toLocalDT((tournament as any).registration_end),
     max_players: tournament.max_players ?? ("" as string | number),
     platform_fee_percentage: (tournament as any).platform_fee_percentage ?? 10,
   });
@@ -330,6 +334,7 @@ function EditTournamentModal({ tournament, onClose, onSaved }: { tournament: Qui
       description: form.description,
       entry_fee: Number(form.entry_fee),
       scheduled_at: form.scheduled_at || null,
+      registration_end: form.registration_end || null,
       max_players: form.max_players !== "" ? Number(form.max_players) : null,
       prize_distribution: tiers.length > 0 ? tiers : null,
       platform_fee_percentage: form.platform_fee_percentage,
@@ -358,10 +363,11 @@ function EditTournamentModal({ tournament, onClose, onSaved }: { tournament: Qui
 
           <div className="space-y-4">
             {[
-              { label: "Title *",               key: "title",        type: "text",           placeholder: "Quiz Championship #1" },
-              { label: "Description",           key: "description",  type: "text",           placeholder: "Test your knowledge..." },
-              { label: "Entry Fee (ZA Tokens)", key: "entry_fee",    type: "number",         placeholder: "0 = Free" },
-              { label: "Reschedule Date/Time",  key: "scheduled_at", type: "datetime-local", placeholder: "" },
+              { label: "Title *",                    key: "title",             type: "text",           placeholder: "Quiz Championship #1" },
+              { label: "Description",                key: "description",       type: "text",           placeholder: "Test your knowledge..." },
+              { label: "Entry Fee (ZA Tokens)",      key: "entry_fee",         type: "number",         placeholder: "0 = Free" },
+              { label: "Registration Closes At",     key: "registration_end",  type: "datetime-local", placeholder: "" },
+              { label: "Game Starts At (Scheduled)", key: "scheduled_at",      type: "datetime-local", placeholder: "" },
             ].map(f => (
               <div key={f.key}>
                 <label className={labelCls}>{f.label}</label>
