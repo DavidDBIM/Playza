@@ -13,11 +13,32 @@ import {
 const STATUS = {
   active:       { label: "LIVE NOW",     short: "LIVE",     color: "#ef4444", bg: "rgba(239,68,68,0.12)",   border: "rgba(239,68,68,0.3)",   live: true  },
   registration: { label: "REGISTER NOW", short: "REGISTER", color: "#16a34a", bg: "rgba(22,163,74,0.12)",  border: "rgba(22,163,74,0.3)",   live: false },
-  lobby:        { label: "REGISTER NOW", short: "REGISTER", color: "#16a34a", bg: "rgba(22,163,74,0.12)",  border: "rgba(22,163,74,0.3)",   live: false },
+  lobby:        { label: "LOBBY",        short: "LOBBY",    color: "#f59e0b", bg: "rgba(245,158,11,0.12)", border: "rgba(245,158,11,0.3)",  live: false },
   draft:        { label: "COMING SOON",  short: "SOON",     color: "#6366f1", bg: "rgba(99,102,241,0.1)",  border: "rgba(99,102,241,0.25)", live: false },
   completed:    { label: "ENDED",        short: "ENDED",    color: "#64748b", bg: "rgba(100,116,139,0.1)", border: "rgba(100,116,139,0.2)", live: false },
   cancelled:    { label: "CANCELLED",    short: "OFF",      color: "#64748b", bg: "rgba(100,116,139,0.1)", border: "rgba(100,116,139,0.2)", live: false },
 } as const;
+
+// ─── Countdown hook ───────────────────────────────────────────────────────────
+function useCountdown(targetIso: string | null) {
+  const [timeLeft, setTimeLeft] = useState<{ d: number; h: number; m: number; s: number } | null>(null);
+  const [expired, setExpired] = useState(false);
+
+  useEffect(() => {
+    if (!targetIso) return;
+    function calc() {
+      const diff = new Date(targetIso!).getTime() - Date.now();
+      if (diff <= 0) { setTimeLeft(null); setExpired(true); return; }
+      const s = Math.floor(diff / 1000);
+      setTimeLeft({ d: Math.floor(s / 86400), h: Math.floor((s % 86400) / 3600), m: Math.floor((s % 3600) / 60), s: s % 60 });
+    }
+    calc();
+    const id = setInterval(calc, 1000);
+    return () => clearInterval(id);
+  }, [targetIso]);
+
+  return { timeLeft, expired };
+}
 
 const ROUNDS = [
   { name: "Warm Up",        color: "#22c55e", secs: 45, emoji: "🟢" },
@@ -61,7 +82,9 @@ function TournamentDetailModal({ qt, onClose, onRegister, isRegistering, registe
   const sc = STATUS[qt.status as keyof typeof STATUS] ?? STATUS.draft;
   const maxPlayers = (qt as any).max_players as number | null;
   const isFull = maxPlayers !== null && qt.player_count >= maxPlayers;
-  const canRegister = (qt.status === "registration" || qt.status === "lobby") && !registered && !isFull;
+  const isLobby = qt.status === "lobby";
+  const canRegister = qt.status === "registration" && !registered && !isFull;
+  const { timeLeft, expired } = useCountdown(isLobby ? (qt.scheduled_at ?? null) : null);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
@@ -173,6 +196,40 @@ function TournamentDetailModal({ qt, onClose, onRegister, isRegistering, registe
             );
           })()}
 
+          {/* Lobby countdown in modal */}
+          {isLobby && qt.scheduled_at && !expired && timeLeft && (
+            <div style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.25)", borderRadius: 12, padding: "14px 16px", marginBottom: 14 }}>
+              <p style={{ fontSize: 10, fontWeight: 700, color: "rgba(245,158,11,0.7)", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 8px" }}>🕐 Game starts in</p>
+              <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                {timeLeft.d > 0 && (
+                  <div style={{ textAlign: "center" }}>
+                    <p style={{ fontSize: 28, fontWeight: 900, color: "#f59e0b", margin: 0, lineHeight: 1 }}>{timeLeft.d}</p>
+                    <p style={{ fontSize: 9, color: "rgba(245,158,11,0.6)", margin: "3px 0 0" }}>DAYS</p>
+                  </div>
+                )}
+                <div style={{ textAlign: "center" }}>
+                  <p style={{ fontSize: 28, fontWeight: 900, color: "#f59e0b", margin: 0, lineHeight: 1 }}>{String(timeLeft.h).padStart(2,"0")}</p>
+                  <p style={{ fontSize: 9, color: "rgba(245,158,11,0.6)", margin: "3px 0 0" }}>HRS</p>
+                </div>
+                <p style={{ fontSize: 24, fontWeight: 900, color: "rgba(245,158,11,0.5)", margin: 0 }}>:</p>
+                <div style={{ textAlign: "center" }}>
+                  <p style={{ fontSize: 28, fontWeight: 900, color: "#f59e0b", margin: 0, lineHeight: 1 }}>{String(timeLeft.m).padStart(2,"0")}</p>
+                  <p style={{ fontSize: 9, color: "rgba(245,158,11,0.6)", margin: "3px 0 0" }}>MIN</p>
+                </div>
+                <p style={{ fontSize: 24, fontWeight: 900, color: "rgba(245,158,11,0.5)", margin: 0 }}>:</p>
+                <div style={{ textAlign: "center" }}>
+                  <p style={{ fontSize: 28, fontWeight: 900, color: "#f59e0b", margin: 0, lineHeight: 1 }}>{String(timeLeft.s).padStart(2,"0")}</p>
+                  <p style={{ fontSize: 9, color: "rgba(245,158,11,0.6)", margin: "3px 0 0" }}>SEC</p>
+                </div>
+              </div>
+            </div>
+          )}
+          {isLobby && expired && (
+            <div style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 12, padding: "14px", marginBottom: 14, textAlign: "center" }}>
+              <p style={{ fontSize: 14, fontWeight: 800, color: "#ef4444", margin: 0 }}>🚀 Game is starting now!</p>
+            </div>
+          )}
+
           {/* Prize breakdown */}
           {(qt as any).prize_distribution && (qt as any).prize_distribution.length > 0 && qt.prize_pool > 0 && (
             <div style={{ marginBottom: 14 }}>
@@ -274,8 +331,8 @@ function TournamentDetailModal({ qt, onClose, onRegister, isRegistering, registe
               <Eye size={14} /> Watch Live
             </Link>
           ) : registered ? (
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "14px", borderRadius: 12, fontSize: 13, fontWeight: 800, textTransform: "uppercase", background: "rgba(22,163,74,0.1)", color: "#16a34a", border: "1px solid rgba(22,163,74,0.3)" }}>
-              <CheckCircle size={14} /> You're Registered!
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "14px", borderRadius: 12, fontSize: 13, fontWeight: 800, textTransform: "uppercase", background: isLobby ? "rgba(245,158,11,0.1)" : "rgba(22,163,74,0.1)", color: isLobby ? "#f59e0b" : "#16a34a", border: `1px solid ${isLobby ? "rgba(245,158,11,0.3)" : "rgba(22,163,74,0.3)"}` }}>
+              {isLobby ? <><Clock size={14} /> You're in the Lobby — Game starting soon!</> : <><CheckCircle size={14} /> You're Registered!</>}
             </div>
           ) : isFull ? (
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "14px", borderRadius: 12, fontSize: 13, fontWeight: 800, textTransform: "uppercase", background: "rgba(239,68,68,0.1)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.3)" }}>
@@ -314,9 +371,11 @@ function TCard({ qt, featured, onRegistered }: { qt: QuizTournament; featured?: 
   const sc = STATUS[qt.status as keyof typeof STATUS] ?? STATUS.draft;
   const maxPlayers = (qt as any).max_players as number | null;
   const isFull = maxPlayers !== null && qt.player_count >= maxPlayers;
-  const canRegister = (qt.status === "registration" || qt.status === "lobby") && !isFull;
+  const canRegister = qt.status === "registration" && !isFull;
+  const isLobby = qt.status === "lobby";
   const [registered, setRegistered] = useState(!!qt.user_registered);
   const [showDetail, setShowDetail] = useState(false);
+  const { timeLeft, expired } = useCountdown(isLobby ? (qt.scheduled_at ?? null) : null);
 
   const { mutate: join, isPending } = useMutation({
     mutationFn: () => joinQuizTournamentApi(qt.id),
@@ -413,6 +472,42 @@ function TCard({ qt, featured, onRegistered }: { qt: QuizTournament; featured?: 
               {ROUNDS.map((r, i) => <div key={i} style={{ flex: 1, height: 3, borderRadius: 2, background: r.color, opacity: 0.5 }} title={r.name} />)}
             </div>
 
+            {/* Lobby countdown — shows when in lobby with a scheduled start */}
+            {isLobby && qt.scheduled_at && !expired && timeLeft && (
+              <div style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.25)", borderRadius: 10, padding: "8px 10px" }}>
+                <p style={{ fontSize: 9, fontWeight: 700, color: "rgba(245,158,11,0.7)", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 4px" }}>
+                  🕐 Game starts in
+                </p>
+                <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                  {timeLeft.d > 0 && (
+                    <div style={{ textAlign: "center" }}>
+                      <p style={{ fontSize: 16, fontWeight: 800, color: "#f59e0b", margin: 0, lineHeight: 1 }}>{timeLeft.d}</p>
+                      <p style={{ fontSize: 8, color: "rgba(245,158,11,0.6)", margin: "2px 0 0" }}>DAYS</p>
+                    </div>
+                  )}
+                  {(timeLeft.d > 0 || timeLeft.h > 0) && (
+                    <div style={{ textAlign: "center" }}>
+                      <p style={{ fontSize: 16, fontWeight: 800, color: "#f59e0b", margin: 0, lineHeight: 1 }}>{String(timeLeft.h).padStart(2,"0")}</p>
+                      <p style={{ fontSize: 8, color: "rgba(245,158,11,0.6)", margin: "2px 0 0" }}>HRS</p>
+                    </div>
+                  )}
+                  <div style={{ textAlign: "center" }}>
+                    <p style={{ fontSize: 16, fontWeight: 800, color: "#f59e0b", margin: 0, lineHeight: 1 }}>{String(timeLeft.m).padStart(2,"0")}</p>
+                    <p style={{ fontSize: 8, color: "rgba(245,158,11,0.6)", margin: "2px 0 0" }}>MIN</p>
+                  </div>
+                  <div style={{ textAlign: "center" }}>
+                    <p style={{ fontSize: 16, fontWeight: 800, color: "#f59e0b", margin: 0, lineHeight: 1 }}>{String(timeLeft.s).padStart(2,"0")}</p>
+                    <p style={{ fontSize: 8, color: "rgba(245,158,11,0.6)", margin: "2px 0 0" }}>SEC</p>
+                  </div>
+                </div>
+              </div>
+            )}
+            {isLobby && expired && (
+              <div style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 10, padding: "8px 10px", textAlign: "center" }}>
+                <p style={{ fontSize: 11, fontWeight: 800, color: "#ef4444", margin: 0 }}>🚀 Starting now...</p>
+              </div>
+            )}
+
             {/* CTA row */}
             <div style={{ display: "flex", gap: 6, marginTop: "auto" }}>
               {/* Details */}
@@ -426,8 +521,8 @@ function TCard({ qt, featured, onRegistered }: { qt: QuizTournament; featured?: 
                   <Eye size={11} /> Watch Live
                 </Link>
               ) : registered ? (
-                <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 4, padding: "9px", borderRadius: 9, fontSize: 10, fontWeight: 700, textTransform: "uppercase", background: "rgba(22,163,74,0.1)", color: "#16a34a", border: "1px solid rgba(22,163,74,0.3)" }}>
-                  <CheckCircle size={11} /> Registered
+                <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 4, padding: "9px", borderRadius: 9, fontSize: 10, fontWeight: 700, textTransform: "uppercase", background: isLobby ? "rgba(245,158,11,0.1)" : "rgba(22,163,74,0.1)", color: isLobby ? "#f59e0b" : "#16a34a", border: `1px solid ${isLobby ? "rgba(245,158,11,0.3)" : "rgba(22,163,74,0.3)"}` }}>
+                  {isLobby ? <><Clock size={11} /> In Lobby</> : <><CheckCircle size={11} /> Registered</>}
                 </div>
               ) : isFull ? (
                 <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 4, padding: "9px", borderRadius: 9, fontSize: 10, fontWeight: 700, textTransform: "uppercase", background: "rgba(239,68,68,0.1)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.3)" }}>
