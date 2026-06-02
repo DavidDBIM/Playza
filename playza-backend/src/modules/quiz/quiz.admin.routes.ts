@@ -19,22 +19,33 @@ router.get('/tournaments', requireAdmin, async (_req, res) => {
       .order('created_at', { ascending: false })
     if (error) throw error
 
-    const enriched = await Promise.all((data ?? []).map(async (t) => {
-      const { count } = await supabaseAdmin
-        .from('quiz_players')
-        .select('id', { count: 'exact', head: true })
-        .eq('tournament_id', t.id)
-      const { count: qCount } = await supabaseAdmin
-        .from('quiz_questions')
-        .select('id', { count: 'exact', head: true })
-        .eq('tournament_id', t.id)
-      return {
-        ...t,
-        player_count: count ?? 0,
-        question_count: qCount ?? 0,
-        max_players: t.max_players ?? null,
-        prize_distribution: t.prize_distribution ?? null,
-      }
+    const tournaments = data ?? []
+    const ids = tournaments.map(t => t.id)
+
+    if (ids.length === 0) return res.json({ success: true, data: [] })
+
+    // Two queries instead of 2N queries
+    const [{ data: players }, { data: questions }] = await Promise.all([
+      supabaseAdmin.from('quiz_players').select('tournament_id').in('tournament_id', ids),
+      supabaseAdmin.from('quiz_questions').select('tournament_id').in('tournament_id', ids),
+    ])
+
+    const playerCountMap: Record<string, number> = {}
+    for (const row of (players ?? [])) {
+      playerCountMap[row.tournament_id] = (playerCountMap[row.tournament_id] ?? 0) + 1
+    }
+
+    const questionCountMap: Record<string, number> = {}
+    for (const row of (questions ?? [])) {
+      questionCountMap[row.tournament_id] = (questionCountMap[row.tournament_id] ?? 0) + 1
+    }
+
+    const enriched = tournaments.map(t => ({
+      ...t,
+      player_count: playerCountMap[t.id] ?? 0,
+      question_count: questionCountMap[t.id] ?? 0,
+      max_players: t.max_players ?? null,
+      prize_distribution: t.prize_distribution ?? null,
     }))
 
     res.json({ success: true, data: enriched })
