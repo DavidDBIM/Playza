@@ -7,7 +7,7 @@ import cron from 'node-cron'
 import { createServer } from 'http'
 import { supabaseAdmin as supabase } from './config/supabase'
 import { finalizeSessionAndPayout } from './modules/gamesession/gamesession.service'
-import { runQuizReminderJob } from './lib/quizReminders'
+import { runQuizReminderJob, runQuizLifecycleJob, setQuizReminderIo } from './lib/quizReminders'
 
 import authRoutes from './modules/auth/auth.routes'
 import referralRoutes from './modules/referral/referral.routes'
@@ -97,6 +97,7 @@ const httpServer = createServer(app)
 const io = setupSocketIO(httpServer)
 setupQuizGateway(io)
 setQuizAdminIo(io)
+setQuizReminderIo(io) // Give lifecycle cron access to socket for auto-launch
 
 // ── Background jobs ───────────────────────────────────────────────────────────
 
@@ -118,6 +119,12 @@ cron.schedule('*/5 * * * *', async () => {
   } catch (err) {
     console.error('[CRON] Auto-payout error:', err)
   }
+})
+
+// Quiz tournament lifecycle — runs every minute
+// Handles: registration close → lobby, 30-min reminder, auto-launch at scheduled_at
+cron.schedule('* * * * *', async () => {
+  await runQuizLifecycleJob()
 })
 
 // Quiz tournament reminders — runs every 30 minutes
