@@ -69,7 +69,6 @@ async function sendRegistrationEmail(
 // ── GET /quiz/tournaments  — public listing (auth optional)
 router.get('/tournaments', async (req, res) => {
   try {
-    // Optionally extract user from auth header without blocking unauthenticated requests
     let userId: string | null = null
     const authHeader = req.headers.authorization
     if (authHeader?.startsWith('Bearer ')) {
@@ -87,32 +86,44 @@ router.get('/tournaments', async (req, res) => {
       .order('scheduled_at', { ascending: true })
 
     if (error) throw error
+    const tournaments = data ?? []
+    const ids = tournaments.map(t => t.id)
 
-    const enriched = await Promise.all((data ?? []).map(async (t) => {
-      const { count } = await supabaseAdmin
+    if (ids.length === 0) {
+      return res.json({ success: true, data: [] })
+    }
+
+    // Single query for all player counts instead of N queries
+    const { data: playerCounts } = await supabaseAdmin
+      .from('quiz_players')
+      .select('tournament_id')
+      .in('tournament_id', ids)
+
+    const countMap: Record<string, number> = {}
+    for (const row of (playerCounts ?? [])) {
+      countMap[row.tournament_id] = (countMap[row.tournament_id] ?? 0) + 1
+    }
+
+    // Single query for user registrations (only if logged in)
+    const registeredSet = new Set<string>()
+    if (userId) {
+      const { data: registrations } = await supabaseAdmin
         .from('quiz_players')
-        .select('id', { count: 'exact', head: true })
-        .eq('tournament_id', t.id)
-
-      let userRegistered = false
-      if (userId) {
-        const { data: existing } = await supabaseAdmin
-          .from('quiz_players')
-          .select('id')
-          .eq('tournament_id', t.id)
-          .eq('user_id', userId)
-          .single()
-        userRegistered = !!existing
+        .select('tournament_id')
+        .in('tournament_id', ids)
+        .eq('user_id', userId)
+      for (const row of (registrations ?? [])) {
+        registeredSet.add(row.tournament_id)
       }
+    }
 
-      return {
-        ...t,
-        player_count: count ?? 0,
-        user_registered: userRegistered,
-        max_players: t.max_players ?? null,
-        prize_distribution: t.prize_distribution ?? null,
-        platform_fee_percentage: t.platform_fee_percentage ?? 10,
-      }
+    const enriched = tournaments.map(t => ({
+      ...t,
+      player_count: countMap[t.id] ?? 0,
+      user_registered: registeredSet.has(t.id),
+      max_players: t.max_players ?? null,
+      prize_distribution: t.prize_distribution ?? null,
+      platform_fee_percentage: t.platform_fee_percentage ?? 10,
     }))
 
     res.json({ success: true, data: enriched })
