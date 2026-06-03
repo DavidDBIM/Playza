@@ -11,7 +11,7 @@ const randomTimes = Array.from({ length: winners.length * 3 }, () =>
 const RecentWinners = () => {
 
   return (
-    <div className="w-full flex flex-col gap-2 md:gap-4 py-2 relative z-10">
+    <div className="w-full flex flex-col gap-1.5 md:gap-2 py-1 relative z-10">
       {/* Title Section */}
       <div className="flex items-center gap-2 md:gap-3 px-2">
         <div className="relative flex items-center justify-center">
