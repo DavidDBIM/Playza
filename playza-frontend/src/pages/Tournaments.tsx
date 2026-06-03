@@ -1,10 +1,11 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Link, useNavigate } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getQuizTournamentsApi, joinQuizTournamentApi, type QuizTournament, type PrizeTier } from "@/api/quiz.api";
-import { Search, Trophy, X, Users, ChevronDown, Zap, Eye, Brain, CheckCircle, Loader2, Info, Calendar, Clock, Shield } from "lucide-react";
+import { getQuizTournamentsApi, joinQuizTournamentApi, getLobbyPlayersApi, type QuizTournament, type PrizeTier } from "@/api/quiz.api";
+import { Search, Trophy, X, Users, ChevronDown, Zap, Eye, Brain, CheckCircle, Loader2, Info, Calendar, Clock, Shield, Send, MessageCircle } from "lucide-react";
 import { useAuth } from "@/context/auth";
 import { useToast } from "@/context/toast";
+import { useLobbySocket } from "@/hooks/quiz/useLobbySocket";
 import {
   DropdownMenu, DropdownMenuContent,
   DropdownMenuItem, DropdownMenuTrigger,
@@ -72,6 +73,201 @@ function useTilt() {
     el.style.transition = "transform 0.5s cubic-bezier(.23,1,.32,1)";
   }, []);
   return { ref, onMove, onLeave };
+}
+
+const REACTIONS = ['🔥', '💪', '👑', '😤', '🎯', '⚡', '🚀', '😂'];
+
+// ─── Lobby Modal ──────────────────────────────────────────────────────────────
+function LobbyModal({ qt, onClose, onGameStart }: {
+  qt: QuizTournament;
+  onClose: () => void;
+  onGameStart: () => void;
+}) {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [msg, setMsg] = useState("");
+  const chatEndRef = useRef<HTMLDivElement>(null);
+  const { timeLeft, expired } = useCountdown(qt.scheduled_at ?? null);
+  const { connected, playerCount, gameStarted, messages, reactions, sendMessage, sendReaction } = useLobbySocket(qt.id);
+
+  const { data: players = [] } = useQuery({
+    queryKey: ["lobby-players", qt.id],
+    queryFn: () => getLobbyPlayersApi(qt.id),
+    staleTime: 30_000,
+    refetchInterval: 30_000,
+  });
+
+  // Auto-scroll chat
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  // Navigate to game when started
+  useEffect(() => {
+    if (gameStarted || expired) {
+      onGameStart();
+      navigate(`/quiz/${qt.id}`);
+    }
+  }, [gameStarted, expired, qt.id, navigate, onGameStart]);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", handler);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", handler);
+      document.body.style.overflow = "";
+    };
+  }, [onClose]);
+
+  function handleSend() {
+    if (!msg.trim()) return;
+    sendMessage(msg.trim());
+    setMsg("");
+  }
+
+  const sc = STATUS[qt.status as keyof typeof STATUS] ?? STATUS.lobby;
+
+  return (
+    <div onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      style={{ position: "fixed", inset: 0, zIndex: 1000, background: "rgba(0,0,0,0.8)", backdropFilter: "blur(8px)", display: "flex", alignItems: "flex-end", justifyContent: "center", animation: "fadeInBackdrop 0.2s ease" }}>
+      <div style={{ width: "100%", maxWidth: 540, maxHeight: "95dvh", background: "var(--card)", borderRadius: "20px 20px 0 0", overflow: "hidden", display: "flex", flexDirection: "column", animation: "slideUp 0.3s cubic-bezier(0.23,1,0.32,1)", boxShadow: "0 -8px 60px rgba(0,0,0,0.5)" }}>
+
+        {/* Accent bar */}
+        <div style={{ height: 4, background: `linear-gradient(90deg,#f59e0b,#f59e0b80)`, flexShrink: 0 }} />
+
+        {/* Header */}
+        <div style={{ padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0, borderBottom: "1px solid var(--border)" }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }}>
+              <span style={{ fontSize: 10, fontWeight: 700, color: "#f59e0b", textTransform: "uppercase", letterSpacing: "0.1em" }}>🏟️ Tournament Lobby</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 4, background: connected ? "rgba(34,197,94,0.1)" : "rgba(100,116,139,0.1)", borderRadius: 20, padding: "2px 8px", border: `1px solid ${connected ? "rgba(34,197,94,0.3)" : "rgba(100,116,139,0.2)"}` }}>
+                <span style={{ width: 5, height: 5, borderRadius: "50%", background: connected ? "#22c55e" : "#64748b", display: "block" }} />
+                <span style={{ fontSize: 8, fontWeight: 700, color: connected ? "#22c55e" : "#64748b" }}>{connected ? "LIVE" : "CONNECTING"}</span>
+              </div>
+            </div>
+            <h3 style={{ fontSize: "clamp(13px,3vw,15px)", fontWeight: 800, color: "var(--foreground)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{qt.title}</h3>
+          </div>
+          <button onClick={onClose} style={{ background: "var(--muted)", border: "1px solid var(--border)", borderRadius: "50%", width: 32, height: 32, minWidth: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", marginLeft: 8 }}>
+            <X size={14} style={{ color: "var(--muted-foreground)" }} />
+          </button>
+        </div>
+
+        {/* Countdown */}
+        {qt.scheduled_at && !expired && timeLeft && (
+          <div style={{ padding: "12px 16px", background: "rgba(245,158,11,0.06)", borderBottom: "1px solid rgba(245,158,11,0.15)", flexShrink: 0 }}>
+            <p style={{ fontSize: 9, fontWeight: 700, color: "rgba(245,158,11,0.7)", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 6px" }}>🕐 Game starts in</p>
+            <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+              {timeLeft.d > 0 && <div style={{ textAlign: "center" }}><p style={{ fontSize: 24, fontWeight: 900, color: "#f59e0b", margin: 0, lineHeight: 1 }}>{timeLeft.d}</p><p style={{ fontSize: 8, color: "rgba(245,158,11,0.6)", margin: "2px 0 0" }}>DAYS</p></div>}
+              <div style={{ textAlign: "center" }}><p style={{ fontSize: 24, fontWeight: 900, color: "#f59e0b", margin: 0, lineHeight: 1 }}>{String(timeLeft.h).padStart(2,"0")}</p><p style={{ fontSize: 8, color: "rgba(245,158,11,0.6)", margin: "2px 0 0" }}>HRS</p></div>
+              <p style={{ fontSize: 20, fontWeight: 900, color: "rgba(245,158,11,0.4)", margin: 0 }}>:</p>
+              <div style={{ textAlign: "center" }}><p style={{ fontSize: 24, fontWeight: 900, color: "#f59e0b", margin: 0, lineHeight: 1 }}>{String(timeLeft.m).padStart(2,"0")}</p><p style={{ fontSize: 8, color: "rgba(245,158,11,0.6)", margin: "2px 0 0" }}>MIN</p></div>
+              <p style={{ fontSize: 20, fontWeight: 900, color: "rgba(245,158,11,0.4)", margin: 0 }}>:</p>
+              <div style={{ textAlign: "center" }}><p style={{ fontSize: 24, fontWeight: 900, color: "#f59e0b", margin: 0, lineHeight: 1 }}>{String(timeLeft.s).padStart(2,"0")}</p><p style={{ fontSize: 8, color: "rgba(245,158,11,0.6)", margin: "2px 0 0" }}>SEC</p></div>
+              <div style={{ marginLeft: "auto", textAlign: "right" }}>
+                <p style={{ fontSize: 13, fontWeight: 800, color: "var(--foreground)", margin: 0 }}>{playerCount || players.length} <span style={{ fontSize: 10, color: "var(--muted-foreground)", fontWeight: 600 }}>in lobby</span></p>
+                {qt.max_players && <p style={{ fontSize: 9, color: "var(--muted-foreground)", margin: "2px 0 0" }}>of {qt.max_players} max</p>}
+              </div>
+            </div>
+          </div>
+        )}
+        {expired && (
+          <div style={{ padding: "12px 16px", background: "rgba(239,68,68,0.08)", borderBottom: "1px solid rgba(239,68,68,0.2)", flexShrink: 0, textAlign: "center" }}>
+            <p style={{ fontSize: 14, fontWeight: 800, color: "#ef4444", margin: 0 }}>🚀 Game is starting — heading to game...</p>
+          </div>
+        )}
+
+        {/* Floating reactions */}
+        <div style={{ position: "relative", height: 0, overflow: "visible", zIndex: 10 }}>
+          {reactions.map(r => (
+            <div key={r.id} style={{ position: "absolute", bottom: 0, left: `${20 + Math.random() * 60}%`, fontSize: 24, animation: "floatUp 2.5s ease-out forwards", pointerEvents: "none" }}>
+              {r.emoji}
+            </div>
+          ))}
+        </div>
+
+        {/* Main content — players + chat tabs */}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+          {/* Players list */}
+          <div style={{ padding: "10px 16px 8px", flexShrink: 0 }}>
+            <p style={{ fontSize: 9, fontWeight: 700, color: "var(--muted-foreground)", textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 8px" }}>
+              👥 Players ({players.length}{qt.max_players ? `/${qt.max_players}` : ""})
+            </p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {players.slice(0, 30).map(p => (
+                <div key={p.user_id} style={{ display: "flex", alignItems: "center", gap: 5, background: p.user_id === user?.id ? "rgba(168,85,247,0.12)" : "var(--muted)", border: `1px solid ${p.user_id === user?.id ? "rgba(168,85,247,0.3)" : "var(--border)"}`, borderRadius: 20, padding: "3px 10px 3px 4px" }}>
+                  {p.avatar_url
+                    ? <img src={p.avatar_url} style={{ width: 18, height: 18, borderRadius: "50%", objectFit: "cover" }} alt="" />
+                    : <div style={{ width: 18, height: 18, borderRadius: "50%", background: p.user_id === user?.id ? "#7c3aed" : "var(--border)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, fontWeight: 700, color: "#fff" }}>{p.username[0]?.toUpperCase()}</div>}
+                  <span style={{ fontSize: 10, fontWeight: p.user_id === user?.id ? 800 : 600, color: p.user_id === user?.id ? "#c084fc" : "var(--foreground)" }}>
+                    {p.user_id === user?.id ? "You" : p.username}
+                  </span>
+                </div>
+              ))}
+              {players.length > 30 && <div style={{ display: "flex", alignItems: "center", background: "var(--muted)", borderRadius: 20, padding: "3px 10px", fontSize: 10, color: "var(--muted-foreground)" }}>+{players.length - 30} more</div>}
+            </div>
+          </div>
+
+          {/* Chat */}
+          <div style={{ borderTop: "1px solid var(--border)", flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+            <div style={{ padding: "6px 16px", display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+              <MessageCircle size={11} style={{ color: "var(--muted-foreground)" }} />
+              <p style={{ fontSize: 9, fontWeight: 700, color: "var(--muted-foreground)", textTransform: "uppercase", letterSpacing: "0.1em", margin: 0 }}>Lobby Chat</p>
+            </div>
+            <div style={{ flex: 1, overflowY: "auto", padding: "4px 16px 8px", display: "flex", flexDirection: "column", gap: 6, WebkitOverflowScrolling: "touch" } as any}>
+              {messages.length === 0 && (
+                <p style={{ fontSize: 11, color: "var(--muted-foreground)", textAlign: "center", padding: "16px 0", fontStyle: "italic" }}>No messages yet — say something! 👋</p>
+              )}
+              {messages.map((m, i) => (
+                <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                  <div style={{ width: 22, height: 22, borderRadius: "50%", background: m.user_id === user?.id ? "rgba(124,58,237,0.3)" : "var(--muted)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, color: m.user_id === user?.id ? "#c084fc" : "var(--foreground)", flexShrink: 0 }}>
+                    {m.avatar_url ? <img src={m.avatar_url} style={{ width: 22, height: 22, borderRadius: "50%", objectFit: "cover" }} alt="" /> : m.username[0]?.toUpperCase()}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: m.user_id === user?.id ? "#c084fc" : "var(--foreground)", marginRight: 6 }}>{m.user_id === user?.id ? "You" : m.username}</span>
+                    <span style={{ fontSize: 9, opacity: 0.5, color: "var(--muted-foreground)" }}>{new Date(m.ts).toLocaleTimeString('en-NG', { hour: '2-digit', minute: '2-digit' })}</span>
+                    <p style={{ fontSize: 12, color: "var(--foreground)", margin: "2px 0 0", wordBreak: "break-word", lineHeight: 1.4 }}>{m.message}</p>
+                  </div>
+                </div>
+              ))}
+              <div ref={chatEndRef} />
+            </div>
+          </div>
+        </div>
+
+        {/* Footer — reactions + input */}
+        <div style={{ borderTop: "1px solid var(--border)", padding: "8px 16px 12px", flexShrink: 0, background: "var(--card)" }}>
+          {/* Reaction bar */}
+          <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
+            {REACTIONS.map(e => (
+              <button key={e} onClick={() => sendReaction(e)} style={{ fontSize: 18, background: "var(--muted)", border: "1px solid var(--border)", borderRadius: 8, width: 36, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "transform 0.1s", flexShrink: 0 }}
+                onMouseDown={ev => (ev.currentTarget.style.transform = "scale(0.85)")}
+                onMouseUp={ev => (ev.currentTarget.style.transform = "scale(1)")}>
+                {e}
+              </button>
+            ))}
+          </div>
+          {/* Chat input */}
+          <div style={{ display: "flex", gap: 8 }}>
+            <input
+              type="text" placeholder="Say something..." value={msg}
+              onChange={e => setMsg(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter") handleSend(); }}
+              maxLength={200}
+              style={{ flex: 1, padding: "9px 12px", borderRadius: 10, fontSize: 13, background: "var(--muted)", border: "1px solid var(--border)", color: "var(--foreground)", outline: "none" }}
+            />
+            <button onClick={handleSend} disabled={!msg.trim()} style={{ padding: "9px 14px", borderRadius: 10, background: msg.trim() ? "#7c3aed" : "var(--muted)", border: "none", cursor: msg.trim() ? "pointer" : "not-allowed", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s" }}>
+              <Send size={14} style={{ color: msg.trim() ? "#fff" : "var(--muted-foreground)" }} />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <style>{`
+        @keyframes floatUp { 0%{transform:translateY(0);opacity:1} 100%{transform:translateY(-80px);opacity:0} }
+      `}</style>
+    </div>
+  );
 }
 
 // ─── Detail Modal ─────────────────────────────────────────────────────────────
@@ -375,6 +571,13 @@ function TCard({ qt, featured, onRegistered }: { qt: QuizTournament; featured?: 
   const isLobby = qt.status === "lobby";
   const [registered, setRegistered] = useState(!!qt.user_registered);
   const [showDetail, setShowDetail] = useState(false);
+  const [showLobby, setShowLobby] = useState(false);
+
+  // Registration closes countdown — only for registration status
+  const { timeLeft: regTimeLeft } = useCountdown(
+    qt.status === "registration" ? ((qt as any).registration_end ?? null) : null
+  );
+  // Game start countdown — only for lobby status
   const { timeLeft, expired } = useCountdown(isLobby ? (qt.scheduled_at ?? null) : null);
 
   const { mutate: join, isPending } = useMutation({
@@ -472,7 +675,22 @@ function TCard({ qt, featured, onRegistered }: { qt: QuizTournament; featured?: 
               {ROUNDS.map((r, i) => <div key={i} style={{ flex: 1, height: 3, borderRadius: 2, background: r.color, opacity: 0.5 }} title={r.name} />)}
             </div>
 
-            {/* Lobby countdown — shows when in lobby with a scheduled start */}
+            {/* Registration closes countdown */}
+            {qt.status === "registration" && regTimeLeft && (qt as any).registration_end && (
+              <div style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 8, padding: "6px 10px" }}>
+                <p style={{ fontSize: 8, fontWeight: 700, color: "rgba(239,68,68,0.7)", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 3px" }}>
+                  ⏳ Registration closes in
+                </p>
+                <p style={{ fontSize: 12, fontWeight: 800, color: "#ef4444", margin: 0, fontVariantNumeric: "tabular-nums" }}>
+                  {regTimeLeft.d > 0 ? `${regTimeLeft.d}d ` : ""}
+                  {String(regTimeLeft.h).padStart(2,"0")}:
+                  {String(regTimeLeft.m).padStart(2,"0")}:
+                  {String(regTimeLeft.s).padStart(2,"0")}
+                </p>
+              </div>
+            )}
+
+            {/* Lobby countdown */}
             {isLobby && qt.scheduled_at && !expired && timeLeft && (
               <div style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.25)", borderRadius: 10, padding: "8px 10px" }}>
                 <p style={{ fontSize: 9, fontWeight: 700, color: "rgba(245,158,11,0.7)", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 4px" }}>
@@ -521,9 +739,12 @@ function TCard({ qt, featured, onRegistered }: { qt: QuizTournament; featured?: 
                   <Eye size={11} /> Watch Live
                 </Link>
               ) : registered ? (
-                <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 4, padding: "9px", borderRadius: 9, fontSize: 10, fontWeight: 700, textTransform: "uppercase", background: isLobby ? "rgba(245,158,11,0.1)" : "rgba(22,163,74,0.1)", color: isLobby ? "#f59e0b" : "#16a34a", border: `1px solid ${isLobby ? "rgba(245,158,11,0.3)" : "rgba(22,163,74,0.3)"}` }}>
-                  {isLobby ? <><Clock size={11} /> In Lobby</> : <><CheckCircle size={11} /> Registered</>}
-                </div>
+                <button
+                  onClick={() => isLobby ? setShowLobby(true) : null}
+                  style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 4, padding: "9px", borderRadius: 9, fontSize: 10, fontWeight: 700, textTransform: "uppercase", background: isLobby ? "rgba(245,158,11,0.1)" : "rgba(22,163,74,0.1)", color: isLobby ? "#f59e0b" : "#16a34a", border: `1px solid ${isLobby ? "rgba(245,158,11,0.3)" : "rgba(22,163,74,0.3)"}`, cursor: isLobby ? "pointer" : "default" }}
+                >
+                  {isLobby ? <><Clock size={11} /> In Lobby ›</> : <><CheckCircle size={11} /> Registered</>}
+                </button>
               ) : isFull ? (
                 <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 4, padding: "9px", borderRadius: 9, fontSize: 10, fontWeight: 700, textTransform: "uppercase", background: "rgba(239,68,68,0.1)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.3)" }}>
                   🔴 Full
@@ -544,6 +765,9 @@ function TCard({ qt, featured, onRegistered }: { qt: QuizTournament; featured?: 
 
       {showDetail && (
         <TournamentDetailModal qt={qt} onClose={() => setShowDetail(false)} onRegister={handleRegister} isRegistering={isPending} registered={registered} />
+      )}
+      {showLobby && isLobby && registered && (
+        <LobbyModal qt={qt} onClose={() => setShowLobby(false)} onGameStart={() => setShowLobby(false)} />
       )}
     </>
   );
