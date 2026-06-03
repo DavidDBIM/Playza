@@ -187,7 +187,7 @@ const AppContent = () => {
             : `w-full max-w-400 mx-auto flex gap-4 md:gap-8 px-1.5 md:px-4 pt-4 md:pt-8 ${
                 isRegistrationPage
                   ? "pb-0 min-h-screen flex items-center justify-center"
-                  : "pb-12 md:pb-16 lg:pb-10"
+                  : "pb-28 md:pb-20 lg:pb-10"
               }`
         }
       >
