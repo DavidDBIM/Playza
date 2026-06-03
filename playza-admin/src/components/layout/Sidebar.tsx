@@ -19,6 +19,7 @@ import {
   MdClose,
   MdShare,
   MdQuiz,
+  MdImage,
 } from 'react-icons/md';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { authService } from '../../services/auth.service';
@@ -33,6 +34,7 @@ const NAV_ITEMS = [
   { path: '/', pathMatch: '/', icon: MdDashboard, label: 'Dashboard' },
   { path: '/users', pathMatch: '/users', icon: MdGroup, label: 'Users' },
   { path: '/games', pathMatch: '/games', icon: MdSportsEsports, label: 'Games' },
+  { path: '/banner-slides', pathMatch: '/banner-slides', icon: MdImage, label: 'Banner Slides' },
   { path: '/sessions', pathMatch: '/sessions', icon: MdTimer, label: 'Sessions' },
   { path: '/leaderboards', pathMatch: '/leaderboards', icon: MdLeaderboard, label: 'Leaderboards' },
   { path: '/transactions', pathMatch: '/transactions', icon: MdPayments, label: 'Transactions' },
