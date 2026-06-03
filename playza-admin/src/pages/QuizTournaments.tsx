@@ -86,7 +86,7 @@ const api = {
   bulkImport:       async (tournamentId: string, questions: Partial<QuizQuestion>[]) => { const { data } = await apiClient.post(`/admin/quiz/tournaments/${tournamentId}/questions/bulk`, { questions }); return data; },
   deleteQuestion:   async (qId: string) => { await apiClient.delete(`/admin/quiz/questions/${qId}`); },
   deleteTournament: async (id: string) => { const { data } = await apiClient.delete(`/admin/quiz/tournaments/${id}`); return data; },
-  cancelTournament: async ({ id, reason }: { id: string; reason: string }) => { const { data } = await apiClient.patch(`/admin/quiz/tournaments/${id}`, { status: "cancelled", cancel_reason: reason }); return data; },
+  cancelTournament: async ({ id, reason }: { id: string; reason: string }) => { const { data } = await apiClient.patch(`/admin/quiz/tournaments/${id}`, { status: "cancelled", cancelled_reason: reason }); return data; },
   getLive:          async (id: string) => { const { data } = await apiClient.get(`/admin/quiz/tournaments/${id}/live`); return data.data; },
 };
 
