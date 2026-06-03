@@ -90,7 +90,7 @@ router.post('/tournaments', requireAdmin, async (req: AuthRequest, res) => {
 // ── PATCH /admin/quiz/tournaments/:id  — update status / settings
 router.patch('/tournaments/:id', requireAdmin, async (req, res) => {
   try {
-    const allowed = ['title', 'description', 'entry_fee', 'scheduled_at', 'registration_end', 'status', 'max_players', 'prize_distribution', 'platform_fee_percentage', 'cancel_reason']
+    const allowed = ['title', 'description', 'entry_fee', 'scheduled_at', 'registration_end', 'status', 'max_players', 'prize_distribution', 'platform_fee_percentage', 'cancelled_reason']
     const updates: Record<string, any> = {}
     for (const k of allowed) {
       if (req.body[k] !== undefined) updates[k] = req.body[k]
