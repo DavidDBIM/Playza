@@ -35,7 +35,7 @@ const HomeAccordionItem = ({ faq, isOpen, onClick }: { faq: HomeFAQItem, isOpen:
     <div className={`glass-card overflow-hidden transition-all duration-300 border ${isOpen ? 'border-primary/40 bg-primary/5' : 'border-border bg-card/50 hover:bg-card dark:border-white/5 dark:bg-white/5 dark:hover:bg-white/10'}`}>
       <button
         onClick={onClick}
-        className="w-full flex items-center justify-between p-5 text-left focus:outline-none"
+        className="w-full flex items-center justify-between px-4 py-3 text-left focus:outline-none"
       >
         <h3 className={`text-xs md:text-sm font-black uppercase tracking-tight ${isOpen ? 'text-primary' : 'text-foreground/90'}`}>
           {faq.question}
@@ -43,7 +43,7 @@ const HomeAccordionItem = ({ faq, isOpen, onClick }: { faq: HomeFAQItem, isOpen:
         <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isOpen ? 'rotate-180 text-primary' : 'text-muted-foreground dark:text-slate-500'}`} />
       </button>
       <div className={`transition-all duration-300 ease-in-out ${isOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'} overflow-hidden`}>
-        <div className="p-5 pt-0 border-t border-border dark:border-white/5">
+        <div className="px-5 py-3 pt-2 border-t border-border dark:border-white/5">
           <div className="text-xs md:text-sm text-muted-foreground font-medium leading-relaxed dark:text-slate-400">
             {faq.answer}
           </div>
