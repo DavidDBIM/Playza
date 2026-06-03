@@ -57,7 +57,7 @@ const HomeGames = ({ games, title }: { games: Game[]; title: string }) => {
   return (
     <div className="relative">
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl h-full bg-primary/8 blur-[120px] pointer-events-none" />
-      <div className="flex items-end justify-between mb-6">
+      <div className="flex items-end justify-between mb-3">
         <div>
           <h2 className="font-heading text-lg md:text-2xl font-black uppercase tracking-tight">
             {title}
@@ -98,7 +98,7 @@ const HomeGames = ({ games, title }: { games: Game[]; title: string }) => {
       <div className="overflow-hidden">
         <div
           ref={scrollRef}
-          className="flex overflow-x-auto scrollbar-hide scroll-smooth snap-x gap-1.5 snap-mandatory py-2"
+          className="flex overflow-x-auto scrollbar-hide scroll-smooth snap-x gap-1.5 snap-mandatory py-1"
         >
           {games.map((game) => (
             <div
