@@ -12,7 +12,7 @@ const GamesCard = (game: Game) => {
   })();
 
   return (
-    <div className="group relative w-full max-w-44 lg:max-w-60 aspect-7/9 rounded-2xl overflow-hidden border border-slate-200 dark:border-white/5 shadow-xl transition-all duration-500 hover:shadow-primary/20 hover:scale-[1.02]">
+    <div className="group relative w-full max-w-36 md:max-w-44 lg:max-w-60 aspect-7/9 rounded-2xl overflow-hidden border border-slate-200 dark:border-white/5 shadow-xl transition-all duration-500 hover:shadow-primary/20 hover:scale-[1.02]">
       <Link
         to={`/games/${slug}`}
         className="block w-full h-full relative"
