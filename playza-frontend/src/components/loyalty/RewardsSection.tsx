@@ -163,7 +163,7 @@ export function RewardsSection({ totalPoints, spinsLeftToday, onPointsChanged, a
 
   return (
     <>
-      <div className="space-y-6">
+      <div className="space-y-3">
 
         {/* ── Section header ── */}
         <div className="flex items-center gap-3">
@@ -177,7 +177,7 @@ export function RewardsSection({ totalPoints, spinsLeftToday, onPointsChanged, a
         </div>
 
         {/* ── SPIN CARD ── */}
-        <div className="relative overflow-hidden rounded-2xl p-6 shadow-xl"
+        <div className="relative overflow-hidden rounded-2xl p-4 shadow-xl"
              style={{ background: "linear-gradient(135deg,#1A0533 0%,#0A0A2E 60%,#001F3F 100%)" }}>
           {/* BG orbs */}
           <div className="absolute -right-10 -top-10 w-44 h-44 rounded-full opacity-20" style={{ background: "radial-gradient(circle,#BF5AF2,transparent)" }} />
@@ -189,8 +189,8 @@ export function RewardsSection({ totalPoints, spinsLeftToday, onPointsChanged, a
                 <div className="h-1.5 w-1.5 rounded-full bg-yellow-400 animate-pulse" />
                 <span className="text-yellow-400 text-[10px] font-black uppercase tracking-widest">Daily Spin</span>
               </div>
-              <h3 className="text-white font-black text-2xl leading-tight mb-1">Spin & Earn<br />PZA Points</h3>
-              <p className="text-white/60 text-sm mb-4">
+              <h3 className="text-white font-black text-xl leading-tight mb-1">Spin & Earn<br />PZA Points</h3>
+              <p className="text-white/60 text-sm mb-3">
                 Win up to <span className="text-yellow-300 font-black">1,000 PZA</span>.
                 Costs <span className="text-red-400 font-black">{SPIN_COST} PZA</span> per spin.
                 {localSpins} spin{localSpins !== 1 ? 's' : ''} left today!
@@ -216,7 +216,7 @@ export function RewardsSection({ totalPoints, spinsLeftToday, onPointsChanged, a
           </div>
 
           {/* Spins bar — 3 dots */}
-          <div className="relative mt-4 flex items-center gap-2">
+          <div className="relative mt-3 flex items-center gap-2">
             {Array.from({ length: 3 }).map((_, i) => (
               <div key={i} className={`h-1.5 flex-1 rounded-full transition-all ${i < localSpins ? 'bg-yellow-400' : 'bg-white/15'}`} />
             ))}
@@ -225,7 +225,7 @@ export function RewardsSection({ totalPoints, spinsLeftToday, onPointsChanged, a
         </div>
 
         {/* ── AMBASSADOR CARD ── */}
-        <div className="relative overflow-hidden bg-linear-to-br from-amber-500 via-orange-500 to-red-500 dark:from-amber-600 dark:via-orange-600 dark:to-red-600 border border-orange-400/50 rounded-2xl p-5 shadow-lg shadow-orange-500/30">
+        <div className="relative overflow-hidden bg-linear-to-br from-amber-500 via-orange-500 to-red-500 dark:from-amber-600 dark:via-orange-600 dark:to-red-600 border border-orange-400/50 rounded-2xl p-4 shadow-lg shadow-orange-500/30">
           {/* BG orbs */}
           <div className="absolute -right-8 -top-8 w-36 h-36 rounded-full bg-yellow-300/20 blur-xl" />
           <div className="absolute -left-4 -bottom-6 w-28 h-28 rounded-full bg-red-400/20 blur-xl" />
@@ -280,7 +280,7 @@ export function RewardsSection({ totalPoints, spinsLeftToday, onPointsChanged, a
 
         {/* ── MERCH STORE ── */}
         <div>
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <ShoppingBag className="w-4 h-4 text-slate-500 dark:text-slate-400" />
               <h3 className="font-black text-slate-900 dark:text-white text-sm">Merch Store</h3>
@@ -294,11 +294,11 @@ export function RewardsSection({ totalPoints, spinsLeftToday, onPointsChanged, a
             {MERCH_PRODUCTS.map((product) => {
               const canAfford = totalPoints >= product.cost;
               return (
-                <div key={product.id} className={`group relative bg-white dark:bg-slate-900 border rounded-2xl p-4 flex flex-col gap-3 transition-all hover:shadow-lg ${canAfford ? 'border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-700' : 'border-slate-100 dark:border-slate-800 opacity-70'}`}>
+                <div key={product.id} className={`group relative bg-white dark:bg-slate-900 border rounded-2xl p-3 flex flex-col gap-2 transition-all hover:shadow-lg ${canAfford ? 'border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-700' : 'border-slate-100 dark:border-slate-800 opacity-70'}`}>
                   {product.badge && (
                     <span className={`absolute top-3 right-3 text-[9px] font-black text-white px-1.5 py-0.5 rounded-full ${product.badgeColor}`}>{product.badge}</span>
                   )}
-                  <div className="w-full h-28 bg-linear-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-750 rounded-xl overflow-hidden group-hover:scale-105 transition-transform">
+                  <div className="w-full h-24 bg-linear-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-750 rounded-xl overflow-hidden group-hover:scale-105 transition-transform">
                     <img src={product.image} alt={product.name} className="w-full h-full object-cover object-center" loading="lazy" />
                   </div>
                   <div className="flex-1">
@@ -518,7 +518,7 @@ export function RewardsSection({ totalPoints, spinsLeftToday, onPointsChanged, a
       {redeemModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setRedeemModal(null)}>
           <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 w-full max-w-sm shadow-2xl" onClick={e => e.stopPropagation()}>
-            <div className="w-full h-40 bg-linear-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-750 rounded-2xl overflow-hidden mx-auto mb-4">
+            <div className="w-full h-40 bg-linear-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-750 rounded-2xl overflow-hidden mx-auto mb-3">
               <img src={redeemModal.image} alt={redeemModal.name} className="w-full h-full object-cover object-center" />
             </div>
             <h3 className="font-black text-slate-900 dark:text-white text-xl text-center mb-1">{redeemModal.name}</h3>
