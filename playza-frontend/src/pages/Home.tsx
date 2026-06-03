@@ -63,7 +63,7 @@ const Home = () => {
   const hasGames = backendGames.length > 0;
 
   return (
-    <main className="flex-1 min-w-0 space-y-3 md:space-y-4 pb-24 md:pb-10">
+    <main className="flex-1 min-w-0 space-y-3 md:space-y-4 pb-2 md:pb-4">
       <HeroBanner />
       <RecentWinners />
 
