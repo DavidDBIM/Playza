@@ -126,8 +126,6 @@ function LobbyModal({ qt, onClose, onGameStart }: {
     setMsg("");
   }
 
-  const sc = STATUS[qt.status as keyof typeof STATUS] ?? STATUS.lobby;
-
   return (
     <div onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
       style={{ position: "fixed", inset: 0, zIndex: 1000, background: "rgba(0,0,0,0.8)", backdropFilter: "blur(8px)", display: "flex", alignItems: "flex-end", justifyContent: "center", animation: "fadeInBackdrop 0.2s ease" }}>
@@ -179,7 +177,7 @@ function LobbyModal({ qt, onClose, onGameStart }: {
 
         {/* Floating reactions */}
         <div style={{ position: "relative", height: 0, overflow: "visible", zIndex: 10 }}>
-          {reactions.map(r => (
+          {reactions.map((r: { id: number; emoji: string }) => (
             <div key={r.id} style={{ position: "absolute", bottom: 0, left: `${20 + Math.random() * 60}%`, fontSize: 24, animation: "floatUp 2.5s ease-out forwards", pointerEvents: "none" }}>
               {r.emoji}
             </div>
@@ -194,7 +192,7 @@ function LobbyModal({ qt, onClose, onGameStart }: {
               👥 Players ({players.length}{qt.max_players ? `/${qt.max_players}` : ""})
             </p>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-              {players.slice(0, 30).map(p => (
+              {players.slice(0, 30).map((p: { user_id: string; username: string; avatar_url: string | null }) => (
                 <div key={p.user_id} style={{ display: "flex", alignItems: "center", gap: 5, background: p.user_id === user?.id ? "rgba(168,85,247,0.12)" : "var(--muted)", border: `1px solid ${p.user_id === user?.id ? "rgba(168,85,247,0.3)" : "var(--border)"}`, borderRadius: 20, padding: "3px 10px 3px 4px" }}>
                   {p.avatar_url
                     ? <img src={p.avatar_url} style={{ width: 18, height: 18, borderRadius: "50%", objectFit: "cover" }} alt="" />
@@ -218,7 +216,7 @@ function LobbyModal({ qt, onClose, onGameStart }: {
               {messages.length === 0 && (
                 <p style={{ fontSize: 11, color: "var(--muted-foreground)", textAlign: "center", padding: "16px 0", fontStyle: "italic" }}>No messages yet — say something! 👋</p>
               )}
-              {messages.map((m, i) => (
+              {messages.map((m: { user_id: string; username: string; avatar_url: string | null; message: string; ts: number }, i: number) => (
                 <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
                   <div style={{ width: 22, height: 22, borderRadius: "50%", background: m.user_id === user?.id ? "rgba(124,58,237,0.3)" : "var(--muted)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, color: m.user_id === user?.id ? "#c084fc" : "var(--foreground)", flexShrink: 0 }}>
                     {m.avatar_url ? <img src={m.avatar_url} style={{ width: 22, height: 22, borderRadius: "50%", objectFit: "cover" }} alt="" /> : m.username[0]?.toUpperCase()}
