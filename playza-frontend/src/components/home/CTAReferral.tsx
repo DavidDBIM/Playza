@@ -3,7 +3,7 @@ import { ZASymbol } from "../currency/ZASymbol";
 
 const CTAReferral = () => {
   return (
-    <section className="relative overflow-hidden ">
+    <section className="relative overflow-hidden">
       <div className="w-full mx-auto @container">
         <div className="relative overflow-hidden rounded-xl p-2 md:p-4 border border-black/10 dark:border-white/10 bg-slate-50/50 dark:bg-white/5">
           <div className="absolute -top-24 -right-24 w-64 h-64 rounded-full blur-[100px] opacity-20 pointer-events-none bg-primary" />
@@ -12,9 +12,6 @@ const CTAReferral = () => {
             {/* <!-- Content --> */}
             <div className="flex flex-col items-center lg:items-start text-center lg:text-left gap-2 md:gap-6 flex-1">
               <div className="space-y-2 md:space-y-4">
-                <div className="inline-flex items-center px-2 md:px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] md:text-xs font-bold uppercase tracking-widest">
-                  Limited Time Bonus
-                </div>
                 <h2 className="text-xl md:text-3xl lg:text-5xl font-black leading-tight tracking-tighter">
                   Invite Friends. <br className="lg:hidden" />
                   <span className="text-transparent bg-clip-text bg-linear-to-r from-primary to-accent">
