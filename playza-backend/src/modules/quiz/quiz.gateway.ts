@@ -433,9 +433,36 @@ export function setupQuizGateway(io: SocketServer) {
         if (game.socketToUser.get(socket.id) === userId) {
           game.socketToUser.delete(socket.id)
           game.userToSocket.delete(userId)
-          // Don't remove from alivePlayers — they're still in the game
-          // They'll be auto-eliminated if they miss an answer
         }
+      })
+    })
+
+    // ── LOBBY CHAT ────────────────────────────────────────────────────────────
+    socket.on('quiz:chat', async ({ tournament_id, message, username, avatar_url }: {
+      tournament_id: string; message: string; username: string; avatar_url?: string
+    }) => {
+      if (!message?.trim() || message.length > 200) return
+      // Only broadcast — no DB storage for lobby chat
+      quizNs.to(`quiz:${tournament_id}`).emit('quiz:chat_message', {
+        user_id: userId,
+        username,
+        avatar_url: avatar_url ?? null,
+        message: message.trim(),
+        ts: Date.now(),
+      })
+    })
+
+    // ── LOBBY REACTIONS ───────────────────────────────────────────────────────
+    socket.on('quiz:react', ({ tournament_id, emoji, username }: {
+      tournament_id: string; emoji: string; username: string
+    }) => {
+      const ALLOWED = ['🔥', '💪', '👑', '😤', '🎯', '⚡', '🚀', '😂']
+      if (!ALLOWED.includes(emoji)) return
+      quizNs.to(`quiz:${tournament_id}`).emit('quiz:reaction', {
+        user_id: userId,
+        username,
+        emoji,
+        ts: Date.now(),
       })
     })
   })
