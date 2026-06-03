@@ -12,10 +12,10 @@ const About = () => {
   return (
     <div className="glass p-2 md:p-4 rounded-xl">
       <div className="flex items-center gap-2 mb-3">
-        <span className="font-heading text-lg md:text-xl font-black text-primary uppercase tracking-tight italic">PLAYZA</span>
         <h3 className="font-heading text-base md:text-xl font-bold text-slate-900 dark:text-white">
-          — About
+          About
         </h3>
+        <img src="/logo.webp" alt="Playza" className="h-6 md:h-8 w-auto object-contain" />
       </div>
       <p className="text-slate-600 dark:text-slate-400 text-xs md:text-sm leading-relaxed mb-4">
         PLAYZA is a leading competitive skill gaming platform. We
