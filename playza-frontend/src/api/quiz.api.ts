@@ -33,6 +33,11 @@ export async function getQuizTournamentApi(id: string): Promise<QuizTournament> 
   return data.data
 }
 
+export async function getLobbyPlayersApi(id: string): Promise<{ user_id: string; username: string; avatar_url: string | null }[]> {
+  const { data } = await axiosInstance.get(`/quiz/tournaments/${id}/lobby`)
+  return data.data ?? []
+}
+
 export async function joinQuizTournamentApi(id: string) {
   const { data } = await axiosInstance.post(`/quiz/tournaments/${id}/join`)
   return data
