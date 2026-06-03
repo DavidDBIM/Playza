@@ -57,7 +57,7 @@ const HomeFAQ = () => {
   const [openIndex, setOpenIndex] = React.useState<number | null>(0);
 
   return (
-    <section className="px-2 space-y-6">
+    <section className="px-2 space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-9 h-9 rounded-xl bg-primary/20 flex items-center justify-center text-primary shadow-lg shadow-primary/10">
@@ -78,7 +78,7 @@ const HomeFAQ = () => {
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 gap-3">
+      <div className="grid grid-cols-1 gap-2">
         {homeFaqs.map((faq, index) => (
           <HomeAccordionItem 
             key={index} 
