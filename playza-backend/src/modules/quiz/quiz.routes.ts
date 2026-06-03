@@ -328,6 +328,30 @@ router.post('/tournaments/:id/join', requireAuth, async (req: AuthRequest, res) 
   }
 })
 
+// ── GET /quiz/tournaments/:id/lobby  — players in lobby
+router.get('/tournaments/:id/lobby', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('quiz_players')
+      .select('user_id, users!inner(username, avatar_url)')
+      .eq('tournament_id', req.params.id)
+      .order('created_at', { ascending: true })
+      .limit(100)
+
+    if (error) throw error
+
+    const players = (data ?? []).map((p: any) => ({
+      user_id: p.user_id,
+      username: p.users?.username ?? 'Player',
+      avatar_url: p.users?.avatar_url ?? null,
+    }))
+
+    res.json({ success: true, data: players })
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message })
+  }
+})
+
 // ── GET /quiz/tournaments/:id/leaderboard
 router.get('/tournaments/:id/leaderboard', requireAuth, async (req, res) => {
   try {
