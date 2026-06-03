@@ -1,156 +1,196 @@
 import { useState, useEffect, useRef } from "react";
-import { 
-  ChevronLeft, 
-  ChevronRight, 
+import {
+  ChevronLeft,
+  ChevronRight,
   Play,
   Trophy,
   ArrowRight,
   Users,
   Zap,
-  Sparkles
+  Sparkles,
 } from "lucide-react";
 import { Link } from "react-router";
 import { games } from "@/data/games";
+import { useBannerSlides } from "@/hooks/useBannerSlides";
+import type { BannerSlide } from "@/api/banner.api";
 
+// ── Fallback hardcoded slides (used when API returns nothing) ─────────────────
 const tournamentGame = games.find((g) => g.mode === "Tournament") || games[1];
-const newReleaseGame = games.find((g) => g.badge === "NEW" || g.category === "Arcade") || games[1];
+const newReleaseGame =
+  games.find((g) => g.badge === "NEW" || g.category === "Arcade") || games[1];
 
-const slides = [
+const FALLBACK_SLIDES = [
   {
-    id: 5,
+    id: "fallback-1",
     tag: "WELCOME",
     title: "WELCOME TO PLAYZA",
     subtitle: "THE ULTIMATE GAMING HUB",
-    desc: "Join thousands of players in the most rewarding arcade experience.",
-    btn: "Join Now",
-    link: "/registration",
-    icon: <Sparkles size={14} />,
+    description: "Join thousands of players in the most rewarding arcade experience.",
+    button_text: "Join Now",
+    button_link: "/registration",
+    image_url: "/hero.webp",
     color: "from-amber-500 to-yellow-900",
     accent: "bg-amber-500",
-    image: "/hero.webp"
+    is_active: true,
+    sort_order: 0,
   },
   {
-    id: 1,
+    id: "fallback-2",
     tag: "PLATFORM",
     title: "MASTER YOUR SKILLS",
     subtitle: "EARN REAL PZA REWARDS",
-    desc: "Compete in high-stakes arcade challenges and win.",
-    btn: "Start Playing",
-    link: "/games",
-    icon: <Play size={14} />,
+    description: "Compete in high-stakes arcade challenges and win.",
+    button_text: "Start Playing",
+    button_link: "/games",
+    image_url: "/hero.webp",
     color: "from-blue-600 to-indigo-900",
     accent: "bg-blue-500",
-    image: "/hero.webp"
+    is_active: true,
+    sort_order: 1,
   },
   {
-    id: 2,
+    id: "fallback-3",
     tag: "CHAMPIONSHIP",
     title: tournamentGame.title.toUpperCase(),
     subtitle: "ZA50,000 PRIZE POOL",
-    desc: `Join the arena. Entry fee only ZA${tournamentGame.entryFee}.`,
-    btn: "Enter Arena",
-    link: `/tournaments/${tournamentGame.slug}`,
-    icon: <Trophy size={14} />,
+    description: `Join the arena. Entry fee only ZA${tournamentGame.entryFee}.`,
+    button_text: "Enter Arena",
+    button_link: `/tournaments/${tournamentGame.slug}`,
+    image_url: tournamentGame.thumbnail,
     color: "from-emerald-600 to-teal-900",
     accent: "bg-emerald-500",
-    image: tournamentGame.thumbnail
+    is_active: true,
+    sort_order: 2,
   },
   {
-    id: 3,
+    id: "fallback-4",
     tag: "NEW DROP",
     title: newReleaseGame.title.toUpperCase(),
     subtitle: "THE FUTURE OF ARCADE",
-    desc: "Experience next-gen gameplay mechanics today.",
-    btn: "Launch Game",
-    link: `/games/${newReleaseGame.slug}`,
-    icon: <Zap size={14} />,
+    description: "Experience next-gen gameplay mechanics today.",
+    button_text: "Launch Game",
+    button_link: `/games/${newReleaseGame.slug}`,
+    image_url: newReleaseGame.thumbnail,
     color: "from-violet-600 to-purple-900",
     accent: "bg-violet-500",
-    image: newReleaseGame.thumbnail
+    is_active: true,
+    sort_order: 3,
   },
   {
-    id: 4,
+    id: "fallback-5",
     tag: "NETWORK",
     title: "EXPAND YOUR SQUAD",
     subtitle: "EARN ZA5,000 PER FRIEND",
-    desc: "Refer teammates and grow your legacy together.",
-    btn: "Refer Friends",
-    link: "/referral",
-    icon: <Users size={14} />,
+    description: "Refer teammates and grow your legacy together.",
+    button_text: "Refer Friends",
+    button_link: "/referral",
+    image_url: null,
     color: "from-orange-600 to-red-900",
     accent: "bg-orange-500",
-    image: null
-  }
+    is_active: true,
+    sort_order: 4,
+  },
 ];
 
+// ── Icon map — pick an icon based on tag keyword ──────────────────────────────
+const tagIcon = (tag: string) => {
+  const t = tag.toLowerCase();
+  if (t.includes("welcome") || t.includes("new")) return <Sparkles size={14} />;
+  if (t.includes("champion") || t.includes("tournament") || t.includes("trophy"))
+    return <Trophy size={14} />;
+  if (t.includes("drop") || t.includes("zap") || t.includes("speed"))
+    return <Zap size={14} />;
+  if (t.includes("network") || t.includes("refer") || t.includes("friend"))
+    return <Users size={14} />;
+  return <Play size={14} />;
+};
+
+// ── Component ─────────────────────────────────────────────────────────────────
 const HeroBanner = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
 
+  const { data: apiSlides, isLoading } = useBannerSlides();
+
+  // Use API slides if available & non-empty, else fallback
+  const slides: BannerSlide[] =
+    apiSlides && apiSlides.length > 0
+      ? apiSlides.filter((s) => s.is_active).sort((a, b) => a.sort_order - b.sort_order)
+      : (FALLBACK_SLIDES as BannerSlide[]);
+
   const scrollToIndex = (index: number) => {
     if (!scrollRef.current) return;
     const width = scrollRef.current.clientWidth;
-    scrollRef.current.scrollTo({
-      left: index * width,
-      behavior: "smooth"
-    });
+    scrollRef.current.scrollTo({ left: index * width, behavior: "smooth" });
     setActiveIndex(index);
   };
 
-  // Auto-scroll logic
+  // Reset to first slide when slides change (e.g. API loads)
   useEffect(() => {
-    if (isPaused) return;
-    
-    const interval = setInterval(() => {
-      const nextIndex = (activeIndex + 1) % slides.length;
-      scrollToIndex(nextIndex);
-    }, 5000);
+    setActiveIndex(0);
+    scrollRef.current?.scrollTo({ left: 0, behavior: "instant" });
+  }, [slides.length]);
 
+  // Auto-scroll
+  useEffect(() => {
+    if (isPaused || slides.length <= 1) return;
+    const interval = setInterval(() => {
+      scrollToIndex((activeIndex + 1) % slides.length);
+    }, 5000);
     return () => clearInterval(interval);
-  }, [activeIndex, isPaused]);
+  }, [activeIndex, isPaused, slides.length]);
 
   const handleScroll = () => {
     if (!scrollRef.current) return;
     const width = scrollRef.current.clientWidth;
     const newIndex = Math.round(scrollRef.current.scrollLeft / width);
-    if (newIndex !== activeIndex) {
-      setActiveIndex(newIndex);
-    }
+    if (newIndex !== activeIndex) setActiveIndex(newIndex);
   };
 
   const next = () => scrollToIndex((activeIndex + 1) % slides.length);
   const prev = () => scrollToIndex((activeIndex - 1 + slides.length) % slides.length);
 
+  // Loading skeleton
+  if (isLoading) {
+    return (
+      <section className="relative w-full">
+        <div className="h-52 md:h-64 rounded-2xl bg-slate-900 animate-pulse border border-white/5" />
+      </section>
+    );
+  }
+
   return (
-    <section 
+    <section
       className="relative w-full group"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
       {/* Slider Container */}
-      <div 
+      <div
         ref={scrollRef}
         onScroll={handleScroll}
         className="flex overflow-x-auto scrollbar-hide snap-x snap-mandatory h-52 md:h-64 rounded-2xl border border-white/5 bg-slate-950"
       >
         {slides.map((slide) => (
-          <div 
+          <div
             key={slide.id}
             className="shrink-0 w-full h-full snap-start relative overflow-hidden flex items-center"
           >
             {/* Background Graphic */}
             <div className={`absolute inset-0 bg-linear-to-br ${slide.color} opacity-20`} />
             <div className="absolute inset-0 bg-linear-to-r from-slate-950 via-slate-950/80 to-transparent z-10" />
-            
+
             {/* Decorative Shapes */}
-            <div className={`absolute top-0 right-0 w-1/2 h-full ${slide.accent} opacity-5 blur-[100px] rounded-full translate-x-1/4 -translate-y-1/4`} />
-            
-            {/* Slide Image - Shaped */}
-            {slide.image && (
+            <div
+              className={`absolute top-0 right-0 w-1/2 h-full ${slide.accent} opacity-5 blur-[100px] rounded-full translate-x-1/4 -translate-y-1/4`}
+            />
+
+            {/* Slide Image */}
+            {slide.image_url && (
               <div className="absolute right-4 md:right-12 top-1/2 -translate-y-1/2 w-32 md:w-48 h-28 md:h-36 z-0">
-                <img 
-                  src={slide.image}
+                <img
+                  src={slide.image_url}
                   alt={slide.title}
                   loading="lazy"
                   className="w-full h-full object-cover rounded-3xl rotate-6 border border-white/10 opacity-40 md:opacity-100"
@@ -161,12 +201,14 @@ const HeroBanner = () => {
             {/* Content Layer */}
             <div className="relative z-20 px-6 md:px-12 flex flex-col items-start gap-1 md:gap-2">
               <div className="flex items-center gap-2 mb-1">
-                <div className={`px-2 py-0.5 ${slide.accent} rounded-md text-[9px] font-black text-white uppercase tracking-widest`}>
+                <div
+                  className={`px-2 py-0.5 ${slide.accent} rounded-md text-[9px] font-black text-white uppercase tracking-widest`}
+                >
                   {slide.tag}
                 </div>
                 <div className="h-px w-8 bg-white/20" />
               </div>
-              
+
               <div className="space-y-0.5 md:space-y-1">
                 <h2 className="text-[10px] md:text-sm lg:text-lg font-black text-white uppercase tracking-tighter leading-tight italic">
                   {slide.title}
@@ -175,17 +217,17 @@ const HeroBanner = () => {
                   {slide.subtitle}
                 </p>
                 <p className="text-[9px] md:text-[10px] lg:text-xs text-slate-500 font-bold max-w-xs md:max-w-sm leading-tight">
-                  {slide.desc}
+                  {slide.description}
                 </p>
               </div>
 
               <div className="mt-2 flex items-center gap-4">
                 <Link
-                  to={slide.link}
+                  to={slide.button_link}
                   className={`flex items-center gap-2 px-4 md:px-6 py-2 ${slide.accent} text-white font-black text-[10px] md:text-xs uppercase tracking-widest rounded-lg`}
                 >
-                  {slide.icon}
-                  {slide.btn}
+                  {tagIcon(slide.tag)}
+                  {slide.button_text}
                   <ArrowRight size={12} />
                 </Link>
               </div>
@@ -229,4 +271,3 @@ const HeroBanner = () => {
 };
 
 export default HeroBanner;
-
