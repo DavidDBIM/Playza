@@ -25,6 +25,7 @@ import ReferralPayouts from "./pages/ReferralPayouts";
 import Feedback from "./pages/Feedback";
 import SecurityLogs from "./pages/SecurityLogs";
 import { SecurityWrapper } from "./components/auth/SecurityWrapper";
+import BannerSlides from "./pages/BannerSlides";
 
 // Placeholder components for routes
 const Placeholder = ({ name }: { name: string }) => (
@@ -71,6 +72,7 @@ const App: React.FC = () => {
               <Route path="security-logs" element={<SecurityLogs />} />
               <Route path="content" element={<Placeholder name="Content" />} />
               <Route path="quiz-tournaments" element={<QuizTournaments />} />
+              <Route path="banner-slides" element={<BannerSlides />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
           </Route>
