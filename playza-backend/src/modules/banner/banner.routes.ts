@@ -12,7 +12,19 @@ import {
 
 const router = Router()
 
-// ── Public: frontend fetches active slides ────────────────────────────────────
+async function ensureBannerBucket() {
+  const bucketId = 'banners'
+  const { data: buckets } = await supabaseAdmin.storage.listBuckets()
+  const exists = buckets?.some((b: any) => b.name === bucketId)
+  if (!exists) {
+    await supabaseAdmin.storage.createBucket(bucketId, {
+      public: true,
+      allowedMimeTypes: ['image/png', 'image/jpeg', 'image/gif', 'image/webp'],
+    })
+  }
+  return bucketId
+}
+
 router.get('/', async (req, res) => {
   try {
     const all = req.query.all === 'true'
@@ -23,7 +35,6 @@ router.get('/', async (req, res) => {
   }
 })
 
-// ── Admin: create ─────────────────────────────────────────────────────────────
 router.post('/', requireAdmin, async (req: AuthRequest, res) => {
   try {
     const data = await createBanner(req.body)
@@ -33,7 +44,6 @@ router.post('/', requireAdmin, async (req: AuthRequest, res) => {
   }
 })
 
-// ── Admin: update ─────────────────────────────────────────────────────────────
 router.put('/:id', requireAdmin, async (req: AuthRequest, res) => {
   try {
     const data = await updateBanner(req.params.id, req.body)
@@ -43,7 +53,6 @@ router.put('/:id', requireAdmin, async (req: AuthRequest, res) => {
   }
 })
 
-// ── Admin: delete ─────────────────────────────────────────────────────────────
 router.delete('/:id', requireAdmin, async (req: AuthRequest, res) => {
   try {
     await deleteBanner(req.params.id)
@@ -53,7 +62,6 @@ router.delete('/:id', requireAdmin, async (req: AuthRequest, res) => {
   }
 })
 
-// ── Admin: reorder ────────────────────────────────────────────────────────────
 router.post('/reorder', requireAdmin, async (req: AuthRequest, res) => {
   try {
     const { ids } = req.body
@@ -65,26 +73,26 @@ router.post('/reorder', requireAdmin, async (req: AuthRequest, res) => {
   }
 })
 
-// ── Admin: upload image (base64 → Supabase Storage, no multer needed) ─────────
 router.post('/upload', requireAdmin, async (req: AuthRequest, res) => {
   try {
     const { base64, filename, mimeType } = req.body
     if (!base64 || !filename) return res.status(400).json({ success: false, message: 'base64 and filename required' })
 
-    // Strip data URI prefix if present: "data:image/png;base64,..."
-    const raw = base64.includes(',') ? base64.split(',')[1] : base64
-    const buffer = Buffer.from(raw, 'base64')
+    const match = base64.match(/^data:(.+?);base64,(.+)$/)
+    const raw = match ? match[2] : base64
+    const mime = match ? match[1] : (mimeType || 'image/jpeg')
+    const ext = mime.split('/')[1]?.replace('jpeg', 'jpg') ?? 'jpg'
+    const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
 
-    const ext = filename.split('.').pop() || 'jpg'
-    const path = `banners/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+    const bucketId = await ensureBannerBucket()
 
     const { error } = await supabaseAdmin.storage
-      .from('media')         // ← change 'media' to your actual bucket name if different
-      .upload(path, buffer, { contentType: mimeType || 'image/jpeg', upsert: false })
+      .from(bucketId)
+      .upload(path, Buffer.from(raw, 'base64'), { contentType: mime, upsert: false })
 
     if (error) throw new Error(error.message)
 
-    const { data: urlData } = supabaseAdmin.storage.from('media').getPublicUrl(path)
+    const { data: urlData } = supabaseAdmin.storage.from(bucketId).getPublicUrl(path)
     res.json({ success: true, url: urlData.publicUrl })
   } catch (err: any) {
     res.status(500).json({ success: false, message: err.message })
