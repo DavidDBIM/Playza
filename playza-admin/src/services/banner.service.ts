@@ -33,7 +33,7 @@ export interface BannerSlideInput {
 
 export const bannerService = {
   async getAllSlides(): Promise<BannerSlide[]> {
-    const response = await apiClient.get('/banners');
+    const response = await apiClient.get('/banners?all=true');
     return response.data?.data || response.data || [];
   },
 
@@ -55,13 +55,21 @@ export const bannerService = {
     await apiClient.post('/banners/reorder', { ids });
   },
 
-  // Upload image and get back a URL
+  // Convert file → base64 and upload (no multer dependency on backend)
   async uploadImage(file: File): Promise<string> {
-    const formData = new FormData();
-    formData.append('image', file);
-    const response = await apiClient.post('/banners/upload', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+    const base64 = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
     });
-    return response.data?.url || response.data?.data?.url;
+
+    const response = await apiClient.post('/banners/upload', {
+      base64,
+      filename: file.name,
+      mimeType: file.type,
+    });
+
+    return response.data?.url;
   },
 };
