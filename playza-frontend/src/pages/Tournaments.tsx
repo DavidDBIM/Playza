@@ -245,18 +245,21 @@ function LobbyModal({ qt, onClose, onGameStart }: {
               </button>
             ))}
           </div>
-          {/* Chat input */}
           <div style={{ display: "flex", gap: 8 }}>
             <input
-              type="text" placeholder={connected ? "Say something..." : "Connecting..."}
+              type="text"
+              placeholder={connected ? "Say something..." : "Connecting..."}
               value={msg}
               onChange={e => setMsg(e.target.value)}
-              onKeyDown={e => { if (e.key === "Enter") handleSend(); }}
+              onKeyDown={e => { if (e.key === "Enter" && msg.trim()) handleSend(); }}
               maxLength={200}
-              disabled={!connected}
               style={{ flex: 1, padding: "9px 12px", borderRadius: 10, fontSize: 13, background: "var(--muted)", border: "1px solid var(--border)", color: "var(--foreground)", outline: "none", opacity: connected ? 1 : 0.5 }}
             />
-            <button onClick={handleSend} disabled={!msg.trim() || !connected} style={{ padding: "9px 14px", borderRadius: 10, background: msg.trim() && connected ? "#7c3aed" : "var(--muted)", border: "none", cursor: msg.trim() && connected ? "pointer" : "not-allowed", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s" }}>
+            <button
+              onClick={handleSend}
+              disabled={!msg.trim() || !connected}
+              style={{ padding: "9px 14px", borderRadius: 10, background: msg.trim() && connected ? "#7c3aed" : "var(--muted)", border: "none", cursor: msg.trim() && connected ? "pointer" : "not-allowed", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s" }}
+            >
               <Send size={14} style={{ color: msg.trim() && connected ? "#fff" : "var(--muted-foreground)" }} />
             </button>
           </div>
