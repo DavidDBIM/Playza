@@ -51,7 +51,7 @@ async function getPlayers(tournamentId: string) {
     .from('quiz_players')
     .select('user_id, users!inner(email, username)')
     .eq('tournament_id', tournamentId)
-  return (data ?? []) as Array<{ user_id: string; users: { email: string; username: string } }>
+  return (data ?? []) as unknown as Array<{ user_id: string; users: { email: string; username: string } }>
 }
 
 // ── Email templates ───────────────────────────────────────────────────────────
