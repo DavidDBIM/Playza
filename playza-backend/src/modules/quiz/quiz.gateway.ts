@@ -370,6 +370,24 @@ export function setupQuizGateway(io: SocketServer) {
 
         socket.emit('quiz:leaderboard_update', { leaderboard: lb ?? [] })
 
+        // Load last 50 chat messages so history persists across refreshes
+        const { data: chatHistory } = await supabaseAdmin
+          .from('quiz_lobby_chat')
+          .select('user_id, username, avatar_url, message, created_at')
+          .eq('tournament_id', tournament_id)
+          .order('created_at', { ascending: true })
+          .limit(50)
+
+        if (chatHistory?.length) {
+          socket.emit('quiz:chat_history', chatHistory.map(m => ({
+            user_id: m.user_id,
+            username: m.username,
+            avatar_url: m.avatar_url,
+            message: m.message,
+            ts: new Date(m.created_at).getTime(),
+          })))
+        }
+
         // If game already active, send current question state
         if (game.status === 'active' && game.currentQuestion) {
           const elapsed = Date.now() - game.currentQuestion.startedAt
@@ -448,13 +466,30 @@ export function setupQuizGateway(io: SocketServer) {
       tournament_id: string; message: string; username: string; avatar_url?: string
     }) => {
       if (!message?.trim() || message.length > 200) return
-      // Only broadcast — no DB storage for lobby chat
+
+      const trimmed = message.trim()
+      const ts = Date.now()
+
+      // Save to DB so messages persist across refreshes
+      try {
+        await supabaseAdmin.from('quiz_lobby_chat').insert({
+          tournament_id,
+          user_id: userId,
+          username,
+          avatar_url: avatar_url ?? null,
+          message: trimmed,
+        })
+      } catch (err) {
+        console.error('[QuizGateway] Failed to save chat message:', err)
+      }
+
+      // Broadcast to everyone in the room including sender
       quizNs.to(`quiz:${tournament_id}`).emit('quiz:chat_message', {
         user_id: userId,
         username,
         avatar_url: avatar_url ?? null,
-        message: message.trim(),
-        ts: Date.now(),
+        message: trimmed,
+        ts,
       })
     })
 
