@@ -14,7 +14,6 @@ import { games } from "@/data/games";
 import { useBannerSlides } from "@/hooks/useBannerSlides";
 import type { BannerSlide } from "@/api/banner.api";
 
-// ── Fallback hardcoded slides (used when API returns nothing) ─────────────────
 const tournamentGame = games.find((g) => g.mode === "Tournament") || games[1];
 const newReleaseGame =
   games.find((g) => g.badge === "NEW" || g.category === "Arcade") || games[1];
@@ -92,7 +91,6 @@ const FALLBACK_SLIDES = [
   },
 ];
 
-// ── Icon map — pick an icon based on tag keyword ──────────────────────────────
 const tagIcon = (tag: string) => {
   const t = tag.toLowerCase();
   if (t.includes("welcome") || t.includes("new")) return <Sparkles size={14} />;
@@ -105,7 +103,6 @@ const tagIcon = (tag: string) => {
   return <Play size={14} />;
 };
 
-// ── Component ─────────────────────────────────────────────────────────────────
 const HeroBanner = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -113,7 +110,6 @@ const HeroBanner = () => {
 
   const { data: apiSlides, isLoading } = useBannerSlides();
 
-  // Use API slides if available & non-empty, else fallback
   const slides: BannerSlide[] =
     apiSlides && apiSlides.length > 0
       ? apiSlides.filter((s) => s.is_active).sort((a, b) => a.sort_order - b.sort_order)
@@ -126,13 +122,11 @@ const HeroBanner = () => {
     setActiveIndex(index);
   };
 
-  // Reset to first slide when slides change (e.g. API loads)
   useEffect(() => {
     setActiveIndex(0);
     scrollRef.current?.scrollTo({ left: 0, behavior: "instant" });
   }, [slides.length]);
 
-  // Auto-scroll
   useEffect(() => {
     if (isPaused || slides.length <= 1) return;
     const interval = setInterval(() => {
@@ -151,7 +145,6 @@ const HeroBanner = () => {
   const next = () => scrollToIndex((activeIndex + 1) % slides.length);
   const prev = () => scrollToIndex((activeIndex - 1 + slides.length) % slides.length);
 
-  // Loading skeleton
   if (isLoading) {
     return (
       <section className="relative w-full">
@@ -166,7 +159,6 @@ const HeroBanner = () => {
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      {/* Slider Container */}
       <div
         ref={scrollRef}
         onScroll={handleScroll}
@@ -177,28 +169,27 @@ const HeroBanner = () => {
             key={slide.id}
             className="shrink-0 w-full h-full snap-start relative overflow-hidden flex items-center"
           >
-            {/* Background Graphic */}
-            <div className={`absolute inset-0 bg-linear-to-br ${slide.color} opacity-20`} />
-            <div className="absolute inset-0 bg-linear-to-r from-slate-950 via-slate-950/80 to-transparent z-10" />
-
-            {/* Decorative Shapes */}
-            <div
-              className={`absolute top-0 right-0 w-1/2 h-full ${slide.accent} opacity-5 blur-[100px] rounded-full translate-x-1/4 -translate-y-1/4`}
-            />
-
-            {/* Slide Image */}
-            {slide.image_url && (
-              <div className="absolute right-4 md:right-12 top-1/2 -translate-y-1/2 w-32 md:w-48 h-28 md:h-36 z-0">
+            {/* Full background image OR gradient fallback */}
+            {slide.image_url ? (
+              <>
                 <img
                   src={slide.image_url}
                   alt={slide.title}
                   loading="lazy"
-                  className="w-full h-full object-cover rounded-3xl rotate-6 border border-white/10 opacity-40 md:opacity-100"
+                  className="absolute inset-0 w-full h-full object-cover z-0"
                 />
-              </div>
+                {/* Dark overlay so text stays readable over any image */}
+                <div className="absolute inset-0 bg-linear-to-r from-slate-950/95 via-slate-950/60 to-slate-950/20 z-10" />
+              </>
+            ) : (
+              <>
+                <div className={`absolute inset-0 bg-linear-to-br ${slide.color} opacity-30`} />
+                <div className="absolute inset-0 bg-linear-to-r from-slate-950 via-slate-950/80 to-transparent z-10" />
+                <div className={`absolute top-0 right-0 w-1/2 h-full ${slide.accent} opacity-5 blur-[100px] rounded-full translate-x-1/4 -translate-y-1/4`} />
+              </>
             )}
 
-            {/* Content Layer */}
+            {/* Content */}
             <div className="relative z-20 px-6 md:px-12 flex flex-col items-start gap-1 md:gap-2">
               <div className="flex items-center gap-2 mb-1">
                 <div
@@ -216,7 +207,7 @@ const HeroBanner = () => {
                 <p className="text-[10px] md:text-xs lg:text-sm font-bold text-slate-300 uppercase tracking-wide leading-none">
                   {slide.subtitle}
                 </p>
-                <p className="text-[9px] md:text-[10px] lg:text-xs text-slate-500 font-bold max-w-xs md:max-w-sm leading-tight">
+                <p className="text-[9px] md:text-[10px] lg:text-xs text-slate-400 font-bold max-w-xs md:max-w-sm leading-tight">
                   {slide.description}
                 </p>
               </div>
@@ -236,7 +227,7 @@ const HeroBanner = () => {
         ))}
       </div>
 
-      {/* Manual Navigation */}
+      {/* Nav arrows */}
       <div className="absolute inset-y-0 left-2 flex items-center z-30 pointer-events-none">
         <button
           onClick={prev}
@@ -254,7 +245,7 @@ const HeroBanner = () => {
         </button>
       </div>
 
-      {/* Pagination Indicators */}
+      {/* Dots */}
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-30">
         {slides.map((_, index) => (
           <button
