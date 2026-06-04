@@ -738,9 +738,13 @@ function TCard({ qt, featured, onRegistered }: { qt: QuizTournament; featured?: 
                 <Link to={`/quiz/${qt.id}`} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 5, padding: "9px", borderRadius: 9, fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", textDecoration: "none", background: sc.color, color: "#fff", boxShadow: `0 3px 12px ${sc.color}35` }}>
                   <Eye size={11} /> Watch Live
                 </Link>
+              ) : qt.status === "completed" || qt.status === "cancelled" ? (
+                <Link to={`/quiz/${qt.id}`} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 4, padding: "9px", borderRadius: 9, fontSize: 10, fontWeight: 700, textTransform: "uppercase", textDecoration: "none", background: "var(--muted)", color: "var(--muted-foreground)" }}>
+                  Results
+                </Link>
               ) : registered ? (
                 <button
-                  onClick={() => isLobby ? setShowLobby(true) : null}
+                  onClick={() => isLobby ? setShowLobby(true) : undefined}
                   style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 4, padding: "9px", borderRadius: 9, fontSize: 10, fontWeight: 700, textTransform: "uppercase", background: isLobby ? "rgba(245,158,11,0.1)" : "rgba(22,163,74,0.1)", color: isLobby ? "#f59e0b" : "#16a34a", border: `1px solid ${isLobby ? "rgba(245,158,11,0.3)" : "rgba(22,163,74,0.3)"}`, cursor: isLobby ? "pointer" : "default" }}
                 >
                   {isLobby ? <><Clock size={11} /> In Lobby ›</> : <><CheckCircle size={11} /> Registered</>}
@@ -753,10 +757,16 @@ function TCard({ qt, featured, onRegistered }: { qt: QuizTournament; featured?: 
                 <button onClick={handleRegister} disabled={isPending} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 5, padding: "9px", borderRadius: 9, fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", background: isPending ? `${sc.color}80` : sc.color, color: "#fff", border: "none", cursor: isPending ? "not-allowed" : "pointer", boxShadow: `0 3px 12px ${sc.color}35`, transition: "all 0.2s" }}>
                   {isPending ? <><Loader2 size={11} className="animate-spin" /> Joining...</> : <><Zap size={11} /> Register</>}
                 </button>
+              ) : isLobby ? (
+                // In lobby but not registered — registration was closed
+                <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 4, padding: "9px", borderRadius: 9, fontSize: 10, fontWeight: 700, textTransform: "uppercase", background: "rgba(245,158,11,0.08)", color: "rgba(245,158,11,0.6)", border: "1px solid rgba(245,158,11,0.2)" }}>
+                  🔒 Closed
+                </div>
               ) : (
-                <Link to={`/quiz/${qt.id}`} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 4, padding: "9px", borderRadius: 9, fontSize: 10, fontWeight: 700, textTransform: "uppercase", textDecoration: "none", background: "var(--muted)", color: "var(--muted-foreground)" }}>
-                  Results
-                </Link>
+                // Draft — registration not open yet
+                <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 4, padding: "9px", borderRadius: 9, fontSize: 10, fontWeight: 700, textTransform: "uppercase", background: "var(--muted)", color: "var(--muted-foreground)", border: "1px solid var(--border)" }}>
+                  Coming Soon
+                </div>
               )}
             </div>
           </div>
