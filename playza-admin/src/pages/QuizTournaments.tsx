@@ -1070,8 +1070,8 @@ const QuizTournaments: React.FC = () => {
 
   const { mutate: startT } = useMutation({
     mutationFn: api.startTournament,
-    onMutate: (id) => { setPendingStart(id); patchCache(id, { status: "lobby" }); },
-    onSuccess: (_data, id) => { setPendingStart(null); patchCache(id, { status: "lobby" }); showToast("Registration is now open!"); },
+    onMutate: (id) => { setPendingStart(id); patchCache(id, { status: "registration" }); },
+    onSuccess: (_data, id) => { setPendingStart(null); patchCache(id, { status: "registration" }); showToast("Registration is now open!"); },
     onError: (err: any, _id) => { setPendingStart(null); queryClient.invalidateQueries({ queryKey: ["admin-quiz-tournaments"] }); setStartError(err?.response?.data?.message ?? err?.message ?? "Failed to open registration"); },
   });
 
