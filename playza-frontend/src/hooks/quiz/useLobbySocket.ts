@@ -67,6 +67,11 @@ export function useLobbySocket(tournamentId: string | null) {
       setMessages(prev => [...prev.slice(-99), msg])
     })
 
+    // Load persisted history on join (so messages survive refresh)
+    socket.on('quiz:chat_history', (history: ChatMessage[]) => {
+      setMessages(history.slice(-100))
+    })
+
     socket.on('quiz:reaction', (r: Omit<Reaction, 'id'>) => {
       const id = ++reactionIdRef.current
       setReactions(prev => [...prev, { ...r, id }])
