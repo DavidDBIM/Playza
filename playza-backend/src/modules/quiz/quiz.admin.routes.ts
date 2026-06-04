@@ -122,7 +122,7 @@ router.post('/tournaments/:id/start', requireAdmin, async (req, res) => {
       .single()
 
     if (!tournament) { res.status(404).json({ success: false, message: 'Not found' }); return }
-    if (!['draft', 'lobby'].includes(tournament.status)) {
+    if (!['draft'].includes(tournament.status)) {
       res.status(400).json({ success: false, message: `Cannot open registration for a tournament with status: ${tournament.status}` })
       return
     }
@@ -139,7 +139,7 @@ router.post('/tournaments/:id/start', requireAdmin, async (req, res) => {
 
     const { error: updateErr } = await supabaseAdmin
       .from('quiz_tournaments')
-      .update({ status: 'lobby' })
+      .update({ status: 'registration' })
       .eq('id', id)
 
     if (updateErr) {
