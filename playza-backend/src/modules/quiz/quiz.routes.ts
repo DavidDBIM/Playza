@@ -124,6 +124,8 @@ router.get('/tournaments', async (req, res) => {
       max_players: t.max_players ?? null,
       prize_distribution: t.prize_distribution ?? null,
       platform_fee_percentage: t.platform_fee_percentage ?? 10,
+      registration_end: t.registration_end ?? null,
+      scheduled_at: t.scheduled_at ?? null,
     }))
 
     res.json({ success: true, data: enriched })
