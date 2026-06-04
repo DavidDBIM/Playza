@@ -2,14 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { io, Socket } from 'socket.io-client'
 import { useAuth } from '@/context/auth'
 
-// Use same URL pattern as useQuizSocket
 const SOCKET_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
-
-export interface LobbyPlayer {
-  user_id: string
-  username: string
-  avatar_url: string | null
-}
 
 export interface ChatMessage {
   user_id: string
@@ -29,46 +22,40 @@ export interface Reaction {
 
 export function useLobbySocket(tournamentId: string | null) {
   const { user } = useAuth()
-  const socketRef  = useRef<Socket | null>(null)
-  const joinedRef  = useRef(false) // track room join confirmation
-  const [connected,    setConnected]    = useState(false)
-  const [playerCount,  setPlayerCount]  = useState(0)
-  const [gameStarted,  setGameStarted]  = useState(false)
-  const [messages,     setMessages]     = useState<ChatMessage[]>([])
-  const [reactions,    setReactions]    = useState<Reaction[]>([])
+  const socketRef     = useRef<Socket | null>(null)
   const reactionIdRef = useRef(0)
+  const [connected,   setConnected]   = useState(false)
+  const [playerCount, setPlayerCount] = useState(0)
+  const [gameStarted, setGameStarted] = useState(false)
+  const [messages,    setMessages]    = useState<ChatMessage[]>([])
+  const [reactions,   setReactions]   = useState<Reaction[]>([])
 
   useEffect(() => {
     if (!tournamentId || !user?.id) return
 
     const socket = io(`${SOCKET_URL}/quiz`, {
-      auth: { userId: user.id }, // matches what gateway expects
+      auth: { userId: user.id },
       transports: ['websocket'],
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
     })
     socketRef.current = socket
-    joinedRef.current = false
 
     socket.on('connect', () => {
       setConnected(true)
-      // Emit quiz:join — this puts us in the room on the backend
       socket.emit('quiz:join', { tournament_id: tournamentId })
     })
 
     socket.on('connect_error', (err) => {
-      console.error('[LobbySocket] Connection error:', err.message)
+      console.error('[LobbySocket] connect error:', err.message)
     })
 
     socket.on('disconnect', (reason) => {
       setConnected(false)
-      joinedRef.current = false
-      console.log('[LobbySocket] Disconnected:', reason)
+      console.log('[LobbySocket] disconnected:', reason)
     })
 
-    // Receiving lobby_update means we've successfully joined the room
-    socket.on('quiz:lobby_update', ({ player_count }: { player_count: number; status?: string }) => {
-      joinedRef.current = true
+    socket.on('quiz:lobby_update', ({ player_count }: { player_count: number }) => {
       setPlayerCount(player_count)
     })
 
@@ -89,7 +76,6 @@ export function useLobbySocket(tournamentId: string | null) {
     })
 
     return () => {
-      joinedRef.current = false
       socket.disconnect()
       socketRef.current = null
     }
@@ -97,14 +83,7 @@ export function useLobbySocket(tournamentId: string | null) {
 
   const sendMessage = useCallback((message: string) => {
     const socket = socketRef.current
-    if (!socket?.connected || !tournamentId || !user) {
-      console.warn('[LobbySocket] Cannot send message — not connected or no tournament')
-      return
-    }
-    if (!joinedRef.current) {
-      console.warn('[LobbySocket] Cannot send message — not yet joined room')
-      return
-    }
+    if (!socket?.connected || !tournamentId || !user) return
     socket.emit('quiz:chat', {
       tournament_id: tournamentId,
       message,
