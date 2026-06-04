@@ -34,6 +34,7 @@ import soloearnRoutes from './modules/soloearn/soloearn.routes'
 import gamesessionRoutes from './modules/gamesession/gamesession.routes'
 import quizRoutes from './modules/quiz/quiz.routes'
 import quizAdminRoutes from './modules/quiz/quiz.admin.routes'
+import bannerRoutes from './modules/banner/banner.routes'
 import { setupQuizGateway } from './modules/quiz/quiz.gateway'
 import { setQuizAdminIo } from './modules/quiz/quiz.admin.routes'
 import { setupSocketIO } from './lib/socketHandler'
@@ -87,6 +88,7 @@ app.use('/api/soloearn', soloearnRoutes)
 app.use('/api/gamesession', gamesessionRoutes)
 app.use('/api/quiz', quizRoutes)
 app.use('/api/admin/quiz', quizAdminRoutes)
+app.use('/api/banners', bannerRoutes)
 
 app.use((req, res) => {
   res.status(404).json({ success: false, message: 'Route not found' })
