@@ -322,71 +322,77 @@ export function setupQuizGateway(io: SocketServer) {
 
     // ── JOIN LOBBY ────────────────────────────────────────────────────────────
     socket.on('quiz:join', async ({ tournament_id }: { tournament_id: string }) => {
-      socket.join(`quiz:${tournament_id}`)
+      try {
+        // Join the room immediately (synchronous) before any async DB work
+        socket.join(`quiz:${tournament_id}`)
 
-      let game = games.get(tournament_id)
-      if (!game) {
-        const questions = await loadQuestions(tournament_id)
-        game = {
-          tournamentId: tournament_id,
-          status: 'lobby',
-          currentRound: 1,
-          currentQuestionIndex: 0,
-          alivePlayers: new Set(),
-          socketToUser: new Map(),
-          userToSocket: new Map(),
-          questions,
-          currentQuestion: null,
-          lobbyCountdown: null,
+        let game = games.get(tournament_id)
+        if (!game) {
+          const questions = await loadQuestions(tournament_id)
+          game = {
+            tournamentId: tournament_id,
+            status: 'lobby',
+            currentRound: 1,
+            currentQuestionIndex: 0,
+            alivePlayers: new Set(),
+            socketToUser: new Map(),
+            userToSocket: new Map(),
+            questions,
+            currentQuestion: null,
+            lobbyCountdown: null,
+          }
+          games.set(tournament_id, game)
         }
-        games.set(tournament_id, game)
-      }
 
-      game.socketToUser.set(socket.id, userId)
-      game.userToSocket.set(userId, socket.id)
-      // Don't add to alivePlayers here — only add when game launches
-      // alivePlayers is populated from DB (registered players) at launch time
+        game.socketToUser.set(socket.id, userId)
+        game.userToSocket.set(userId, socket.id)
 
-      // Count registered players from DB for the lobby counter
-      const { count } = await supabaseAdmin
-        .from('quiz_players')
-        .select('id', { count: 'exact', head: true })
-        .eq('tournament_id', tournament_id)
-        .in('status', ['registered', 'alive'])
+        // Count registered players from DB for the lobby counter
+        const { count } = await supabaseAdmin
+          .from('quiz_players')
+          .select('id', { count: 'exact', head: true })
+          .eq('tournament_id', tournament_id)
+          .in('status', ['registered', 'alive'])
 
-      quizNs.to(`quiz:${tournament_id}`).emit('quiz:lobby_update', {
-        player_count: count ?? 0,
-        status: game.status,
-      })
-
-      // Send current leaderboard on join
-      const { data: lb } = await supabaseAdmin
-        .from('quiz_leaderboard')
-        .select('rank, user_id, username, avatar_url, correct_answers, avg_time_ms, status')
-        .eq('tournament_id', tournament_id)
-        .order('rank', { ascending: true })
-        .limit(50)
-
-      socket.emit('quiz:leaderboard_update', { leaderboard: lb ?? [] })
-
-      // If game already active, send current question state
-      if (game.status === 'active' && game.currentQuestion) {
-        const elapsed = Date.now() - game.currentQuestion.startedAt
-        const remaining = Math.max(0, game.currentQuestion.timeLimitMs - elapsed)
-        const roundCfg = ROUND_CONFIG[game.currentRound - 1]
-        const questions = game.questions[game.currentRound] ?? []
-        socket.emit('quiz:question_start', {
-          question_id: game.currentQuestion.questionId,
-          round: game.currentRound,
-          round_name: roundCfg?.name,
-          question_index: game.currentQuestionIndex,
-          total_questions: questions.length,
-          question_text: game.currentQuestion.questionText,
-          image_url: game.currentQuestion.imageUrl,
-          options: game.currentQuestion.options,
-          time_limit_ms: remaining,
-          alive_count: game.alivePlayers.size,
+        // Always emit lobby_update — this is what unlocks chat on the client
+        quizNs.to(`quiz:${tournament_id}`).emit('quiz:lobby_update', {
+          player_count: count ?? 0,
+          status: game.status,
         })
+
+        // Send current leaderboard on join
+        const { data: lb } = await supabaseAdmin
+          .from('quiz_leaderboard')
+          .select('rank, user_id, username, avatar_url, correct_answers, avg_time_ms, status')
+          .eq('tournament_id', tournament_id)
+          .order('rank', { ascending: true })
+          .limit(50)
+
+        socket.emit('quiz:leaderboard_update', { leaderboard: lb ?? [] })
+
+        // If game already active, send current question state
+        if (game.status === 'active' && game.currentQuestion) {
+          const elapsed = Date.now() - game.currentQuestion.startedAt
+          const remaining = Math.max(0, game.currentQuestion.timeLimitMs - elapsed)
+          const roundCfg = ROUND_CONFIG[game.currentRound - 1]
+          const questions = game.questions[game.currentRound] ?? []
+          socket.emit('quiz:question_start', {
+            question_id: game.currentQuestion.questionId,
+            round: game.currentRound,
+            round_name: roundCfg?.name,
+            question_index: game.currentQuestionIndex,
+            total_questions: questions.length,
+            question_text: game.currentQuestion.questionText,
+            image_url: game.currentQuestion.imageUrl,
+            options: game.currentQuestion.options,
+            time_limit_ms: remaining,
+            alive_count: game.alivePlayers.size,
+          })
+        }
+      } catch (err) {
+        console.error('[QuizGateway] quiz:join error:', err)
+        // Even on error, emit lobby_update so client unblocks chat
+        socket.emit('quiz:lobby_update', { player_count: 0, status: 'lobby' })
       }
     })
 
