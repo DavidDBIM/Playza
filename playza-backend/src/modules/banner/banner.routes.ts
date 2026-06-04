@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { requireAdmin, AuthRequest } from '../../middleware/auth'
+import { supabaseAdmin } from '../../config/supabase'
 import {
   getAllBanners,
   getActiveBanners,
@@ -8,16 +9,12 @@ import {
   deleteBanner,
   reorderBanners,
 } from './banner.service'
-import multer from 'multer'
-import { supabaseAdmin } from '../../config/supabase'
-import { v4 as uuidv4 } from 'uuid'
 
 const router = Router()
 
 // ── Public: frontend fetches active slides ────────────────────────────────────
 router.get('/', async (req, res) => {
   try {
-    // Admin query param: return all (active + inactive) for admin panel
     const all = req.query.all === 'true'
     const data = all ? await getAllBanners() : await getActiveBanners()
     res.json({ success: true, data })
@@ -26,7 +23,7 @@ router.get('/', async (req, res) => {
   }
 })
 
-// ── Admin: create new banner slide ────────────────────────────────────────────
+// ── Admin: create ─────────────────────────────────────────────────────────────
 router.post('/', requireAdmin, async (req: AuthRequest, res) => {
   try {
     const data = await createBanner(req.body)
@@ -36,7 +33,7 @@ router.post('/', requireAdmin, async (req: AuthRequest, res) => {
   }
 })
 
-// ── Admin: update banner slide ────────────────────────────────────────────────
+// ── Admin: update ─────────────────────────────────────────────────────────────
 router.put('/:id', requireAdmin, async (req: AuthRequest, res) => {
   try {
     const data = await updateBanner(req.params.id, req.body)
@@ -46,7 +43,7 @@ router.put('/:id', requireAdmin, async (req: AuthRequest, res) => {
   }
 })
 
-// ── Admin: delete banner slide ────────────────────────────────────────────────
+// ── Admin: delete ─────────────────────────────────────────────────────────────
 router.delete('/:id', requireAdmin, async (req: AuthRequest, res) => {
   try {
     await deleteBanner(req.params.id)
@@ -56,13 +53,11 @@ router.delete('/:id', requireAdmin, async (req: AuthRequest, res) => {
   }
 })
 
-// ── Admin: reorder slides ─────────────────────────────────────────────────────
+// ── Admin: reorder ────────────────────────────────────────────────────────────
 router.post('/reorder', requireAdmin, async (req: AuthRequest, res) => {
   try {
     const { ids } = req.body
-    if (!Array.isArray(ids)) {
-      return res.status(400).json({ success: false, message: 'ids must be an array' })
-    }
+    if (!Array.isArray(ids)) return res.status(400).json({ success: false, message: 'ids must be an array' })
     await reorderBanners(ids)
     res.json({ success: true })
   } catch (err: any) {
@@ -70,31 +65,26 @@ router.post('/reorder', requireAdmin, async (req: AuthRequest, res) => {
   }
 })
 
-// ── Admin: upload banner image to Supabase Storage ────────────────────────────
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } })
-
-router.post('/upload', requireAdmin, upload.single('image'), async (req: AuthRequest, res) => {
+// ── Admin: upload image (base64 → Supabase Storage, no multer needed) ─────────
+router.post('/upload', requireAdmin, async (req: AuthRequest, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ success: false, message: 'No file uploaded' })
-    }
+    const { base64, filename, mimeType } = req.body
+    if (!base64 || !filename) return res.status(400).json({ success: false, message: 'base64 and filename required' })
 
-    const ext = req.file.originalname.split('.').pop()
-    const fileName = `banners/${uuidv4()}.${ext}`
+    // Strip data URI prefix if present: "data:image/png;base64,..."
+    const raw = base64.includes(',') ? base64.split(',')[1] : base64
+    const buffer = Buffer.from(raw, 'base64')
+
+    const ext = filename.split('.').pop() || 'jpg'
+    const path = `banners/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
 
     const { error } = await supabaseAdmin.storage
-      .from('media')           // ← your Supabase storage bucket name
-      .upload(fileName, req.file.buffer, {
-        contentType: req.file.mimetype,
-        upsert: false,
-      })
+      .from('media')         // ← change 'media' to your actual bucket name if different
+      .upload(path, buffer, { contentType: mimeType || 'image/jpeg', upsert: false })
 
     if (error) throw new Error(error.message)
 
-    const { data: urlData } = supabaseAdmin.storage
-      .from('media')
-      .getPublicUrl(fileName)
-
+    const { data: urlData } = supabaseAdmin.storage.from('media').getPublicUrl(path)
     res.json({ success: true, url: urlData.publicUrl })
   } catch (err: any) {
     res.status(500).json({ success: false, message: err.message })
