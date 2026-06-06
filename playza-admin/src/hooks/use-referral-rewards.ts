@@ -4,14 +4,16 @@ import { referralRewardsService, type SignupRewardConfig, type PromoCode } from 
 const SIGNUP_KEY = ['signup-rewards']
 const PROMO_KEY = ['promo-codes']
 
-// ── Signup rewards ────────────────────────────────────────────────────────────
 export const useSignupRewards = () =>
-  useQuery({ queryKey: SIGNUP_KEY, queryFn: referralRewardsService.getSignupRewards })
+  useQuery({
+    queryKey: SIGNUP_KEY,
+    queryFn: () => referralRewardsService.getSignupRewards(),
+  })
 
 export const useCreateSignupReward = () => {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (data: Parameters<typeof referralRewardsService.createSignupReward>[0]) =>
+    mutationFn: (data: Omit<SignupRewardConfig, 'id' | 'total_claimed' | 'created_by' | 'created_at' | 'updated_at'>) =>
       referralRewardsService.createSignupReward(data),
     onSuccess: () => qc.invalidateQueries({ queryKey: SIGNUP_KEY }),
   })
@@ -34,14 +36,16 @@ export const useDeleteSignupReward = () => {
   })
 }
 
-// ── Promo codes ───────────────────────────────────────────────────────────────
 export const usePromoCodes = () =>
-  useQuery({ queryKey: PROMO_KEY, queryFn: referralRewardsService.getPromoCodes })
+  useQuery({
+    queryKey: PROMO_KEY,
+    queryFn: () => referralRewardsService.getPromoCodes(),
+  })
 
 export const useCreatePromoCode = () => {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (data: Parameters<typeof referralRewardsService.createPromoCode>[0]) =>
+    mutationFn: (data: Omit<PromoCode, 'id' | 'uses_count' | 'created_by' | 'created_at' | 'updated_at'>) =>
       referralRewardsService.createPromoCode(data),
     onSuccess: () => qc.invalidateQueries({ queryKey: PROMO_KEY }),
   })
