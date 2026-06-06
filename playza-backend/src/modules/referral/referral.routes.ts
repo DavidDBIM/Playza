@@ -13,18 +13,40 @@ const router = Router()
 
 router.get('/validate/:code', async (req, res) => {
   try {
-    const { data } = await supabaseAdmin
+    const code = req.params.code.toUpperCase()
+
+    // 1. Check user referral codes first
+    const { data: userData } = await supabaseAdmin
       .from('users')
       .select('username, referral_code')
-      .eq('referral_code', req.params.code.toUpperCase())
+      .eq('referral_code', code)
       .single()
 
-    if (!data) {
-      res.status(404).json({ success: false, message: 'Invalid referral code' })
+    if (userData) {
+      res.json({ success: true, data: { valid: true, referrer: userData.username, type: 'user' } })
       return
     }
 
-    res.json({ success: true, data: { valid: true, referrer: data.username } })
+    // 2. Also check promo referral codes
+    const { data: promoData } = await supabaseAdmin
+      .from('promo_referral_codes')
+      .select('code, description, bonus_amount, reward_type, is_active, expires_at, max_uses, uses_count')
+      .eq('code', code)
+      .eq('is_active', true)
+      .single()
+
+    if (promoData) {
+      const expired = promoData.expires_at && new Date(promoData.expires_at) < new Date()
+      const full = promoData.max_uses !== null && promoData.uses_count >= promoData.max_uses
+      if (expired || full) {
+        res.status(404).json({ success: false, message: expired ? 'This promo code has expired' : 'This promo code has reached its limit' })
+        return
+      }
+      res.json({ success: true, data: { valid: true, referrer: 'Playza', type: 'promo', bonus_amount: promoData.bonus_amount, reward_type: promoData.reward_type, description: promoData.description } })
+      return
+    }
+
+    res.status(404).json({ success: false, message: 'Invalid referral code' })
   } catch (err: any) {
     res.status(400).json({ success: false, message: err.message })
   }
