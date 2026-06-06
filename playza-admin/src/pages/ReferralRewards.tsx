@@ -1,7 +1,10 @@
 import React, { useState } from 'react'
 import {
-  MdGift, MdAdd, MdEdit, MdDelete, MdClose, MdSave,
-  MdPeople, MdTag, MdVisibility, MdVisibilityOff,
+  MdCardGiftcard as MdGift,
+  MdAdd, MdEdit, MdDelete, MdClose, MdSave,
+  MdPeople,
+  MdLocalOffer as MdTag,
+  MdVisibility, MdVisibilityOff,
   MdCheckCircle, MdContentCopy, MdAutorenew,
 } from 'react-icons/md'
 import {
