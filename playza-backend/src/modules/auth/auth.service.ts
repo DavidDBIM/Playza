@@ -16,7 +16,7 @@ const SUPERADMIN_INITIAL_PZA = 10_000
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function signup(input: SignupInput) {
-  const { username, email, phone, password, referral_code } = input;
+  const { username, email, phone, password, referral_code, country } = input;
 
   const { data: existingUsername } = await supabaseAdmin
     .from("users")
@@ -56,7 +56,7 @@ export async function signup(input: SignupInput) {
     email,
     password,
     options: {
-      data: { username, phone, referral_code: referral_code || null },
+      data: { username, phone, referral_code: referral_code || null, country: country || null },
     },
   });
 
@@ -90,6 +90,7 @@ export async function verifyOtp(email: string, token: string) {
     const username = meta.username;
     const phone = meta.phone;
     const referral_code = meta.referral_code || null;
+    const country = meta.country || null;
 
     let referredBy: string | null = null;
 
@@ -111,10 +112,10 @@ export async function verifyOtp(email: string, token: string) {
       username,
       email,
       phone,
+      country,
       referral_code: newReferralCode,
       referred_by: referredBy,
       is_email_verified: true,
-      // Grant superadmin role immediately for whitelisted emails
       ...(isSuperAdmin && { role: 'superadmin' }),
     });
 
