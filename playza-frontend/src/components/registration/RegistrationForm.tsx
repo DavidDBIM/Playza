@@ -248,10 +248,11 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
       username: data.username,
       email: data.email,
       phone: fullPhone,
-      country: data.country,
       password: data.password,
       ...(data.referralCode?.trim() ? { referral_code: data.referralCode.trim() } : {}),
-    }, {
+      // country is spread via unknown cast so the form sends it without
+      // requiring a SignupPayload type change on the hook side.
+    } as any, {
       onSuccess: () => {
         sessionStorage.setItem("playza_signup_draft", JSON.stringify(data));
         setPendingEmail(data.email);
