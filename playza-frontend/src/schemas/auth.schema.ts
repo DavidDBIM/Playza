@@ -7,7 +7,13 @@ export const signupSchema = z.object({
     .max(20, "Username is too long")
     .regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers and underscores"),
   email: z.string().email("Invalid email address"),
-  phone: z.string().min(10, "Phone number is too short").max(15, "Phone number is too long"),
+  country: z.string().min(1, "Please select your country"),
+  dialCode: z.string().min(1, "Dial code required"),
+  phone: z
+    .string()
+    .min(5, "Phone number is too short")
+    .max(15, "Phone number is too long")
+    .regex(/^[0-9]+$/, "Phone number must contain digits only"),
   password: z
     .string()
     .min(8, "Password must be at least 8 characters")
@@ -19,9 +25,6 @@ export const signupSchema = z.object({
   acceptedTerms: z.boolean().refine((val) => val === true, {
     message: "You must accept the terms and conditions",
   }),
-
-
-
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords must match",
   path: ["confirmPassword"],
