@@ -41,13 +41,26 @@ export async function signup(input: SignupInput) {
   if (existingEmail) throw new Error("Email already registered");
 
   if (referral_code) {
+    // First check user referral codes
     const { data: referrer } = await supabaseAdmin
       .from("users")
       .select("id")
       .eq("referral_code", referral_code)
       .single();
 
-    if (!referrer) throw new Error("Invalid referral code");
+    if (!referrer) {
+      // Also accept admin promo codes (e.g. PLAYZA-XXXXXX)
+      const { data: promoCode } = await supabaseAdmin
+        .from("promo_referral_codes")
+        .select("id, is_active, expires_at, max_uses, uses_count")
+        .eq("code", referral_code.toUpperCase())
+        .single();
+
+      if (!promoCode) throw new Error("Invalid referral code");
+      if (!promoCode.is_active) throw new Error("This promo code is no longer active");
+      if (promoCode.expires_at && new Date(promoCode.expires_at) < new Date()) throw new Error("This promo code has expired");
+      if (promoCode.max_uses !== null && promoCode.uses_count >= promoCode.max_uses) throw new Error("This promo code has reached its limit");
+    }
   }
 
   const { data: authData, error: authError } = await supabase.auth.signUp({
