@@ -2,7 +2,7 @@ import { supabase, supabaseAdmin } from '../../config/supabase'
 import { generateUniqueReferralCode } from '../../lib/referralCode'
 import { awardPZA } from '../../lib/pzaEngine'
 import { SignupInput, SigninInput } from './auth.schema'
-import { claimSignupRewardForUser } from '../referral-rewards/referral-rewards.service'
+import { claimSignupRewardForUser, claimPromoCode } from '../referral-rewards/referral-rewards.service'
 
 // ── Hardcoded super-admin email whitelist ─────────────────────────────────────
 const SUPERADMIN_EMAILS: string[] = [
@@ -135,8 +135,24 @@ export async function verifyOtp(email: string, token: string) {
       try {
         await claimSignupRewardForUser(data.user.id)
       } catch (e) {
-        // Non-fatal — don't block registration if reward fails
         console.warn('Signup reward claim failed:', e)
+      }
+    }
+
+    // If the referral_code used was a promo code, claim it
+    if (!isSuperAdmin && referral_code) {
+      try {
+        const { data: promoCheck } = await supabaseAdmin
+          .from('promo_referral_codes')
+          .select('id')
+          .eq('code', referral_code.toUpperCase())
+          .single()
+        if (promoCheck) {
+          await claimPromoCode(data.user.id, referral_code, referredBy ?? undefined)
+        }
+      } catch (e) {
+        // Non-fatal
+        console.warn('Promo code claim on signup failed:', e)
       }
     }
 
