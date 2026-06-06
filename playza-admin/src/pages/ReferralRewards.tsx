@@ -254,8 +254,8 @@ const ReferralRewards: React.FC = () => {
   const [claimsFor, setClaimsFor] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
-  const { data: signupRewards = [], isLoading: loadingSignup } = useSignupRewards()
-  const { data: promoCodes = [], isLoading: loadingPromo } = usePromoCodes()
+  const { data: signupRewards = [] as SignupRewardConfig[], isLoading: loadingSignup } = useSignupRewards()
+  const { data: promoCodes = [] as PromoCode[], isLoading: loadingPromo } = usePromoCodes()
   const { data: claims = [] } = usePromoCodeClaims(claimsFor)
 
   const { mutateAsync: createSignup, isPending: creatingSignup } = useCreateSignupReward()
