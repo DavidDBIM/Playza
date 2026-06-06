@@ -1,10 +1,7 @@
 import React, { useState } from 'react'
 import {
-  MdCardGiftcard as MdGift,
-  MdAdd, MdEdit, MdDelete, MdClose, MdSave,
-  MdPeople,
-  MdLocalOffer as MdTag,
-  MdVisibility, MdVisibilityOff,
+  MdCardGiftcard, MdAdd, MdEdit, MdDelete, MdClose, MdSave,
+  MdPeople, MdTag, MdVisibility, MdVisibilityOff,
   MdCheckCircle, MdContentCopy, MdAutorenew,
 } from 'react-icons/md'
 import {
@@ -71,7 +68,7 @@ const SignupRewardModal: React.FC<{
         <div className="flex justify-center pt-3 pb-1 sm:hidden"><div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" /></div>
         <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center"><MdGift className="text-primary text-xl" /></div>
+            <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center"><MdCardGiftcard className="text-primary text-xl" /></div>
             <div>
               <h3 className="font-black text-slate-900 dark:text-white text-base">{item ? 'Edit' : 'New'} Signup Reward</h3>
               <p className="text-[10px] text-slate-500">Auto-grant on registration</p>
@@ -297,7 +294,7 @@ const ReferralRewards: React.FC = () => {
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-2xl bg-linear-to-br from-primary to-violet-600 flex items-center justify-center shadow-md shadow-primary/30">
-            <MdGift className="w-5 h-5 text-white" />
+            <MdCardGiftcard className="w-5 h-5 text-white" />
           </div>
           <div>
             <h1 className="text-2xl font-black text-foreground tracking-tight uppercase">Referral Rewards</h1>
@@ -315,7 +312,7 @@ const ReferralRewards: React.FC = () => {
 
       {/* Tabs */}
       <div className="flex gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl w-fit">
-        {([['signup', 'Signup Rewards', MdGift], ['promo', 'Promo Codes', MdTag]] as const).map(([id, label, Icon]) => (
+        {([['signup', 'Signup Rewards', MdCardGiftcard], ['promo', 'Promo Codes', MdTag]] as const).map(([id, label, Icon]) => (
           <button key={id} onClick={() => setTab(id)}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${tab === id ? 'bg-white dark:bg-slate-900 text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>
             <Icon className="text-base" />{label}
@@ -335,7 +332,7 @@ const ReferralRewards: React.FC = () => {
             <div className="space-y-2">{[1,2].map(i => <div key={i} className="h-20 rounded-2xl bg-card border border-border animate-pulse" />)}</div>
           ) : signupRewards.length === 0 ? (
             <div className="flex flex-col items-center py-16 gap-3 text-center">
-              <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center"><MdGift className="text-3xl text-primary/40" /></div>
+              <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center"><MdCardGiftcard className="text-3xl text-primary/40" /></div>
               <p className="text-sm font-black text-muted-foreground uppercase tracking-wide">No signup rewards yet</p>
               <button onClick={() => setSignupModal({ open: true })} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/10 text-primary font-black text-xs border border-primary/20 hover:bg-primary/20 transition-all"><MdAdd /> Create one</button>
             </div>
@@ -344,7 +341,7 @@ const ReferralRewards: React.FC = () => {
               <div key={r.id} className={`bg-card border rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center gap-4 transition-all ${r.is_active ? 'border-primary/40 shadow-sm shadow-primary/10' : 'border-border'}`}>
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${r.is_active ? 'bg-primary/10' : 'bg-slate-100 dark:bg-slate-800'}`}>
-                    <MdGift className={`text-xl ${r.is_active ? 'text-primary' : 'text-slate-400'}`} />
+                    <MdCardGiftcard className={`text-xl ${r.is_active ? 'text-primary' : 'text-slate-400'}`} />
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap mb-0.5">
