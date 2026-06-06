@@ -2,18 +2,16 @@ import { supabase, supabaseAdmin } from '../../config/supabase'
 import { generateUniqueReferralCode } from '../../lib/referralCode'
 import { awardPZA } from '../../lib/pzaEngine'
 import { SignupInput, SigninInput } from './auth.schema'
+import { claimSignupRewardForUser } from '../referral-rewards/referral-rewards.service'
 
-// â”€â”€â”€ Hardcoded super-admin email whitelist â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// Only these emails will be granted the 'superadmin' role and receive 10,000
-// ZA tokens when their account is first verified. They are also the only
-// accounts allowed to log in through the /admin routes.
+// ── Hardcoded super-admin email whitelist ─────────────────────────────────────
 const SUPERADMIN_EMAILS: string[] = [
   'muizcal@gmail.com',
   'ojekunledavid.a@gmail.com',
   'devguselt@gmail.com',
 ]
 const SUPERADMIN_INITIAL_PZA = 10_000
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────────────────
 
 export async function signup(input: SignupInput) {
   const { username, email, phone, password, referral_code, country } = input;
@@ -132,8 +130,17 @@ export async function verifyOtp(email: string, token: string) {
       total_points: isSuperAdmin ? SUPERADMIN_INITIAL_PZA : 0,
     });
 
+    // Auto-grant signup reward if admin has configured one and limit not reached
+    if (!isSuperAdmin) {
+      try {
+        await claimSignupRewardForUser(data.user.id)
+      } catch (e) {
+        // Non-fatal — don't block registration if reward fails
+        console.warn('Signup reward claim failed:', e)
+      }
+    }
+
     if (isSuperAdmin) {
-      // Log the initial token grant as a PZA event for audit trail
       await supabaseAdmin.from("pza_events").insert({
         user_id: data.user.id,
         event_type: 'ADMIN_INITIAL_GRANT',
@@ -244,25 +251,21 @@ export async function signin(input: SigninInput) {
 export async function adminSignin(input: SigninInput) {
   const { identifier, password } = input;
   
-  // 1. Verify credentials and role first
   const result = await signin(input);
   
   if (result.user.role !== 'admin' && result.user.role !== 'superadmin') {
     throw new Error("Access denied: Administrative privileges required.");
   }
   
-  // 2. Instead of returning the session, trigger Supabase OTP for this email
-  // This uses your existing SMTP/OTP setup used in regular signup
   const { error: otpError } = await supabase.auth.signInWithOtp({
     email: result.user.email,
     options: {
-      shouldCreateUser: false, // Ensure we don't create new users here
+      shouldCreateUser: false,
     }
   });
 
   if (otpError) throw otpError;
 
-  // 3. Return MFA required state
   return {
     mfa_required: true,
     user_id: result.user.id,
@@ -271,18 +274,16 @@ export async function adminSignin(input: SigninInput) {
 }
 
 export async function verifyAdminMfa(email: string, code: string) {
-  // 1. Verify the OTP using Supabase's built-in verification
   const { data, error } = await supabase.auth.verifyOtp({
     email,
     token: code,
-    type: 'email' // or 'signup' depending on your Supabase config
+    type: 'email'
   });
 
   if (error || !data.session || !data.user) {
     throw new Error("Invalid or expired verification code.");
   }
 
-  // 2. Fetch the profile to ensure it's still an admin
   const { data: profile } = await supabaseAdmin
     .from('users')
     .select('id, username, email, role, avatar_url')
@@ -293,7 +294,6 @@ export async function verifyAdminMfa(email: string, code: string) {
     throw new Error("Security check failed: Insufficient privileges.");
   }
 
-  // 3. Return the verified session
   return {
     access_token: data.session.access_token,
     refresh_token: data.session.refresh_token,
