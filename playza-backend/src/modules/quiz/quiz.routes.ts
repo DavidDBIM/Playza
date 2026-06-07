@@ -135,8 +135,19 @@ router.get('/tournaments', async (req, res) => {
 })
 
 // ── GET /quiz/tournaments/:id
-router.get('/tournaments/:id', requireAuth, async (req: AuthRequest, res) => {
+router.get('/tournaments/:id', async (req, res) => {
   try {
+    // Optional auth — check token if present but don't require it
+    let userId: string | null = null
+    const authHeader = req.headers.authorization
+    if (authHeader?.startsWith('Bearer ')) {
+      try {
+        const token = authHeader.split(' ')[1]
+        const { data: { user } } = await supabaseAdmin.auth.getUser(token)
+        userId = user?.id ?? null
+      } catch (_) {}
+    }
+
     const { data: tournament, error } = await supabaseAdmin
       .from('quiz_tournaments')
       .select('*')
@@ -154,12 +165,12 @@ router.get('/tournaments/:id', requireAuth, async (req: AuthRequest, res) => {
       .eq('tournament_id', tournament.id)
 
     let userRegistered = false
-    if (req.user?.id) {
+    if (userId) {
       const { data: existing } = await supabaseAdmin
         .from('quiz_players')
-        .select('id, status, entry_fee_paid')
+        .select('id')
         .eq('tournament_id', tournament.id)
-        .eq('user_id', req.user.id)
+        .eq('user_id', userId)
         .single()
       userRegistered = !!existing
     }
@@ -173,6 +184,8 @@ router.get('/tournaments/:id', requireAuth, async (req: AuthRequest, res) => {
         max_players: tournament.max_players ?? null,
         prize_distribution: tournament.prize_distribution ?? null,
         platform_fee_percentage: tournament.platform_fee_percentage ?? 10,
+        registration_end: tournament.registration_end ?? null,
+        scheduled_at: tournament.scheduled_at ?? null,
       },
     })
   } catch (err: any) {
@@ -355,7 +368,7 @@ router.get('/tournaments/:id/lobby', requireAuth, async (req: AuthRequest, res) 
 })
 
 // ── GET /quiz/tournaments/:id/leaderboard
-router.get('/tournaments/:id/leaderboard', requireAuth, async (req, res) => {
+router.get('/tournaments/:id/leaderboard', async (req, res) => {
   try {
     const { data, error } = await supabaseAdmin
       .from('quiz_leaderboard')
