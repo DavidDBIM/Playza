@@ -63,17 +63,15 @@
     <link rel="icon" type="image/png" href="/logo.png" />
 
     <!-- ─── Keep Render backend awake (pings every 10 min) ──────────────────── -->
-    <!-- Runs in a Worker so it never blocks the main thread -->
     <script>
       (function() {
-        var PING_URL = 'https://api.playza.games/api/health';
-        var INTERVAL = 10 * 60 * 1000; // 10 minutes
+        // Use an invisible image tag to ping — avoids CORS entirely
         function ping() {
-          fetch(PING_URL, { method: 'GET', mode: 'no-cors' }).catch(function(){});
+          var img = new Image();
+          img.src = 'https://api.playza.games/api/health?t=' + Date.now();
         }
-        // First ping immediately on load
         ping();
-        setInterval(ping, INTERVAL);
+        setInterval(ping, 10 * 60 * 1000);
       })();
     </script>
   </head>
