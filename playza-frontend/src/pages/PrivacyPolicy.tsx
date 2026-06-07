@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { Link } from "react-router";
+import SEO from "@/components/SEO"
 
 const PrivacyPolicy = () => {
     useEffect(() => {
@@ -8,6 +9,12 @@ const PrivacyPolicy = () => {
 
     return (
         <div className="min-h-screen bg-background text-foreground py-2 md:py-12 px-4 md:px-8 max-w-4xl mx-auto">
+      <SEO
+      title="Privacy Policy"
+      description="Learn how Playza collects, uses and protects your personal data. Your privacy is important to us."
+      url="/privacy"
+      keywords="playza privacy policy, data protection Nigeria"
+      />
         <div className="mb-6 md:mb-12 text-center animate-fade-in px-2">
             <h1 className="text-2xl md:text-5xl font-black tracking-tighter uppercase italic bg-clip-text text-transparent bg-linear-to-r from-primary to-accent mb-2 md:mb-4">
                 Privacy Policy
