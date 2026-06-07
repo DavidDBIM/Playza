@@ -6,6 +6,7 @@ import TransactionDetailModal from "@/components/transactions/TransactionDetailM
 import type { TransactionUI } from "@/types/types";
 import { useTransactions } from "@/hooks/wallet/useWallet";
 import { format } from "date-fns";
+import SEO from "@/components/SEO"
 
 const ITEMS_PER_PAGE = 20;
 
@@ -83,6 +84,12 @@ const Transactions = () => {
 
   return (
     <main className="flex-1 mx-auto w-full overflow-x-hidden relative pb-24 md:pb-10">
+      <SEO
+      title="Transaction History"
+      description="View all your Playza transactions — deposits, withdrawals, game entries and winnings."
+      url="/transactions"
+      noIndex
+      />
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-6 mb-10 mt-4">
         <div className="space-y-2">
           <h1 className="text-4xl md:text-5xl font-black tracking-tighter text-slate-900 dark:text-slate-100">
