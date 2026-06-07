@@ -10,6 +10,7 @@ import { PreGameSetup } from '@/components/soloearn/PreGameSetup';
 import { GameArenaLayout } from '@/components/soloearn/GameArenaLayout';
 import { ResultsPanel } from '@/components/soloearn/ResultsPanel';
 import type { Game as BaseGame } from "@/types/types";
+import SEO from "@/components/SEO"
 
 // --- Main Page ---
 
@@ -83,6 +84,12 @@ const SoloEarn = () => {
   if (isLoading) {
     return (
       <div className="w-full h-[60vh] flex flex-col items-center justify-center gap-4 animate-in fade-in">
+      <SEO
+      title="Solo Earn – Play & Get Paid"
+      description="Play solo games on Playza and earn real ZA rewards based on your performance. No opponent needed — just skill."
+      url="/solo-earn"
+      keywords="solo games earn money Nigeria, play alone win money, skill solo games"
+      />
         <Loader2 className="w-10 h-10 animate-spin text-primary" />
         <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Synchronizing Solo Modules...</p>
       </div>
