@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router";
 import { ChevronDown, HelpCircle, Shield, Zap, Wallet, Users, Layout } from "lucide-react";
+import SEO from "@/components/SEO"
 
 interface FAQItem {
   question: string;
@@ -134,6 +135,12 @@ const faqs: FAQItem[] = [
 const AccordionItem = ({ item, isOpen, onClick, icon }: { item: FAQItem; isOpen: boolean; onClick: () => void; icon: React.ReactNode }) => {
   return (
     <div className={`glass-card overflow-hidden transition-all duration-300 border ${isOpen ? 'border-primary/50 bg-primary/5 shadow-lg shadow-primary/5' : 'border-border bg-card/50 hover:bg-card dark:border-white/5 dark:bg-white/5 dark:hover:bg-white/10'}`}>
+      <SEO
+      title="FAQ – Frequently Asked Questions"
+      description="Got questions about Playza? Learn how to deposit, play, withdraw and refer friends on Nigeria's top gaming platform."
+      url="/faq"
+      keywords="playza FAQ, how to play playza, deposit playza, withdraw winnings Nigeria"
+      />
       <button
         onClick={onClick}
         className="w-full flex items-center justify-between p-4 md:p-6 text-left focus:outline-none"
