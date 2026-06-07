@@ -22,6 +22,7 @@ import { useClaimTask } from "@/hooks/loyalty/useClaimTask";
 import { RewardsSection } from "@/components/loyalty/RewardsSection";
 import { useToast } from "@/context/toast";
 import axiosInstance from "@/api/axiosInstance";
+import SEO from "@/components/SEO"
 
 interface Task {
   id: string;
@@ -356,6 +357,12 @@ export default function Loyalty() {
   if (!user)
     return (
       <div className="min-h-[70vh] flex items-center justify-center p-4">
+      <SEO
+      title="Loyalty Rewards – Earn PZA"
+      description="Earn PZA points every time you play, refer friends or complete tasks on Playza. Redeem your points for real ZA rewards."
+      url="/loyalty"
+      keywords="playza loyalty, PZA points, earn rewards gaming, daily streak bonus"
+      />
         <div className="max-w-md w-full text-center space-y-8">
           <div className="w-20 h-20 bg-blue-100 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center mx-auto border border-blue-200 dark:border-blue-800">
             <MdStars className="text-4xl text-blue-600 dark:text-blue-400" />
