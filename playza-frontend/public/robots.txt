@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /profile
+Disallow: /wallet
+Disallow: /transactions
+Disallow: /settings
+
+Sitemap: https://playza.games/sitemap.xml
