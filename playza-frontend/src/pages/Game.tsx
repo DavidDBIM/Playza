@@ -15,6 +15,7 @@ import {
 } from "@/hooks/gamesession/useGameSession";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import SEO from "@/components/SEO"
 
 type Tab = "sessions" | "about" | "rules";
 
@@ -117,6 +118,12 @@ const Game = () => {
   if (gamesLoading) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center text-white gap-4">
+      <SEO
+      title="Game Details"
+      description="View game details, entry fees, leaderboard and join an active session on Playza."
+      url="/games"
+      keywords="playza game, game session, entry fee, leaderboard"
+      />
         <Loader2 className="w-12 h-12 animate-spin text-primary" />
         <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500">
           Calibrating Game Engine...
