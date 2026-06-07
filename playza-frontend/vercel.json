@@ -31,11 +31,17 @@
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
       ]
+    },
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "index, follow" }
+      ]
     }
   ],
   "rewrites": [
     {
-      "source": "/((?!gameLib|assets|thumbnails|logo.png|hero.png|games|sw.js).*)",
+      "source": "/((?!gameLib|assets|thumbnails|logo.png|hero.png|games|sw.js|sitemap.xml|robots.txt).*)",
       "destination": "/"
     }
   ]
