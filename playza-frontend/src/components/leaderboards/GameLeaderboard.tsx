@@ -356,7 +356,7 @@ function GameLeaderboard() {
           </div>
         ) : (
           <div className="flex flex-col gap-3">
-            <div className="flex overflow-x-auto custom-scrollbar gap-2 pb-2">
+            <div className="flex overflow-x-auto gap-2 pb-2 scrollbar-hide snap-x snap-mandatory" style={{ WebkitOverflowScrolling: "touch", msOverflowStyle: "none", scrollbarWidth: "none" } as any}>
               {filteredGames.map((game: Game) => (
                 <button
                   key={game.id}
@@ -369,7 +369,7 @@ function GameLeaderboard() {
                       setIsSessionDropdownOpen(true);
                     }
                   }}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl border whitespace-nowrap transition-all ${
+                  className={`flex items-center gap-2 px-3 py-2 rounded-xl border whitespace-nowrap transition-all snap-start shrink-0 ${
                     activeGameId === game.id
                       ? "bg-primary border-primary text-black"
                       : "bg-white/5 border-white/10 text-slate-400 hover:border-primary/50 hover:text-white"
@@ -378,9 +378,9 @@ function GameLeaderboard() {
                   <img
                     src={game.thumbnail_url || game.thumbnail}
                     alt={game.title}
-                    className="w-6 h-6 rounded-md object-cover"
+                    className="w-6 h-6 rounded-md object-cover shrink-0"
                   />
-                  <span className="font-black text-xs uppercase italic tracking-tighter">
+                  <span className="font-black text-xs uppercase italic tracking-tighter max-w-[100px] truncate">
                     {game.title}
                   </span>
                   {activeGameId === game.id && (
