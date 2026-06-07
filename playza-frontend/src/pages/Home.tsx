@@ -6,6 +6,7 @@ import HomeGames from "@/components/home/HomeGames";
 import CTAReferral from "@/components/home/CTAReferral";
 import GamesMaintenance from "@/components/home/GamesMaintenance";
 import HomeFAQ from "@/components/home/HomeFAQ";
+import SEO from "@/components/SEO";
 
 import { Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -22,7 +23,6 @@ const Home = () => {
       ? gamesData
       : gamesData?.games || [];
 
-    // Filter for active games only - show inactive ones only on localhost for development/preview
     const isDev = window.location.hostname === 'localhost';
     const filteredList = gamesList.filter((g: Game) => {
       const isActiveOrDev = g.is_active === true || isDev;
@@ -45,8 +45,7 @@ const Home = () => {
   }, [gamesData]);
 
   const popularGames = useMemo(
-    () =>
-      backendGames.filter((game: Game) => game.badge === "POPULAR").slice(0, 8),
+    () => backendGames.filter((game: Game) => game.badge === "POPULAR").slice(0, 8),
     [backendGames],
   );
 
@@ -64,6 +63,13 @@ const Home = () => {
 
   return (
     <main className="flex-1 min-w-0 space-y-3 md:space-y-4 pb-2 md:pb-4">
+      <SEO
+        title="Play Games, Win Real Money"
+        description="Nigeria's #1 competitive gaming platform. Play skill-based games, join tournaments, challenge friends in H2H matches, and win real ZA rewards instantly."
+        keywords="playza, win real money Nigeria, skill games, online arcade, competitive gaming Nigeria, H2H games, tournaments"
+        url="/"
+      />
+
       <HeroBanner />
       <RecentWinners />
 
@@ -131,7 +137,6 @@ const Home = () => {
       <CTAReferral />
       <HowItWorks />
       <HomeFAQ />
-
     </main>
   );
 };
