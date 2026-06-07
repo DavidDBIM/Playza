@@ -8,6 +8,7 @@ import { Link, useNavigate } from "react-router";
 import { useEffect } from "react";
 import { ZASymbol } from "@/components/currency/ZASymbol";
 import { WalletSkeleton } from "@/components/skeletons/WalletSkeleton";
+import SEO from "@/components/SEO"
 
 interface WalletProps {
   onWithdrawClick: () => void;
@@ -27,6 +28,13 @@ const Wallet = ({ onWithdrawClick }: WalletProps) => {
   if (authLoading || (walletLoading && !balance)) {
     return (
       <main className="flex-1 flex flex-col gap-4 md:gap-10 pb-2 md:pb-10 animate-in fade-in duration-500">
+      <SEO
+      title="Wallet – Manage Your Funds"
+      description="View your Playza wallet balance, deposit ZA, withdraw winnings and track your transaction history."
+      url="/wallet"
+      keywords="playza wallet, deposit money, withdraw winnings Nigeria"
+      noIndex
+      />
         <WalletSkeleton />
       </main>
     );
