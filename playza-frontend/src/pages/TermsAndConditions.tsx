@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { Link } from "react-router";
+import SEO from "@/components/SEO"
 
 const TermsAndConditions = () => {
   useEffect(() => {
@@ -8,6 +9,12 @@ const TermsAndConditions = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground py-2 md:py-12 px-4 md:px-8 max-w-4xl mx-auto">
+      <SEO
+      title="Terms & Conditions"
+      description="Read the Playza Terms and Conditions. Understand the rules, eligibility and policies governing your use of the platform."
+      url="/terms"
+      keywords="playza terms and conditions, gaming platform rules Nigeria"
+      />
       <div className="mb-6 md:mb-12 text-center animate-fade-in px-2">
         <h1 className="text-2xl md:text-5xl font-black tracking-tighter uppercase italic bg-clip-text text-transparent bg-linear-to-r from-primary to-accent mb-2 md:mb-4">
           Terms & Conditions
