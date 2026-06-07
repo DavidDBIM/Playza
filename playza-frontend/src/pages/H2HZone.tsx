@@ -32,6 +32,7 @@ import type { PoolRoom } from "@/components/h2h/pool/game/pool/types";
 import type { UserProfile } from "@/context/auth";
 import { useToast } from "@/context/toast";
 import type { ChessRoom } from "@/types/chess";
+import SEO from "@/components/SEO"
 
 const H2HZone = () => {
   const toast = useToast();
@@ -143,6 +144,12 @@ const H2HZone = () => {
             <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 animate-pulse">
               Loading arena...
             </span>
+      <SEO
+      title="H2H Zone – Challenge Friends"
+      description="Create or join a Head-to-Head match on Playza. Challenge a friend, set your stake and winner takes all — paid out instantly."
+      url="/h2h"
+      keywords="H2H gaming Nigeria, head to head games, challenge friends online, stake games Nigeria"
+      />
           </div>
         </div>
       }
