@@ -20,7 +20,6 @@ import { useRequestReferralPayout, useReferralPayoutRequests } from "../hooks/re
 import { ReferralSkeleton } from "@/components/skeletons/ReferralSkeleton";
 import { type ReferralRecord } from "@/api/referral.api";
 import { MdAccountBalanceWallet, MdHourglassEmpty, MdInfoOutline } from "react-icons/md";
-import SEO from "@/components/SEO"
 
 /* ─── Share Modal ──────────────────────────────────────────────────────────── */
 function ShareModal({ referralLink, onClose }: { referralLink: string; onClose: () => void }) {
@@ -33,21 +32,34 @@ function ShareModal({ referralLink, onClose }: { referralLink: string; onClose: 
     setTimeout(() => setCopied(false), 2000);
   };
 
+  // Use native share sheet on mobile if available
+  const handleNativeShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: "Join Playza",
+          text: "Join me on Playza and compete for real cash!",
+          url: referralLink,
+        });
+      } catch (_) { /* user dismissed */ }
+    }
+  };
+
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/95 backdrop-blur-2xl"
+      className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/90 backdrop-blur-2xl"
       onClick={onClose}
     >
-      <SEO
-      title="Refer Friends – Earn ZA5,000"
-      description="Invite your friends to Playza and earn ZA5,000 for every friend who signs up and plays. No limit on referrals."
-      url="/referral"
-      keywords="playza referral, refer and earn Nigeria, invite friends earn money, referral bonus"
-      />
       <div
-        className="glass-card w-full sm:max-w-sm rounded-t-2xl sm:rounded-2xl p-5 relative"
+        className="glass-card w-full sm:max-w-sm rounded-t-2xl sm:rounded-2xl p-5 relative pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))]"
+        style={{ marginBottom: 0 }}
         onClick={e => e.stopPropagation()}
       >
+        {/* Drag handle */}
+        <div className="flex justify-center mb-3 sm:hidden">
+          <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-white/20" />
+        </div>
+
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-slate-900 dark:text-white font-black text-sm uppercase tracking-widest">Share Link</h3>
           <button onClick={onClose} className="size-8 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-500">
@@ -65,6 +77,16 @@ function ShareModal({ referralLink, onClose }: { referralLink: string; onClose: 
             {copied ? "Copied!" : "Copy"}
           </button>
         </div>
+
+        {/* Native share on mobile */}
+        {typeof navigator !== "undefined" && "share" in navigator && (
+          <button
+            onClick={handleNativeShare}
+            className="w-full h-11 mb-3 bg-primary text-white rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:brightness-110 transition-all"
+          >
+            <MdShare className="text-sm" /> Share via...
+          </button>
+        )}
 
         {/* Social */}
         <div className="grid grid-cols-3 gap-2">
