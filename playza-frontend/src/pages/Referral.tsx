@@ -20,6 +20,7 @@ import { useRequestReferralPayout, useReferralPayoutRequests } from "../hooks/re
 import { ReferralSkeleton } from "@/components/skeletons/ReferralSkeleton";
 import { type ReferralRecord } from "@/api/referral.api";
 import { MdAccountBalanceWallet, MdHourglassEmpty, MdInfoOutline } from "react-icons/md";
+import SEO from "@/components/SEO"
 
 /* ─── Share Modal ──────────────────────────────────────────────────────────── */
 function ShareModal({ referralLink, onClose }: { referralLink: string; onClose: () => void }) {
@@ -37,6 +38,12 @@ function ShareModal({ referralLink, onClose }: { referralLink: string; onClose: 
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/95 backdrop-blur-2xl"
       onClick={onClose}
     >
+      <SEO
+      title="Refer Friends – Earn ZA5,000"
+      description="Invite your friends to Playza and earn ZA5,000 for every friend who signs up and plays. No limit on referrals."
+      url="/referral"
+      keywords="playza referral, refer and earn Nigeria, invite friends earn money, referral bonus"
+      />
       <div
         className="glass-card w-full sm:max-w-sm rounded-t-2xl sm:rounded-2xl p-5 relative"
         onClick={e => e.stopPropagation()}
