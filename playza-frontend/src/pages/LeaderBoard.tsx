@@ -7,6 +7,7 @@ import GameLeaderboard from "@/components/leaderboards/GameLeaderboard";
 import ReferralLeaderboard from "@/components/leaderboards/ReferralLeaderboard";
 import LoyaltyLeaderboard from "@/components/leaderboards/LoyaltyLeaderboard";
 import { LeaderBoardSkeleton } from "@/components/skeletons/LeaderBoardSkeleton";
+import SEO from "@/components/SEO"
 
 const LeaderBoard = () => {
   const { user, isLoading } = useAuth();
@@ -25,6 +26,12 @@ const LeaderBoard = () => {
 
   return (
     <section className="flex-1 flex flex-col gap-2 md:gap-6 overflow-hidden pb-24 md:pb-10">
+      <SEO
+      title="Leaderboard – Top Players"
+      description="See the top players on Playza. Compete in games and tournaments to climb the global, loyalty and referral leaderboards."
+      url="/leaderboard"
+      keywords="playza leaderboard, top players Nigeria, gaming rankings, loyalty points leaderboard"
+      />
       {/* Premium Header */}
       <div className="relative overflow-hidden bg-slate-900 dark:bg-slate-950 p-8 md:p-12 rounded-xl border border-white/5">
         <div className="absolute top-0 right-0 p-2 md:p-12 opacity-10 rotate-12">
