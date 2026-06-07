@@ -4,6 +4,7 @@ import { FeedbackForm } from '../components/feedback/FeedbackForm';
 import { useAuth } from '@/context/auth';
 import { useNavigate } from 'react-router';
 import { useEffect } from 'react';
+import SEO from "@/components/SEO"
 
 const Support: React.FC = () => {
   const { user, isLoading } = useAuth();
@@ -19,6 +20,12 @@ const Support: React.FC = () => {
 
   return (
     <div className="max-w-3xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 ">
+      <SEO
+      title="Support – Help Center"
+      description="Need help? Contact the Playza support team. We're here to help with deposits, withdrawals, games and account issues."
+      url="/support"
+      keywords="playza support, help center, contact playza, customer service Nigeria"
+      />
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-center gap-4">
           <div className="size-16 rounded-3xl bg-primary/20 flex items-center justify-center text-primary text-3xl shadow-inner">
