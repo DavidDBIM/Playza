@@ -5,6 +5,7 @@ import { getQuizTournamentApi, joinQuizTournamentApi, type QuizTournament } from
 import { useQuizSocket, type LeaderboardEntry } from "@/hooks/quiz/useQuizSocket";
 import { useAuth } from "@/context/auth";
 import { useToast } from "@/context/toast";
+import axiosInstance from "@/api/axiosInstance";
 
 const ROUNDS = [
   { name: "Warm Up",        emoji: "🟢", color: "#22c55e", secs: 45 },
@@ -140,6 +141,16 @@ export default function QuizChampionship() {
     },
   });
 
+  const { data: apiLeaderboard = [] } = useQuery<LeaderboardEntry[]>({
+    queryKey: ["quiz-leaderboard", id],
+    queryFn: async () => {
+      const { data } = await axiosInstance.get(`/quiz/tournaments/${id}/leaderboard`);
+      return data.data ?? [];
+    },
+    enabled: !!id && tournament?.status === "completed",
+    staleTime: 5 * 60 * 1000,
+  });
+
   const {
     connected, phase, playerCount, currentQuestion,
     selectedOption, answerLocked, revealData,
@@ -174,6 +185,84 @@ export default function QuizChampionship() {
           <div className="w-12 h-12 rounded-full border-2 border-purple-500/30 border-t-purple-500 animate-spin" />
           <p className="text-white/50 text-sm font-bold">Connecting to game...</p>
           <p className="text-white/20 text-xs">{connected ? "Connected — syncing game state" : "Establishing connection..."}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ── COMPLETED — show final leaderboard ────────────────────────────────────
+  if (tournament.status === "completed" && phase !== "game_over") {
+    return (
+      <div className="min-h-screen bg-[#080810] overflow-y-auto pb-28">
+        <div className="max-w-sm mx-auto px-4 py-10">
+          <button onClick={() => navigate("/tournaments")} className="mb-6 flex items-center gap-2 text-white/30 hover:text-white text-xs font-bold uppercase tracking-widest transition-colors">← Back</button>
+
+          {/* Header */}
+          <div className="text-center mb-6">
+            <div className="text-5xl mb-3">🏆</div>
+            <h2 className="text-2xl font-black text-white mb-1">{tournament.title}</h2>
+            <div className="inline-flex items-center gap-2 bg-slate-500/10 border border-slate-500/20 px-3 py-1 rounded-full">
+              <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Tournament Ended</span>
+            </div>
+          </div>
+
+          {/* Prize pool */}
+          {tournament.prize_pool > 0 && (
+            <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-2xl p-4 mb-4 text-center">
+              <p className="text-[10px] font-black uppercase tracking-widest text-yellow-400/60 mb-1">Total Prize Pool</p>
+              <p className="text-3xl font-black text-yellow-400">{tournament.prize_pool.toLocaleString()} ZA</p>
+            </div>
+          )}
+
+          {/* Leaderboard from socket (if available) or from API */}
+          <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl overflow-hidden mb-4">
+            <div className="px-4 py-3 border-b border-white/[0.06]">
+              <p className="text-[10px] font-black uppercase tracking-widest text-white/30">Final Standings</p>
+            </div>
+            {(() => {
+              const finalLb = leaderboard.length > 0 ? leaderboard : apiLeaderboard;
+              if (finalLb.length === 0) return (
+                <div className="py-10 text-center">
+                  <p className="text-white/20 text-sm font-bold">No leaderboard data yet</p>
+                  <p className="text-white/10 text-xs mt-1">Results will appear here after the game ends</p>
+                </div>
+              );
+              return (
+                <div className="divide-y divide-white/[0.04]">
+                  {finalLb.slice(0, 20).map((e, i) => {
+                    const isMe = e.user_id === user?.id;
+                    const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : null;
+                    return (
+                      <div key={i} className={`flex items-center gap-3 px-4 py-3 ${isMe ? "bg-purple-500/10 border-l-2 border-purple-500" : ""}`}>
+                        <span className="text-sm w-6 text-center shrink-0">
+                          {medal ?? <span className="text-xs text-white/20 font-black">#{i + 1}</span>}
+                        </span>
+                        <div className="w-7 h-7 rounded-full bg-white/[0.08] flex items-center justify-center text-[10px] font-black text-white shrink-0">
+                          {e.username[0]?.toUpperCase()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-sm font-bold truncate ${isMe ? "text-purple-300" : "text-white/70"}`}>{isMe ? "You" : e.username}</p>
+                          <p className="text-[10px] text-white/25">{e.correct_answers} correct</p>
+                        </div>
+                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
+                          e.status === "winner" ? "bg-yellow-400/15 text-yellow-400" :
+                          e.status === "alive"  ? "bg-green-400/15 text-green-400"  :
+                                                  "bg-red-500/10 text-red-400/60"
+                        }`}>
+                          {e.status === "winner" ? "🏆 Winner" : e.status === "alive" ? "Finalist" : "Eliminated"}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+          </div>
+
+          <button onClick={() => navigate("/tournaments")} className="w-full py-4 rounded-2xl font-black text-sm text-white" style={{ background: "linear-gradient(135deg,#7c3aed,#a855f7)" }}>
+            View All Tournaments
+          </button>
         </div>
       </div>
     );
