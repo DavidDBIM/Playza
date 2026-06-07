@@ -14,14 +14,15 @@ import { useProfile } from "../hooks/profile/useProfile";
 import { useAuth } from "@/context/auth";
 import { type User } from "@/api/users.api";
 import { ZASymbol } from "@/components/currency/ZASymbol";
-
 import { ProfileSkeleton } from "@/components/skeletons/ProfileSkeleton";
+import SEO from "@/components/SEO";
 
 const Profile = () => {
   const { user, isLoading: authLoading } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const { data: profileData, isLoading: profileLoading } = useProfile();
+
   useEffect(() => {
     if (!authLoading && !profileLoading && !user) {
       navigate("/registration?view=login");
@@ -62,7 +63,6 @@ const Profile = () => {
     : (user as User | null);
 
   const pts = profile?.pza_points ?? 0;
-  // Tier thresholds: Bronze 0–4999 | Silver 5000–24999 | Gold 25000–99999 | Platinum 100000+
   const tier =
     pts < 5000   ? { label: "BRONZE",   color: "bg-amber-700 text-white border-amber-800 shadow-amber-900/40" } :
     pts < 25000  ? { label: "SILVER",   color: "bg-slate-400 text-white border-slate-500 shadow-slate-500/40" } :
@@ -71,6 +71,13 @@ const Profile = () => {
 
   return (
     <div className="flex-1 pb-24 md:pb-10 transition-all duration-500">
+      <SEO
+        title="My Profile"
+        description="View and manage your Playza profile. Update your details, check your stats and manage account settings."
+        url="/profile"
+        noIndex
+      />
+
       {/* ── COMPACT PROFILE HEADER ── */}
       <div className="glass-card rounded-xl p-3 md:p-6 mb-3 md:mb-6 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 blur-[100px] rounded-full -mr-32 -mt-32 pointer-events-none" />
@@ -81,65 +88,43 @@ const Profile = () => {
           <div className="relative shrink-0">
             <div className="size-16 md:size-24 rounded-xl border-2 border-white/10 shadow-xl overflow-hidden bg-slate-100 dark:bg-white/5 flex items-center justify-center">
               {profile?.avatar_url ? (
-                <img
-                  src={profile.avatar_url}
-                  alt={profile.username}
-                  className="w-full h-full object-cover"
-                />
+                <img src={profile.avatar_url} alt={profile.username} className="w-full h-full object-cover" />
               ) : (
                 <MdPerson className="size-10 text-primary/50" />
               )}
             </div>
-            <div
-              className={`absolute -bottom-2 -right-2 text-[8px] font-black px-2 py-1 rounded-full uppercase tracking-widest shadow-lg border-2 ${tier.color}`}
-            >
+            <div className={`absolute -bottom-2 -right-2 text-[8px] font-black px-2 py-1 rounded-full uppercase tracking-widest shadow-lg border-2 ${tier.color}`}>
               {tier.label}
             </div>
           </div>
 
-          {/* Info + PZA & ZA inline */}
+          {/* Info */}
           <div className="flex-1 min-w-0">
-            {/* Username */}
             <h1 className="text-slate-900 dark:text-white text-base md:text-2xl font-black tracking-tight italic leading-none truncate">
               {profile?.username?.toLowerCase()}
             </h1>
-
-            {/* Full name */}
             {(profile?.first_name || profile?.last_name) && (
               <p className="text-slate-600 dark:text-slate-400 text-xs font-bold mt-0.5 truncate">
                 {profile?.first_name} {profile?.last_name}
               </p>
             )}
-
-            {/* Email */}
             <p className="text-slate-500 dark:text-slate-500 text-[10px] font-medium mt-0.5 truncate">
               {profile?.email}
             </p>
-
-            {/* PZA Points & ZA Balance — shown right below identity info */}
             <div className="flex items-center gap-3 mt-2 flex-wrap">
-              {/* PZA Points */}
               <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-primary/10 border border-primary/20">
                 <MdMilitaryTech className="text-primary text-sm" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
-                  PZA
-                </span>
-                <span className="text-xs font-black text-primary">
-                  {pts.toLocaleString()}
-                </span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">PZA</span>
+                <span className="text-xs font-black text-primary">{pts.toLocaleString()}</span>
               </div>
-
-              {/* ZA Wallet */}
               <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-green-500/10 border border-green-500/20">
                 <ZASymbol className="text-green-500 text-sm" />
-                <span className="text-xs font-black text-green-500">
-                  {(profile?.wallet?.balance ?? 0).toLocaleString()}
-                </span>
+                <span className="text-xs font-black text-green-500">{(profile?.wallet?.balance ?? 0).toLocaleString()}</span>
               </div>
             </div>
           </div>
 
-          {/* Action Buttons */}
+          {/* Actions */}
           <div className="flex flex-col gap-1.5 shrink-0">
             {!location.pathname.includes("/profile/settings") && (
               <button
@@ -151,14 +136,7 @@ const Profile = () => {
               </button>
             )}
             <button
-              onClick={() => {
-                if (navigator.share) {
-                  navigator.share({
-                    title: "Playza Profile",
-                    url: window.location.href,
-                  });
-                }
-              }}
+              onClick={() => { if (navigator.share) { navigator.share({ title: "Playza Profile", url: window.location.href }); } }}
               className="flex items-center gap-1.5 px-3 py-2 bg-primary text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:brightness-110 transition-all shadow-md glow-accent"
             >
               <MdShare className="text-xs" />
@@ -168,7 +146,7 @@ const Profile = () => {
         </div>
       </div>
 
-      {/* ── MOBILE TAB BAR ── shown above content on mobile only */}
+      {/* Mobile tab bar */}
       <div className="-mx-1 md:hidden overflow-x-auto no-scrollbar mb-3 px-1">
         <div className="flex gap-1.5 w-max">
           {menuItems.map((item) => (
@@ -190,9 +168,9 @@ const Profile = () => {
         </div>
       </div>
 
-      {/* ── MAIN LAYOUT: sidebar on desktop, content always ── */}
+      {/* Main layout */}
       <div className="flex flex-col md:flex-row gap-2 md:gap-6">
-        {/* Desktop sidebar — hidden on mobile */}
+        {/* Desktop sidebar */}
         <div className="hidden md:flex flex-col gap-2 w-56 shrink-0">
           <div className="glass-card rounded-2xl p-2 space-y-0.5">
             {menuItems.map((item) => (
@@ -218,9 +196,7 @@ const Profile = () => {
             <div className="absolute -right-6 -bottom-6 size-20 bg-primary/20 blur-2xl rounded-full group-hover:size-28 transition-all pointer-events-none" />
             <div className="flex items-center gap-2 mb-1.5 relative z-10">
               <MdCardGiftcard className="text-primary text-base" />
-              <h3 className="text-slate-900 dark:text-white font-black text-xs uppercase tracking-widest">
-                Refer & Earn
-              </h3>
+              <h3 className="text-slate-900 dark:text-white font-black text-xs uppercase tracking-widest">Refer & Earn</h3>
             </div>
             <p className="text-[10px] text-slate-500 dark:text-slate-400 mb-3 relative z-10 font-bold uppercase tracking-wider flex items-center gap-1 flex-wrap">
               Get <ZASymbol className="text-[10px]" /> 500 per friend
@@ -234,13 +210,11 @@ const Profile = () => {
           </div>
         </div>
 
-        {/* Content area */}
+        {/* Content */}
         <div className="flex-1 min-w-0 animate-in fade-in slide-in-from-bottom-2 duration-300">
           <Outlet />
         </div>
       </div>
-
-
     </div>
   );
 };
