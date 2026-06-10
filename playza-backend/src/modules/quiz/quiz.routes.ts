@@ -6,7 +6,6 @@ import { Resend } from 'resend'
 const router = Router()
 const resend = new Resend(process.env.RESEND_API_KEY)
 
-// ── Send registration confirmation email ──────────────────────────────────────
 async function sendRegistrationEmail(
   to: string,
   username: string,
@@ -79,21 +78,21 @@ router.get('/tournaments', async (req, res) => {
       } catch (_) {}
     }
 
+    // ── include sponsor join ──────────────────────────────────────────────────
     const { data, error } = await supabaseAdmin
       .from('quiz_tournaments')
-      .select('*')
+      .select('*, sponsor:tournament_sponsors(id,name,logo_url,website_url)')
       .in('status', ['registration', 'lobby', 'active', 'completed'])
       .order('scheduled_at', { ascending: true })
 
     if (error) throw error
     const tournaments = data ?? []
-    const ids = tournaments.map(t => t.id)
+    const ids = tournaments.map((t: any) => t.id)
 
     if (ids.length === 0) {
       return res.json({ success: true, data: [] })
     }
 
-    // Single query for all player counts instead of N queries
     const { data: playerCounts } = await supabaseAdmin
       .from('quiz_players')
       .select('tournament_id')
@@ -104,7 +103,6 @@ router.get('/tournaments', async (req, res) => {
       countMap[row.tournament_id] = (countMap[row.tournament_id] ?? 0) + 1
     }
 
-    // Single query for user registrations (only if logged in)
     const registeredSet = new Set<string>()
     if (userId) {
       const { data: registrations } = await supabaseAdmin
@@ -117,7 +115,7 @@ router.get('/tournaments', async (req, res) => {
       }
     }
 
-    const enriched = tournaments.map(t => ({
+    const enriched = tournaments.map((t: any) => ({
       ...t,
       player_count: countMap[t.id] ?? 0,
       user_registered: registeredSet.has(t.id),
@@ -126,6 +124,9 @@ router.get('/tournaments', async (req, res) => {
       platform_fee_percentage: t.platform_fee_percentage ?? 10,
       registration_end: t.registration_end ?? null,
       scheduled_at: t.scheduled_at ?? null,
+      sponsor: t.sponsor ?? null,
+      sponsor_mode: t.sponsor_mode ?? null,
+      sponsor_banner_url: t.sponsor_banner_url ?? null,
     }))
 
     res.json({ success: true, data: enriched })
@@ -137,7 +138,6 @@ router.get('/tournaments', async (req, res) => {
 // ── GET /quiz/tournaments/:id
 router.get('/tournaments/:id', async (req, res) => {
   try {
-    // Optional auth — check token if present but don't require it
     let userId: string | null = null
     const authHeader = req.headers.authorization
     if (authHeader?.startsWith('Bearer ')) {
@@ -148,9 +148,10 @@ router.get('/tournaments/:id', async (req, res) => {
       } catch (_) {}
     }
 
+    // ── include sponsor join ──────────────────────────────────────────────────
     const { data: tournament, error } = await supabaseAdmin
       .from('quiz_tournaments')
-      .select('*')
+      .select('*, sponsor:tournament_sponsors(id,name,logo_url,website_url)')
       .eq('id', req.params.id)
       .single()
 
@@ -186,6 +187,9 @@ router.get('/tournaments/:id', async (req, res) => {
         platform_fee_percentage: tournament.platform_fee_percentage ?? 10,
         registration_end: tournament.registration_end ?? null,
         scheduled_at: tournament.scheduled_at ?? null,
+        sponsor: tournament.sponsor ?? null,
+        sponsor_mode: tournament.sponsor_mode ?? null,
+        sponsor_banner_url: tournament.sponsor_banner_url ?? null,
       },
     })
   } catch (err: any) {
@@ -220,7 +224,6 @@ router.post('/tournaments/:id/join', requireAuth, async (req: AuthRequest, res) 
       return
     }
 
-    // ── Check max players cap ─────────────────────────────────────────────────
     if (tournament.max_players) {
       const { count: currentCount } = await supabaseAdmin
         .from('quiz_players')
@@ -236,7 +239,6 @@ router.post('/tournaments/:id/join', requireAuth, async (req: AuthRequest, res) 
       }
     }
 
-    // ── Check already registered ──────────────────────────────────────────────
     const { data: existing } = await supabaseAdmin
       .from('quiz_players')
       .select('id')
@@ -249,7 +251,6 @@ router.post('/tournaments/:id/join', requireAuth, async (req: AuthRequest, res) 
       return
     }
 
-    // ── Deduct entry fee ──────────────────────────────────────────────────────
     if (tournament.entry_fee > 0) {
       const { data: wallet } = await supabaseAdmin
         .from('wallets')
@@ -262,10 +263,7 @@ router.post('/tournaments/:id/join', requireAuth, async (req: AuthRequest, res) 
         return
       }
 
-      await supabaseAdmin.rpc('decrement_wallet_balance', {
-        p_user_id: userId,
-        p_amount: tournament.entry_fee,
-      })
+      await supabaseAdmin.rpc('decrement_wallet_balance', { p_user_id: userId, p_amount: tournament.entry_fee })
 
       await supabaseAdmin.from('transactions').insert({
         user_id: userId,
@@ -289,21 +287,14 @@ router.post('/tournaments/:id/join', requireAuth, async (req: AuthRequest, res) 
       } catch (_) {}
     }
 
-    // ── Register player ───────────────────────────────────────────────────────
     const { data: player, error: pErr } = await supabaseAdmin
       .from('quiz_players')
-      .insert({
-        tournament_id: tournamentId,
-        user_id: userId,
-        entry_fee_paid: tournament.entry_fee,
-        status: 'alive',
-      })
+      .insert({ tournament_id: tournamentId, user_id: userId, entry_fee_paid: tournament.entry_fee, status: 'alive' })
       .select()
       .single()
 
     if (pErr) throw pErr
 
-    // ── Init leaderboard row ──────────────────────────────────────────────────
     const { data: profile } = await supabaseAdmin
       .from('users')
       .select('username, avatar_url, email')
@@ -327,7 +318,6 @@ router.post('/tournaments/:id/join', requireAuth, async (req: AuthRequest, res) 
         })
       : 'TBA'
 
-    // ── Send confirmation email (non-blocking) ────────────────────────────────
     if (profile?.email) {
       sendRegistrationEmail(profile.email, profile.username ?? 'Player', tournament)
     }
@@ -343,7 +333,7 @@ router.post('/tournaments/:id/join', requireAuth, async (req: AuthRequest, res) 
   }
 })
 
-// ── GET /quiz/tournaments/:id/lobby  — players in lobby
+// ── GET /quiz/tournaments/:id/lobby
 router.get('/tournaments/:id/lobby', requireAuth, async (req: AuthRequest, res) => {
   try {
     const { data, error } = await supabaseAdmin
