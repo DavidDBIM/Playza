@@ -21,6 +21,7 @@ import {
   MdQuiz,
   MdImage,
   MdCardGiftcard,
+  MdHandshake,
 } from 'react-icons/md';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { authService } from '../../services/auth.service';
@@ -45,6 +46,7 @@ const NAV_ITEMS = [
   { path: '/ambassadors', pathMatch: '/ambassadors', icon: MdEmojiPeople, label: 'Ambassadors' },
   { path: '/social-tasks', pathMatch: '/social-tasks', icon: MdShare, label: 'Social Tasks' },
   { path: '/quiz-tournaments', pathMatch: '/quiz-tournaments', icon: MdQuiz, label: 'Quiz Tournaments' },
+  { path: '/sponsors', pathMatch: '/sponsors', icon: MdHandshake, label: 'Sponsors' },
   { path: '/referral-payouts', pathMatch: '/referral-payouts', icon: MdCurrencyExchange, label: 'Referral Payouts' },
   { path: '/notifications', pathMatch: '/notifications', icon: MdNotifications, label: 'Notifications' },
   { path: '/feedback', pathMatch: '/feedback', icon: MdChat, label: 'Feedback' },
