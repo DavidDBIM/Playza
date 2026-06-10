@@ -5,6 +5,13 @@ export interface PrizeTier {
   percentage: number
 }
 
+export interface TournamentSponsor {
+  id: string
+  name: string
+  logo_url: string | null
+  website_url: string | null
+}
+
 export interface QuizTournament {
   id: string
   title: string
@@ -21,6 +28,11 @@ export interface QuizTournament {
   current_round: number
   player_count: number
   user_registered?: boolean
+  // Sponsor fields
+  sponsor_id?: string | null
+  sponsor_mode?: 'collab' | 'banner' | null
+  sponsor_banner_url?: string | null
+  sponsor?: TournamentSponsor | null
 }
 
 export async function getQuizTournamentsApi(): Promise<QuizTournament[]> {
