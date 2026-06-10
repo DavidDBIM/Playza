@@ -18,6 +18,7 @@ import Ambassadors from "./pages/Ambassadors";
 import SocialTasks from "./pages/SocialTasks";
 import Rewards from "./pages/Rewards";
 import QuizTournaments from "./pages/QuizTournaments";
+import Sponsors from "./pages/Sponsors";
 import SignIn from "./pages/SignIn";
 import { ThemeProvider } from "./components/theme/ThemeProvider";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
@@ -28,7 +29,6 @@ import { SecurityWrapper } from "./components/auth/SecurityWrapper";
 import BannerSlides from "./pages/BannerSlides";
 import ReferralRewards from "./pages/ReferralRewards";
 
-// Placeholder components for routes
 const Placeholder = ({ name }: { name: string }) => (
   <div className="p-10 text-foreground">
     <h1 className="text-3xl font-headline font-black mb-4">{name} Console</h1>
@@ -38,14 +38,12 @@ const Placeholder = ({ name }: { name: string }) => (
   </div>
 );
 
-
 const App: React.FC = () => {
   return (
     <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
       <Router>
         <Routes>
           <Route path="/signin" element={<SignIn />} />
-          
           <Route element={<ProtectedRoute />}>
             <Route path="/" element={<SecurityWrapper><Layout /></SecurityWrapper>}>
               <Route index element={<Dashboard />} />
@@ -56,10 +54,7 @@ const App: React.FC = () => {
               <Route path="games/edit/:slug" element={<CreateGame />} />
               <Route path="games/:slug" element={<Game />} />
               <Route path="sessions/:id" element={<Session />} />
-              <Route
-                path="sessions/:id/leaderboard"
-                element={<SessionLeaderboard />}
-              />
+              <Route path="sessions/:id/leaderboard" element={<SessionLeaderboard />} />
               <Route path="leaderboards/*" element={<Leaderboards />} />
               <Route path="transactions" element={<Transactions />} />
               <Route path="transactions/:id" element={<TransactionDetails />} />
@@ -73,6 +68,7 @@ const App: React.FC = () => {
               <Route path="security-logs" element={<SecurityLogs />} />
               <Route path="content" element={<Placeholder name="Content" />} />
               <Route path="quiz-tournaments" element={<QuizTournaments />} />
+              <Route path="sponsors" element={<Sponsors />} />
               <Route path="banner-slides" element={<BannerSlides />} />
               <Route path="referral-rewards" element={<ReferralRewards />} />
               <Route path="*" element={<Navigate to="/" replace />} />
