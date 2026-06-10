@@ -34,6 +34,7 @@ import soloearnRoutes from './modules/soloearn/soloearn.routes'
 import gamesessionRoutes from './modules/gamesession/gamesession.routes'
 import quizRoutes from './modules/quiz/quiz.routes'
 import quizAdminRoutes from './modules/quiz/quiz.admin.routes'
+import sponsorsRoutes from './modules/quiz/quiz.sponsors.routes'
 import bannerRoutes from './modules/banner/banner.routes'
 import referralRewardsRoutes from './modules/referral-rewards/referral-rewards.routes'
 import { setupQuizGateway } from './modules/quiz/quiz.gateway'
@@ -89,6 +90,7 @@ app.use('/api/soloearn', soloearnRoutes)
 app.use('/api/gamesession', gamesessionRoutes)
 app.use('/api/quiz', quizRoutes)
 app.use('/api/admin/quiz', quizAdminRoutes)
+app.use('/api/admin/quiz/sponsors', sponsorsRoutes)
 app.use('/api/banners', bannerRoutes)
 app.use('/api/referral-rewards', referralRewardsRoutes)
 
@@ -101,7 +103,7 @@ const httpServer = createServer(app)
 const io = setupSocketIO(httpServer)
 setupQuizGateway(io)
 setQuizAdminIo(io)
-setQuizReminderIo(io) // Give lifecycle cron access to socket for auto-launch
+setQuizReminderIo(io)
 
 // ── Background jobs ───────────────────────────────────────────────────────────
 
@@ -126,13 +128,11 @@ cron.schedule('*/5 * * * *', async () => {
 })
 
 // Quiz tournament lifecycle — runs every minute
-// Handles: registration close → lobby, 30-min reminder, auto-launch at scheduled_at
 cron.schedule('* * * * *', async () => {
   await runQuizLifecycleJob()
 })
 
 // Quiz tournament reminders — runs every 30 minutes
-// Sends push + email at 24h before and 2h before the scheduled start
 cron.schedule('*/30 * * * *', async () => {
   await runQuizReminderJob()
 })
