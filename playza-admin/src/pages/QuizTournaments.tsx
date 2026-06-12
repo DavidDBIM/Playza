@@ -223,6 +223,7 @@ function CreateTournamentModal({ onClose, onCreated }: { onClose: () => void; on
     scheduled_at: "", registration_end: "",
     max_players: "" as string | number,
     platform_fee_percentage: 10,
+    consolation_pza: 0,
   });
   const [tiers, setTiers] = useState<PrizeTier[]>([]);
   const [error, setError] = useState("");
@@ -240,6 +241,7 @@ function CreateTournamentModal({ onClose, onCreated }: { onClose: () => void; on
       max_players: form.max_players !== "" ? Number(form.max_players) : null,
       prize_distribution: tiers.length > 0 ? tiers : null,
       platform_fee_percentage: form.platform_fee_percentage,
+      consolation_pza: form.consolation_pza,
     } as any),
     onSuccess: () => { onCreated(); onClose(); },
     onError: (err: any) => setError(err.response?.data?.message ?? "Failed to create"),
@@ -287,14 +289,18 @@ function CreateTournamentModal({ onClose, onCreated }: { onClose: () => void; on
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-black text-white/30">%</span>
               </div>
             </div>
+            <div>
+              <label className={labelCls}>Consolation PZA <span style={{ fontWeight: 400, textTransform: "none", opacity: 0.5 }}>(awarded to ALL registered players at game end)</span></label>
+              <div className="relative">
+                <input type="number" min={0} placeholder="e.g. 50" value={form.consolation_pza} onChange={e => setForm(p => ({ ...p, consolation_pza: Math.max(0, Number(e.target.value)) }))} className={inputCls + " pr-12"} />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-black text-white/30">PZA</span>
+              </div>
+            </div>
           </div>
 
           <div style={{ height: 1, background: "rgba(255,255,255,0.06)" }} />
 
           <PrizeDistributionBuilder tiers={tiers} onChange={setTiers} platformFeePct={form.platform_fee_percentage} />
-        </div>
-        <div className="px-6 py-4 border-t border-white/5 shrink-0">
-          <button onClick={() => mutate()} disabled={isPending || !canSubmit} className="w-full py-3 rounded-xl font-black text-sm text-white disabled:opacity-40 flex items-center justify-center gap-2 transition-all hover:opacity-90" style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)", boxShadow: "0 0 24px rgba(124,58,237,0.35)" }}>
             {isPending ? <><MdRefresh className="animate-spin" /> Creating...</> : <><MdAdd /> Create Tournament</>}
           </button>
         </div>
@@ -320,6 +326,7 @@ function EditTournamentModal({ tournament, onClose, onSaved }: { tournament: Qui
     registration_end: toLocalDT((tournament as any).registration_end),
     max_players: tournament.max_players ?? ("" as string | number),
     platform_fee_percentage: (tournament as any).platform_fee_percentage ?? 10,
+    consolation_pza: (tournament as any).consolation_pza ?? 0,
   });
   const [tiers, setTiers] = useState<PrizeTier[]>(tournament.prize_distribution ?? []);
   const [error, setError] = useState("");
@@ -338,6 +345,7 @@ function EditTournamentModal({ tournament, onClose, onSaved }: { tournament: Qui
       max_players: form.max_players !== "" ? Number(form.max_players) : null,
       prize_distribution: tiers.length > 0 ? tiers : null,
       platform_fee_percentage: form.platform_fee_percentage,
+      consolation_pza: form.consolation_pza,
     } as any),
     onSuccess: (updated) => { onSaved(updated); onClose(); },
     onError: (err: any) => setError(err.response?.data?.message ?? "Failed to save"),
@@ -383,6 +391,13 @@ function EditTournamentModal({ tournament, onClose, onSaved }: { tournament: Qui
               <div className="relative">
                 <input type="number" min={0} max={50} placeholder="10" value={form.platform_fee_percentage} onChange={e => setForm(p => ({ ...p, platform_fee_percentage: Math.max(0, Math.min(50, Number(e.target.value))) }))} className={inputCls + " pr-8"} />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-black text-white/30">%</span>
+              </div>
+            </div>
+            <div>
+              <label className={labelCls}>Consolation PZA <span style={{ fontWeight: 400, textTransform: "none", opacity: 0.5 }}>(awarded to ALL registered players at game end)</span></label>
+              <div className="relative">
+                <input type="number" min={0} placeholder="e.g. 50" value={form.consolation_pza} onChange={e => setForm(p => ({ ...p, consolation_pza: Math.max(0, Number(e.target.value)) }))} className={inputCls + " pr-12"} />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-black text-white/30">PZA</span>
               </div>
             </div>
           </div>
