@@ -351,8 +351,10 @@ const Tournaments = () => {
       <div style={{ position: "relative", background: "#07041a", borderRadius: "0 0 20px 20px", overflow: "hidden", padding: "clamp(28px,6vw,48px) clamp(16px,4vw,28px) clamp(24px,5vw,36px)", marginBottom: 20 }}>
         {/* Sponsor banner overlay */}
         {sponsoredBanner && (
-          <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${sponsoredBanner.sponsor_banner_url})`, backgroundSize: "cover", backgroundPosition: "center", opacity: 0.5, zIndex: 0 }} />
-          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(7,4,26,0.3) 0%, rgba(7,4,26,0.75) 100%)", zIndex: 0 }} />
+          <>
+            <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${sponsoredBanner.sponsor_banner_url})`, backgroundSize: "cover", backgroundPosition: "center", opacity: 0.5, zIndex: 0 }} />
+            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(7,4,26,0.3) 0%, rgba(7,4,26,0.75) 100%)", zIndex: 0 }} />
+          </>
         )}
         <div style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0 }}>
           <div style={{ position: "absolute", width: "clamp(200px,60vw,380px)", height: "clamp(200px,60vw,380px)", borderRadius: "50%", background: "#3b0764", opacity: 0.5, top: -100, left: -80, filter: "blur(80px)" }} />
