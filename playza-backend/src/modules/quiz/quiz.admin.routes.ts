@@ -218,7 +218,7 @@ router.get('/tournaments/:id/questions', requireAdmin, async (req, res) => {
 // ── POST /admin/quiz/tournaments/:id/questions  — add single question
 router.post('/tournaments/:id/questions', requireAdmin, async (req, res) => {
   try {
-    const { round_number, question_text, option_a, option_b, option_c, option_d, correct_option } = req.body
+    const { round_number, question_text, option_a, option_b, option_c, option_d, correct_option, image_url } = req.body
 
     if (!question_text || !option_a || !option_b || !option_c || !option_d || !correct_option) {
       res.status(400).json({ success: false, message: 'All fields are required' })
@@ -246,6 +246,7 @@ router.post('/tournaments/:id/questions', requireAdmin, async (req, res) => {
         difficulty: roundCfg?.difficulty ?? 'easy',
         time_limit_secs: roundCfg?.time_secs ?? 45,
         order_index: count ?? 0,
+        image_url: image_url ?? null,
       })
       .select()
       .single()
@@ -269,6 +270,7 @@ router.post('/tournaments/:id/questions/bulk', requireAdmin, async (req, res) =>
         option_c: string
         option_d: string
         correct_option: string
+        image_url?: string | null
       }>
     }
 
@@ -302,6 +304,7 @@ router.post('/tournaments/:id/questions/bulk', requireAdmin, async (req, res) =>
         difficulty: roundCfg?.difficulty ?? 'easy',
         time_limit_secs: roundCfg?.time_secs ?? 45,
         order_index: idx,
+        image_url: q.image_url ?? null,
       }
     })
 
