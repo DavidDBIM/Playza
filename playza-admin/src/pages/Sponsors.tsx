@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "../lib/api-client";
 import { MdAdd, MdDelete, MdEdit, MdClose, MdRefresh, MdCheckCircle, MdHandshake } from "react-icons/md";
-import { Globe, Trophy, Link as LinkIcon } from "lucide-react";
+import { Globe } from "lucide-react";
 
 interface Sponsor {
   id: string;
