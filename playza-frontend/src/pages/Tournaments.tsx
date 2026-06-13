@@ -351,7 +351,8 @@ const Tournaments = () => {
       <div style={{ position: "relative", background: "#07041a", borderRadius: "0 0 20px 20px", overflow: "hidden", padding: "clamp(28px,6vw,48px) clamp(16px,4vw,28px) clamp(24px,5vw,36px)", marginBottom: 20 }}>
         {/* Sponsor banner overlay */}
         {sponsoredBanner && (
-          <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${sponsoredBanner.sponsor_banner_url})`, backgroundSize: "cover", backgroundPosition: "center", opacity: 0.3, zIndex: 0 }} />
+          <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${sponsoredBanner.sponsor_banner_url})`, backgroundSize: "cover", backgroundPosition: "center", opacity: 0.5, zIndex: 0 }} />
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(7,4,26,0.3) 0%, rgba(7,4,26,0.75) 100%)", zIndex: 0 }} />
         )}
         <div style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0 }}>
           <div style={{ position: "absolute", width: "clamp(200px,60vw,380px)", height: "clamp(200px,60vw,380px)", borderRadius: "50%", background: "#3b0764", opacity: 0.5, top: -100, left: -80, filter: "blur(80px)" }} />
@@ -360,32 +361,32 @@ const Tournaments = () => {
           <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(rgba(255,255,255,0.07) 1px,transparent 1px)", backgroundSize: "24px 24px" }} />
         </div>
 
-        {/* Eyebrow — sponsor-aware */}
-        <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 8 }}>
-          {sponsoredCollab?.sponsor ? (
-            /* Collab mode: Playza × Sponsor */
-            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(168,85,247,0.12)", border: "1px solid rgba(168,85,247,0.25)", borderRadius: 20, padding: "5px 14px" }}>
-              <div style={{ width: 22, height: 22, borderRadius: 6, background: "linear-gradient(135deg,#7c3aed,#4f46e5)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <span style={{ fontSize: 11, fontWeight: 900, color: "#fff" }}>P</span>
-              </div>
-              <span style={{ fontSize: "clamp(9px,2.5vw,11px)", fontWeight: 700, color: "rgba(255,255,255,0.5)" }}>Playza</span>
-              <span style={{ fontSize: 14, color: "rgba(255,255,255,0.3)", lineHeight: 1 }}>×</span>
-              {sponsoredCollab.sponsor.logo_url
-                ? <img src={sponsoredCollab.sponsor.logo_url} alt={sponsoredCollab.sponsor.name} style={{ width: 22, height: 22, borderRadius: 6, objectFit: "contain", background: "rgba(255,255,255,0.1)", padding: 2, flexShrink: 0 }} />
-                : <div style={{ width: 22, height: 22, borderRadius: 6, background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    <span style={{ fontSize: 11, fontWeight: 900, color: "#fff" }}>{sponsoredCollab.sponsor.name[0]}</span>
-                  </div>}
-              <span style={{ fontSize: "clamp(9px,2.5vw,11px)", fontWeight: 700, color: "rgba(255,255,255,0.5)" }}>{sponsoredCollab.sponsor.name}</span>
-            </div>
-          ) : (
-            /* Default Playza branding */
-            <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(168,85,247,0.15)", border: "1px solid rgba(168,85,247,0.3)", borderRadius: 20, padding: "4px 12px" }}>
-              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#a855f7", display: "block", animation: "pulse-glow 1.4s ease-in-out infinite" }} />
-              <span style={{ fontSize: "clamp(8px,2.5vw,10px)", fontWeight: 600, color: "#c084fc", letterSpacing: "0.15em", textTransform: "uppercase" }}>Playza · Competitive</span>
-            </div>
-          )}
+        {/* Eyebrow */}
+        <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: sponsoredCollab?.sponsor || sponsoredBanner ? 14 : 20, flexWrap: "wrap", gap: 8 }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(168,85,247,0.15)", border: "1px solid rgba(168,85,247,0.3)", borderRadius: 20, padding: "4px 12px" }}>
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#a855f7", display: "block", animation: "pulse-glow 1.4s ease-in-out infinite" }} />
+            <span style={{ fontSize: "clamp(8px,2.5vw,10px)", fontWeight: 600, color: "#c084fc", letterSpacing: "0.15em", textTransform: "uppercase" }}>Playza · Competitive</span>
+          </div>
           {liveCount > 0 && (<div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.35)", borderRadius: 20, padding: "4px 12px" }}><span style={{ width: 6, height: 6, borderRadius: "50%", background: "#ef4444", display: "block", animation: "pulse-glow 0.9s ease-in-out infinite" }} /><span style={{ fontSize: "clamp(8px,2.5vw,10px)", fontWeight: 600, color: "#f87171", letterSpacing: "0.1em", textTransform: "uppercase" }}>{liveCount} Live Now</span></div>)}
         </div>
+
+        {/* Sponsor banner row — big, prominent, responsive */}
+        {sponsoredCollab?.sponsor && (
+          <div style={{ position: "relative", zIndex: 1, marginBottom: 20, display: "flex", alignItems: "center", justifyContent: "center", gap: "clamp(10px,3vw,20px)", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, padding: "clamp(12px,3vw,18px) clamp(14px,4vw,24px)", flexWrap: "wrap" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "clamp(6px,2vw,10px)" }}>
+              <img src="/logo.png" alt="Playza" style={{ height: "clamp(28px,7vw,44px)", width: "auto", objectFit: "contain" }} />
+            </div>
+            <span style={{ fontSize: "clamp(16px,4vw,28px)", fontWeight: 300, color: "rgba(255,255,255,0.35)", lineHeight: 1 }}>×</span>
+            <div style={{ display: "flex", alignItems: "center", gap: "clamp(6px,2vw,10px)" }}>
+              {sponsoredCollab.sponsor.logo_url
+                ? <img src={sponsoredCollab.sponsor.logo_url} alt={sponsoredCollab.sponsor.name} style={{ height: "clamp(28px,7vw,44px)", width: "auto", maxWidth: "clamp(80px,20vw,160px)", objectFit: "contain" }} />
+                : <div style={{ height: "clamp(28px,7vw,44px)", width: "clamp(28px,7vw,44px)", borderRadius: 8, background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <span style={{ fontSize: "clamp(12px,3vw,18px)", fontWeight: 900, color: "#fff" }}>{sponsoredCollab.sponsor.name[0]}</span>
+                  </div>}
+              <span style={{ fontSize: "clamp(13px,3.5vw,22px)", fontWeight: 800, color: "#fff", whiteSpace: "nowrap" }}>{sponsoredCollab.sponsor.name}</span>
+            </div>
+          </div>
+        )}
 
         <div style={{ position: "relative", zIndex: 1, marginBottom: 20 }}><DropTitle /></div>
         <div style={{ position: "relative", zIndex: 1, display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 20 }}>
