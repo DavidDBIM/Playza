@@ -259,9 +259,15 @@ function EditTournamentModal({ tournament, onClose, onSaved }: { tournament: Qui
                   </div>
                   {sponsorForm.sponsor_mode === "banner" && (
                     <div>
-                      <label className={labelCls}>Banner Image URL</label>
-                      <input type="url" placeholder="https://sponsor.com/banner.png" value={sponsorForm.sponsor_banner_url} onChange={e => setSponsorForm(p => ({ ...p, sponsor_banner_url: e.target.value }))} className={inputCls} />
-                      {sponsorForm.sponsor_banner_url && <img src={sponsorForm.sponsor_banner_url} alt="banner preview" className="mt-2 w-full h-20 object-cover rounded-xl" style={{ border: "1px solid rgba(255,255,255,0.1)" }} onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />}
+                      <label className={labelCls}>Banner Image</label>
+                      <div className="flex gap-2 mb-2">
+                        <input type="url" placeholder="Paste banner image URL..." value={sponsorForm.sponsor_banner_url} onChange={e => setSponsorForm(p => ({ ...p, sponsor_banner_url: e.target.value }))} className={inputCls} style={{ flex: 1 }} />
+                        <label className="flex items-center gap-1.5 px-3 py-2 rounded-xl cursor-pointer shrink-0 text-xs font-bold text-white/60 hover:text-white transition-all" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", whiteSpace: "nowrap" }}>
+                          <MdUpload className="text-sm" /> Upload
+                          <input type="file" accept="image/*" className="hidden" onChange={e => { const file = e.target.files?.[0]; if (!file) return; const reader = new FileReader(); reader.onload = ev => { setSponsorForm(p => ({ ...p, sponsor_banner_url: ev.target?.result as string })); }; reader.readAsDataURL(file); e.target.value = ""; }} />
+                        </label>
+                      </div>
+                      {sponsorForm.sponsor_banner_url && <img src={sponsorForm.sponsor_banner_url} alt="banner preview" className="w-full h-20 object-cover rounded-xl" style={{ border: "1px solid rgba(255,255,255,0.1)" }} onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />}
                     </div>
                   )}
                   {sponsorForm.sponsor_mode === "collab" && (() => {
@@ -272,7 +278,7 @@ function EditTournamentModal({ tournament, onClose, onSaved }: { tournament: Qui
                           {sp.logo_url ? <img src={sp.logo_url} alt={sp.name} className="w-full h-full object-contain p-0.5" /> : <span className="text-xs font-black text-white">{sp.name[0]}</span>}
                         </div>
                         <span className="text-white/60 font-bold text-sm">×</span>
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center"><span className="text-white text-xs font-black">P</span></div>
+                        <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center" style={{ background: "rgba(255,255,255,0.06)" }}><img src="/logo.png" alt="Playza" className="w-full h-full object-contain p-0.5" /></div>
                         <div><p className="text-xs font-black text-white">{sp.name} × Playza</p><p className="text-[9px] text-white/30">Collab banner preview</p></div>
                       </div>
                     ) : null;
