@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "../lib/api-client";
-import { MdAdd, MdDelete, MdEdit, MdClose, MdRefresh, MdCheckCircle, MdHandshake } from "react-icons/md";
+import { MdAdd, MdDelete, MdEdit, MdClose, MdRefresh, MdCheckCircle, MdHandshake, MdUpload } from "react-icons/md";
 import { Globe } from "lucide-react";
 
 interface Sponsor {
@@ -67,14 +67,29 @@ function SponsorForm({
       </div>
 
       <div>
-        <label className={labelCls}>Logo URL <span className="font-normal normal-case opacity-50">(direct image link)</span></label>
-        <input type="url" placeholder="https://example.com/logo.png" value={form.logo_url}
-          onChange={e => setForm(p => ({ ...p, logo_url: e.target.value }))} className={inputCls} />
+        <label className={labelCls}>Sponsor Logo</label>
+        <div className="flex gap-2 mb-2">
+          <input type="url" placeholder="Paste logo image URL..." value={form.logo_url}
+            onChange={e => setForm(p => ({ ...p, logo_url: e.target.value }))} className={inputCls} style={{ flex: 1 }} />
+          <label className="flex items-center gap-1.5 px-3 py-2 rounded-xl cursor-pointer shrink-0 text-xs font-bold text-white/60 hover:text-white transition-all" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", whiteSpace: "nowrap" }}>
+            <MdUpload className="text-sm" /> Upload
+            <input type="file" accept="image/*" className="hidden" onChange={e => {
+              const file = e.target.files?.[0]; if (!file) return;
+              const reader = new FileReader();
+              reader.onload = ev => { setForm(p => ({ ...p, logo_url: ev.target?.result as string })); };
+              reader.readAsDataURL(file);
+              e.target.value = "";
+            }} />
+          </label>
+        </div>
         {form.logo_url && (
           <div className="mt-2 flex items-center gap-3 p-3 rounded-xl" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
-            <img src={form.logo_url} alt="preview" className="w-10 h-10 object-contain rounded-lg"
+            <img src={form.logo_url} alt="preview" className="w-12 h-12 object-contain rounded-lg" style={{ background: "rgba(255,255,255,0.06)" }}
               onError={e => { (e.currentTarget as HTMLImageElement).style.opacity = "0.2"; }} />
             <span className="text-xs text-white/40 font-bold">Logo preview</span>
+            <button onClick={() => setForm(p => ({ ...p, logo_url: "" }))} className="ml-auto w-7 h-7 rounded-lg flex items-center justify-center transition-all" style={{ background: "rgba(239,68,68,0.12)", color: "#f87171" }}>
+              <MdClose className="text-sm" />
+            </button>
           </div>
         )}
       </div>
