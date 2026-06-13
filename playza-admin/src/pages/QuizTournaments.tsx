@@ -188,7 +188,7 @@ function EditTournamentModal({ tournament, onClose, onSaved }: { tournament: Qui
   const toLocalDT = (iso: string | null) => { if (!iso) return ""; const d = new Date(iso); const pad = (n: number) => String(n).padStart(2, "0"); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`; };
   const [form, setForm] = useState({ title: tournament.title, description: tournament.description ?? "", entry_fee: tournament.entry_fee, scheduled_at: toLocalDT(tournament.scheduled_at), registration_end: toLocalDT((tournament as any).registration_end), max_players: tournament.max_players ?? ("" as string | number), platform_fee_percentage: (tournament as any).platform_fee_percentage ?? 10 });
   const [tiers, setTiers] = useState<PrizeTier[]>(tournament.prize_distribution ?? []);
-  const [sponsorForm, setSponsorForm] = useState({ sponsor_id: tournament.sponsor_id ?? "", sponsor_mode: tournament.sponsor_mode ?? "collab", sponsor_banner_url: tournament.sponsor_banner_url ?? "" });
+  const [sponsorForm, setSponsorForm] = useState({ sponsor_id: tournament.sponsor_id ?? "", sponsor_mode: tournament.sponsor_mode ?? "none", sponsor_banner_url: tournament.sponsor_banner_url ?? "" });
   const [error, setError] = useState("");
   const totalPct = tiers.reduce((s, t) => s + t.percentage, 0);
   const maxAllocatable = 100 - form.platform_fee_percentage;
@@ -196,7 +196,12 @@ function EditTournamentModal({ tournament, onClose, onSaved }: { tournament: Qui
   const { mutate, isPending } = useMutation({
     mutationFn: async () => {
       await api.updateTournament({ id: tournament.id, title: form.title, description: form.description, entry_fee: Number(form.entry_fee), scheduled_at: form.scheduled_at || null, registration_end: form.registration_end || null, max_players: form.max_players !== "" ? Number(form.max_players) : null, prize_distribution: tiers.length > 0 ? tiers : null, platform_fee_percentage: form.platform_fee_percentage } as any);
-      await api.attachSponsor(tournament.id, { sponsor_id: sponsorForm.sponsor_id || null, sponsor_mode: sponsorForm.sponsor_id ? sponsorForm.sponsor_mode : null, sponsor_banner_url: sponsorForm.sponsor_mode === "banner" ? (sponsorForm.sponsor_banner_url || null) : null });
+      const mode = sponsorForm.sponsor_mode === "none" ? null : sponsorForm.sponsor_mode;
+      await api.attachSponsor(tournament.id, {
+        sponsor_id: mode === "collab" ? (sponsorForm.sponsor_id || null) : null,
+        sponsor_mode: mode,
+        sponsor_banner_url: mode === "banner" ? (sponsorForm.sponsor_banner_url || null) : null,
+      });
     },
     onSuccess: () => { onSaved({ ...tournament, ...form } as any); onClose(); },
     onError: (err: any) => setError(err.response?.data?.message ?? "Failed to save"),
@@ -238,53 +243,58 @@ function EditTournamentModal({ tournament, onClose, onSaved }: { tournament: Qui
             </div>
             <div className="space-y-3">
               <div>
-                <label className={labelCls}>Select Sponsor</label>
-                <select value={sponsorForm.sponsor_id} onChange={e => setSponsorForm(p => ({ ...p, sponsor_id: e.target.value }))} className={inputCls + " appearance-none"}>
-                  <option value="" style={{ background: "#1e1035" }}>— No Sponsor —</option>
-                  {sponsors.map(s => <option key={s.id} value={s.id} style={{ background: "#1e1035" }}>{s.name}</option>)}
-                </select>
+                <label className={labelCls}>Display Mode</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { value: "none",   label: "— None —", desc: "Default Playza branding" },
+                    { value: "collab", label: "🤝 Collab", desc: "Playza × Sponsor logos" },
+                    { value: "banner", label: "🖼 Banner",  desc: "Upload a designed image" },
+                  ].map(m => (
+                    <button key={m.value} onClick={() => setSponsorForm(p => ({ ...p, sponsor_mode: m.value as any }))} className="p-3 rounded-xl text-left transition-all" style={sponsorForm.sponsor_mode === m.value ? { background: "rgba(124,58,237,0.2)", border: "1px solid rgba(124,58,237,0.5)" } : { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                      <p className="text-sm font-black text-white">{m.label}</p>
+                      <p className="text-[10px] text-white/40 mt-0.5">{m.desc}</p>
+                    </button>
+                  ))}
+                </div>
               </div>
-              {sponsorForm.sponsor_id && (
-                <>
-                  <div>
-                    <label className={labelCls}>Display Mode</label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {[{ value: "collab", label: "🤝 Collab", desc: "Playza × Sponsor logos" }, { value: "banner", label: "🖼 Banner", desc: "Full custom image" }].map(m => (
-                        <button key={m.value} onClick={() => setSponsorForm(p => ({ ...p, sponsor_mode: m.value as any }))} className="p-3 rounded-xl text-left transition-all" style={sponsorForm.sponsor_mode === m.value ? { background: "rgba(124,58,237,0.2)", border: "1px solid rgba(124,58,237,0.5)" } : { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
-                          <p className="text-sm font-black text-white">{m.label}</p>
-                          <p className="text-[10px] text-white/40 mt-0.5">{m.desc}</p>
-                        </button>
-                      ))}
-                    </div>
+
+              {sponsorForm.sponsor_mode === "banner" && (
+                <div>
+                  <label className={labelCls}>Banner Image <span className="font-normal normal-case opacity-50">(no sponsor needed — just upload your design)</span></label>
+                  <div className="flex gap-2 mb-2">
+                    <input type="url" placeholder="Paste banner image URL..." value={sponsorForm.sponsor_banner_url} onChange={e => setSponsorForm(p => ({ ...p, sponsor_banner_url: e.target.value }))} className={inputCls} style={{ flex: 1 }} />
+                    <label className="flex items-center gap-1.5 px-3 py-2 rounded-xl cursor-pointer shrink-0 text-xs font-bold text-white/60 hover:text-white transition-all" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", whiteSpace: "nowrap" }}>
+                      <MdUpload className="text-sm" /> Upload
+                      <input type="file" accept="image/*" className="hidden" onChange={e => { const file = e.target.files?.[0]; if (!file) return; const reader = new FileReader(); reader.onload = ev => { setSponsorForm(p => ({ ...p, sponsor_banner_url: ev.target?.result as string })); }; reader.readAsDataURL(file); e.target.value = ""; }} />
+                    </label>
                   </div>
-                  {sponsorForm.sponsor_mode === "banner" && (
-                    <div>
-                      <label className={labelCls}>Banner Image</label>
-                      <div className="flex gap-2 mb-2">
-                        <input type="url" placeholder="Paste banner image URL..." value={sponsorForm.sponsor_banner_url} onChange={e => setSponsorForm(p => ({ ...p, sponsor_banner_url: e.target.value }))} className={inputCls} style={{ flex: 1 }} />
-                        <label className="flex items-center gap-1.5 px-3 py-2 rounded-xl cursor-pointer shrink-0 text-xs font-bold text-white/60 hover:text-white transition-all" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", whiteSpace: "nowrap" }}>
-                          <MdUpload className="text-sm" /> Upload
-                          <input type="file" accept="image/*" className="hidden" onChange={e => { const file = e.target.files?.[0]; if (!file) return; const reader = new FileReader(); reader.onload = ev => { setSponsorForm(p => ({ ...p, sponsor_banner_url: ev.target?.result as string })); }; reader.readAsDataURL(file); e.target.value = ""; }} />
-                        </label>
-                      </div>
-                      {sponsorForm.sponsor_banner_url && <img src={sponsorForm.sponsor_banner_url} alt="banner preview" className="w-full h-20 object-cover rounded-xl" style={{ border: "1px solid rgba(255,255,255,0.1)" }} onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />}
-                    </div>
-                  )}
-                  {sponsorForm.sponsor_mode === "collab" && (() => {
-                    const sp = sponsors.find(s => s.id === sponsorForm.sponsor_id);
-                    return sp ? (
-                      <div className="rounded-xl p-3 flex items-center gap-3" style={{ background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.2)" }}>
-                        <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center" style={{ background: "rgba(255,255,255,0.1)" }}>
-                          {sp.logo_url ? <img src={sp.logo_url} alt={sp.name} className="w-full h-full object-contain p-0.5" /> : <span className="text-xs font-black text-white">{sp.name[0]}</span>}
-                        </div>
-                        <span className="text-white/60 font-bold text-sm">×</span>
-                        <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center" style={{ background: "rgba(255,255,255,0.06)" }}><img src="/logo.png" alt="Playza" className="w-full h-full object-contain p-0.5" /></div>
-                        <div><p className="text-xs font-black text-white">{sp.name} × Playza</p><p className="text-[9px] text-white/30">Collab banner preview</p></div>
-                      </div>
-                    ) : null;
-                  })()}
-                </>
+                  {sponsorForm.sponsor_banner_url && <img src={sponsorForm.sponsor_banner_url} alt="banner preview" className="w-full h-20 object-cover rounded-xl" style={{ border: "1px solid rgba(255,255,255,0.1)" }} onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />}
+                </div>
               )}
+
+              {sponsorForm.sponsor_mode === "collab" && (
+                <div>
+                  <label className={labelCls}>Select Sponsor</label>
+                  <select value={sponsorForm.sponsor_id} onChange={e => setSponsorForm(p => ({ ...p, sponsor_id: e.target.value }))} className={inputCls + " appearance-none"}>
+                    <option value="" style={{ background: "#1e1035" }}>— Select a sponsor —</option>
+                    {sponsors.map(s => <option key={s.id} value={s.id} style={{ background: "#1e1035" }}>{s.name}</option>)}
+                  </select>
+                </div>
+              )}
+
+              {sponsorForm.sponsor_mode === "collab" && sponsorForm.sponsor_id && (() => {
+                const sp = sponsors.find(s => s.id === sponsorForm.sponsor_id);
+                return sp ? (
+                  <div className="rounded-xl p-3 flex items-center gap-3" style={{ background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.2)" }}>
+                    <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center" style={{ background: "rgba(255,255,255,0.1)" }}>
+                      {sp.logo_url ? <img src={sp.logo_url} alt={sp.name} className="w-full h-full object-contain p-0.5" /> : <span className="text-xs font-black text-white">{sp.name[0]}</span>}
+                    </div>
+                    <span className="text-white/60 font-bold text-sm">×</span>
+                    <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center" style={{ background: "rgba(255,255,255,0.06)" }}><img src="/logo.png" alt="Playza" className="w-full h-full object-contain p-0.5" /></div>
+                    <div><p className="text-xs font-black text-white">{sp.name} × Playza</p><p className="text-[9px] text-white/30">Collab banner preview</p></div>
+                  </div>
+                ) : null;
+              })()}
             </div>
           </div>
         </div>
