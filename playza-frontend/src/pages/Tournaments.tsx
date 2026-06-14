@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import { Link, useNavigate } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getQuizTournamentsApi, joinQuizTournamentApi, getLobbyPlayersApi, type QuizTournament, type PrizeTier } from "@/api/quiz.api";
@@ -337,13 +337,107 @@ const Tournaments = () => {
   const sponsoredCollab = quizTournaments.find(t => t.sponsor_mode === "collab" && t.sponsor);
   const sponsoredBanners = quizTournaments.filter(t => t.sponsor_mode === "banner" && t.sponsor_banner_url);
 
-  // ── Banner carousel — auto-rotates through all sponsored banner images ─────
-  const [bannerIndex, setBannerIndex] = useState(0);
+  // ── Hero slides: default Playza slide always first, sponsor slides after ───
+  const defaultHeroSlide = (
+    <div style={{ position: "relative", background: "#0a0618", padding: "clamp(24px,5vw,40px) clamp(16px,4vw,28px) clamp(20px,4vw,32px)" }}>
+      {/* Orbs */}
+      <div style={{ position: "absolute", inset: 0, pointerEvents: "none", overflow: "hidden" }}>
+        <div style={{ position: "absolute", width: "clamp(200px,60vw,380px)", height: "clamp(200px,60vw,380px)", borderRadius: "50%", background: "#3b0764", opacity: 0.5, top: -100, left: -80, filter: "blur(80px)" }} />
+        <div style={{ position: "absolute", width: "clamp(140px,40vw,280px)", height: "clamp(140px,40vw,280px)", borderRadius: "50%", background: "#1e3a5f", opacity: 0.45, top: -50, right: 0, filter: "blur(70px)" }} />
+        <div style={{ position: "absolute", width: "clamp(100px,30vw,200px)", height: "clamp(100px,30vw,200px)", borderRadius: "50%", background: "#4c1d95", opacity: 0.3, bottom: -40, left: "40%", filter: "blur(60px)" }} />
+        <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(rgba(255,255,255,0.07) 1px,transparent 1px)", backgroundSize: "24px 24px" }} />
+      </div>
+      <div style={{ position: "relative", zIndex: 1, display: "flex", flexWrap: "wrap", gap: "clamp(16px,4vw,32px)", alignItems: "center" }}>
+        {/* Left content */}
+        <div style={{ flex: "1 1 220px", minWidth: 0 }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(168,85,247,0.15)", border: "1px solid rgba(168,85,247,0.3)", borderRadius: 20, padding: "4px 12px", marginBottom: 14 }}>
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#a855f7", display: "block", animation: "pulse-glow 1.4s ease-in-out infinite" }} />
+            <span style={{ fontSize: "clamp(8px,2.5vw,10px)", fontWeight: 600, color: "#c084fc", letterSpacing: "0.15em", textTransform: "uppercase" }}>Playza · Competitive</span>
+          </div>
+          <h1 style={{ fontSize: "clamp(2rem,8vw,3.5rem)", fontWeight: 700, color: "#fff", letterSpacing: "-1.5px", lineHeight: 0.95, margin: "0 0 10px" }}>Tournaments</h1>
+          <p style={{ fontSize: "clamp(13px,3.5vw,18px)", color: "rgba(255,255,255,0.65)", margin: "0 0 16px" }}>
+            Compete. Play. <span style={{ color: "#fbbf24", fontWeight: 700 }}>Win.</span>
+          </p>
+          {/* Category icons */}
+          <div style={{ display: "flex", gap: "clamp(12px,3vw,20px)", marginBottom: 16, flexWrap: "wrap" }}>
+            {[
+              { icon: "💬", label: "Quizzes" },
+              { icon: "♟️", label: "Chess" },
+              { icon: "🏆", label: "Sponsored" },
+              { icon: "🎮", label: "& More" },
+            ].map(c => (
+              <div key={c.label} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                <span style={{ fontSize: "clamp(16px,4vw,22px)" }}>{c.icon}</span>
+                <span style={{ fontSize: "clamp(10px,2.5vw,13px)", fontWeight: 500, color: "rgba(255,255,255,0.75)" }}>{c.label}</span>
+              </div>
+            ))}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, color: "rgba(255,255,255,0.3)", fontSize: "clamp(11px,2.5vw,13px)", borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 12 }}>
+            <span style={{ fontSize: "clamp(13px,3vw,16px)" }}>🌐</span>
+            One platform. Every game. Real rewards.
+          </div>
+        </div>
+        {/* Trophy visual */}
+        <div style={{ flex: "0 0 auto", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", width: "clamp(120px,28vw,200px)", height: "clamp(120px,28vw,200px)" }}>
+          <div style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "radial-gradient(circle, rgba(168,85,247,0.3), transparent 70%)" }} />
+          <span style={{ fontSize: "clamp(72px,18vw,128px)", lineHeight: 1, position: "relative", zIndex: 1 }}>🏆</span>
+          <span style={{ fontSize: "clamp(28px,7vw,48px)", position: "absolute", bottom: "10%", left: "5%" }}>♟️</span>
+          <span style={{ fontSize: "clamp(28px,7vw,48px)", position: "absolute", bottom: "10%", right: "5%" }}>🎮</span>
+          <div style={{ position: "absolute", top: "6%", right: "6%", width: "clamp(36px,9vw,56px)", height: "clamp(36px,9vw,56px)", borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <span style={{ fontSize: "clamp(14px,3.5vw,22px)" }}>👑</span>
+          </div>
+        </div>
+      </div>
+      {/* Stats row */}
+      <div style={{ position: "relative", zIndex: 1, display: "flex", gap: 8, flexWrap: "wrap", marginTop: 20 }}>
+        {[
+          { icon: "🏆", val: `${totalPrize > 0 ? totalPrize.toLocaleString() : "1,024,509"} ZA`, lbl: "Global ZA Paid Out",    bg: "rgba(168,85,247,0.15)", border: "rgba(168,85,247,0.25)" },
+          { icon: "👥", val: totalPlayers > 0 ? totalPlayers.toLocaleString() : "12,450",       lbl: "Total Participation",  bg: "rgba(34,197,94,0.1)",  border: "rgba(34,197,94,0.2)"  },
+          { icon: "⚡", val: quizTournaments.length > 0 ? quizTournaments.length.toLocaleString() : "1,320", lbl: "Tournaments Played", bg: "rgba(251,191,36,0.1)", border: "rgba(251,191,36,0.2)" },
+        ].map((s, i) => (
+          <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, background: s.bg, border: `1px solid ${s.border}`, borderRadius: 12, padding: "10px 14px", flex: "1 1 120px", minWidth: 0 }}>
+            <span style={{ fontSize: "clamp(18px,4vw,24px)", flexShrink: 0 }}>{s.icon}</span>
+            <div style={{ minWidth: 0 }}>
+              <p style={{ fontSize: "clamp(13px,3.5vw,18px)", fontWeight: 700, color: "#fff", margin: 0, lineHeight: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.val}</p>
+              <p style={{ fontSize: "clamp(8px,2vw,10px)", color: "rgba(255,255,255,0.35)", margin: "3px 0 0", textTransform: "uppercase", letterSpacing: "0.07em", whiteSpace: "nowrap" }}>{s.lbl}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const heroSlides: { key: string; content: React.ReactNode }[] = [
+    { key: "default", content: defaultHeroSlide },
+    ...sponsoredBanners.map(t => ({
+      key: t.id,
+      content: (
+        <div style={{ aspectRatio: "16/7", backgroundImage: `url(${t.sponsor_banner_url})`, backgroundSize: "cover", backgroundPosition: "center" }} />
+      ),
+    })),
+    ...(sponsoredCollab?.sponsor ? [{
+      key: "collab",
+      content: (
+        <div style={{ aspectRatio: "16/7", background: "#07041a", display: "flex", alignItems: "center", justifyContent: "center", gap: "clamp(12px,4vw,28px)", flexWrap: "wrap", padding: "clamp(20px,5vw,40px)" }}>
+          <img src="/logo.png" alt="Playza" style={{ height: "clamp(36px,10vw,72px)", width: "auto", objectFit: "contain" }} />
+          <span style={{ fontSize: "clamp(20px,6vw,44px)", fontWeight: 300, color: "rgba(255,255,255,0.35)", lineHeight: 1 }}>×</span>
+          {sponsoredCollab.sponsor!.logo_url
+            ? <img src={sponsoredCollab.sponsor!.logo_url} alt={sponsoredCollab.sponsor!.name} style={{ height: "clamp(36px,10vw,72px)", width: "auto", maxWidth: "clamp(120px,30vw,260px)", objectFit: "contain" }} />
+            : <div style={{ height: "clamp(36px,10vw,72px)", width: "clamp(36px,10vw,72px)", borderRadius: 12, background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <span style={{ fontSize: "clamp(16px,4vw,28px)", fontWeight: 900, color: "#fff" }}>{sponsoredCollab.sponsor!.name[0]}</span>
+              </div>}
+          <span style={{ fontSize: "clamp(18px,5vw,40px)", fontWeight: 800, color: "#fff", whiteSpace: "nowrap" }}>{sponsoredCollab.sponsor!.name}</span>
+        </div>
+      ),
+    }] : []),
+  ];
+
+  const [heroIndex, setHeroIndex] = useState(0);
   useEffect(() => {
-    if (sponsoredBanners.length <= 1) return;
-    const id = setInterval(() => setBannerIndex(i => (i + 1) % sponsoredBanners.length), 5000);
+    if (heroSlides.length <= 1) return;
+    const id = setInterval(() => setHeroIndex(i => (i + 1) % heroSlides.length), 6000);
     return () => clearInterval(id);
-  }, [sponsoredBanners.length]);
+  }, [heroSlides.length]);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1, paddingBottom: 64, overflowX: "hidden" }}>
@@ -355,63 +449,21 @@ const Tournaments = () => {
       />
       <style>{`@keyframes spin{to{transform:rotate(360deg)}} @keyframes pulse-glow{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.8)}}`}</style>
 
-      {/* ── Hero ── */}
-      {(sponsoredBanners.length > 0 || sponsoredCollab?.sponsor) ? (
-        /* Sponsor banner active — clean standalone visual, no default hero content */
-        <div style={{ position: "relative", borderRadius: 20, overflow: "hidden", marginBottom: 20, aspectRatio: "16/7", background: "#07041a" }}>
-          {sponsoredBanners.length > 0 ? (
-            <>
-              {sponsoredBanners.map((t, i) => (
-                <div key={t.id} style={{ position: "absolute", inset: 0, backgroundImage: `url(${t.sponsor_banner_url})`, backgroundSize: "cover", backgroundPosition: "center", opacity: i === bannerIndex ? 1 : 0, transition: "opacity 1s ease-in-out" }} />
-              ))}
-              {sponsoredBanners.length > 1 && (
-                <div style={{ position: "absolute", bottom: 12, left: "50%", transform: "translateX(-50%)", display: "flex", gap: 6, zIndex: 2 }}>
-                  {sponsoredBanners.map((_, i) => (
-                    <span key={i} onClick={() => setBannerIndex(i)} style={{ width: i === bannerIndex ? 18 : 6, height: 6, borderRadius: 3, background: i === bannerIndex ? "#a855f7" : "rgba(255,255,255,0.5)", transition: "all 0.3s ease", cursor: "pointer" }} />
-                  ))}
-                </div>
-              )}
-            </>
-          ) : (
-            /* Collab mode — Playza x Sponsor, clean standalone */
-            <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", gap: "clamp(12px,4vw,28px)", flexWrap: "wrap", padding: "clamp(20px,5vw,40px)" }}>
-              <img src="/logo.png" alt="Playza" style={{ height: "clamp(36px,10vw,72px)", width: "auto", objectFit: "contain" }} />
-              <span style={{ fontSize: "clamp(20px,6vw,44px)", fontWeight: 300, color: "rgba(255,255,255,0.35)", lineHeight: 1 }}>×</span>
-              {sponsoredCollab!.sponsor!.logo_url
-                ? <img src={sponsoredCollab!.sponsor!.logo_url!} alt={sponsoredCollab!.sponsor!.name} style={{ height: "clamp(36px,10vw,72px)", width: "auto", maxWidth: "clamp(120px,30vw,260px)", objectFit: "contain" }} />
-                : <div style={{ height: "clamp(36px,10vw,72px)", width: "clamp(36px,10vw,72px)", borderRadius: 12, background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    <span style={{ fontSize: "clamp(16px,4vw,28px)", fontWeight: 900, color: "#fff" }}>{sponsoredCollab!.sponsor!.name[0]}</span>
-                  </div>}
-              <span style={{ fontSize: "clamp(18px,5vw,40px)", fontWeight: 800, color: "#fff", whiteSpace: "nowrap" }}>{sponsoredCollab!.sponsor!.name}</span>
-            </div>
-          )}
-        </div>
-      ) : (
-      /* Default hero — Playza branding, title, stats */
-      <div style={{ position: "relative", background: "#07041a", borderRadius: "0 0 20px 20px", overflow: "hidden", padding: "clamp(28px,6vw,48px) clamp(16px,4vw,28px) clamp(24px,5vw,36px)", marginBottom: 20 }}>
-        <div style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0 }}>
-          <div style={{ position: "absolute", width: "clamp(200px,60vw,380px)", height: "clamp(200px,60vw,380px)", borderRadius: "50%", background: "#3b0764", opacity: 0.5, top: -100, left: -80, filter: "blur(80px)" }} />
-          <div style={{ position: "absolute", width: "clamp(140px,40vw,280px)", height: "clamp(140px,40vw,280px)", borderRadius: "50%", background: "#1e3a5f", opacity: 0.45, top: -50, right: 0, filter: "blur(70px)" }} />
-          <div style={{ position: "absolute", width: "clamp(100px,30vw,200px)", height: "clamp(100px,30vw,200px)", borderRadius: "50%", background: "#4c1d95", opacity: 0.3, bottom: -40, left: "40%", filter: "blur(60px)" }} />
-          <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(rgba(255,255,255,0.07) 1px,transparent 1px)", backgroundSize: "24px 24px" }} />
-        </div>
-
-        {/* Eyebrow */}
-        <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 8 }}>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(168,85,247,0.15)", border: "1px solid rgba(168,85,247,0.3)", borderRadius: 20, padding: "4px 12px" }}>
-            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#a855f7", display: "block", animation: "pulse-glow 1.4s ease-in-out infinite" }} />
-            <span style={{ fontSize: "clamp(8px,2.5vw,10px)", fontWeight: 600, color: "#c084fc", letterSpacing: "0.15em", textTransform: "uppercase" }}>Playza · Competitive</span>
+      {/* ── Hero carousel — default Playza slide + sponsor banner/collab slides ── */}
+      <div style={{ position: "relative", borderRadius: 20, overflow: "hidden", marginBottom: 20, background: "#0a0618" }}>
+        {heroSlides.map((slide, i) => (
+          <div key={slide.key} style={{ position: i === 0 ? "relative" : "absolute", inset: 0, opacity: i === heroIndex ? 1 : 0, transition: "opacity 1s ease-in-out", pointerEvents: i === heroIndex ? "auto" : "none" }}>
+            {slide.content}
           </div>
-          {liveCount > 0 && (<div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.35)", borderRadius: 20, padding: "4px 12px" }}><span style={{ width: 6, height: 6, borderRadius: "50%", background: "#ef4444", display: "block", animation: "pulse-glow 0.9s ease-in-out infinite" }} /><span style={{ fontSize: "clamp(8px,2.5vw,10px)", fontWeight: 600, color: "#f87171", letterSpacing: "0.1em", textTransform: "uppercase" }}>{liveCount} Live Now</span></div>)}
-        </div>
-
-        <div style={{ position: "relative", zIndex: 1, marginBottom: 20 }}><DropTitle /></div>
-        <div style={{ position: "relative", zIndex: 1, display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 20 }}>
-          {[{ icon: <Trophy size={14} style={{ color: "#c084fc" }} />, val: `${totalPrize.toLocaleString()} ZA`, lbl: "Total prize pool", bg: "rgba(168,85,247,0.15)", border: "rgba(168,85,247,0.25)" }, { icon: <Users size={14} style={{ color: "#4ade80" }} />, val: totalPlayers.toLocaleString(), lbl: "Players competing", bg: "rgba(34,197,94,0.1)", border: "rgba(34,197,94,0.2)" }, { icon: <Zap size={14} style={{ color: "#fbbf24" }} />, val: `${quizTournaments.length}`, lbl: "Tournaments", bg: "rgba(251,191,36,0.1)", border: "rgba(251,191,36,0.2)" }].map((s, i) => (<div key={i} style={{ display: "flex", alignItems: "center", gap: 8, background: s.bg, border: `1px solid ${s.border}`, borderRadius: 10, padding: "8px 12px", flex: "1 1 120px", minWidth: 0 }}><div style={{ flexShrink: 0 }}>{s.icon}</div><div style={{ minWidth: 0 }}><p style={{ fontSize: "clamp(12px,3vw,14px)", fontWeight: 600, color: "#fff", margin: 0, lineHeight: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.val}</p><p style={{ fontSize: "clamp(8px,2vw,10px)", color: "rgba(255,255,255,0.35)", margin: "2px 0 0", textTransform: "uppercase", letterSpacing: "0.07em", whiteSpace: "nowrap" }}>{s.lbl}</p></div></div>))}
-        </div>
-        <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", gap: 6 }}><span style={{ fontSize: 8, fontWeight: 600, color: "rgba(255,255,255,0.2)", textTransform: "uppercase", letterSpacing: "0.1em", whiteSpace: "nowrap" }}>5 Rounds</span><div style={{ display: "flex", gap: 3, flex: 1 }}>{["#22c55e","#3b82f6","#f97316","#ef4444","#a855f7"].map((c, i) => (<div key={i} style={{ flex: 1, height: 3, borderRadius: 2, background: c, opacity: 0.7 }} />))}</div><span style={{ fontSize: 8, color: "rgba(255,255,255,0.2)", whiteSpace: "nowrap" }}>Final Showdown</span></div>
+        ))}
+        {heroSlides.length > 1 && (
+          <div style={{ position: "absolute", bottom: 12, left: "50%", transform: "translateX(-50%)", display: "flex", gap: 6, zIndex: 5 }}>
+            {heroSlides.map((_, i) => (
+              <span key={i} onClick={() => setHeroIndex(i)} style={{ width: i === heroIndex ? 18 : 6, height: 6, borderRadius: 3, background: i === heroIndex ? "#a855f7" : "rgba(255,255,255,0.4)", transition: "all 0.3s ease", cursor: "pointer" }} />
+            ))}
+          </div>
+        )}
       </div>
-      )}
 
       <div style={{ padding: "0 clamp(8px,3vw,16px)", display: "flex", flexDirection: "column", gap: 14 }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
