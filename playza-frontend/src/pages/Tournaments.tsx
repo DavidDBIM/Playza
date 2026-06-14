@@ -1,8 +1,8 @@
-import React, { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Link, useNavigate } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getQuizTournamentsApi, joinQuizTournamentApi, getLobbyPlayersApi, type QuizTournament, type PrizeTier } from "@/api/quiz.api";
-import { Search, Trophy, X, ChevronDown, Zap, Eye, Brain, CheckCircle, Loader2, Info, Calendar, Clock, Shield, Send, MessageCircle } from "lucide-react";
+import { Search, Trophy, X, Users, ChevronDown, Zap, Eye, Brain, CheckCircle, Loader2, Info, Calendar, Clock, Shield, Send, MessageCircle } from "lucide-react";
 import { useAuth } from "@/context/auth";
 import { useToast } from "@/context/toast";
 import { useLobbySocket } from "@/hooks/quiz/useLobbySocket";
@@ -300,6 +300,25 @@ function TCard({ qt, featured, onRegistered }: { qt: QuizTournament; featured?: 
   );
 }
 
+function DropTitle() {
+  const [phase, setPhase] = useState<"drop" | "shake" | "settled">("drop");
+  const wrapRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const t = setTimeout(() => { setPhase("shake"); const el = wrapRef.current; if (el) { el.style.animation = "screenShake 0.35s ease-out"; setTimeout(() => { if (el) el.style.animation = ""; setPhase("settled"); }, 360); } }, 820);
+    return () => clearTimeout(t);
+  }, []);
+  return (
+    <>
+      <style>{`@keyframes wordDrop{0%{transform:translateY(-180px);opacity:0}60%{opacity:1}80%{transform:translateY(6px)}90%{transform:translateY(-3px)}100%{transform:translateY(0);opacity:1}} @keyframes screenShake{0%{transform:translate(0,0)}15%{transform:translate(-3px,2px)}30%{transform:translate(3px,-2px)}45%{transform:translate(-2px,1px)}60%{transform:translate(2px,-1px)}75%{transform:translate(-1px,0)}100%{transform:translate(0,0)}} @keyframes shockRing{0%{transform:translate(-50%,-50%) scale(0);opacity:0.6}100%{transform:translate(-50%,-50%) scale(5);opacity:0}} @keyframes dustL{0%{transform:translateX(0) scaleX(1);opacity:0.5}100%{transform:translateX(-50px) scaleX(2);opacity:0}} @keyframes dustR{0%{transform:translateX(0) scaleX(1);opacity:0.5}100%{transform:translateX(50px) scaleX(2);opacity:0}} @keyframes fadeUp{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:translateY(0)}} @keyframes lineIn{0%{transform:scaleX(0);opacity:0}100%{transform:scaleX(1);opacity:1}} @keyframes pulse-glow{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.8)}}`}</style>
+      <div ref={wrapRef} style={{ position: "relative", textAlign: "center", paddingTop: 8 }}>
+        {(phase === "shake" || phase === "settled") && <><div style={{ position: "absolute", left: "50%", top: "72%", width: 50, height: 50, borderRadius: "50%", border: "2px solid #a855f7", opacity: 0, animation: "shockRing 0.5s ease-out forwards", pointerEvents: "none" }} /><div style={{ position: "absolute", left: "50%", top: "72%", width: 50, height: 50, borderRadius: "50%", border: "1px solid #a855f7", opacity: 0, animation: "shockRing 0.6s ease-out 0.07s forwards", pointerEvents: "none" }} /><div style={{ position: "absolute", left: "calc(50% - 50px)", top: "70%", width: 30, height: 4, borderRadius: 3, background: "#a855f7", opacity: 0, animation: "dustL 0.4s ease-out 0.04s forwards", pointerEvents: "none" }} /><div style={{ position: "absolute", left: "calc(50% + 20px)", top: "70%", width: 30, height: 4, borderRadius: 3, background: "#a855f7", opacity: 0, animation: "dustR 0.4s ease-out 0.04s forwards", pointerEvents: "none" }} /></>}
+        <h1 style={{ fontSize: "clamp(2.2rem,9vw,5rem)", fontWeight: 700, color: "#fff", letterSpacing: "-2px", lineHeight: 0.95, animation: "wordDrop 0.85s cubic-bezier(0.23,1,0.32,1) forwards", willChange: "transform", margin: 0 }}>Tournaments</h1>
+        <div style={{ height: 2, width: "min(240px,60%)", margin: "12px auto 0", background: "linear-gradient(90deg,transparent,#a855f7,transparent)", transformOrigin: "center", opacity: 0, animation: phase === "settled" ? "lineIn 0.5s ease-out 0.1s forwards" : "none" }} />
+        <p style={{ fontSize: "clamp(11px,3vw,13px)", color: "rgba(255,255,255,0.4)", marginTop: 8, letterSpacing: "0.04em", opacity: 0, animation: phase === "settled" ? "fadeUp 0.4s ease-out 0.2s forwards" : "none", padding: "0 16px" }}>Answer fast. Outlast everyone. Take the prize.</p>
+      </div>
+    </>
+  );
+}
 
 const Tournaments = () => {
   const [activeTab, setActiveTab] = useState<"live" | "upcoming" | "completed">("upcoming");
@@ -311,164 +330,12 @@ const Tournaments = () => {
   const filtered = quizTournaments.filter(qt => { const matchTab = activeTab === "live" ? qt.status === "active" : activeTab === "completed" ? qt.status === "completed" : ["lobby", "draft", "registration"].includes(qt.status); const matchSearch = qt.title.toLowerCase().includes(searchQuery.toLowerCase()); const matchPrize = filterPrize === "high" ? qt.prize_pool >= 100_000 : filterPrize === "low" ? qt.prize_pool < 100_000 : true; return matchTab && matchSearch && matchPrize; });
   const totalPlayers = quizTournaments.reduce((s, t) => s + t.player_count, 0);
   const totalPrize = quizTournaments.reduce((s, t) => s + t.prize_pool, 0);
+  const liveCount = quizTournaments.filter(t => t.status === "active").length;
   function handleRegistered(id: string) { queryClient.setQueryData<QuizTournament[]>(["quiz-tournaments-public"], old => (old ?? []).map(t => t.id === id ? { ...t, player_count: t.player_count + 1, user_registered: true } : t)); }
 
   // ── Sponsor detection ──────────────────────────────────────────────────────
   const sponsoredCollab = quizTournaments.find(t => t.sponsor_mode === "collab" && t.sponsor);
-  const sponsoredBanners = quizTournaments.filter(t => t.sponsor_mode === "banner" && t.sponsor_banner_url);
-
-  // ── Hero slides: default Playza slide always first, sponsor slides after ───
-  const defaultHeroSlide = (
-    <div style={{ position: "relative", background: "#0a0618", padding: "clamp(24px,5vw,40px) clamp(16px,4vw,28px) clamp(20px,4vw,32px)" }}>
-      {/* Orbs */}
-      <div style={{ position: "absolute", inset: 0, pointerEvents: "none", overflow: "hidden" }}>
-        <div style={{ position: "absolute", width: "clamp(200px,60vw,380px)", height: "clamp(200px,60vw,380px)", borderRadius: "50%", background: "#3b0764", opacity: 0.5, top: -100, left: -80, filter: "blur(80px)" }} />
-        <div style={{ position: "absolute", width: "clamp(140px,40vw,280px)", height: "clamp(140px,40vw,280px)", borderRadius: "50%", background: "#1e3a5f", opacity: 0.45, top: -50, right: 0, filter: "blur(70px)" }} />
-        <div style={{ position: "absolute", width: "clamp(100px,30vw,200px)", height: "clamp(100px,30vw,200px)", borderRadius: "50%", background: "#4c1d95", opacity: 0.3, bottom: -40, left: "40%", filter: "blur(60px)" }} />
-        <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(rgba(255,255,255,0.07) 1px,transparent 1px)", backgroundSize: "24px 24px" }} />
-      </div>
-      <div style={{ position: "relative", zIndex: 1, display: "flex", flexWrap: "wrap", gap: "clamp(16px,4vw,32px)", alignItems: "center" }}>
-        {/* Left content */}
-        <div style={{ flex: "1 1 220px", minWidth: 0 }}>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(168,85,247,0.15)", border: "1px solid rgba(168,85,247,0.3)", borderRadius: 20, padding: "4px 12px", marginBottom: 14 }}>
-            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#a855f7", display: "block", animation: "pulse-glow 1.4s ease-in-out infinite" }} />
-            <span style={{ fontSize: "clamp(8px,2.5vw,10px)", fontWeight: 600, color: "#c084fc", letterSpacing: "0.15em", textTransform: "uppercase" }}>Playza · Competitive</span>
-          </div>
-          <h1 style={{ fontSize: "clamp(2rem,8vw,3.5rem)", fontWeight: 700, color: "#fff", letterSpacing: "-1.5px", lineHeight: 0.95, margin: "0 0 10px" }}>Tournaments</h1>
-          <p style={{ fontSize: "clamp(13px,3.5vw,18px)", color: "rgba(255,255,255,0.65)", margin: "0 0 16px" }}>
-            Compete. Play. <span style={{ color: "#fbbf24", fontWeight: 700 }}>Win.</span>
-          </p>
-          {/* Category pills — SVG icons, no emoji */}
-          <div style={{ display: "flex", gap: "clamp(8px,2vw,14px)", marginBottom: 16, flexWrap: "wrap" }}>
-            {[
-              { color: "#c084fc", bg: "rgba(168,85,247,0.12)", border: "rgba(168,85,247,0.25)", label: "Quizzes",
-                icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> },
-              { color: "#fbbf24", bg: "rgba(251,191,36,0.1)",  border: "rgba(251,191,36,0.2)",  label: "Chess",
-                icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 16l-1.447.724a1 1 0 0 0-.553.894V20h12v-2.382a1 1 0 0 0-.553-.894L16 16"/><path d="M12 4a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/><path d="M9 12h6"/><path d="M9 16V9a3 3 0 0 1 6 0v7"/></svg> },
-              { color: "#4ade80", bg: "rgba(34,197,94,0.1)",   border: "rgba(34,197,94,0.2)",   label: "Sponsored",
-                icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="5 3 9 3 9 7 5 7 5 3"/><polyline points="15 3 19 3 19 7 15 7 15 3"/><polyline points="5 13 9 13 9 17 5 17 5 13"/><polyline points="15 13 19 13 19 17 15 17 15 13"/></svg> },
-              { color: "#60a5fa", bg: "rgba(96,165,250,0.1)",  border: "rgba(96,165,250,0.2)",  label: "& More",
-                icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M12 12h.01"/><path d="M7 12h.01"/><path d="M17 12h.01"/></svg> },
-            ].map(c => (
-              <div key={c.label} style={{ display: "flex", alignItems: "center", gap: 6, background: c.bg, border: `1px solid ${c.border}`, borderRadius: 20, padding: "5px 10px" }}>
-                <span style={{ color: c.color, display: "flex", alignItems: "center" }}>{c.icon}</span>
-                <span style={{ fontSize: "clamp(10px,2.5vw,12px)", fontWeight: 600, color: "rgba(255,255,255,0.8)" }}>{c.label}</span>
-              </div>
-            ))}
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, color: "rgba(255,255,255,0.3)", fontSize: "clamp(11px,2.5vw,13px)", borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 12 }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-            One platform. Every game. Real rewards.
-          </div>
-        </div>
-        {/* Trophy visual — illustrated SVG, no emoji */}
-        <div style={{ flex: "0 0 auto", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", width: "clamp(130px,28vw,210px)", height: "clamp(130px,28vw,210px)" }}>
-          {/* Glow ring */}
-          <div style={{ position: "absolute", inset: "10%", borderRadius: "50%", background: "radial-gradient(circle, rgba(251,191,36,0.18), rgba(168,85,247,0.12), transparent 70%)" }} />
-          <svg viewBox="0 0 200 200" style={{ width: "100%", height: "100%", position: "relative", zIndex: 1 }} fill="none">
-            {/* Trophy cup body */}
-            <path d="M70 40 h60 l-8 60 a22 22 0 0 1-44 0 Z" fill="#f59e0b" opacity="0.95"/>
-            <path d="M70 40 h60 l-4 30 H74 Z" fill="#fbbf24"/>
-            {/* Trophy shine */}
-            <path d="M80 48 l4 28" stroke="rgba(255,255,255,0.35)" strokeWidth="3" strokeLinecap="round"/>
-            <path d="M88 46 l2 14" stroke="rgba(255,255,255,0.2)" strokeWidth="2" strokeLinecap="round"/>
-            {/* Handles */}
-            <path d="M70 55 Q48 55 48 75 Q48 90 65 90" stroke="#f59e0b" strokeWidth="7" strokeLinecap="round" fill="none"/>
-            <path d="M130 55 Q152 55 152 75 Q152 90 135 90" stroke="#f59e0b" strokeWidth="7" strokeLinecap="round" fill="none"/>
-            {/* Stem */}
-            <rect x="92" y="100" width="16" height="28" rx="4" fill="#d97706"/>
-            {/* Base */}
-            <rect x="74" y="128" width="52" height="10" rx="5" fill="#b45309"/>
-            <rect x="68" y="136" width="64" height="8" rx="4" fill="#92400e"/>
-            {/* Star on cup */}
-            <path d="M100 55 l3 8 h9 l-7 5 3 8 -8-5 -8 5 3-8 -7-5 h9 Z" fill="rgba(255,255,255,0.9)"/>
-            {/* Chess piece - left */}
-            <g transform="translate(28,115)">
-              <rect x="0" y="32" width="28" height="6" rx="3" fill="rgba(255,255,255,0.15)"/>
-              <rect x="4" y="18" width="20" height="14" rx="2" fill="rgba(255,255,255,0.12)"/>
-              <rect x="6" y="12" width="16" height="8" rx="2" fill="rgba(255,255,255,0.14)"/>
-              <circle cx="14" cy="7" r="6" fill="rgba(255,255,255,0.18)"/>
-              <circle cx="14" cy="7" r="3" fill="rgba(255,255,255,0.3)"/>
-            </g>
-            {/* Gamepad - right */}
-            <g transform="translate(140,118)">
-              <rect x="0" y="8" width="44" height="28" rx="12" fill="rgba(96,165,250,0.2)" stroke="rgba(96,165,250,0.4)" strokeWidth="1.5"/>
-              <circle cx="14" cy="22" r="4" fill="rgba(96,165,250,0.35)"/>
-              <line x1="10" y1="22" x2="18" y2="22" stroke="rgba(96,165,250,0.7)" strokeWidth="1.5"/>
-              <line x1="14" y1="18" x2="14" y2="26" stroke="rgba(96,165,250,0.7)" strokeWidth="1.5"/>
-              <circle cx="30" cy="18" r="2.5" fill="rgba(168,85,247,0.5)"/>
-              <circle cx="36" cy="22" r="2.5" fill="rgba(34,197,94,0.5)"/>
-              <circle cx="30" cy="26" r="2.5" fill="rgba(251,191,36,0.5)"/>
-            </g>
-            {/* Crown badge top-right */}
-            <g transform="translate(142,22)">
-              <circle cx="18" cy="18" r="18" fill="rgba(168,85,247,0.15)" stroke="rgba(168,85,247,0.35)" strokeWidth="1.5"/>
-              <path d="M8 24 l3-10 4 6 3-10 3 10 4-6 3 10 Z" fill="#a855f7" opacity="0.9"/>
-              <rect x="7" y="24" width="22" height="3" rx="1.5" fill="#a855f7" opacity="0.7"/>
-            </g>
-            {/* Confetti dots */}
-            <circle cx="52" cy="38" r="3" fill="#a855f7" opacity="0.6"/>
-            <circle cx="162" cy="50" r="2.5" fill="#fbbf24" opacity="0.7"/>
-            <circle cx="44" cy="80" r="2" fill="#4ade80" opacity="0.5"/>
-            <circle cx="170" cy="95" r="3" fill="#f87171" opacity="0.5"/>
-            <rect x="155" y="32" width="6" height="6" rx="1" fill="#60a5fa" opacity="0.5" transform="rotate(20 158 35)"/>
-            <rect x="36" y="55" width="5" height="5" rx="1" fill="#fbbf24" opacity="0.5" transform="rotate(-15 38 57)"/>
-          </svg>
-        </div>
-      </div>
-      {/* Stats row */}
-      <div style={{ position: "relative", zIndex: 1, display: "flex", gap: 8, flexWrap: "wrap", marginTop: 20 }}>
-        {[
-          { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#c084fc" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/><path d="M6 9V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v4"/><rect x="2" y="15" width="20" height="4" rx="2"/></svg>,
-            val: `${totalPrize > 0 ? totalPrize.toLocaleString() : "1,024,509"} ZA`, lbl: "Global ZA Paid Out", bg: "rgba(168,85,247,0.12)", border: "rgba(168,85,247,0.25)" },
-          { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
-            val: totalPlayers > 0 ? totalPlayers.toLocaleString() : "12,450", lbl: "Total Participation", bg: "rgba(34,197,94,0.08)", border: "rgba(34,197,94,0.2)" },
-          { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>,
-            val: quizTournaments.length > 0 ? quizTournaments.length.toLocaleString() : "1,320", lbl: "Tournaments Played", bg: "rgba(251,191,36,0.08)", border: "rgba(251,191,36,0.2)" },
-        ].map((s, i) => (
-          <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, background: s.bg, border: `1px solid ${s.border}`, borderRadius: 12, padding: "12px 16px", flex: "1 1 120px", minWidth: 0 }}>
-            <div style={{ flexShrink: 0 }}>{s.icon}</div>
-            <div style={{ minWidth: 0 }}>
-              <p style={{ fontSize: "clamp(13px,3.5vw,18px)", fontWeight: 700, color: "#fff", margin: 0, lineHeight: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.val}</p>
-              <p style={{ fontSize: "clamp(8px,2vw,10px)", color: "rgba(255,255,255,0.35)", margin: "3px 0 0", textTransform: "uppercase", letterSpacing: "0.07em", whiteSpace: "nowrap" }}>{s.lbl}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-
-  const heroSlides: { key: string; content: React.ReactNode }[] = [
-    { key: "default", content: defaultHeroSlide },
-    ...sponsoredBanners.map(t => ({
-      key: t.id,
-      content: (
-        <div style={{ aspectRatio: "16/7", backgroundImage: `url(${t.sponsor_banner_url})`, backgroundSize: "cover", backgroundPosition: "center" }} />
-      ),
-    })),
-    ...(sponsoredCollab?.sponsor ? [{
-      key: "collab",
-      content: (
-        <div style={{ aspectRatio: "16/7", background: "#07041a", display: "flex", alignItems: "center", justifyContent: "center", gap: "clamp(12px,4vw,28px)", flexWrap: "wrap", padding: "clamp(20px,5vw,40px)" }}>
-          <img src="/logo.png" alt="Playza" style={{ height: "clamp(36px,10vw,72px)", width: "auto", objectFit: "contain" }} />
-          <span style={{ fontSize: "clamp(20px,6vw,44px)", fontWeight: 300, color: "rgba(255,255,255,0.35)", lineHeight: 1 }}>×</span>
-          {sponsoredCollab.sponsor!.logo_url
-            ? <img src={sponsoredCollab.sponsor!.logo_url} alt={sponsoredCollab.sponsor!.name} style={{ height: "clamp(36px,10vw,72px)", width: "auto", maxWidth: "clamp(120px,30vw,260px)", objectFit: "contain" }} />
-            : <div style={{ height: "clamp(36px,10vw,72px)", width: "clamp(36px,10vw,72px)", borderRadius: 12, background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <span style={{ fontSize: "clamp(16px,4vw,28px)", fontWeight: 900, color: "#fff" }}>{sponsoredCollab.sponsor!.name[0]}</span>
-              </div>}
-          <span style={{ fontSize: "clamp(18px,5vw,40px)", fontWeight: 800, color: "#fff", whiteSpace: "nowrap" }}>{sponsoredCollab.sponsor!.name}</span>
-        </div>
-      ),
-    }] : []),
-  ];
-
-  const [heroIndex, setHeroIndex] = useState(0);
-  useEffect(() => {
-    if (heroSlides.length <= 1) return;
-    const id = setInterval(() => setHeroIndex(i => (i + 1) % heroSlides.length), 6000);
-    return () => clearInterval(id);
-  }, [heroSlides.length]);
+  const sponsoredBanner = quizTournaments.find(t => t.sponsor_mode === "banner" && t.sponsor_banner_url);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1, paddingBottom: 64, overflowX: "hidden" }}>
@@ -478,22 +345,64 @@ const Tournaments = () => {
         keywords="playza tournaments, gaming tournaments Nigeria, quiz tournament, chess tournament, prize pool games"
         url="/tournaments"
       />
-      <style>{`@keyframes spin{to{transform:rotate(360deg)}} @keyframes pulse-glow{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.8)}}`}</style>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}} @keyframes pulse-glow{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.8)}} @keyframes wordDrop{0%{transform:translateY(-180px);opacity:0}60%{opacity:1}80%{transform:translateY(6px)}90%{transform:translateY(-3px)}100%{transform:translateY(0);opacity:1}} @keyframes screenShake{0%{transform:translate(0,0)}15%{transform:translate(-3px,2px)}30%{transform:translate(3px,-2px)}45%{transform:translate(-2px,1px)}60%{transform:translate(2px,-1px)}75%{transform:translate(-1px,0)}100%{transform:translate(0,0)}} @keyframes shockRing{0%{transform:translate(-50%,-50%) scale(0);opacity:0.6}100%{transform:translate(-50%,-50%) scale(5);opacity:0}} @keyframes dustL{0%{transform:translateX(0) scaleX(1);opacity:0.5}100%{transform:translateX(-50px) scaleX(2);opacity:0}} @keyframes dustR{0%{transform:translateX(0) scaleX(1);opacity:0.5}100%{transform:translateX(50px) scaleX(2);opacity:0}} @keyframes fadeUp{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:translateY(0)}} @keyframes lineIn{0%{transform:scaleX(0);opacity:0}100%{transform:scaleX(1);opacity:1}}
+        .hero-inner { display: flex; flex-direction: column; }
+        @media (min-width: 768px) {
+          .hero-inner { flex-direction: row; align-items: center; gap: 40px; }
+          .hero-left  { flex: 1; min-width: 0; }
+          .hero-right { flex: 0 0 280px; display: flex; align-items: center; justify-content: center; }
+        }
+        @media (max-width: 767px) { .hero-right { display: none; } }
+      `}</style>
 
-      {/* ── Hero carousel — default Playza slide + sponsor banner/collab slides ── */}
-      <div style={{ position: "relative", borderRadius: 20, overflow: "hidden", marginBottom: 20, background: "#0a0618" }}>
-        {heroSlides.map((slide, i) => (
-          <div key={slide.key} style={{ position: i === 0 ? "relative" : "absolute", inset: 0, opacity: i === heroIndex ? 1 : 0, transition: "opacity 1s ease-in-out", pointerEvents: i === heroIndex ? "auto" : "none" }}>
-            {slide.content}
+      {/* ── Hero ── */}
+      <div style={{ position: "relative", background: "#07041a", borderRadius: "0 0 20px 20px", overflow: "hidden", padding: "clamp(28px,6vw,48px) clamp(16px,4vw,28px) clamp(24px,5vw,36px)", marginBottom: 20 }}>
+        {/* Sponsor banner overlay */}
+        {sponsoredBanner && (
+          <>
+            <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${sponsoredBanner.sponsor_banner_url})`, backgroundSize: "cover", backgroundPosition: "center", opacity: 0.5, zIndex: 0 }} />
+            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(7,4,26,0.3) 0%, rgba(7,4,26,0.75) 100%)", zIndex: 0 }} />
+          </>
+        )}
+        <div style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0 }}>
+          <div style={{ position: "absolute", width: "clamp(200px,60vw,380px)", height: "clamp(200px,60vw,380px)", borderRadius: "50%", background: "#3b0764", opacity: 0.5, top: -100, left: -80, filter: "blur(80px)" }} />
+          <div style={{ position: "absolute", width: "clamp(140px,40vw,280px)", height: "clamp(140px,40vw,280px)", borderRadius: "50%", background: "#1e3a5f", opacity: 0.45, top: -50, right: 0, filter: "blur(70px)" }} />
+          <div style={{ position: "absolute", width: "clamp(100px,30vw,200px)", height: "clamp(100px,30vw,200px)", borderRadius: "50%", background: "#4c1d95", opacity: 0.3, bottom: -40, left: "40%", filter: "blur(60px)" }} />
+          <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(rgba(255,255,255,0.07) 1px,transparent 1px)", backgroundSize: "24px 24px" }} />
+        </div>
+
+        {/* Eyebrow */}
+        <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: sponsoredCollab?.sponsor || sponsoredBanner ? 14 : 20, flexWrap: "wrap", gap: 8 }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(168,85,247,0.15)", border: "1px solid rgba(168,85,247,0.3)", borderRadius: 20, padding: "4px 12px" }}>
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#a855f7", display: "block", animation: "pulse-glow 1.4s ease-in-out infinite" }} />
+            <span style={{ fontSize: "clamp(8px,2.5vw,10px)", fontWeight: 600, color: "#c084fc", letterSpacing: "0.15em", textTransform: "uppercase" }}>Playza · Competitive</span>
           </div>
-        ))}
-        {heroSlides.length > 1 && (
-          <div style={{ position: "absolute", bottom: 12, left: "50%", transform: "translateX(-50%)", display: "flex", gap: 6, zIndex: 5 }}>
-            {heroSlides.map((_, i) => (
-              <span key={i} onClick={() => setHeroIndex(i)} style={{ width: i === heroIndex ? 18 : 6, height: 6, borderRadius: 3, background: i === heroIndex ? "#a855f7" : "rgba(255,255,255,0.4)", transition: "all 0.3s ease", cursor: "pointer" }} />
-            ))}
+          {liveCount > 0 && (<div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.35)", borderRadius: 20, padding: "4px 12px" }}><span style={{ width: 6, height: 6, borderRadius: "50%", background: "#ef4444", display: "block", animation: "pulse-glow 0.9s ease-in-out infinite" }} /><span style={{ fontSize: "clamp(8px,2.5vw,10px)", fontWeight: 600, color: "#f87171", letterSpacing: "0.1em", textTransform: "uppercase" }}>{liveCount} Live Now</span></div>)}
+        </div>
+
+        {/* Sponsor banner row — big, prominent, responsive */}
+        {sponsoredCollab?.sponsor && (
+          <div style={{ position: "relative", zIndex: 1, marginBottom: 20, display: "flex", alignItems: "center", justifyContent: "center", gap: "clamp(10px,3vw,20px)", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, padding: "clamp(12px,3vw,18px) clamp(14px,4vw,24px)", flexWrap: "wrap" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "clamp(6px,2vw,10px)" }}>
+              <img src="/logo.png" alt="Playza" style={{ height: "clamp(28px,7vw,44px)", width: "auto", objectFit: "contain" }} />
+            </div>
+            <span style={{ fontSize: "clamp(16px,4vw,28px)", fontWeight: 300, color: "rgba(255,255,255,0.35)", lineHeight: 1 }}>×</span>
+            <div style={{ display: "flex", alignItems: "center", gap: "clamp(6px,2vw,10px)" }}>
+              {sponsoredCollab.sponsor.logo_url
+                ? <img src={sponsoredCollab.sponsor.logo_url} alt={sponsoredCollab.sponsor.name} style={{ height: "clamp(28px,7vw,44px)", width: "auto", maxWidth: "clamp(80px,20vw,160px)", objectFit: "contain" }} />
+                : <div style={{ height: "clamp(28px,7vw,44px)", width: "clamp(28px,7vw,44px)", borderRadius: 8, background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <span style={{ fontSize: "clamp(12px,3vw,18px)", fontWeight: 900, color: "#fff" }}>{sponsoredCollab.sponsor.name[0]}</span>
+                  </div>}
+              <span style={{ fontSize: "clamp(13px,3.5vw,22px)", fontWeight: 800, color: "#fff", whiteSpace: "nowrap" }}>{sponsoredCollab.sponsor.name}</span>
+            </div>
           </div>
         )}
+
+        <div style={{ position: "relative", zIndex: 1, marginBottom: 20 }}><DropTitle /></div>
+        <div style={{ position: "relative", zIndex: 1, display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 20 }}>
+          {[{ icon: <Trophy size={14} style={{ color: "#c084fc" }} />, val: `${totalPrize.toLocaleString()} ZA`, lbl: "Total prize pool", bg: "rgba(168,85,247,0.15)", border: "rgba(168,85,247,0.25)" }, { icon: <Users size={14} style={{ color: "#4ade80" }} />, val: totalPlayers.toLocaleString(), lbl: "Players competing", bg: "rgba(34,197,94,0.1)", border: "rgba(34,197,94,0.2)" }, { icon: <Zap size={14} style={{ color: "#fbbf24" }} />, val: `${quizTournaments.length}`, lbl: "Tournaments", bg: "rgba(251,191,36,0.1)", border: "rgba(251,191,36,0.2)" }].map((s, i) => (<div key={i} style={{ display: "flex", alignItems: "center", gap: 8, background: s.bg, border: `1px solid ${s.border}`, borderRadius: 10, padding: "8px 12px", flex: "1 1 120px", minWidth: 0 }}><div style={{ flexShrink: 0 }}>{s.icon}</div><div style={{ minWidth: 0 }}><p style={{ fontSize: "clamp(12px,3vw,14px)", fontWeight: 600, color: "#fff", margin: 0, lineHeight: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.val}</p><p style={{ fontSize: "clamp(8px,2vw,10px)", color: "rgba(255,255,255,0.35)", margin: "2px 0 0", textTransform: "uppercase", letterSpacing: "0.07em", whiteSpace: "nowrap" }}>{s.lbl}</p></div></div>))}
+        </div>
+        <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", gap: 6 }}><span style={{ fontSize: 8, fontWeight: 600, color: "rgba(255,255,255,0.2)", textTransform: "uppercase", letterSpacing: "0.1em", whiteSpace: "nowrap" }}>5 Rounds</span><div style={{ display: "flex", gap: 3, flex: 1 }}>{["#22c55e","#3b82f6","#f97316","#ef4444","#a855f7"].map((c, i) => (<div key={i} style={{ flex: 1, height: 3, borderRadius: 2, background: c, opacity: 0.7 }} />))}</div><span style={{ fontSize: 8, color: "rgba(255,255,255,0.2)", whiteSpace: "nowrap" }}>Final Showdown</span></div>
       </div>
 
       <div style={{ padding: "0 clamp(8px,3vw,16px)", display: "flex", flexDirection: "column", gap: 14 }}>
