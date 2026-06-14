@@ -40,9 +40,6 @@
     }
   ],
   "rewrites": [
-    {
-      "source": "/((?!gameLib|assets|thumbnails|logo\\.png|hero\\.png|games|sw\\.js|sitemap\\.xml|robots\\.txt|.*\\.html|.*\\.xml|.*\\.txt).*)",
-      "destination": "/"
-    }
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
