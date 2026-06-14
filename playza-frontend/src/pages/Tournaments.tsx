@@ -345,7 +345,7 @@ const Tournaments = () => {
         keywords="playza tournaments, gaming tournaments Nigeria, quiz tournament, chess tournament, prize pool games"
         url="/tournaments"
       />
-      <style>{`@keyframes spin{to{transform:rotate(360deg)}} @keyframes pulse-glow{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.8)}} @keyframes wordDrop{0%{transform:translateY(-180px);opacity:0}60%{opacity:1}80%{transform:translateY(6px)}90%{transform:translateY(-3px)}100%{transform:translateY(0);opacity:1}} @keyframes screenShake{0%{transform:translate(0,0)}15%{transform:translate(-3px,2px)}30%{transform:translate(3px,-2px)}45%{transform:translate(-2px,1px)}60%{transform:translate(2px,-1px)}75%{transform:translate(-1px,0)}100%{transform:translate(0,0)}} @keyframes shockRing{0%{transform:translate(-50%,-50%) scale(0);opacity:0.6}100%{transform:translate(-50%,-50%) scale(5);opacity:0}} @keyframes dustL{0%{transform:translateX(0) scaleX(1);opacity:0.5}100%{transform:translateX(-50px) scaleX(2);opacity:0}} @keyframes dustR{0%{transform:translateX(0) scaleX(1);opacity:0.5}100%{transform:translateX(50px) scaleX(2);opacity:0}} @keyframes fadeUp{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:translateY(0)}} @keyframes lineIn{0%{transform:scaleX(0);opacity:0}100%{transform:scaleX(1);opacity:1}}
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}} @keyframes pulse-glow{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.8)}} @keyframes wordDrop{0%{transform:translateY(-180px);opacity:0}60%{opacity:1}80%{transform:translateY(6px)}90%{transform:translateY(-3px)}100%{transform:translateY(0);opacity:1}} @keyframes screenShake{0%{transform:translate(0,0)}15%{transform:translate(-3px,2px)}30%{transform:translate(3px,-2px)}45%{transform:translate(-2px,1px)}60%{transform:translate(2px,-1px)}75%{transform:translate(-1px,0)}100%{transform:translate(0,0)}} @keyframes shockRing{0%{transform:translate(-50%,-50%) scale(0);opacity:0.6}100%{transform:translate(-50%,-50%) scale(5);opacity:0}} @keyframes dustL{0%{transform:translateX(0) scaleX(1);opacity:0.5}100%{transform:translateX(-50px) scaleX(2);opacity:0}} @keyframes dustR{0%{transform:translateX(0) scaleX(1);opacity:0.5}100%{transform:translateX(50px) scaleX(2);opacity:0}} @keyframes fadeUp{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:translateY(0)}} @keyframes lineIn{0%{transform:scaleX(0);opacity:0}100%{transform:scaleX(1);opacity:1}} .hero-trophy{display:none!important} @media(min-width:640px){.hero-trophy{display:flex!important}}
         .hero-inner { display: flex; flex-direction: column; }
         @media (min-width: 768px) {
           .hero-inner { flex-direction: row; align-items: center; gap: 40px; }
@@ -380,29 +380,108 @@ const Tournaments = () => {
           {liveCount > 0 && (<div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.35)", borderRadius: 20, padding: "4px 12px" }}><span style={{ width: 6, height: 6, borderRadius: "50%", background: "#ef4444", display: "block", animation: "pulse-glow 0.9s ease-in-out infinite" }} /><span style={{ fontSize: "clamp(8px,2.5vw,10px)", fontWeight: 600, color: "#f87171", letterSpacing: "0.1em", textTransform: "uppercase" }}>{liveCount} Live Now</span></div>)}
         </div>
 
-        {/* Sponsor banner row — big, prominent, responsive */}
-        {sponsoredCollab?.sponsor && (
-          <div style={{ position: "relative", zIndex: 1, marginBottom: 20, display: "flex", alignItems: "center", justifyContent: "center", gap: "clamp(10px,3vw,20px)", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, padding: "clamp(12px,3vw,18px) clamp(14px,4vw,24px)", flexWrap: "wrap" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "clamp(6px,2vw,10px)" }}>
-              <img src="/logo.png" alt="Playza" style={{ height: "clamp(28px,7vw,44px)", width: "auto", objectFit: "contain" }} />
+        {/* Two-column layout: left = content, right = trophy (desktop only) */}
+        <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", gap: "clamp(20px,5vw,48px)" }}>
+
+          {/* LEFT COLUMN */}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            {/* Sponsor collab row */}
+            {sponsoredCollab?.sponsor && (
+              <div style={{ marginBottom: 20, display: "flex", alignItems: "center", justifyContent: "center", gap: "clamp(10px,3vw,20px)", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, padding: "clamp(10px,2.5vw,16px) clamp(12px,3vw,20px)", flexWrap: "wrap" }}>
+                <img src="/logo.png" alt="Playza" style={{ height: "clamp(24px,5vw,36px)", width: "auto", objectFit: "contain" }} />
+                <span style={{ fontSize: "clamp(14px,3vw,22px)", fontWeight: 300, color: "rgba(255,255,255,0.35)", lineHeight: 1 }}>×</span>
+                {sponsoredCollab.sponsor.logo_url
+                  ? <img src={sponsoredCollab.sponsor.logo_url} alt={sponsoredCollab.sponsor.name} style={{ height: "clamp(24px,5vw,36px)", width: "auto", maxWidth: "clamp(80px,18vw,140px)", objectFit: "contain" }} />
+                  : <div style={{ height: "clamp(24px,5vw,36px)", width: "clamp(24px,5vw,36px)", borderRadius: 8, background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <span style={{ fontSize: "clamp(10px,2.5vw,16px)", fontWeight: 900, color: "#fff" }}>{sponsoredCollab.sponsor.name[0]}</span>
+                    </div>}
+                <span style={{ fontSize: "clamp(12px,3vw,20px)", fontWeight: 800, color: "#fff", whiteSpace: "nowrap" }}>{sponsoredCollab.sponsor.name}</span>
+              </div>
+            )}
+
+            <div style={{ marginBottom: 20 }}><DropTitle /></div>
+
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 20 }}>
+              {[
+                { icon: <Trophy size={14} style={{ color: "#c084fc" }} />, val: `${totalPrize.toLocaleString()} ZA`, lbl: "Total prize pool", bg: "rgba(168,85,247,0.15)", border: "rgba(168,85,247,0.25)" },
+                { icon: <Users size={14} style={{ color: "#4ade80" }} />, val: totalPlayers.toLocaleString(), lbl: "Players competing", bg: "rgba(34,197,94,0.1)", border: "rgba(34,197,94,0.2)" },
+                { icon: <Zap size={14} style={{ color: "#fbbf24" }} />, val: `${quizTournaments.length}`, lbl: "Tournaments", bg: "rgba(251,191,36,0.1)", border: "rgba(251,191,36,0.2)" },
+              ].map((s, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, background: s.bg, border: `1px solid ${s.border}`, borderRadius: 10, padding: "8px 12px", flex: "1 1 100px", minWidth: 0 }}>
+                  <div style={{ flexShrink: 0 }}>{s.icon}</div>
+                  <div style={{ minWidth: 0 }}>
+                    <p style={{ fontSize: "clamp(12px,1.8vw,15px)", fontWeight: 700, color: "#fff", margin: 0, lineHeight: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.val}</p>
+                    <p style={{ fontSize: "clamp(8px,1vw,10px)", color: "rgba(255,255,255,0.35)", margin: "2px 0 0", textTransform: "uppercase", letterSpacing: "0.07em", whiteSpace: "nowrap" }}>{s.lbl}</p>
+                  </div>
+                </div>
+              ))}
             </div>
-            <span style={{ fontSize: "clamp(16px,4vw,28px)", fontWeight: 300, color: "rgba(255,255,255,0.35)", lineHeight: 1 }}>×</span>
-            <div style={{ display: "flex", alignItems: "center", gap: "clamp(6px,2vw,10px)" }}>
-              {sponsoredCollab.sponsor.logo_url
-                ? <img src={sponsoredCollab.sponsor.logo_url} alt={sponsoredCollab.sponsor.name} style={{ height: "clamp(28px,7vw,44px)", width: "auto", maxWidth: "clamp(80px,20vw,160px)", objectFit: "contain" }} />
-                : <div style={{ height: "clamp(28px,7vw,44px)", width: "clamp(28px,7vw,44px)", borderRadius: 8, background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    <span style={{ fontSize: "clamp(12px,3vw,18px)", fontWeight: 900, color: "#fff" }}>{sponsoredCollab.sponsor.name[0]}</span>
-                  </div>}
-              <span style={{ fontSize: "clamp(13px,3.5vw,22px)", fontWeight: 800, color: "#fff", whiteSpace: "nowrap" }}>{sponsoredCollab.sponsor.name}</span>
+
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ fontSize: 8, fontWeight: 600, color: "rgba(255,255,255,0.2)", textTransform: "uppercase", letterSpacing: "0.1em", whiteSpace: "nowrap" }}>5 Rounds</span>
+              <div style={{ display: "flex", gap: 3, flex: 1 }}>
+                {["#22c55e","#3b82f6","#f97316","#ef4444","#a855f7"].map((c, i) => (
+                  <div key={i} style={{ flex: 1, height: 3, borderRadius: 2, background: c, opacity: 0.7 }} />
+                ))}
+              </div>
+              <span style={{ fontSize: 8, color: "rgba(255,255,255,0.2)", whiteSpace: "nowrap" }}>Final Showdown</span>
             </div>
           </div>
-        )}
 
-        <div style={{ position: "relative", zIndex: 1, marginBottom: 20 }}><DropTitle /></div>
-        <div style={{ position: "relative", zIndex: 1, display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 20 }}>
-          {[{ icon: <Trophy size={14} style={{ color: "#c084fc" }} />, val: `${totalPrize.toLocaleString()} ZA`, lbl: "Total prize pool", bg: "rgba(168,85,247,0.15)", border: "rgba(168,85,247,0.25)" }, { icon: <Users size={14} style={{ color: "#4ade80" }} />, val: totalPlayers.toLocaleString(), lbl: "Players competing", bg: "rgba(34,197,94,0.1)", border: "rgba(34,197,94,0.2)" }, { icon: <Zap size={14} style={{ color: "#fbbf24" }} />, val: `${quizTournaments.length}`, lbl: "Tournaments", bg: "rgba(251,191,36,0.1)", border: "rgba(251,191,36,0.2)" }].map((s, i) => (<div key={i} style={{ display: "flex", alignItems: "center", gap: 8, background: s.bg, border: `1px solid ${s.border}`, borderRadius: 10, padding: "8px 12px", flex: "1 1 120px", minWidth: 0 }}><div style={{ flexShrink: 0 }}>{s.icon}</div><div style={{ minWidth: 0 }}><p style={{ fontSize: "clamp(12px,3vw,14px)", fontWeight: 600, color: "#fff", margin: 0, lineHeight: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.val}</p><p style={{ fontSize: "clamp(8px,2vw,10px)", color: "rgba(255,255,255,0.35)", margin: "2px 0 0", textTransform: "uppercase", letterSpacing: "0.07em", whiteSpace: "nowrap" }}>{s.lbl}</p></div></div>))}
+          {/* RIGHT COLUMN — trophy SVG, hidden on mobile */}
+          <div className="hero-trophy" style={{ flexShrink: 0, width: "clamp(0px,32vw,260px)", alignItems: "center", justifyContent: "center" }}>
+            <svg viewBox="0 0 260 260" width="100%" height="100%" fill="none" style={{ maxWidth: 260 }}>
+              <circle cx="130" cy="120" r="85" fill="#7c3aed" opacity="0.1"/>
+              <circle cx="130" cy="120" r="55" fill="#fbbf24" opacity="0.06"/>
+              {/* Cup */}
+              <path d="M88 66 h84 l-11 82 a28 28 0 0 1-62 0 Z" fill="#f59e0b"/>
+              <path d="M88 66 h84 l-5 40 H93 Z" fill="#fbbf24"/>
+              <path d="M102 76 l5 38" stroke="rgba(255,255,255,0.38)" strokeWidth="3.5" strokeLinecap="round"/>
+              <path d="M113 74 l3 20" stroke="rgba(255,255,255,0.18)" strokeWidth="2" strokeLinecap="round"/>
+              {/* Handles */}
+              <path d="M88 86 Q58 86 58 110 Q58 130 82 130" stroke="#f59e0b" strokeWidth="9" strokeLinecap="round"/>
+              <path d="M172 86 Q202 86 202 110 Q202 130 178 130" stroke="#f59e0b" strokeWidth="9" strokeLinecap="round"/>
+              {/* Stem + base */}
+              <rect x="117" y="148" width="26" height="32" rx="5" fill="#d97706"/>
+              <rect x="97"  y="180" width="66" height="11" rx="5" fill="#b45309"/>
+              <rect x="88"  y="190" width="84" height="10" rx="4" fill="#92400e"/>
+              {/* Star */}
+              <path d="M130 82 l4 12 h13 l-11 8 4 12 -10-7 -10 7 4-12 -11-8 h13 Z" fill="rgba(255,255,255,0.93)"/>
+              {/* Crown badge */}
+              <circle cx="196" cy="50" r="24" fill="rgba(168,85,247,0.15)" stroke="rgba(168,85,247,0.4)" strokeWidth="1.5"/>
+              <path d="M185 58 l3-12 5 8 4-12 4 12 5-8 3 12 Z" fill="#a855f7" opacity="0.9"/>
+              <rect x="184" y="58" width="24" height="4" rx="2" fill="#a855f7" opacity="0.6"/>
+              {/* Confetti */}
+              <circle cx="66"  cy="55"  r="4.5" fill="#a855f7" opacity="0.65"/>
+              <circle cx="208" cy="68"  r="3.5" fill="#fbbf24" opacity="0.75"/>
+              <circle cx="55"  cy="118" r="3"   fill="#4ade80" opacity="0.55"/>
+              <circle cx="215" cy="138" r="3.5" fill="#f87171" opacity="0.55"/>
+              <circle cx="74"  cy="178" r="2.5" fill="#60a5fa" opacity="0.5"/>
+              <circle cx="206" cy="185" r="2.5" fill="#a855f7" opacity="0.5"/>
+              <rect x="198" y="46" width="9" height="9" rx="2" fill="#60a5fa" opacity="0.55" transform="rotate(22 202 50)"/>
+              <rect x="50"  y="74" width="7" height="7" rx="2" fill="#fbbf24" opacity="0.55" transform="rotate(-18 53 77)"/>
+              <rect x="210" y="100" width="7" height="7" rx="2" fill="#4ade80" opacity="0.45" transform="rotate(28 213 103)"/>
+              {/* Chess piece */}
+              <g transform="translate(30,145)" opacity="0.55">
+                <rect x="0"  y="36" width="32" height="7"  rx="3.5" fill="rgba(255,255,255,0.4)"/>
+                <rect x="4"  y="22" width="24" height="14" rx="3"   fill="rgba(255,255,255,0.3)"/>
+                <rect x="7"  y="14" width="18" height="9"  rx="2"   fill="rgba(255,255,255,0.35)"/>
+                <circle cx="16" cy="8" r="7" fill="rgba(255,255,255,0.4)"/>
+                <circle cx="16" cy="8" r="3.5" fill="rgba(255,255,255,0.6)"/>
+              </g>
+              {/* Gamepad */}
+              <g transform="translate(164,152)" opacity="0.55">
+                <rect x="0" y="8" width="48" height="30" rx="13" fill="rgba(96,165,250,0.18)" stroke="rgba(96,165,250,0.45)" strokeWidth="1.5"/>
+                <circle cx="15" cy="23" r="4.5" fill="rgba(96,165,250,0.3)"/>
+                <line x1="10" y1="23" x2="20" y2="23" stroke="rgba(96,165,250,0.7)" strokeWidth="1.5"/>
+                <line x1="15" y1="18" x2="15" y2="28" stroke="rgba(96,165,250,0.7)" strokeWidth="1.5"/>
+                <circle cx="33" cy="18" r="3" fill="rgba(168,85,247,0.55)"/>
+                <circle cx="40" cy="24" r="3" fill="rgba(34,197,94,0.55)"/>
+                <circle cx="33" cy="30" r="3" fill="rgba(251,191,36,0.55)"/>
+              </g>
+            </svg>
+          </div>
         </div>
-        <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", gap: 6 }}><span style={{ fontSize: 8, fontWeight: 600, color: "rgba(255,255,255,0.2)", textTransform: "uppercase", letterSpacing: "0.1em", whiteSpace: "nowrap" }}>5 Rounds</span><div style={{ display: "flex", gap: 3, flex: 1 }}>{["#22c55e","#3b82f6","#f97316","#ef4444","#a855f7"].map((c, i) => (<div key={i} style={{ flex: 1, height: 3, borderRadius: 2, background: c, opacity: 0.7 }} />))}</div><span style={{ fontSize: 8, color: "rgba(255,255,255,0.2)", whiteSpace: "nowrap" }}>Final Showdown</span></div>
       </div>
 
       <div style={{ padding: "0 clamp(8px,3vw,16px)", display: "flex", flexDirection: "column", gap: 14 }}>
