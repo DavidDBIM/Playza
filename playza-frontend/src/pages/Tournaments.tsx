@@ -2,7 +2,7 @@ import React, { useState, useRef, useCallback, useEffect } from "react";
 import { Link, useNavigate } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getQuizTournamentsApi, joinQuizTournamentApi, getLobbyPlayersApi, type QuizTournament, type PrizeTier } from "@/api/quiz.api";
-import { Search, Trophy, X, Users, ChevronDown, Zap, Eye, Brain, CheckCircle, Loader2, Info, Calendar, Clock, Shield, Send, MessageCircle } from "lucide-react";
+import { Search, Trophy, X, ChevronDown, Zap, Eye, Brain, CheckCircle, Loader2, Info, Calendar, Clock, Shield, Send, MessageCircle } from "lucide-react";
 import { useAuth } from "@/context/auth";
 import { useToast } from "@/context/toast";
 import { useLobbySocket } from "@/hooks/quiz/useLobbySocket";
@@ -300,25 +300,6 @@ function TCard({ qt, featured, onRegistered }: { qt: QuizTournament; featured?: 
   );
 }
 
-function DropTitle() {
-  const [phase, setPhase] = useState<"drop" | "shake" | "settled">("drop");
-  const wrapRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const t = setTimeout(() => { setPhase("shake"); const el = wrapRef.current; if (el) { el.style.animation = "screenShake 0.35s ease-out"; setTimeout(() => { if (el) el.style.animation = ""; setPhase("settled"); }, 360); } }, 820);
-    return () => clearTimeout(t);
-  }, []);
-  return (
-    <>
-      <style>{`@keyframes wordDrop{0%{transform:translateY(-180px);opacity:0}60%{opacity:1}80%{transform:translateY(6px)}90%{transform:translateY(-3px)}100%{transform:translateY(0);opacity:1}} @keyframes screenShake{0%{transform:translate(0,0)}15%{transform:translate(-3px,2px)}30%{transform:translate(3px,-2px)}45%{transform:translate(-2px,1px)}60%{transform:translate(2px,-1px)}75%{transform:translate(-1px,0)}100%{transform:translate(0,0)}} @keyframes shockRing{0%{transform:translate(-50%,-50%) scale(0);opacity:0.6}100%{transform:translate(-50%,-50%) scale(5);opacity:0}} @keyframes dustL{0%{transform:translateX(0) scaleX(1);opacity:0.5}100%{transform:translateX(-50px) scaleX(2);opacity:0}} @keyframes dustR{0%{transform:translateX(0) scaleX(1);opacity:0.5}100%{transform:translateX(50px) scaleX(2);opacity:0}} @keyframes fadeUp{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:translateY(0)}} @keyframes lineIn{0%{transform:scaleX(0);opacity:0}100%{transform:scaleX(1);opacity:1}} @keyframes pulse-glow{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.8)}}`}</style>
-      <div ref={wrapRef} style={{ position: "relative", textAlign: "center", paddingTop: 8 }}>
-        {(phase === "shake" || phase === "settled") && <><div style={{ position: "absolute", left: "50%", top: "72%", width: 50, height: 50, borderRadius: "50%", border: "2px solid #a855f7", opacity: 0, animation: "shockRing 0.5s ease-out forwards", pointerEvents: "none" }} /><div style={{ position: "absolute", left: "50%", top: "72%", width: 50, height: 50, borderRadius: "50%", border: "1px solid #a855f7", opacity: 0, animation: "shockRing 0.6s ease-out 0.07s forwards", pointerEvents: "none" }} /><div style={{ position: "absolute", left: "calc(50% - 50px)", top: "70%", width: 30, height: 4, borderRadius: 3, background: "#a855f7", opacity: 0, animation: "dustL 0.4s ease-out 0.04s forwards", pointerEvents: "none" }} /><div style={{ position: "absolute", left: "calc(50% + 20px)", top: "70%", width: 30, height: 4, borderRadius: 3, background: "#a855f7", opacity: 0, animation: "dustR 0.4s ease-out 0.04s forwards", pointerEvents: "none" }} /></>}
-        <h1 style={{ fontSize: "clamp(2.2rem,9vw,5rem)", fontWeight: 700, color: "#fff", letterSpacing: "-2px", lineHeight: 0.95, animation: "wordDrop 0.85s cubic-bezier(0.23,1,0.32,1) forwards", willChange: "transform", margin: 0 }}>Tournaments</h1>
-        <div style={{ height: 2, width: "min(240px,60%)", margin: "12px auto 0", background: "linear-gradient(90deg,transparent,#a855f7,transparent)", transformOrigin: "center", opacity: 0, animation: phase === "settled" ? "lineIn 0.5s ease-out 0.1s forwards" : "none" }} />
-        <p style={{ fontSize: "clamp(11px,3vw,13px)", color: "rgba(255,255,255,0.4)", marginTop: 8, letterSpacing: "0.04em", opacity: 0, animation: phase === "settled" ? "fadeUp 0.4s ease-out 0.2s forwards" : "none", padding: "0 16px" }}>Answer fast. Outlast everyone. Take the prize.</p>
-      </div>
-    </>
-  );
-}
 
 const Tournaments = () => {
   const [activeTab, setActiveTab] = useState<"live" | "upcoming" | "completed">("upcoming");
@@ -330,7 +311,6 @@ const Tournaments = () => {
   const filtered = quizTournaments.filter(qt => { const matchTab = activeTab === "live" ? qt.status === "active" : activeTab === "completed" ? qt.status === "completed" : ["lobby", "draft", "registration"].includes(qt.status); const matchSearch = qt.title.toLowerCase().includes(searchQuery.toLowerCase()); const matchPrize = filterPrize === "high" ? qt.prize_pool >= 100_000 : filterPrize === "low" ? qt.prize_pool < 100_000 : true; return matchTab && matchSearch && matchPrize; });
   const totalPlayers = quizTournaments.reduce((s, t) => s + t.player_count, 0);
   const totalPrize = quizTournaments.reduce((s, t) => s + t.prize_pool, 0);
-  const liveCount = quizTournaments.filter(t => t.status === "active").length;
   function handleRegistered(id: string) { queryClient.setQueryData<QuizTournament[]>(["quiz-tournaments-public"], old => (old ?? []).map(t => t.id === id ? { ...t, player_count: t.player_count + 1, user_registered: true } : t)); }
 
   // ── Sponsor detection ──────────────────────────────────────────────────────
