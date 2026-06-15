@@ -179,7 +179,7 @@ function LobbyModal({ qt, onClose, onGameStart }: {
           </div>
         </div>
       </div>
-      <style>{`@keyframes floatUp { 0%{transform:translateY(0);opacity:1} 100%{transform:translateY(-80px);opacity:0} }`}</style>
+      <style>{HERO_CSS}</style>
     </div>
   );
 }
@@ -319,6 +319,8 @@ function DropTitle() {
     </>
   );
 }
+
+const HERO_CSS = `@keyframes floatUp { 0%{transform:translateY(0);opacity:1} 100%{transform:translateY(-80px);opacity:0} }`;
 
 const Tournaments = () => {
   const [activeTab, setActiveTab] = useState<"live" | "upcoming" | "completed">("upcoming");
