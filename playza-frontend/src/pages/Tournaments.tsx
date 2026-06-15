@@ -320,6 +320,142 @@ function DropTitle() {
   );
 }
 
+
+function TrophyIllustration() {
+  return (
+    <div className="hero-trophy" style={{ flexShrink: 0, width: "clamp(0px,36vw,300px)", alignItems: "center", justifyContent: "center" }}>
+      <svg viewBox="0 0 600 520" width="100%" height="100%" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ maxWidth: 300 }}>
+        <defs>
+          <radialGradient id="hg1" cx="50%" cy="60%" r="50%"><stop offset="0%" stopColor="#7c3aed" stopOpacity="0.55"/><stop offset="100%" stopColor="#0a0618" stopOpacity="0"/></radialGradient>
+          <radialGradient id="hg2" cx="50%" cy="70%" r="40%"><stop offset="0%" stopColor="#a855f7" stopOpacity="0.35"/><stop offset="100%" stopColor="#0a0618" stopOpacity="0"/></radialGradient>
+          <radialGradient id="hcup" cx="35%" cy="25%" r="75%"><stop offset="0%" stopColor="#fde68a"/><stop offset="35%" stopColor="#fbbf24"/><stop offset="70%" stopColor="#d97706"/><stop offset="100%" stopColor="#92400e"/></radialGradient>
+          <radialGradient id="hshine" cx="30%" cy="20%" r="60%"><stop offset="0%" stopColor="#ffffff" stopOpacity="0.45"/><stop offset="100%" stopColor="#ffffff" stopOpacity="0"/></radialGradient>
+          <radialGradient id="hhandle" cx="30%" cy="30%" r="70%"><stop offset="0%" stopColor="#fbbf24"/><stop offset="100%" stopColor="#b45309"/></radialGradient>
+          <radialGradient id="hplatform" cx="50%" cy="0%" r="80%"><stop offset="0%" stopColor="#a855f7" stopOpacity="0.8"/><stop offset="100%" stopColor="#6d28d9" stopOpacity="0.2"/></radialGradient>
+          <radialGradient id="hstar" cx="50%" cy="30%" r="70%"><stop offset="0%" stopColor="#fef3c7"/><stop offset="60%" stopColor="#fde68a"/><stop offset="100%" stopColor="#fbbf24"/></radialGradient>
+          <linearGradient id="hstem" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="#b45309"/><stop offset="40%" stopColor="#fbbf24"/><stop offset="100%" stopColor="#92400e"/></linearGradient>
+          <linearGradient id="hblack" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#374151"/><stop offset="100%" stopColor="#111827"/></linearGradient>
+          <linearGradient id="hwhite" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#f9fafb"/><stop offset="100%" stopColor="#d1d5db"/></linearGradient>
+          <linearGradient id="hticket" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#dc2626"/><stop offset="100%" stopColor="#991b1b"/></linearGradient>
+          <linearGradient id="hpad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#1d4ed8"/><stop offset="100%" stopColor="#1e3a8a"/></linearGradient>
+          <linearGradient id="hgift" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#7c3aed"/><stop offset="100%" stopColor="#4c1d95"/></linearGradient>
+          <filter id="hblur"><feGaussianBlur stdDeviation="6"/></filter>
+          <filter id="htblur"><feGaussianBlur stdDeviation="2"/></filter>
+        </defs>
+        <rect width="600" height="520" fill="#0a0618"/>
+        <ellipse cx="310" cy="290" rx="200" ry="170" fill="url(#hg1)"/>
+        <ellipse cx="310" cy="330" rx="150" ry="110" fill="url(#hg2)"/>
+        <ellipse cx="310" cy="428" rx="125" ry="25" fill="#7c3aed" opacity="0.35" filter="url(#hblur)"/>
+        <ellipse cx="310" cy="424" rx="80" ry="16" fill="#a855f7" opacity="0.4" filter="url(#htblur)"/>
+        <ellipse cx="310" cy="416" rx="104" ry="15" fill="#4c1d95"/>
+        <ellipse cx="310" cy="416" rx="104" ry="15" fill="url(#hplatform)" opacity="0.8"/>
+        <path d="M206 416 Q206 442 310 442 Q414 442 414 416" fill="#3b0764"/>
+        <rect x="206" y="406" width="208" height="18" fill="#3b0764"/>
+        <ellipse cx="310" cy="416" rx="104" ry="15" fill="none" stroke="#a855f7" strokeWidth="1.5" opacity="0.6"/>
+        <ellipse cx="310" cy="416" rx="86" ry="9" fill="#a855f7" opacity="0.22"/>
+        <path d="M284 336 L288 416 L332 416 L336 336 Z" fill="url(#hstem)"/>
+        <path d="M291 336 L294 416" stroke="#fde68a" strokeWidth="1.5" opacity="0.3"/>
+        <rect x="266" y="396" width="88" height="18" rx="4" fill="#b45309"/>
+        <rect x="256" y="408" width="108" height="11" rx="3" fill="#92400e"/>
+        <rect x="258" y="409" width="104" height="4" rx="2" fill="#fbbf24" opacity="0.22"/>
+        <path d="M206 102 C206 102 200 114 200 136 C200 198 222 258 252 292 C268 310 284 322 310 328 C336 322 352 310 368 292 C398 258 420 198 420 136 C420 114 414 102 414 102 Z" fill="url(#hcup)"/>
+        <path d="M218 107 C218 107 215 119 215 139 C215 191 228 244 252 274 C264 288 278 298 310 304" fill="none" stroke="#92400e" strokeWidth="18" strokeOpacity="0.3"/>
+        <path d="M206 102 C206 102 200 114 200 136 C200 198 222 258 252 292 C268 310 284 322 310 328 C336 322 352 310 368 292 C398 258 420 198 420 136 C420 114 414 102 414 102 Z" fill="url(#hshine)"/>
+        <path d="M204 104 C204 104 220 92 310 92 C400 92 416 104 416 104" fill="none" stroke="#fde68a" strokeWidth="3" strokeLinecap="round"/>
+        <path d="M204 104 C204 104 220 97 310 97 C400 97 416 104 416 104" fill="none" stroke="#ffffff" strokeWidth="1.5" strokeOpacity="0.5"/>
+        <path d="M228 112 C230 144 236 196 248 234" fill="none" stroke="#fde68a" strokeWidth="5" strokeLinecap="round" opacity="0.5"/>
+        <path d="M234 110 C236 138 241 186 251 222" fill="none" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" opacity="0.35"/>
+        <path d="M204 142 C170 142 148 162 148 192 C148 220 168 246 198 252" fill="none" stroke="url(#hhandle)" strokeWidth="16" strokeLinecap="round"/>
+        <path d="M204 142 C172 142 152 160 152 190 C152 216 170 240 198 246" fill="none" stroke="#fde68a" strokeWidth="4" strokeLinecap="round" opacity="0.4"/>
+        <path d="M416 142 C450 142 472 162 472 192 C472 220 452 246 422 252" fill="none" stroke="url(#hhandle)" strokeWidth="16" strokeLinecap="round"/>
+        <path d="M416 142 C448 142 468 160 468 190 C468 216 450 240 422 246" fill="none" stroke="#fde68a" strokeWidth="4" strokeLinecap="round" opacity="0.4"/>
+        <path d="M310 146 L321 178 L356 178 L329 198 L339 230 L310 210 L281 230 L291 198 L264 178 L299 178 Z" fill="url(#hstar)"/>
+        <path d="M310 151 L319 178 L346 178 L324 195 L332 222 L310 207 L288 222 L296 195 L274 178 L301 178 Z" fill="#ffffff" opacity="0.22"/>
+        <g transform="translate(128,222) rotate(-12)">
+          <rect x="-20" y="106" width="40" height="9" rx="4.5" fill="url(#hblack)"/>
+          <rect x="-14" y="80" width="28" height="28" rx="3" fill="url(#hblack)"/>
+          <rect x="-10" y="64" width="20" height="18" rx="3" fill="url(#hblack)"/>
+          <circle cx="0" cy="50" r="14" fill="url(#hblack)"/>
+          <circle cx="0" cy="50" r="8" fill="#374151"/>
+          <ellipse cx="-4" cy="42" rx="5" ry="4" fill="#ffffff" opacity="0.18"/>
+        </g>
+        <g transform="translate(176,268) rotate(-5)">
+          <rect x="-22" y="98" width="44" height="10" rx="5" fill="url(#hwhite)"/>
+          <rect x="-15" y="76" width="30" height="24" rx="3" fill="url(#hwhite)"/>
+          <rect x="-11" y="62" width="22" height="16" rx="3" fill="url(#hwhite)"/>
+          <circle cx="0" cy="48" r="16" fill="url(#hwhite)"/>
+          <circle cx="0" cy="48" r="9" fill="#e5e7eb"/>
+          <ellipse cx="-5" cy="40" rx="6" ry="5" fill="#ffffff" opacity="0.65"/>
+        </g>
+        <g transform="translate(195,352) rotate(-18)">
+          <rect x="0" y="0" width="82" height="48" rx="7" fill="url(#hticket)"/>
+          <circle cx="0" cy="24" r="8" fill="#0a0618"/>
+          <circle cx="82" cy="24" r="8" fill="#0a0618"/>
+          <line x1="9" y1="24" x2="73" y2="24" stroke="#ffffff" strokeWidth="1.5" strokeDasharray="5,4" opacity="0.4"/>
+          <path d="M41 6 L44 16 L55 16 L47 22 L50 32 L41 26 L32 32 L35 22 L27 16 L38 16 Z" fill="#ffffff" opacity="0.88"/>
+          <rect x="6" y="4" width="28" height="6" rx="3" fill="#ffffff" opacity="0.14"/>
+        </g>
+        <g transform="translate(398,294) rotate(10)">
+          <path d="M8 18 C-2 18 -10 32 -12 52 C-14 68 -6 82 6 82 C16 82 24 72 32 68 L62 68 C70 72 78 82 88 82 C100 82 108 68 106 52 C104 32 96 18 86 18 Z" fill="url(#hpad)"/>
+          <rect x="12" y="30" width="26" height="9" rx="3" fill="#1e40af"/>
+          <rect x="15" y="25" width="19" height="20" rx="3" fill="#1e40af"/>
+          <circle cx="25" cy="35" r="3.5" fill="#2563eb"/>
+          <circle cx="66" cy="26" r="6.5" fill="#7c3aed"/>
+          <circle cx="77" cy="37" r="6.5" fill="#16a34a"/>
+          <circle cx="55" cy="37" r="6.5" fill="#dc2626"/>
+          <circle cx="66" cy="48" r="6.5" fill="#d97706"/>
+          <rect x="4" y="10" width="32" height="11" rx="5" fill="#1e40af"/>
+          <rect x="58" y="10" width="32" height="11" rx="5" fill="#1e40af"/>
+          <circle cx="20" cy="56" r="9" fill="#1e3a8a"/>
+          <circle cx="20" cy="56" r="5" fill="#2563eb"/>
+          <circle cx="74" cy="56" r="9" fill="#1e3a8a"/>
+          <circle cx="74" cy="56" r="5" fill="#2563eb"/>
+          <path d="M14 20 C18 16 32 15 42 17" fill="none" stroke="#93c5fd" strokeWidth="2" strokeLinecap="round" opacity="0.38"/>
+        </g>
+        <g transform="translate(430,358)">
+          <rect x="0" y="18" width="66" height="56" rx="5" fill="url(#hgift)"/>
+          <rect x="-4" y="11" width="74" height="16" rx="4" fill="#6d28d9"/>
+          <rect x="27" y="11" width="12" height="63" rx="2" fill="#fbbf24" opacity="0.9"/>
+          <rect x="0" y="18" width="66" height="10" rx="2" fill="#fbbf24" opacity="0.9"/>
+          <path d="M33 14 C16 2 8 -2 14 8 C18 14 27 12 33 14" fill="#fde68a"/>
+          <path d="M33 14 C50 2 58 -2 52 8 C48 14 39 12 33 14" fill="#fde68a"/>
+          <circle cx="33" cy="14" r="5" fill="#fbbf24"/>
+          <rect x="6" y="22" width="16" height="5" rx="2" fill="#ffffff" opacity="0.18"/>
+        </g>
+        <g transform="translate(420,42)">
+          <circle cx="64" cy="64" r="62" fill="#1e1b4b"/>
+          <circle cx="64" cy="64" r="62" fill="none" stroke="#4f46e5" strokeWidth="3"/>
+          <circle cx="64" cy="64" r="57" fill="none" stroke="#a855f7" strokeWidth="1.2" strokeDasharray="5,4"/>
+          <circle cx="64" cy="64" r="50" fill="#312e81"/>
+          <text x="64" y="58" textAnchor="middle" fill="#fbbf24" fontSize="11" fontWeight="800" letterSpacing="0.5">MILLION</text>
+          <text x="64" y="74" textAnchor="middle" fill="#fbbf24" fontSize="11" fontWeight="800" letterSpacing="0.5">AIRE</text>
+          <text x="64" y="90" textAnchor="middle" fill="#c4b5fd" fontSize="7" letterSpacing="1.5">WHO WANTS TO BE</text>
+          <line x1="24" y1="64" x2="42" y2="64" stroke="#a855f7" strokeWidth="1.5"/>
+          <line x1="86" y1="64" x2="104" y2="64" stroke="#a855f7" strokeWidth="1.5"/>
+          <circle cx="64" cy="48" r="3" fill="#fbbf24"/>
+        </g>
+        <rect x="222" y="65" width="9" height="9" rx="1" fill="#f97316" transform="rotate(45 226 69)"/>
+        <rect x="478" y="118" width="8" height="8" rx="1" fill="#f97316" transform="rotate(30 482 122)"/>
+        <rect x="350" y="72" width="8" height="8" rx="1" fill="#3b82f6" transform="rotate(20 354 76)"/>
+        <rect x="532" y="88" width="7" height="7" rx="1" fill="#3b82f6" transform="rotate(50 535 91)"/>
+        <circle cx="248" cy="90" r="4.5" fill="#fbbf24" opacity="0.85"/>
+        <circle cx="510" cy="140" r="4" fill="#fbbf24" opacity="0.75"/>
+        <circle cx="388" cy="65" r="4" fill="#a855f7" opacity="0.8"/>
+        <circle cx="540" cy="165" r="4" fill="#ef4444" opacity="0.7"/>
+        <circle cx="196" cy="138" r="3.5" fill="#4ade80" opacity="0.6"/>
+        <path d="M262 70 C266 78 260 86 264 94" fill="none" stroke="#fbbf24" strokeWidth="2" strokeLinecap="round" opacity="0.5"/>
+        <path d="M520 108 C524 116 518 124 522 132" fill="none" stroke="#60a5fa" strokeWidth="2" strokeLinecap="round" opacity="0.5"/>
+        <path d="M372 60 C376 68 370 76 374 84" fill="none" stroke="#f97316" strokeWidth="2" strokeLinecap="round" opacity="0.5"/>
+        <rect x="184" y="198" width="7" height="7" fill="#ef4444" opacity="0.6" transform="rotate(25 187 201)"/>
+        <rect x="528" y="238" width="6" height="6" fill="#4ade80" opacity="0.55" transform="rotate(40 531 241)"/>
+        <path d="M368 88 L370 80 L372 88 L380 90 L372 92 L370 100 L368 92 L360 90 Z" fill="#fde68a" opacity="0.7"/>
+        <path d="M206 176 L208 171 L210 176 L215 177 L210 178 L208 183 L206 178 L201 177 Z" fill="#60a5fa" opacity="0.5"/>
+        <path d="M544 256 L546 251 L548 256 L553 257 L548 258 L546 263 L544 258 L539 257 Z" fill="#fbbf24" opacity="0.6"/>
+      </svg>
+    </div>
+  );
+}
+
 const HERO_CSS = `@keyframes floatUp { 0%{transform:translateY(0);opacity:1} 100%{transform:translateY(-80px);opacity:0} }`;
 
 const Tournaments = () => {
@@ -413,139 +549,7 @@ const Tournaments = () => {
               <span style={{ fontSize: 8, color: "rgba(255,255,255,0.2)", whiteSpace: "nowrap" }}>Final Showdown</span>
             </div>
           </div>
-          <div className="hero-trophy" style={{ flexShrink: 0, width: "clamp(0px,36vw,300px)", alignItems: "center", justifyContent: "center" }}>
-            <svg viewBox="0 0 600 520" width="100%" height="100%" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ maxWidth: 300 }}>
-              <defs>
-                <radialGradient id="hg1" cx="50%" cy="60%" r="50%"><stop offset="0%" stopColor="#7c3aed" stopOpacity="0.55"/><stop offset="100%" stopColor="#0a0618" stopOpacity="0"/></radialGradient>
-                <radialGradient id="hg2" cx="50%" cy="70%" r="40%"><stop offset="0%" stopColor="#a855f7" stopOpacity="0.35"/><stop offset="100%" stopColor="#0a0618" stopOpacity="0"/></radialGradient>
-                <radialGradient id="hcup" cx="35%" cy="25%" r="75%"><stop offset="0%" stopColor="#fde68a"/><stop offset="35%" stopColor="#fbbf24"/><stop offset="70%" stopColor="#d97706"/><stop offset="100%" stopColor="#92400e"/></radialGradient>
-                <radialGradient id="hshine" cx="30%" cy="20%" r="60%"><stop offset="0%" stopColor="#fff" stopOpacity="0.45"/><stop offset="100%" stopColor="#fff" stopOpacity="0"/></radialGradient>
-                <radialGradient id="hhandle" cx="30%" cy="30%" r="70%"><stop offset="0%" stopColor="#fbbf24"/><stop offset="100%" stopColor="#b45309"/></radialGradient>
-                <radialGradient id="hplatform" cx="50%" cy="0%" r="80%"><stop offset="0%" stopColor="#a855f7" stopOpacity="0.8"/><stop offset="100%" stopColor="#6d28d9" stopOpacity="0.2"/></radialGradient>
-                <radialGradient id="hstar" cx="50%" cy="30%" r="70%"><stop offset="0%" stopColor="#fef3c7"/><stop offset="60%" stopColor="#fde68a"/><stop offset="100%" stopColor="#fbbf24"/></radialGradient>
-                <linearGradient id="hstem" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="#b45309"/><stop offset="40%" stopColor="#fbbf24"/><stop offset="100%" stopColor="#92400e"/></linearGradient>
-                <linearGradient id="hblack" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#374151"/><stop offset="100%" stopColor="#111827"/></linearGradient>
-                <linearGradient id="hwhite" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#f9fafb"/><stop offset="100%" stopColor="#d1d5db"/></linearGradient>
-                <linearGradient id="hticket" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#dc2626"/><stop offset="100%" stopColor="#991b1b"/></linearGradient>
-                <linearGradient id="hpad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#1d4ed8"/><stop offset="100%" stopColor="#1e3a8a"/></linearGradient>
-                <linearGradient id="hgift" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#7c3aed"/><stop offset="100%" stopColor="#4c1d95"/></linearGradient>
-                <filter id="hblur"><feGaussianBlur stdDeviation="6"/></filter>
-                <filter id="htblur"><feGaussianBlur stdDeviation="2"/></filter>
-              </defs>
-              <rect width="600" height="520" fill="#0a0618"/>
-              <ellipse cx="310" cy="290" rx="200" ry="170" fill="url(#hg1)"/>
-              <ellipse cx="310" cy="330" rx="150" ry="110" fill="url(#hg2)"/>
-              <ellipse cx="310" cy="428" rx="125" ry="25" fill="#7c3aed" opacity="0.35" filter="url(#hblur)"/>
-              <ellipse cx="310" cy="424" rx="80" ry="16" fill="#a855f7" opacity="0.4" filter="url(#htblur)"/>
-              <ellipse cx="310" cy="416" rx="104" ry="15" fill="#4c1d95"/>
-              <ellipse cx="310" cy="416" rx="104" ry="15" fill="url(#hplatform)" opacity="0.8"/>
-              <path d="M206 416 Q206 442 310 442 Q414 442 414 416" fill="#3b0764"/>
-              <rect x="206" y="406" width="208" height="18" fill="#3b0764"/>
-              <ellipse cx="310" cy="416" rx="104" ry="15" fill="none" stroke="#a855f7" strokeWidth="1.5" opacity="0.6"/>
-              <ellipse cx="310" cy="416" rx="86" ry="9" fill="#a855f7" opacity="0.22"/>
-              <path d="M284 336 L288 416 L332 416 L336 336 Z" fill="url(#hstem)"/>
-              <path d="M291 336 L294 416" stroke="#fde68a" strokeWidth="1.5" opacity="0.3"/>
-              <rect x="266" y="396" width="88" height="18" rx="4" fill="#b45309"/>
-              <rect x="256" y="408" width="108" height="11" rx="3" fill="#92400e"/>
-              <rect x="258" y="409" width="104" height="4" rx="2" fill="#fbbf24" opacity="0.22"/>
-              <path d="M206 102 C206 102 200 114 200 136 C200 198 222 258 252 292 C268 310 284 322 310 328 C336 322 352 310 368 292 C398 258 420 198 420 136 C420 114 414 102 414 102 Z" fill="url(#hcup)"/>
-              <path d="M218 107 C218 107 215 119 215 139 C215 191 228 244 252 274 C264 288 278 298 310 304" fill="none" stroke="#92400e" strokeWidth="18" strokeOpacity="0.3"/>
-              <path d="M206 102 C206 102 200 114 200 136 C200 198 222 258 252 292 C268 310 284 322 310 328 C336 322 352 310 368 292 C398 258 420 198 420 136 C420 114 414 102 414 102 Z" fill="url(#hshine)"/>
-              <path d="M204 104 C204 104 220 92 310 92 C400 92 416 104 416 104" fill="none" stroke="#fde68a" strokeWidth="3" strokeLinecap="round"/>
-              <path d="M204 104 C204 104 220 97 310 97 C400 97 416 104 416 104" fill="none" stroke="#fff" strokeWidth="1.5" strokeOpacity="0.5"/>
-              <path d="M228 112 C230 144 236 196 248 234" fill="none" stroke="#fde68a" strokeWidth="5" strokeLinecap="round" opacity="0.5"/>
-              <path d="M234 110 C236 138 241 186 251 222" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" opacity="0.35"/>
-              <path d="M204 142 C170 142 148 162 148 192 C148 220 168 246 198 252" fill="none" stroke="url(#hhandle)" strokeWidth="16" strokeLinecap="round"/>
-              <path d="M204 142 C172 142 152 160 152 190 C152 216 170 240 198 246" fill="none" stroke="#fde68a" strokeWidth="4" strokeLinecap="round" opacity="0.4"/>
-              <path d="M416 142 C450 142 472 162 472 192 C472 220 452 246 422 252" fill="none" stroke="url(#hhandle)" strokeWidth="16" strokeLinecap="round"/>
-              <path d="M416 142 C448 142 468 160 468 190 C468 216 450 240 422 246" fill="none" stroke="#fde68a" strokeWidth="4" strokeLinecap="round" opacity="0.4"/>
-              <path d="M310 146 L321 178 L356 178 L329 198 L339 230 L310 210 L281 230 L291 198 L264 178 L299 178 Z" fill="url(#hstar)"/>
-              <path d="M310 151 L319 178 L346 178 L324 195 L332 222 L310 207 L288 222 L296 195 L274 178 L301 178 Z" fill="#fff" opacity="0.22"/>
-              <g transform="translate(128,222) rotate(-12)">
-                <rect x="-20" y="106" width="40" height="9" rx="4.5" fill="url(#hblack)"/>
-                <rect x="-14" y="80" width="28" height="28" rx="3" fill="url(#hblack)"/>
-                <rect x="-10" y="64" width="20" height="18" rx="3" fill="url(#hblack)"/>
-                <circle cx="0" cy="50" r="14" fill="url(#hblack)"/>
-                <circle cx="0" cy="50" r="8" fill="#374151"/>
-                <ellipse cx="-4" cy="42" rx="5" ry="4" fill="#fff" opacity="0.18"/>
-              </g>
-              <g transform="translate(176,268) rotate(-5)">
-                <rect x="-22" y="98" width="44" height="10" rx="5" fill="url(#hwhite)"/>
-                <rect x="-15" y="76" width="30" height="24" rx="3" fill="url(#hwhite)"/>
-                <rect x="-11" y="62" width="22" height="16" rx="3" fill="url(#hwhite)"/>
-                <circle cx="0" cy="48" r="16" fill="url(#hwhite)"/>
-                <circle cx="0" cy="48" r="9" fill="#e5e7eb"/>
-                <ellipse cx="-5" cy="40" rx="6" ry="5" fill="#fff" opacity="0.65"/>
-              </g>
-              <g transform="translate(195,352) rotate(-18)">
-                <rect x="0" y="0" width="82" height="48" rx="7" fill="url(#hticket)"/>
-                <circle cx="0" cy="24" r="8" fill="#0a0618"/>
-                <circle cx="82" cy="24" r="8" fill="#0a0618"/>
-                <line x1="9" y1="24" x2="73" y2="24" stroke="#fff" strokeWidth="1.5" strokeDasharray="5,4" opacity="0.4"/>
-                <path d="M41 6 L44 16 L55 16 L47 22 L50 32 L41 26 L32 32 L35 22 L27 16 L38 16 Z" fill="#fff" opacity="0.88"/>
-                <rect x="6" y="4" width="28" height="6" rx="3" fill="#fff" opacity="0.14"/>
-              </g>
-              <g transform="translate(398,294) rotate(10)">
-                <path d="M8 18 C-2 18 -10 32 -12 52 C-14 68 -6 82 6 82 C16 82 24 72 32 68 L62 68 C70 72 78 82 88 82 C100 82 108 68 106 52 C104 32 96 18 86 18 Z" fill="url(#hpad)"/>
-                <rect x="12" y="30" width="26" height="9" rx="3" fill="#1e40af"/>
-                <rect x="15.5" y="25" width="19" height="20" rx="3" fill="#1e40af"/>
-                <circle cx="25" cy="35" r="3.5" fill="#2563eb"/>
-                <circle cx="66" cy="26" r="6.5" fill="#7c3aed"/>
-                <circle cx="77" cy="37" r="6.5" fill="#16a34a"/>
-                <circle cx="55" cy="37" r="6.5" fill="#dc2626"/>
-                <circle cx="66" cy="48" r="6.5" fill="#d97706"/>
-                <rect x="4" y="10" width="32" height="11" rx="5.5" fill="#1e40af"/>
-                <rect x="58" y="10" width="32" height="11" rx="5.5" fill="#1e40af"/>
-                <circle cx="20" cy="56" r="9" fill="#1e3a8a"/>
-                <circle cx="20" cy="56" r="5" fill="#2563eb"/>
-                <circle cx="74" cy="56" r="9" fill="#1e3a8a"/>
-                <circle cx="74" cy="56" r="5" fill="#2563eb"/>
-                <path d="M14 20 C18 16 32 15 42 17" fill="none" stroke="#93c5fd" strokeWidth="2" strokeLinecap="round" opacity="0.38"/>
-              </g>
-              <g transform="translate(430,358)">
-                <rect x="0" y="18" width="66" height="56" rx="5" fill="url(#hgift)"/>
-                <rect x="-4" y="11" width="74" height="16" rx="4" fill="#6d28d9"/>
-                <rect x="27" y="11" width="12" height="63" rx="2" fill="#fbbf24" opacity="0.9"/>
-                <rect x="0" y="18" width="66" height="10" rx="2" fill="#fbbf24" opacity="0.9"/>
-                <path d="M33 14 C16 2 8 -2 14 8 C18 14 27 12 33 14" fill="#fde68a"/>
-                <path d="M33 14 C50 2 58 -2 52 8 C48 14 39 12 33 14" fill="#fde68a"/>
-                <circle cx="33" cy="14" r="5" fill="#fbbf24"/>
-                <rect x="6" y="22" width="16" height="5" rx="2.5" fill="#fff" opacity="0.18"/>
-              </g>
-              <g transform="translate(420,42)">
-                <circle cx="64" cy="64" r="62" fill="#1e1b4b"/>
-                <circle cx="64" cy="64" r="62" fill="none" stroke="#4f46e5" strokeWidth="3"/>
-                <circle cx="64" cy="64" r="57" fill="none" stroke="#a855f7" strokeWidth="1.2" strokeDasharray="5,4"/>
-                <circle cx="64" cy="64" r="50" fill="#312e81"/>
-                <text x="64" y="58" textAnchor="middle" fill="#fbbf24" fontSize="11" fontWeight="800" letterSpacing="0.5">MILLION</text>
-                <text x="64" y="74" textAnchor="middle" fill="#fbbf24" fontSize="11" fontWeight="800" letterSpacing="0.5">AIRE</text>
-                <text x="64" y="90" textAnchor="middle" fill="#c4b5fd" fontSize="7" letterSpacing="1.5">WHO WANTS TO BE</text>
-                <line x1="24" y1="64" x2="42" y2="64" stroke="#a855f7" strokeWidth="1.5"/>
-                <line x1="86" y1="64" x2="104" y2="64" stroke="#a855f7" strokeWidth="1.5"/>
-                <circle cx="64" cy="48" r="3" fill="#fbbf24"/>
-              </g>
-              <rect x="222" y="65" width="9" height="9" rx="1" fill="#f97316" transform="rotate(45 226 69)"/>
-              <rect x="478" y="118" width="8" height="8" rx="1" fill="#f97316" transform="rotate(30 482 122)"/>
-              <rect x="350" y="72" width="8" height="8" rx="1" fill="#3b82f6" transform="rotate(20 354 76)"/>
-              <rect x="532" y="88" width="7" height="7" rx="1" fill="#3b82f6" transform="rotate(50 535 91)"/>
-              <circle cx="248" cy="90" r="4.5" fill="#fbbf24" opacity="0.85"/>
-              <circle cx="510" cy="140" r="4" fill="#fbbf24" opacity="0.75"/>
-              <circle cx="540" cy="196" r="3.5" fill="#fbbf24" opacity="0.65"/>
-              <circle cx="388" cy="65" r="4" fill="#a855f7" opacity="0.8"/>
-              <circle cx="228" cy="164" r="3" fill="#a855f7" opacity="0.6"/>
-              <circle cx="540" cy="165" r="4" fill="#ef4444" opacity="0.7"/>
-              <circle cx="196" cy="138" r="3.5" fill="#4ade80" opacity="0.6"/>
-              <path d="M262 70 C266 78 260 86 264 94" fill="none" stroke="#fbbf24" strokeWidth="2" strokeLinecap="round" opacity="0.5"/>
-              <path d="M520 108 C524 116 518 124 522 132" fill="none" stroke="#60a5fa" strokeWidth="2" strokeLinecap="round" opacity="0.5"/>
-              <path d="M372 60 C376 68 370 76 374 84" fill="none" stroke="#f97316" strokeWidth="2" strokeLinecap="round" opacity="0.5"/>
-              <rect x="184" y="198" width="7" height="7" fill="#ef4444" opacity="0.6" transform="rotate(25 187 201)"/>
-              <rect x="528" y="238" width="6" height="6" fill="#4ade80" opacity="0.55" transform="rotate(40 531 241)"/>
-              <rect x="558" y="143" width="7" height="7" fill="#a855f7" opacity="0.6" transform="rotate(15 561 146)"/>
-              <path d="M368 88 L370 80 L372 88 L380 90 L372 92 L370 100 L368 92 L360 90 Z" fill="#fde68a" opacity="0.7"/>
-              <path d="M206 176 L208 171 L210 176 L215 177 L210 178 L208 183 L206 178 L201 177 Z" fill="#60a5fa" opacity="0.5"/>
-              <path d="M544 256 L546 251 L548 256 L553 257 L548 258 L546 263 L544 258 L539 257 Z" fill="#fbbf24" opacity="0.6"/>
-            </svg>
-          </div>
+          <TrophyIllustration />
 
       <div style={{ padding: "0 clamp(8px,3vw,16px)", display: "flex", flexDirection: "column", gap: 14 }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
