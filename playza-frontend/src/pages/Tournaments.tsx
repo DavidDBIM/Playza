@@ -426,9 +426,9 @@ function TrophyIllustration() {
           <circle cx="64" cy="64" r="62" fill="none" stroke="#4f46e5" strokeWidth="3"/>
           <circle cx="64" cy="64" r="57" fill="none" stroke="#a855f7" strokeWidth="1.2" strokeDasharray="5,4"/>
           <circle cx="64" cy="64" r="50" fill="#312e81"/>
-          <text x="64" y="58" textAnchor="middle" fill="#fbbf24" fontSize="11" fontWeight="800" letterSpacing="0.5">MILLION</text>
-          <text x="64" y="74" textAnchor="middle" fill="#fbbf24" fontSize="11" fontWeight="800" letterSpacing="0.5">AIRE</text>
-          <text x="64" y="90" textAnchor="middle" fill="#c4b5fd" fontSize="7" letterSpacing="1.5">WHO WANTS TO BE</text>
+          <text x="64" y="58" style={{textAnchor:"middle",fill:"#fbbf24",fontSize:"11px",fontWeight:"800",letterSpacing:"0.5px"}}>MILLION</text>
+          <text x="64" y="74" style={{textAnchor:"middle",fill:"#fbbf24",fontSize:"11px",fontWeight:"800",letterSpacing:"0.5px"}}>AIRE</text>
+          <text x="64" y="90" style={{textAnchor:"middle",fill:"#c4b5fd",fontSize:"7px",letterSpacing:"1.5px"}}>WHO WANTS TO BE</text>
           <line x1="24" y1="64" x2="42" y2="64" stroke="#a855f7" strokeWidth="1.5"/>
           <line x1="86" y1="64" x2="104" y2="64" stroke="#a855f7" strokeWidth="1.5"/>
           <circle cx="64" cy="48" r="3" fill="#fbbf24"/>
