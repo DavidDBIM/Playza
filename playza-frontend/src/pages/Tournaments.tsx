@@ -179,7 +179,6 @@ function LobbyModal({ qt, onClose, onGameStart }: {
           </div>
         </div>
       </div>
-      <style>{TOURNAMENTS_CSS}</style>
     </div>
   );
 }
@@ -197,7 +196,6 @@ function TournamentDetailModal({ qt, onClose, onRegister, isRegistering, registe
 
   return (
     <div onClick={(e) => { if (e.target === e.currentTarget) onClose(); }} style={{ position: "fixed", inset: 0, zIndex: 1000, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(6px)", display: "flex", alignItems: "flex-end", justifyContent: "center", animation: "fadeInBackdrop 0.2s ease" }}>
-      <style>{TOURNAMENTS_CSS}</style>
       <div style={{ width: "100%", maxWidth: 540, maxHeight: "92dvh", background: "var(--card)", borderRadius: "20px 20px 0 0", overflow: "hidden", display: "flex", flexDirection: "column", animation: "slideUp 0.3s cubic-bezier(0.23,1,0.32,1)", boxShadow: "0 -8px 60px rgba(0,0,0,0.5)" }}>
         <div style={{ height: 4, background: `linear-gradient(90deg,${sc.color},${sc.color}80)`, flexShrink: 0 }} />
         <div style={{ display: "flex", justifyContent: "center", padding: "10px 0 0", flexShrink: 0 }}><div style={{ width: 36, height: 4, borderRadius: 2, background: "var(--border)" }} /></div>
@@ -300,7 +298,7 @@ function TCard({ qt, featured, onRegistered }: { qt: QuizTournament; featured?: 
   );
 }
 
-const DROP_TITLE_CSS = String.raw`@keyframes wordDrop{0%{transform:translateY(-180px);opacity:0}60%{opacity:1}80%{transform:translateY(6px)}90%{transform:translateY(-3px)}100%{transform:translateY(0);opacity:1}} @keyframes screenShake{0%{transform:translate(0,0)}15%{transform:translate(-3px,2px)}30%{transform:translate(3px,-2px)}45%{transform:translate(-2px,1px)}60%{transform:translate(2px,-1px)}75%{transform:translate(-1px,0)}100%{transform:translate(0,0)}} @keyframes shockRing{0%{transform:translate(-50%,-50%) scale(0);opacity:0.6}100%{transform:translate(-50%,-50%) scale(5);opacity:0}} @keyframes dustL{0%{transform:translateX(0) scaleX(1);opacity:0.5}100%{transform:translateX(-50px) scaleX(2);opacity:0}} @keyframes dustR{0%{transform:translateX(0) scaleX(1);opacity:0.5}100%{transform:translateX(50px) scaleX(2);opacity:0}} @keyframes fadeUp{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:translateY(0)}} @keyframes lineIn{0%{transform:scaleX(0);opacity:0}100%{transform:scaleX(1);opacity:1}} @keyframes pulse-glow{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.8)}}`;
+
 
 function DropTitle() {
   const [phase, setPhase] = useState<"drop" | "shake" | "settled">("drop");
@@ -311,7 +309,6 @@ function DropTitle() {
   }, []);
   return (
     <>
-      <style>{DROP_TITLE_CSS}</style>
       <div ref={wrapRef} style={{ position: "relative", textAlign: "center", paddingTop: 8 }}>
         {(phase === "shake" || phase === "settled") && <><div style={{ position: "absolute", left: "50%", top: "72%", width: 50, height: 50, borderRadius: "50%", border: "2px solid #a855f7", opacity: 0, animation: "shockRing 0.5s ease-out forwards", pointerEvents: "none" }} /><div style={{ position: "absolute", left: "50%", top: "72%", width: 50, height: 50, borderRadius: "50%", border: "1px solid #a855f7", opacity: 0, animation: "shockRing 0.6s ease-out 0.07s forwards", pointerEvents: "none" }} /><div style={{ position: "absolute", left: "calc(50% - 50px)", top: "70%", width: 30, height: 4, borderRadius: 3, background: "#a855f7", opacity: 0, animation: "dustL 0.4s ease-out 0.04s forwards", pointerEvents: "none" }} /><div style={{ position: "absolute", left: "calc(50% + 20px)", top: "70%", width: 30, height: 4, borderRadius: 3, background: "#a855f7", opacity: 0, animation: "dustR 0.4s ease-out 0.04s forwards", pointerEvents: "none" }} /></>}
         <h1 style={{ fontSize: "clamp(2.2rem,9vw,5rem)", fontWeight: 700, color: "#fff", letterSpacing: "-2px", lineHeight: 0.95, animation: "wordDrop 0.85s cubic-bezier(0.23,1,0.32,1) forwards", willChange: "transform", margin: 0 }}>Tournaments</h1>
@@ -458,9 +455,33 @@ function TrophyIllustration() {
   );
 }
 
-const TOURNAMENTS_CSS = `@keyframes floatUp { 0%{transform:translateY(0);opacity:1} 100%{transform:translateY(-80px);opacity:0} }`;
+
 
 const Tournaments = () => {
+
+  // Inject hero CSS once
+  useEffect(() => {
+    const id = "playza-hero-styles";
+    if (document.getElementById(id)) return;
+    const el = document.createElement("style");
+    el.id = id;
+    el.textContent = [
+      "@keyframes spin{to{transform:rotate(360deg)}}",
+      "@keyframes pulse-glow{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.8)}}",
+      "@keyframes wordDrop{0%{transform:translateY(-180px);opacity:0}60%{opacity:1}80%{transform:translateY(6px)}90%{transform:translateY(-3px)}100%{transform:translateY(0);opacity:1}}",
+      "@keyframes screenShake{0%{transform:translate(0,0)}15%{transform:translate(-3px,2px)}30%{transform:translate(3px,-2px)}45%{transform:translate(-2px,1px)}60%{transform:translate(2px,-1px)}75%{transform:translate(-1px,0)}100%{transform:translate(0,0)}}",
+      "@keyframes shockRing{0%{transform:translate(-50%,-50%) scale(0);opacity:0.6}100%{transform:translate(-50%,-50%) scale(5);opacity:0}}",
+      "@keyframes dustL{0%{transform:translateX(0) scaleX(1);opacity:0.5}100%{transform:translateX(-50px) scaleX(2);opacity:0}}",
+      "@keyframes dustR{0%{transform:translateX(0) scaleX(1);opacity:0.5}100%{transform:translateX(50px) scaleX(2);opacity:0}}",
+      "@keyframes fadeUp{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:translateY(0)}}",
+      "@keyframes lineIn{0%{transform:scaleX(0);opacity:0}100%{transform:scaleX(1);opacity:1}}",
+      "@keyframes floatUp{0%{transform:translateY(0);opacity:1}100%{transform:translateY(-80px);opacity:0}}",
+      ".hero-trophy{display:none!important}",
+      "@media(min-width:640px){.hero-trophy{display:flex!important}}",
+    ].join(" ");
+    document.head.appendChild(el);
+    return () => { el.remove(); };
+  }, []);
   const [activeTab, setActiveTab] = useState<"live" | "upcoming" | "completed">("upcoming");
   const [searchQuery, setSearchQuery] = useState("");
   const [filterPrize, setFilterPrize] = useState("all");
@@ -484,7 +505,6 @@ const Tournaments = () => {
         keywords="playza tournaments, gaming tournaments Nigeria, quiz tournament, chess tournament, prize pool games"
         url="/tournaments"
       />
-      <style>{TOURNAMENTS_CSS}</style>
       <div style={{ position: "relative", background: "#07041a", borderRadius: "0 0 20px 20px", overflow: "hidden", padding: "clamp(28px,6vw,48px) clamp(16px,4vw,28px) clamp(24px,5vw,36px)", marginBottom: 20 }}>
 
         <div style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0 }}>
