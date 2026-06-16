@@ -564,6 +564,8 @@ const Tournaments = () => {
             </div>
           </div>
           <TrophyIllustration />
+          </div>
+        </div>
 
       <div style={{ padding: "0 clamp(8px,3vw,16px)", display: "flex", flexDirection: "column", gap: 14 }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
