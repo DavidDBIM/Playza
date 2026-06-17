@@ -46,6 +46,7 @@ router.get('/tournaments', requireAdmin, async (_req, res) => {
       question_count: questionCountMap[t.id] ?? 0,
       max_players: t.max_players ?? null,
       prize_distribution: t.prize_distribution ?? null,
+      consolation_pza: t.consolation_pza ?? 0,
     }))
 
     res.json({ success: true, data: enriched })
@@ -57,7 +58,7 @@ router.get('/tournaments', requireAdmin, async (_req, res) => {
 // ── POST /admin/quiz/tournaments  — create
 router.post('/tournaments', requireAdmin, async (req: AuthRequest, res) => {
   try {
-    const { title, description, entry_fee, scheduled_at, max_players, prize_distribution, platform_fee_percentage, registration_end } = req.body
+    const { title, description, entry_fee, scheduled_at, max_players, prize_distribution, platform_fee_percentage, registration_end, consolation_pza } = req.body
     if (!title) { res.status(400).json({ success: false, message: 'title is required' }); return }
 
     const { data, error } = await supabaseAdmin
@@ -76,6 +77,7 @@ router.post('/tournaments', requireAdmin, async (req: AuthRequest, res) => {
         max_players: max_players ?? null,
         prize_distribution: prize_distribution ?? null,
         platform_fee_percentage: platform_fee_percentage ?? 10,
+        consolation_pza: consolation_pza ?? 0,
       })
       .select()
       .single()
@@ -90,7 +92,7 @@ router.post('/tournaments', requireAdmin, async (req: AuthRequest, res) => {
 // ── PATCH /admin/quiz/tournaments/:id  — update status / settings
 router.patch('/tournaments/:id', requireAdmin, async (req, res) => {
   try {
-    const allowed = ['title', 'description', 'entry_fee', 'scheduled_at', 'registration_end', 'status', 'max_players', 'prize_distribution', 'platform_fee_percentage', 'cancelled_reason']
+    const allowed = ['title', 'description', 'entry_fee', 'scheduled_at', 'registration_end', 'status', 'max_players', 'prize_distribution', 'platform_fee_percentage', 'consolation_pza', 'cancelled_reason']
     const updates: Record<string, any> = {}
     for (const k of allowed) {
       if (req.body[k] !== undefined) updates[k] = req.body[k]
