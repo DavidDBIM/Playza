@@ -28,7 +28,7 @@ const Footer = ({ showAbout = true }: { showAbout?: boolean }) => {
               </p>
             </div>
             <p className="text-[10px] font-medium text-slate-400 dark:text-slate-500">
-              Nigeria's Premium Skill Gaming Ecosystem. All rights reserved.
+              The World's Premier Skill Gaming Ecosystem. All rights reserved.
             </p>
           </div>
 
