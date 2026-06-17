@@ -19,6 +19,7 @@ interface QuizTournament {
   status: "draft" | "registration" | "lobby" | "active" | "completed" | "cancelled";
   scheduled_at: string | null; started_at: string | null;
   registration_end: string | null;
+  consolation_pza?: number | null;
   player_count: number; question_count: number; current_round: number;
   sponsor_id?: string | null; sponsor_mode?: "collab" | "banner" | null;
   sponsor_banner_url?: string | null;
@@ -135,13 +136,13 @@ function PrizeDistributionBuilder({ tiers, onChange, platformFeePct }: { tiers: 
 }
 
 function CreateTournamentModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
-  const [form, setForm] = useState({ title: "", description: "", entry_fee: 0, scheduled_at: "", registration_end: "", max_players: "" as string | number, platform_fee_percentage: 10 });
+  const [form, setForm] = useState({ title: "", description: "", entry_fee: 0, scheduled_at: "", registration_end: "", max_players: "" as string | number, platform_fee_percentage: 10, consolation_pza: 0 });
   const [tiers, setTiers] = useState<PrizeTier[]>([]);
   const [error, setError] = useState("");
   const totalPct = tiers.reduce((s, t) => s + t.percentage, 0);
   const maxAllocatable = 100 - form.platform_fee_percentage;
   const { mutate, isPending } = useMutation({
-    mutationFn: () => api.createTournament({ title: form.title, description: form.description, entry_fee: Number(form.entry_fee), scheduled_at: form.scheduled_at || null, registration_end: form.registration_end || null, max_players: form.max_players !== "" ? Number(form.max_players) : null, prize_distribution: tiers.length > 0 ? tiers : null, platform_fee_percentage: form.platform_fee_percentage } as any),
+    mutationFn: () => api.createTournament({ title: form.title, description: form.description, entry_fee: Number(form.entry_fee), scheduled_at: form.scheduled_at || null, registration_end: form.registration_end || null, max_players: form.max_players !== "" ? Number(form.max_players) : null, prize_distribution: tiers.length > 0 ? tiers : null, platform_fee_percentage: form.platform_fee_percentage, consolation_pza: form.consolation_pza } as any),
     onSuccess: () => { onCreated(); onClose(); },
     onError: (err: any) => setError(err.response?.data?.message ?? "Failed to create"),
   });
@@ -170,6 +171,7 @@ function CreateTournamentModal({ onClose, onCreated }: { onClose: () => void; on
             ))}
             <div><label className={labelCls}>Max Players <span style={{ fontWeight: 400, textTransform: "none", opacity: 0.5 }}>(leave blank = unlimited)</span></label><input type="number" placeholder="e.g. 500" min={1} value={form.max_players} onChange={e => setForm(p => ({ ...p, max_players: e.target.value }))} className={inputCls} /></div>
             <div><label className={labelCls}>Platform Fee % <span style={{ fontWeight: 400, textTransform: "none", opacity: 0.5 }}>(taken before prize distribution)</span></label><div className="relative"><input type="number" min={0} max={50} placeholder="10" value={form.platform_fee_percentage} onChange={e => setForm(p => ({ ...p, platform_fee_percentage: Math.max(0, Math.min(50, Number(e.target.value))) }))} className={inputCls + " pr-8"} /><span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-black text-white/30">%</span></div></div>
+            <div><label className={labelCls}>Consolation PZA <span style={{ fontWeight: 400, textTransform: "none", opacity: 0.5 }}>(awarded to ALL registered players at game end)</span></label><div className="relative"><input type="number" min={0} placeholder="e.g. 50" value={form.consolation_pza} onChange={e => setForm(p => ({ ...p, consolation_pza: Math.max(0, Number(e.target.value)) }))} className={inputCls + " pr-12"} /><span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-black text-white/30">PZA</span></div></div>
           </div>
           <div style={{ height: 1, background: "rgba(255,255,255,0.06)" }} />
           <PrizeDistributionBuilder tiers={tiers} onChange={setTiers} platformFeePct={form.platform_fee_percentage} />
@@ -186,7 +188,7 @@ function CreateTournamentModal({ onClose, onCreated }: { onClose: () => void; on
 
 function EditTournamentModal({ tournament, onClose, onSaved }: { tournament: QuizTournament; onClose: () => void; onSaved: (updated: QuizTournament) => void }) {
   const toLocalDT = (iso: string | null) => { if (!iso) return ""; const d = new Date(iso); const pad = (n: number) => String(n).padStart(2, "0"); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`; };
-  const [form, setForm] = useState({ title: tournament.title, description: tournament.description ?? "", entry_fee: tournament.entry_fee, scheduled_at: toLocalDT(tournament.scheduled_at), registration_end: toLocalDT((tournament as any).registration_end), max_players: tournament.max_players ?? ("" as string | number), platform_fee_percentage: (tournament as any).platform_fee_percentage ?? 10 });
+  const [form, setForm] = useState({ title: tournament.title, description: tournament.description ?? "", entry_fee: tournament.entry_fee, scheduled_at: toLocalDT(tournament.scheduled_at), registration_end: toLocalDT((tournament as any).registration_end), max_players: tournament.max_players ?? ("" as string | number), platform_fee_percentage: (tournament as any).platform_fee_percentage ?? 10, consolation_pza: (tournament as any).consolation_pza ?? 0 });
   const [tiers, setTiers] = useState<PrizeTier[]>(tournament.prize_distribution ?? []);
   const [sponsorForm, setSponsorForm] = useState({ sponsor_id: tournament.sponsor_id ?? "", sponsor_mode: tournament.sponsor_mode ?? "none", sponsor_banner_url: tournament.sponsor_banner_url ?? "" });
   const [error, setError] = useState("");
@@ -195,7 +197,7 @@ function EditTournamentModal({ tournament, onClose, onSaved }: { tournament: Qui
   const { data: sponsors = [] } = useQuery({ queryKey: ["admin-sponsors"], queryFn: api.getSponsors });
   const { mutate, isPending } = useMutation({
     mutationFn: async () => {
-      await api.updateTournament({ id: tournament.id, title: form.title, description: form.description, entry_fee: Number(form.entry_fee), scheduled_at: form.scheduled_at || null, registration_end: form.registration_end || null, max_players: form.max_players !== "" ? Number(form.max_players) : null, prize_distribution: tiers.length > 0 ? tiers : null, platform_fee_percentage: form.platform_fee_percentage } as any);
+      await api.updateTournament({ id: tournament.id, title: form.title, description: form.description, entry_fee: Number(form.entry_fee), scheduled_at: form.scheduled_at || null, registration_end: form.registration_end || null, max_players: form.max_players !== "" ? Number(form.max_players) : null, prize_distribution: tiers.length > 0 ? tiers : null, platform_fee_percentage: form.platform_fee_percentage, consolation_pza: form.consolation_pza } as any);
       const mode = sponsorForm.sponsor_mode === "none" ? null : sponsorForm.sponsor_mode;
       await api.attachSponsor(tournament.id, {
         sponsor_id: mode === "collab" ? (sponsorForm.sponsor_id || null) : null,
@@ -230,6 +232,7 @@ function EditTournamentModal({ tournament, onClose, onSaved }: { tournament: Qui
             ))}
             <div><label className={labelCls}>Max Players <span style={{ fontWeight: 400, textTransform: "none", opacity: 0.5 }}>(leave blank = unlimited)</span></label><input type="number" placeholder="e.g. 500" min={1} value={form.max_players} onChange={e => setForm(p => ({ ...p, max_players: e.target.value }))} className={inputCls} /></div>
             <div><label className={labelCls}>Platform Fee %</label><div className="relative"><input type="number" min={0} max={50} placeholder="10" value={form.platform_fee_percentage} onChange={e => setForm(p => ({ ...p, platform_fee_percentage: Math.max(0, Math.min(50, Number(e.target.value))) }))} className={inputCls + " pr-8"} /><span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-black text-white/30">%</span></div></div>
+            <div><label className={labelCls}>Consolation PZA <span style={{ fontWeight: 400, textTransform: "none", opacity: 0.5 }}>(awarded to ALL registered players at game end)</span></label><div className="relative"><input type="number" min={0} placeholder="e.g. 50" value={form.consolation_pza} onChange={e => setForm(p => ({ ...p, consolation_pza: Math.max(0, Number(e.target.value)) }))} className={inputCls + " pr-12"} /><span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-black text-white/30">PZA</span></div></div>
           </div>
           <div style={{ height: 1, background: "rgba(255,255,255,0.06)" }} />
           <PrizeDistributionBuilder tiers={tiers} onChange={setTiers} platformFeePct={form.platform_fee_percentage} />
