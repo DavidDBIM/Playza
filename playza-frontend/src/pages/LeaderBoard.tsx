@@ -30,7 +30,7 @@ const LeaderBoard = () => {
       title="Leaderboard – Top Players"
       description="See the top players on Playza. Compete in games and tournaments to climb the global, loyalty and referral leaderboards."
       url="/leaderboard"
-      keywords="playza leaderboard, top players Nigeria, gaming rankings, loyalty points leaderboard"
+      keywords="playza leaderboard, top players worldwide, gaming rankings, loyalty points leaderboard"
       />
       {/* Premium Header */}
       <div className="relative overflow-hidden bg-slate-900 dark:bg-slate-950 p-8 md:p-12 rounded-xl border border-white/5">
