@@ -107,6 +107,9 @@ export function useQuizSocket(tournamentId: string | null) {
     socket.on('quiz:lobby_update', ({ player_count, status }) => {
       setPlayerCount(player_count)
       if (status === 'lobby') setPhase('lobby')
+      // If joining mid-game, show "starting" briefly while we wait for the
+      // server to push the current/next question (handles backend restarts).
+      if (status === 'active') setPhase(prev => prev === 'idle' ? 'starting' : prev)
     })
 
     socket.on('quiz:game_start', ({ alive_count }) => {
