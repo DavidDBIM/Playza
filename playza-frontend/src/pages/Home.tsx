@@ -65,8 +65,8 @@ const Home = () => {
     <main className="flex-1 min-w-0 space-y-3 md:space-y-4 pb-2 md:pb-4">
       <SEO
         title="Play Games, Win Real Money"
-        description="Nigeria's #1 competitive gaming platform. Play skill-based games, join tournaments, challenge friends in H2H matches, and win real ZA rewards instantly."
-        keywords="playza, win real money Nigeria, skill games, online arcade, competitive gaming Nigeria, H2H games, tournaments"
+        description="The #1 competitive skill gaming platform. Play skill-based games, join tournaments, challenge friends in H2H matches, and win real ZA rewards instantly."
+        keywords="playza, win real money online, skill games, online arcade, competitive gaming online, H2H games, tournaments"
         url="/"
       />
 
