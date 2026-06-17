@@ -13,7 +13,7 @@ const PrivacyPolicy = () => {
       title="Privacy Policy"
       description="Learn how Playza collects, uses and protects your personal data. Your privacy is important to us."
       url="/privacy"
-      keywords="playza privacy policy, data protection Nigeria"
+      keywords="playza privacy policy, data protection"
       />
         <div className="mb-6 md:mb-12 text-center animate-fade-in px-2">
             <h1 className="text-2xl md:text-5xl font-black tracking-tighter uppercase italic bg-clip-text text-transparent bg-linear-to-r from-primary to-accent mb-2 md:mb-4">
@@ -166,7 +166,7 @@ const PrivacyPolicy = () => {
                         </div>
                     <div className="bg-background/80 p-3 md:p-4 rounded-xl md:rounded-2xl flex-1 border border-white/5">
                             <p className="text-[10px] uppercase font-black text-primary mb-1">HQ Address</p>
-                            <p className="text-xs md:text-sm font-bold italic">Lagos, Nigeria</p>
+                            <p className="text-xs md:text-sm font-bold italic">Worldwide</p>
                         </div>
                     </div>
                 </section>
