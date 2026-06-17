@@ -17,8 +17,8 @@ const TWITTER_HANDLE = '@playzadotgames'
 
 const DEFAULT = {
   title: 'Playza – Play Games, Win Real Money',
-  description: "Nigeria's #1 competitive gaming platform. Play skill-based games, join tournaments, challenge friends in H2H matches, and win real ZA rewards.",
-  keywords: 'playza, play games online, win real money Nigeria, skill games, H2H games, online tournaments, leaderboard games, competitive gaming',
+  description: "The #1 competitive skill gaming platform. Play skill-based games, join tournaments, challenge friends in H2H matches, and win real ZA rewards.",
+  keywords: 'playza, play games online, win real money online, skill games, H2H games, online tournaments, leaderboard games, competitive gaming',
   image: DEFAULT_IMAGE,
   url: BASE_URL,
 }
@@ -54,7 +54,7 @@ const SEO = ({
       <meta property="og:image" content={image} />
       <meta property="og:image:width" content="1200" />
       <meta property="og:image:height" content="630" />
-      <meta property="og:locale" content="en_NG" />
+      <meta property="og:locale" content="en" />
 
       {/* Twitter */}
       <meta name="twitter:card" content="summary_large_image" />
