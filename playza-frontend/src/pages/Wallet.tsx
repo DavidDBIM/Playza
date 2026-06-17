@@ -32,7 +32,7 @@ const Wallet = ({ onWithdrawClick }: WalletProps) => {
       title="Wallet – Manage Your Funds"
       description="View your Playza wallet balance, deposit ZA, withdraw winnings and track your transaction history."
       url="/wallet"
-      keywords="playza wallet, deposit money, withdraw winnings Nigeria"
+      keywords="playza wallet, deposit money, withdraw winnings online"
       noIndex
       />
         <WalletSkeleton />
