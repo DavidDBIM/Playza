@@ -23,8 +23,8 @@ const faqs: FAQItem[] = [
     answer: <>Go to playza.games, click <Link to="/registration" className="text-primary hover:underline font-black">Sign Up</Link>, enter your details, verify your number, and you're ready to play.</>,
   },
   {
-    question: "Is Playza available in Nigeria and Ghana?",
-    answer: "Yes, Playza is fully available in Nigeria and Ghana, with more West African countries being added.",
+    question: "Is Playza available worldwide?",
+    answer: "Yes, Playza is available globally. We support players from many countries around the world, with more regions being added regularly.",
   },
   {
     question: "What devices can I use to play on Playza?",
@@ -137,9 +137,9 @@ const AccordionItem = ({ item, isOpen, onClick, icon }: { item: FAQItem; isOpen:
     <div className={`glass-card overflow-hidden transition-all duration-300 border ${isOpen ? 'border-primary/50 bg-primary/5 shadow-lg shadow-primary/5' : 'border-border bg-card/50 hover:bg-card dark:border-white/5 dark:bg-white/5 dark:hover:bg-white/10'}`}>
       <SEO
       title="FAQ – Frequently Asked Questions"
-      description="Got questions about Playza? Learn how to deposit, play, withdraw and refer friends on Nigeria's top gaming platform."
+      description="Got questions about Playza? Learn how to deposit, play, withdraw and refer friends on the world's top gaming platform."
       url="/faq"
-      keywords="playza FAQ, how to play playza, deposit playza, withdraw winnings Nigeria"
+      keywords="playza FAQ, how to play playza, deposit playza, withdraw winnings online"
       />
       <button
         onClick={onClick}
