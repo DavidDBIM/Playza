@@ -148,7 +148,7 @@ const H2HZone = () => {
       title="H2H Zone – Challenge Friends"
       description="Create or join a Head-to-Head match on Playza. Challenge a friend, set your stake and winner takes all — paid out instantly."
       url="/h2h"
-      keywords="H2H gaming Nigeria, head to head games, challenge friends online, stake games Nigeria"
+      keywords="H2H gaming online, head to head games, challenge friends online, stake games online"
       />
           </div>
         </div>
