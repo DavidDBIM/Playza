@@ -24,7 +24,7 @@ const Support: React.FC = () => {
       title="Support – Help Center"
       description="Need help? Contact the Playza support team. We're here to help with deposits, withdrawals, games and account issues."
       url="/support"
-      keywords="playza support, help center, contact playza, customer service Nigeria"
+      keywords="playza support, help center, contact playza, customer service worldwide"
       />
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-center gap-4">
