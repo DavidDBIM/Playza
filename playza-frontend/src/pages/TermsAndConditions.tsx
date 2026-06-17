@@ -13,7 +13,7 @@ const TermsAndConditions = () => {
       title="Terms & Conditions"
       description="Read the Playza Terms and Conditions. Understand the rules, eligibility and policies governing your use of the platform."
       url="/terms"
-      keywords="playza terms and conditions, gaming platform rules Nigeria"
+      keywords="playza terms and conditions, gaming platform rules"
       />
       <div className="mb-6 md:mb-12 text-center animate-fade-in px-2">
         <h1 className="text-2xl md:text-5xl font-black tracking-tighter uppercase italic bg-clip-text text-transparent bg-linear-to-r from-primary to-accent mb-2 md:mb-4">
@@ -67,7 +67,7 @@ const TermsAndConditions = () => {
               { term: "Ticket", def: "A digital entry pass purchased using Za to enter a specific game round." },
               { term: "Prize Pool", def: "The total value of Za contributed by participants in a game round, intended for distribution to winners." },
               { term: "We / Us / Our", def: "Reference to PLAYZA is reference to playza.io corporate entities." },
-              { term: "Fiat", def: "Government-issued currency (e.g., Nigerian Naira)." }
+              { term: "Fiat", def: "Government-issued currency (e.g., local currency)." }
             ].map((item, i) => (
               <div key={i} className="bg-muted/30 p-3 md:p-4 rounded-xl md:rounded-2xl border border-white/5">
                 <p className="font-black text-foreground uppercase text-xs tracking-widest mb-1">{item.term}</p>
@@ -86,7 +86,7 @@ const TermsAndConditions = () => {
             <p className="text-xs md:text-base">To use PLAYZA, you represent and warrant that:</p>
             <ol className="list-decimal pl-2 md:pl-6 space-y-2 font-medium">
               <li>You are at least 13 years of age. Users under 18 must have parental or guardian consent.</li>
-              <li>You are a resident of Nigeria or a jurisdiction where skill-based gaming is not prohibited by law.</li>
+              <li>You are a resident of a jurisdiction where skill-based gaming is not prohibited by law.</li>
               <li>You have the legal capacity to enter into a binding contract.</li>
               <li>You have not been previously suspended or removed from the Platform.</li>
             </ol>
@@ -172,7 +172,7 @@ const TermsAndConditions = () => {
           </h2>
           <div className="bg-muted/50 p-4 md:p-6 rounded-2xl md:rounded-xl space-y-3 md:space-y-4">
             <p className="text-xs md:text-sm text-muted-foreground italic">
-              Governing Law: Fed. Republic of Nigeria. For full details or questions, reach out to our team.
+              Governing Law: The laws applicable to your jurisdiction. For full details or questions, reach out to our team.
             </p>
             <div className="flex flex-col md:flex-row gap-3 md:gap-4">
               <div className="bg-background/80 p-3 md:p-4 rounded-xl md:rounded-2xl flex-1 border border-white/5">
@@ -181,7 +181,7 @@ const TermsAndConditions = () => {
               </div>
               <div className="bg-background/80 p-2 md:p-4 rounded-2xl flex-1 border border-white/5">
                 <p className="text-[10px] uppercase font-black text-primary mb-1">Office</p>
-                <p className="text-xs md:text-sm font-bold">Lagos, Nigeria</p>
+                <p className="text-xs md:text-sm font-bold">Worldwide</p>
               </div>
             </div>
           </div>
