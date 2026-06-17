@@ -88,7 +88,7 @@ const SoloEarn = () => {
       title="Solo Earn – Play & Get Paid"
       description="Play solo games on Playza and earn real ZA rewards based on your performance. No opponent needed — just skill."
       url="/solo-earn"
-      keywords="solo games earn money Nigeria, play alone win money, skill solo games"
+      keywords="solo games earn money online, play alone and win, skill-based solo games"
       />
         <Loader2 className="w-10 h-10 animate-spin text-primary" />
         <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Synchronizing Solo Modules...</p>
