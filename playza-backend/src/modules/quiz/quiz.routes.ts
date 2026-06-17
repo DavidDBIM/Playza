@@ -44,7 +44,7 @@ async function sendRegistrationEmail(
               <p style="margin:6px 0;font-weight:700;">🔥 5 Rounds of Elimination</p>
             </div>
             <div style="background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.25);border-radius:12px;padding:14px;margin-bottom:20px;">
-              <p style="margin:0;font-size:13px;font-weight:700;color:#c084fc;">⏰ You'll receive reminders 24 hours and 2 hours before the game starts.</p>
+              <p style="margin:0;font-size:13px;font-weight:700;color:#c084fc;">⏰ You'll receive reminders before the game starts.</p>
             </div>
             <p style="font-size:13px;opacity:0.6;margin-bottom:20px;">
               Wrong answer = eliminated. Answer fast to survive all 5 rounds. Last one standing wins the prize pool!
@@ -124,6 +124,7 @@ router.get('/tournaments', async (req, res) => {
       platform_fee_percentage: t.platform_fee_percentage ?? 10,
       registration_end: t.registration_end ?? null,
       scheduled_at: t.scheduled_at ?? null,
+      consolation_pza: t.consolation_pza ?? 0,
       sponsor: t.sponsor ?? null,
       sponsor_mode: t.sponsor_mode ?? null,
       sponsor_banner_url: t.sponsor_banner_url ?? null,
@@ -187,6 +188,7 @@ router.get('/tournaments/:id', async (req, res) => {
         platform_fee_percentage: tournament.platform_fee_percentage ?? 10,
         registration_end: tournament.registration_end ?? null,
         scheduled_at: tournament.scheduled_at ?? null,
+        consolation_pza: tournament.consolation_pza ?? 0,
         sponsor: tournament.sponsor ?? null,
         sponsor_mode: tournament.sponsor_mode ?? null,
         sponsor_banner_url: tournament.sponsor_banner_url ?? null,
@@ -301,6 +303,7 @@ router.post('/tournaments/:id/join', requireAuth, async (req: AuthRequest, res) 
       .eq('id', userId)
       .single()
 
+    // Initialize leaderboard row — includes scoring fields used for fair ranking
     await supabaseAdmin.from('quiz_leaderboard').upsert({
       tournament_id: tournamentId,
       user_id: userId,
@@ -308,6 +311,9 @@ router.post('/tournaments/:id/join', requireAuth, async (req: AuthRequest, res) 
       avatar_url: profile?.avatar_url ?? null,
       correct_answers: 0,
       avg_time_ms: 0,
+      rounds_survived: 0,
+      speed_score: 0,
+      speed_ms: 0,
       status: 'alive',
     }, { onConflict: 'tournament_id,user_id' })
 
@@ -357,12 +363,12 @@ router.get('/tournaments/:id/lobby', requireAuth, async (req: AuthRequest, res) 
   }
 })
 
-// ── GET /quiz/tournaments/:id/leaderboard
+// ── GET /quiz/tournaments/:id/leaderboard  — includes full scoring breakdown
 router.get('/tournaments/:id/leaderboard', async (req, res) => {
   try {
     const { data, error } = await supabaseAdmin
       .from('quiz_leaderboard')
-      .select('rank, username, avatar_url, correct_answers, avg_time_ms, status')
+      .select('rank, final_rank, user_id, username, avatar_url, correct_answers, avg_time_ms, rounds_survived, speed_score, speed_ms, status')
       .eq('tournament_id', req.params.id)
       .order('rank', { ascending: true })
       .limit(50)
