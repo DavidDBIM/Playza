@@ -351,8 +351,11 @@ export function setupQuizGateway(io: SocketServer) {
         // ── Recovery: if this socket created a brand-new in-memory game state
         // but the tournament is already 'active' in the DB (backend restarted
         // mid-game, e.g. Render free-tier sleep/wake), rebuild alive players
-        // and round position from DB and resume sending questions — instead
-        // of silently stalling at an empty lobby state forever.
+        // and round position from DB. We deliberately do NOT call
+        // sendNextQuestion here — that would race against the natural launch
+        // flow and double-advance rounds. The retry-emit block below handles
+        // delivering the question once it's actually ready.
+        let recoveredButNoQuestionYet = false
         if (isNewGame) {
           const { data: tRow } = await supabaseAdmin
             .from('quiz_tournaments')
@@ -371,12 +374,18 @@ export function setupQuizGateway(io: SocketServer) {
             game.status = 'active'
             game.currentRound = tRow.current_round || 1
             game.currentQuestionIndex = tRow.current_question || 0
+            recoveredButNoQuestionYet = true
 
             console.log(`[QuizGateway] Recovered state for "${tournament_id}" — round ${game.currentRound}, q${game.currentQuestionIndex}, ${game.alivePlayers.size} alive`)
 
-            // Re-send the current question fresh (full timer) since the
-            // original timer was lost when memory was wiped.
-            setTimeout(() => sendNextQuestion(tournament_id, quizNs as any, game!), 1000)
+            // Genuine recovery case (server actually lost memory, e.g. restart) —
+            // nobody else is going to send this question, so we must.
+            // Use a one-time flag on the game object to guard against duplicate sends
+            // if multiple sockets join in the same recovery window.
+            if (!(game as any)._recoverySent) {
+              (game as any)._recoverySent = true
+              setTimeout(() => sendNextQuestion(tournament_id, quizNs as any, game!), 1500)
+            }
           }
         }
 
@@ -421,26 +430,40 @@ export function setupQuizGateway(io: SocketServer) {
           })))
         }
 
-        // If game already active AND we have a live question in memory
-        // (i.e. this wasn't a fresh recovery — recovery resends on its own
-        // timer above), send current question state immediately.
-        if (!isNewGame && game.status === 'active' && game.currentQuestion) {
-          const elapsed = Date.now() - game.currentQuestion.startedAt
-          const remaining = Math.max(0, game.currentQuestion.timeLimitMs - elapsed)
-          const roundCfg = ROUND_CONFIG[game.currentRound - 1]
-          const questions = game.questions[game.currentRound] ?? []
-          socket.emit('quiz:question_start', {
-            question_id: game.currentQuestion.questionId,
-            round: game.currentRound,
-            round_name: roundCfg?.name,
-            question_index: game.currentQuestionIndex,
-            total_questions: questions.length,
-            question_text: game.currentQuestion.questionText,
-            image_url: game.currentQuestion.imageUrl,
-            options: game.currentQuestion.options,
-            time_limit_ms: remaining,
-            alive_count: game.alivePlayers.size,
-          })
+        // If game already active, send current question state.
+        // If currentQuestion isn't set yet (e.g. launch's initial 3s delay
+        // hasn't fired, or recovery is still in flight), retry briefly so
+        // the client never gets stuck waiting on an event that already passed.
+        if (game.status === 'active') {
+          const emitCurrentQuestion = () => {
+            if (!game!.currentQuestion) return false
+            const elapsed = Date.now() - game!.currentQuestion.startedAt
+            const remaining = Math.max(0, game!.currentQuestion.timeLimitMs - elapsed)
+            const roundCfg = ROUND_CONFIG[game!.currentRound - 1]
+            const questions = game!.questions[game!.currentRound] ?? []
+            socket.emit('quiz:question_start', {
+              question_id: game!.currentQuestion.questionId,
+              round: game!.currentRound,
+              round_name: roundCfg?.name,
+              question_index: game!.currentQuestionIndex,
+              total_questions: questions.length,
+              question_text: game!.currentQuestion.questionText,
+              image_url: game!.currentQuestion.imageUrl,
+              options: game!.currentQuestion.options,
+              time_limit_ms: remaining,
+              alive_count: game!.alivePlayers.size,
+            })
+            return true
+          }
+
+          if (!emitCurrentQuestion()) {
+            // Question not ready yet (mid-launch delay or recovery in flight) — retry a few times
+            let attempts = 0
+            const retryInterval = setInterval(() => {
+              attempts++
+              if (emitCurrentQuestion() || attempts >= 6) clearInterval(retryInterval)
+            }, 1000)
+          }
         }
       } catch (err) {
         console.error('[QuizGateway] quiz:join error:', err)
