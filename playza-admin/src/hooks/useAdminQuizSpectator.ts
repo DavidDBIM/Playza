@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { io, Socket } from "socket.io-client";
+
+type Socket = import("socket.io-client").Socket;
 
 const SOCKET_URL = import.meta.env.VITE_API_URL || "https://api.playza.games";
 
@@ -82,61 +83,71 @@ export function useAdminQuizSpectator(tournamentId: string | null, enabled: bool
       adminUserId = parsed?.id ?? adminUserId;
     } catch (_) { /* ignore */ }
 
-    const socket = io(`${SOCKET_URL}/quiz`, {
-      auth: { userId: adminUserId },
-      transports: ["websocket"],
-      reconnectionAttempts: 5,
-    });
-    socketRef.current = socket;
+    let socket: Socket | null = null;
+    let cancelled = false;
 
-    socket.on("connect", () => {
-      setConnected(true);
-      socket.emit("quiz:join", { tournament_id: tournamentId });
-    });
+    import("socket.io-client").then(({ io }) => {
+      if (cancelled) return;
 
-    socket.on("disconnect", () => setConnected(false));
+      socket = io(`${SOCKET_URL}/quiz`, {
+        auth: { userId: adminUserId },
+        transports: ["websocket"],
+        reconnectionAttempts: 5,
+      });
+      socketRef.current = socket;
 
-    socket.on("quiz:lobby_update", ({ status }: { status: string }) => {
-      if (status === "lobby") setPhase("idle");
-      if (status === "active") setPhase((prev) => (prev === "idle" ? "starting" : prev));
-    });
+      socket.on("connect", () => {
+        setConnected(true);
+        socket!.emit("quiz:join", { tournament_id: tournamentId });
+      });
 
-    socket.on("quiz:game_start", ({ alive_count }: { alive_count: number }) => {
-      setAliveCount(alive_count);
-      setPhase("starting");
-    });
+      socket.on("disconnect", () => setConnected(false));
 
-    socket.on("quiz:question_start", (q: LiveQuestionData) => {
-      setCurrentQuestion(q);
-      setRevealData(null);
-      setAliveCount(q.alive_count);
-      setPhase("question");
-      startTicker(q.time_limit_ms);
-    });
+      socket.on("quiz:lobby_update", ({ status }: { status: string }) => {
+        if (status === "lobby") setPhase("idle");
+        if (status === "active") setPhase((prev) => (prev === "idle" ? "starting" : prev));
+      });
 
-    socket.on("quiz:reveal", (data: RevealData) => {
-      if (tickRef.current) clearInterval(tickRef.current);
-      setRevealData(data);
-      setAliveCount(data.alive_count);
-      setPhase("revealing");
-    });
+      socket.on("quiz:game_start", ({ alive_count }: { alive_count: number }) => {
+        setAliveCount(alive_count);
+        setPhase("starting");
+      });
 
-    socket.on("quiz:round_summary", (summary: RoundSummaryData) => {
-      setRoundSummary(summary);
-      setAliveCount(summary.survivors);
-      setPhase("round_summary");
-    });
+      socket.on("quiz:question_start", (q: LiveQuestionData) => {
+        setCurrentQuestion(q);
+        setRevealData(null);
+        setAliveCount(q.alive_count);
+        setPhase("question");
+        startTicker(q.time_limit_ms);
+      });
 
-    socket.on("quiz:game_over", (data: GameOverData) => {
-      if (tickRef.current) clearInterval(tickRef.current);
-      setGameOver(data);
-      setPhase("game_over");
+      socket.on("quiz:reveal", (data: RevealData) => {
+        if (tickRef.current) clearInterval(tickRef.current);
+        setRevealData(data);
+        setAliveCount(data.alive_count);
+        setPhase("revealing");
+      });
+
+      socket.on("quiz:round_summary", (summary: RoundSummaryData) => {
+        setRoundSummary(summary);
+        setAliveCount(summary.survivors);
+        setPhase("round_summary");
+      });
+
+      socket.on("quiz:game_over", (data: GameOverData) => {
+        if (tickRef.current) clearInterval(tickRef.current);
+        setGameOver(data);
+        setPhase("game_over");
+      });
     });
 
     return () => {
+      cancelled = true;
       if (tickRef.current) clearInterval(tickRef.current);
-      socket.disconnect();
-      socketRef.current = null;
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
     };
   }, [tournamentId, enabled]);
 
