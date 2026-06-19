@@ -7,6 +7,7 @@ import {
   MdCheckCircle, MdTimer, MdBolt, MdWarning, MdHandshake,
 } from "react-icons/md";
 import { Trophy, Crown, ChevronDown, Zap, Shield, Flame, Star, Users, Calendar, Eye } from "lucide-react";
+import { useAdminQuizSpectator } from "../hooks/useAdminQuizSpectator";
 
 interface PrizeTier { rank: number; percentage: number; }
 
@@ -440,6 +441,8 @@ function QuestionManagerModal({ tournament, onClose }: { tournament: QuizTournam
 function LiveMonitorModal({ tournament, onClose }: { tournament: QuizTournament; onClose: () => void }) {
   const { data: live, isLoading, isError, error } = useQuery({ queryKey: ["admin-quiz-live", tournament.id], queryFn: () => api.getLive(tournament.id), refetchInterval: 3000, retry: 2 });
   const isActive = tournament.status === "active";
+  const spec = useAdminQuizSpectator(tournament.id, isActive);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(16px)" }} onClick={onClose}>
       <div className="w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl overflow-hidden" style={{ background: "linear-gradient(160deg, rgba(20,5,5,0.99) 0%, rgba(8,2,2,0.99) 100%)", border: "1px solid rgba(239,68,68,0.2)" }} onClick={e => e.stopPropagation()}>
@@ -451,7 +454,15 @@ function LiveMonitorModal({ tournament, onClose }: { tournament: QuizTournament;
               <p className="text-white/30 text-xs font-bold uppercase tracking-wider mt-0.5">{isActive ? "🔴 Live Now" : tournament.status === "lobby" ? "🟡 In Lobby" : tournament.status === "registration" ? "🟢 Registration Open" : tournament.status}</p>
             </div>
           </div>
-          <button onClick={onClose} className="w-8 h-8 rounded-xl flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-all"><MdClose /></button>
+          <div className="flex items-center gap-2">
+            {isActive && (
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full" style={{ background: spec.connected ? "rgba(34,197,94,0.1)" : "rgba(100,116,139,0.1)", border: `1px solid ${spec.connected ? "rgba(34,197,94,0.3)" : "rgba(100,116,139,0.2)"}` }}>
+                <span style={{ width: 5, height: 5, borderRadius: "50%", background: spec.connected ? "#22c55e" : "#64748b", display: "block" }} />
+                <span style={{ fontSize: 9, fontWeight: 700, color: spec.connected ? "#22c55e" : "#64748b" }}>{spec.connected ? "SPECTATING" : "CONNECTING"}</span>
+              </div>
+            )}
+            <button onClick={onClose} className="w-8 h-8 rounded-xl flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-all"><MdClose /></button>
+          </div>
         </div>
         <div className="flex-1 overflow-y-auto p-5 space-y-4">
           {isLoading ? (
@@ -462,6 +473,59 @@ function LiveMonitorModal({ tournament, onClose }: { tournament: QuizTournament;
               <p className="font-black text-white">{(error as any)?.message ?? "Could not reach server"}</p>
             </div>
           ) : (<>
+            {/* ── Live question panel — real-time spectator view ──────────── */}
+            {isActive && (
+              <div className="rounded-2xl overflow-hidden" style={{ background: "rgba(124,58,237,0.06)", border: "1px solid rgba(124,58,237,0.2)" }}>
+                {spec.phase === "idle" || spec.phase === "starting" ? (
+                  <div className="py-10 text-center px-6">
+                    <MdRefresh className="animate-spin text-2xl text-violet-400 mx-auto mb-2" />
+                    <p className="text-sm font-bold text-white/50">{spec.phase === "starting" ? "Game starting — first question incoming..." : "Connecting to live game..."}</p>
+                  </div>
+                ) : spec.phase === "question" && spec.currentQuestion ? (
+                  <div className="p-5">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-violet-400">Round {spec.currentQuestion.round} — {spec.currentQuestion.round_name ?? ""} · Q{spec.currentQuestion.question_index + 1}/{spec.currentQuestion.total_questions}</span>
+                      <span className="text-sm font-black text-white tabular-nums">{Math.ceil(spec.timeLeftMs / 1000)}s</span>
+                    </div>
+                    <div className="h-1.5 rounded-full overflow-hidden mb-4" style={{ background: "rgba(255,255,255,0.08)" }}>
+                      <div className="h-full rounded-full transition-all" style={{ width: `${Math.max(0, (spec.timeLeftMs / (spec.currentQuestion.time_limit_ms || 1)) * 100)}%`, background: spec.timeLeftMs < 5000 ? "#ef4444" : "linear-gradient(90deg,#7c3aed,#a855f7)" }} />
+                    </div>
+                    <p className="text-white font-bold text-sm mb-3 leading-snug">{spec.currentQuestion.question_text}</p>
+                    {spec.currentQuestion.image_url && <img src={spec.currentQuestion.image_url} alt="" className="w-full max-h-32 object-cover rounded-xl mb-3" />}
+                    <div className="grid grid-cols-2 gap-2">
+                      {(["A", "B", "C", "D"] as const).map(opt => (
+                        <div key={opt} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.7)" }}>
+                          <span className="font-black text-[10px] text-white/40">{opt}</span>{spec.currentQuestion?.options[opt]}
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-[10px] text-white/30 mt-3 font-bold">👥 {spec.aliveCount} players still alive</p>
+                  </div>
+                ) : spec.phase === "revealing" && spec.revealData ? (
+                  <div className="p-5 text-center">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-violet-400 mb-2">Round {spec.revealData.round}</p>
+                    <p className="text-lg font-black text-white mb-1">Correct Answer: <span className="text-green-400">{spec.revealData.correct_option}</span></p>
+                    <p className="text-xs text-white/40">{spec.revealData.eliminated_count} eliminated this question · {spec.revealData.alive_count} remain</p>
+                  </div>
+                ) : spec.phase === "round_summary" && spec.roundSummary ? (
+                  <div className="p-5 text-center">
+                    <p className="text-sm font-black text-white mb-1">✅ {spec.roundSummary.round_name} complete</p>
+                    <p className="text-xs text-white/40 mb-2">{spec.roundSummary.survivors} survived · {spec.roundSummary.eliminated_this_round} eliminated</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-violet-400">Next: {spec.roundSummary.next_round_name}</p>
+                  </div>
+                ) : spec.phase === "game_over" && spec.gameOver ? (
+                  <div className="p-5 text-center">
+                    <p className="text-lg font-black text-white mb-2">🏆 Game Over!</p>
+                    {spec.gameOver.winners.slice(0, 3).map(w => (
+                      <p key={w.rank} className="text-xs text-white/60">Rank {w.rank}: <span className="font-bold text-white">{w.username}</span> — {w.prize.toLocaleString()} ZA</p>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="py-10 text-center"><p className="text-sm font-bold text-white/30">Waiting for next question...</p></div>
+                )}
+              </div>
+            )}
+
             <div className="grid grid-cols-3 gap-3">
               {[
                 { label: "Round", value: isActive ? (live?.tournament?.current_round ?? 0) : "—", color: "#a855f7" },
