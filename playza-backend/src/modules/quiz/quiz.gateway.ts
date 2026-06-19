@@ -483,12 +483,15 @@ export function setupQuizGateway(io: SocketServer) {
       if (!game.currentQuestion || game.currentQuestion.questionId !== question_id) return
       if (game.currentQuestion.answers.has(userId)) return // already answered
 
-      const timeTakenMs = Date.now() - game.currentQuestion.startedAt
+      const now = Date.now()
+      const timeTakenMs = now - game.currentQuestion.startedAt
+      const timeRemainingMs = Math.max(0, game.currentQuestion.timeLimitMs - timeTakenMs)
+      const timeRemainingSecs = Math.floor(timeRemainingMs / 1000)
       const isCorrect = selected_option === game.currentQuestion.correctOption
 
       game.currentQuestion.answers.set(userId, { option: selected_option, timeTakenMs })
 
-      // Persist to DB
+      // Persist answer with speed data
       try {
         await supabaseAdmin.from('quiz_answers').upsert({
           tournament_id,
@@ -497,10 +500,47 @@ export function setupQuizGateway(io: SocketServer) {
           selected_option,
           is_correct: isCorrect,
           time_taken_ms: timeTakenMs,
+          time_remaining_secs: timeRemainingSecs,
+          time_remaining_ms: timeRemainingMs,
         }, { onConflict: 'question_id,user_id' })
       } catch (_) {}
 
-      socket.emit('quiz:answer_ack', { received: true, question_id })
+      if (isCorrect) {
+        try {
+          const { data: lb } = await supabaseAdmin
+            .from('quiz_leaderboard')
+            .select('correct_answers, speed_score, speed_ms')
+            .eq('tournament_id', tournament_id)
+            .eq('user_id', userId)
+            .single()
+
+          if (lb) {
+            // Speed score (seconds remaining) only counted from Q2 onwards —
+            // Q1 excluded so nerves on first question don't unfairly penalise players
+            const speedAdd = game.currentQuestionIndex >= 1 ? timeRemainingSecs : 0
+            const speedMsAdd = game.currentQuestionIndex >= 1 ? timeRemainingMs : 0
+
+            await supabaseAdmin
+              .from('quiz_leaderboard')
+              .update({
+                correct_answers: (lb.correct_answers ?? 0) + 1,
+                speed_score: (lb.speed_score ?? 0) + speedAdd,
+                speed_ms: (lb.speed_ms ?? 0) + speedMsAdd,
+                avg_time_ms: timeTakenMs,
+                updated_at: new Date().toISOString(),
+              })
+              .eq('tournament_id', tournament_id)
+              .eq('user_id', userId)
+          }
+        } catch (_) {}
+      }
+
+      socket.emit('quiz:answer_ack', {
+        received: true,
+        question_id,
+        is_correct: isCorrect,
+        time_remaining_secs: timeRemainingSecs,
+      })
 
       // If ALL alive players answered, reveal early
       if (game.currentQuestion.answers.size >= game.alivePlayers.size) {
