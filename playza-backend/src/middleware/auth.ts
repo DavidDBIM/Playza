@@ -37,10 +37,12 @@ export async function requireAuth(req: AuthRequest, res: Response, next: NextFun
   }
 
   if (!user) {
-    return res.status(401).json({ 
-      success: false, 
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('[auth] requireAuth failed:', debugInfo)
+    }
+    return res.status(401).json({
+      success: false,
       message: "Invalid or expired token",
-      debug: debugInfo 
     });
   }
 
@@ -80,10 +82,12 @@ export async function requireAdmin(req: AuthRequest, res: Response, next: NextFu
   }
 
   if (!user) {
-    return res.status(401).json({ 
-      success: false, 
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('[auth] requireAdmin failed:', debugInfo)
+    }
+    return res.status(401).json({
+      success: false,
       message: "Invalid or expired token",
-      debug: debugInfo
     });
   }
 
@@ -101,4 +105,3 @@ export async function requireAdmin(req: AuthRequest, res: Response, next: NextFu
   req.user = { id: user.id, email: user.email! };
   next();
 }
-
