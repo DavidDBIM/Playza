@@ -50,17 +50,24 @@ async function loadQuestions(tournamentId: string): Promise<Record<number, any[]
 }
 
 async function updateLeaderboard(tournamentId: string, io: SocketServer) {
-  // Recompute rankings from quiz_answers and quiz_players
-  const { data: aliveRows } = await supabaseAdmin
+  const { data: rows } = await supabaseAdmin
     .from('quiz_leaderboard')
     .select('*')
     .eq('tournament_id', tournamentId)
-    .order('correct_answers', { ascending: false })
-    .order('avg_time_ms', { ascending: true })
 
-  const ranked = (aliveRows ?? []).map((row, i) => ({ ...row, rank: i + 1 }))
+  if (!rows?.length) return
 
-  // Batch update ranks
+  // Rank by: rounds_survived → correct_answers → speed_score → speed_ms → random
+  const sorted = [...rows].sort((a, b) => {
+    if ((b.rounds_survived ?? 0) !== (a.rounds_survived ?? 0)) return (b.rounds_survived ?? 0) - (a.rounds_survived ?? 0)
+    if ((b.correct_answers ?? 0) !== (a.correct_answers ?? 0)) return (b.correct_answers ?? 0) - (a.correct_answers ?? 0)
+    if ((b.speed_score ?? 0) !== (a.speed_score ?? 0)) return (b.speed_score ?? 0) - (a.speed_score ?? 0)
+    if ((b.speed_ms ?? 0) !== (a.speed_ms ?? 0)) return (b.speed_ms ?? 0) - (a.speed_ms ?? 0)
+    return Math.random() - 0.5
+  })
+
+  const ranked = sorted.map((row, i) => ({ ...row, rank: i + 1 }))
+
   for (const row of ranked) {
     await supabaseAdmin
       .from('quiz_leaderboard')
@@ -182,28 +189,10 @@ async function revealAndAdvance(tournamentId: string, io: SocketServer, game: Ga
     if (!answer || answer.option !== q.correctOption) {
       eliminatedThisQ.push(userId)
       await eliminatePlayer(tournamentId, userId, game.currentRound, game.currentQuestionIndex, io, game)
-    } else {
-      // Update leaderboard stats
-      const totalAnswered = await supabaseAdmin
-        .from('quiz_answers')
-        .select('time_taken_ms')
-        .eq('tournament_id', tournamentId)
-        .eq('user_id', userId)
-        .eq('is_correct', true)
-
-      const times = totalAnswered.data?.map(r => r.time_taken_ms ?? 0) ?? []
-      const avg = times.length ? Math.round(times.reduce((a, b) => a + b, 0) / times.length) : 0
-
-      await supabaseAdmin
-        .from('quiz_leaderboard')
-        .update({
-          correct_answers: (totalAnswered.data?.length ?? 0),
-          avg_time_ms: avg,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('tournament_id', tournamentId)
-        .eq('user_id', userId)
     }
+    // Correct-answer players already had their correct_answers, speed_score,
+    // and speed_ms updated in real-time inside the quiz:answer handler.
+    // No second update needed here — doing so would overwrite speed scores with 0.
   }
 
   // Broadcast reveal
