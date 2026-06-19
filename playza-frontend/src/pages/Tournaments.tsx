@@ -405,7 +405,7 @@ function DropTitle() {
 
 function TrophyIllustration() {
   return (
-    <div style={{ flexShrink: 0, width: "clamp(120px,38vw,280px)", display: "flex", alignItems: "center", justifyContent: "center", alignSelf: "center" }}>
+    <div style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
       <svg viewBox="0 0 600 520" width="100%" height="100%" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ maxWidth: 300 }}>
         <defs>
           <radialGradient id="hg1" cx="50%" cy="60%" r="50%"><stop offset="0%" stopColor="#7c3aed" stopOpacity="0.55"/><stop offset="100%" stopColor="#0a0618" stopOpacity="0"/></radialGradient>
@@ -620,8 +620,12 @@ const Tournaments = () => {
                 </div>
               )}
             </div>
-            <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", gap: "clamp(20px,5vw,48px)", flexWrap: "wrap" }}>
-              <div style={{ flex: 1, minWidth: "min(100%, 200px)", width: "100%" }}>
+            <div style={{ position: "relative", zIndex: 1 }}>
+              {/* Trophy — absolutely positioned top-right on mobile, floats right on desktop */}
+              <div style={{ position: "absolute", top: 0, right: 0, width: "clamp(110px,32vw,260px)", zIndex: 2, pointerEvents: "none" }}>
+                <TrophyIllustration />
+              </div>
+              <div style={{ paddingRight: "clamp(110px,34vw,280px)" }}>
                 <div style={{ marginBottom: "clamp(10px,3vw,20px)" }}><DropTitle /></div>
                 <p style={{ fontSize: "clamp(13px,3.5vw,18px)", color: "rgba(255,255,255,0.65)", margin: "0 0 clamp(10px,3vw,16px)" }}>
                   Compete. Play. <span style={{ color: "#fbbf24", fontWeight: 700 }}>Win.</span>
@@ -663,7 +667,7 @@ const Tournaments = () => {
                   <span style={{ fontSize: 8, color: "rgba(255,255,255,0.2)", whiteSpace: "nowrap" }}>Final Showdown</span>
                 </div>
               </div>
-              <TrophyIllustration />
+              </div>
             </div>
           </div>
         </div>
@@ -677,8 +681,8 @@ const Tournaments = () => {
                 <div style={{ position: "absolute", width: "clamp(140px,40vw,280px)", height: "clamp(140px,40vw,280px)", borderRadius: "50%", background: "#1e3a5f", opacity: 0.45, top: -50, right: 0, filter: "blur(70px)" }} />
                 <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(rgba(255,255,255,0.07) 1px,transparent 1px)", backgroundSize: "24px 24px" }} />
               </div>
-              <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", gap: "clamp(20px,5vw,48px)", flexWrap: "wrap" }}>
-                <div style={{ flex: 1, minWidth: "min(100%, 260px)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 24, paddingTop: 20, paddingBottom: 20 }}>
+              <div style={{ position: "relative", zIndex: 1 }}>
+                <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 24, paddingTop: 20, paddingBottom: 20, paddingRight: "clamp(110px,34vw,280px)" }}>
                   <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(168,85,247,0.15)", border: "1px solid rgba(168,85,247,0.3)", borderRadius: 20, padding: "4px 12px" }}>
                     <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#a855f7", display: "block" }} />
                     <span style={{ fontSize: "clamp(8px,2.5vw,10px)", fontWeight: 600, color: "#c084fc", letterSpacing: "0.15em", textTransform: "uppercase" }}>Sponsored Tournament</span>
@@ -697,7 +701,9 @@ const Tournaments = () => {
                     <p style={{ fontSize: "clamp(11px,2.5vw,14px)", color: "rgba(255,255,255,0.4)", margin: "6px 0 0", textAlign: "center", letterSpacing: "0.04em" }}>Official Tournament Sponsor</p>
                   </div>
                 </div>
-                <TrophyIllustration />
+                <div style={{ position: "absolute", top: 0, right: 0, width: "clamp(110px,32vw,260px)", zIndex: 2, pointerEvents: "none" }}>
+                  <TrophyIllustration />
+                </div>
               </div>
             </div>
           </div>
