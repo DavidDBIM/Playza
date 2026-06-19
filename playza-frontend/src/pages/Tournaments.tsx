@@ -576,6 +576,17 @@ const Tournaments = () => {
   const totalPrize = quizTournaments.reduce((s, t) => s + t.prize_pool, 0);
   const liveCount = quizTournaments.filter(t => t.status === "active").length;
   function handleRegistered(id: string) { queryClient.setQueryData<QuizTournament[]>(["quiz-tournaments-public"], old => (old ?? []).map(t => t.id === id ? { ...t, player_count: t.player_count + 1, user_registered: true } : t)); }
+  // ── Sponsor slides ────────────────────────────────────────────────────────
+  const sponsoredCollabs = quizTournaments.filter(t => t.sponsor_mode === "collab" && t.sponsor);
+  const sponsoredBanners = quizTournaments.filter(t => t.sponsor_mode === "banner" && t.sponsor_banner_url);
+  const totalSlides = 1 + sponsoredCollabs.length + sponsoredBanners.length;
+  const [heroIndex, setHeroIndex] = useState(0);
+  useEffect(() => {
+    if (totalSlides <= 1) return;
+    const id = setInterval(() => setHeroIndex(i => (i + 1) % totalSlides), 6000);
+    return () => clearInterval(id);
+  }, [totalSlides]);
+
 
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1, paddingBottom: 64, overflowX: "hidden" }}>
