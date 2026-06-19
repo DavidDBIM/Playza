@@ -601,7 +601,7 @@ const Tournaments = () => {
 
         {/* ── SLIDE 1: Default Playza hero ── */}
         <div style={{ display: heroIndex === 0 ? "block" : "none" }}>
-          <div style={{ position: "relative", background: "#07041a", borderRadius: "0 0 20px 20px", overflow: "hidden", padding: "clamp(20px,5vw,48px) clamp(16px,4vw,28px) clamp(20px,4vw,36px)" }}>
+          <div style={{ position: "relative", background: "#07041a", borderRadius: "0 0 20px 20px", padding: "clamp(20px,5vw,48px) clamp(16px,4vw,28px) clamp(20px,4vw,36px)" }}>
             <div style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0 }}>
               <div style={{ position: "absolute", width: "clamp(200px,60vw,380px)", height: "clamp(200px,60vw,380px)", borderRadius: "50%", background: "#3b0764", opacity: 0.5, top: -100, left: -80, filter: "blur(80px)" }} />
               <div style={{ position: "absolute", width: "clamp(140px,40vw,280px)", height: "clamp(140px,40vw,280px)", borderRadius: "50%", background: "#1e3a5f", opacity: 0.45, top: -50, right: 0, filter: "blur(70px)" }} />
@@ -620,12 +620,12 @@ const Tournaments = () => {
                 </div>
               )}
             </div>
-            <div style={{ position: "relative", zIndex: 1 }}>
+            <div style={{ position: "relative", zIndex: 1, minHeight: "clamp(200px,45vw,320px)" }}>
               {/* Trophy — absolutely positioned top-right on mobile, floats right on desktop */}
-              <div style={{ position: "absolute", top: 0, right: 0, width: "clamp(110px,32vw,260px)", zIndex: 2, pointerEvents: "none" }}>
+              <div style={{ position: "absolute", top: "clamp(-10px,0vw,0px)", right: 0, width: "clamp(130px,36vw,280px)", zIndex: 2, pointerEvents: "none" }}>
                 <TrophyIllustration />
               </div>
-              <div style={{ paddingRight: "clamp(110px,34vw,280px)" }}>
+              <div style={{ paddingRight: "clamp(140px,38vw,300px)" }}>
                 <div style={{ marginBottom: "clamp(10px,3vw,20px)" }}><DropTitle /></div>
                 <p style={{ fontSize: "clamp(13px,3.5vw,18px)", color: "rgba(255,255,255,0.65)", margin: "0 0 clamp(10px,3vw,16px)" }}>
                   Compete. Play. <span style={{ color: "#fbbf24", fontWeight: 700 }}>Win.</span>
@@ -701,7 +701,7 @@ const Tournaments = () => {
                     <p style={{ fontSize: "clamp(11px,2.5vw,14px)", color: "rgba(255,255,255,0.4)", margin: "6px 0 0", textAlign: "center", letterSpacing: "0.04em" }}>Official Tournament Sponsor</p>
                   </div>
                 </div>
-                <div style={{ position: "absolute", top: 0, right: 0, width: "clamp(110px,32vw,260px)", zIndex: 2, pointerEvents: "none" }}>
+                <div style={{ position: "absolute", top: "clamp(-10px,0vw,0px)", right: 0, width: "clamp(130px,36vw,280px)", zIndex: 2, pointerEvents: "none" }}>
                   <TrophyIllustration />
                 </div>
               </div>
