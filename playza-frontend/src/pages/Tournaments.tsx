@@ -388,6 +388,16 @@ function DropTitle() {
   }, []);
   return (
     <div ref={wrapRef} style={{ position: "relative", textAlign: "center", paddingTop: 8 }}>
+      <style>{`
+        .tourn-hero-title { font-size: clamp(2rem, 7vw, 5rem); }
+        /* Hard cap for the awkward mid-width range (split-screen desktop,
+           landscape tablets) where vw-only scaling overlaps the trophy */
+        @media (min-width: 480px) and (max-width: 900px) {
+          .tourn-hero-title { font-size: clamp(1.6rem, 6vw, 2.8rem) !important; }
+          .tourn-hero-trophy { width: clamp(70px, 18vw, 140px) !important; }
+          .tourn-hero-text-pad { padding-right: clamp(80px, 20vw, 160px) !important; }
+        }
+      `}</style>
       {(phase === "shake" || phase === "settled") && (
         <>
           <div style={{ position: "absolute", left: "50%", top: "72%", width: 50, height: 50, borderRadius: "50%", border: "2px solid #a855f7", opacity: 0, animation: "shockRing 0.5s ease-out forwards", pointerEvents: "none" }} />
@@ -396,7 +406,7 @@ function DropTitle() {
           <div style={{ position: "absolute", left: "calc(50% + 20px)", top: "70%", width: 30, height: 4, borderRadius: 3, background: "#a855f7", opacity: 0, animation: "dustR 0.4s ease-out 0.04s forwards", pointerEvents: "none" }} />
         </>
       )}
-      <h1 style={{ fontSize: "clamp(2rem,7vw,5rem)", fontWeight: 700, color: "#fff", letterSpacing: "-2px", lineHeight: 0.95, animation: "wordDrop 0.85s cubic-bezier(0.23,1,0.32,1) forwards", willChange: "transform", margin: 0 }}>Tournaments</h1>
+      <h1 className="tourn-hero-title" style={{ fontWeight: 700, color: "#fff", letterSpacing: "-2px", lineHeight: 0.95, animation: "wordDrop 0.85s cubic-bezier(0.23,1,0.32,1) forwards", willChange: "transform", margin: 0 }}>Tournaments</h1>
       <div style={{ height: 2, width: "min(240px,60%)", margin: "12px auto 0", background: "linear-gradient(90deg,transparent,#a855f7,transparent)", transformOrigin: "center", opacity: 0, animation: phase === "settled" ? "lineIn 0.5s ease-out 0.1s forwards" : "none" }} />
       <p style={{ fontSize: "clamp(11px,3vw,13px)", color: "rgba(255,255,255,0.4)", marginTop: 8, letterSpacing: "0.04em", opacity: 0, animation: phase === "settled" ? "fadeUp 0.4s ease-out 0.2s forwards" : "none", padding: "0 16px" }}>Answer fast. Outlast everyone. Take the prize.</p>
     </div>
@@ -622,10 +632,10 @@ const Tournaments = () => {
             </div>
             <div style={{ position: "relative", zIndex: 1, minHeight: "clamp(200px,45vw,320px)" }}>
               {/* Trophy — absolutely positioned top-right on mobile, floats right on desktop */}
-              <div style={{ position: "absolute", top: "clamp(-10px,0vw,0px)", right: 0, width: "clamp(100px,28vw,280px)", zIndex: 2, pointerEvents: "none" }}>
+              <div className="tourn-hero-trophy" style={{ position: "absolute", top: "clamp(-10px,0vw,0px)", right: 0, width: "clamp(100px,28vw,280px)", zIndex: 2, pointerEvents: "none" }}>
                 <TrophyIllustration />
               </div>
-              <div style={{ paddingRight: "clamp(110px,30vw,300px)" }}>
+              <div className="tourn-hero-text-pad" style={{ paddingRight: "clamp(110px,30vw,300px)" }}>
                 <div style={{ marginBottom: "clamp(10px,3vw,20px)" }}><DropTitle /></div>
                 <p style={{ fontSize: "clamp(13px,3.5vw,18px)", color: "rgba(255,255,255,0.65)", margin: "0 0 clamp(10px,3vw,16px)" }}>
                   Compete. Play. <span style={{ color: "#fbbf24", fontWeight: 700 }}>Win.</span>
