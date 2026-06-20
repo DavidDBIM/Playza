@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { validate } from '../../middleware/validate'
-import { authLimiter } from '../../middleware/rateLimit'
+import { authLimiter, otpLimiter, passwordResetLimiter, refreshLimiter } from '../../middleware/rateLimit'
 import {
   signupController,
   signinController,
@@ -26,12 +26,12 @@ const router = Router()
 router.post('/signup', authLimiter, validate(signupSchema), signupController)
 router.post('/signin', authLimiter, validate(signinSchema), signinController)
 router.post('/admin/signin', authLimiter, validate(signinSchema), adminSigninController)
-router.post('/admin/verify-mfa', authLimiter, verifyAdminMfaController)
-router.post('/verify-otp', validate(verifyOtpSchema), verifyOtpController)
+router.post('/admin/verify-mfa', otpLimiter, verifyAdminMfaController)
+router.post('/verify-otp', otpLimiter, validate(verifyOtpSchema), verifyOtpController)
 router.post('/resend-otp', authLimiter, validate(resendOtpSchema), resendOtpController)
-router.post('/forgot-password', authLimiter, validate(forgotPasswordSchema), forgotPasswordController)
-router.post('/refresh', refreshTokenController)
+router.post('/forgot-password', passwordResetLimiter, validate(forgotPasswordSchema), forgotPasswordController)
+router.post('/refresh', refreshLimiter, refreshTokenController)
 router.post('/logout', logoutController)
-router.post('/reset-password', resetPasswordController)
+router.post('/reset-password', passwordResetLimiter, resetPasswordController)
 
 export default router
