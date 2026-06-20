@@ -33,6 +33,9 @@ export interface QuizTournament {
   sponsor_mode?: 'collab' | 'banner' | null
   sponsor_banner_url?: string | null
   sponsor?: TournamentSponsor | null
+  // Archive / trust display fields (completed tournaments only)
+  winner_username?: string | null
+  winner_prize?: number | null
 }
 
 export async function getQuizTournamentsApi(): Promise<QuizTournament[]> {
