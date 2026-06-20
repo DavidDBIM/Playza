@@ -41,7 +41,7 @@ export interface QuizLeaderboardEntry {
 
 // Round config: 5 rounds with increasing difficulty
 export const ROUND_CONFIG = [
-  { round: 1, name: 'Warm Up',        difficulty: 'easy',      time_secs: 45, questions: 10, color: '#22c55e' },
+  { round: 1, name: 'Warm Up',        difficulty: 'easy',      time_secs: 60, questions: 10, color: '#22c55e' },
   { round: 2, name: 'Rising',         difficulty: 'medium',    time_secs: 35, questions: 8,  color: '#3b82f6' },
   { round: 3, name: 'Heat Up',        difficulty: 'hard',      time_secs: 30, questions: 7,  color: '#f97316' },
   { round: 4, name: 'Danger Zone',    difficulty: 'expert',    time_secs: 25, questions: 6,  color: '#ef4444' },
