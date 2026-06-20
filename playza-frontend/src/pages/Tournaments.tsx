@@ -187,6 +187,7 @@ function TournamentDetailModal({ qt, onClose, onRegister, isRegistering, registe
   const isLobby = qt.status === "lobby";
   const canRegister = qt.status === "registration" && !registered && !isFull;
   const { timeLeft, expired } = useCountdown(isLobby ? (qt.scheduled_at ?? null) : null);
+  const [showScoringInfo, setShowScoringInfo] = useState(false);
   useEffect(() => { const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); }; document.addEventListener("keydown", handler); return () => document.removeEventListener("keydown", handler); }, [onClose]);
   useEffect(() => { document.body.style.overflow = "hidden"; return () => { document.body.style.overflow = ""; }; }, []);
   const scheduledDate = qt.scheduled_at ? new Date(qt.scheduled_at).toLocaleDateString("en-NG", { weekday: "long", day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }) : null;
@@ -207,7 +208,7 @@ function TournamentDetailModal({ qt, onClose, onRegister, isRegistering, registe
           <button onClick={onClose} style={{ background: "var(--muted)", border: "1px solid var(--border)", borderRadius: "50%", width: 32, height: 32, minWidth: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}><X size={14} style={{ color: "var(--muted-foreground)" }} /></button>
         </div>
         <div style={{ flex: 1, overflowY: "auto", padding: "16px 16px 0" } as any}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 6, marginBottom: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 6, marginBottom: 8 }}>
             {[{ icon: "🏆", val: qt.prize_pool > 0 ? qt.prize_pool.toLocaleString() + " ZA" : "TBD", lbl: "Prize Pool" }, { icon: "👥", val: maxPlayers ? qt.player_count + "/" + maxPlayers : qt.player_count.toLocaleString(), lbl: "Players" }, { icon: "💎", val: qt.entry_fee > 0 ? qt.entry_fee + " ZA" : "FREE", lbl: "Entry" }].map((s, i) => (
               <div key={i} style={{ background: "var(--muted)", borderRadius: 10, padding: "10px 6px", textAlign: "center" }}>
                 <div style={{ fontSize: 16, marginBottom: 3 }}>{s.icon}</div>
@@ -216,6 +217,15 @@ function TournamentDetailModal({ qt, onClose, onRegister, isRegistering, registe
               </div>
             ))}
           </div>
+          {qt.entry_fee > 0 && typeof qt.platform_fee_percentage === "number" && (
+            <p style={{ fontSize: 9, color: "var(--muted-foreground)", textAlign: "center", margin: "0 0 8px", opacity: 0.7 }}>
+              💧 Prize pool grows as players join · {qt.platform_fee_percentage}% platform fee disclosed upfront
+            </p>
+          )}
+          <button onClick={() => setShowScoringInfo(true)} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginBottom: 14, padding: "9px", borderRadius: 9, background: "var(--muted)", border: "1px solid var(--border)", cursor: "pointer" }}>
+            <span style={{ fontSize: 12 }}>⚖️</span>
+            <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--muted-foreground)" }}>How ranking &amp; scoring works</span>
+          </button>
           {isLobby && qt.scheduled_at && !expired && timeLeft && (
             <div style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.25)", borderRadius: 12, padding: "14px 16px", marginBottom: 14 }}>
               <p style={{ fontSize: 10, fontWeight: 700, color: "rgba(245,158,11,0.7)", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 8px" }}>🕐 Game starts in</p>
@@ -303,6 +313,45 @@ function TournamentDetailModal({ qt, onClose, onRegister, isRegistering, registe
           {qt.status === "active" ? (<Link to={"/quiz/" + qt.id} onClick={onClose} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "14px", borderRadius: 12, fontSize: 13, fontWeight: 800, textTransform: "uppercase", textDecoration: "none", background: sc.color, color: "#fff" }}><Eye size={14} /> Watch Live</Link>) : registered ? (<div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "14px", borderRadius: 12, fontSize: 13, fontWeight: 800, textTransform: "uppercase", background: isLobby ? "rgba(245,158,11,0.1)" : "rgba(22,163,74,0.1)", color: isLobby ? "#f59e0b" : "#16a34a", border: "1px solid " + (isLobby ? "rgba(245,158,11,0.3)" : "rgba(22,163,74,0.3)") }}>{isLobby ? <><Clock size={14} /> You're in the Lobby — Game starting soon!</> : <><CheckCircle size={14} /> You're Registered!</>}</div>) : isFull ? (<div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "14px", borderRadius: 12, fontSize: 13, fontWeight: 800, textTransform: "uppercase", background: "rgba(239,68,68,0.1)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.3)" }}>🔴 Tournament Full</div>) : canRegister ? (<button onClick={onRegister} disabled={isRegistering} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "14px", borderRadius: 12, fontSize: 13, fontWeight: 800, textTransform: "uppercase", background: isRegistering ? sc.color + "80" : sc.color, color: "#fff", border: "none", cursor: isRegistering ? "not-allowed" : "pointer", width: "100%" }}>{isRegistering ? <><Loader2 size={14} className="animate-spin" /> Registering...</> : qt.entry_fee > 0 ? <><Zap size={14} /> Register — Pay {qt.entry_fee} ZA</> : <><Zap size={14} /> Register Free</>}</button>) : qt.status === "completed" ? (<Link to={"/quiz/" + qt.id} onClick={onClose} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "14px", borderRadius: 12, fontSize: 13, fontWeight: 800, textTransform: "uppercase", textDecoration: "none", background: "var(--muted)", color: "var(--muted-foreground)" }}>View Results</Link>) : (<div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "14px", borderRadius: 12, fontSize: 12, fontWeight: 700, textTransform: "uppercase", background: "var(--muted)", color: "var(--muted-foreground)", border: "1px solid var(--border)" }}>Registration Not Open Yet</div>)}
         </div>
       </div>
+      {showScoringInfo && <ScoringInfoModal onClose={() => setShowScoringInfo(false)} />}
+    </div>
+  );
+}
+
+// ── Trust & Transparency: ranking formula explainer (compact, used in Tournaments list) ──
+function ScoringInfoModal({ onClose }: { onClose: () => void }) {
+  return (
+    <div onClick={(e) => { if (e.target === e.currentTarget) onClose(); }} style={{ position: "fixed", inset: 0, zIndex: 1100, background: "rgba(0,0,0,0.8)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+      <div style={{ width: "100%", maxWidth: 420, maxHeight: "85vh", overflowY: "auto", background: "var(--card)", borderRadius: 20, padding: 20, border: "1px solid var(--border)" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 18 }}>⚖️</span>
+            <h3 style={{ fontSize: 15, fontWeight: 800, color: "var(--foreground)", margin: 0 }}>How Ranking Works</h3>
+          </div>
+          <button onClick={onClose} style={{ width: 28, height: 28, borderRadius: 8, background: "var(--muted)", border: "none", color: "var(--muted-foreground)", cursor: "pointer" }}>✕</button>
+        </div>
+        <p style={{ fontSize: 11, color: "var(--muted-foreground)", marginBottom: 16, lineHeight: 1.6 }}>Every player is ranked the same fair way — no randomness, no hidden weighting:</p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {[
+            { n: 1, title: "Rounds Survived", desc: "Lasting longer always beats lasting shorter — Round 4 beats Round 2, every time.", color: "#a855f7" },
+            { n: 2, title: "Correct Answers", desc: "Among equal survivors, more correct answers ranks higher.", color: "#3b82f6" },
+            { n: 3, title: "Answer Speed", desc: "Still tied? Faster correct answers win — measured from your 2nd question onward, so opening nerves never cost you.", color: "#22c55e" },
+            { n: 4, title: "Exact Milliseconds", desc: "Final tiebreaker — virtually impossible to tie this precisely.", color: "#f59e0b" },
+          ].map(s => (
+            <div key={s.n} style={{ display: "flex", gap: 10 }}>
+              <div style={{ width: 24, height: 24, borderRadius: "50%", background: s.color, color: "#fff", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{s.n}</div>
+              <div>
+                <p style={{ fontSize: 12, fontWeight: 700, color: "var(--foreground)", margin: "0 0 2px" }}>{s.title}</p>
+                <p style={{ fontSize: 10.5, color: "var(--muted-foreground)", margin: 0, lineHeight: 1.5 }}>{s.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div style={{ marginTop: 16, background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.15)", borderRadius: 12, padding: 12, display: "flex", gap: 8 }}>
+          <span style={{ fontSize: 14, flexShrink: 0 }}>🛡️</span>
+          <p style={{ fontSize: 10.5, color: "rgba(34,197,94,0.8)", margin: 0, lineHeight: 1.5 }}>No structural advantages — registration time or account age never affect your rank. Only performance matters.</p>
+        </div>
+      </div>
     </div>
   );
 }
@@ -355,6 +404,23 @@ function TCard({ qt, featured, onRegistered }: { qt: QuizTournament; featured?: 
               ))}
             </div>
             {maxPlayers && (() => { const pct = Math.min(qt.player_count / maxPlayers * 100, 100); const full = qt.player_count >= maxPlayers; const almost = pct >= 80; const barColor = full ? "#ef4444" : almost ? "#f97316" : sc.color; return (<div><div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 3 }}><span style={{ fontSize: 9, fontWeight: 700, color: "var(--muted-foreground)" }}>{full ? "🔴 Full" : almost ? "🟠 Almost Full" : "🟢 Spots Left"}</span><span style={{ fontSize: 9, fontWeight: 700, color: barColor }}>{maxPlayers - qt.player_count > 0 ? (maxPlayers - qt.player_count) + " left" : "Full"}</span></div><div style={{ height: 3, borderRadius: 2, background: "var(--muted)", overflow: "hidden" }}><div style={{ height: "100%", width: pct + "%", borderRadius: 2, background: barColor }} /></div></div>); })()}
+            {qt.status === "completed" && qt.winner_username && (
+              <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(234,179,8,0.08)", border: "1px solid rgba(234,179,8,0.2)", borderRadius: 8, padding: "6px 10px" }}>
+                <span style={{ fontSize: 13 }}>🏆</span>
+                <span style={{ fontSize: 10, color: "var(--foreground)", fontWeight: 700, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  Won by <span style={{ color: "#eab308" }}>{qt.winner_username}</span>
+                </span>
+                {typeof qt.winner_prize === "number" && qt.winner_prize > 0 && (
+                  <span style={{ fontSize: 9, fontWeight: 800, color: "#eab308", flexShrink: 0 }}>{qt.winner_prize.toLocaleString()} ZA</span>
+                )}
+              </div>
+            )}
+            {qt.status === "completed" && (
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
+                <span style={{ fontSize: 9, color: "#22c55e" }}>✓</span>
+                <span style={{ fontSize: 8, fontWeight: 700, color: "rgba(34,197,94,0.7)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Prizes paid out</span>
+              </div>
+            )}
             <div style={{ display: "flex", gap: 3 }}>{ROUNDS.map((r, i) => <div key={i} style={{ flex: 1, height: 3, borderRadius: 2, background: r.color, opacity: 0.5 }} title={r.name} />)}</div>
             {qt.status === "registration" && regTimeLeft && (qt as any).registration_end && (<div style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 8, padding: "6px 10px" }}><p style={{ fontSize: 8, fontWeight: 700, color: "rgba(239,68,68,0.7)", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 3px" }}>⏳ Registration closes in</p><p style={{ fontSize: 12, fontWeight: 800, color: "#ef4444", margin: 0 }}>{regTimeLeft.d > 0 ? regTimeLeft.d + "d " : ""}{String(regTimeLeft.h).padStart(2,"0")}:{String(regTimeLeft.m).padStart(2,"0")}:{String(regTimeLeft.s).padStart(2,"0")}</p></div>)}
             {isLobby && qt.scheduled_at && !expired && timeLeft && (<div style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.25)", borderRadius: 10, padding: "8px 10px" }}><p style={{ fontSize: 9, fontWeight: 700, color: "rgba(245,158,11,0.7)", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 4px" }}>🕐 Game starts in</p><div style={{ display: "flex", gap: 6, alignItems: "center" }}>{timeLeft.d > 0 && <div style={{ textAlign: "center" }}><p style={{ fontSize: 16, fontWeight: 800, color: "#f59e0b", margin: 0 }}>{timeLeft.d}</p><p style={{ fontSize: 8, color: "rgba(245,158,11,0.6)", margin: "2px 0 0" }}>DAYS</p></div>}{(timeLeft.d > 0 || timeLeft.h > 0) && <div style={{ textAlign: "center" }}><p style={{ fontSize: 16, fontWeight: 800, color: "#f59e0b", margin: 0 }}>{String(timeLeft.h).padStart(2,"0")}</p><p style={{ fontSize: 8, color: "rgba(245,158,11,0.6)", margin: "2px 0 0" }}>HRS</p></div>}<div style={{ textAlign: "center" }}><p style={{ fontSize: 16, fontWeight: 800, color: "#f59e0b", margin: 0 }}>{String(timeLeft.m).padStart(2,"0")}</p><p style={{ fontSize: 8, color: "rgba(245,158,11,0.6)", margin: "2px 0 0" }}>MIN</p></div><div style={{ textAlign: "center" }}><p style={{ fontSize: 16, fontWeight: 800, color: "#f59e0b", margin: 0 }}>{String(timeLeft.s).padStart(2,"0")}</p><p style={{ fontSize: 8, color: "rgba(245,158,11,0.6)", margin: "2px 0 0" }}>SEC</p></div></div></div>)}
