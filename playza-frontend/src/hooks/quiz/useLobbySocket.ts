@@ -18,6 +18,8 @@ export interface Reaction {
   emoji: string
   ts: number
   id: number
+  left: number    // horizontal scatter position (%) — set once at creation
+  rotate: number  // slight rotation for a more organic, less robotic feel
 }
 
 export function useLobbySocket(tournamentId: string | null) {
@@ -72,9 +74,13 @@ export function useLobbySocket(tournamentId: string | null) {
       setMessages(history.slice(-100))
     })
 
-    socket.on('quiz:reaction', (r: Omit<Reaction, 'id'>) => {
+    socket.on('quiz:reaction', (r: Omit<Reaction, 'id' | 'left' | 'rotate'>) => {
       const id = ++reactionIdRef.current
-      setReactions(prev => [...prev, { ...r, id }])
+      // Randomize once at creation — keeps this reaction's position fixed
+      // through its whole float-up animation instead of recalculating per render
+      const left = 15 + Math.random() * 60   // 15%–75%, keeps emoji within visible bounds
+      const rotate = -20 + Math.random() * 40 // -20deg to +20deg, organic feel
+      setReactions(prev => [...prev, { ...r, id, left, rotate }])
       setTimeout(() => {
         setReactions(prev => prev.filter(x => x.id !== id))
       }, 2500)
