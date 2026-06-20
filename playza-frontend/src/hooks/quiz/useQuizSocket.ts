@@ -36,6 +36,9 @@ export interface LeaderboardEntry {
   avatar_url: string | null
   correct_answers: number
   avg_time_ms: number
+  speed_score?: number
+  speed_ms?: number
+  rounds_survived?: number
   status: 'alive' | 'eliminated' | 'winner'
 }
 
