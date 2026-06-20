@@ -34,7 +34,7 @@ interface QuizQuestion {
 }
 
 const ROUND_META = [
-  { round: 1, name: "Warm Up",        color: "#22c55e", bg: "rgba(34,197,94,0.1)",   border: "rgba(34,197,94,0.3)",  secs: 45, icon: <Star  className="w-3 h-3" /> },
+  { round: 1, name: "Warm Up",        color: "#22c55e", bg: "rgba(34,197,94,0.1)",   border: "rgba(34,197,94,0.3)",  secs: 60, icon: <Star  className="w-3 h-3" /> },
   { round: 2, name: "Rising",         color: "#3b82f6", bg: "rgba(59,130,246,0.1)",  border: "rgba(59,130,246,0.3)", secs: 35, icon: <Zap   className="w-3 h-3" /> },
   { round: 3, name: "Heat Up",        color: "#f97316", bg: "rgba(249,115,22,0.1)",  border: "rgba(249,115,22,0.3)", secs: 30, icon: <Flame className="w-3 h-3" /> },
   { round: 4, name: "Danger Zone",    color: "#ef4444", bg: "rgba(239,68,68,0.1)",   border: "rgba(239,68,68,0.3)",  secs: 25, icon: <Shield className="w-3 h-3" /> },
