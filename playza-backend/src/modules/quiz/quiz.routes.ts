@@ -115,6 +115,32 @@ router.get('/tournaments', async (req, res) => {
       }
     }
 
+    // ── Batch-fetch rank #1 winner for every completed tournament in this list ──
+    // Single query instead of N — used for the archive/trust display so users
+    // can see who actually won and what they were paid, at a glance.
+    const completedIds = tournaments.filter((t: any) => t.status === 'completed').map((t: any) => t.id)
+    const winnerMap: Record<string, { username: string; prize_won: number | null }> = {}
+    if (completedIds.length > 0) {
+      const { data: winnerRows } = await supabaseAdmin
+        .from('quiz_leaderboard')
+        .select('tournament_id, username, rank')
+        .in('tournament_id', completedIds)
+        .eq('rank', 1)
+
+      const { data: prizeRows } = await supabaseAdmin
+        .from('quiz_players')
+        .select('tournament_id, prize_won, final_rank')
+        .in('tournament_id', completedIds)
+        .eq('final_rank', 1)
+
+      const prizeMap: Record<string, number | null> = {}
+      for (const row of (prizeRows ?? [])) prizeMap[row.tournament_id] = row.prize_won ?? null
+
+      for (const row of (winnerRows ?? [])) {
+        winnerMap[row.tournament_id] = { username: row.username, prize_won: prizeMap[row.tournament_id] ?? null }
+      }
+    }
+
     const enriched = tournaments.map((t: any) => ({
       ...t,
       player_count: countMap[t.id] ?? 0,
@@ -128,6 +154,8 @@ router.get('/tournaments', async (req, res) => {
       sponsor: t.sponsor ?? null,
       sponsor_mode: t.sponsor_mode ?? null,
       sponsor_banner_url: t.sponsor_banner_url ?? null,
+      winner_username: winnerMap[t.id]?.username ?? null,
+      winner_prize: winnerMap[t.id]?.prize_won ?? null,
     }))
 
     res.json({ success: true, data: enriched })
