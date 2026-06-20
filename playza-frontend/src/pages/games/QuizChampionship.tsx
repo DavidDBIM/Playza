@@ -724,7 +724,9 @@ export default function QuizChampionship() {
               )}
               <div className={`flex-1 bg-white/[0.04] border border-white/[0.08] rounded-xl overflow-hidden ${isRevealing ? "w-full" : ""}`}>
                 {currentQuestion.image_url && (
-                  <img src={currentQuestion.image_url} alt="Question" className="w-full max-h-28 object-cover border-b border-white/[0.08]" />
+                  <div className="w-full max-h-40 bg-black/30 border-b border-white/[0.08] flex items-center justify-center overflow-hidden">
+                    <img src={currentQuestion.image_url} alt="Question" className="w-full max-h-40 object-contain" />
+                  </div>
                 )}
                 <div className="p-2.5">
                   <p className="text-white font-black text-xs md:text-sm leading-snug">{currentQuestion.question_text}</p>
