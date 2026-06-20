@@ -73,6 +73,10 @@ router.post('/reorder', requireAdmin, async (req: AuthRequest, res) => {
   }
 })
 
+// Only allow real image types — blocks svg (XSS risk), html, and other dangerous uploads
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+const MAX_UPLOAD_BYTES = 5 * 1024 * 1024 // 5MB
+
 router.post('/upload', requireAdmin, async (req: AuthRequest, res) => {
   try {
     const { base64, filename, mimeType } = req.body
@@ -81,14 +85,26 @@ router.post('/upload', requireAdmin, async (req: AuthRequest, res) => {
     const match = base64.match(/^data:(.+?);base64,(.+)$/)
     const raw = match ? match[2] : base64
     const mime = match ? match[1] : (mimeType || 'image/jpeg')
+
+    if (!ALLOWED_MIME_TYPES.includes(mime)) {
+      return res.status(400).json({ success: false, message: `Unsupported file type: ${mime}. Allowed: jpg, png, webp, gif` })
+    }
+
+    const buffer = Buffer.from(raw, 'base64')
+    if (buffer.byteLength > MAX_UPLOAD_BYTES) {
+      return res.status(400).json({ success: false, message: 'File too large. Maximum size is 5MB.' })
+    }
+
     const ext = mime.split('/')[1]?.replace('jpeg', 'jpg') ?? 'jpg'
-    const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+    // Sanitize filename — strip any path traversal / special chars, keep only safe charset
+    const safeName = filename.replace(/[^a-zA-Z0-9._-]/g, '').slice(0, 60)
+    const path = `${Date.now()}-${Math.random().toString(36).slice(2)}-${safeName}.${ext}`
 
     const bucketId = await ensureBannerBucket()
 
     const { error } = await supabaseAdmin.storage
       .from(bucketId)
-      .upload(path, Buffer.from(raw, 'base64'), { contentType: mime, upsert: false })
+      .upload(path, buffer, { contentType: mime, upsert: false })
 
     if (error) throw new Error(error.message)
 
