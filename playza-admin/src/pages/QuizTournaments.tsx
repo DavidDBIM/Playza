@@ -378,7 +378,11 @@ function QuestionManagerModal({ tournament, onClose }: { tournament: QuizTournam
                     <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md" style={{ background: rm?.color, color: "#000" }}>{rm?.name}</span>
                     <span className="text-[9px] font-bold text-white/30 flex items-center gap-0.5"><MdTimer className="text-xs" />{q.time_limit_secs}s</span>
                   </div>
-                  {q.image_url && <img src={q.image_url} alt="" className="w-full max-h-20 object-cover rounded-lg mb-2" style={{ border: "1px solid rgba(255,255,255,0.08)" }} />}
+                  {q.image_url && (
+                    <div className="w-full max-h-20 bg-black/20 rounded-lg mb-2 flex items-center justify-center overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.08)" }}>
+                      <img src={q.image_url} alt="" className="w-full max-h-20 object-contain" />
+                    </div>
+                  )}
                   <p className="text-sm font-bold text-white mb-2 leading-snug">{q.question_text}</p>
                   <div className="grid grid-cols-2 gap-1.5">
                     {(["A","B","C","D"] as const).map(opt => (
@@ -406,7 +410,7 @@ function QuestionManagerModal({ tournament, onClose }: { tournament: QuizTournam
                     <input type="file" accept="image/*" className="hidden" onChange={e => { const file = e.target.files?.[0]; if (!file) return; const reader = new FileReader(); reader.onload = ev => { setNewQ(p => ({ ...p, image_url: ev.target?.result as string })); }; reader.readAsDataURL(file); e.target.value = ""; }} />
                   </label>
                 </div>
-                {newQ.image_url && <div className="relative"><img src={newQ.image_url} alt="preview" className="w-full max-h-32 object-cover rounded-xl" style={{ border: "1px solid rgba(255,255,255,0.1)" }} onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} /><button onClick={() => setNewQ(p => ({ ...p, image_url: "" }))} className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-black" style={{ background: "rgba(0,0,0,0.6)" }}>✕</button></div>}
+                {newQ.image_url && <div className="relative w-full max-h-32 bg-black/20 rounded-xl flex items-center justify-center overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.1)" }}><img src={newQ.image_url} alt="preview" className="w-full max-h-32 object-contain" onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} /><button onClick={() => setNewQ(p => ({ ...p, image_url: "" }))} className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-black" style={{ background: "rgba(0,0,0,0.6)" }}>✕</button></div>}
               </div>
               <div className="grid grid-cols-2 gap-2">
                 {(["a","b","c","d"] as const).map(k => (
@@ -491,7 +495,11 @@ function LiveMonitorModal({ tournament, onClose }: { tournament: QuizTournament;
                       <div className="h-full rounded-full transition-all" style={{ width: `${Math.max(0, (spec.timeLeftMs / (spec.currentQuestion.time_limit_ms || 1)) * 100)}%`, background: spec.timeLeftMs < 5000 ? "#ef4444" : "linear-gradient(90deg,#7c3aed,#a855f7)" }} />
                     </div>
                     <p className="text-white font-bold text-sm mb-3 leading-snug">{spec.currentQuestion.question_text}</p>
-                    {spec.currentQuestion.image_url && <img src={spec.currentQuestion.image_url} alt="" className="w-full max-h-32 object-cover rounded-xl mb-3" />}
+                    {spec.currentQuestion.image_url && (
+                      <div className="w-full max-h-32 bg-black/20 rounded-xl mb-3 flex items-center justify-center overflow-hidden">
+                        <img src={spec.currentQuestion.image_url} alt="" className="w-full max-h-32 object-contain" />
+                      </div>
+                    )}
                     <div className="grid grid-cols-2 gap-2">
                       {(["A", "B", "C", "D"] as const).map(opt => (
                         <div key={opt} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.7)" }}>
