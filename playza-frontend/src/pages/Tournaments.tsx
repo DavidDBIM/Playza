@@ -642,29 +642,6 @@ const Tournaments = () => {
                   <span style={{ fontSize: "clamp(12px,3vw,16px)" }}>🌐</span>
                   One platform. Every game. Real rewards.
                 </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 0 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(168,85,247,0.15)", border: "1px solid rgba(168,85,247,0.25)", borderRadius: 12, padding: "10px 14px", width: "100%", boxSizing: "border-box" }}>
-                    <div style={{ flexShrink: 0, width: "clamp(28px,6vw,36px)", height: "clamp(28px,6vw,36px)", borderRadius: "50%", background: "rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center" }}><Trophy size={18} style={{ color: "#c084fc" }} /></div>
-                    <div style={{ minWidth: 0 }}>
-                      <p style={{ fontSize: "clamp(14px,3.5vw,20px)", fontWeight: 700, color: "#fbbf24", margin: 0, lineHeight: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{totalPrize.toLocaleString() + " ZA"}</p>
-                      <p style={{ fontSize: "clamp(9px,2vw,11px)", color: "rgba(255,255,255,0.4)", margin: "3px 0 0", textTransform: "uppercase", letterSpacing: "0.07em", whiteSpace: "nowrap" }}>Global ZA Paid Out</p>
-                    </div>
-                  </div>
-                  <div style={{ display: "flex", gap: 8 }}>
-                    {[
-                      { icon: <Users size={18} style={{ color: "#4ade80" }} />, val: totalPlayers.toLocaleString(), lbl: "Total Participation", bg: "rgba(34,197,94,0.1)", border: "rgba(34,197,94,0.2)" },
-                      { icon: <Zap size={18} style={{ color: "#fbbf24" }} />, val: String(quizTournaments.length), lbl: "Tournaments Played", bg: "rgba(251,191,36,0.1)", border: "rgba(251,191,36,0.2)" },
-                    ].map((s, i) => (
-                      <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, background: s.bg, border: "1px solid " + s.border, borderRadius: 12, padding: "10px 14px", flex: "1 1 0", minWidth: 0 }}>
-                        <div style={{ flexShrink: 0, width: "clamp(28px,6vw,36px)", height: "clamp(28px,6vw,36px)", borderRadius: "50%", background: "rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center" }}>{s.icon}</div>
-                        <div style={{ minWidth: 0 }}>
-                          <p style={{ fontSize: "clamp(14px,3.5vw,20px)", fontWeight: 700, color: "#fff", margin: 0, lineHeight: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.val}</p>
-                          <p style={{ fontSize: "clamp(9px,2vw,11px)", color: "rgba(255,255,255,0.4)", margin: "3px 0 0", textTransform: "uppercase", letterSpacing: "0.07em", whiteSpace: "nowrap" }}>{s.lbl}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 12 }}>
                   <span style={{ fontSize: 8, fontWeight: 600, color: "rgba(255,255,255,0.2)", textTransform: "uppercase", letterSpacing: "0.1em", whiteSpace: "nowrap" }}>5 Rounds</span>
                   <div style={{ display: "flex", gap: 3, flex: 1 }}>
@@ -673,6 +650,29 @@ const Tournaments = () => {
                     ))}
                   </div>
                   <span style={{ fontSize: 8, color: "rgba(255,255,255,0.2)", whiteSpace: "nowrap" }}>Final Showdown</span>
+                </div>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: "clamp(10px,3vw,16px)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(168,85,247,0.15)", border: "1px solid rgba(168,85,247,0.25)", borderRadius: 12, padding: "10px 14px", width: "100%", boxSizing: "border-box" }}>
+                  <div style={{ flexShrink: 0, width: "clamp(28px,6vw,36px)", height: "clamp(28px,6vw,36px)", borderRadius: "50%", background: "rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center" }}><Trophy size={18} style={{ color: "#c084fc" }} /></div>
+                  <div style={{ minWidth: 0 }}>
+                    <p style={{ fontSize: "clamp(14px,3.5vw,20px)", fontWeight: 700, color: "#fbbf24", margin: 0, lineHeight: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{totalPrize.toLocaleString() + " ZA"}</p>
+                    <p style={{ fontSize: "clamp(9px,2vw,11px)", color: "rgba(255,255,255,0.4)", margin: "3px 0 0", textTransform: "uppercase", letterSpacing: "0.07em", whiteSpace: "nowrap" }}>Global ZA Paid Out</p>
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  {[
+                    { icon: <Users size={18} style={{ color: "#4ade80" }} />, val: totalPlayers.toLocaleString(), lbl: "Total Participation", bg: "rgba(34,197,94,0.1)", border: "rgba(34,197,94,0.2)" },
+                    { icon: <Zap size={18} style={{ color: "#fbbf24" }} />, val: String(quizTournaments.length), lbl: "Tournaments Played", bg: "rgba(251,191,36,0.1)", border: "rgba(251,191,36,0.2)" },
+                  ].map((s, i) => (
+                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, background: s.bg, border: "1px solid " + s.border, borderRadius: 12, padding: "10px 14px", flex: "1 1 0", minWidth: 0 }}>
+                      <div style={{ flexShrink: 0, width: "clamp(28px,6vw,36px)", height: "clamp(28px,6vw,36px)", borderRadius: "50%", background: "rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center" }}>{s.icon}</div>
+                      <div style={{ minWidth: 0 }}>
+                        <p style={{ fontSize: "clamp(14px,3.5vw,20px)", fontWeight: 700, color: "#fff", margin: 0, lineHeight: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.val}</p>
+                        <p style={{ fontSize: "clamp(9px,2vw,11px)", color: "rgba(255,255,255,0.4)", margin: "3px 0 0", textTransform: "uppercase", letterSpacing: "0.07em", whiteSpace: "nowrap" }}>{s.lbl}</p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
