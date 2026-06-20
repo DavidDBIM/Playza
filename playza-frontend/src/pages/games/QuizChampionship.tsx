@@ -19,6 +19,44 @@ const OPTS = ["A", "B", "C", "D"] as const;
 const OPT_IDLE   = ["border-sky-500/30 bg-sky-500/5 hover:bg-sky-500/15 hover:border-sky-400","border-violet-500/30 bg-violet-500/5 hover:bg-violet-500/15 hover:border-violet-400","border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/15 hover:border-amber-400","border-rose-500/30 bg-rose-500/5 hover:bg-rose-500/15 hover:border-rose-400"];
 const OPT_LETTER = ["bg-sky-500","bg-violet-500","bg-amber-500","bg-rose-500"];
 
+// ── Trust & Transparency: How Scoring Works ──────────────────────────────────
+function ScoringExplainer({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-md" onClick={onClose}>
+      <div className="w-full sm:max-w-md max-h-[85vh] overflow-y-auto bg-[#0c0c16] border border-white/10 rounded-t-3xl sm:rounded-3xl p-6" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">⚖️</span>
+            <h3 className="text-white font-black text-base">How Ranking Works</h3>
+          </div>
+          <button onClick={onClose} className="w-7 h-7 rounded-lg bg-white/5 text-white/40 hover:text-white flex items-center justify-center text-sm">✕</button>
+        </div>
+        <p className="text-white/40 text-xs mb-5 leading-relaxed">Every player is ranked using the same fair formula — no randomness, no hidden weighting. Here's exactly how it works, in order:</p>
+        <div className="space-y-3">
+          {[
+            { n: 1, title: "Rounds Survived", desc: "Lasting longer always beats lasting a shorter time. A player eliminated in Round 4 always outranks someone eliminated in Round 2.", color: "#a855f7" },
+            { n: 2, title: "Correct Answers", desc: "Among players who survived the same number of rounds, whoever answered more questions correctly ranks higher.", color: "#3b82f6" },
+            { n: 3, title: "Answer Speed", desc: "Still tied? The player who answered faster wins — measured by seconds left on the clock when you submit. Speed only counts from your 2nd question onward, so opening nerves never cost you.", color: "#22c55e" },
+            { n: 4, title: "Exact Milliseconds", desc: "In the extremely rare case speed is still tied to the second, we compare exact millisecond timestamps — virtually impossible to tie.", color: "#f59e0b" },
+          ].map(s => (
+            <div key={s.n} className="flex gap-3 bg-white/[0.03] border border-white/[0.06] rounded-2xl p-3.5">
+              <div className="shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-black text-white" style={{ background: s.color }}>{s.n}</div>
+              <div>
+                <p className="text-white font-bold text-sm mb-0.5">{s.title}</p>
+                <p className="text-white/35 text-[11px] leading-relaxed">{s.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="mt-5 bg-emerald-500/[0.06] border border-emerald-500/15 rounded-2xl p-3.5 flex gap-2.5">
+          <span className="text-base shrink-0">🛡️</span>
+          <p className="text-emerald-300/80 text-[11px] leading-relaxed">No player ever has a structural advantage — registration time, account age, or prior history have zero effect on your rank. Only your performance in this game matters.</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function TimerArc({ ms, totalMs, round }: { ms: number; totalMs: number; round: number }) {
   const pct  = totalMs > 0 ? Math.max(0, ms / totalMs) : 0;
   const r    = 40;
@@ -95,6 +133,7 @@ export default function QuizChampionship() {
 
   const [joinedState, setJoinedState] = useState(false);
   const [countdown, setCountdown]     = useState<string | null>(null);
+  const [showScoring, setShowScoring] = useState(false);
   const prevPhase                     = useRef<string>("");
 
   const { data: tournament, isLoading } = useQuery({
@@ -194,6 +233,8 @@ export default function QuizChampionship() {
   // ── COMPLETED — show final leaderboard ────────────────────────────────────
   if (tournament.status === "completed" && phase !== "game_over") {
     return (
+      <>
+      {showScoring && <ScoringExplainer onClose={() => setShowScoring(false)} />}
       <div className="min-h-screen bg-[#080810] overflow-y-auto pb-28">
         <div className="max-w-sm mx-auto px-4 py-10">
           <button onClick={() => navigate("/tournaments")} className="mb-6 flex items-center gap-2 text-white/30 hover:text-white text-xs font-bold uppercase tracking-widest transition-colors">← Back</button>
@@ -208,13 +249,32 @@ export default function QuizChampionship() {
             </div>
           </div>
 
-          {/* Prize pool */}
+          {/* Payout proof */}
           {tournament.prize_pool > 0 && (
-            <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-2xl p-4 mb-4 text-center">
-              <p className="text-[10px] font-black uppercase tracking-widest text-yellow-400/60 mb-1">Total Prize Pool</p>
-              <p className="text-3xl font-black text-yellow-400">{tournament.prize_pool.toLocaleString()} ZA</p>
+            <div className="flex items-center justify-center gap-1.5 mb-4">
+              <span className="text-emerald-400 text-xs">✓</span>
+              <p className="text-emerald-400/70 text-[10px] font-bold uppercase tracking-wider">Prizes paid out automatically at game end</p>
             </div>
           )}
+
+          {/* Prize pool with fee transparency */}
+          {tournament.prize_pool > 0 && (
+            <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-2xl p-4 mb-3 text-center">
+              <p className="text-[10px] font-black uppercase tracking-widest text-yellow-400/60 mb-1">Total Prize Pool</p>
+              <p className="text-3xl font-black text-yellow-400">{tournament.prize_pool.toLocaleString()} ZA</p>
+              {typeof (tournament as any).platform_fee_percentage === "number" && (
+                <p className="text-[10px] text-white/25 mt-1.5">
+                  {(tournament as any).platform_fee_percentage}% platform fee disclosed upfront · {Math.round(tournament.prize_pool * (1 - (tournament as any).platform_fee_percentage / 100)).toLocaleString()} ZA distributed to winners
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* How scoring works link */}
+          <button onClick={() => setShowScoring(true)} className="w-full flex items-center justify-center gap-2 mb-4 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.07] text-white/40 hover:text-white/70 hover:bg-white/[0.05] transition-colors">
+            <span className="text-sm">⚖️</span>
+            <span className="text-[11px] font-bold uppercase tracking-wider">How ranking &amp; scoring works</span>
+          </button>
 
           {/* Leaderboard from socket (if available) or from API */}
           <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl overflow-hidden mb-4">
@@ -244,7 +304,7 @@ export default function QuizChampionship() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className={`text-sm font-bold truncate ${isMe ? "text-purple-300" : "text-white/70"}`}>{isMe ? "You" : e.username}</p>
-                          <p className="text-[10px] text-white/25">{e.correct_answers} correct</p>
+                          <p className="text-[10px] text-white/25">{e.correct_answers} correct{typeof e.speed_score === "number" && e.speed_score > 0 ? ` · ⚡${e.speed_score}` : ""}</p>
                         </div>
                         <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
                           e.status === "winner" ? "bg-yellow-400/15 text-yellow-400" :
@@ -261,17 +321,48 @@ export default function QuizChampionship() {
             })()}
           </div>
 
+          {/* Personal breakdown — why you ranked where you did */}
+          {(() => {
+            const finalLb = leaderboard.length > 0 ? leaderboard : apiLeaderboard;
+            const myIdx = finalLb.findIndex(e => e.user_id === user?.id);
+            if (myIdx === -1) return null;
+            const me = finalLb[myIdx];
+            const aboveMe = myIdx > 0 ? finalLb[myIdx - 1] : null;
+            return (
+              <div className="bg-purple-500/[0.06] border border-purple-500/15 rounded-2xl p-4 mb-4">
+                <p className="text-[10px] font-black uppercase tracking-widest text-purple-300/70 mb-2">Your Result Breakdown</p>
+                <p className="text-white/70 text-xs leading-relaxed mb-1">
+                  You finished <span className="font-black text-white">#{myIdx + 1}</span> with <span className="font-black text-white">{me.correct_answers}</span> correct answer{me.correct_answers === 1 ? "" : "s"}
+                  {typeof me.speed_score === "number" && me.speed_score > 0 ? <> and a speed score of <span className="font-black text-white">{me.speed_score}</span></> : null}.
+                </p>
+                {aboveMe && (
+                  <p className="text-white/35 text-[11px] leading-relaxed">
+                    The player ranked just above you ({aboveMe.username}) had {aboveMe.correct_answers} correct
+                    {typeof aboveMe.speed_score === "number" && typeof me.speed_score === "number" && aboveMe.speed_score !== me.speed_score
+                      ? <> and was {Math.abs(aboveMe.speed_score - me.speed_score)} speed points {aboveMe.speed_score > me.speed_score ? "faster" : "slower"}</>
+                      : null}.
+                  </p>
+                )}
+                {!aboveMe && myIdx === 0 && (
+                  <p className="text-yellow-300/70 text-[11px] leading-relaxed font-bold">🏆 You had the best performance in this tournament!</p>
+                )}
+              </div>
+            );
+          })()}
+
           <button onClick={() => navigate("/tournaments")} className="w-full py-4 rounded-2xl font-black text-sm text-white" style={{ background: "linear-gradient(135deg,#7c3aed,#a855f7)" }}>
             View All Tournaments
           </button>
         </div>
       </div>
+      </>
     );
   }
 
   // ── PRE-JOIN ────────────────────────────────────────────────────────────────
   if (!joined || phase === "idle") {
     return (
+      <>
       <div className="min-h-screen bg-[#080810] flex flex-col items-center justify-center p-4 relative overflow-hidden pb-28">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-80 h-80 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
         <button onClick={() => navigate("/tournaments")} className="absolute top-5 left-4 text-white/30 hover:text-white text-xs font-bold uppercase tracking-widest transition-colors z-10">← Back</button>
@@ -364,10 +455,16 @@ export default function QuizChampionship() {
               {tournament.entry_fee > 0 && canJoin && (
                 <p className="text-center text-[10px] text-white/20 mt-2">Entry fee added to prize pool · Reminder sent before game day</p>
               )}
+              <button onClick={() => setShowScoring(true)} className="w-full flex items-center justify-center gap-1.5 mt-3 py-2 text-white/25 hover:text-white/50 transition-colors">
+                <span className="text-xs">⚖️</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider">How ranking &amp; scoring works</span>
+              </button>
             </>
           )}
         </div>
       </div>
+      {showScoring && <ScoringExplainer onClose={() => setShowScoring(false)} />}
+      </>
     );
   }
 
