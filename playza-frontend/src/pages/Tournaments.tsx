@@ -667,7 +667,6 @@ const Tournaments = () => {
                   <span style={{ fontSize: 8, color: "rgba(255,255,255,0.2)", whiteSpace: "nowrap" }}>Final Showdown</span>
                 </div>
               </div>
-              </div>
             </div>
           </div>
         </div>
