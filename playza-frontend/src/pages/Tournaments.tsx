@@ -129,7 +129,9 @@ function LobbyModal({ qt, onClose, onGameStart }: { qt: QuizTournament; onClose:
         )}
         {expired && <div style={{ padding: "12px 16px", background: "rgba(239,68,68,0.08)", borderBottom: "1px solid rgba(239,68,68,0.2)", flexShrink: 0, textAlign: "center" }}><p style={{ fontSize: 14, fontWeight: 800, color: "#ef4444", margin: 0 }}>🚀 Game is starting — heading to game...</p></div>}
         <div style={{ position: "relative", height: 0, overflow: "visible", zIndex: 10 }}>
-          {reactions.map((r: { id: number; emoji: string }) => (<div key={r.id} style={{ position: "absolute", bottom: 0, left: "40%", fontSize: 24, pointerEvents: "none" }}>{r.emoji}</div>))}
+          {reactions.map((r: { id: number; emoji: string; left: number; rotate: number }) => (
+            <div key={r.id} style={{ position: "absolute", bottom: 0, left: `${r.left}%`, fontSize: 24, pointerEvents: "none", transform: `rotate(${r.rotate}deg)`, animation: "floatUp 2.5s ease-out forwards" }}>{r.emoji}</div>
+          ))}
         </div>
         <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
           <div style={{ padding: "10px 16px 8px", flexShrink: 0 }}>
