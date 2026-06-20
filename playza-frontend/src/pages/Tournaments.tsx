@@ -40,7 +40,7 @@ function useCountdown(targetIso: string | null) {
 }
 
 const ROUNDS = [
-  { name: "Warm Up",        color: "#22c55e", secs: 45, emoji: "🟢" },
+  { name: "Warm Up",        color: "#22c55e", secs: 60, emoji: "🟢" },
   { name: "Rising",         color: "#3b82f6", secs: 35, emoji: "🔵" },
   { name: "Heat Up",        color: "#f97316", secs: 30, emoji: "🟠" },
   { name: "Danger Zone",    color: "#ef4444", secs: 25, emoji: "🔴" },
@@ -730,28 +730,61 @@ const Tournaments = () => {
                   <span style={{ fontSize: 8, color: "rgba(255,255,255,0.2)", whiteSpace: "nowrap" }}>Final Showdown</span>
                 </div>
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: "clamp(10px,3vw,16px)" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(168,85,247,0.15)", border: "1px solid rgba(168,85,247,0.25)", borderRadius: 12, padding: "10px 14px", width: "100%", boxSizing: "border-box" }}>
-                  <div style={{ flexShrink: 0, width: "clamp(28px,6vw,36px)", height: "clamp(28px,6vw,36px)", borderRadius: "50%", background: "rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center" }}><Trophy size={18} style={{ color: "#c084fc" }} /></div>
-                  <div style={{ minWidth: 0 }}>
-                    <p style={{ fontSize: "clamp(14px,3.5vw,20px)", fontWeight: 700, color: "#fbbf24", margin: 0, lineHeight: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{totalPrize.toLocaleString() + " ZA"}</p>
-                    <p style={{ fontSize: "clamp(9px,2vw,11px)", color: "rgba(255,255,255,0.4)", margin: "3px 0 0", textTransform: "uppercase", letterSpacing: "0.07em", whiteSpace: "nowrap" }}>Global ZA Paid Out</p>
-                  </div>
-                </div>
-                <div style={{ display: "flex", gap: 8 }}>
-                  {[
-                    { icon: <Users size={18} style={{ color: "#4ade80" }} />, val: totalPlayers.toLocaleString(), lbl: "Total Participation", bg: "rgba(34,197,94,0.1)", border: "rgba(34,197,94,0.2)" },
-                    { icon: <Zap size={18} style={{ color: "#fbbf24" }} />, val: String(quizTournaments.length), lbl: "Tournaments Played", bg: "rgba(251,191,36,0.1)", border: "rgba(251,191,36,0.2)" },
-                  ].map((s, i) => (
-                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, background: s.bg, border: "1px solid " + s.border, borderRadius: 12, padding: "10px 14px", flex: "1 1 0", minWidth: 0 }}>
-                      <div style={{ flexShrink: 0, width: "clamp(28px,6vw,36px)", height: "clamp(28px,6vw,36px)", borderRadius: "50%", background: "rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center" }}>{s.icon}</div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 10, marginTop: "clamp(10px,3vw,16px)" }}>
+                {[
+                  {
+                    icon: <Trophy size={20} style={{ color: "#c084fc" }} />,
+                    val: totalPrize.toLocaleString() + " ZA",
+                    lbl: "Global ZA Paid Out",
+                    accent: "#a855f7",
+                    glow: "rgba(168,85,247,0.35)",
+                    bg: "linear-gradient(135deg, rgba(124,58,237,0.18), rgba(88,28,135,0.08))",
+                    border: "rgba(168,85,247,0.3)",
+                    pattern: "trophy",
+                  },
+                  {
+                    icon: <Users size={20} style={{ color: "#4ade80" }} />,
+                    val: totalPlayers.toLocaleString(),
+                    lbl: "Total Participation",
+                    accent: "#22c55e",
+                    glow: "rgba(34,197,94,0.3)",
+                    bg: "linear-gradient(135deg, rgba(22,163,74,0.16), rgba(20,83,45,0.08))",
+                    border: "rgba(34,197,94,0.28)",
+                    pattern: "dots",
+                  },
+                  {
+                    icon: <Zap size={20} style={{ color: "#fbbf24" }} />,
+                    val: String(quizTournaments.length),
+                    lbl: "Tournaments Played",
+                    accent: "#f59e0b",
+                    glow: "rgba(245,158,11,0.3)",
+                    bg: "linear-gradient(135deg, rgba(217,119,6,0.16), rgba(120,53,15,0.08))",
+                    border: "rgba(245,158,11,0.28)",
+                    pattern: "trophy-outline",
+                  },
+                ].map((s, i) => (
+                  <div key={i} style={{ position: "relative", overflow: "hidden", background: s.bg, border: "1px solid " + s.border, borderRadius: 16, padding: "16px 16px", boxShadow: `0 0 24px ${s.glow}, inset 0 1px 0 rgba(255,255,255,0.06)`, minWidth: 0 }}>
+                    {/* Subtle background texture per card */}
+                    <svg width="100%" height="100%" style={{ position: "absolute", inset: 0, opacity: 0.5, pointerEvents: "none" }} preserveAspectRatio="xMidYMid slice">
+                      {s.pattern === "dots" && Array.from({ length: 30 }).map((_, di) => (
+                        <circle key={di} cx={`${(di * 37) % 100}%`} cy={`${(di * 53) % 100}%`} r="1.2" fill={s.accent} opacity={0.35} />
+                      ))}
+                      {(s.pattern === "trophy" || s.pattern === "trophy-outline") && (
+                        <g transform="translate(70%, 10%) scale(2.2)" opacity={s.pattern === "trophy-outline" ? 0.12 : 0.08}>
+                          <path d="M0 2 L8 2 L8 6 Q8 10 4 11 Q0 10 0 6 Z" fill="none" stroke={s.accent} strokeWidth="0.6" />
+                          <path d="M3 11 L5 11 L5.5 13 L2.5 13 Z" fill="none" stroke={s.accent} strokeWidth="0.6" />
+                        </g>
+                      )}
+                    </svg>
+                    <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 12 }}>
+                      <div style={{ flexShrink: 0, width: 40, height: 40, borderRadius: "50%", background: "rgba(255,255,255,0.08)", border: `1px solid ${s.border}`, display: "flex", alignItems: "center", justifyContent: "center" }}>{s.icon}</div>
                       <div style={{ minWidth: 0 }}>
-                        <p style={{ fontSize: "clamp(14px,3.5vw,20px)", fontWeight: 700, color: "#fff", margin: 0, lineHeight: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.val}</p>
-                        <p style={{ fontSize: "clamp(9px,2vw,11px)", color: "rgba(255,255,255,0.4)", margin: "3px 0 0", textTransform: "uppercase", letterSpacing: "0.07em", whiteSpace: "nowrap" }}>{s.lbl}</p>
+                        <p style={{ fontSize: "clamp(16px,4vw,22px)", fontWeight: 800, color: "#fff", margin: 0, lineHeight: 1.1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.val}</p>
+                        <p style={{ fontSize: "clamp(9px,2vw,11px)", color: "rgba(255,255,255,0.45)", margin: "4px 0 0", letterSpacing: "0.02em", whiteSpace: "nowrap" }}>{s.lbl}</p>
                       </div>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
