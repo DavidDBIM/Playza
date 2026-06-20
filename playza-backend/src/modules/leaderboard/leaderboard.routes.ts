@@ -1,5 +1,6 @@
 import { Router, Response } from 'express'
 import { requireAuth, AuthRequest } from '../../middleware/auth'
+import { cached } from '../../utils/cache'
 import {
   getLoyaltyLeaderboard,
   getReferralLeaderboard,
@@ -14,6 +15,11 @@ const router = Router()
 
 const VALID_PERIODS: LeaderboardPeriod[] = ['today', '7d', '30d', 'all']
 const VALID_GAMES: GameSlug[] = ['chess', 'speedbattle', 'wordscramble', 'pool', 'ludo']
+
+// Leaderboards don't need to be live-accurate to the second — a short cache
+// massively cuts database load under traffic spikes with no visible effect
+// for users (ranks rarely change within a 20s window anyway).
+const LEADERBOARD_TTL_MS = 20_000
 
 function parsePeriod(raw: unknown): LeaderboardPeriod {
   return VALID_PERIODS.includes(raw as LeaderboardPeriod)
@@ -33,7 +39,11 @@ router.get('/loyalty', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
     const period = parsePeriod(req.query.period)
     const limit = parseLimit(req.query.limit)
-    const data = await getLoyaltyLeaderboard(period, limit)
+    const data = await cached(
+      `leaderboard:loyalty:${period}:${limit}`,
+      LEADERBOARD_TTL_MS,
+      () => getLoyaltyLeaderboard(period, limit)
+    )
     res.json({ success: true, data })
   } catch (err: any) {
     res.status(400).json({ success: false, message: err.message })
@@ -46,7 +56,11 @@ router.get('/referral', requireAuth, async (req: AuthRequest, res: Response) => 
   try {
     const period = parsePeriod(req.query.period)
     const limit = parseLimit(req.query.limit)
-    const data = await getReferralLeaderboard(period, limit)
+    const data = await cached(
+      `leaderboard:referral:${period}:${limit}`,
+      LEADERBOARD_TTL_MS,
+      () => getReferralLeaderboard(period, limit)
+    )
     res.json({ success: true, data })
   } catch (err: any) {
     res.status(400).json({ success: false, message: err.message })
@@ -59,7 +73,11 @@ router.get('/games', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
     const period = parsePeriod(req.query.period)
     const limit = parseLimit(req.query.limit)
-    const data = await getAllGamesLeaderboard(period, limit)
+    const data = await cached(
+      `leaderboard:games-all:${period}:${limit}`,
+      LEADERBOARD_TTL_MS,
+      () => getAllGamesLeaderboard(period, limit)
+    )
     res.json({ success: true, data })
   } catch (err: any) {
     res.status(400).json({ success: false, message: err.message })
@@ -77,7 +95,11 @@ router.get('/games/:game', requireAuth, async (req: AuthRequest, res: Response) 
     }
     const period = parsePeriod(req.query.period)
     const limit = parseLimit(req.query.limit)
-    const data = await getGameLeaderboard(game, period, limit)
+    const data = await cached(
+      `leaderboard:game:${game}:${period}:${limit}`,
+      LEADERBOARD_TTL_MS,
+      () => getGameLeaderboard(game, period, limit)
+    )
     res.json({ success: true, data })
   } catch (err: any) {
     res.status(400).json({ success: false, message: err.message })
@@ -85,9 +107,8 @@ router.get('/games/:game', requireAuth, async (req: AuthRequest, res: Response) 
 })
 
 // GET /api/leaderboard/session/:game/:roomId
-// Returns leaderboard for a specific room/session
-// game: chess | speedbattle | wordscramble | pool | ludo
-// roomId: the UUID of the room
+// Returns leaderboard for a specific room/session — NOT cached, this is a
+// live in-progress game and must always reflect the current state.
 router.get('/session/:game/:roomId', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
     const game = req.params.game as GameSlug
