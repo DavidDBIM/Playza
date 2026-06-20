@@ -73,6 +73,12 @@ export function useQuizSocket(tournamentId: string | null) {
   const [elimMessage, setElimMessage] = useState('')
   const [connected, setConnected] = useState(false)
   const [timeLeftMs, setTimeLeftMs] = useState(0)
+  // Running totals so the player sees their points update immediately after
+  // answering, instead of having to wait until game over to see anything.
+  const [myCorrectCount, setMyCorrectCount] = useState(0)
+  const [mySpeedScore, setMySpeedScore] = useState(0)
+  const [lastAnswerResult, setLastAnswerResult] = useState<{ is_correct: boolean; points_earned: number } | null>(null)
+  const isFirstQuestionRef = useRef(true)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const clearTimer = useCallback(() => {
@@ -126,12 +132,26 @@ export function useQuizSocket(tournamentId: string | null) {
       setSelectedOption(null)
       setAnswerLocked(false)
       setRevealData(null)
+      setLastAnswerResult(null)
       setPhase('question')
       startTimer(q.time_limit_ms)
     })
 
-    socket.on('quiz:answer_ack', () => {
+    socket.on('quiz:answer_ack', (data: { is_correct?: boolean; time_remaining_secs?: number } = {}) => {
       setAnswerLocked(true)
+
+      const isCorrect = data.is_correct ?? false
+      // Speed points only count from the 2nd question of the tournament onward —
+      // the very first question is worth correctness only, no speed bonus.
+      const speedPoints = isFirstQuestionRef.current ? 0 : (data.time_remaining_secs ?? 0)
+
+      if (isCorrect) {
+        setMyCorrectCount(c => c + 1)
+        setMySpeedScore(s => s + speedPoints)
+      }
+
+      setLastAnswerResult({ is_correct: isCorrect, points_earned: isCorrect ? speedPoints : 0 })
+      isFirstQuestionRef.current = false
     })
 
     socket.on('quiz:reveal', (data) => {
@@ -197,5 +217,8 @@ export function useQuizSocket(tournamentId: string | null) {
     elimMessage,
     timeLeftMs,
     submitAnswer,
+    myCorrectCount,
+    mySpeedScore,
+    lastAnswerResult,
   }
 }
