@@ -156,6 +156,7 @@ export default function QuizChampionship() {
     selectedOption, answerLocked, revealData,
     leaderboard, roundSummary, gameOver, elimMessage,
     timeLeftMs, submitAnswer,
+    myCorrectCount, mySpeedScore, lastAnswerResult,
   } = useQuizSocket(joined ? (id ?? null) : null);
 
   useEffect(() => {
@@ -673,7 +674,26 @@ export default function QuizChampionship() {
 
             {/* Status bar */}
             <div className="mt-2">
-              {answerLocked && !isRevealing && (
+              {answerLocked && !isRevealing && lastAnswerResult && (
+                <div className={`flex flex-col items-center justify-center gap-1 py-2.5 rounded-xl ${lastAnswerResult.is_correct ? "bg-green-500/10 border border-green-500/20" : "bg-purple-500/10 border border-purple-500/20"}`}>
+                  <div className="flex items-center gap-2">
+                    {lastAnswerResult.is_correct ? (
+                      <p className="text-green-400 font-bold text-xs">
+                        ✅ Correct! {lastAnswerResult.points_earned > 0 ? `+${lastAnswerResult.points_earned} speed pts` : ""}
+                      </p>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 border-2 border-purple-400/40 border-t-purple-400 rounded-full animate-spin" />
+                        <p className="text-purple-300 font-bold text-xs">Locked in — waiting for others</p>
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-white/30 font-semibold">
+                    Your total: {myCorrectCount} correct · ⚡{mySpeedScore} speed
+                  </p>
+                </div>
+              )}
+              {answerLocked && !isRevealing && !lastAnswerResult && (
                 <div className="flex items-center justify-center gap-2 py-2 rounded-xl bg-purple-500/10 border border-purple-500/20">
                   <div className="w-3 h-3 border-2 border-purple-400/40 border-t-purple-400 rounded-full animate-spin" />
                   <p className="text-purple-300 font-bold text-xs">Locked in — waiting for others</p>
