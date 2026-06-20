@@ -396,7 +396,7 @@ function DropTitle() {
           <div style={{ position: "absolute", left: "calc(50% + 20px)", top: "70%", width: 30, height: 4, borderRadius: 3, background: "#a855f7", opacity: 0, animation: "dustR 0.4s ease-out 0.04s forwards", pointerEvents: "none" }} />
         </>
       )}
-      <h1 style={{ fontSize: "clamp(2.2rem,9vw,5rem)", fontWeight: 700, color: "#fff", letterSpacing: "-2px", lineHeight: 0.95, animation: "wordDrop 0.85s cubic-bezier(0.23,1,0.32,1) forwards", willChange: "transform", margin: 0 }}>Tournaments</h1>
+      <h1 style={{ fontSize: "clamp(2rem,7vw,5rem)", fontWeight: 700, color: "#fff", letterSpacing: "-2px", lineHeight: 0.95, animation: "wordDrop 0.85s cubic-bezier(0.23,1,0.32,1) forwards", willChange: "transform", margin: 0 }}>Tournaments</h1>
       <div style={{ height: 2, width: "min(240px,60%)", margin: "12px auto 0", background: "linear-gradient(90deg,transparent,#a855f7,transparent)", transformOrigin: "center", opacity: 0, animation: phase === "settled" ? "lineIn 0.5s ease-out 0.1s forwards" : "none" }} />
       <p style={{ fontSize: "clamp(11px,3vw,13px)", color: "rgba(255,255,255,0.4)", marginTop: 8, letterSpacing: "0.04em", opacity: 0, animation: phase === "settled" ? "fadeUp 0.4s ease-out 0.2s forwards" : "none", padding: "0 16px" }}>Answer fast. Outlast everyone. Take the prize.</p>
     </div>
@@ -622,10 +622,10 @@ const Tournaments = () => {
             </div>
             <div style={{ position: "relative", zIndex: 1, minHeight: "clamp(200px,45vw,320px)" }}>
               {/* Trophy — absolutely positioned top-right on mobile, floats right on desktop */}
-              <div style={{ position: "absolute", top: "clamp(-10px,0vw,0px)", right: 0, width: "clamp(130px,36vw,280px)", zIndex: 2, pointerEvents: "none" }}>
+              <div style={{ position: "absolute", top: "clamp(-10px,0vw,0px)", right: 0, width: "clamp(100px,28vw,280px)", zIndex: 2, pointerEvents: "none" }}>
                 <TrophyIllustration />
               </div>
-              <div style={{ paddingRight: "clamp(140px,38vw,300px)" }}>
+              <div style={{ paddingRight: "clamp(110px,30vw,300px)" }}>
                 <div style={{ marginBottom: "clamp(10px,3vw,20px)" }}><DropTitle /></div>
                 <p style={{ fontSize: "clamp(13px,3.5vw,18px)", color: "rgba(255,255,255,0.65)", margin: "0 0 clamp(10px,3vw,16px)" }}>
                   Compete. Play. <span style={{ color: "#fbbf24", fontWeight: 700 }}>Win.</span>
@@ -689,26 +689,26 @@ const Tournaments = () => {
                 <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(rgba(255,255,255,0.07) 1px,transparent 1px)", backgroundSize: "24px 24px" }} />
               </div>
               <div style={{ position: "relative", zIndex: 1 }}>
-                <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 24, paddingTop: 20, paddingBottom: 20, paddingRight: "clamp(110px,34vw,280px)" }}>
+                <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 24, paddingTop: 20, paddingBottom: 20, paddingRight: "clamp(90px,26vw,280px)" }}>
                   <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(168,85,247,0.15)", border: "1px solid rgba(168,85,247,0.3)", borderRadius: 20, padding: "4px 12px" }}>
                     <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#a855f7", display: "block" }} />
                     <span style={{ fontSize: "clamp(8px,2.5vw,10px)", fontWeight: 600, color: "#c084fc", letterSpacing: "0.15em", textTransform: "uppercase" }}>Sponsored Tournament</span>
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "clamp(12px,4vw,28px)", flexWrap: "wrap" }}>
-                    <img src="/logo.png" alt="Playza" style={{ height: "clamp(36px,9vw,60px)", width: "auto", objectFit: "contain" }} />
-                    <span style={{ fontSize: "clamp(22px,6vw,42px)", fontWeight: 200, color: "rgba(255,255,255,0.3)", lineHeight: 1 }}>×</span>
-                    <div style={{ display: "flex", alignItems: "center", gap: "clamp(8px,2.5vw,16px)" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "clamp(6px,2.5vw,28px)", flexWrap: "nowrap", maxWidth: "100%" }}>
+                    <img src="/logo.png" alt="Playza" style={{ height: "clamp(22px,7vw,60px)", width: "auto", objectFit: "contain", flexShrink: 0 }} />
+                    <span style={{ fontSize: "clamp(14px,4.5vw,42px)", fontWeight: 200, color: "rgba(255,255,255,0.3)", lineHeight: 1, flexShrink: 0 }}>×</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: "clamp(5px,2vw,16px)", minWidth: 0 }}>
                       {t.sponsor!.logo_url
-                        ? <img src={t.sponsor!.logo_url} alt={t.sponsor!.name} style={{ height: "clamp(36px,9vw,60px)", width: "auto", maxWidth: "clamp(100px,25vw,200px)", objectFit: "contain" }} />
-                        : <div style={{ height: "clamp(36px,9vw,60px)", width: "clamp(36px,9vw,60px)", borderRadius: 12, background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                            <span style={{ fontSize: "clamp(16px,4vw,28px)", fontWeight: 900, color: "#fff" }}>{t.sponsor!.name[0]}</span>
+                        ? <img src={t.sponsor!.logo_url} alt={t.sponsor!.name} style={{ height: "clamp(22px,7vw,60px)", width: "auto", maxWidth: "clamp(50px,16vw,200px)", objectFit: "contain", flexShrink: 0 }} />
+                        : <div style={{ height: "clamp(22px,7vw,60px)", width: "clamp(22px,7vw,60px)", borderRadius: 12, background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                            <span style={{ fontSize: "clamp(10px,3vw,28px)", fontWeight: 900, color: "#fff" }}>{t.sponsor!.name[0]}</span>
                           </div>}
-                      <span style={{ fontSize: "clamp(20px,5vw,36px)", fontWeight: 800, color: "#fff", whiteSpace: "nowrap" }}>{t.sponsor!.name}</span>
+                      <span style={{ fontSize: "clamp(13px,4vw,36px)", fontWeight: 800, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.sponsor!.name}</span>
                     </div>
                   </div>
                   <p style={{ fontSize: "clamp(11px,2.5vw,14px)", color: "rgba(255,255,255,0.4)", margin: 0, textAlign: "center", letterSpacing: "0.04em" }}>Official Tournament Sponsor</p>
                 </div>
-                <div style={{ position: "absolute", top: "clamp(-10px,0vw,0px)", right: 0, width: "clamp(130px,36vw,280px)", zIndex: 2, pointerEvents: "none" }}>
+                <div style={{ position: "absolute", top: "clamp(-10px,0vw,0px)", right: 0, width: "clamp(100px,28vw,280px)", zIndex: 2, pointerEvents: "none" }}>
                   <TrophyIllustration />
                 </div>
               </div>
