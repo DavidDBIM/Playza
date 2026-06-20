@@ -535,6 +535,9 @@ export default function QuizChampionship() {
                 <span className="text-xs text-white/20 w-4 text-center font-black">#{i + 1}</span>
                 <div className="w-6 h-6 rounded-full bg-white/[0.08] flex items-center justify-center text-[10px] font-black text-white">{e.username[0]?.toUpperCase()}</div>
                 <span className="text-xs font-bold text-white/60 flex-1 text-left">{e.username}</span>
+                {typeof e.speed_score === "number" && e.speed_score > 0 && (
+                  <span className="text-[9px] font-bold text-cyan-400/70" title="Speed score">⚡{e.speed_score}</span>
+                )}
                 <span className={`text-[10px] font-black ${e.status === "winner" ? "text-yellow-400" : e.status === "alive" ? "text-green-400" : "text-white/20"}`}>{e.correct_answers}✓</span>
               </div>
             ))}
