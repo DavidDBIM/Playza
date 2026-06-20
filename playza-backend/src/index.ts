@@ -2,6 +2,7 @@ import express from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
 import dotenv from 'dotenv'
+import rateLimit from 'express-rate-limit'
 import cookieParser from 'cookie-parser'
 import cron from 'node-cron'
 import { createServer } from 'http'
@@ -60,6 +61,17 @@ app.use(cors({ origin: allowedOrigins, credentials: true }))
 app.post('/api/wallet/webhook/paystack', express.raw({ type: 'application/json' }))
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
+
+// Global API rate limiter — protects every route from abuse/DoS,
+// separate from the tighter per-route limiters on auth endpoints
+const globalLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000,
+  max: 200, // 200 requests/min per IP across the whole API
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many requests, please slow down' },
+})
+app.use('/api', globalLimiter)
 
 app.get('/health', (_, res) => {
   res.json({ status: 'ok', project: 'Playza API', env: process.env.NODE_ENV })
