@@ -8,7 +8,7 @@ import { useToast } from "@/context/toast";
 import axiosInstance from "@/api/axiosInstance";
 
 const ROUNDS = [
-  { name: "Warm Up",        emoji: "🟢", color: "#22c55e", secs: 45 },
+  { name: "Warm Up",        emoji: "🟢", color: "#22c55e", secs: 60 },
   { name: "Rising",         emoji: "🔵", color: "#3b82f6", secs: 35 },
   { name: "Heat Up",        emoji: "🟠", color: "#f97316", secs: 30 },
   { name: "Danger Zone",    emoji: "🔴", color: "#ef4444", secs: 25 },
