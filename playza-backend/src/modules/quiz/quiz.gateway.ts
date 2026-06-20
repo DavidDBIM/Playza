@@ -176,6 +176,15 @@ async function revealAndAdvance(tournamentId: string, io: SocketServer, game: Ga
   const q = game.currentQuestion
   if (!q) return
 
+  // Guard against double-trigger: the early-reveal path (all players answered)
+  // and the natural timer can both fire for the same question in a tight race
+  // — especially with few players, where the last answer arrives almost
+  // exactly when the timer would have expired anyway. Without this guard,
+  // the second call re-processes a question whose state has already moved
+  // on, wrongly eliminating players who answered correctly.
+  if ((q as any)._revealed) return
+  ;(q as any)._revealed = true
+
   if (q.timerHandle) clearTimeout(q.timerHandle)
   q.timerHandle = null
 
@@ -504,10 +513,14 @@ export function setupQuizGateway(io: SocketServer) {
             .single()
 
           if (lb) {
-            // Speed score (seconds remaining) only counted from Q2 onwards —
-            // Q1 excluded so nerves on first question don't unfairly penalise players
-            const speedAdd = game.currentQuestionIndex >= 1 ? timeRemainingSecs : 0
-            const speedMsAdd = game.currentQuestionIndex >= 1 ? timeRemainingMs : 0
+            // Speed score only counted from the 2nd question of the tournament
+            // onwards — the very first question (Round 1, index 0) is excluded
+            // so opening nerves don't unfairly penalise players. With 1 question
+            // per round, "Q2 onwards" means Round 2+, not currentQuestionIndex>=1
+            // (which resets to 0 every round and would never be true here).
+            const isFirstQuestionOfGame = game.currentRound === 1 && game.currentQuestionIndex === 0
+            const speedAdd = isFirstQuestionOfGame ? 0 : timeRemainingSecs
+            const speedMsAdd = isFirstQuestionOfGame ? 0 : timeRemainingMs
 
             await supabaseAdmin
               .from('quiz_leaderboard')
