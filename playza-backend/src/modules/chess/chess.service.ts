@@ -222,6 +222,40 @@ async function handleGameOver(roomId: string, winnerId: string | null, stake: nu
       }
     }
   }
+
+  // 5. Tournament hook — if this chess_rooms match belongs to a tournament
+  // fixture, advance the bracket (knockout) or update the standings table
+  // (group stage). Stake is always 0 for tournament matches, so none of
+  // the H2H prize logic above ever double-pays a tournament player —
+  // tournament prizes are paid separately once the whole event finishes.
+  try {
+    const { data: fixture } = await supabaseAdmin
+      .from('chess_tournament_fixtures')
+      .select('id, tournament_id, group_number, player1_id, player2_id')
+      .eq('chess_room_id', roomId)
+      .maybeSingle()
+
+    if (fixture) {
+      const { advanceKnockoutFixture, recordGroupResult, finishChessTournament } =
+        await import('../chess-tournament/chess-tournament.service')
+
+      if (fixture.group_number) {
+        await recordGroupResult(fixture.id, winnerId, fixture.player1_id, fixture.player2_id)
+      } else {
+        const loserId = winnerId
+          ? (winnerId === fixture.player1_id ? fixture.player2_id : fixture.player1_id)
+          : null // draw in a knockout match — handled by caller via replay/tiebreak in future; for now no elimination on draw
+        if (winnerId) {
+          const result = await advanceKnockoutFixture(fixture.id, winnerId, loserId)
+          if (result.tournamentComplete && result.championId) {
+            await finishChessTournament(fixture.tournament_id, result.championId)
+          }
+        }
+      }
+    }
+  } catch (tErr) {
+    console.error(`[Chess handleGameOver] Tournament hook failed for room ${roomId}:`, tErr)
+  }
 }
 
 export async function listWaitingRooms() {
