@@ -11,6 +11,7 @@ import {
   DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import SEO from "@/components/SEO";
+import { ZASymbol } from "@/components/currency/ZASymbol";
 
 const STATUS = {
   active:       { label: "LIVE NOW",     short: "LIVE",     color: "#ef4444", bg: "rgba(239,68,68,0.12)",   border: "rgba(239,68,68,0.3)",   live: true  },
@@ -659,18 +660,18 @@ const Tournaments = () => {
                 alt="Playza Tournaments — Compete. Play. Win. Quizzes, Chess, Sponsored & More."
                 style={{ width: "100%", height: "auto", display: "block", borderRadius: 16 }}
               />
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 10, marginTop: "clamp(10px,3vw,16px)" }}>
-                {[
-                  {
-                    icon: <Trophy size={20} style={{ color: "#c084fc" }} />,
-                    val: totalPrize.toLocaleString() + " ZA",
-                    lbl: "Global ZA Paid Out",
-                    accent: "#a855f7",
-                    glow: "rgba(168,85,247,0.35)",
-                    bg: "linear-gradient(135deg, rgba(124,58,237,0.18), rgba(88,28,135,0.08))",
-                    border: "rgba(168,85,247,0.3)",
-                    pattern: "trophy",
-                  },
+              {(() => {
+                const prizeCard = {
+                  icon: <Trophy size={20} style={{ color: "#c084fc" }} />,
+                  amount: totalPrize.toLocaleString(),
+                  lbl: "Global ZA Paid Out",
+                  accent: "#a855f7",
+                  glow: "rgba(168,85,247,0.35)",
+                  bg: "linear-gradient(135deg, rgba(124,58,237,0.18), rgba(88,28,135,0.08))",
+                  border: "rgba(168,85,247,0.3)",
+                  pattern: "trophy" as const,
+                };
+                const secondaryCards = [
                   {
                     icon: <Users size={20} style={{ color: "#4ade80" }} />,
                     val: totalPlayers.toLocaleString(),
@@ -679,7 +680,7 @@ const Tournaments = () => {
                     glow: "rgba(34,197,94,0.3)",
                     bg: "linear-gradient(135deg, rgba(22,163,74,0.16), rgba(20,83,45,0.08))",
                     border: "rgba(34,197,94,0.28)",
-                    pattern: "dots",
+                    pattern: "dots" as const,
                   },
                   {
                     icon: <Zap size={20} style={{ color: "#fbbf24" }} />,
@@ -689,32 +690,55 @@ const Tournaments = () => {
                     glow: "rgba(245,158,11,0.3)",
                     bg: "linear-gradient(135deg, rgba(217,119,6,0.16), rgba(120,53,15,0.08))",
                     border: "rgba(245,158,11,0.28)",
-                    pattern: "trophy-outline",
+                    pattern: "trophy-outline" as const,
                   },
-                ].map((s, i) => (
-                  <div key={i} style={{ position: "relative", overflow: "hidden", background: s.bg, border: "1px solid " + s.border, borderRadius: 16, padding: "16px 16px", boxShadow: `0 0 24px ${s.glow}, inset 0 1px 0 rgba(255,255,255,0.06)`, minWidth: 0 }}>
-                    {/* Subtle background texture per card */}
-                    <svg width="100%" height="100%" style={{ position: "absolute", inset: 0, opacity: 0.5, pointerEvents: "none" }} preserveAspectRatio="xMidYMid slice">
-                      {s.pattern === "dots" && Array.from({ length: 30 }).map((_, di) => (
-                        <circle key={di} cx={`${(di * 37) % 100}%`} cy={`${(di * 53) % 100}%`} r="1.2" fill={s.accent} opacity={0.35} />
-                      ))}
-                      {(s.pattern === "trophy" || s.pattern === "trophy-outline") && (
-                        <g transform="translate(70%, 10%) scale(2.2)" opacity={s.pattern === "trophy-outline" ? 0.12 : 0.08}>
-                          <path d="M0 2 L8 2 L8 6 Q8 10 4 11 Q0 10 0 6 Z" fill="none" stroke={s.accent} strokeWidth="0.6" />
-                          <path d="M3 11 L5 11 L5.5 13 L2.5 13 Z" fill="none" stroke={s.accent} strokeWidth="0.6" />
-                        </g>
-                      )}
-                    </svg>
-                    <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 12 }}>
-                      <div style={{ flexShrink: 0, width: 40, height: 40, borderRadius: "50%", background: "rgba(255,255,255,0.08)", border: `1px solid ${s.border}`, display: "flex", alignItems: "center", justifyContent: "center" }}>{s.icon}</div>
-                      <div style={{ minWidth: 0 }}>
-                        <p style={{ fontSize: "clamp(16px,4vw,22px)", fontWeight: 800, color: "#fff", margin: 0, lineHeight: 1.1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.val}</p>
-                        <p style={{ fontSize: "clamp(9px,2vw,11px)", color: "rgba(255,255,255,0.45)", margin: "4px 0 0", letterSpacing: "0.02em", whiteSpace: "nowrap" }}>{s.lbl}</p>
+                ];
+                const Texture = ({ pattern, accent }: { pattern: "trophy" | "dots" | "trophy-outline"; accent: string }) => (
+                  <svg width="100%" height="100%" style={{ position: "absolute", inset: 0, opacity: 0.5, pointerEvents: "none" }} preserveAspectRatio="xMidYMid slice">
+                    {pattern === "dots" && Array.from({ length: 30 }).map((_, di) => (
+                      <circle key={di} cx={`${(di * 37) % 100}%`} cy={`${(di * 53) % 100}%`} r="1.2" fill={accent} opacity={0.35} />
+                    ))}
+                    {(pattern === "trophy" || pattern === "trophy-outline") && (
+                      <g transform="translate(70%, 10%) scale(2.2)" opacity={pattern === "trophy-outline" ? 0.12 : 0.08}>
+                        <path d="M0 2 L8 2 L8 6 Q8 10 4 11 Q0 10 0 6 Z" fill="none" stroke={accent} strokeWidth="0.6" />
+                        <path d="M3 11 L5 11 L5.5 13 L2.5 13 Z" fill="none" stroke={accent} strokeWidth="0.6" />
+                      </g>
+                    )}
+                  </svg>
+                );
+                return (
+                  <div style={{ marginTop: "clamp(10px,3vw,16px)" }}>
+                    {/* Prize card — full width on its own row */}
+                    <div style={{ position: "relative", overflow: "hidden", background: prizeCard.bg, border: "1px solid " + prizeCard.border, borderRadius: 16, padding: "16px 16px", boxShadow: `0 0 24px ${prizeCard.glow}, inset 0 1px 0 rgba(255,255,255,0.06)`, marginBottom: 10 }}>
+                      <Texture pattern={prizeCard.pattern} accent={prizeCard.accent} />
+                      <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 12 }}>
+                        <div style={{ flexShrink: 0, width: 40, height: 40, borderRadius: "50%", background: "rgba(255,255,255,0.08)", border: `1px solid ${prizeCard.border}`, display: "flex", alignItems: "center", justifyContent: "center" }}>{prizeCard.icon}</div>
+                        <div style={{ minWidth: 0 }}>
+                          <p style={{ fontSize: "clamp(18px,4.5vw,24px)", fontWeight: 800, color: "#fff", margin: 0, lineHeight: 1.1, display: "flex", alignItems: "baseline", gap: 5 }}>
+                            {prizeCard.amount} <ZASymbol className="text-[0.85em]" />
+                          </p>
+                          <p style={{ fontSize: "clamp(9px,2vw,11px)", color: "rgba(255,255,255,0.45)", margin: "4px 0 0", letterSpacing: "0.02em", whiteSpace: "nowrap" }}>{prizeCard.lbl}</p>
+                        </div>
                       </div>
                     </div>
+                    {/* Participation + Tournaments Played — share one row */}
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                      {secondaryCards.map((s, i) => (
+                        <div key={i} style={{ position: "relative", overflow: "hidden", background: s.bg, border: "1px solid " + s.border, borderRadius: 16, padding: "16px 16px", boxShadow: `0 0 24px ${s.glow}, inset 0 1px 0 rgba(255,255,255,0.06)`, minWidth: 0 }}>
+                          <Texture pattern={s.pattern} accent={s.accent} />
+                          <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 12 }}>
+                            <div style={{ flexShrink: 0, width: 40, height: 40, borderRadius: "50%", background: "rgba(255,255,255,0.08)", border: `1px solid ${s.border}`, display: "flex", alignItems: "center", justifyContent: "center" }}>{s.icon}</div>
+                            <div style={{ minWidth: 0 }}>
+                              <p style={{ fontSize: "clamp(16px,4vw,22px)", fontWeight: 800, color: "#fff", margin: 0, lineHeight: 1.1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.val}</p>
+                              <p style={{ fontSize: "clamp(9px,2vw,11px)", color: "rgba(255,255,255,0.45)", margin: "4px 0 0", letterSpacing: "0.02em", whiteSpace: "nowrap" }}>{s.lbl}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                ))}
-              </div>
+                );
+              })()}
             </div>
           </div>
         </div>
