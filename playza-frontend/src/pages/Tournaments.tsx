@@ -806,7 +806,7 @@ const Tournaments = () => {
                     <span style={{ fontSize: "clamp(8px,2.5vw,10px)", fontWeight: 600, color: "#c084fc", letterSpacing: "0.15em", textTransform: "uppercase" }}>Sponsored Tournament</span>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "clamp(6px,2.5vw,28px)", flexWrap: "nowrap", maxWidth: "100%" }}>
-                    <img src="/logo.png" alt="Playza" style={{ height: "clamp(22px,7vw,60px)", width: "auto", objectFit: "contain", flexShrink: 0 }} />
+                    <img src="/logo.webp" alt="Playza" style={{ height: "clamp(22px,7vw,60px)", width: "auto", objectFit: "contain", flexShrink: 0 }} />
                     <span style={{ fontSize: "clamp(14px,4.5vw,42px)", fontWeight: 200, color: "rgba(255,255,255,0.3)", lineHeight: 1, flexShrink: 0 }}>×</span>
                     <div style={{ display: "flex", alignItems: "center", gap: "clamp(5px,2vw,16px)", minWidth: 0 }}>
                       {t.sponsor!.logo_url
