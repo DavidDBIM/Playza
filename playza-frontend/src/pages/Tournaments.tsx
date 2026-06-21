@@ -440,47 +440,6 @@ function TCard({ qt, featured, onRegistered }: { qt: QuizTournament; featured?: 
   );
 }
 
-function DropTitle() {
-  const [phase, setPhase] = useState<"drop" | "shake" | "settled">("drop");
-  const wrapRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const t = setTimeout(() => {
-      setPhase("shake");
-      const el = wrapRef.current;
-      if (el) {
-        el.style.animation = "screenShake 0.35s ease-out";
-        setTimeout(() => { if (el) el.style.animation = ""; setPhase("settled"); }, 360);
-      }
-    }, 820);
-    return () => clearTimeout(t);
-  }, []);
-  return (
-    <div ref={wrapRef} style={{ position: "relative", textAlign: "center", paddingTop: 8 }}>
-      <style>{`
-        .tourn-hero-title { font-size: clamp(2rem, 7vw, 5rem); }
-        /* Hard cap for the awkward mid-width range (split-screen desktop,
-           landscape tablets) where vw-only scaling overlaps the trophy */
-        @media (min-width: 480px) and (max-width: 900px) {
-          .tourn-hero-title { font-size: clamp(1.6rem, 6vw, 2.8rem) !important; }
-          .tourn-hero-trophy { width: clamp(70px, 18vw, 140px) !important; }
-          .tourn-hero-text-pad { padding-right: clamp(80px, 20vw, 160px) !important; }
-        }
-      `}</style>
-      {(phase === "shake" || phase === "settled") && (
-        <>
-          <div style={{ position: "absolute", left: "50%", top: "72%", width: 50, height: 50, borderRadius: "50%", border: "2px solid #a855f7", opacity: 0, animation: "shockRing 0.5s ease-out forwards", pointerEvents: "none" }} />
-          <div style={{ position: "absolute", left: "50%", top: "72%", width: 50, height: 50, borderRadius: "50%", border: "1px solid #a855f7", opacity: 0, animation: "shockRing 0.6s ease-out 0.07s forwards", pointerEvents: "none" }} />
-          <div style={{ position: "absolute", left: "calc(50% - 50px)", top: "70%", width: 30, height: 4, borderRadius: 3, background: "#a855f7", opacity: 0, animation: "dustL 0.4s ease-out 0.04s forwards", pointerEvents: "none" }} />
-          <div style={{ position: "absolute", left: "calc(50% + 20px)", top: "70%", width: 30, height: 4, borderRadius: 3, background: "#a855f7", opacity: 0, animation: "dustR 0.4s ease-out 0.04s forwards", pointerEvents: "none" }} />
-        </>
-      )}
-      <h1 className="tourn-hero-title" style={{ fontWeight: 700, color: "#fff", letterSpacing: "-2px", lineHeight: 0.95, animation: "wordDrop 0.85s cubic-bezier(0.23,1,0.32,1) forwards", willChange: "transform", margin: 0 }}>Tournaments</h1>
-      <div style={{ height: 2, width: "min(240px,60%)", margin: "12px auto 0", background: "linear-gradient(90deg,transparent,#a855f7,transparent)", transformOrigin: "center", opacity: 0, animation: phase === "settled" ? "lineIn 0.5s ease-out 0.1s forwards" : "none" }} />
-      <p style={{ fontSize: "clamp(11px,3vw,13px)", color: "rgba(255,255,255,0.4)", marginTop: 8, letterSpacing: "0.04em", opacity: 0, animation: phase === "settled" ? "fadeUp 0.4s ease-out 0.2s forwards" : "none", padding: "0 16px" }}>Answer fast. Outlast everyone. Take the prize.</p>
-    </div>
-  );
-}
-
 function TrophyIllustration() {
   return (
     <div style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -686,11 +645,7 @@ const Tournaments = () => {
               <div style={{ position: "absolute", width: "clamp(100px,30vw,200px)", height: "clamp(100px,30vw,200px)", borderRadius: "50%", background: "#4c1d95", opacity: 0.3, bottom: -40, left: "40%", filter: "blur(60px)" }} />
               <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(rgba(255,255,255,0.07) 1px,transparent 1px)", backgroundSize: "24px 24px" }} />
             </div>
-            <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 8 }}>
-              <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(168,85,247,0.15)", border: "1px solid rgba(168,85,247,0.3)", borderRadius: 20, padding: "4px 12px" }}>
-                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#a855f7", display: "block" }} />
-                <span style={{ fontSize: "clamp(8px,2.5vw,10px)", fontWeight: 600, color: "#c084fc", letterSpacing: "0.15em", textTransform: "uppercase" }}>Playza · Competitive</span>
-              </div>
+            <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", justifyContent: "flex-end", marginBottom: 10 }}>
               {liveCount > 0 && (
                 <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.35)", borderRadius: 20, padding: "4px 12px" }}>
                   <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#ef4444", display: "block" }} />
@@ -698,38 +653,12 @@ const Tournaments = () => {
                 </div>
               )}
             </div>
-            <div style={{ position: "relative", zIndex: 1, minHeight: "clamp(200px,45vw,320px)" }}>
-              {/* Trophy — absolutely positioned top-right on mobile, floats right on desktop */}
-              <div className="tourn-hero-trophy" style={{ position: "absolute", top: "clamp(-10px,0vw,0px)", right: 0, width: "clamp(100px,28vw,280px)", zIndex: 2, pointerEvents: "none" }}>
-                <TrophyIllustration />
-              </div>
-              <div className="tourn-hero-text-pad" style={{ paddingRight: "clamp(110px,30vw,300px)" }}>
-                <div style={{ marginBottom: "clamp(10px,3vw,20px)" }}><DropTitle /></div>
-                <p style={{ fontSize: "clamp(13px,3.5vw,18px)", color: "rgba(255,255,255,0.65)", margin: "0 0 clamp(10px,3vw,16px)" }}>
-                  Compete. Play. <span style={{ color: "#fbbf24", fontWeight: 700 }}>Win.</span>
-                </p>
-                <div style={{ display: "flex", gap: "clamp(12px,3vw,22px)", marginBottom: "clamp(10px,3vw,16px)", flexWrap: "wrap" }}>
-                  {[{ icon: "💬", label: "Quizzes" }, { icon: "♟️", label: "Chess" }, { icon: "🏆", label: "Sponsored" }, { icon: "🎮", label: "& More" }].map(c => (
-                    <div key={c.label} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                      <div style={{ width: "clamp(32px,7vw,44px)", height: "clamp(32px,7vw,44px)", borderRadius: "50%", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "clamp(14px,3.5vw,20px)" }}>{c.icon}</div>
-                      <span style={{ fontSize: "clamp(9px,2.2vw,12px)", fontWeight: 500, color: "rgba(255,255,255,0.7)" }}>{c.label}</span>
-                    </div>
-                  ))}
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, color: "rgba(255,255,255,0.3)", fontSize: "clamp(10px,2.5vw,13px)", borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: "clamp(8px,2vw,12px)", marginBottom: "clamp(10px,3vw,16px)" }}>
-                  <span style={{ fontSize: "clamp(12px,3vw,16px)" }}>🌐</span>
-                  One platform. Every game. Real rewards.
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 12 }}>
-                  <span style={{ fontSize: 8, fontWeight: 600, color: "rgba(255,255,255,0.2)", textTransform: "uppercase", letterSpacing: "0.1em", whiteSpace: "nowrap" }}>5 Rounds</span>
-                  <div style={{ display: "flex", gap: 3, flex: 1 }}>
-                    {["#22c55e","#3b82f6","#f97316","#ef4444","#a855f7"].map((c, i) => (
-                      <div key={i} style={{ flex: 1, height: 3, borderRadius: 2, background: c, opacity: 0.7 }} />
-                    ))}
-                  </div>
-                  <span style={{ fontSize: 8, color: "rgba(255,255,255,0.2)", whiteSpace: "nowrap" }}>Final Showdown</span>
-                </div>
-              </div>
+            <div style={{ position: "relative", zIndex: 1 }}>
+              <img
+                src="/images/tournaments-hero-banner.png"
+                alt="Playza Tournaments — Compete. Play. Win. Quizzes, Chess, Sponsored & More."
+                style={{ width: "100%", height: "auto", display: "block", borderRadius: 16 }}
+              />
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 10, marginTop: "clamp(10px,3vw,16px)" }}>
                 {[
                   {
@@ -806,7 +735,7 @@ const Tournaments = () => {
                     <span style={{ fontSize: "clamp(8px,2.5vw,10px)", fontWeight: 600, color: "#c084fc", letterSpacing: "0.15em", textTransform: "uppercase" }}>Sponsored Tournament</span>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "clamp(6px,2.5vw,28px)", flexWrap: "nowrap", maxWidth: "100%" }}>
-                    <img src="/logo.webp" alt="Playza" style={{ height: "clamp(22px,7vw,60px)", width: "auto", objectFit: "contain", flexShrink: 0 }} />
+                    <img src="/logo.png" alt="Playza" style={{ height: "clamp(22px,7vw,60px)", width: "auto", objectFit: "contain", flexShrink: 0 }} />
                     <span style={{ fontSize: "clamp(14px,4.5vw,42px)", fontWeight: 200, color: "rgba(255,255,255,0.3)", lineHeight: 1, flexShrink: 0 }}>×</span>
                     <div style={{ display: "flex", alignItems: "center", gap: "clamp(5px,2vw,16px)", minWidth: 0 }}>
                       {t.sponsor!.logo_url
