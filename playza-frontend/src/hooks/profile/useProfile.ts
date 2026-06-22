@@ -9,14 +9,16 @@ import {
   removeBankAccountApi,
 } from "../../api/profile.api";
 import type { UpdateProfilePayload } from "../../api/profile.api";
-import { TokenStorage } from "../../api/axiosInstance";
 
+// Auth lives in an httpOnly cookie now — queries just attempt the call and
+// rely on the backend's 401 to signal "not logged in" rather than gating
+// on a client-readable token.
 export const useProfile = () => {
   return useQuery({
     queryKey: ["profile"],
     queryFn: getProfileApi,
     staleTime: 5 * 60 * 1000,
-    enabled: !!TokenStorage.getAccessToken(),
+    retry: false,
   });
 };
 
@@ -39,7 +41,7 @@ export const useGameHistory = (page = 1, limit = 20) => {
     queryFn: () => getGameHistoryApi(page, limit),
     staleTime: 0, // Always fetch fresh — backend is protected from CDN caching
     gcTime: 0,    // Don't keep in memory either — force fresh on every mount
-    enabled: !!TokenStorage.getAccessToken(),
+    retry: false,
   });
 };
 
