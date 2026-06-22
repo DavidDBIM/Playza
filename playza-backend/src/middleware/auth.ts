@@ -6,7 +6,9 @@ export interface AuthRequest extends Request {
 }
 
 export async function requireAuth(req: AuthRequest, res: Response, next: NextFunction) {
-  let token: string | undefined = req.cookies?.admin_token;
+  // Regular users use playza_token; admin sessions use admin_token.
+  // Check both so admin accounts (which are also regular users) work on user-facing routes too.
+  let token: string | undefined = req.cookies?.playza_token || req.cookies?.admin_token;
   let user: any = null;
   let debugInfo = "None";
 
@@ -51,7 +53,7 @@ export async function requireAuth(req: AuthRequest, res: Response, next: NextFun
 }
 
 export async function requireAdmin(req: AuthRequest, res: Response, next: NextFunction) {
-  let token: string | undefined = req.cookies?.admin_token;
+  let token: string | undefined = req.cookies?.admin_token || req.cookies?.playza_token;
   let user: any = null;
   let debugInfo = "None";
 
