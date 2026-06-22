@@ -23,14 +23,10 @@ export interface VerifyOtpPayload {
   token: string;
 }
 
+// Tokens are now set as httpOnly cookies by the backend — no longer returned in JSON.
 export interface VerifyOtpResponse {
   success: boolean;
   data: {
-    session: {
-      access_token: string;
-      refresh_token: string;
-      expires_in: number;
-    };
     user: {
       id: string;
       email: string;
@@ -62,11 +58,10 @@ export interface SigninPayload {
   password: string;
 }
 
+// Tokens are now set as httpOnly cookies by the backend — no longer returned in JSON.
 export interface SigninResponse {
   success: boolean;
   data: {
-    access_token: string;
-    refresh_token: string;
     user: {
       id: string;
       email: string;
@@ -96,9 +91,11 @@ export interface ForgotPasswordResponse {
 export interface RefreshTokenResponse {
   success: boolean;
   data: {
-    access_token: string;
-    refresh_token: string;
-    expires_in: number;
+    user: {
+      id: string;
+      email: string;
+      username: string;
+    };
   };
 }
 
@@ -161,12 +158,13 @@ export const forgotPasswordApi = async (
   return data;
 };
 
-export const refreshTokenApi = async (
-  refreshToken: string,
-): Promise<RefreshTokenResponse> => {
+// No longer takes a refresh token param — it's read from the httpOnly
+// cookie server-side. Kept as a function (no args) so axiosInstance's
+// interceptor and any manual callers have one consistent way to refresh.
+export const refreshTokenApi = async (): Promise<RefreshTokenResponse> => {
   const { data } = await axiosInstance.post<RefreshTokenResponse>(
     "/auth/refresh",
-    { refresh_token: refreshToken },
+    {},
   );
   return data;
 };
