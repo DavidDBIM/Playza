@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback, useMemo, type ReactNode } from "react
 import { AuthContext, type UserProfile } from "./auth";
 import { getMeApi } from "@/api/users.api";
 import { logoutApi } from "@/api/auth.api";
-import { TokenStorage } from "@/api/axiosInstance";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getProfileApi,
@@ -12,9 +11,14 @@ import { walletApi } from "@/api/wallet.api";
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
-  const token = TokenStorage.getAccessToken();
   const queryClient = useQueryClient();
 
+  // Auth now lives in an httpOnly cookie set by the backend — JS can't read
+  // it, so we can't gate this query on "is there a token". Instead we always
+  // attempt the /users/me call; the cookie rides along automatically via
+  // axios's withCredentials. A 401 here just means "not logged in", which
+  // is the expected, normal case for a logged-out visitor — not an error to
+  // alarm about.
   const {
     data: profile,
     isLoading,
@@ -22,7 +26,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   } = useQuery({
     queryKey: ["users", "me"],
     queryFn: getMeApi,
-    enabled: !!token,
     retry: false,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
@@ -47,14 +50,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
 
       // Defer non-critical prefetches so they don't compete with the initial render
-      // Only prefetch wallet (needed in header) — profile and banks load on-demand
       const timer = setTimeout(() => {
         queryClient.prefetchQuery({
           queryKey: ["wallet", "balance"],
           queryFn: walletApi.getWallet,
           staleTime: 2 * 60 * 1000,
         });
-        // Prefetch profile and bank accounts after a longer delay
         setTimeout(() => {
           queryClient.prefetchQuery({
             queryKey: ["profile"],
@@ -71,36 +72,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             queryFn: walletApi.getBankList,
             staleTime: 60 * 60 * 1000,
           });
-        }, 3000); // 3s delay for lower-priority data
-      }, 800); // 800ms delay — let first paint complete first
+        }, 3000);
+      }, 800);
 
       return () => clearTimeout(timer);
     } else if (isError) {
-      TokenStorage.clearTokens();
+      // Not logged in (or session expired) — just clear local state.
+      // No tokens to clear since they live in httpOnly cookies the backend manages.
       setUser(null);
       queryClient.clear();
     }
   }, [profile, isError, queryClient]);
 
-  const setAuth = useCallback(
-    (newUser: UserProfile, token: string, refreshToken?: string) => {
-      if (refreshToken) {
-        TokenStorage.setTokens(token, refreshToken);
-      } else {
-        localStorage.setItem("playza_token", token);
-      }
-      setUser(newUser);
-    },
-    [],
-  );
+  // Called after a successful signin or OTP verification. The backend has
+  // already set the auth cookies in its response — this just updates the
+  // in-memory user state so the UI reflects the logged-in user immediately
+  // without waiting for the next /users/me refetch.
+  const setAuth = useCallback((newUser: UserProfile) => {
+    setUser(newUser);
+    queryClient.invalidateQueries({ queryKey: ["users", "me"] });
+  }, [queryClient]);
 
   const logout = useCallback(async () => {
     try {
-      await logoutApi();
+      await logoutApi(); // backend clears the httpOnly cookies
     } catch {
       // Best-effort logout
     } finally {
-      TokenStorage.clearTokens();
       setUser(null);
       queryClient.clear();
     }
@@ -115,7 +113,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     [user],
   );
 
-  const authLoading = isLoading || (!!token && !isError && !user);
+  const authLoading = isLoading;
 
   const value = useMemo(
     () => ({
