@@ -95,23 +95,21 @@ const OTP = ({ onClick }: OtpProps) => {
       { email: pendingEmail, token },
       {
         onSuccess: (data) => {
-          const { session, user } = data.data;
-          setAuth(
-            {
-              id: user.id,
-              username: user.username,
-              email: user.email,
-              phone: user.phone,
-              referralCode: user.referral_code,
-              avatarUrl: user.avatar_url,
-              firstName: user.first_name,
-              lastName: user.last_name,
-              pzaPoints: user.pza_points,
-              isEmailVerified: user.is_email_verified,
-            },
-            session.access_token,
-            session.refresh_token,
-          );
+          // Tokens are now set as httpOnly cookies by the backend response —
+          // nothing to extract or store here, just update the user state.
+          const { user } = data.data;
+          setAuth({
+            id: user.id,
+            username: user.username,
+            email: user.email,
+            phone: user.phone,
+            referralCode: user.referral_code,
+            avatarUrl: user.avatar_url,
+            firstName: user.first_name,
+            lastName: user.last_name,
+            pzaPoints: user.pza_points,
+            isEmailVerified: user.is_email_verified,
+          });
           const redirectTo = searchParams.get("redirect") || "/";
           navigate(redirectTo);
         },
