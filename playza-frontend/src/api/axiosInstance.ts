@@ -64,8 +64,14 @@ axiosInstance.interceptors.response.use(
 
     const status = error.response?.status;
 
-    // ── 401 handling — try a cookie-based refresh once, then retry the request
-    if (status === 401 && !originalRequest._retry && !originalRequest.url?.includes("/auth/refresh")) {
+    // ── 401 handling — only attempt refresh if this isn't a public/auth endpoint
+    // Avoids hammering /auth/refresh for logged-out visitors hitting /users/me
+    const isPublicEndpoint = originalRequest.url?.includes("/auth/") ||
+                             originalRequest.url?.includes("/banners") ||
+                             originalRequest.url?.includes("/gamesession/games") ||
+                             originalRequest.url?.includes("/quiz/tournaments")
+
+    if (status === 401 && !originalRequest._retry && !originalRequest.url?.includes("/auth/refresh") && !isPublicEndpoint) {
       // If a refresh is already in progress, queue this request behind it
       if (isRefreshing) {
         return new Promise<void>((resolve, reject) => {
