@@ -75,7 +75,9 @@ const globalLimiter = rateLimit({
 })
 app.use('/api', globalLimiter)
 
-app.get('/health', (_, res) => {
+// Health check — must be under /api to match frontend ping URL (/api/health)
+// and registered after CORS so the preflight passes
+app.get('/api/health', (_, res) => {
   res.json({ status: 'ok', project: 'Playza API', env: process.env.NODE_ENV })
 })
 
