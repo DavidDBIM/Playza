@@ -8,17 +8,15 @@ import { logAdminAction } from '../admin/admin.service'
 const ACCESS_COOKIE_OPTS = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
-  sameSite: 'lax' as const,
-  domain: process.env.NODE_ENV === 'production' ? '.playza.games' : undefined,
-  maxAge: 60 * 60 * 1000, // 1 hour — Supabase access tokens are short-lived by default
+  sameSite: 'none' as const, // 'none' required for cross-origin (api.playza.games -> playza.games)
+  maxAge: 60 * 60 * 1000, // 1 hour
 }
 
 const REFRESH_COOKIE_OPTS = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
-  sameSite: 'lax' as const,
-  domain: process.env.NODE_ENV === 'production' ? '.playza.games' : undefined,
-  maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days — matches "stay logged in" expectation
+  sameSite: 'none' as const, // 'none' required for cross-origin
+  maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
 }
 
 function setAuthCookies(res: Response, accessToken: string, refreshToken: string) {
@@ -71,8 +69,7 @@ export async function verifyAdminMfaController(req: Request, res: Response) {
     res.cookie('admin_token', result.access_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax', // Lax is required for cross-subdomain requests
-      domain: process.env.NODE_ENV === 'production' ? '.playza.games' : undefined,
+      sameSite: 'none', // 'none' required for cross-origin (admin.playza.games -> api.playza.games)
       maxAge: 4 * 60 * 60 * 1000 // 4 hours
     });
 
@@ -147,8 +144,7 @@ export async function logoutController(req: Request, res: Response) {
     res.clearCookie('admin_token', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      domain: process.env.NODE_ENV === 'production' ? '.playza.games' : undefined
+      sameSite: 'none',
     });
 
     res.status(200).json({ success: true, message: 'Logged out successfully' })
