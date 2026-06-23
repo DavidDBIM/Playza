@@ -28,6 +28,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     queryFn: getMeApi,
     retry: false,
     staleTime: 1000 * 60 * 5, // 5 minutes
+    // Never automatically refetch — auth state only changes on explicit
+    // user actions (login / logout / setAuth). Automatic background
+    // refetches would trigger the 401 → refresh → 429 loop on every
+    // window focus or reconnect event for logged-out visitors.
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
   });
 
   useEffect(() => {
@@ -77,10 +84,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       return () => clearTimeout(timer);
     } else if (isError) {
-      // Not logged in (or session expired) — just clear local state.
-      // No tokens to clear since they live in httpOnly cookies the backend manages.
+      // Not logged in (or session expired) — just clear local user state.
+      // IMPORTANT: Do NOT call queryClient.clear() here. Clearing the entire
+      // query cache removes the ["users","me"] entry itself, which causes
+      // React Query to treat it as a fresh query, immediately re-fire
+      // /users/me, get another 401, attempt another refresh, hit 429, and
+      // loop forever — causing the page-blink. Instead, only reset the
+      // in-memory user state and leave the query cache intact so React
+      // Query knows the "not logged in" result is already settled.
       setUser(null);
-      queryClient.clear();
     }
   }, [profile, isError, queryClient]);
 
@@ -90,6 +102,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // without waiting for the next /users/me refetch.
   const setAuth = useCallback((newUser: UserProfile) => {
     setUser(newUser);
+    // Invalidate so the query re-fetches with the new session cookie
     queryClient.invalidateQueries({ queryKey: ["users", "me"] });
   }, [queryClient]);
 
@@ -100,6 +113,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Best-effort logout
     } finally {
       setUser(null);
+      // On explicit logout it's safe to clear everything — the user
+      // intentionally ended their session so a fresh /users/me on next
+      // visit is expected and correct.
       queryClient.clear();
     }
   }, [queryClient]);
