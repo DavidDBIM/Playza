@@ -806,6 +806,7 @@ const Tournaments = () => {
               {([{ id: "live", label: "🔴 Live Now" }, { id: "upcoming", label: "🟢 Upcoming" }, { id: "completed", label: "⚫ Completed" }] as const).map(tab => (
                 <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{ padding: "6px 14px 10px", fontSize: "clamp(9px,2.5vw,11px)", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em", whiteSpace: "nowrap", background: "none", cursor: "pointer", border: "none", borderBottomStyle: "solid", borderBottomWidth: 2, borderBottomColor: activeTab === tab.id ? "var(--primary)" : "transparent", color: activeTab === tab.id ? "var(--primary)" : "var(--muted-foreground)", marginBottom: -2 }}>{tab.label}</button>
               ))}
+              <Link to="/chess-tournament" style={{ padding: "6px 14px 10px", fontSize: "clamp(9px,2.5vw,11px)", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em", whiteSpace: "nowrap", border: "none", borderBottomStyle: "solid", borderBottomWidth: 2, borderBottomColor: "transparent", color: "var(--muted-foreground)", marginBottom: -2, textDecoration: "none", display: "flex", alignItems: "center", gap: 4 }}>♟ Chess</Link>
             </div>
           </div>
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
