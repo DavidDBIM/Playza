@@ -27,11 +27,17 @@ export const passwordResetLimiter = rateLimit({
   legacyHeaders: false,
 })
 
-// Token refresh — generous but capped, prevents refresh-token spam
+// Token refresh — generous window since every tab re-open triggers one.
+// 60 per 15 min per IP is enough to stop abuse without blocking legit users.
 export const refreshLimiter = rateLimit({
-  windowMs: 5 * 60 * 1000,
-  max: 30,
+  windowMs: 15 * 60 * 1000,
+  max: 60,
   message: { success: false, message: 'Too many refresh requests, slow down' },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => {
+    // Don't rate-limit if there's no refresh cookie at all —
+    // these are logged-out visitors, not token abusers
+    return !req.cookies?.playza_refresh && !req.body?.refresh_token
+  },
 })
