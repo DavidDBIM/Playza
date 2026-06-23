@@ -34,6 +34,8 @@ const Deposit = lazy(() => import("./pages/Deposit"));
 const Withdrawal = lazy(() => import("./pages/Withdrawal"));
 const MyGames = lazy(() => import("./pages/MyGames"));
 const Tournaments = lazy(() => import("./pages/Tournaments"));
+const ChessTournamentPage  = lazy(() => import("./pages/ChessTournamentPage"));
+const ChessTournamentMatch = lazy(() => import("./pages/ChessTournamentMatch"));
 const Referral = lazy(() => import("./pages/Referral"));
 const WithdrawSuccess = lazy(() => import("./pages/WithdrawSuccess"));
 const TermsAndConditions = lazy(() => import("./pages/TermsAndConditions"));
@@ -225,6 +227,8 @@ const AppContent = () => {
               />
               <Route path="/games/speed-tap-arena" element={<SpeedTapArena />} />
               <Route path="/quiz/:id" element={<QuizChampionship />} />
+              <Route path="/chess-tournament" element={<ChessTournamentPage />} />
+              <Route path="/chess-tournament/:tournamentId/match/:roomId" element={<ChessTournamentMatch />} />
               <Route path="/games/:id" element={<Game />} />
               <Route path="/games/:id/session" element={<MatchSession />} />
               <Route path="/games/:id/play" element={<GamePlay />} />
