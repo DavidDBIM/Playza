@@ -594,7 +594,6 @@ const Tournaments = () => {
       
     ].join(" ");
     document.head.appendChild(el);
-    return () => { el.remove(); };
   }, []);
 
   const [activeTab, setActiveTab] = useState<"live" | "upcoming" | "completed">("upcoming");
@@ -617,12 +616,13 @@ const Tournaments = () => {
   const sponsoredCollabs = quizTournaments.filter(t => t.sponsor_mode === "collab" && t.sponsor);
   const sponsoredBanners = quizTournaments.filter(t => t.sponsor_mode === "banner" && t.sponsor_banner_url);
   const totalSlides = 1 + sponsoredCollabs.length + sponsoredBanners.length;
+  const totalSlidesRef = useRef(totalSlides);
+  totalSlidesRef.current = totalSlides;
   const [heroIndex, setHeroIndex] = useState(0);
   useEffect(() => {
-    if (totalSlides <= 1) return;
-    const id = setInterval(() => setHeroIndex(i => (i + 1) % totalSlides), 6000);
+    const id = setInterval(() => setHeroIndex(i => (i + 1) % totalSlidesRef.current), 6000);
     return () => clearInterval(id);
-  }, [totalSlides]);
+  }, []); // stable - uses ref so no restart on refetch
 
 
   return (
@@ -637,8 +637,10 @@ const Tournaments = () => {
       {/* ── Hero Carousel ── */}
       <div style={{ position: "relative", marginBottom: 20 }}>
 
+        {/* ── Slides wrapper ── */}
+        <div style={{ position: "relative" }}>
         {/* ── SLIDE 1: Default Playza hero ── */}
-        <div style={{ display: heroIndex === 0 ? "block" : "none" }}>
+        <div style={{ opacity: heroIndex === 0 ? 1 : 0, pointerEvents: heroIndex === 0 ? "auto" : "none", position: heroIndex === 0 ? "relative" : "absolute", inset: 0, transition: "opacity 0.6s ease" }}>
           <div style={{ position: "relative", background: "#07041a", borderRadius: "0 0 20px 20px", padding: "clamp(20px,5vw,48px) clamp(16px,4vw,28px) clamp(20px,4vw,36px)" }}>
             <div style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0 }}>
               <div style={{ position: "absolute", width: "clamp(200px,60vw,380px)", height: "clamp(200px,60vw,380px)", borderRadius: "50%", background: "#3b0764", opacity: 0.5, top: -100, left: -80, filter: "blur(80px)" }} />
@@ -745,7 +747,7 @@ const Tournaments = () => {
 
         {/* ── COLLAB SLIDES: Playza x Sponsor + trophy ── */}
         {sponsoredCollabs.map((t, si) => (
-          <div key={t.id} style={{ display: heroIndex === 1 + si ? "block" : "none" }}>
+          <div key={t.id} style={{ opacity: heroIndex === 1 + si ? 1 : 0, pointerEvents: heroIndex === 1 + si ? "auto" : "none", position: heroIndex === 1 + si ? "relative" : "absolute", inset: 0, transition: "opacity 0.6s ease" }}>
             <div style={{ position: "relative", background: "#07041a", borderRadius: "0 0 20px 20px", overflow: "hidden", padding: "clamp(20px,5vw,48px) clamp(16px,4vw,28px) clamp(20px,4vw,36px)" }}>
               <div style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0 }}>
                 <div style={{ position: "absolute", width: "clamp(200px,60vw,380px)", height: "clamp(200px,60vw,380px)", borderRadius: "50%", background: "#3b0764", opacity: 0.5, top: -100, left: -80, filter: "blur(80px)" }} />
@@ -782,13 +784,14 @@ const Tournaments = () => {
 
         {/* ── BANNER SLIDES: full uploaded image ── */}
         {sponsoredBanners.map((t, si) => (
-          <div key={t.id} style={{ display: heroIndex === 1 + sponsoredCollabs.length + si ? "block" : "none" }}>
+          <div key={t.id} style={{ opacity: heroIndex === 1 + sponsoredCollabs.length + si ? 1 : 0, pointerEvents: heroIndex === 1 + sponsoredCollabs.length + si ? "auto" : "none", position: heroIndex === 1 + sponsoredCollabs.length + si ? "relative" : "absolute", inset: 0, transition: "opacity 0.6s ease" }}>
             <div style={{ borderRadius: "0 0 20px 20px", overflow: "hidden" }}>
               <img src={t.sponsor_banner_url!} alt="Sponsor banner" style={{ width: "100%", display: "block", maxHeight: "clamp(180px,40vw,340px)", objectFit: "cover" }} />
             </div>
           </div>
         ))}
 
+        </div>{/* end slides wrapper */}
         {/* ── Dot indicators (only if more than 1 slide) ── */}
         {totalSlides > 1 && (
           <div style={{ display: "flex", justifyContent: "center", gap: 6, marginTop: 10 }}>
