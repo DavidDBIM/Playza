@@ -70,7 +70,7 @@
     <!-- ─── Keep Render backend awake (pings every 10 min) ──────────────────── -->
     <script>
       (function() {
-        var PING_URL = 'https://api.playza.games/api/health';
+        var PING_URL = 'https://api.playza.games/api/health'; // matches /api/health backend endpoint
         var INTERVAL = 10 * 60 * 1000;
         function ping() {
           fetch(PING_URL, { method: 'GET', mode: 'no-cors' }).catch(function(){});
