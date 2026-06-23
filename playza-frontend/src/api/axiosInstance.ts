@@ -77,19 +77,27 @@ axiosInstance.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        // Refresh token is read from the httpOnly cookie server-side —
-        // nothing to send here except the cookie itself (withCredentials handles that)
-        await axios.post(
+        const refreshResponse = await axios.post(
           `${import.meta.env.VITE_BACKEND_URL}/api/auth/refresh`,
           {},
           { withCredentials: true },
         );
+
+        // If the server returned a non-2xx (e.g. 400 bad token, 429 rate limited)
+        // axios won't throw for these in some configs — handle explicitly
+        if (refreshResponse.status === 400 || refreshResponse.status === 429) {
+          throw new Error(`Refresh failed with status ${refreshResponse.status}`);
+        }
+
         processPendingQueue(null);
         return axiosInstance(originalRequest);
       } catch (refreshError) {
         processPendingQueue(refreshError);
-        // Refresh failed — session is truly over. Let AuthContext detect the
-        // missing user via the failed /users/me call and handle UI accordingly.
+        // Refresh truly failed — clear user state via the query cache so
+        // AuthContext detects it cleanly without triggering another loop.
+        // Remove only the ["users","me"] entry (not the whole cache) so the
+        // settled "not logged in" state is preserved.
+        queryClient.removeQueries({ queryKey: ["users", "me"] });
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
