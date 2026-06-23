@@ -64,14 +64,21 @@ axiosInstance.interceptors.response.use(
 
     const status = error.response?.status;
 
-    // ── 401 handling — only attempt refresh if this isn't a public/auth endpoint
-    // Avoids hammering /auth/refresh for logged-out visitors hitting /users/me
-    const isPublicEndpoint = originalRequest.url?.includes("/auth/") ||
-                             originalRequest.url?.includes("/banners") ||
-                             originalRequest.url?.includes("/gamesession/games") ||
-                             originalRequest.url?.includes("/quiz/tournaments")
+    // ── 401 handling — only attempt silent refresh for authenticated-user endpoints.
+    // Logged-out visitors hitting /users/me will get a 401, which is normal —
+    // we must NOT attempt refresh in that case since there's no cookie to refresh with,
+    // which causes the 400 error loop. Only retry endpoints that require auth.
+    const requiresAuth = originalRequest.url?.includes("/users/me") ||
+                         originalRequest.url?.includes("/wallet") ||
+                         originalRequest.url?.includes("/profile") ||
+                         originalRequest.url?.includes("/leaderboard") ||
+                         originalRequest.url?.includes("/referral") ||
+                         originalRequest.url?.includes("/loyalty") ||
+                         originalRequest.url?.includes("/pza") ||
+                         originalRequest.url?.includes("/chess") ||
+                         originalRequest.url?.includes("/gamesession/session")
 
-    if (status === 401 && !originalRequest._retry && !originalRequest.url?.includes("/auth/refresh") && !isPublicEndpoint) {
+    if (status === 401 && !originalRequest._retry && !originalRequest.url?.includes("/auth/refresh") && requiresAuth) {
       // If a refresh is already in progress, queue this request behind it
       if (isRefreshing) {
         return new Promise<void>((resolve, reject) => {
