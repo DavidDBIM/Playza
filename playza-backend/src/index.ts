@@ -43,6 +43,7 @@ import referralRewardsRoutes from './modules/referral-rewards/referral-rewards.r
 import { setupQuizGateway } from './modules/quiz/quiz.gateway'
 import { setQuizAdminIo } from './modules/quiz/quiz.admin.routes'
 import { setupSocketIO } from './lib/socketHandler'
+import { prerenderMiddleware } from './middleware/prerender.middleware'
 
 dotenv.config()
 
@@ -60,6 +61,12 @@ if (process.env.NODE_ENV !== 'production' && !allowedOrigins.includes('http://lo
 app.use(helmet())
 app.use(cookieParser())
 app.use(cors({ origin: allowedOrigins, credentials: true }))
+
+// ── Prerender middleware — intercepts bots before any other route ─────────────
+// Googlebot, WhatsApp, Facebook etc. get real HTML with content.
+// Real users are completely unaffected — middleware skips them instantly.
+app.use(prerenderMiddleware)
+
 app.post('/api/wallet/webhook/paystack', express.raw({ type: 'application/json' }))
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
