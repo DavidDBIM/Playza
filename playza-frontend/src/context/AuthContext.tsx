@@ -3,6 +3,7 @@ import { AuthContext, type UserProfile } from "./auth";
 import { getMeApi } from "@/api/users.api";
 import { logoutApi } from "@/api/auth.api";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { TokenStorage } from "@/api/axiosInstance";
 import {
   getProfileApi,
   getBankAccountsApi,
@@ -11,14 +12,11 @@ import { walletApi } from "@/api/wallet.api";
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
+  const [token, setToken] = useState<string | null>(
+    TokenStorage.getAccessToken()
+  );
   const queryClient = useQueryClient();
 
-  // Auth now lives in an httpOnly cookie set by the backend — JS can't read
-  // it, so we can't gate this query on "is there a token". Instead we always
-  // attempt the /users/me call; the cookie rides along automatically via
-  // axios's withCredentials. A 401 here just means "not logged in", which
-  // is the expected, normal case for a logged-out visitor — not an error to
-  // alarm about.
   const {
     data: profile,
     isLoading,
@@ -26,12 +24,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   } = useQuery({
     queryKey: ["users", "me"],
     queryFn: getMeApi,
+    enabled: !!token,
     retry: false,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    // Never automatically refetch — auth state only changes on explicit
-    // user actions (login / logout / setAuth). Automatic background
-    // refetches would trigger the 401 → refresh → 429 loop on every
-    // window focus or reconnect event for logged-out visitors.
+    staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     refetchOnMount: false,
@@ -56,7 +51,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         is_active: profile.is_active,
       });
 
-      // Defer non-critical prefetches so they don't compete with the initial render
       const timer = setTimeout(() => {
         queryClient.prefetchQuery({
           queryKey: ["wallet", "balance"],
@@ -84,38 +78,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       return () => clearTimeout(timer);
     } else if (isError) {
-      // Not logged in (or session expired) — just clear local user state.
-      // IMPORTANT: Do NOT call queryClient.clear() here. Clearing the entire
-      // query cache removes the ["users","me"] entry itself, which causes
-      // React Query to treat it as a fresh query, immediately re-fire
-      // /users/me, get another 401, attempt another refresh, hit 429, and
-      // loop forever — causing the page-blink. Instead, only reset the
-      // in-memory user state and leave the query cache intact so React
-      // Query knows the "not logged in" result is already settled.
       setUser(null);
+      setToken(null);
+      TokenStorage.clearTokens();
+      queryClient.clear();
     }
   }, [profile, isError, queryClient]);
 
-  // Called after a successful signin or OTP verification. The backend has
-  // already set the auth cookies in its response — this just updates the
-  // in-memory user state so the UI reflects the logged-in user immediately
-  // without waiting for the next /users/me refetch.
-  const setAuth = useCallback((newUser: UserProfile) => {
-    setUser(newUser);
-    // Invalidate so the query re-fetches with the new session cookie
-    queryClient.invalidateQueries({ queryKey: ["users", "me"] });
-  }, [queryClient]);
+  const setAuth = useCallback(
+    (newUser: UserProfile, accessToken: string, refreshToken: string) => {
+      TokenStorage.setTokens(accessToken, refreshToken);
+      setToken(accessToken);
+      setUser(newUser);
+      queryClient.invalidateQueries({ queryKey: ["users", "me"] });
+    },
+    [queryClient]
+  );
 
   const logout = useCallback(async () => {
     try {
-      await logoutApi(); // backend clears the httpOnly cookies
+      await logoutApi();
     } catch {
       // Best-effort logout
     } finally {
+      TokenStorage.clearTokens();
+      setToken(null);
       setUser(null);
-      // On explicit logout it's safe to clear everything — the user
-      // intentionally ended their session so a fresh /users/me on next
-      // visit is expected and correct.
       queryClient.clear();
     }
   }, [queryClient]);
@@ -126,10 +114,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const isProfileComplete = useMemo(
     () => !!(user?.firstName && user?.lastName),
-    [user],
+    [user]
   );
 
-  const authLoading = isLoading;
+  const authLoading = isLoading || (!!token && !isError && !user);
 
   const value = useMemo(
     () => ({
@@ -140,7 +128,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       isProfileComplete,
       isLoading: authLoading,
     }),
-    [user, isProfileComplete, authLoading, setAuth, logout, updateProfile],
+    [user, isProfileComplete, authLoading, setAuth, logout, updateProfile]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
