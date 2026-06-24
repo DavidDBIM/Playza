@@ -1,16 +1,34 @@
 import axios from "axios";
 import { queryClient } from "../lib/queryClient";
 
-// Tokens now live in httpOnly cookies set by the backend — JavaScript can no
-// longer read or store them, which is the point (protects against XSS token
-// theft). The browser attaches cookies automatically on every request as
-// long as withCredentials is true, so there's no token-attaching logic needed.
+// ── Token storage (localStorage) ─────────────────────────────────────────────
+export const TokenStorage = {
+  getAccessToken: () => localStorage.getItem("playza_token"),
+  getRefreshToken: () => localStorage.getItem("playza_refresh_token"),
+  setTokens: (access: string, refresh: string) => {
+    localStorage.setItem("playza_token", access);
+    localStorage.setItem("playza_refresh_token", refresh);
+  },
+  clearTokens: () => {
+    localStorage.removeItem("playza_token");
+    localStorage.removeItem("playza_refresh_token");
+  },
+};
 
 const axiosInstance = axios.create({
   baseURL: `${import.meta.env.VITE_BACKEND_URL}/api`,
   headers: { "Content-Type": "application/json" },
   withCredentials: true,
-  timeout: 15000, // 15s timeout — prevents requests hanging forever
+  timeout: 15000,
+});
+
+// ── Attach token to every request ─────────────────────────────────────────────
+axiosInstance.interceptors.request.use((config) => {
+  const token = TokenStorage.getAccessToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
 });
 
 // ── Track in-flight refresh to avoid parallel refresh storms
@@ -25,12 +43,11 @@ function processPendingQueue(err: unknown) {
   pendingQueue = [];
 }
 
-// ── Response interceptor: silent refresh on 401, wallet invalidation on mutations
+// ── Response interceptor
 axiosInstance.interceptors.response.use(
   (response) => {
     const url = response.config.url || "";
     const method = response.config.method?.toLowerCase();
-
     if (method === "post" || method === "put" || method === "delete") {
       const endpointsThatAffectWallet = [
         "/soloearn", "/gamesession", "/chess", "/ludo", "/pool", "/soccer", "/speedbattle", "/wordscramble"
@@ -64,22 +81,13 @@ axiosInstance.interceptors.response.use(
 
     const status = error.response?.status;
 
-    // ── 401 handling — only attempt silent refresh for authenticated-user endpoints.
-    // Logged-out visitors hitting /users/me will get a 401, which is normal —
-    // we must NOT attempt refresh in that case since there's no cookie to refresh with,
-    // which causes the 400 error loop. Only retry endpoints that require auth.
-    const requiresAuth = originalRequest.url?.includes("/users/me") ||
-                         originalRequest.url?.includes("/wallet") ||
-                         originalRequest.url?.includes("/profile") ||
-                         originalRequest.url?.includes("/leaderboard") ||
-                         originalRequest.url?.includes("/referral") ||
-                         originalRequest.url?.includes("/loyalty") ||
-                         originalRequest.url?.includes("/pza") ||
-                         originalRequest.url?.includes("/chess") ||
-                         originalRequest.url?.includes("/gamesession/session")
-
-    if (status === 401 && !originalRequest._retry && !originalRequest.url?.includes("/auth/refresh") && requiresAuth) {
-      // If a refresh is already in progress, queue this request behind it
+    // ── 401: only attempt refresh if we actually have a refresh token
+    if (
+      status === 401 &&
+      !originalRequest._retry &&
+      !originalRequest.url?.includes("/auth/refresh") &&
+      TokenStorage.getRefreshToken()
+    ) {
       if (isRefreshing) {
         return new Promise<void>((resolve, reject) => {
           pendingQueue.push({ resolve, reject });
@@ -90,26 +98,21 @@ axiosInstance.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const refreshResponse = await axios.post(
+        const { data } = await axios.post(
           `${import.meta.env.VITE_BACKEND_URL}/api/auth/refresh`,
-          {},
+          { refresh_token: TokenStorage.getRefreshToken() },
           { withCredentials: true },
         );
 
-        // If the server returned a non-2xx (e.g. 400 bad token, 429 rate limited)
-        // axios won't throw for these in some configs — handle explicitly
-        if (refreshResponse.status === 400 || refreshResponse.status === 429) {
-          throw new Error(`Refresh failed with status ${refreshResponse.status}`);
+        if (data?.data?.access_token) {
+          TokenStorage.setTokens(data.data.access_token, data.data.refresh_token || TokenStorage.getRefreshToken()!);
         }
 
         processPendingQueue(null);
         return axiosInstance(originalRequest);
       } catch (refreshError) {
         processPendingQueue(refreshError);
-        // Refresh truly failed — clear user state via the query cache so
-        // AuthContext detects it cleanly without triggering another loop.
-        // Remove only the ["users","me"] entry (not the whole cache) so the
-        // settled "not logged in" state is preserved.
+        TokenStorage.clearTokens();
         queryClient.removeQueries({ queryKey: ["users", "me"] });
         return Promise.reject(refreshError);
       } finally {
