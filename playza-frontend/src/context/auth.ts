@@ -25,9 +25,7 @@ export interface UserProfile {
 
 export interface AuthContextType {
   user: UserProfile | null;
-  // No longer takes a token — the backend sets it as an httpOnly cookie.
-  // This just updates the in-memory user state after a successful signin/OTP verify.
-  setAuth: (user: UserProfile) => void;
+  setAuth: (user: UserProfile, accessToken: string, refreshToken: string) => void;
   logout: () => Promise<void>;
   updateProfile: (data: Partial<UserProfile>) => void;
   isProfileComplete: boolean;
