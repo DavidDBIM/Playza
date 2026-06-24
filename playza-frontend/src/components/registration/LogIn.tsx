@@ -25,21 +25,23 @@ const LogIn = ({ onClick }: LogInProps) => {
       { identifier, password },
       {
         onSuccess: (data) => {
-          // Tokens are now set as httpOnly cookies by the backend response —
-          // nothing to extract or store here, just update the user state.
-          const { user } = data.data;
-          setAuth({
-            id: user.id,
-            username: user.username,
-            email: user.email,
-            phone: user.phone,
-            referralCode: user.referral_code,
-            avatarUrl: user.avatar_url,
-            firstName: user.first_name,
-            lastName: user.last_name,
-            pzaPoints: user.pza_points,
-            isEmailVerified: user.is_email_verified,
-          });
+          const { access_token, refresh_token, user } = data.data;
+          setAuth(
+            {
+              id: user.id,
+              username: user.username,
+              email: user.email,
+              phone: user.phone,
+              referralCode: user.referral_code,
+              avatarUrl: user.avatar_url,
+              firstName: user.first_name,
+              lastName: user.last_name,
+              pzaPoints: user.pza_points,
+              isEmailVerified: user.is_email_verified,
+            },
+            access_token,
+            refresh_token,
+          );
           const redirectTo = searchParams.get("redirect") || "/";
           navigate(redirectTo);
         },
