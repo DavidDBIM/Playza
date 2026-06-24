@@ -75,8 +75,6 @@ const globalLimiter = rateLimit({
 })
 app.use('/api', globalLimiter)
 
-// Health check — frontend pings this to keep Render warm.
-// Explicitly set CORP header so browser no-cors fetch doesn't get blocked.
 app.get('/api/health', (_, res) => {
   res.set('Cross-Origin-Resource-Policy', 'cross-origin')
   res.json({ status: 'ok', project: 'Playza API', env: process.env.NODE_ENV })
