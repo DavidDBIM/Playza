@@ -2,33 +2,6 @@ import { Request, Response } from 'express'
 import * as authService from './auth.service'
 import { logAdminAction } from '../admin/admin.service'
 
-// ── Shared cookie options ─────────────────────────────────────────────────
-// playza_token: short-lived access token, sent on every request
-// playza_refresh: long-lived refresh token, only sent to /api/auth/refresh
-const ACCESS_COOKIE_OPTS = {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: 'none' as const, // 'none' required for cross-origin (api.playza.games -> playza.games)
-  maxAge: 60 * 60 * 1000, // 1 hour
-}
-
-const REFRESH_COOKIE_OPTS = {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: 'none' as const, // 'none' required for cross-origin
-  maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-}
-
-function setAuthCookies(res: Response, accessToken: string, refreshToken: string) {
-  res.cookie('playza_token', accessToken, ACCESS_COOKIE_OPTS)
-  res.cookie('playza_refresh', refreshToken, REFRESH_COOKIE_OPTS)
-}
-
-function clearAuthCookies(res: Response) {
-  res.clearCookie('playza_token', ACCESS_COOKIE_OPTS)
-  res.clearCookie('playza_refresh', REFRESH_COOKIE_OPTS)
-}
-
 export async function signupController(req: Request, res: Response) {
   try {
     const result = await authService.signup(req.body)
@@ -41,8 +14,7 @@ export async function signupController(req: Request, res: Response) {
 export async function signinController(req: Request, res: Response) {
   try {
     const result = await authService.signin(req.body)
-    setAuthCookies(res, result.access_token, result.refresh_token)
-    res.status(200).json({ success: true, data: { user: result.user } })
+    res.status(200).json({ success: true, data: result })
   } catch (err: any) {
     res.status(401).json({ success: false, message: err.message })
   }
@@ -62,23 +34,16 @@ export async function verifyAdminMfaController(req: Request, res: Response) {
     const { email, code } = req.body
     const result = await authService.verifyAdminMfa(email, code)
 
-    // Log the successful login
-    await logAdminAction(result.user.id, 'LOGIN_SUCCESS', null, { email }, req);
+    await logAdminAction(result.user.id, 'LOGIN_SUCCESS', null, { email }, req)
 
-    // Set HttpOnly Cookie for the token
     res.cookie('admin_token', result.access_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'none', // 'none' required for cross-origin (admin.playza.games -> api.playza.games)
-      maxAge: 4 * 60 * 60 * 1000 // 4 hours
-    });
-
-    res.status(200).json({
-      success: true,
-      data: {
-        user: result.user,
-      }
+      sameSite: 'lax',
+      maxAge: 4 * 60 * 60 * 1000
     })
+
+    res.status(200).json({ success: true, data: { user: result.user } })
   } catch (err: any) {
     res.status(401).json({ success: false, message: err.message })
   }
@@ -88,10 +53,7 @@ export async function verifyOtpController(req: Request, res: Response) {
   try {
     const { email, token } = req.body
     const result = await authService.verifyOtp(email, token)
-    if (result.session?.access_token && result.session?.refresh_token) {
-      setAuthCookies(res, result.session.access_token, result.session.refresh_token)
-    }
-    res.status(200).json({ success: true, data: { user: result.user } })
+    res.status(200).json({ success: true, data: result })
   } catch (err: any) {
     res.status(400).json({ success: false, message: err.message })
   }
@@ -119,34 +81,23 @@ export async function forgotPasswordController(req: Request, res: Response) {
 
 export async function refreshTokenController(req: Request, res: Response) {
   try {
-    // Prefer the refresh cookie; fall back to body for any non-browser callers
-    const refresh_token = req.cookies?.playza_refresh || req.body?.refresh_token
+    const refresh_token = req.body?.refresh_token || req.cookies?.playza_refresh
     if (!refresh_token) {
       res.status(400).json({ success: false, message: 'No refresh token found' })
       return
     }
     const result = await authService.refreshToken(refresh_token)
-    setAuthCookies(res, result.access_token, result.refresh_token)
-    res.status(200).json({ success: true, data: { user: result.user } })
+    res.status(200).json({ success: true, data: result })
   } catch (err: any) {
-    clearAuthCookies(res)
     res.status(401).json({ success: false, message: err.message })
   }
 }
 
 export async function logoutController(req: Request, res: Response) {
   try {
-    const token = req.cookies?.playza_token || req.headers.authorization?.split(' ')[1] || ''
+    const token = req.headers.authorization?.split(' ')[1] || req.cookies?.admin_token || ''
     await authService.logout(token)
-
-    clearAuthCookies(res)
-    // Also clear admin cookie in case this was an admin session
-    res.clearCookie('admin_token', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'none',
-    });
-
+    res.clearCookie('admin_token')
     res.status(200).json({ success: true, message: 'Logged out successfully' })
   } catch (err: any) {
     res.status(400).json({ success: false, message: err.message })
