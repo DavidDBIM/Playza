@@ -572,6 +572,53 @@ function TrophyIllustration() {
   );
 }
 
+// ── Chess Tournament Card — shown inline with quiz cards in same tabs ─────────
+function ChessTCard({ ct, onOpen }: { ct: any; onOpen: () => void }) {
+  const navigate = useNavigate();
+  const fmtTime = (s: number) => s >= 60 ? `${Math.floor(s / 60)}m${s % 60 > 0 ? `+${s % 60}s` : ""}` : `${s}s`;
+  const fill = Math.min(((ct.player_count ?? 0) / ct.bracket_size) * 100, 100);
+  const isLive = ct.status === "active";
+  return (
+    <div onClick={onOpen} style={{ cursor: "pointer", borderRadius: 14, padding: "14px 16px", background: "rgba(124,58,237,0.06)", border: `1px solid ${isLive ? "rgba(239,68,68,0.35)" : "rgba(124,58,237,0.2)"}`, transition: "transform 0.15s", display: "flex", flexDirection: "column", gap: 10 }}
+      onMouseEnter={e => (e.currentTarget.style.transform = "translateY(-2px)")}
+      onMouseLeave={e => (e.currentTarget.style.transform = "")}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ fontSize: 16 }}>♟</span>
+          <span style={{ fontSize: 9, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", color: isLive ? "#ef4444" : "#a855f7" }}>
+            {isLive ? "🔴 Live" : ct.status === "lobby" ? "🟡 Starting Soon" : "🟢 Registration"} · Chess
+          </span>
+        </div>
+        <span style={{ fontSize: 9, color: "var(--muted-foreground)", fontWeight: 700 }}>
+          {ct.format === "group_knockout" ? "Group+KO" : "Knockout"} · {fmtTime(ct.time_control_secs)}
+        </span>
+      </div>
+      <div>
+        <p style={{ fontSize: 14, fontWeight: 800, color: "var(--foreground)", margin: "0 0 4px", lineHeight: 1.3 }}>{ct.title}</p>
+        <div style={{ display: "flex", gap: 10, fontSize: 10, color: "var(--muted-foreground)" }}>
+          <span>{ct.bracket_size} players</span>
+          <span>·</span>
+          <span style={{ color: "#fbbf24", fontWeight: 700 }}>{ct.prize_pool?.toLocaleString() ?? 0} ZA prize</span>
+          {ct.entry_fee > 0 && <><span>·</span><span>{ct.entry_fee} ZA entry</span></>}
+        </div>
+      </div>
+      <div>
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9, color: "var(--muted-foreground)", marginBottom: 4 }}>
+          <span>{ct.player_count ?? 0}/{ct.bracket_size} registered</span>
+          {isLive && <span style={{ color: "#a855f7", fontWeight: 800 }}>Round {ct.current_round}</span>}
+        </div>
+        <div style={{ height: 3, borderRadius: 2, background: "rgba(124,58,237,0.15)", overflow: "hidden" }}>
+          <div style={{ height: "100%", borderRadius: 2, width: `${fill}%`, background: "linear-gradient(90deg,#7c3aed,#a855f7)" }} />
+        </div>
+      </div>
+      <button onClick={e => { e.stopPropagation(); navigate(`/chess-tournament`); }}
+        style={{ padding: "8px", borderRadius: 8, background: "rgba(124,58,237,0.15)", border: "1px solid rgba(124,58,237,0.3)", color: "#a855f7", fontSize: 11, fontWeight: 800, cursor: "pointer", textAlign: "center" }}>
+        {ct.status === "registration" ? "Register" : ct.status === "active" ? "View Bracket" : "View Lobby"}
+      </button>
+    </div>
+  );
+}
+
 const Tournaments = () => {
   useEffect(() => {
     const id = "playza-hero-styles";
@@ -601,6 +648,21 @@ const Tournaments = () => {
   const [filterPrize, setFilterPrize] = useState("all");
   const queryClient = useQueryClient();
   const { data: quizTournaments = [], isError, isLoading, refetch } = useQuery({ queryKey: ["quiz-tournaments-public"], queryFn: getQuizTournamentsApi, staleTime: 5_000, refetchInterval: 15_000, retry: 1 });
+
+  // Fetch chess tournaments and merge into same tabs
+  const { data: chessTournaments = [] } = useQuery({
+    queryKey: ["chess-tournaments-public"],
+    queryFn: async () => {
+      try {
+        const { getChessTournaments } = await import("@/api/chess-tournament.api");
+        return await getChessTournaments();
+      } catch { return []; }
+    },
+    staleTime: 10_000,
+    refetchInterval: 20_000,
+    retry: false,
+  });
+
   const featuredT = quizTournaments.find(qt => qt.status === "active" || qt.status === "registration" || qt.status === "lobby") ?? quizTournaments[0];
   const filtered = quizTournaments.filter(qt => {
     const matchTab = activeTab === "live" ? qt.status === "active" : activeTab === "completed" ? qt.status === "completed" : ["lobby", "draft", "registration"].includes(qt.status);
@@ -608,9 +670,14 @@ const Tournaments = () => {
     const matchPrize = filterPrize === "high" ? qt.prize_pool >= 100_000 : filterPrize === "low" ? qt.prize_pool < 100_000 : true;
     return matchTab && matchSearch && matchPrize;
   });
+  const filteredChess = (chessTournaments as any[]).filter((ct: any) => {
+    const matchTab = activeTab === "live" ? ct.status === "active" : activeTab === "completed" ? ct.status === "completed" : ["lobby", "registration"].includes(ct.status);
+    const matchSearch = ct.title.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchTab && matchSearch;
+  });
   const totalPlayers = quizTournaments.reduce((s, t) => s + t.player_count, 0);
   const totalPrize = quizTournaments.reduce((s, t) => s + t.prize_pool, 0);
-  const liveCount = quizTournaments.filter(t => t.status === "active").length;
+  const liveCount = quizTournaments.filter(t => t.status === "active").length + (chessTournaments as any[]).filter((t: any) => t.status === "active").length;
   function handleRegistered(id: string) { queryClient.setQueryData<QuizTournament[]>(["quiz-tournaments-public"], old => (old ?? []).map(t => t.id === id ? { ...t, player_count: t.player_count + 1, user_registered: true } : t)); }
   // ── Sponsor slides ────────────────────────────────────────────────────────
   const sponsoredCollabs = quizTournaments.filter(t => t.sponsor_mode === "collab" && t.sponsor);
@@ -701,7 +768,7 @@ const Tournaments = () => {
                       <circle key={di} cx={`${(di * 37) % 100}%`} cy={`${(di * 53) % 100}%`} r="1.2" fill={accent} opacity={0.35} />
                     ))}
                     {(pattern === "trophy" || pattern === "trophy-outline") && (
-                      <g transform="translate(70%, 10%) scale(2.2)" opacity={pattern === "trophy-outline" ? 0.12 : 0.08}>
+                      <g transform="translate(100 10) scale(2.2)" opacity={pattern === "trophy-outline" ? 0.12 : 0.08}>
                         <path d="M0 2 L8 2 L8 6 Q8 10 4 11 Q0 10 0 6 Z" fill="none" stroke={accent} strokeWidth="0.6" />
                         <path d="M3 11 L5 11 L5.5 13 L2.5 13 Z" fill="none" stroke={accent} strokeWidth="0.6" />
                       </g>
@@ -809,7 +876,6 @@ const Tournaments = () => {
               {([{ id: "live", label: "🔴 Live Now" }, { id: "upcoming", label: "🟢 Upcoming" }, { id: "completed", label: "⚫ Completed" }] as const).map(tab => (
                 <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{ padding: "6px 14px 10px", fontSize: "clamp(9px,2.5vw,11px)", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em", whiteSpace: "nowrap", background: "none", cursor: "pointer", border: "none", borderBottomStyle: "solid", borderBottomWidth: 2, borderBottomColor: activeTab === tab.id ? "var(--primary)" : "transparent", color: activeTab === tab.id ? "var(--primary)" : "var(--muted-foreground)", marginBottom: -2 }}>{tab.label}</button>
               ))}
-              <Link to="/chess-tournament" style={{ padding: "6px 14px 10px", fontSize: "clamp(9px,2.5vw,11px)", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em", whiteSpace: "nowrap", border: "none", borderBottomStyle: "solid", borderBottomWidth: 2, borderBottomColor: "transparent", color: "var(--muted-foreground)", marginBottom: -2, textDecoration: "none", display: "flex", alignItems: "center", gap: 4 }}>♟ Chess</Link>
             </div>
           </div>
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
@@ -845,8 +911,11 @@ const Tournaments = () => {
               <p style={{ fontSize: 11, color: "var(--muted-foreground)", margin: 0 }}>Check your connection and try again</p>
               <button onClick={() => refetch()} style={{ padding: "10px 20px", borderRadius: 10, background: "var(--primary)", color: "#fff", fontSize: 13, fontWeight: 600, border: "none", cursor: "pointer" }}>Retry</button>
             </div>
-          ) : filtered.length > 0 ? (
-            filtered.map(qt => <TCard key={qt.id} qt={qt} featured={featuredT?.id === qt.id} onRegistered={handleRegistered} />)
+          ) : filtered.length > 0 || filteredChess.length > 0 ? (
+            <>
+              {filtered.map(qt => <TCard key={qt.id} qt={qt} featured={featuredT?.id === qt.id} onRegistered={handleRegistered} />)}
+              {filteredChess.map((ct: any) => <ChessTCard key={`chess-${ct.id}`} ct={ct} onOpen={() => {}} />)}
+            </>
           ) : (
             <div style={{ gridColumn: "1/-1", padding: "60px 16px", display: "flex", flexDirection: "column", alignItems: "center", gap: 10, textAlign: "center", border: "2px dashed var(--border)", borderRadius: 14 }}>
               <Trophy size={36} style={{ opacity: 0.2, color: "var(--foreground)" }} />
