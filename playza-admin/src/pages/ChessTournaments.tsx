@@ -252,7 +252,8 @@ function TournamentForm({ initial, onSave, onCancel, editId }: {
   const set = (k: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setForm(f => ({ ...f, [k]: e.target.type === "number" ? Number(e.target.value) : e.target.value }));
 
-  const inputCls = "w-full bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white placeholder-white/20 focus:outline-none focus:ring-1 focus:ring-violet-500/50";
+  const inputCls = "w-full bg-[#1a1025] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white placeholder-white/20 focus:outline-none focus:ring-1 focus:ring-violet-500/50";
+  const selectCls = "w-full bg-[#1a1025] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-violet-500/50 cursor-pointer";
   const labelCls = "block text-[10px] font-black uppercase tracking-widest text-white/40 mb-1.5";
 
   return (
@@ -282,15 +283,15 @@ function TournamentForm({ initial, onSave, onCancel, editId }: {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className={labelCls}>Format</label>
-            <select className={inputCls} value={form.format} onChange={e => setForm(f => ({ ...f, format: e.target.value as any }))}>
-              <option value="knockout">Knockout — Single elimination</option>
-              <option value="group_knockout">Group Stage → Knockout</option>
+            <select className={selectCls} value={form.format} onChange={e => setForm(f => ({ ...f, format: e.target.value as any }))}>
+              <option value="knockout" style={{background:"#1a1025",color:"#fff"}}>Knockout — Single elimination</option>
+              <option value="group_knockout" style={{background:"#1a1025",color:"#fff"}}>Group Stage → Knockout</option>
             </select>
           </div>
           <div>
             <label className={labelCls}>Bracket Size</label>
-            <select className={inputCls} value={form.bracket_size} onChange={e => setForm(f => ({ ...f, bracket_size: Number(e.target.value) }))}>
-              {[4, 8, 16, 32, 64].map(n => <option key={n} value={n}>{n} players</option>)}
+            <select className={selectCls} value={form.bracket_size} onChange={e => setForm(f => ({ ...f, bracket_size: Number(e.target.value) }))}>
+              {[4, 8, 16, 32, 64].map(n => <option key={n} value={n} style={{background:"#1a1025",color:"#fff"}}>{n} players</option>)}
             </select>
           </div>
         </div>
@@ -300,15 +301,15 @@ function TournamentForm({ initial, onSave, onCancel, editId }: {
           <div className="grid grid-cols-2 gap-4 p-4 rounded-xl border border-violet-500/20 bg-violet-500/5">
             <div>
               <label className={labelCls}>Number of Groups</label>
-              <select className={inputCls} value={form.group_count} onChange={e => setForm(f => ({ ...f, group_count: Number(e.target.value) }))}>
-                {[2, 4, 8].map(n => <option key={n} value={n}>{n} groups</option>)}
+              <select className={selectCls} value={form.group_count} onChange={e => setForm(f => ({ ...f, group_count: Number(e.target.value) }))}>
+                {[2, 4, 8].map(n => <option key={n} value={n} style={{background:"#1a1025",color:"#fff"}}>{n} groups</option>)}
               </select>
               <p className="text-[9px] text-white/20 mt-1">{form.bracket_size / form.group_count} players per group</p>
             </div>
             <div>
               <label className={labelCls}>Advance per Group</label>
-              <select className={inputCls} value={form.advance_per_group} onChange={e => setForm(f => ({ ...f, advance_per_group: Number(e.target.value) }))}>
-                {[1, 2, 3].map(n => <option key={n} value={n}>Top {n}</option>)}
+              <select className={selectCls} value={form.advance_per_group} onChange={e => setForm(f => ({ ...f, advance_per_group: Number(e.target.value) }))}>
+                {[1, 2, 3].map(n => <option key={n} value={n} style={{background:"#1a1025",color:"#fff"}}>Top {n}</option>)}
               </select>
               <p className="text-[9px] text-white/20 mt-1">{form.advance_per_group * form.group_count} advance to knockout</p>
             </div>
@@ -319,9 +320,9 @@ function TournamentForm({ initial, onSave, onCancel, editId }: {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className={labelCls}>Time Per Side</label>
-            <select className={inputCls} value={form.time_control_secs} onChange={e => setForm(f => ({ ...f, time_control_secs: Number(e.target.value) }))}>
+            <select className={selectCls} value={form.time_control_secs} onChange={e => setForm(f => ({ ...f, time_control_secs: Number(e.target.value) }))}>
               {[[60,"1 min (Bullet)"],[180,"3 min (Blitz)"],[300,"5 min (Blitz)"],[600,"10 min (Rapid)"],[900,"15 min (Rapid)"],[1800,"30 min (Classical)"]].map(([v, l]) => (
-                <option key={v} value={v}>{l}</option>
+                <option key={v} value={v} style={{background:"#1a1025",color:"#fff"}}>{l}</option>
               ))}
             </select>
           </div>
