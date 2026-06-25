@@ -286,6 +286,8 @@ export async function adminSignin(input: SigninInput) {
     throw new Error("Access denied: Administrative privileges required.");
   }
   
+  // Send OTP using signInWithOtp - Supabase sends a 6-digit code to email
+  // We use shouldCreateUser: false since user already exists
   const { error: otpError } = await supabase.auth.signInWithOtp({
     email: result.user.email,
     options: {
@@ -293,7 +295,10 @@ export async function adminSignin(input: SigninInput) {
     }
   });
 
-  if (otpError) throw otpError;
+  if (otpError) {
+    console.error('[adminSignin] OTP send error:', otpError.message)
+    throw otpError
+  }
 
   return {
     mfa_required: true,
@@ -308,6 +313,10 @@ export async function verifyAdminMfa(email: string, code: string) {
     token: code,
     type: 'email'
   });
+
+  if (error) {
+    console.error('[verifyAdminMfa] error:', error.message, '| email:', email)
+  }
 
   if (error || !data.session || !data.user) {
     throw new Error("Invalid or expired verification code.");
