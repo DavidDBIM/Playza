@@ -573,48 +573,277 @@ function TrophyIllustration() {
 }
 
 // ── Chess Tournament Card — shown inline with quiz cards in same tabs ─────────
-function ChessTCard({ ct, onOpen }: { ct: any; onOpen: () => void }) {
+function ChessTCard({ ct }: { ct: any }) {
+  const { user } = useAuth();
   const navigate = useNavigate();
+  const toast = useToast();
+  const queryClient = useQueryClient();
   const fmtTime = (s: number) => s >= 60 ? `${Math.floor(s / 60)}m${s % 60 > 0 ? `+${s % 60}s` : ""}` : `${s}s`;
   const fill = Math.min(((ct.player_count ?? 0) / ct.bracket_size) * 100, 100);
   const isLive = ct.status === "active";
+  const isLobby = ct.status === "lobby";
+  const isFull = ct.player_count >= ct.bracket_size;
+  const [showDetail, setShowDetail] = useState(false);
+  const [showLobby, setShowLobby] = useState(false);
+  const [registered, setRegistered] = useState(false);
+
+  const { mutate: registerChess, isPending } = useMutation({
+    mutationFn: async () => {
+      const { registerChessTournament } = await import("@/api/chess-tournament.api");
+      return registerChessTournament(ct.id);
+    },
+    onSuccess: () => {
+      toast.success("Registered! ♟ Good luck!");
+      setRegistered(true);
+      queryClient.invalidateQueries({ queryKey: ["chess-tournaments-public"] });
+      setShowDetail(false);
+    },
+    onError: (err: any) => toast.error(err?.response?.data?.message ?? "Registration failed"),
+  });
+
+  function handleRegister() {
+    if (!user) { toast.error("Please log in to register."); navigate("/login"); return; }
+    const balance = (user as any).wallet?.balance ?? 0;
+    if (ct.entry_fee > 0 && balance < ct.entry_fee) { toast.error(`Insufficient ZA balance. You need ${ct.entry_fee} ZA.`); return; }
+    registerChess();
+  }
+
   return (
-    <div onClick={onOpen} style={{ cursor: "pointer", borderRadius: 14, padding: "14px 16px", background: "rgba(124,58,237,0.06)", border: `1px solid ${isLive ? "rgba(239,68,68,0.35)" : "rgba(124,58,237,0.2)"}`, transition: "transform 0.15s", display: "flex", flexDirection: "column", gap: 10 }}
-      onMouseEnter={e => (e.currentTarget.style.transform = "translateY(-2px)")}
-      onMouseLeave={e => (e.currentTarget.style.transform = "")}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <span style={{ fontSize: 16 }}>♟</span>
-          <span style={{ fontSize: 9, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", color: isLive ? "#ef4444" : "#a855f7" }}>
-            {isLive ? "🔴 Live" : ct.status === "lobby" ? "🟡 Starting Soon" : "🟢 Registration"} · Chess
+    <>
+      <div onClick={() => setShowDetail(true)}
+        style={{ cursor: "pointer", borderRadius: 14, padding: "14px 16px", background: "rgba(124,58,237,0.06)", border: `1px solid ${isLive ? "rgba(239,68,68,0.35)" : "rgba(124,58,237,0.2)"}`, transition: "transform 0.15s", display: "flex", flexDirection: "column", gap: 10 }}
+        onMouseEnter={e => (e.currentTarget.style.transform = "translateY(-2px)")}
+        onMouseLeave={e => (e.currentTarget.style.transform = "")}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ fontSize: 16 }}>♟</span>
+            <span style={{ fontSize: 9, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", color: isLive ? "#ef4444" : "#a855f7" }}>
+              {isLive ? "🔴 Live" : isLobby ? "🟡 Starting Soon" : "🟢 Registration"} · Chess
+            </span>
+          </div>
+          <span style={{ fontSize: 9, color: "var(--muted-foreground)", fontWeight: 700 }}>
+            {ct.format === "group_knockout" ? "Group+KO" : "Knockout"} · {fmtTime(ct.time_control_secs)}
           </span>
         </div>
-        <span style={{ fontSize: 9, color: "var(--muted-foreground)", fontWeight: 700 }}>
-          {ct.format === "group_knockout" ? "Group+KO" : "Knockout"} · {fmtTime(ct.time_control_secs)}
-        </span>
-      </div>
-      <div>
-        <p style={{ fontSize: 14, fontWeight: 800, color: "var(--foreground)", margin: "0 0 4px", lineHeight: 1.3 }}>{ct.title}</p>
-        <div style={{ display: "flex", gap: 10, fontSize: 10, color: "var(--muted-foreground)" }}>
-          <span>{ct.bracket_size} players</span>
-          <span>·</span>
-          <span style={{ color: "#fbbf24", fontWeight: 700 }}>{ct.prize_pool?.toLocaleString() ?? 0} ZA prize</span>
-          {ct.entry_fee > 0 && <><span>·</span><span>{ct.entry_fee} ZA entry</span></>}
+        <div>
+          <p style={{ fontSize: 14, fontWeight: 800, color: "var(--foreground)", margin: "0 0 4px", lineHeight: 1.3 }}>{ct.title}</p>
+          <div style={{ display: "flex", gap: 10, fontSize: 10, color: "var(--muted-foreground)" }}>
+            <span>{ct.bracket_size} players</span><span>·</span>
+            <span style={{ color: "#fbbf24", fontWeight: 700 }}>{ct.prize_pool?.toLocaleString() ?? 0} ZA prize</span>
+            {ct.entry_fee > 0 && <><span>·</span><span>{ct.entry_fee} ZA entry</span></>}
+          </div>
+        </div>
+        <div>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9, color: "var(--muted-foreground)", marginBottom: 4 }}>
+            <span>{ct.player_count ?? 0}/{ct.bracket_size} registered</span>
+            {isLive && <span style={{ color: "#a855f7", fontWeight: 800 }}>Round {ct.current_round}</span>}
+          </div>
+          <div style={{ height: 3, borderRadius: 2, background: "rgba(124,58,237,0.15)", overflow: "hidden" }}>
+            <div style={{ height: "100%", borderRadius: 2, width: `${fill}%`, background: "linear-gradient(90deg,#7c3aed,#a855f7)" }} />
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: 6 }}>
+          <button onClick={e => { e.stopPropagation(); setShowDetail(true); }}
+            style={{ flex: 1, padding: "8px", borderRadius: 8, background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.25)", color: "#a855f7", fontSize: 11, fontWeight: 800, cursor: "pointer" }}>
+            View Details
+          </button>
+          {ct.status === "registration" && !registered && !isFull && (
+            <button onClick={e => { e.stopPropagation(); handleRegister(); }} disabled={isPending}
+              style={{ flex: 1, padding: "8px", borderRadius: 8, background: isPending ? "rgba(124,58,237,0.3)" : "rgba(124,58,237,0.8)", border: "none", color: "#fff", fontSize: 11, fontWeight: 800, cursor: isPending ? "not-allowed" : "pointer" }}>
+              {isPending ? "Registering…" : ct.entry_fee > 0 ? `Pay ${ct.entry_fee} ZA` : "Register Free"}
+            </button>
+          )}
+          {registered && isLobby && (
+            <button onClick={e => { e.stopPropagation(); setShowLobby(true); }}
+              style={{ flex: 1, padding: "8px", borderRadius: 8, background: "rgba(245,158,11,0.15)", border: "1px solid rgba(245,158,11,0.3)", color: "#f59e0b", fontSize: 11, fontWeight: 800, cursor: "pointer" }}>
+              In Lobby ›
+            </button>
+          )}
+          {registered && !isLobby && !isLive && (
+            <div style={{ flex: 1, padding: "8px", borderRadius: 8, background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.25)", color: "#22c55e", fontSize: 11, fontWeight: 800, textAlign: "center" }}>✓ Registered</div>
+          )}
         </div>
       </div>
-      <div>
-        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9, color: "var(--muted-foreground)", marginBottom: 4 }}>
-          <span>{ct.player_count ?? 0}/{ct.bracket_size} registered</span>
-          {isLive && <span style={{ color: "#a855f7", fontWeight: 800 }}>Round {ct.current_round}</span>}
+
+      {/* ── Detail Modal ─────────────────────────────────────────────── */}
+      {showDetail && (
+        <div onClick={e => { if (e.target === e.currentTarget) setShowDetail(false); }}
+          style={{ position: "fixed", inset: 0, zIndex: 1000, background: "rgba(0,0,0,0.8)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+          <div style={{ width: "100%", maxWidth: 420, background: "var(--card)", borderRadius: 20, overflow: "hidden", border: "1px solid rgba(124,58,237,0.25)" }}
+            onClick={e => e.stopPropagation()}>
+            <div style={{ height: 4, background: "linear-gradient(90deg,#7c3aed,#a855f7)" }} />
+            <div style={{ padding: "16px 16px 0" }}>
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 12 }}>
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                    <span style={{ fontSize: 18 }}>♟</span>
+                    <span style={{ fontSize: 9, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", color: "#a855f7" }}>Chess Tournament</span>
+                  </div>
+                  <h3 style={{ fontSize: 16, fontWeight: 800, color: "var(--foreground)", margin: 0 }}>{ct.title}</h3>
+                </div>
+                <button onClick={() => setShowDetail(false)} style={{ background: "var(--muted)", border: "1px solid var(--border)", borderRadius: "50%", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, marginLeft: 8 }}>
+                  <X size={14} style={{ color: "var(--muted-foreground)" }} />
+                </button>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8, marginBottom: 14 }}>
+                {[
+                  { label: "Format", value: ct.format === "group_knockout" ? "Group+KO" : "Knockout" },
+                  { label: "Time", value: `${fmtTime(ct.time_control_secs)}${ct.increment_secs > 0 ? `+${ct.increment_secs}` : ""}` },
+                  { label: "Players", value: `${ct.player_count ?? 0}/${ct.bracket_size}` },
+                  { label: "Entry", value: ct.entry_fee > 0 ? `${ct.entry_fee} ZA` : "FREE" },
+                  { label: "Prize Pool", value: `${(ct.prize_pool ?? 0).toLocaleString()} ZA` },
+                  { label: "Status", value: ct.status === "registration" ? "Open" : ct.status === "lobby" ? "Lobby" : ct.status === "active" ? "Live" : "Done" },
+                ].map((s, i) => (
+                  <div key={i} style={{ background: "var(--muted)", borderRadius: 10, padding: "10px 8px", textAlign: "center" }}>
+                    <p style={{ fontSize: 13, fontWeight: 800, color: "var(--foreground)", margin: 0 }}>{s.value}</p>
+                    <p style={{ fontSize: 9, color: "var(--muted-foreground)", margin: "3px 0 0", textTransform: "uppercase", letterSpacing: "0.06em" }}>{s.label}</p>
+                  </div>
+                ))}
+              </div>
+              <div style={{ height: 4, borderRadius: 2, background: "var(--muted)", overflow: "hidden", marginBottom: 14 }}>
+                <div style={{ height: "100%", width: `${fill}%`, borderRadius: 2, background: "linear-gradient(90deg,#7c3aed,#a855f7)" }} />
+              </div>
+            </div>
+            <div style={{ padding: "0 16px 16px" }}>
+              {ct.status === "registration" && !registered && !isFull && (
+                <button onClick={handleRegister} disabled={isPending}
+                  style={{ width: "100%", padding: "14px", borderRadius: 12, fontSize: 13, fontWeight: 800, textTransform: "uppercase", background: isPending ? "rgba(124,58,237,0.5)" : "linear-gradient(135deg,#7c3aed,#a855f7)", color: "#fff", border: "none", cursor: isPending ? "not-allowed" : "pointer" }}>
+                  {isPending ? "Registering…" : ct.entry_fee > 0 ? `♟ Register — Pay ${ct.entry_fee} ZA` : "♟ Register Free"}
+                </button>
+              )}
+              {registered && isLobby && (
+                <button onClick={() => { setShowDetail(false); setShowLobby(true); }}
+                  style={{ width: "100%", padding: "14px", borderRadius: 12, fontSize: 13, fontWeight: 800, textTransform: "uppercase", background: "rgba(245,158,11,0.15)", border: "1px solid rgba(245,158,11,0.3)", color: "#f59e0b", cursor: "pointer" }}>
+                  🏟️ Enter Lobby
+                </button>
+              )}
+              {registered && !isLobby && !isLive && (
+                <div style={{ width: "100%", padding: "14px", borderRadius: 12, fontSize: 13, fontWeight: 800, textTransform: "uppercase", background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.25)", color: "#22c55e", textAlign: "center" }}>✓ You're Registered</div>
+              )}
+              {isFull && !registered && (
+                <div style={{ width: "100%", padding: "14px", borderRadius: 12, fontSize: 13, fontWeight: 800, textTransform: "uppercase", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#ef4444", textAlign: "center" }}>🔴 Tournament Full</div>
+              )}
+              {isLive && (
+                <button onClick={() => { setShowDetail(false); navigate(`/chess-tournament`); }}
+                  style={{ width: "100%", padding: "14px", borderRadius: 12, fontSize: 13, fontWeight: 800, textTransform: "uppercase", background: "rgba(239,68,68,0.2)", border: "1px solid rgba(239,68,68,0.4)", color: "#ef4444", cursor: "pointer" }}>
+                  🔴 Live — View Bracket
+                </button>
+              )}
+            </div>
+          </div>
         </div>
-        <div style={{ height: 3, borderRadius: 2, background: "rgba(124,58,237,0.15)", overflow: "hidden" }}>
-          <div style={{ height: "100%", borderRadius: 2, width: `${fill}%`, background: "linear-gradient(90deg,#7c3aed,#a855f7)" }} />
+      )}
+
+      {/* ── Chess Lobby — full chat + reactions, mirrors quiz lobby ──── */}
+      {showLobby && registered && (
+        <ChessLobbyModal tournamentId={ct.id} title={ct.title} scheduledAt={ct.scheduled_at} playerCount={ct.player_count} maxPlayers={ct.bracket_size} onClose={() => setShowLobby(false)} />
+      )}
+    </>
+  );
+}
+
+const CHESS_REACTIONS = ['🔥', '♟', '👑', '😤', '🎯', '⚡', '🤝', '😂'];
+
+function ChessLobbyModal({ tournamentId, title, scheduledAt, playerCount, maxPlayers, onClose }: {
+  tournamentId: string; title: string; scheduledAt?: string; playerCount: number; maxPlayers: number; onClose: () => void;
+}) {
+  const { user } = useAuth();
+  const [msg, setMsg] = useState("");
+  const chatEndRef = useRef<HTMLDivElement>(null);
+  const { timeLeft } = useCountdown(scheduledAt ?? null);
+  const { connected, messages, reactions, sendMessage, sendReaction } = useLobbySocket(tournamentId);
+  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", handler);
+    document.body.style.overflow = "hidden";
+    return () => { document.removeEventListener("keydown", handler); document.body.style.overflow = ""; };
+  }, [onClose]);
+  function handleSend() { if (!msg.trim()) return; sendMessage(msg.trim()); setMsg(""); }
+  return (
+    <div onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+      style={{ position: "fixed", inset: 0, zIndex: 1000, background: "rgba(0,0,0,0.8)", backdropFilter: "blur(8px)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+      <div style={{ width: "100%", maxWidth: 540, maxHeight: "95dvh", background: "var(--card)", borderRadius: "20px 20px 0 0", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+        <div style={{ height: 4, background: "linear-gradient(90deg,#7c3aed,#a855f7)", flexShrink: 0 }} />
+        <div style={{ padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0, borderBottom: "1px solid var(--border)" }}>
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }}>
+              <span style={{ fontSize: 10, fontWeight: 700, color: "#a855f7", textTransform: "uppercase", letterSpacing: "0.1em" }}>♟ Chess Lobby</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 4, background: connected ? "rgba(34,197,94,0.1)" : "rgba(100,116,139,0.1)", borderRadius: 20, padding: "2px 8px", border: `1px solid ${connected ? "rgba(34,197,94,0.3)" : "rgba(100,116,139,0.2)"}` }}>
+                <span style={{ width: 5, height: 5, borderRadius: "50%", background: connected ? "#22c55e" : "#64748b", display: "block" }} />
+                <span style={{ fontSize: 8, fontWeight: 700, color: connected ? "#22c55e" : "#64748b" }}>{connected ? "LIVE" : "CONNECTING"}</span>
+              </div>
+            </div>
+            <h3 style={{ fontSize: 15, fontWeight: 800, color: "var(--foreground)", margin: 0 }}>{title}</h3>
+          </div>
+          <button onClick={onClose} style={{ background: "var(--muted)", border: "1px solid var(--border)", borderRadius: "50%", width: 32, height: 32, minWidth: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", marginLeft: 8 }}>
+            <X size={14} style={{ color: "var(--muted-foreground)" }} />
+          </button>
+        </div>
+        {scheduledAt && timeLeft && (
+          <div style={{ padding: "12px 16px", background: "rgba(124,58,237,0.06)", borderBottom: "1px solid rgba(124,58,237,0.15)", flexShrink: 0 }}>
+            <p style={{ fontSize: 9, fontWeight: 700, color: "rgba(168,85,247,0.7)", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 6px" }}>🕐 Tournament starts in</p>
+            <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+              {[{ v: timeLeft.d, l: "DAYS", show: timeLeft.d > 0 }, { v: timeLeft.h, l: "HRS", show: true }, { v: timeLeft.m, l: "MIN", show: true }, { v: timeLeft.s, l: "SEC", show: true }]
+                .filter(x => x.show).map((x, i, arr) => (
+                <span key={x.l} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <div style={{ textAlign: "center" }}>
+                    <p style={{ fontSize: 24, fontWeight: 900, color: "#a855f7", margin: 0, lineHeight: 1 }}>{String(x.v).padStart(2,"0")}</p>
+                    <p style={{ fontSize: 8, color: "rgba(168,85,247,0.6)", margin: "2px 0 0" }}>{x.l}</p>
+                  </div>
+                  {i < arr.length - 1 && <p style={{ fontSize: 20, fontWeight: 900, color: "rgba(168,85,247,0.4)", margin: 0 }}>:</p>}
+                </span>
+              ))}
+              <div style={{ marginLeft: "auto", textAlign: "right" }}>
+                <p style={{ fontSize: 13, fontWeight: 800, color: "var(--foreground)", margin: 0 }}>{playerCount} <span style={{ fontSize: 10, color: "var(--muted-foreground)", fontWeight: 600 }}>registered</span></p>
+                <p style={{ fontSize: 9, color: "var(--muted-foreground)", margin: "2px 0 0" }}>of {maxPlayers} max</p>
+              </div>
+            </div>
+          </div>
+        )}
+        <div style={{ position: "relative", height: 0, overflow: "visible", zIndex: 10 }}>
+          {reactions.map((r: { id: number; emoji: string; left: number; rotate: number }) => (
+            <div key={r.id} style={{ position: "absolute", bottom: 0, left: `${r.left}%`, fontSize: 24, pointerEvents: "none", transform: `rotate(${r.rotate}deg)`, animation: "floatUp 2.5s ease-out forwards" }}>{r.emoji}</div>
+          ))}
+        </div>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+          <div style={{ padding: "6px 16px", display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+            <MessageCircle size={11} style={{ color: "var(--muted-foreground)" }} />
+            <p style={{ fontSize: 9, fontWeight: 700, color: "var(--muted-foreground)", textTransform: "uppercase", letterSpacing: "0.1em", margin: 0 }}>Lobby Chat</p>
+          </div>
+          <div style={{ flex: 1, overflowY: "auto", padding: "4px 16px 8px", display: "flex", flexDirection: "column", gap: 6 } as any}>
+            {messages.length === 0 && <p style={{ fontSize: 11, color: "var(--muted-foreground)", textAlign: "center", padding: "16px 0", fontStyle: "italic" }}>No messages yet — say something! ♟</p>}
+            {messages.map((m: { user_id: string; username: string; avatar_url: string | null; message: string; ts: number }, i: number) => (
+              <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                <div style={{ width: 22, height: 22, borderRadius: "50%", background: m.user_id === user?.id ? "rgba(124,58,237,0.3)" : "var(--muted)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, color: m.user_id === user?.id ? "#c084fc" : "var(--foreground)", flexShrink: 0 }}>
+                  {m.avatar_url ? <img src={m.avatar_url} style={{ width: 22, height: 22, borderRadius: "50%", objectFit: "cover" }} alt="" /> : m.username[0]?.toUpperCase()}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: m.user_id === user?.id ? "#c084fc" : "var(--foreground)", marginRight: 6 }}>{m.user_id === user?.id ? "You" : m.username}</span>
+                  <span style={{ fontSize: 9, opacity: 0.5, color: "var(--muted-foreground)" }}>{new Date(m.ts).toLocaleTimeString("en-NG", { hour: "2-digit", minute: "2-digit" })}</span>
+                  <p style={{ fontSize: 12, color: "var(--foreground)", margin: "2px 0 0", wordBreak: "break-word", lineHeight: 1.4 }}>{m.message}</p>
+                </div>
+              </div>
+            ))}
+            <div ref={chatEndRef} />
+          </div>
+        </div>
+        <div style={{ borderTop: "1px solid var(--border)", padding: "8px 16px 12px", flexShrink: 0, background: "var(--card)" }}>
+          <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
+            {CHESS_REACTIONS.map(e => (
+              <button key={e} onClick={() => sendReaction(e)} style={{ fontSize: 18, background: "var(--muted)", border: "1px solid var(--border)", borderRadius: 8, width: 36, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>{e}</button>
+            ))}
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <input type="text" placeholder={connected ? "Say something..." : "Connecting..."} value={msg} onChange={e => setMsg(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && msg.trim()) handleSend(); }} maxLength={200}
+              style={{ flex: 1, padding: "9px 12px", borderRadius: 10, fontSize: 13, background: "var(--muted)", border: "1px solid var(--border)", color: "var(--foreground)", outline: "none", opacity: connected ? 1 : 0.5 }} />
+            <button onClick={handleSend} disabled={!msg.trim() || !connected}
+              style={{ padding: "9px 14px", borderRadius: 10, background: msg.trim() && connected ? "#7c3aed" : "var(--muted)", border: "none", cursor: msg.trim() && connected ? "pointer" : "not-allowed", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Send size={14} style={{ color: msg.trim() && connected ? "#fff" : "var(--muted-foreground)" }} />
+            </button>
+          </div>
         </div>
       </div>
-      <button onClick={e => { e.stopPropagation(); navigate(`/chess-tournament`); }}
-        style={{ padding: "8px", borderRadius: 8, background: "rgba(124,58,237,0.15)", border: "1px solid rgba(124,58,237,0.3)", color: "#a855f7", fontSize: 11, fontWeight: 800, cursor: "pointer", textAlign: "center" }}>
-        {ct.status === "registration" ? "Register" : ct.status === "active" ? "View Bracket" : "View Lobby"}
-      </button>
     </div>
   );
 }
@@ -697,7 +926,7 @@ const Tournaments = () => {
       <SEO
         title="Tournaments – Compete for Big Prizes"
         description="Join live and upcoming tournaments on Playza. Compete in quiz, chess, arcade and sponsored tournaments with prize pools up to ZA100,000."
-        keywords="playza tournaments, online gaming tournaments, quiz tournament, chess tournament, prize pool games"
+        keywords="playza tournaments, gaming tournaments Nigeria, quiz tournament, chess tournament, prize pool games"
         url="/tournaments"
       />
 
@@ -914,7 +1143,7 @@ const Tournaments = () => {
           ) : filtered.length > 0 || filteredChess.length > 0 ? (
             <>
               {filtered.map(qt => <TCard key={qt.id} qt={qt} featured={featuredT?.id === qt.id} onRegistered={handleRegistered} />)}
-              {filteredChess.map((ct: any) => <ChessTCard key={`chess-${ct.id}`} ct={ct} onOpen={() => {}} />)}
+              {filteredChess.map((ct: any) => <ChessTCard key={`chess-${ct.id}`} ct={ct} />)}
             </>
           ) : (
             <div style={{ gridColumn: "1/-1", padding: "60px 16px", display: "flex", flexDirection: "column", alignItems: "center", gap: 10, textAlign: "center", border: "2px dashed var(--border)", borderRadius: 14 }}>
