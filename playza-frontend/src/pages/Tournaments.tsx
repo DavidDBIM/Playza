@@ -697,7 +697,7 @@ const Tournaments = () => {
       <SEO
         title="Tournaments – Compete for Big Prizes"
         description="Join live and upcoming tournaments on Playza. Compete in quiz, chess, arcade and sponsored tournaments with prize pools up to ZA100,000."
-        keywords="playza tournaments, gaming tournaments Nigeria, quiz tournament, chess tournament, prize pool games"
+        keywords="playza tournaments, online gaming tournaments, quiz tournament, chess tournament, prize pool games"
         url="/tournaments"
       />
 
