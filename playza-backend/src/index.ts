@@ -9,6 +9,7 @@ import { createServer } from 'http'
 import { supabaseAdmin as supabase } from './config/supabase'
 import { finalizeSessionAndPayout } from './modules/gamesession/gamesession.service'
 import { runQuizReminderJob, runQuizLifecycleJob, setQuizReminderIo } from './lib/quizReminders'
+import { runChessLifecycleJob, runChessReminderJob } from './lib/chessReminders'
 
 import authRoutes from './modules/auth/auth.routes'
 import referralRoutes from './modules/referral/referral.routes'
@@ -43,7 +44,6 @@ import referralRewardsRoutes from './modules/referral-rewards/referral-rewards.r
 import { setupQuizGateway } from './modules/quiz/quiz.gateway'
 import { setQuizAdminIo } from './modules/quiz/quiz.admin.routes'
 import { setupSocketIO } from './lib/socketHandler'
-import { prerenderMiddleware } from './middleware/prerender.middleware'
 
 dotenv.config()
 
@@ -61,12 +61,6 @@ if (process.env.NODE_ENV !== 'production' && !allowedOrigins.includes('http://lo
 app.use(helmet())
 app.use(cookieParser())
 app.use(cors({ origin: allowedOrigins, credentials: true }))
-
-// ── Prerender middleware — intercepts bots before any other route ─────────────
-// Googlebot, WhatsApp, Facebook etc. get real HTML with content.
-// Real users are completely unaffected — middleware skips them instantly.
-app.use(prerenderMiddleware)
-
 app.post('/api/wallet/webhook/paystack', express.raw({ type: 'application/json' }))
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
@@ -82,8 +76,7 @@ const globalLimiter = rateLimit({
 })
 app.use('/api', globalLimiter)
 
-app.get('/api/health', (_, res) => {
-  res.set('Cross-Origin-Resource-Policy', 'cross-origin')
+app.get('/health', (_, res) => {
   res.json({ status: 'ok', project: 'Playza API', env: process.env.NODE_ENV })
 })
 
@@ -159,6 +152,16 @@ cron.schedule('* * * * *', async () => {
 // Quiz tournament reminders — runs every 30 minutes
 cron.schedule('*/30 * * * *', async () => {
   await runQuizReminderJob()
+})
+
+// Chess tournament lifecycle: auto-draw, closure emails, match reminders (every minute)
+cron.schedule('* * * * *', async () => {
+  await runChessLifecycleJob()
+})
+
+// Chess tournament 24h / 2h reminders (every 30 minutes)
+cron.schedule('*/30 * * * *', async () => {
+  await runChessReminderJob()
 })
 
 httpServer.listen(PORT, () => {
