@@ -585,7 +585,23 @@ function ChessTCard({ ct }: { ct: any }) {
   const isFull = ct.player_count >= ct.bracket_size;
   const [showDetail, setShowDetail] = useState(false);
   const [showLobby, setShowLobby] = useState(false);
-  const [registered, setRegistered] = useState(false);
+  const [registered, setRegistered] = useState(!!ct.user_registered);
+  const [activeFixture, setActiveFixture] = useState<any>(null);
+
+  // Fetch per-user status — picks up registration from previous sessions
+  // and surfaces any active fixture link if tournament is live
+  useQuery({
+    queryKey: ["chess-my-status", ct.id, user?.id],
+    queryFn: async () => {
+      const { getMyChessStatus } = await import("@/api/chess-tournament.api");
+      return getMyChessStatus(ct.id);
+    },
+    enabled: !!user,
+    onSuccess: (d: any) => {
+      if (d.registered) setRegistered(true);
+      if (d.active_fixture) setActiveFixture(d.active_fixture);
+    },
+  } as any);
 
   const { mutate: registerChess, isPending } = useMutation({
     mutationFn: async () => {
@@ -723,7 +739,13 @@ function ChessTCard({ ct }: { ct: any }) {
               {isFull && !registered && (
                 <div style={{ width: "100%", padding: "14px", borderRadius: 12, fontSize: 13, fontWeight: 800, textTransform: "uppercase", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#ef4444", textAlign: "center" }}>🔴 Tournament Full</div>
               )}
-              {isLive && (
+              {isLive && activeFixture && (
+                <button onClick={() => { setShowDetail(false); navigate(`/chess-tournament/${ct.id}/match/${activeFixture.chess_room_id}`); }}
+                  style={{ width: "100%", padding: "14px", borderRadius: 12, fontSize: 13, fontWeight: 800, textTransform: "uppercase", background: "linear-gradient(135deg,#dc2626,#ef4444)", color: "#fff", border: "none", cursor: "pointer", marginBottom: 8 }}>
+                  ♟ Play Now — {activeFixture.round_name}
+                </button>
+              )}
+              {isLive && !activeFixture && (
                 <button onClick={() => { setShowDetail(false); navigate(`/chess-tournament`); }}
                   style={{ width: "100%", padding: "14px", borderRadius: 12, fontSize: 13, fontWeight: 800, textTransform: "uppercase", background: "rgba(239,68,68,0.2)", border: "1px solid rgba(239,68,68,0.4)", color: "#ef4444", cursor: "pointer" }}>
                   🔴 Live — View Bracket

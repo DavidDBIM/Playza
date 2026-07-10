@@ -493,41 +493,137 @@ export async function finishChessTournament(tournamentId: string, championId: st
     .single()
   if (!tournament) throw new Error('Tournament not found')
 
-  await supabaseAdmin
-    .from('chess_tournament_players')
-    .update({ status: 'winner', final_rank: 1 })
-    .eq('tournament_id', tournamentId)
-    .eq('user_id', championId)
-
   const distributablePool = Math.floor(tournament.prize_pool * (1 - (tournament.platform_fee_percentage ?? 10) / 100))
-  const prizeDist = tournament.prize_distribution?.length
+  const prizeDist: { rank: number; percentage: number }[] = tournament.prize_distribution?.length
     ? tournament.prize_distribution
     : [{ rank: 1, percentage: 60 }, { rank: 2, percentage: 25 }, { rank: 3, percentage: 15 }]
 
-  // Rank 1 = champion. Ranks 2+ are derived from elimination round —
-  // players eliminated in the final round (losing finalists) = rank 2,
-  // semifinal losers = rank 3/4 (split), etc. For now we pay rank 1
-  // (champion) directly; runner-up/semifinalist payout uses the same
-  // fixture-elimination-round data already stored per player.
+  // ── Determine final ranks from fixture elimination order ──────────────────
+  // Rank 1 = champion (passed in)
+  // Rank 2 = finalist who lost the Final
+  // Rank 3/4 = players who lost in Semifinal (split equally)
+  // Rank 5-8 = players who lost in Quarterfinal, etc.
+  const { data: allFixtures } = await supabaseAdmin
+    .from('chess_tournament_fixtures')
+    .select('round_number, player1_id, player2_id, winner_id, is_bye, status')
+    .eq('tournament_id', tournamentId)
+    .eq('status', 'completed')
+    .not('group_number', 'is', null)  // exclude group stage — only knockout fixtures determine final rank
+    .is('group_number', null)         // knockout fixtures have null group_number
+    .order('round_number', { ascending: false })
+
+  // Build a map: userId → the round they were eliminated in (higher = better rank)
+  const eliminationRound: Record<string, number> = {}
+  for (const f of (allFixtures ?? [])) {
+    if (f.is_bye || !f.winner_id) continue
+    const loser = f.player1_id === f.winner_id ? f.player2_id : f.player1_id
+    if (loser && !eliminationRound[loser]) {
+      eliminationRound[loser] = f.round_number
+    }
+  }
+
+  // Get all players sorted by elimination round descending (later = better finish)
+  const { data: players } = await supabaseAdmin
+    .from('chess_tournament_players')
+    .select('user_id, username')
+    .eq('tournament_id', tournamentId)
+
+  // Sort: champion first, then by elimination round desc
+  const sortedPlayers = (players ?? []).sort((a, b) => {
+    if (a.user_id === championId) return -1
+    if (b.user_id === championId) return 1
+    const ra = eliminationRound[a.user_id] ?? 0
+    const rb = eliminationRound[b.user_id] ?? 0
+    return rb - ra
+  })
+
+  // Assign final ranks
+  const rankAssignments: Record<string, number> = {}
+  let currentRank = 1
+  let i = 0
+  while (i < sortedPlayers.length) {
+    const player = sortedPlayers[i]
+    if (player.user_id === championId) {
+      rankAssignments[player.user_id] = 1
+      i++
+      currentRank = 2
+      continue
+    }
+    // Group players eliminated in the same round — they share the same rank
+    const sameRound = eliminationRound[player.user_id] ?? 0
+    const groupEnd = sortedPlayers.slice(i).findIndex(p => (eliminationRound[p.user_id] ?? 0) !== sameRound)
+    const groupSize = groupEnd === -1 ? sortedPlayers.length - i : groupEnd
+    for (let j = i; j < i + groupSize; j++) {
+      rankAssignments[sortedPlayers[j].user_id] = currentRank
+    }
+    currentRank += groupSize
+    i += groupSize
+  }
+
+  // ── Pay prizes by rank ────────────────────────────────────────────────────
   for (const tier of prizeDist) {
-    if (tier.rank === 1) {
-      const prize = Math.floor(distributablePool * tier.percentage / 100)
-      if (prize > 0) {
-        await supabaseAdmin.rpc('increment_wallet_balance', { p_user_id: championId, p_amount: prize })
+    const recipients = sortedPlayers.filter(p => rankAssignments[p.user_id] === tier.rank)
+    if (!recipients.length) continue
+    // Split prize equally among players sharing the same rank (e.g. 2 semifinalists)
+    const totalPrize = Math.floor(distributablePool * tier.percentage / 100)
+    const prizeEach = Math.floor(totalPrize / recipients.length)
+    if (prizeEach <= 0) continue
+
+    for (const recipient of recipients) {
+      try {
+        await supabaseAdmin.rpc('increment_wallet_balance', { p_user_id: recipient.user_id, p_amount: prizeEach })
         await supabaseAdmin.from('transactions').insert({
-          user_id: championId,
+          user_id: recipient.user_id,
           type: 'chess_tournament_prize',
-          amount: prize,
+          amount: prizeEach,
           status: 'completed',
-          reference: `CHESS-PRIZE-${tournamentId}-${championId}-${Date.now()}`,
-          meta: { tournament_id: tournamentId, rank: 1 },
+          reference: `CHESS-PRIZE-${tournamentId}-${recipient.user_id}-${Date.now()}`,
+          meta: { tournament_id: tournamentId, rank: tier.rank },
         })
         await supabaseAdmin
           .from('chess_tournament_players')
-          .update({ prize_won: prize })
+          .update({
+            status: tier.rank === 1 ? 'winner' : 'eliminated',
+            final_rank: tier.rank,
+            prize_won: prizeEach,
+          })
           .eq('tournament_id', tournamentId)
-          .eq('user_id', championId)
+          .eq('user_id', recipient.user_id)
+        console.log(`[ChessEnd] Rank ${tier.rank}: ${recipient.username} paid ${prizeEach} ZA`)
+      } catch (err) {
+        console.error(`[ChessEnd] Prize payment failed rank ${tier.rank} for ${recipient.user_id}:`, err)
       }
+    }
+  }
+
+  // ── Update final_rank for all players even those without prizes ───────────
+  for (const p of sortedPlayers) {
+    await supabaseAdmin
+      .from('chess_tournament_players')
+      .update({ final_rank: rankAssignments[p.user_id] ?? 99 })
+      .eq('tournament_id', tournamentId)
+      .eq('user_id', p.user_id)
+      .is('final_rank', null)  // only update if not already set above
+  }
+
+  // ── Consolation PZA for everyone ─────────────────────────────────────────
+  const consolation = tournament.consolation_pza ?? 0
+  if (consolation > 0) {
+    for (const p of (players ?? [])) {
+      try {
+        await supabaseAdmin.from('pza_events').insert({
+          user_id: p.user_id,
+          event_type: 'chess_participation',
+          points: consolation,
+          reference: `CHESS-PZA-${tournamentId}-${p.user_id}`,
+          meta: { tournament_id: tournamentId },
+        })
+        const { data: pzaRow } = await supabaseAdmin.from('pza_points').select('total_points').eq('user_id', p.user_id).single()
+        await supabaseAdmin.from('pza_points').upsert({
+          user_id: p.user_id,
+          total_points: (pzaRow?.total_points ?? 0) + consolation,
+        }, { onConflict: 'user_id' })
+      } catch (_) {}
     }
   }
 
@@ -536,5 +632,5 @@ export async function finishChessTournament(tournamentId: string, championId: st
     .update({ status: 'completed', ended_at: new Date().toISOString() })
     .eq('id', tournamentId)
 
-  return { championId }
+  return { championId, rankAssignments }
 }

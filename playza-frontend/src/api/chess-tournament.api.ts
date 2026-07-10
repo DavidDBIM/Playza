@@ -22,6 +22,7 @@ export interface ChessTournament {
   started_at?: string;
   ended_at?: string;
   player_count?: number;
+  user_registered?: boolean;  // included when user is authenticated
 }
 
 export interface TournamentFixture {
@@ -36,6 +37,7 @@ export interface TournamentFixture {
   winner_id?: string;
   is_bye: boolean;
   status: "pending" | "scheduled" | "active" | "completed" | "bye";
+  scheduled_at?: string;
   player1?: { username: string; avatar_url?: string };
   player2?: { username: string; avatar_url?: string };
 }
@@ -55,6 +57,15 @@ export interface TournamentStanding {
   advanced: boolean;
 }
 
+export interface MyChessStatus {
+  registered: boolean;
+  status: string | null;
+  final_rank: number | null;
+  prize_won: number | null;
+  group_number: number | null;
+  active_fixture: TournamentFixture | null;
+}
+
 export const getChessTournaments = async (): Promise<ChessTournament[]> => {
   const { data } = await axiosInstance.get("/chess-tournament/tournaments");
   return data.data ?? [];
@@ -62,6 +73,11 @@ export const getChessTournaments = async (): Promise<ChessTournament[]> => {
 
 export const getChessTournament = async (id: string): Promise<ChessTournament> => {
   const { data } = await axiosInstance.get(`/chess-tournament/tournaments/${id}`);
+  return data.data;
+};
+
+export const getMyChessStatus = async (tournamentId: string): Promise<MyChessStatus> => {
+  const { data } = await axiosInstance.get(`/chess-tournament/tournaments/${tournamentId}/my-status`);
   return data.data;
 };
 

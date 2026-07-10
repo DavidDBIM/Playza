@@ -1076,11 +1076,12 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
               onSquareClick: handleSquareClick,
               squareStyles: squareStyles,
               pieces: customPieces,
-              darkSquareStyle: { backgroundColor: "#739552" },
-              lightSquareStyle: { backgroundColor: "#ebecd0" },
+              darkSquareStyle: { backgroundColor: "#4a2d6b" },
+              lightSquareStyle: { backgroundColor: "#c9a96e" },
               boardStyle: {
-                borderRadius: "4px",
-                border: "6px solid #2d2013",
+                borderRadius: "8px",
+                border: "6px solid #1a0a2e",
+                boxShadow: "0 0 32px rgba(124,58,237,0.4), 0 8px 32px rgba(0,0,0,0.6)",
               },
             }}
           />

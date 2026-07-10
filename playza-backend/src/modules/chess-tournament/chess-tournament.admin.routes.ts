@@ -184,4 +184,96 @@ router.post('/tournaments/:id/cancel', requireAdmin, async (req: AuthRequest, re
   }
 })
 
+// ── Schedule match times per round ───────────────────────────────────────────
+// Admin sets when each round's matches start — cron uses scheduled_at to
+// send 30min + 5min match reminders to each player.
+// Body: { round_number: 1, scheduled_at: "2025-06-25T15:00:00Z" }
+// This sets scheduled_at on every fixture in that round.
+router.post('/tournaments/:id/schedule-round', requireAdmin, async (req: AuthRequest, res: Response) => {
+  try {
+    const { round_number, scheduled_at } = req.body
+    if (!round_number || !scheduled_at) {
+      return res.status(400).json({ success: false, message: 'round_number and scheduled_at are required' })
+    }
+
+    const { data: fixtures, error } = await supabaseAdmin
+      .from('chess_tournament_fixtures')
+      .update({ scheduled_at, status: 'scheduled' })
+      .eq('tournament_id', req.params.id)
+      .eq('round_number', round_number)
+      .in('status', ['pending', 'scheduled'])
+      .select()
+
+    if (error) throw error
+    res.json({ success: true, data: { updated: fixtures?.length ?? 0 } })
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message })
+  }
+})
+
+// ── Schedule a specific fixture ───────────────────────────────────────────────
+// Body: { scheduled_at: "2025-06-25T15:00:00Z" }
+router.post('/tournaments/:id/fixtures/:fixtureId/schedule', requireAdmin, async (req: AuthRequest, res: Response) => {
+  try {
+    const { scheduled_at } = req.body
+    if (!scheduled_at) return res.status(400).json({ success: false, message: 'scheduled_at is required' })
+
+    const { data, error } = await supabaseAdmin
+      .from('chess_tournament_fixtures')
+      .update({ scheduled_at, status: 'scheduled' })
+      .eq('id', req.params.fixtureId)
+      .eq('tournament_id', req.params.id)
+      .select()
+      .single()
+
+    if (error) throw error
+    res.json({ success: true, data })
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message })
+  }
+})
+
+// ── Auto-schedule all rounds from a start time ────────────────────────────────
+// Body: { start_time: "2025-06-25T15:00:00Z", minutes_per_round: 90 }
+// Round 1 = start_time, Round 2 = start_time + 90min, etc.
+router.post('/tournaments/:id/auto-schedule', requireAdmin, async (req: AuthRequest, res: Response) => {
+  try {
+    const { start_time, minutes_per_round = 90 } = req.body
+    if (!start_time) return res.status(400).json({ success: false, message: 'start_time is required' })
+
+    const { data: fixtures } = await supabaseAdmin
+      .from('chess_tournament_fixtures')
+      .select('id, round_number')
+      .eq('tournament_id', req.params.id)
+      .not('is_bye', 'eq', true)
+      .order('round_number', { ascending: true })
+
+    const rounds = [...new Set((fixtures ?? []).map(f => f.round_number))].sort((a, b) => a - b)
+    const startMs = new Date(start_time).getTime()
+    let updated = 0
+
+    for (let i = 0; i < rounds.length; i++) {
+      const roundTime = new Date(startMs + i * minutes_per_round * 60 * 1000).toISOString()
+      const roundFixtures = (fixtures ?? []).filter(f => f.round_number === rounds[i]).map(f => f.id)
+
+      await supabaseAdmin
+        .from('chess_tournament_fixtures')
+        .update({ scheduled_at: roundTime, status: 'scheduled' })
+        .in('id', roundFixtures)
+
+      updated += roundFixtures.length
+    }
+
+    // Also update tournament scheduled_at to match the first round
+    await supabaseAdmin
+      .from('chess_tournaments')
+      .update({ scheduled_at: start_time })
+      .eq('id', req.params.id)
+
+    res.json({ success: true, data: { rounds: rounds.length, fixtures_updated: updated } })
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message })
+  }
+})
+
 export default router
