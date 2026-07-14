@@ -24,6 +24,7 @@ export default function ChessTournamentMatch() {
     queryKey: ["chess-tournament", tournamentId],
     queryFn: () => getChessTournament(tournamentId!),
     enabled: !!tournamentId,
+    refetchInterval: 15000,
   });
 
   const { data: fixtures = [] } = useQuery({
@@ -44,13 +45,13 @@ export default function ChessTournamentMatch() {
   if (roomError) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 p-6 text-center"
-        style={{ background: "#080810" }}>
+        style={{ background: "var(--background)" }}>
         <span className="text-4xl">♟</span>
-        <p className="font-black text-white text-lg">Match not found</p>
-        <p className="text-sm text-white/30">This match may have already ended or the link is invalid.</p>
+        <p className="font-black text-foreground text-lg">Match not found</p>
+        <p className="text-sm text-foreground/50">This match may have already ended or the link is invalid.</p>
         <button onClick={() => navigate(`/chess-tournament/${tournamentId}`)}
           className="mt-2 px-5 py-2.5 rounded-xl text-sm font-black text-white"
-          style={{ background: "rgba(124,58,237,0.3)", border: "1px solid rgba(124,58,237,0.4)" }}>
+          style={{ background: "linear-gradient(135deg,#7c3aed,#a855f7)" }}>
           ← Back to Tournament
         </button>
       </div>
@@ -59,14 +60,14 @@ export default function ChessTournamentMatch() {
 
   if (!room) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "#080810" }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--background)" }}>
         <div className="w-8 h-8 border-2 border-violet-500/30 border-t-violet-500 rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: "#080810" }}>
+    <div className="min-h-screen flex flex-col" style={{ background: "var(--background)" }}>
       {/* Tournament context banner */}
       <div className="shrink-0 px-4 py-2.5 flex items-center justify-between"
         style={{ background: "rgba(124,58,237,0.12)", borderBottom: "1px solid rgba(124,58,237,0.2)" }}>
@@ -85,8 +86,8 @@ export default function ChessTournamentMatch() {
               </span>
               {opponent && (
                 <>
-                  <span className="text-white/15 text-xs">vs</span>
-                  <span className="text-[10px] font-bold text-white/50">{opponent}</span>
+                  <span className="text-foreground/25 text-xs">vs</span>
+                  <span className="text-[10px] font-bold text-foreground/60">{opponent}</span>
                 </>
               )}
             </>

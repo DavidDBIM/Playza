@@ -48,7 +48,7 @@ function shufflePlayers<T>(players: T[]): T[] {
 }
 
 // ── Create a single chess_rooms match for a fixture, both players pre-assigned ──
-async function createFixtureMatch(
+export async function createFixtureMatch(
   fixtureId: string,
   player1Id: string,
   player2Id: string,
@@ -242,6 +242,28 @@ export async function advanceKnockoutFixture(fixtureId: string, winnerId: string
     .eq('id', fixture.tournament_id)
 
   return { advanced: true, nextRoundNumber, fixtures: nextFixtures }
+}
+
+// ── KNOCKOUT: a drawn match doesn't eliminate anyone — knockout rounds need
+// a decisive result, so replay the same fixture with colors swapped instead
+// of leaving it stuck at "active" forever. The fixture stays open (same id,
+// same status) and just gets a fresh chess_rooms match attached.
+export async function replayDrawnFixture(fixtureId: string, player1Id: string, player2Id: string) {
+  const { data: fixture } = await supabaseAdmin
+    .from('chess_tournament_fixtures')
+    .select('tournament_id')
+    .eq('id', fixtureId)
+    .single()
+  if (!fixture) throw new Error('Fixture not found')
+
+  const { data: tournament } = await supabaseAdmin
+    .from('chess_tournaments')
+    .select('time_control_secs')
+    .eq('id', fixture.tournament_id)
+    .single()
+
+  // Swap colors for the rematch so it stays fair over repeated draws.
+  return createFixtureMatch(fixtureId, player2Id, player1Id, tournament?.time_control_secs ?? 600)
 }
 
 // ── GROUP STAGE: assign players into groups and generate round-robin fixtures ──
@@ -508,8 +530,7 @@ export async function finishChessTournament(tournamentId: string, championId: st
     .select('round_number, player1_id, player2_id, winner_id, is_bye, status')
     .eq('tournament_id', tournamentId)
     .eq('status', 'completed')
-    .not('group_number', 'is', null)  // exclude group stage — only knockout fixtures determine final rank
-    .is('group_number', null)         // knockout fixtures have null group_number
+    .is('group_number', null)         // exclude group stage — knockout fixtures have null group_number
     .order('round_number', { ascending: false })
 
   // Build a map: userId → the round they were eliminated in (higher = better rank)

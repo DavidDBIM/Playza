@@ -1,8 +1,72 @@
 import { Router, Response } from 'express'
 import { supabaseAdmin } from '../../config/supabase'
 import { requireAuth, AuthRequest } from '../../middleware/auth'
+import { Resend } from 'resend'
 
 const router = Router()
+const resend = new Resend(process.env.RESEND_API_KEY)
+
+function fmtTime(secs: number) {
+  if (secs >= 60) return `${Math.floor(secs / 60)} minute${Math.floor(secs / 60) > 1 ? 's' : ''}${secs % 60 > 0 ? ` + ${secs % 60}s increment` : ''}`
+  return `${secs}s`
+}
+
+async function sendChessRegistrationEmail(
+  to: string,
+  username: string,
+  tournament: { id: string; title: string; registration_end: string | null; scheduled_at: string | null; entry_fee: number; prize_pool: number; time_control_secs: number; format: string }
+) {
+  try {
+    const closesStr = tournament.registration_end
+      ? new Date(tournament.registration_end).toLocaleDateString('en-NG', {
+          weekday: 'long', day: 'numeric', month: 'long',
+          year: 'numeric', hour: '2-digit', minute: '2-digit',
+        })
+      : 'TBA'
+
+    await resend.emails.send({
+      from: 'Playza <noreply@playza.games>',
+      to,
+      subject: `✅ You're registered — ${tournament.title}`,
+      html: `
+        <div style="font-family:sans-serif;max-width:480px;margin:auto;background:#0e0e1a;color:#fff;border-radius:16px;overflow:hidden;">
+          <div style="background:linear-gradient(135deg,#7c3aed,#a855f7);padding:32px 24px;text-align:center;">
+            <div style="font-size:48px;margin-bottom:8px;">♟</div>
+            <h1 style="margin:0;font-size:22px;font-weight:900;">You're In!</h1>
+            <p style="margin:8px 0 0;opacity:0.8;font-size:13px;">Registration Confirmed</p>
+          </div>
+          <div style="padding:24px;">
+            <p style="font-size:15px;line-height:1.6;margin:0 0 16px;">
+              Hey <strong>${username}</strong>,<br><br>
+              Your spot in <strong>${tournament.title}</strong> is confirmed. Sharpen your openings!
+            </p>
+            <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:16px;margin-bottom:20px;">
+              <p style="margin:0 0 8px;font-size:12px;opacity:0.5;text-transform:uppercase;letter-spacing:0.1em;">Tournament Details</p>
+              <p style="margin:6px 0;font-weight:700;">♟ ${tournament.title}</p>
+              <p style="margin:6px 0;font-weight:700;">📐 Format: ${tournament.format === 'group_knockout' ? 'Group Stage → Knockout' : 'Single Elimination'}</p>
+              <p style="margin:6px 0;font-weight:700;">⏱️ Time Control: ${fmtTime(tournament.time_control_secs)}</p>
+              <p style="margin:6px 0;font-weight:700;">🔒 Registration Closes: ${closesStr}</p>
+              ${tournament.prize_pool > 0 ? `<p style="margin:6px 0;font-weight:700;">💰 Prize Pool: ${tournament.prize_pool.toLocaleString()} ZA</p>` : ''}
+              ${tournament.entry_fee > 0 ? `<p style="margin:6px 0;font-weight:700;">⚡ Entry Fee Paid: ${tournament.entry_fee} ZA</p>` : '<p style="margin:6px 0;font-weight:700;color:#4ade80;">🎁 Free Entry</p>'}
+            </div>
+            <div style="background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.25);border-radius:12px;padding:14px;margin-bottom:20px;">
+              <p style="margin:0;font-size:13px;font-weight:700;color:#c084fc;">⏰ We'll email you when the bracket is drawn and before every match.</p>
+            </div>
+            <a href="https://playza.games/chess-tournament/${tournament.id}"
+              style="display:block;text-align:center;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;text-decoration:none;padding:14px;border-radius:12px;font-weight:900;font-size:14px;">
+              View Tournament →
+            </a>
+          </div>
+          <div style="padding:16px 24px;text-align:center;opacity:0.4;font-size:11px;">
+            Playza Games · You registered for this chess tournament
+          </div>
+        </div>
+      `,
+    })
+  } catch (err) {
+    console.error('[ChessTournament] Registration email failed:', err)
+  }
+}
 
 // ── List tournaments — includes user_registered if auth header present ────────
 router.get('/tournaments', async (req: AuthRequest, res: Response) => {
@@ -193,13 +257,17 @@ router.post('/tournaments/:id/register', requireAuth, async (req: AuthRequest, r
       await supabaseAdmin.from('chess_tournaments').update({ prize_pool: tournament.prize_pool + tournament.entry_fee }).eq('id', tournamentId)
     }
 
-    const { data: userRow } = await supabaseAdmin.from('users').select('username, avatar_url').eq('id', userId).single()
+    const { data: userRow } = await supabaseAdmin.from('users').select('username, avatar_url, email').eq('id', userId).single()
 
     const { error } = await supabaseAdmin.from('chess_tournament_players').insert({
       tournament_id: tournamentId, user_id: userId,
       username: userRow?.username ?? 'Player', avatar_url: userRow?.avatar_url ?? null,
     })
     if (error) throw error
+
+    if (userRow?.email) {
+      sendChessRegistrationEmail(userRow.email, userRow.username ?? 'Player', tournament)
+    }
 
     res.json({ success: true })
   } catch (err: any) {

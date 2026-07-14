@@ -276,4 +276,33 @@ router.post('/tournaments/:id/auto-schedule', requireAdmin, async (req: AuthRequ
   }
 })
 
+// ── Delete a tournament — only once it's cancelled or completed ────────────
+router.delete('/tournaments/:id', requireAdmin, async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params
+
+    const { data: tournament } = await supabaseAdmin
+      .from('chess_tournaments')
+      .select('status')
+      .eq('id', id)
+      .single()
+
+    if (!tournament) {
+      return res.status(404).json({ success: false, message: 'Tournament not found' })
+    }
+    if (!['cancelled', 'completed'].includes(tournament.status)) {
+      return res.status(400).json({ success: false, message: 'Only cancelled or completed tournaments can be deleted.' })
+    }
+
+    await supabaseAdmin.from('chess_tournament_standings').delete().eq('tournament_id', id)
+    await supabaseAdmin.from('chess_tournament_fixtures').delete().eq('tournament_id', id)
+    await supabaseAdmin.from('chess_tournament_players').delete().eq('tournament_id', id)
+    await supabaseAdmin.from('chess_tournaments').delete().eq('id', id)
+
+    res.json({ success: true, message: 'Tournament deleted successfully.' })
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message })
+  }
+})
+
 export default router

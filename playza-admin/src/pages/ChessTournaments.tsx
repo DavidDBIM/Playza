@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "../lib/api-client";
-import { Trophy, Users, Zap, Plus, Play, X, ChevronRight, Shield } from "lucide-react";
+import { Trophy, Users, Zap, Plus, Play, X, ChevronRight, Shield, Trash2, Pencil } from "lucide-react";
 import { MdSportsEsports } from "react-icons/md";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -67,6 +67,7 @@ const api = {
   patch:   async ({ id, ...payload }: any) => { const { data } = await apiClient.patch(`/admin/chess-tournament/tournaments/${id}`, payload); return data.data; },
   launch:  async (id: string) => { const { data } = await apiClient.post(`/admin/chess-tournament/tournaments/${id}/launch`); return data; },
   cancel:  async (id: string) => { const { data } = await apiClient.post(`/admin/chess-tournament/tournaments/${id}/cancel`); return data; },
+  delete:  async (id: string) => { const { data } = await apiClient.delete(`/admin/chess-tournament/tournaments/${id}`); return data; },
   fixtures:  async (id: string): Promise<Fixture[]> => { const { data } = await apiClient.get(`/api/chess-tournament/tournaments/${id}/fixtures`); return data.data ?? []; },
   standings: async (id: string): Promise<Standing[]> => { const { data } = await apiClient.get(`/api/chess-tournament/tournaments/${id}/standings`); return data.data ?? []; },
 };
@@ -217,6 +218,92 @@ function StandingsTable({ standings }: { standings: Standing[] }) {
       ))}
     </div>
   );
+}
+
+// ── Revenue Tab ───────────────────────────────────────────────────────────────
+function RevenueTab({ tournaments }: { tournaments: ChessTournament[] }) {
+  const totalRevenue = tournaments.reduce((s, t) => s + Math.round(t.prize_pool * (t.platform_fee_percentage ?? 10) / 100), 0);
+  const totalPool = tournaments.reduce((s, t) => s + t.prize_pool, 0);
+  const totalPlayers = tournaments.reduce((s, t) => s + (t.player_count ?? 0), 0);
+  const totalPaid = tournaments.reduce((s, t) => s + Math.round(t.prize_pool * (1 - (t.platform_fee_percentage ?? 10) / 100)), 0);
+  return (
+    <div className="space-y-5">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {[
+          { label: "Total Revenue", value: `${totalRevenue.toLocaleString()} ZA`, color: "#4ade80", icon: "💰" },
+          { label: "Total Entry Fees", value: `${totalPool.toLocaleString()} ZA`, color: "#a855f7", icon: "🎯" },
+          { label: "Prizes Paid Out", value: `${totalPaid.toLocaleString()} ZA`, color: "#f87171", icon: "🏆" },
+          { label: "Total Players", value: totalPlayers.toLocaleString(), color: "#fbbf24", icon: "👥" },
+        ].map(s => (
+          <div key={s.label} className="rounded-2xl p-4" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
+            <div className="text-2xl mb-2">{s.icon}</div>
+            <p className="text-xl font-black text-white leading-none">{s.value}</p>
+            <p className="text-[10px] font-bold uppercase tracking-wider mt-1" style={{ color: s.color }}>{s.label}</p>
+          </div>
+        ))}
+      </div>
+      <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.07)" }}>
+        <div className="px-5 py-3 border-b border-white/5 flex items-center justify-between" style={{ background: "rgba(255,255,255,0.02)" }}>
+          <p className="text-xs font-black text-white/40 uppercase tracking-widest">Per Tournament Breakdown</p>
+          <p className="text-xs text-white/20 font-bold">{tournaments.length} total</p>
+        </div>
+        {tournaments.length === 0 ? (
+          <div className="py-12 text-center"><p className="text-white/20 text-sm font-bold">No tournaments yet</p></div>
+        ) : (
+          <div className="divide-y divide-white/5">
+            <div className="grid px-5 py-2" style={{ gridTemplateColumns: "1fr 60px 90px 60px 100px 90px" }}>
+              {["Tournament", "Players", "Pool", "Fee %", "Revenue", "Status"].map(h => (
+                <p key={h} className="text-[9px] font-black text-white/20 uppercase tracking-widest">{h}</p>
+              ))}
+            </div>
+            {tournaments.map(t => {
+              const fee = t.platform_fee_percentage ?? 10;
+              const rev = Math.round(t.prize_pool * fee / 100);
+              const sc = STATUS_STYLES[t.status] ?? STATUS_STYLES.registration;
+              return (
+                <div key={t.id} className="grid px-5 py-3 items-center hover:bg-white/[0.02]" style={{ gridTemplateColumns: "1fr 60px 90px 60px 100px 90px" }}>
+                  <div className="min-w-0 pr-3"><p className="text-sm font-bold text-white truncate">{t.title}</p></div>
+                  <p className="text-sm font-black text-white/70">{t.player_count ?? 0}</p>
+                  <p className="text-sm font-black text-white/70">{t.prize_pool.toLocaleString()} ZA</p>
+                  <p className="text-sm font-black" style={{ color: "#fbbf24" }}>{fee}%</p>
+                  <p className="text-sm font-black" style={{ color: rev > 0 ? "#4ade80" : "rgba(255,255,255,0.3)" }}>{rev > 0 ? `+${rev.toLocaleString()} ZA` : "—"}</p>
+                  <span className="text-[10px] font-black px-2 py-1 rounded-full w-fit" style={{ background: sc.bg, color: sc.color }}>{sc.label}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function toDatetimeLocal(iso?: string): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function toFormState(t: ChessTournament): FormState {
+  return {
+    title: t.title,
+    description: t.description ?? "",
+    format: t.format,
+    bracket_size: t.bracket_size,
+    group_count: t.group_count ?? 2,
+    advance_per_group: t.advance_per_group ?? 2,
+    time_control_secs: t.time_control_secs,
+    increment_secs: t.increment_secs,
+    entry_fee: t.entry_fee,
+    platform_fee_percentage: t.platform_fee_percentage,
+    consolation_pza: t.consolation_pza,
+    registration_end: toDatetimeLocal(t.registration_end),
+    scheduled_at: toDatetimeLocal(t.scheduled_at),
+    prize_distribution: t.prize_distribution?.length
+      ? t.prize_distribution
+      : [{ rank: 1, percentage: 60 }, { rank: 2, percentage: 25 }, { rank: 3, percentage: 15 }],
+  };
 }
 
 // ── Create / Edit Form ───────────────────────────────────────────────────────
@@ -403,11 +490,13 @@ function TournamentForm({ initial, onSave, onCancel, editId }: {
 }
 
 // ── Tournament Detail Panel ───────────────────────────────────────────────────
-function TournamentDetail({ t, onClose, onLaunch, onCancel, isLaunching, isCancelling }: {
+function TournamentDetail({ t, onClose, onLaunch, onCancel, onEdit, onDelete, isLaunching, isCancelling }: {
   t: ChessTournament;
   onClose: () => void;
   onLaunch: () => void;
   onCancel: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
   isLaunching: boolean;
   isCancelling: boolean;
 }) {
@@ -506,6 +595,10 @@ function TournamentDetail({ t, onClose, onLaunch, onCancel, isLaunching, isCance
           <div className="flex gap-3">
             {t.status === "registration" && (
               <>
+                <button onClick={onEdit}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black text-blue-400 border border-blue-500/20 hover:bg-blue-500/10 transition-colors">
+                  <Pencil size={12} /> Edit
+                </button>
                 <button onClick={onCancel} disabled={isCancelling}
                   className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black text-red-400 border border-red-500/20 hover:bg-red-500/10 transition-colors disabled:opacity-40">
                   <X size={12} /> Cancel Tournament
@@ -523,6 +616,12 @@ function TournamentDetail({ t, onClose, onLaunch, onCancel, isLaunching, isCance
                 Tournament in progress — Round {t.current_round}
               </div>
             )}
+            {(t.status === "completed" || t.status === "cancelled") && (
+              <button onClick={onDelete}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black text-red-400 border border-red-500/20 hover:bg-red-500/10 transition-colors">
+                <Trash2 size={12} /> Delete Tournament
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -535,7 +634,10 @@ export default function ChessTournaments() {
   const qc = useQueryClient();
   const [showCreate, setShowCreate] = useState(false);
   const [selected, setSelected] = useState<ChessTournament | null>(null);
+  const [editing, setEditing] = useState<ChessTournament | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<ChessTournament | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [activeTab, setActiveTab] = useState<"tournaments" | "revenue">("tournaments");
 
   const { data: tournaments = [], isLoading } = useQuery({
     queryKey: ["chess-tournaments"],
@@ -543,9 +645,22 @@ export default function ChessTournaments() {
     refetchInterval: 15000,
   });
 
+  // Keep the open detail panel in sync with the live-polling list instead of
+  // showing a stale snapshot from the moment it was clicked open.
+  const selectedFresh = selected ? tournaments.find(x => x.id === selected.id) ?? selected : null;
+
   const createM   = useMutation({ mutationFn: api.create,   onSuccess: () => { qc.invalidateQueries({ queryKey: ["chess-tournaments"] }); setShowCreate(false); } });
+  const editM     = useMutation({ mutationFn: api.patch,    onSuccess: (updated) => { qc.invalidateQueries({ queryKey: ["chess-tournaments"] }); setEditing(null); if (selected) setSelected(t => t ? { ...t, ...updated } : null); } });
   const launchM   = useMutation({ mutationFn: (id: string) => api.launch(id),  onSuccess: () => { qc.invalidateQueries({ queryKey: ["chess-tournaments"] }); if (selected) setSelected(t => t ? { ...t, status: "active" } : null); } });
   const cancelM   = useMutation({ mutationFn: (id: string) => api.cancel(id),  onSuccess: () => { qc.invalidateQueries({ queryKey: ["chess-tournaments"] }); setSelected(null); } });
+  const deleteM   = useMutation({
+    mutationFn: (id: string) => api.delete(id),
+    onSuccess: (_d, id) => {
+      qc.setQueryData<ChessTournament[]>(["chess-tournaments"], old => (old ?? []).filter(t => t.id !== id));
+      setConfirmDelete(null);
+      setSelected(null);
+    },
+  });
 
   const filtered = tournaments.filter(t => filterStatus === "all" || t.status === filterStatus);
 
@@ -572,6 +687,31 @@ export default function ChessTournaments() {
       {/* Create form */}
       {showCreate && <TournamentForm onSave={v => createM.mutate(v)} onCancel={() => setShowCreate(false)} />}
 
+      {/* Edit form */}
+      {editing && (
+        <TournamentForm
+          editId={editing.id}
+          initial={toFormState(editing)}
+          onSave={v => editM.mutate(v)}
+          onCancel={() => setEditing(null)}
+        />
+      )}
+
+      {/* Top-level tabs */}
+      <div className="flex gap-1 p-1 rounded-xl w-fit" style={{ background: "var(--muted)" }}>
+        {([["tournaments", "🏟️ Tournaments"], ["revenue", "💰 Revenue"]] as const).map(([v, l]) => (
+          <button key={v} onClick={() => setActiveTab(v)}
+            className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${activeTab === v ? "text-white" : "text-white/40 hover:text-white/60"}`}
+            style={activeTab === v ? { background: "rgba(124,58,237,0.5)" } : {}}>
+            {l}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === "revenue" ? (
+        <RevenueTab tournaments={tournaments} />
+      ) : (
+      <>
       {/* Filter tabs */}
       <div className="flex gap-1 p-1 rounded-xl w-fit" style={{ background: "var(--muted)" }}>
         {[["all", "All"], ["registration", "Registration"], ["active", "Live"], ["completed", "Completed"]].map(([v, l]) => (
@@ -633,17 +773,39 @@ export default function ChessTournaments() {
           })}
         </div>
       )}
+      </>
+      )}
 
       {/* Detail panel */}
-      {selected && (
+      {selectedFresh && (
         <TournamentDetail
-          t={selected}
+          t={selectedFresh}
           onClose={() => setSelected(null)}
-          onLaunch={() => launchM.mutate(selected.id)}
-          onCancel={() => cancelM.mutate(selected.id)}
+          onLaunch={() => launchM.mutate(selectedFresh.id)}
+          onCancel={() => cancelM.mutate(selectedFresh.id)}
+          onEdit={() => setEditing(selectedFresh)}
+          onDelete={() => setConfirmDelete(selectedFresh)}
           isLaunching={launchM.isPending}
           isCancelling={cancelM.isPending}
         />
+      )}
+
+      {/* Delete confirmation */}
+      {confirmDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(16px)" }} onClick={() => setConfirmDelete(null)}>
+          <div className="w-full max-w-sm rounded-2xl p-6 text-center" style={{ background: "rgba(12,8,24,0.99)", border: "1px solid rgba(239,68,68,0.25)" }} onClick={e => e.stopPropagation()}>
+            <Trash2 size={36} className="text-red-400 mx-auto mb-4" />
+            <h3 className="font-black text-white text-lg mb-1">Delete Tournament?</h3>
+            <p className="text-sm font-bold text-white/50 mb-1">"{confirmDelete.title}"</p>
+            <p className="text-xs text-white/30 mb-6">Permanently deletes all fixtures, players, and standings data. <span className="text-red-400 font-bold">Cannot be undone.</span></p>
+            <div className="flex gap-3">
+              <button onClick={() => setConfirmDelete(null)} className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white/50" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>Keep It</button>
+              <button onClick={() => deleteM.mutate(confirmDelete.id)} disabled={deleteM.isPending} className="flex-1 py-2.5 rounded-xl font-black text-sm text-white disabled:opacity-50" style={{ background: "linear-gradient(135deg, #dc2626, #991b1b)" }}>
+                <Trash2 size={14} className="inline mr-1" /> {deleteM.isPending ? "Deleting…" : "Yes, Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

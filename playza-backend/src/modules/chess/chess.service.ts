@@ -236,21 +236,21 @@ async function handleGameOver(roomId: string, winnerId: string | null, stake: nu
       .maybeSingle()
 
     if (fixture) {
-      const { advanceKnockoutFixture, recordGroupResult, finishChessTournament } =
+      const { advanceKnockoutFixture, recordGroupResult, finishChessTournament, replayDrawnFixture } =
         await import('../chess-tournament/chess-tournament.service')
 
       if (fixture.group_number) {
         await recordGroupResult(fixture.id, winnerId, fixture.player1_id, fixture.player2_id)
-      } else {
-        const loserId = winnerId
-          ? (winnerId === fixture.player1_id ? fixture.player2_id : fixture.player1_id)
-          : null // draw in a knockout match — handled by caller via replay/tiebreak in future; for now no elimination on draw
-        if (winnerId) {
-          const result = await advanceKnockoutFixture(fixture.id, winnerId, loserId)
-          if (result.tournamentComplete && result.championId) {
-            await finishChessTournament(fixture.tournament_id, result.championId)
-          }
+      } else if (winnerId) {
+        const loserId = winnerId === fixture.player1_id ? fixture.player2_id : fixture.player1_id
+        const result = await advanceKnockoutFixture(fixture.id, winnerId, loserId)
+        if (result.tournamentComplete && result.championId) {
+          await finishChessTournament(fixture.tournament_id, result.championId)
         }
+      } else {
+        // Draw in a knockout match — no elimination possible, so replay the
+        // fixture with colors swapped rather than leaving the round stuck.
+        await replayDrawnFixture(fixture.id, fixture.player1_id, fixture.player2_id)
       }
     }
   } catch (tErr) {
