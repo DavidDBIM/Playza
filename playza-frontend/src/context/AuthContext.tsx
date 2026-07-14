@@ -30,6 +30,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     refetchOnMount: false,
+    refetchInterval: 60 * 1000, // keep header balance fresh without a manual reload
   });
 
   useEffect(() => {

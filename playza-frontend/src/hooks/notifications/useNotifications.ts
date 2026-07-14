@@ -24,6 +24,7 @@ export const useActiveBanner = () => {
     queryFn: getActiveBannerApi,
     staleTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
+    refetchInterval: 2 * 60 * 1000, // pick up new banners posted by admin without a manual reload
   });
 };
 

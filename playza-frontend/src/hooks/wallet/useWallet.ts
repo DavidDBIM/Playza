@@ -8,6 +8,7 @@ export const useWallet = () => {
     queryKey: ["wallet", "balance"],
     queryFn: walletApi.getWallet,
     staleTime: 1000 * 60 * 2, // 2 minutes
+    refetchInterval: 30 * 1000, // pick up deposits/payouts that land while the page is open
   });
 };
 
