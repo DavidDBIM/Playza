@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, type ComponentType } from 'react';
-import { useNavigate, useLocation } from 'react-router';
+import { useNavigate, useLocation, useSearchParams } from 'react-router';
 import { Zap, Swords, Trophy } from 'lucide-react';
 import H2HLobbySkeleton from '../skeletons/H2HLobbySkeleton';
 import { useGames } from '@/hooks/gamesession/useGameSession';
@@ -38,6 +38,7 @@ interface GameType {
 const H2HLobby = ({ onCreate, onBotCreate, onJoin, onQuickMatch, getWaitingRooms, loading }: H2HLobbyProps) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [view, setView] = useState<'hub' | 'quick' | 'invite' | 'bot'>(location.state?.view || 'hub');
   const [stakeValue, setStakeValue] = useState(100);
   const [customStake, setCustomStake] = useState('');
@@ -69,6 +70,21 @@ const H2HLobby = ({ onCreate, onBotCreate, onJoin, onQuickMatch, getWaitingRooms
       fetchPublicRooms();
     }
   }, [view, fetchPublicRooms]);
+
+  // ── Arrived via a shared invite link (?join=CODE) — pre-fill the code and
+  // jump straight to the join tab instead of leaving the friend stranded.
+  useEffect(() => {
+    const joinParam = searchParams.get('join');
+    if (joinParam) {
+      setJoinCode(joinParam.toUpperCase());
+      setView('invite');
+      setInviteMobileTab('join');
+      // Strip the query param so it doesn't re-trigger on re-renders/back nav
+      searchParams.delete('join');
+      setSearchParams(searchParams, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Function to change view and stay in sync with URL state
   const handleSetView = (newView: 'hub' | 'quick' | 'invite' | 'bot') => {
@@ -254,4 +270,3 @@ const H2HLobby = ({ onCreate, onBotCreate, onJoin, onQuickMatch, getWaitingRooms
 };
 
 export default H2HLobby;
-

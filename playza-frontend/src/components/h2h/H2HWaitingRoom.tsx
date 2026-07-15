@@ -27,12 +27,13 @@ const H2HWaitingRoom = ({ room, gameType }: WaitingRoomProps) => {
   const { cancelRoom } = useH2HMutations(gameType);
 
   const handleShare = () => {
-    const text = `Join my H2H battle on Playza! Room Code: ${room.code} \nLink: ${window.location.href}`;
+    const joinUrl = `${window.location.origin}/h2h/${gameType}?join=${room.code}`;
+    const text = `Join my H2H battle on Playza! Room Code: ${room.code} \nLink: ${joinUrl}`;
     if (navigator.share) {
       navigator.share({
         title: 'Playza H2H Battle',
         text: text,
-        url: window.location.href,
+        url: joinUrl,
       }).catch(() => {});
     } else {
       navigator.clipboard.writeText(text);
