@@ -590,18 +590,22 @@ function ChessTCard({ ct }: { ct: any }) {
 
   // Fetch per-user status — picks up registration from previous sessions
   // and surfaces any active fixture link if tournament is live
-  useQuery({
+  const { data: myStatus } = useQuery({
     queryKey: ["chess-my-status", ct.id, user?.id],
     queryFn: async () => {
       const { getMyChessStatus } = await import("@/api/chess-tournament.api");
       return getMyChessStatus(ct.id);
     },
     enabled: !!user,
-    onSuccess: (d: any) => {
-      if (d.registered) setRegistered(true);
-      if (d.active_fixture) setActiveFixture(d.active_fixture);
-    },
-  } as any);
+  });
+
+  // React Query v5 removed the onSuccess callback from useQuery — this
+  // effect is what actually keeps `registered`/`activeFixture` in sync now.
+  useEffect(() => {
+    if (!myStatus) return;
+    if ((myStatus as any).registered) setRegistered(true);
+    if ((myStatus as any).active_fixture) setActiveFixture((myStatus as any).active_fixture);
+  }, [myStatus]);
 
   const { mutate: registerChess, isPending } = useMutation({
     mutationFn: async () => {
@@ -773,7 +777,7 @@ function ChessLobbyModal({ tournamentId, title, scheduledAt, playerCount, maxPla
   const [msg, setMsg] = useState("");
   const chatEndRef = useRef<HTMLDivElement>(null);
   const { timeLeft } = useCountdown(scheduledAt ?? null);
-  const { connected, messages, reactions, sendMessage, sendReaction } = useLobbySocket(tournamentId);
+  const { connected, messages, reactions, sendMessage, sendReaction } = useLobbySocket(tournamentId, 'chess');
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };

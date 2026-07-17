@@ -249,61 +249,22 @@ export async function advanceKnockoutFixture(fixtureId: string, winnerId: string
   const allDecided = (roundFixtures ?? []).every(f => f.winner_id || f.status === 'bye')
   if (!allDecided) return { advanced: false }
 
-  const winners = (roundFixtures ?? [])
-    .sort((a, b) => a.bracket_position - b.bracket_position)
-    .map(f => f.winner_id!)
-
-  if (winners.length === 1) {
-    // Tournament is over — the single remaining winner takes the title.
-    return { advanced: false, tournamentComplete: true, championId: winners[0] }
-  }
-
   const { data: tournament } = await supabaseAdmin
     .from('chess_tournaments')
     .select('time_control_secs')
     .eq('id', fixture.tournament_id)
     .single()
 
-  const nextRoundNumber = fixture.round_number + 1
-  const roundName = roundNameForPlayerCount(winners.length)
-  const nextFixtures: { id: string; player1_id: string | null; player2_id: string | null }[] = []
+  // Delegate to the shared round-resolution helper rather than duplicating
+  // this logic — it correctly filters out null winners from "double-bye"
+  // fixtures (both slots empty in a sparse bracket) and cascades through
+  // any further rounds that also turn out to be all-byes, finishing the
+  // tournament directly if it collapses to a single winner. The duplicated
+  // version that used to live here didn't do either, which could silently
+  // stall a bracket on a garbage fixture.
+  await resolveRoundOutcome(fixture.tournament_id, fixture.round_number, tournament?.time_control_secs ?? 600)
 
-  for (let i = 0; i < winners.length / 2; i++) {
-    const p1 = winners[i * 2]
-    const p2 = winners[i * 2 + 1]
-
-    const { data: nf, error } = await supabaseAdmin
-      .from('chess_tournament_fixtures')
-      .insert({
-        tournament_id: fixture.tournament_id,
-        round_number: nextRoundNumber,
-        round_name: roundName,
-        bracket_position: i,
-        player1_id: p1,
-        player2_id: p2 ?? null,
-        is_bye: !p2,
-        winner_id: !p2 ? p1 : null,
-        status: !p2 ? 'bye' : 'pending',
-      })
-      .select()
-      .single()
-
-    if (error) throw error
-    nextFixtures.push(nf)
-  }
-
-  for (const f of nextFixtures) {
-    if (f.player1_id && f.player2_id) {
-      await createFixtureMatch(f.id, f.player1_id, f.player2_id, tournament?.time_control_secs ?? 600)
-    }
-  }
-
-  await supabaseAdmin
-    .from('chess_tournaments')
-    .update({ current_round: nextRoundNumber })
-    .eq('id', fixture.tournament_id)
-
-  return { advanced: true, nextRoundNumber, fixtures: nextFixtures }
+  return { advanced: true }
 }
 
 // ── KNOCKOUT: a drawn match doesn't eliminate anyone — knockout rounds need

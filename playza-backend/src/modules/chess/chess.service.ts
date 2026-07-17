@@ -236,17 +236,16 @@ async function handleGameOver(roomId: string, winnerId: string | null, stake: nu
       .maybeSingle()
 
     if (fixture) {
-      const { advanceKnockoutFixture, recordGroupResult, finishChessTournament, replayDrawnFixture } =
+      const { advanceKnockoutFixture, recordGroupResult, replayDrawnFixture } =
         await import('../chess-tournament/chess-tournament.service')
 
       if (fixture.group_number) {
         await recordGroupResult(fixture.id, winnerId, fixture.player1_id, fixture.player2_id)
       } else if (winnerId) {
         const loserId = winnerId === fixture.player1_id ? fixture.player2_id : fixture.player1_id
-        const result = await advanceKnockoutFixture(fixture.id, winnerId, loserId)
-        if (result.tournamentComplete && result.championId) {
-          await finishChessTournament(fixture.tournament_id, result.championId)
-        }
+        // Tournament completion (if this was the final) is handled internally
+        // by advanceKnockoutFixture → resolveRoundOutcome → finishChessTournament.
+        await advanceKnockoutFixture(fixture.id, winnerId, loserId)
       } else {
         // Draw in a knockout match — no elimination possible, so replay the
         // fixture with colors swapped rather than leaving the round stuck.

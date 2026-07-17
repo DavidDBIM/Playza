@@ -697,12 +697,83 @@ export function setupQuizGateway(io: SocketServer) {
     })
 
     // ── LOBBY REACTIONS ───────────────────────────────────────────────────────
-    socket.on('quiz:react', ({ tournament_id, emoji, username }: {
+    // ── CHESS LOBBY: join ────────────────────────────────────────────────────
+    // Lightweight sibling to quiz:join — chess tournament lobbies only need
+    // presence + chat, not the full quiz game-state machine, so this doesn't
+    // touch the `games` map at all. Same socket connection/namespace as quiz,
+    // separate room prefix and its own chess_lobby_chat table so history
+    // actually persists (previously this reused quiz's tables/events with a
+    // chess tournament_id, which never matched any quiz_tournaments row).
+    socket.on('chess:join', async ({ tournament_id }: { tournament_id: string }) => {
+      try {
+        socket.join(`chess:${tournament_id}`)
+
+        const { count } = await supabaseAdmin
+          .from('chess_tournament_players')
+          .select('id', { count: 'exact', head: true })
+          .eq('tournament_id', tournament_id)
+
+        quizNs.to(`chess:${tournament_id}`).emit('chess:lobby_update', { player_count: count ?? 0 })
+
+        const { data: chatHistory } = await supabaseAdmin
+          .from('chess_lobby_chat')
+          .select('user_id, username, avatar_url, message, created_at')
+          .eq('tournament_id', tournament_id)
+          .order('created_at', { ascending: true })
+          .limit(50)
+
+        if (chatHistory?.length) {
+          socket.emit('chess:chat_history', chatHistory.map(m => ({
+            user_id: m.user_id,
+            username: m.username,
+            avatar_url: m.avatar_url,
+            message: m.message,
+            ts: new Date(m.created_at).getTime(),
+          })))
+        }
+      } catch (err) {
+        console.error('[ChessLobby] chess:join error:', err)
+        socket.emit('chess:lobby_update', { player_count: 0 })
+      }
+    })
+
+    // ── CHESS LOBBY: chat ────────────────────────────────────────────────────
+    socket.on('chess:chat', async ({ tournament_id, message, username, avatar_url }: {
+      tournament_id: string; message: string; username: string; avatar_url?: string
+    }) => {
+      if (!message?.trim() || message.length > 200) return
+
+      const trimmed = message.trim()
+      const ts = Date.now()
+
+      try {
+        await supabaseAdmin.from('chess_lobby_chat').insert({
+          tournament_id,
+          user_id: userId,
+          username,
+          avatar_url: avatar_url ?? null,
+          message: trimmed,
+        })
+      } catch (err) {
+        console.error('[ChessLobby] Failed to save chat message:', err)
+      }
+
+      quizNs.to(`chess:${tournament_id}`).emit('chess:chat_message', {
+        user_id: userId,
+        username,
+        avatar_url: avatar_url ?? null,
+        message: trimmed,
+        ts,
+      })
+    })
+
+    // ── CHESS LOBBY: reactions ───────────────────────────────────────────────
+    socket.on('chess:react', ({ tournament_id, emoji, username }: {
       tournament_id: string; emoji: string; username: string
     }) => {
-      const ALLOWED = ['🔥', '💪', '👑', '😤', '🎯', '⚡', '🚀', '😂']
+      const ALLOWED = ['🔥', '♟', '👑', '😤', '🎯', '⚡', '🤝', '😂']
       if (!ALLOWED.includes(emoji)) return
-      quizNs.to(`quiz:${tournament_id}`).emit('quiz:reaction', {
+      quizNs.to(`chess:${tournament_id}`).emit('chess:reaction', {
         user_id: userId,
         username,
         emoji,

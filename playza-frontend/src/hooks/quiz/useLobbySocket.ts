@@ -22,7 +22,7 @@ export interface Reaction {
   rotate: number  // slight rotation for a more organic, less robotic feel
 }
 
-export function useLobbySocket(tournamentId: string | null) {
+export function useLobbySocket(tournamentId: string | null, type: 'quiz' | 'chess' = 'quiz') {
   const { user } = useAuth()
   const socketRef     = useRef<Socket | null>(null)
   const reactionIdRef = useRef(0)
@@ -45,7 +45,7 @@ export function useLobbySocket(tournamentId: string | null) {
 
     socket.on('connect', () => {
       setConnected(true)
-      socket.emit('quiz:join', { tournament_id: tournamentId })
+      socket.emit(`${type}:join`, { tournament_id: tournamentId })
     })
 
     socket.on('connect_error', (err) => {
@@ -57,24 +57,24 @@ export function useLobbySocket(tournamentId: string | null) {
       console.log('[LobbySocket] disconnected:', reason)
     })
 
-    socket.on('quiz:lobby_update', ({ player_count }: { player_count: number }) => {
+    socket.on(`${type}:lobby_update`, ({ player_count }: { player_count: number }) => {
       setPlayerCount(player_count)
     })
 
-    socket.on('quiz:game_start', () => {
+    socket.on(`${type}:game_start`, () => {
       setGameStarted(true)
     })
 
-    socket.on('quiz:chat_message', (msg: ChatMessage) => {
+    socket.on(`${type}:chat_message`, (msg: ChatMessage) => {
       setMessages(prev => [...prev.slice(-99), msg])
     })
 
     // Load persisted history on join (so messages survive refresh)
-    socket.on('quiz:chat_history', (history: ChatMessage[]) => {
+    socket.on(`${type}:chat_history`, (history: ChatMessage[]) => {
       setMessages(history.slice(-100))
     })
 
-    socket.on('quiz:reaction', (r: Omit<Reaction, 'id' | 'left' | 'rotate'>) => {
+    socket.on(`${type}:reaction`, (r: Omit<Reaction, 'id' | 'left' | 'rotate'>) => {
       const id = ++reactionIdRef.current
       // Randomize once at creation — keeps this reaction's position fixed
       // through its whole float-up animation instead of recalculating per render
@@ -90,28 +90,28 @@ export function useLobbySocket(tournamentId: string | null) {
       socket.disconnect()
       socketRef.current = null
     }
-  }, [tournamentId, user?.id])
+  }, [tournamentId, user?.id, type])
 
   const sendMessage = useCallback((message: string) => {
     const socket = socketRef.current
     if (!socket?.connected || !tournamentId || !user) return
-    socket.emit('quiz:chat', {
+    socket.emit(`${type}:chat`, {
       tournament_id: tournamentId,
       message,
       username: user.username,
       avatar_url: user.avatarUrl ?? null,
     })
-  }, [tournamentId, user])
+  }, [tournamentId, user, type])
 
   const sendReaction = useCallback((emoji: string) => {
     const socket = socketRef.current
     if (!socket?.connected || !tournamentId || !user) return
-    socket.emit('quiz:react', {
+    socket.emit(`${type}:react`, {
       tournament_id: tournamentId,
       emoji,
       username: user.username,
     })
-  }, [tournamentId, user])
+  }, [tournamentId, user, type])
 
   return { connected, playerCount, gameStarted, messages, reactions, sendMessage, sendReaction }
 }
