@@ -16,6 +16,7 @@ import NotificationBanner from "./components/NotificationBanner";
 import PayoutBanner from "./components/PayoutBanner";
 import { DeactivatedAccountModal } from "./components/profile/DeactivatedAccountModal";
 import { FloatingFeedbackButton } from "./components/feedback/FloatingFeedbackButton";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
 // ─── Lazy pages ───────────────────────────────────────────────────────────────
 const Home = lazy(() => import("./pages/Home"));
@@ -210,6 +211,7 @@ const AppContent = () => {
           }}
         >
           <Suspense fallback={<PageLoader />}>
+            <ErrorBoundary key={pathname}>
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/leaderboard" element={<LeaderBoard />} />
@@ -261,6 +263,7 @@ const AppContent = () => {
                 <Route path="security" element={<Security />} />
               </Route>
             </Routes>
+            </ErrorBoundary>
           </Suspense>
         </main>
       </div>
