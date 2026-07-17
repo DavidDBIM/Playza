@@ -537,7 +537,7 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
 
   // ── Click-to-move
   const handleSquareClick = useCallback(
-    ({ square }: { square: string; piece: { pieceType: string } | null }) => {
+    (square: string) => {
       if (!isYourTurn) return;
 
       if (selectedSquare) {
@@ -1063,26 +1063,23 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
         )}
         <div className="relative z-1 w-full h-full">
           <Chessboard
-            options={{
-              position: game.fen(),
-              boardOrientation: boardOrientation as "white" | "black",
-              allowDragging: isYourTurn,
-              animationDurationInMs: 300,
-              onPieceDrop: ({ sourceSquare, targetSquare }) => {
-                if (!targetSquare) return false;
-                const moved = attemptMove(sourceSquare, targetSquare);
-                return moved;
-              },
-              onSquareClick: handleSquareClick,
-              squareStyles: squareStyles,
-              pieces: customPieces,
-              darkSquareStyle: { backgroundColor: "#4a2d6b" },
-              lightSquareStyle: { backgroundColor: "#c9a96e" },
-              boardStyle: {
-                borderRadius: "8px",
-                border: "6px solid #1a0a2e",
-                boxShadow: "0 0 32px rgba(124,58,237,0.4), 0 8px 32px rgba(0,0,0,0.6)",
-              },
+            position={game.fen()}
+            boardOrientation={boardOrientation as "white" | "black"}
+            arePiecesDraggable={isYourTurn}
+            animationDuration={300}
+            onPieceDrop={(sourceSquare, targetSquare) => {
+              if (!targetSquare) return false;
+              return attemptMove(sourceSquare, targetSquare);
+            }}
+            onSquareClick={handleSquareClick}
+            customSquareStyles={squareStyles}
+            customPieces={customPieces}
+            customDarkSquareStyle={{ backgroundColor: "#4a2d6b" }}
+            customLightSquareStyle={{ backgroundColor: "#c9a96e" }}
+            customBoardStyle={{
+              borderRadius: "8px",
+              border: "6px solid #1a0a2e",
+              boxShadow: "0 0 32px rgba(124,58,237,0.4), 0 8px 32px rgba(0,0,0,0.6)",
             }}
           />
         </div>
