@@ -19,6 +19,23 @@ router.get('/tournaments', requireAdmin, async (_req, res) => {
   }
 })
 
+// ── Registered players list — admin previously had no way to see who
+// registered, only a headcount. Useful during registration/lobby before any
+// fixtures exist yet. ──────────────────────────────────────────────────────
+router.get('/tournaments/:id/players', requireAdmin, async (req: AuthRequest, res: Response) => {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('chess_tournament_players')
+      .select('user_id, username, avatar_url, status, final_rank, prize_won, group_number, seed, created_at')
+      .eq('tournament_id', req.params.id)
+      .order('created_at', { ascending: true })
+    if (error) throw error
+    res.json({ success: true, data: data ?? [] })
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message })
+  }
+})
+
 // ── Create a new tournament ──────────────────────────────────────────────────
 router.post('/tournaments', requireAdmin, async (req: AuthRequest, res: Response) => {
   try {
@@ -85,16 +102,24 @@ router.patch('/tournaments/:id', requireAdmin, async (req: AuthRequest, res: Res
       .eq('id', req.params.id)
       .single()
     if (!existing) return res.status(404).json({ success: false, message: 'Tournament not found' })
-    if (existing.status !== 'registration') {
-      return res.status(400).json({ success: false, message: 'Can only edit tournaments still in registration' })
+    if (['completed', 'cancelled'].includes(existing.status)) {
+      return res.status(400).json({ success: false, message: 'Cannot edit a completed or cancelled tournament' })
     }
 
-    const allowedFields = [
-      'title', 'description', 'banner_url', 'bracket_size', 'group_count',
-      'matches_per_player', 'advance_per_group', 'time_control_secs',
-      'increment_secs', 'entry_fee', 'platform_fee_percentage',
-      'prize_distribution', 'consolation_pza', 'registration_end', 'scheduled_at',
-    ]
+    // Structural fields reshape the bracket itself — safe to change only
+    // before fixtures exist (registration stage). Everything else (title,
+    // prizes, schedule, etc.) is safe to update any time, same as quiz.
+    const structuralFields = ['bracket_size', 'group_count', 'matches_per_player', 'advance_per_group', 'time_control_secs', 'increment_secs', 'entry_fee']
+    const alwaysEditableFields = ['title', 'description', 'banner_url', 'prize_distribution', 'consolation_pza', 'platform_fee_percentage', 'registration_end', 'scheduled_at']
+
+    if (existing.status !== 'registration') {
+      const attemptedStructuralChange = structuralFields.some(f => f in req.body)
+      if (attemptedStructuralChange) {
+        return res.status(400).json({ success: false, message: 'Bracket structure (size, format, time control, entry fee) can only be changed while registration is still open.' })
+      }
+    }
+
+    const allowedFields = existing.status === 'registration' ? [...structuralFields, ...alwaysEditableFields] : alwaysEditableFields
     const updates: Record<string, any> = {}
     for (const f of allowedFields) if (f in req.body) updates[f] = req.body[f]
 
