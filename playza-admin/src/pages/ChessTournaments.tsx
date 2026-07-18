@@ -543,6 +543,11 @@ function TournamentForm({ initial, onSave, onCancel, editId, lockStructural }: {
             <input className={inputCls} type="datetime-local" value={form.scheduled_at} onChange={set("scheduled_at")} />
           </div>
         </div>
+        {!form.registration_end && !form.scheduled_at && (
+          <div className="px-4 py-2.5 rounded-xl text-[11px] font-bold text-amber-400" style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)" }}>
+            ⚠️ Without either date set, this tournament will never auto-launch or auto-complete — you'll need to click "Launch Tournament" manually whenever you're ready.
+          </div>
+        )}
       </div>
 
       <div className="px-6 py-4 border-t border-foreground/[0.06] flex justify-end gap-3">
@@ -832,14 +837,21 @@ export default function ChessTournaments() {
           {filtered.map(t => {
             const sc = STATUS_STYLES[t.status] ?? STATUS_STYLES.registration;
             const fillPct = Math.min(((t.player_count ?? 0) / t.bracket_size) * 100, 100);
+            const relevantDate = t.registration_end || t.scheduled_at;
+            const isOverdue = (t.status === "registration" || t.status === "lobby") && relevantDate && new Date(relevantDate) < new Date();
             return (
               <button key={t.id} onClick={() => setSelected(t)}
                 className="text-left rounded-2xl p-5 transition-all hover:scale-[1.02] hover:-translate-y-0.5"
-                style={{ background: "color-mix(in srgb, var(--foreground) 2.5%, transparent)", border: "1px solid color-mix(in srgb, var(--foreground) 7%, transparent)" }}>
+                style={{ background: "color-mix(in srgb, var(--foreground) 2.5%, transparent)", border: `1px solid ${isOverdue ? "rgba(245,158,11,0.4)" : "color-mix(in srgb, var(--foreground) 7%, transparent)"}` }}>
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full" style={{ background: sc.bg, color: sc.color }}>{sc.label}</span>
                     {t.status === "active" && <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />}
+                    {isOverdue && (
+                      <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full" style={{ background: "rgba(245,158,11,0.15)", color: "#f59e0b" }} title={`Was due ${new Date(relevantDate!).toLocaleString()}`}>
+                        ⏰ Overdue
+                      </span>
+                    )}
                   </div>
                   <span className="text-[9px] text-foreground/20 font-bold uppercase">{t.format === "group_knockout" ? "Group+KO" : "Knockout"}</span>
                 </div>
@@ -851,6 +863,11 @@ export default function ChessTournaments() {
                   <span>·</span>
                   <span><span className="font-bold text-yellow-400">{t.prize_pool.toLocaleString()} ZA</span> pool</span>
                 </div>
+                {isOverdue && (
+                  <p className="text-[9px] font-bold mb-2" style={{ color: "#f59e0b" }}>
+                    Should have {t.status === "registration" ? "closed registration" : "launched"} by now — will auto-progress within a minute, or launch it manually below.
+                  </p>
+                )}
                 {/* Registration fill bar */}
                 <div className="space-y-1">
                   <div className="flex justify-between text-[9px] text-foreground/20">

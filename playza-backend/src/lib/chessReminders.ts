@@ -219,22 +219,36 @@ export async function runChessLifecycleJob() {
 
     for (const t of tournaments) {
 
-      // ── 1. Close registration → send closure email, schedule draw in 30 min ──
+      // ── 1. Close registration → send closure email, schedule draw ──────────
+      // Normally triggered by registration_end passing. But registration_end
+      // is optional on the admin create form — if an admin only sets a
+      // scheduled_at (match start time) and leaves registration_end blank,
+      // this tournament would otherwise sit in "registration" forever, long
+      // after its scheduled time has come and gone, since nothing else ever
+      // triggers the close/draw. Fall back to scheduled_at in that case.
+      const closeTrigger = t.registration_end
+        ? new Date(t.registration_end)
+        : (!t.registration_end && t.scheduled_at ? new Date(t.scheduled_at) : null)
+
       if (
         t.status === 'registration' &&
-        t.registration_end &&
-        new Date(t.registration_end) <= now &&
+        closeTrigger &&
+        closeTrigger <= now &&
         !t.closure_email_sent
       ) {
-        console.log(`[ChessCron] Closing registration for "${t.title}"`)
+        console.log(`[ChessCron] Closing registration for "${t.title}"${!t.registration_end ? ' (via scheduled_at fallback — no registration_end set)' : ''}`)
+
+        // If we're using the scheduled_at fallback, the tournament is
+        // already late to start — draw immediately rather than adding
+        // another 30 minutes of delay on top.
+        const drawDelayMs = t.registration_end ? 30 * 60 * 1000 : 0
 
         await supabaseAdmin
           .from('chess_tournaments')
           .update({
             status: 'lobby',
             closure_email_sent: true,
-            // Auto-draw fires 30 minutes after registration closes
-            draw_scheduled_at: new Date(now.getTime() + 30 * 60 * 1000).toISOString(),
+            draw_scheduled_at: new Date(now.getTime() + drawDelayMs).toISOString(),
           })
           .eq('id', t.id)
 
