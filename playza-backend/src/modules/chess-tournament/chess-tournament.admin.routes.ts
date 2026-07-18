@@ -308,15 +308,38 @@ router.delete('/tournaments/:id', requireAdmin, async (req: AuthRequest, res: Re
 
     const { data: tournament } = await supabaseAdmin
       .from('chess_tournaments')
-      .select('status')
+      .select('status, entry_fee')
       .eq('id', id)
       .single()
 
     if (!tournament) {
       return res.status(404).json({ success: false, message: 'Tournament not found' })
     }
-    if (!['cancelled', 'completed'].includes(tournament.status)) {
-      return res.status(400).json({ success: false, message: 'Only cancelled or completed tournaments can be deleted.' })
+
+    // Refund entry fees when deleting a tournament that never went through
+    // /cancel (which already refunds) or finished naturally (which already
+    // paid out prizes) — otherwise players would just lose their money with
+    // nothing to show for it. Deleting a live tournament is intentionally
+    // allowed here (e.g. to remove a broken/test tournament), but any
+    // in-progress games are left alone — they'll finish normally as regular
+    // games, they just won't advance a tournament bracket that no longer exists.
+    if (['registration', 'lobby', 'active'].includes(tournament.status) && tournament.entry_fee > 0) {
+      const { data: players } = await supabaseAdmin
+        .from('chess_tournament_players')
+        .select('user_id')
+        .eq('tournament_id', id)
+
+      for (const p of (players ?? [])) {
+        await supabaseAdmin.rpc('increment_wallet_balance', { p_user_id: p.user_id, p_amount: tournament.entry_fee })
+        await supabaseAdmin.from('transactions').insert({
+          user_id: p.user_id,
+          type: 'chess_tournament_refund',
+          amount: tournament.entry_fee,
+          status: 'completed',
+          reference: `CHESS-REFUND-DELETE-${id}-${p.user_id}`,
+          meta: { tournament_id: id, reason: 'tournament_deleted' },
+        })
+      }
     }
 
     await supabaseAdmin.from('chess_tournament_standings').delete().eq('tournament_id', id)

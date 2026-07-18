@@ -584,6 +584,7 @@ function ChessTCard({ ct }: { ct: any }) {
   const isLobby = ct.status === "lobby";
   const isFull = ct.player_count >= ct.bracket_size;
   const [showDetail, setShowDetail] = useState(false);
+  const [showRules, setShowRules] = useState(false);
   const [showLobby, setShowLobby] = useState(false);
   const [registered, setRegistered] = useState(!!ct.user_registered);
   const [activeFixture, setActiveFixture] = useState<any>(null);
@@ -663,9 +664,9 @@ function ChessTCard({ ct }: { ct: any }) {
           </div>
         </div>
         <div style={{ display: "flex", gap: 6 }}>
-          <button onClick={e => { e.stopPropagation(); setShowDetail(true); }}
+          <button onClick={e => { e.stopPropagation(); setShowRules(true); }}
             style={{ flex: 1, padding: "8px", borderRadius: 8, background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.25)", color: "#a855f7", fontSize: 11, fontWeight: 800, cursor: "pointer" }}>
-            View Details
+            📜 View Rules
           </button>
           {ct.status === "registration" && !registered && !isFull && (
             <button onClick={e => { e.stopPropagation(); handleRegister(); }} disabled={isPending}
@@ -686,6 +687,65 @@ function ChessTCard({ ct }: { ct: any }) {
       </div>
 
       {/* ── Detail Modal ─────────────────────────────────────────────── */}
+      {showRules && (
+        <div onClick={e => { if (e.target === e.currentTarget) setShowRules(false); }}
+          style={{ position: "fixed", inset: 0, zIndex: 1000, background: "rgba(0,0,0,0.8)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+          <div style={{ width: "100%", maxWidth: 460, maxHeight: "85vh", display: "flex", flexDirection: "column", background: "var(--card)", borderRadius: 20, overflow: "hidden", border: "1px solid rgba(124,58,237,0.25)" }}
+            onClick={e => e.stopPropagation()}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 20px", borderBottom: "1px solid var(--border)" }}>
+              <p style={{ fontSize: 15, fontWeight: 900, color: "var(--foreground)", display: "flex", alignItems: "center", gap: 8, margin: 0 }}>📜 Tournament Rules</p>
+              <button onClick={() => setShowRules(false)} style={{ background: "none", border: "none", color: "var(--muted-foreground)", fontSize: 20, cursor: "pointer" }}>✕</button>
+            </div>
+            <div style={{ flex: 1, overflowY: "auto", padding: 20, display: "flex", flexDirection: "column", gap: 14 }}>
+              {[
+                {
+                  icon: "📐",
+                  title: ct.format === "group_knockout" ? "Group Stage → Knockout" : "Single Elimination Knockout",
+                  body: ct.format === "group_knockout"
+                    ? `Players are split into ${ct.group_count} groups. Everyone plays everyone else in their group once. The top ${ct.advance_per_group} from each group advance to a knockout bracket — lose in the knockout stage and you're out.`
+                    : "Players are randomly paired into a bracket. Win and you advance; lose and you're eliminated. If the player count isn't a perfect power of 2, some players get a bye (automatic advance) in Round 1.",
+                },
+                {
+                  icon: "⏱",
+                  title: `${fmtTime(ct.time_control_secs)}${ct.increment_secs > 0 ? ` + ${ct.increment_secs}s increment` : ""} per game`,
+                  body: "Each player gets this much time on their clock for the whole game. Run out of time and you lose automatically.",
+                },
+                {
+                  icon: "🤝",
+                  title: "What happens if a game is drawn?",
+                  body: "A draw can't decide a knockout match, so the same two players replay immediately with colors swapped. Each draw shrinks the time control by 1 minute, so games speed up the more you draw. If a game at the fastest 1-minute pace is still drawn, the next game becomes a sudden-death decider — one player is randomly given slightly less time but wins outright if that game is also drawn, guaranteeing a result.",
+                },
+                {
+                  icon: "💰",
+                  title: ct.entry_fee > 0 ? `${ct.entry_fee} ZA entry fee` : "Free to enter",
+                  body: ct.entry_fee > 0
+                    ? `Entry fees form the prize pool (currently ${ct.prize_pool?.toLocaleString() ?? 0} ZA). You pay this once at registration — no fee per match.`
+                    : `Free to enter. The ${ct.prize_pool?.toLocaleString() ?? 0} ZA prize pool is funded by Playza.`,
+                },
+                {
+                  icon: "🏆",
+                  title: "Prize distribution",
+                  body: (ct.prize_distribution?.length
+                    ? ct.prize_distribution.map((p: any) => `Rank ${p.rank}: ${p.percentage}%`).join(" · ")
+                    : "Split among top finishers.") + (ct.consolation_pza > 0 ? ` — plus everyone gets ${ct.consolation_pza} PZA just for playing.` : ""),
+                },
+              ].map((r, i) => (
+                <div key={i} style={{ borderRadius: 14, padding: 14, background: "rgba(124,58,237,0.05)", border: "1px solid rgba(124,58,237,0.15)" }}>
+                  <p style={{ fontSize: 13, fontWeight: 800, color: "var(--foreground)", display: "flex", alignItems: "center", gap: 8, margin: "0 0 6px" }}><span>{r.icon}</span>{r.title}</p>
+                  <p style={{ fontSize: 11.5, color: "var(--muted-foreground)", lineHeight: 1.6, margin: 0 }}>{r.body}</p>
+                </div>
+              ))}
+            </div>
+            <div style={{ padding: 16, borderTop: "1px solid var(--border)" }}>
+              <button onClick={() => setShowRules(false)}
+                style={{ width: "100%", padding: 13, borderRadius: 12, background: "linear-gradient(135deg,#7c3aed,#a855f7)", border: "none", color: "#fff", fontSize: 13, fontWeight: 800, cursor: "pointer" }}>
+                Got it
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showDetail && (
         <div onClick={e => { if (e.target === e.currentTarget) setShowDetail(false); }}
           style={{ position: "fixed", inset: 0, zIndex: 1000, background: "rgba(0,0,0,0.8)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>

@@ -708,9 +708,15 @@ function TournamentDetail({ t, onClose, onLaunch, onCancel, onEdit, onDelete, is
               </div>
             )}
             {t.status === "active" && (
-              <div className="flex items-center gap-2 text-xs text-red-400 font-bold">
-                <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                Tournament in progress — Round {t.current_round}
+              <div className="flex items-center gap-3 flex-wrap">
+                <div className="flex items-center gap-2 text-xs text-red-400 font-bold">
+                  <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                  Tournament in progress — Round {t.current_round}
+                </div>
+                <button onClick={onDelete}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black text-red-400 border border-red-500/20 hover:bg-red-500/10 transition-colors">
+                  <Trash2 size={12} /> Delete Tournament
+                </button>
               </div>
             )}
             {(t.status === "completed" || t.status === "cancelled") && (
@@ -907,8 +913,16 @@ export default function ChessTournaments() {
             <Trash2 size={36} className="text-red-400 mx-auto mb-4" />
             <h3 className="font-black text-foreground text-lg mb-1">Delete Tournament?</h3>
             <p className="text-sm font-bold text-foreground/50 mb-1">"{confirmDelete.title}"</p>
-            <p className="text-xs text-foreground/30 mb-6">Permanently deletes all fixtures, players, and standings data. <span className="text-red-400 font-bold">Cannot be undone.</span></p>
-            <div className="flex gap-3">
+            <p className="text-xs text-foreground/30 mb-3">Permanently deletes all fixtures, players, and standings data. <span className="text-red-400 font-bold">Cannot be undone.</span></p>
+            {confirmDelete.status === "active" && (
+              <p className="text-xs font-bold text-amber-400 mb-3 px-3 py-2 rounded-lg" style={{ background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.25)" }}>
+                ⚠️ This tournament is LIVE — games are in progress right now. Any in-progress games will keep playing normally for the two players, but the bracket itself will be gone. {confirmDelete.entry_fee > 0 ? "Entry fees will be refunded to everyone registered." : ""}
+              </p>
+            )}
+            {["registration", "lobby"].includes(confirmDelete.status) && confirmDelete.entry_fee > 0 && (
+              <p className="text-xs font-bold text-blue-400 mb-3">Entry fees will be refunded to everyone registered.</p>
+            )}
+            <div className="flex gap-3 mt-3">
               <button onClick={() => setConfirmDelete(null)} className="flex-1 py-2.5 rounded-xl font-bold text-sm text-foreground/50" style={{ background: "color-mix(in srgb, var(--foreground) 5%, transparent)", border: "1px solid color-mix(in srgb, var(--foreground) 8%, transparent)" }}>Keep It</button>
               <button onClick={() => deleteM.mutate(confirmDelete.id)} disabled={deleteM.isPending} className="flex-1 py-2.5 rounded-xl font-black text-sm text-white disabled:opacity-50" style={{ background: "linear-gradient(135deg, #dc2626, #991b1b)" }}>
                 <Trash2 size={14} className="inline mr-1" /> {deleteM.isPending ? "Deleting…" : "Yes, Delete"}
