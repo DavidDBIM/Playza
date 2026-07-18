@@ -23,13 +23,13 @@ function roundNameForPlayerCount(playersRemainingBeforeRound: number): string {
   return ROUND_NAMES[playersRemainingBeforeRound] ?? `Round of ${playersRemainingBeforeRound}`
 }
 
-function getInitialBoard(timeControlSecs: number) {
+function getInitialBoard(whiteTimeSecs: number, blackTimeSecs: number = whiteTimeSecs) {
   return {
     fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
     moves: [],
     last_move: null,
-    white_time: timeControlSecs,
-    black_time: timeControlSecs,
+    white_time: whiteTimeSecs,
+    black_time: blackTimeSecs,
     turn_started_at: new Date().toISOString(),
   }
 }
@@ -52,7 +52,8 @@ export async function createFixtureMatch(
   fixtureId: string,
   player1Id: string,
   player2Id: string,
-  timeControlSecs: number
+  whiteTimeControlSecs: number,
+  blackTimeControlSecs: number = whiteTimeControlSecs
 ) {
   const code = `TRN-${fixtureId.slice(0, 8).toUpperCase()}`
 
@@ -64,7 +65,7 @@ export async function createFixtureMatch(
       guest_id: player2Id,  // black
       stake: 0,              // entry fee was already paid at tournament registration
       status: 'active',
-      board_state: getInitialBoard(timeControlSecs),
+      board_state: getInitialBoard(whiteTimeControlSecs, blackTimeControlSecs),
       current_turn: player1Id,
     })
     .select()
@@ -268,25 +269,66 @@ export async function advanceKnockoutFixture(fixtureId: string, winnerId: string
 }
 
 // ── KNOCKOUT: a drawn match doesn't eliminate anyone — knockout rounds need
-// a decisive result, so replay the same fixture with colors swapped instead
-// of leaving it stuck at "active" forever. The fixture stays open (same id,
-// same status) and just gets a fresh chess_rooms match attached.
+// a decisive result. Rather than replaying at the same speed forever (which
+// could in theory loop indefinitely if two players keep drawing), each
+// replay shaves 60s off the time control — colors swapped each time for
+// fairness — down to a 60s floor. If a game AT the floor also draws, the
+// next game becomes an Armageddon decider: White gets the floor time,
+// Black gets slightly less but wins outright if that game is also a draw,
+// which guarantees a decisive result in one more game.
+const ARMAGEDDON_WHITE_SECS = 60
+const ARMAGEDDON_BLACK_SECS = 50
+
 export async function replayDrawnFixture(fixtureId: string, player1Id: string, player2Id: string) {
   const { data: fixture } = await supabaseAdmin
     .from('chess_tournament_fixtures')
-    .select('tournament_id')
+    .select('tournament_id, draw_count, is_armageddon')
     .eq('id', fixtureId)
     .single()
   if (!fixture) throw new Error('Fixture not found')
+
+  // The Armageddon decider itself drew — armageddon_draw_winner_id already
+  // handles that case in the game-over hook before this is ever called, so
+  // reaching here with is_armageddon still true would be a logic error.
+  // Guard against it defensively rather than looping forever.
+  if (fixture.is_armageddon) {
+    throw new Error('Armageddon decider already in progress for this fixture')
+  }
 
   const { data: tournament } = await supabaseAdmin
     .from('chess_tournaments')
     .select('time_control_secs')
     .eq('id', fixture.tournament_id)
     .single()
+  const baseTime = tournament?.time_control_secs ?? 600
 
-  // Swap colors for the rematch so it stays fair over repeated draws.
-  return createFixtureMatch(fixtureId, player2Id, player1Id, tournament?.time_control_secs ?? 600)
+  const priorDrawCount = fixture.draw_count ?? 0
+  const newDrawCount = priorDrawCount + 1
+  const timeOfGameThatJustDrew = Math.max(baseTime - 60 * priorDrawCount, 60)
+
+  if (timeOfGameThatJustDrew <= 60) {
+    // Already at the floor and drew again — settle it with Armageddon.
+    // Randomize who gets White/Black draw-odds rather than always favoring
+    // whoever happened to be player1 for this replay.
+    const blackGetsDrawOdds = Math.random() < 0.5 ? player2Id : player1Id
+    const whitePlayer = blackGetsDrawOdds === player1Id ? player2Id : player1Id
+
+    await supabaseAdmin
+      .from('chess_tournament_fixtures')
+      .update({ draw_count: newDrawCount, is_armageddon: true, armageddon_draw_winner_id: blackGetsDrawOdds })
+      .eq('id', fixtureId)
+
+    return createFixtureMatch(fixtureId, whitePlayer, blackGetsDrawOdds, ARMAGEDDON_WHITE_SECS, ARMAGEDDON_BLACK_SECS)
+  }
+
+  // Normal shrinking-time replay — swap colors for fairness.
+  const nextTime = Math.max(baseTime - 60 * newDrawCount, 60)
+  await supabaseAdmin
+    .from('chess_tournament_fixtures')
+    .update({ draw_count: newDrawCount })
+    .eq('id', fixtureId)
+
+  return createFixtureMatch(fixtureId, player2Id, player1Id, nextTime)
 }
 
 // ── GROUP STAGE: assign players into groups and generate round-robin fixtures ──

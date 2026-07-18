@@ -231,7 +231,7 @@ async function handleGameOver(roomId: string, winnerId: string | null, stake: nu
   try {
     const { data: fixture } = await supabaseAdmin
       .from('chess_tournament_fixtures')
-      .select('id, tournament_id, group_number, player1_id, player2_id')
+      .select('id, tournament_id, group_number, player1_id, player2_id, is_armageddon, armageddon_draw_winner_id')
       .eq('chess_room_id', roomId)
       .maybeSingle()
 
@@ -239,16 +239,23 @@ async function handleGameOver(roomId: string, winnerId: string | null, stake: nu
       const { advanceKnockoutFixture, recordGroupResult, replayDrawnFixture } =
         await import('../chess-tournament/chess-tournament.service')
 
+      // An Armageddon decider guarantees a result: if it's a draw, the
+      // designated player (drawn with less time, hence "draw odds") wins.
+      const effectiveWinnerId = (!winnerId && fixture.is_armageddon && fixture.armageddon_draw_winner_id)
+        ? fixture.armageddon_draw_winner_id
+        : winnerId
+
       if (fixture.group_number) {
-        await recordGroupResult(fixture.id, winnerId, fixture.player1_id, fixture.player2_id)
-      } else if (winnerId) {
-        const loserId = winnerId === fixture.player1_id ? fixture.player2_id : fixture.player1_id
+        await recordGroupResult(fixture.id, effectiveWinnerId, fixture.player1_id, fixture.player2_id)
+      } else if (effectiveWinnerId) {
+        const loserId = effectiveWinnerId === fixture.player1_id ? fixture.player2_id : fixture.player1_id
         // Tournament completion (if this was the final) is handled internally
         // by advanceKnockoutFixture → resolveRoundOutcome → finishChessTournament.
-        await advanceKnockoutFixture(fixture.id, winnerId, loserId)
+        await advanceKnockoutFixture(fixture.id, effectiveWinnerId, loserId)
       } else {
-        // Draw in a knockout match — no elimination possible, so replay the
-        // fixture with colors swapped rather than leaving the round stuck.
+        // Draw in a knockout match — no elimination possible, so replay with
+        // a shrinking time control (falling back to Armageddon at the floor)
+        // rather than leaving the round stuck.
         await replayDrawnFixture(fixture.id, fixture.player1_id, fixture.player2_id)
       }
     }

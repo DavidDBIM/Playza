@@ -38,6 +38,9 @@ export interface TournamentFixture {
   is_bye: boolean;
   status: "pending" | "scheduled" | "active" | "completed" | "bye";
   scheduled_at?: string;
+  draw_count?: number;
+  is_armageddon?: boolean;
+  armageddon_draw_winner_id?: string;
   player1?: { username: string; avatar_url?: string };
   player2?: { username: string; avatar_url?: string };
 }

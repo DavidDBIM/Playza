@@ -105,6 +105,25 @@ export default function ChessTournamentMatch() {
         </div>
       </div>
 
+      {myFixture && myFixture.is_armageddon && (
+        <div className="shrink-0 px-4 py-2 flex items-center justify-center gap-2 text-center"
+          style={{ background: "rgba(239,68,68,0.12)", borderBottom: "1px solid rgba(239,68,68,0.25)" }}>
+          <span className="text-xs">⚡</span>
+          <span className="text-[11px] font-black text-red-400">
+            Sudden Death — {myFixture.armageddon_draw_winner_id === user?.id ? "you win" : "opponent wins"} if this game is drawn
+          </span>
+        </div>
+      )}
+      {myFixture && !myFixture.is_armageddon && (myFixture.draw_count ?? 0) > 0 && (
+        <div className="shrink-0 px-4 py-2 flex items-center justify-center gap-2 text-center"
+          style={{ background: "rgba(245,158,11,0.1)", borderBottom: "1px solid rgba(245,158,11,0.2)" }}>
+          <span className="text-xs">⏱️</span>
+          <span className="text-[11px] font-black text-amber-400">
+            Rematch #{myFixture.draw_count} after a draw — time control reduced
+          </span>
+        </div>
+      )}
+
       {/* Chess arena — completely unmodified, same component as H2H */}
       <div className="flex-1">
         <Suspense fallback={

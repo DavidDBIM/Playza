@@ -209,6 +209,7 @@ function TournamentModal({ t, onClose, onRegister, isRegistering, registered }: 
   );
 
   const { timeLeft: regTimeLeft, expired: regExpired } = useCountdown(t.status === "registration" ? t.registration_end : null);
+  const [showRules, setShowRules] = useState(false);
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
@@ -326,6 +327,10 @@ function TournamentModal({ t, onClose, onRegister, isRegistering, registered }: 
 
         {/* CTA */}
         <div className="px-5 py-4 border-t border-foreground/[0.06] shrink-0">
+          <button onClick={() => setShowRules(true)}
+            className="w-full flex items-center justify-center gap-1.5 mb-3 text-[11px] font-bold text-foreground/40 hover:text-violet-400 transition-colors">
+            📜 How this tournament works — rules, time control & tiebreaks
+          </button>
           {t.status === "registration" && !registered && (
             <button onClick={onRegister} disabled={isRegistering || (t.player_count ?? 0) >= t.bracket_size}
               className="w-full py-3.5 rounded-2xl font-black text-sm text-white transition-all hover:scale-[1.01] disabled:opacity-40 disabled:cursor-not-allowed"
@@ -350,6 +355,74 @@ function TournamentModal({ t, onClose, onRegister, isRegistering, registered }: 
           )}
         </div>
       </div>
+
+      {showRules && <ChessRulesModal t={t} onClose={() => setShowRules(false)} />}
+    </div>
+  );
+}
+
+// ── Rules modal — explains format, time control, and how draws/tiebreaks work ──
+function ChessRulesModal({ t, onClose }: { t: ChessTournament; onClose: () => void }) {
+  const rows: { icon: string; title: string; body: string }[] = [
+    {
+      icon: "📐",
+      title: t.format === "group_knockout" ? "Group Stage → Knockout" : "Single Elimination Knockout",
+      body: t.format === "group_knockout"
+        ? `Players are split into ${t.group_count} groups. Everyone plays everyone else in their group once. The top ${t.advance_per_group} from each group advance to a knockout bracket — lose in the knockout stage and you're out.`
+        : "Players are randomly paired into a bracket. Win and you advance to the next round; lose and you're eliminated. If the number of players isn't a perfect power of 2, some players get a bye (automatic advance) in Round 1.",
+    },
+    {
+      icon: "⏱",
+      title: `${fmtTime(t.time_control_secs)}${t.increment_secs > 0 ? ` + ${t.increment_secs}s increment` : ""} per game`,
+      body: "Each player gets this much time on their clock for the whole game. Run out of time and you lose the game automatically, same as any timed chess match.",
+    },
+    {
+      icon: "🤝",
+      title: "What happens if a game is drawn?",
+      body: "A draw can't decide a knockout match, so the same two players replay immediately with colors swapped. Each time you draw, the time control drops by 1 minute — so games get faster the more you draw. If a game at the fastest 1-minute speed is still drawn, the next game becomes a sudden-death decider: one player is randomly given slightly less time but wins outright if that game ends in a draw, guaranteeing a result.",
+    },
+    {
+      icon: "💰",
+      title: t.entry_fee > 0 ? `${t.entry_fee} ZA entry fee` : "Free to enter",
+      body: t.entry_fee > 0
+        ? `Entry fees form the prize pool (currently ${t.prize_pool.toLocaleString()} ZA). Everyone who registers pays this once — no fee for individual matches.`
+        : `This tournament is free to enter. The ${t.prize_pool.toLocaleString()} ZA prize pool is funded by Playza.`,
+    },
+    {
+      icon: "🏆",
+      title: "Prize distribution",
+      body: (t.prize_distribution?.length
+        ? t.prize_distribution.map(p => `Rank ${p.rank}: ${p.percentage}%`).join(" · ")
+        : "Split among top finishers.") + (t.consolation_pza > 0 ? ` — plus every participant gets ${t.consolation_pza} PZA just for playing.` : ""),
+    },
+  ];
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4"
+      style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(16px)" }} onClick={onClose}>
+      <div className="w-full sm:max-w-lg max-h-[85vh] flex flex-col rounded-t-3xl sm:rounded-3xl overflow-hidden"
+        style={{ background: "var(--card)", border: "1px solid rgba(124,58,237,0.25)" }}
+        onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-foreground/[0.06] shrink-0">
+          <h3 className="font-black text-foreground text-base flex items-center gap-2">📜 Tournament Rules</h3>
+          <button onClick={onClose} className="text-foreground/30 hover:text-foreground transition-colors text-xl">✕</button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-5 space-y-4">
+          {rows.map((r, i) => (
+            <div key={i} className="rounded-2xl p-4" style={{ background: "color-mix(in srgb, var(--foreground) 3%, transparent)", border: "1px solid color-mix(in srgb, var(--foreground) 7%, transparent)" }}>
+              <p className="text-sm font-black text-foreground flex items-center gap-2 mb-1.5"><span>{r.icon}</span>{r.title}</p>
+              <p className="text-xs text-foreground/50 leading-relaxed">{r.body}</p>
+            </div>
+          ))}
+        </div>
+        <div className="px-5 py-4 border-t border-foreground/[0.06] shrink-0">
+          <button onClick={onClose}
+            className="w-full py-3 rounded-2xl font-black text-sm text-white transition-all hover:scale-[1.01]"
+            style={{ background: "linear-gradient(135deg,#7c3aed,#a855f7)" }}>
+            Got it
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -359,42 +432,83 @@ function TCard({ t, onOpen }: { t: ChessTournament; onOpen: () => void }) {
   const sc = STATUS_CFG[t.status] ?? STATUS_CFG.registration;
   const fill = Math.min(((t.player_count ?? 0) / t.bracket_size) * 100, 100);
   const { timeLeft: regTimeLeft, expired: regExpired } = useCountdown(t.status === "registration" ? t.registration_end : null);
+  const spotsLeft = t.bracket_size - (t.player_count ?? 0);
+  const isHot = t.status === "registration" && spotsLeft > 0 && spotsLeft <= Math.max(2, Math.ceil(t.bracket_size * 0.15));
 
   return (
-    <button onClick={onOpen} className="text-left w-full rounded-2xl p-4 transition-all hover:scale-[1.02]"
-      style={{ background: "color-mix(in srgb, var(--foreground) 2.5%, transparent)", border: "1px solid color-mix(in srgb, var(--foreground) 7%, transparent)" }}>
-      <div className="flex items-start justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: sc.dot, boxShadow: `0 0 6px ${sc.dot}` }} />
-          <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: sc.dot }}>{sc.label}</span>
-          {t.status === "active" && <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />}
+    <button onClick={onOpen} className="group relative text-left w-full rounded-2xl overflow-hidden transition-all hover:scale-[1.02] hover:-translate-y-0.5"
+      style={{
+        background: "color-mix(in srgb, var(--foreground) 2.5%, transparent)",
+        border: `1px solid ${t.status === "active" ? "rgba(239,68,68,0.35)" : t.status === "registration" ? "rgba(124,58,237,0.3)" : "color-mix(in srgb, var(--foreground) 7%, transparent)"}`,
+        boxShadow: t.status === "active" ? "0 0 24px rgba(239,68,68,0.12)" : t.status === "registration" ? "0 0 24px rgba(124,58,237,0.08)" : "none",
+      }}>
+      {/* Header strip — subtle chess-board accent + status */}
+      <div className="relative px-4 pt-3.5 pb-3 overflow-hidden"
+        style={{ background: t.status === "active" ? "linear-gradient(135deg,rgba(239,68,68,0.14),rgba(124,58,237,0.08))" : "linear-gradient(135deg,rgba(124,58,237,0.14),rgba(168,85,247,0.06))" }}>
+        <span className="absolute -right-2 -top-3 text-6xl opacity-[0.08] select-none rotate-12">♞</span>
+        <div className="relative flex items-start justify-between mb-1.5">
+          <div className="flex items-center gap-2">
+            <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: sc.dot, boxShadow: `0 0 6px ${sc.dot}` }} />
+            <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: sc.dot }}>{sc.label}</span>
+            {t.status === "active" && <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />}
+            {isHot && (
+              <span className="text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full text-white" style={{ background: "linear-gradient(135deg,#f97316,#ef4444)" }}>🔥 Filling fast</span>
+            )}
+          </div>
+          <span className="text-[9px] text-foreground/25 font-bold shrink-0">{t.format === "group_knockout" ? "Group+KO" : "Knockout"}</span>
         </div>
-        <span className="text-[9px] text-foreground/20 font-bold">{t.format === "group_knockout" ? "Group+KO" : "Knockout"}</span>
+        <h3 className="relative font-black text-foreground text-[15px] leading-snug line-clamp-2">{t.title}</h3>
       </div>
-      <h3 className="font-black text-foreground text-sm mb-2 leading-snug line-clamp-2">{t.title}</h3>
-      <div className="flex items-center gap-2 text-[10px] text-foreground/30 mb-3 flex-wrap">
-        <span>{t.bracket_size} players</span>
-        <span>·</span>
-        <span>{fmtTime(t.time_control_secs)}{t.increment_secs ? ` +${t.increment_secs}s` : ""}</span>
-        <span>·</span>
-        <span className="text-yellow-400 font-bold">{t.prize_pool.toLocaleString()} ZA</span>
-        {t.entry_fee > 0 && <><span>·</span><span>{t.entry_fee} ZA entry</span></>}
-      </div>
-      {t.status === "registration" && t.registration_end && !regExpired && regTimeLeft && (
-        <div className="flex items-center gap-1.5 mb-3 px-2.5 py-1.5 rounded-lg" style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
-          <span className="text-[9px] font-black uppercase tracking-wider" style={{ color: "#ef4444" }}>⏳ Closes in</span>
-          <span className="text-[11px] font-black" style={{ color: "#ef4444" }}>
-            {regTimeLeft.d > 0 ? `${regTimeLeft.d}d ` : ""}{String(regTimeLeft.h).padStart(2, "0")}:{String(regTimeLeft.m).padStart(2, "0")}:{String(regTimeLeft.s).padStart(2, "0")}
-          </span>
+
+      <div className="px-4 pt-3 pb-4">
+        {/* Prize pool — the hero element */}
+        <div className="flex items-end justify-between mb-3">
+          <div>
+            <p className="text-[9px] font-bold uppercase tracking-wider text-foreground/25 mb-0.5">Prize Pool</p>
+            <p className="text-xl font-black leading-none" style={{ background: "linear-gradient(135deg,#fbbf24,#f59e0b)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+              🏆 {t.prize_pool.toLocaleString()} <span className="text-xs">ZA</span>
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="text-[9px] font-bold uppercase tracking-wider text-foreground/25 mb-0.5">Entry</p>
+            <p className="text-sm font-black text-foreground/70">{t.entry_fee > 0 ? `${t.entry_fee} ZA` : "FREE"}</p>
+          </div>
         </div>
-      )}
-      <div>
-        <div className="flex justify-between text-[9px] text-foreground/20 mb-1">
-          <span>{t.player_count ?? 0}/{t.bracket_size} registered</span>
-          {t.status === "active" && <span className="text-violet-400 font-black">Round {t.current_round}</span>}
+
+        <div className="flex items-center gap-2 text-[10px] text-foreground/35 mb-3 flex-wrap font-medium">
+          <span className="flex items-center gap-1">👥 {t.bracket_size} players</span>
+          <span>·</span>
+          <span className="flex items-center gap-1">⏱ {fmtTime(t.time_control_secs)}{t.increment_secs ? ` +${t.increment_secs}s` : ""}</span>
         </div>
-        <div className="h-1 rounded-full overflow-hidden" style={{ background: "color-mix(in srgb, var(--foreground) 6%, transparent)" }}>
-          <div className="h-full rounded-full" style={{ width: `${fill}%`, background: "linear-gradient(90deg,#7c3aed,#a855f7)" }} />
+
+        {t.status === "registration" && t.registration_end && !regExpired && regTimeLeft && (
+          <div className="flex items-center justify-between gap-1.5 mb-3 px-2.5 py-1.5 rounded-lg" style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
+            <span className="text-[9px] font-black uppercase tracking-wider" style={{ color: "#ef4444" }}>⏳ Closes in</span>
+            <span className="text-[11px] font-black tabular-nums" style={{ color: "#ef4444" }}>
+              {regTimeLeft.d > 0 ? `${regTimeLeft.d}d ` : ""}{String(regTimeLeft.h).padStart(2, "0")}:{String(regTimeLeft.m).padStart(2, "0")}:{String(regTimeLeft.s).padStart(2, "0")}
+            </span>
+          </div>
+        )}
+
+        <div className="mb-1">
+          <div className="flex justify-between text-[9px] text-foreground/25 mb-1 font-bold">
+            <span>{t.player_count ?? 0}/{t.bracket_size} registered</span>
+            {t.status === "active" && <span className="text-violet-400 font-black">Round {t.current_round}</span>}
+            {t.status === "registration" && spotsLeft > 0 && <span>{spotsLeft} spot{spotsLeft === 1 ? "" : "s"} left</span>}
+          </div>
+          <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "color-mix(in srgb, var(--foreground) 6%, transparent)" }}>
+            <div className="h-full rounded-full transition-all" style={{ width: `${fill}%`, background: "linear-gradient(90deg,#7c3aed,#a855f7)" }} />
+          </div>
+        </div>
+
+        {/* CTA pill — reinforces the action; whole card is clickable regardless */}
+        <div className="mt-3 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-black transition-all"
+          style={
+            t.status === "active" ? { background: "linear-gradient(135deg,#dc2626,#ef4444)", color: "#fff" }
+            : t.status === "registration" ? { background: "linear-gradient(135deg,#7c3aed,#a855f7)", color: "#fff" }
+            : { background: "color-mix(in srgb, var(--foreground) 6%, transparent)", color: "var(--muted-foreground)" }
+          }>
+          {t.status === "active" ? "🔴 Watch / Play Live" : t.status === "registration" ? (t.entry_fee > 0 ? `Register — ${t.entry_fee} ZA →` : "Register Free →") : t.status === "completed" ? "View Results" : "View Bracket"}
         </div>
       </div>
     </button>
