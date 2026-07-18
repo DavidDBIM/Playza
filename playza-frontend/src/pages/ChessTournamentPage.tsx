@@ -388,13 +388,6 @@ function ChessRulesModal({ t, onClose }: { t: ChessTournament; onClose: () => vo
         ? `Entry fees form the prize pool (currently ${t.prize_pool.toLocaleString()} ZA). Everyone who registers pays this once — no fee for individual matches.`
         : `This tournament is free to enter. The ${t.prize_pool.toLocaleString()} ZA prize pool is funded by Playza.`,
     },
-    {
-      icon: "🏆",
-      title: "Prize distribution",
-      body: (t.prize_distribution?.length
-        ? t.prize_distribution.map(p => `Rank ${p.rank}: ${p.percentage}%`).join(" · ")
-        : "Split among top finishers.") + (t.consolation_pza > 0 ? ` — plus every participant gets ${t.consolation_pza} PZA just for playing.` : ""),
-    },
   ];
 
   return (

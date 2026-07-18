@@ -13,7 +13,25 @@ router.get('/tournaments', requireAdmin, async (_req, res) => {
       .select('*')
       .order('created_at', { ascending: false })
     if (error) throw error
-    res.json({ success: true, data: data ?? [] })
+
+    const tournaments = data ?? []
+    if (!tournaments.length) return res.json({ success: true, data: [] })
+
+    // player_count isn't a real synced column on chess_tournaments — compute
+    // it live from chess_tournament_players, same as the public endpoint
+    // does. Without this the admin list always showed a stale/zero count
+    // no matter how many people actually registered.
+    const ids = tournaments.map(t => t.id)
+    const { data: counts } = await supabaseAdmin
+      .from('chess_tournament_players')
+      .select('tournament_id')
+      .in('tournament_id', ids)
+
+    const countMap: Record<string, number> = {}
+    for (const row of (counts ?? [])) countMap[row.tournament_id] = (countMap[row.tournament_id] ?? 0) + 1
+
+    const enriched = tournaments.map(t => ({ ...t, player_count: countMap[t.id] ?? 0 }))
+    res.json({ success: true, data: enriched })
   } catch (err: any) {
     res.status(400).json({ success: false, message: err.message })
   }

@@ -722,13 +722,6 @@ function ChessTCard({ ct }: { ct: any }) {
                     ? `Entry fees form the prize pool (currently ${ct.prize_pool?.toLocaleString() ?? 0} ZA). You pay this once at registration — no fee per match.`
                     : `Free to enter. The ${ct.prize_pool?.toLocaleString() ?? 0} ZA prize pool is funded by Playza.`,
                 },
-                {
-                  icon: "🏆",
-                  title: "Prize distribution",
-                  body: (ct.prize_distribution?.length
-                    ? ct.prize_distribution.map((p: any) => `Rank ${p.rank}: ${p.percentage}%`).join(" · ")
-                    : "Split among top finishers.") + (ct.consolation_pza > 0 ? ` — plus everyone gets ${ct.consolation_pza} PZA just for playing.` : ""),
-                },
               ].map((r, i) => (
                 <div key={i} style={{ borderRadius: 14, padding: 14, background: "rgba(124,58,237,0.05)", border: "1px solid rgba(124,58,237,0.15)" }}>
                   <p style={{ fontSize: 13, fontWeight: 800, color: "var(--foreground)", display: "flex", alignItems: "center", gap: 8, margin: "0 0 6px" }}><span>{r.icon}</span>{r.title}</p>
