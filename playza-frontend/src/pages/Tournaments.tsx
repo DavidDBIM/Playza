@@ -1238,8 +1238,15 @@ const Tournaments = () => {
             </div>
           ) : filtered.length > 0 || filteredChess.length > 0 ? (
             <>
-              {filtered.map(qt => <TCard key={qt.id} qt={qt} featured={featuredT?.id === qt.id} onRegistered={handleRegistered} />)}
-              {filteredChess.map((ct: any) => <ChessTCard key={`chess-${ct.id}`} ct={ct} />)}
+              {[
+                ...filtered.map(qt => ({ type: "quiz" as const, sortDate: qt.started_at ?? qt.scheduled_at ?? (qt as any).created_at ?? 0, data: qt })),
+                ...filteredChess.map((ct: any) => ({ type: "chess" as const, sortDate: activeTab === "completed" ? (ct.ended_at ?? ct.scheduled_at ?? ct.created_at ?? 0) : (ct.scheduled_at ?? ct.created_at ?? 0), data: ct })),
+              ]
+                .sort((a, b) => new Date(b.sortDate).getTime() - new Date(a.sortDate).getTime())
+                .map(item => item.type === "quiz"
+                  ? <TCard key={item.data.id} qt={item.data} featured={featuredT?.id === item.data.id} onRegistered={handleRegistered} />
+                  : <ChessTCard key={`chess-${item.data.id}`} ct={item.data} />
+                )}
             </>
           ) : (
             <div style={{ gridColumn: "1/-1", padding: "60px 16px", display: "flex", flexDirection: "column", alignItems: "center", gap: 10, textAlign: "center", border: "2px dashed var(--border)", borderRadius: 14 }}>
