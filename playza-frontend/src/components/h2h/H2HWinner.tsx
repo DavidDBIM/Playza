@@ -17,6 +17,8 @@ interface H2HWinnerProps {
   user: UserProfile | null;
   localWinnerId?: string | null;
   isSyncing?: boolean;
+  backTo?: string;
+  backLabel?: string;
 }
 
 const motivationalPhrases = [
@@ -29,7 +31,7 @@ const motivationalPhrases = [
 
 const randomPhrase = motivationalPhrases[Math.floor(Math.random() * motivationalPhrases.length)];
 
-const H2HWinner = ({ room, user, localWinnerId, isSyncing }: H2HWinnerProps) => {
+const H2HWinner = ({ room, user, localWinnerId, isSyncing, backTo = "/h2h", backLabel = "H2H ZONE" }: H2HWinnerProps) => {
   useEffect(() => {
     if (document.fullscreenElement) {
       document.exitFullscreen().catch(() => {});
@@ -112,16 +114,16 @@ const H2HWinner = ({ room, user, localWinnerId, isSyncing }: H2HWinnerProps) => 
         {/* Action Group */}
         <div className="flex flex-col md:flex-row gap-4 md:gap-6 justify-center px-4 md:px-0">
           <NavLink 
-            to="/h2h"
+            to={backTo}
             className="flex-1 md:flex-none px-6 md:px-12 py-4 md:py-6 bg-white dark:bg-slate-950 border-2 md:border-[3px] border-primary text-primary font-headline font-black rounded-xl uppercase tracking-widest text-[10px] md:text-lg italic text-center shadow-lg active:translate-y-1 transition-all"
           >
             NEXT BATTLE
           </NavLink>
           <NavLink 
-            to="/h2h"
+            to={backTo}
             className="flex-1 md:flex-none px-6 md:px-12 py-4 md:py-6 bg-slate-900 dark:bg-indigo-600 text-white font-headline font-black rounded-xl uppercase tracking-widest text-[10px] md:text-lg italic text-center shadow-lg active:translate-y-1 transition-all"
           >
-            H2H ZONE
+            {backLabel}
           </NavLink>
         </div>
 
