@@ -600,6 +600,8 @@ function ChessTCard({ ct }: { ct: any }) {
     enabled: !!user,
   });
 
+  const myFinalRank: number | null = (myStatus as any)?.final_rank ?? null;
+
   // React Query v5 removed the onSuccess callback from useQuery — this
   // effect is what actually keeps `registered`/`activeFixture` in sync now.
   useEffect(() => {
@@ -638,8 +640,8 @@ function ChessTCard({ ct }: { ct: any }) {
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <span style={{ fontSize: 16 }}>♟</span>
-            <span style={{ fontSize: 9, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", color: isLive ? "#ef4444" : "#a855f7" }}>
-              {isLive ? "🔴 Live" : isLobby ? "🟡 Starting Soon" : "🟢 Registration"} · Chess
+            <span style={{ fontSize: 9, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", color: isLive ? "#ef4444" : ct.status === "completed" ? "var(--muted-foreground)" : ct.status === "cancelled" ? "#f87171" : "#a855f7" }}>
+              {isLive ? "🔴 Live" : isLobby ? "🟡 Starting Soon" : ct.status === "completed" ? "⚪ Completed" : ct.status === "cancelled" ? "⚫ Cancelled" : "🟢 Registration"} · Chess
             </span>
           </div>
           <span style={{ fontSize: 9, color: "var(--muted-foreground)", fontWeight: 700 }}>
@@ -656,7 +658,11 @@ function ChessTCard({ ct }: { ct: any }) {
         </div>
         <div>
           <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9, color: "var(--muted-foreground)", marginBottom: 4 }}>
-            <span>{ct.player_count ?? 0}/{ct.bracket_size} registered</span>
+            <span>
+              {ct.status === "completed"
+                ? (myFinalRank === 1 ? "🏆 You won this tournament!" : myFinalRank ? `You placed #${myFinalRank}` : `${ct.player_count ?? 0}/${ct.bracket_size} played`)
+                : `${ct.player_count ?? 0}/${ct.bracket_size} registered`}
+            </span>
             {isLive && <span style={{ color: "#a855f7", fontWeight: 800 }}>Round {ct.current_round}</span>}
           </div>
           <div style={{ height: 3, borderRadius: 2, background: "rgba(124,58,237,0.15)", overflow: "hidden" }}>
@@ -668,6 +674,12 @@ function ChessTCard({ ct }: { ct: any }) {
             style={{ flex: 1, padding: "8px", borderRadius: 8, background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.25)", color: "#a855f7", fontSize: 11, fontWeight: 800, cursor: "pointer" }}>
             📜 View Rules
           </button>
+          {(ct.status === "completed" || ct.status === "cancelled") && (
+            <button onClick={e => { e.stopPropagation(); setShowDetail(true); }}
+              style={{ flex: 1, padding: "8px", borderRadius: 8, background: "var(--muted)", border: "1px solid var(--border)", color: "var(--muted-foreground)", fontSize: 11, fontWeight: 800, cursor: "pointer" }}>
+              {ct.status === "cancelled" ? "View Details" : "🏆 Results"}
+            </button>
+          )}
           {ct.status === "registration" && !registered && !isFull && (
             <button onClick={e => { e.stopPropagation(); handleRegister(); }} disabled={isPending}
               style={{ flex: 1, padding: "8px", borderRadius: 8, background: isPending ? "rgba(124,58,237,0.3)" : "rgba(124,58,237,0.8)", border: "none", color: "#fff", fontSize: 11, fontWeight: 800, cursor: isPending ? "not-allowed" : "pointer" }}>
@@ -680,7 +692,7 @@ function ChessTCard({ ct }: { ct: any }) {
               In Lobby ›
             </button>
           )}
-          {registered && !isLobby && !isLive && (
+          {registered && !isLobby && !isLive && ct.status !== "completed" && ct.status !== "cancelled" && (
             <div style={{ flex: 1, padding: "8px", borderRadius: 8, background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.25)", color: "#22c55e", fontSize: 11, fontWeight: 800, textAlign: "center" }}>✓ Registered</div>
           )}
         </div>
@@ -982,6 +994,11 @@ const Tournaments = () => {
     const matchTab = activeTab === "live" ? ct.status === "active" : activeTab === "completed" ? ct.status === "completed" : ["lobby", "registration"].includes(ct.status);
     const matchSearch = ct.title.toLowerCase().includes(searchQuery.toLowerCase());
     return matchTab && matchSearch;
+  }).sort((a: any, b: any) => {
+    if (activeTab === "completed") {
+      return new Date(b.ended_at ?? b.created_at ?? 0).getTime() - new Date(a.ended_at ?? a.created_at ?? 0).getTime();
+    }
+    return 0;
   });
   const totalPlayers = quizTournaments.reduce((s, t) => s + t.player_count, 0);
   const totalPrize = quizTournaments.reduce((s, t) => s + t.prize_pool, 0);

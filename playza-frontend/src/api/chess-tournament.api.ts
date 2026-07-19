@@ -4,6 +4,7 @@ export interface ChessTournament {
   id: string;
   title: string;
   description?: string;
+  created_at?: string;
   format: "knockout" | "group_knockout";
   bracket_size: number;
   group_count?: number;

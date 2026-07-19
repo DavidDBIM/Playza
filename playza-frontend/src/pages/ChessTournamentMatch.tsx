@@ -131,7 +131,7 @@ export default function ChessTournamentMatch() {
             <div className="w-8 h-8 border-2 border-violet-500/30 border-t-violet-500 rounded-full animate-spin" />
           </div>
         }>
-          <ChessArena room={room} user={user} />
+          <ChessArena room={room} user={user} backTo={`/chess-tournament/${tournamentId}`} backLabel="BACK TO TOURNAMENT" />
         </Suspense>
       </div>
     </div>

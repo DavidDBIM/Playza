@@ -27,6 +27,8 @@ interface ChessTournament {
   registration_end?: string;
   scheduled_at?: string;
   player_count?: number;
+  created_at: string;
+  ended_at?: string;
 }
 
 interface Fixture {
@@ -765,7 +767,17 @@ export default function ChessTournaments() {
     },
   });
 
-  const filtered = tournaments.filter(t => filterStatus === "all" || t.status === filterStatus);
+  const filtered = tournaments
+    .filter(t => filterStatus === "all" || t.status === filterStatus)
+    .sort((a, b) => {
+      if (filterStatus === "completed") {
+        // Most recently completed first — sorting by created_at would bury
+        // a tournament that just finished behind older ones created more
+        // recently but still in progress.
+        return new Date(b.ended_at ?? b.created_at).getTime() - new Date(a.ended_at ?? a.created_at).getTime();
+      }
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
 
   return (
     <div className="p-6 space-y-6 min-h-full" style={{ background: "var(--background)" }}>

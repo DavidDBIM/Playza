@@ -536,11 +536,18 @@ export default function ChessTournamentPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["chess-tournaments"] }),
   });
 
-  const filtered = tournaments.filter(t =>
-    tab === "registration" ? t.status === "registration" || t.status === "lobby"
-    : tab === "active" ? t.status === "active"
-    : t.status === "completed" || t.status === "cancelled"
-  );
+  const filtered = tournaments
+    .filter(t =>
+      tab === "registration" ? t.status === "registration" || t.status === "lobby"
+      : tab === "active" ? t.status === "active"
+      : t.status === "completed" || t.status === "cancelled"
+    )
+    .sort((a, b) => {
+      if (tab === "completed") {
+        return new Date(b.ended_at ?? b.created_at ?? 0).getTime() - new Date(a.ended_at ?? a.created_at ?? 0).getTime();
+      }
+      return 0; // preserve backend order (created_at desc) for other tabs
+    });
 
   // Update selected tournament when query data refreshes
   const selectedFresh = selected ? (tournaments.find(t => t.id === selected.id) ?? selected) : null;

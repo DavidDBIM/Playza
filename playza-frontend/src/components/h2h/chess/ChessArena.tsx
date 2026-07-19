@@ -31,6 +31,11 @@ import ResignConfirmationModal from "./ResignConfirmationModal";
 interface ChessArenaProps {
   room: ChessRoom;
   user: UserProfile | null;
+  /** Where the post-game "back" buttons should go. Defaults to /h2h — pass
+   * the tournament URL when this arena is rendered inside a tournament match
+   * so players land back on their bracket instead of the generic H2H lobby. */
+  backTo?: string;
+  backLabel?: string;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -91,7 +96,7 @@ function parseSAN(san: string) {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-const ChessArena = ({ room, user }: ChessArenaProps) => {
+const ChessArena = ({ room, user, backTo = "/h2h", backLabel = "H2H ZONE" }: ChessArenaProps) => {
   const toast = useToast();
   const logEndRef = useRef<HTMLDivElement>(null);
 
@@ -701,7 +706,7 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
 
   // ── Render
   return (
-    <div className="flex flex-col gap-1.5 w-full max-w-full mx-auto p-2 box-border md:grid md:grid-cols-[1fr_360px] md:grid-rows-[auto_auto_auto_auto_1fr] md:gap-4 md:p-4 lg:p-6 h-screen bg-slate-50 dark:bg-slate-950 overflow-y-auto">
+    <div className="flex flex-col gap-1.5 w-full max-w-full mx-auto p-2 box-border md:grid md:grid-cols-[1fr_360px] md:grid-rows-[auto_auto_auto_auto_1fr] md:gap-4 md:p-4 lg:p-6 h-screen bg-slate-50 dark:bg-slate-950 overflow-y-auto" style={{ overscrollBehavior: "contain" }}>
       {/* ── Network Offline Overlay ── */}
       {!isOnline && (
         <div className="fixed inset-0 z-500 flex items-center justify-center bg-slate-950/90 backdrop-blur-sm">
@@ -1051,6 +1056,7 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
       <div
         className={`relative w-full max-w-[75vh] mx-auto aspect-square rounded-xl overflow-hidden bg-white dark:bg-slate-900 border-4 md:col-start-1 md:row-start-5
         ${inCheck && myTurn ? "border-red-500/60" : "border-slate-800 dark:border-slate-700"}`}
+        style={{ touchAction: "none" }}
       >
         <div className="absolute inset-0 pointer-events-none z-0 bg-[radial-gradient(ellipse_at_center,rgba(99,102,241,0.12),transparent_70%)]" />
 
@@ -1123,6 +1129,8 @@ const ChessArena = ({ room, user }: ChessArenaProps) => {
                 )
               }
               isSyncing={room.status !== "finished"}
+              backTo={backTo}
+              backLabel={backLabel}
             />
           </div>
         </div>
