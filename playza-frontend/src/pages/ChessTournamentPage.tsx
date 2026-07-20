@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/auth";
 import SEO from "@/components/SEO";
@@ -512,6 +512,7 @@ function TCard({ t, onOpen }: { t: ChessTournament; onOpen: () => void }) {
 export default function ChessTournamentPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const { tournamentId } = useParams<{ tournamentId?: string }>();
   const [selected, setSelected] = useState<ChessTournament | null>(null);
   const [tab, setTab] = useState<"registration" | "active" | "completed">("registration");
 
@@ -520,6 +521,21 @@ export default function ChessTournamentPage() {
     queryFn: getChessTournaments,
     refetchInterval: 15000,
   });
+
+  // Direct link to a specific tournament (e.g. /chess-tournament/:id from a
+  // results button or email) — auto-open it and switch to the right tab
+  // once the list has loaded, instead of just showing the generic list.
+  useEffect(() => {
+    if (!tournamentId || !tournaments.length) return;
+    const t = tournaments.find(x => x.id === tournamentId);
+    if (!t) return;
+    setSelected(t);
+    setTab(
+      t.status === "active" ? "active"
+      : t.status === "completed" || t.status === "cancelled" ? "completed"
+      : "registration"
+    );
+  }, [tournamentId, tournaments]);
 
   // Track which tournaments this user is registered in
   useQuery({

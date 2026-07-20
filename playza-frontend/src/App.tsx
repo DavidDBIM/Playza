@@ -230,6 +230,7 @@ const AppContent = () => {
               <Route path="/games/speed-tap-arena" element={<SpeedTapArena />} />
               <Route path="/quiz/:id" element={<QuizChampionship />} />
               <Route path="/chess-tournament" element={<ChessTournamentPage />} />
+              <Route path="/chess-tournament/:tournamentId" element={<ChessTournamentPage />} />
               <Route path="/chess-tournament/:tournamentId/match/:roomId" element={<ChessTournamentMatch />} />
               <Route path="/games/:id" element={<Game />} />
               <Route path="/games/:id/session" element={<MatchSession />} />
