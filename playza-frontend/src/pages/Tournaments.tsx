@@ -573,6 +573,14 @@ function TrophyIllustration() {
 }
 
 // ── Chess Tournament Card — shown inline with quiz cards in same tabs ─────────
+const CHESS_STATUS = {
+  active:       { label: "LIVE NOW",      short: "LIVE",     color: "#ef4444", bg: "rgba(239,68,68,0.12)",  border: "rgba(239,68,68,0.3)",   live: true  },
+  registration: { label: "REGISTER NOW",  short: "OPEN",     color: "#a855f7", bg: "rgba(168,85,247,0.12)", border: "rgba(168,85,247,0.3)",  live: false },
+  lobby:        { label: "STARTING SOON", short: "LOBBY",    color: "#f59e0b", bg: "rgba(245,158,11,0.12)", border: "rgba(245,158,11,0.3)",  live: false },
+  completed:    { label: "ENDED",         short: "ENDED",    color: "#64748b", bg: "rgba(100,116,139,0.1)", border: "rgba(100,116,139,0.2)", live: false },
+  cancelled:    { label: "CANCELLED",     short: "OFF",      color: "#64748b", bg: "rgba(100,116,139,0.1)", border: "rgba(100,116,139,0.2)", live: false },
+} as const;
+
 function ChessTCard({ ct }: { ct: any }) {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -631,70 +639,125 @@ function ChessTCard({ ct }: { ct: any }) {
     registerChess();
   }
 
+  const sc = CHESS_STATUS[ct.status as keyof typeof CHESS_STATUS] ?? CHESS_STATUS.registration;
+
   return (
     <>
       <div onClick={() => setShowDetail(true)}
-        style={{ cursor: "pointer", borderRadius: 14, padding: "14px 16px", background: "rgba(124,58,237,0.06)", border: `1px solid ${isLive ? "rgba(239,68,68,0.35)" : "rgba(124,58,237,0.2)"}`, transition: "transform 0.15s", display: "flex", flexDirection: "column", gap: 10 }}
+        style={{ cursor: "pointer", background: "var(--card)", border: `1px solid ${sc.color}30`, borderRadius: 16, overflow: "hidden", display: "flex", flexDirection: "column", height: "100%", boxShadow: "0 2px 8px rgba(0,0,0,0.06)", transition: "transform 0.15s" }}
         onMouseEnter={e => (e.currentTarget.style.transform = "translateY(-2px)")}
         onMouseLeave={e => (e.currentTarget.style.transform = "")}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{ fontSize: 16 }}>♟</span>
-            <span style={{ fontSize: 9, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", color: isLive ? "#ef4444" : ct.status === "completed" ? "var(--muted-foreground)" : ct.status === "cancelled" ? "#f87171" : "#a855f7" }}>
-              {isLive ? "🔴 Live" : isLobby ? "🟡 Starting Soon" : ct.status === "completed" ? "⚪ Completed" : ct.status === "cancelled" ? "⚫ Cancelled" : "🟢 Registration"} · Chess
-            </span>
+        <div style={{ height: 3, background: sc.color, width: "100%" }} />
+        <div style={{ height: 64, display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden", background: `linear-gradient(135deg,${sc.color}12,${sc.color}04)` }}>
+          <span style={{ fontSize: 30 }}>{ct.status === "completed" ? "🏆" : "♟"}</span>
+          <div style={{ position: "absolute", top: 8, right: 10, display: "flex", alignItems: "center", gap: 4, background: sc.bg, border: `1px solid ${sc.border}`, borderRadius: 20, padding: "3px 8px" }}>
+            {sc.live && <span style={{ width: 5, height: 5, borderRadius: "50%", background: sc.color, display: "block" }} />}
+            <span style={{ fontSize: 8, fontWeight: 700, color: sc.color, letterSpacing: "0.1em", textTransform: "uppercase" }}>{sc.short}</span>
           </div>
-          <span style={{ fontSize: 9, color: "var(--muted-foreground)", fontWeight: 700 }}>
-            {ct.format === "group_knockout" ? "Group+KO" : "Knockout"} · {fmtTime(ct.time_control_secs)}
-          </span>
+          <div style={{ position: "absolute", top: 8, left: 10, background: "rgba(124,58,237,0.85)", borderRadius: 6, padding: "2px 7px", fontSize: 8, fontWeight: 700, color: "#fff", letterSpacing: "0.1em", textTransform: "uppercase" }}>Chess</div>
         </div>
-        <div>
-          <p style={{ fontSize: 14, fontWeight: 800, color: "var(--foreground)", margin: "0 0 4px", lineHeight: 1.3 }}>{ct.title}</p>
-          <div style={{ display: "flex", gap: 10, fontSize: 10, color: "var(--muted-foreground)" }}>
-            <span>{ct.bracket_size} players</span><span>·</span>
-            <span style={{ color: "#fbbf24", fontWeight: 700 }}>{ct.prize_pool?.toLocaleString() ?? 0} ZA prize</span>
-            {ct.entry_fee > 0 && <><span>·</span><span>{ct.entry_fee} ZA entry</span></>}
+        <div style={{ padding: "12px 14px 14px", display: "flex", flexDirection: "column", flex: 1, gap: 9 }}>
+          <div>
+            <h3 style={{ fontSize: "clamp(12px,3vw,14px)", fontWeight: 700, color: "var(--foreground)", lineHeight: 1.3, margin: "0 0 3px", wordBreak: "break-word" }}>{ct.title}</h3>
+            <p style={{ fontSize: "clamp(10px,2.5vw,11px)", color: "var(--muted-foreground)", lineHeight: 1.4, margin: 0 }}>
+              {ct.format === "group_knockout" ? "Group Stage → Knockout" : "Single Elimination"} · {fmtTime(ct.time_control_secs)}{ct.increment_secs > 0 ? ` +${ct.increment_secs}s` : ""}
+            </p>
           </div>
-        </div>
-        <div>
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9, color: "var(--muted-foreground)", marginBottom: 4 }}>
-            <span>
-              {ct.status === "completed"
-                ? (myFinalRank === 1 ? "🏆 You won this tournament!" : myFinalRank ? `You placed #${myFinalRank}` : `${ct.player_count ?? 0}/${ct.bracket_size} played`)
-                : `${ct.player_count ?? 0}/${ct.bracket_size} registered`}
-            </span>
-            {isLive && <span style={{ color: "#a855f7", fontWeight: 800 }}>Round {ct.current_round}</span>}
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 5 }}>
+            {[
+              { val: ct.prize_pool > 0 ? ct.prize_pool.toLocaleString() : "TBD", lbl: "ZA Prize" },
+              { val: `${ct.player_count ?? 0}/${ct.bracket_size}`, lbl: "Players" },
+              { val: ct.entry_fee > 0 ? `${ct.entry_fee} ZA` : "Free", lbl: "Entry" },
+            ].map((s, i) => (
+              <div key={i} style={{ background: "var(--muted)", borderRadius: 8, padding: "5px 6px", textAlign: "center" }}>
+                <p style={{ fontSize: "clamp(10px,2.5vw,12px)", fontWeight: 700, color: "var(--foreground)", margin: 0, lineHeight: 1, wordBreak: "break-all" }}>{s.val}</p>
+                <p style={{ fontSize: 8, color: "var(--muted-foreground)", margin: "2px 0 0", textTransform: "uppercase", letterSpacing: "0.05em" }}>{s.lbl}</p>
+              </div>
+            ))}
           </div>
-          <div style={{ height: 3, borderRadius: 2, background: "rgba(124,58,237,0.15)", overflow: "hidden" }}>
-            <div style={{ height: "100%", borderRadius: 2, width: `${fill}%`, background: "linear-gradient(90deg,#7c3aed,#a855f7)" }} />
+
+          {ct.status !== "completed" && ct.status !== "cancelled" && (() => {
+            const pct = fill;
+            const full = isFull;
+            const almost = pct >= 80;
+            const barColor = full ? "#ef4444" : almost ? "#f97316" : sc.color;
+            return (
+              <div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 3 }}>
+                  <span style={{ fontSize: 9, fontWeight: 700, color: "var(--muted-foreground)" }}>
+                    {isLive ? `Round ${ct.current_round}` : full ? "🔴 Full" : almost ? "🟠 Almost Full" : "🟢 Spots Left"}
+                  </span>
+                  <span style={{ fontSize: 9, fontWeight: 700, color: barColor }}>{!isLive && ct.bracket_size - (ct.player_count ?? 0) > 0 ? `${ct.bracket_size - (ct.player_count ?? 0)} left` : !isLive ? "Full" : ""}</span>
+                </div>
+                <div style={{ height: 3, borderRadius: 2, background: "var(--muted)", overflow: "hidden" }}>
+                  <div style={{ height: "100%", width: `${pct}%`, borderRadius: 2, background: barColor }} />
+                </div>
+              </div>
+            );
+          })()}
+
+          {ct.status === "completed" && myFinalRank && (
+            <div style={{ display: "flex", alignItems: "center", gap: 6, background: myFinalRank === 1 ? "rgba(234,179,8,0.08)" : "rgba(124,58,237,0.06)", border: `1px solid ${myFinalRank === 1 ? "rgba(234,179,8,0.2)" : "rgba(124,58,237,0.15)"}`, borderRadius: 8, padding: "6px 10px" }}>
+              <span style={{ fontSize: 13 }}>{myFinalRank === 1 ? "🏆" : "🎖️"}</span>
+              <span style={{ fontSize: 10, color: "var(--foreground)", fontWeight: 700, flex: 1 }}>
+                {myFinalRank === 1 ? <>You <span style={{ color: "#eab308" }}>won</span> this tournament!</> : <>You placed <span style={{ color: "#a855f7" }}>#{myFinalRank}</span></>}
+              </span>
+            </div>
+          )}
+          {ct.status === "completed" && (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
+              <span style={{ fontSize: 9, color: "#22c55e" }}>✓</span>
+              <span style={{ fontSize: 8, fontWeight: 700, color: "rgba(34,197,94,0.7)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Prizes paid out</span>
+            </div>
+          )}
+
+          <div style={{ display: "flex", gap: 6, marginTop: "auto" }}>
+            <button onClick={e => { e.stopPropagation(); setShowRules(true); }}
+              style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 4, padding: "9px 10px", borderRadius: 9, fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", background: "var(--muted)", color: "var(--muted-foreground)", border: "1px solid var(--border)", cursor: "pointer", flexShrink: 0, whiteSpace: "nowrap" }}>
+              📜 Rules
+            </button>
+            {(ct.status === "completed" || ct.status === "cancelled") ? (
+              <button onClick={e => { e.stopPropagation(); setShowDetail(true); }}
+                style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 4, padding: "9px", borderRadius: 9, fontSize: 10, fontWeight: 700, textTransform: "uppercase", background: "var(--muted)", color: "var(--muted-foreground)", border: "none", cursor: "pointer" }}>
+                {ct.status === "cancelled" ? "View Details" : "🏆 Results"}
+              </button>
+            ) : isLive ? (
+              activeFixture ? (
+                <button onClick={e => { e.stopPropagation(); navigate(`/chess-tournament/${ct.id}/match/${activeFixture.chess_room_id}`); }}
+                  style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 5, padding: "9px", borderRadius: 9, fontSize: 10, fontWeight: 700, textTransform: "uppercase", background: sc.color, color: "#fff", border: "none", cursor: "pointer" }}>
+                  ⚔️ Play Now
+                </button>
+              ) : (
+                <button onClick={e => { e.stopPropagation(); setShowDetail(true); }}
+                  style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 5, padding: "9px", borderRadius: 9, fontSize: 10, fontWeight: 700, textTransform: "uppercase", background: sc.color, color: "#fff", border: "none", cursor: "pointer" }}>
+                  👁 Watch Live
+                </button>
+              )
+            ) : registered && isLobby ? (
+              <button onClick={e => { e.stopPropagation(); setShowLobby(true); }}
+                style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 4, padding: "9px", borderRadius: 9, fontSize: 10, fontWeight: 700, textTransform: "uppercase", background: "rgba(245,158,11,0.1)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.3)", cursor: "pointer" }}>
+                In Lobby ›
+              </button>
+            ) : registered ? (
+              <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 4, padding: "9px", borderRadius: 9, fontSize: 10, fontWeight: 700, textTransform: "uppercase", background: "rgba(22,163,74,0.1)", color: "#16a34a", border: "1px solid rgba(22,163,74,0.3)" }}>
+                ✓ Registered
+              </div>
+            ) : isFull ? (
+              <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 4, padding: "9px", borderRadius: 9, fontSize: 10, fontWeight: 700, textTransform: "uppercase", background: "rgba(239,68,68,0.1)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.3)" }}>
+                🔴 Full
+              </div>
+            ) : ct.status === "registration" ? (
+              <button onClick={e => { e.stopPropagation(); handleRegister(); }} disabled={isPending}
+                style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 5, padding: "9px", borderRadius: 9, fontSize: 10, fontWeight: 700, textTransform: "uppercase", background: isPending ? sc.color + "80" : sc.color, color: "#fff", border: "none", cursor: isPending ? "not-allowed" : "pointer" }}>
+                {isPending ? "Registering…" : ct.entry_fee > 0 ? `Pay ${ct.entry_fee} ZA` : "Register Free"}
+              </button>
+            ) : (
+              <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 4, padding: "9px", borderRadius: 9, fontSize: 10, fontWeight: 700, textTransform: "uppercase", background: "var(--muted)", color: "var(--muted-foreground)", border: "1px solid var(--border)" }}>
+                🔒 Closed
+              </div>
+            )}
           </div>
-        </div>
-        <div style={{ display: "flex", gap: 6 }}>
-          <button onClick={e => { e.stopPropagation(); setShowRules(true); }}
-            style={{ flex: 1, padding: "8px", borderRadius: 8, background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.25)", color: "#a855f7", fontSize: 11, fontWeight: 800, cursor: "pointer" }}>
-            📜 View Rules
-          </button>
-          {(ct.status === "completed" || ct.status === "cancelled") && (
-            <button onClick={e => { e.stopPropagation(); setShowDetail(true); }}
-              style={{ flex: 1, padding: "8px", borderRadius: 8, background: "var(--muted)", border: "1px solid var(--border)", color: "var(--muted-foreground)", fontSize: 11, fontWeight: 800, cursor: "pointer" }}>
-              {ct.status === "cancelled" ? "View Details" : "🏆 Results"}
-            </button>
-          )}
-          {ct.status === "registration" && !registered && !isFull && (
-            <button onClick={e => { e.stopPropagation(); handleRegister(); }} disabled={isPending}
-              style={{ flex: 1, padding: "8px", borderRadius: 8, background: isPending ? "rgba(124,58,237,0.3)" : "rgba(124,58,237,0.8)", border: "none", color: "#fff", fontSize: 11, fontWeight: 800, cursor: isPending ? "not-allowed" : "pointer" }}>
-              {isPending ? "Registering…" : ct.entry_fee > 0 ? `Pay ${ct.entry_fee} ZA` : "Register Free"}
-            </button>
-          )}
-          {registered && isLobby && (
-            <button onClick={e => { e.stopPropagation(); setShowLobby(true); }}
-              style={{ flex: 1, padding: "8px", borderRadius: 8, background: "rgba(245,158,11,0.15)", border: "1px solid rgba(245,158,11,0.3)", color: "#f59e0b", fontSize: 11, fontWeight: 800, cursor: "pointer" }}>
-              In Lobby ›
-            </button>
-          )}
-          {registered && !isLobby && !isLive && ct.status !== "completed" && ct.status !== "cancelled" && (
-            <div style={{ flex: 1, padding: "8px", borderRadius: 8, background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.25)", color: "#22c55e", fontSize: 11, fontWeight: 800, textAlign: "center" }}>✓ Registered</div>
-          )}
         </div>
       </div>
 
