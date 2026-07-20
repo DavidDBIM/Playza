@@ -609,6 +609,24 @@ function ChessTCard({ ct }: { ct: any }) {
   });
 
   const myFinalRank: number | null = (myStatus as any)?.final_rank ?? null;
+  const myPrizeWon: number | null = (myStatus as any)?.prize_won ?? null;
+
+  // Only needed to determine the champion for the results view — no point
+  // fetching this before the tournament has actually finished.
+  const { data: finalFixtures = [] } = useQuery({
+    queryKey: ["chess-fixtures-results", ct.id],
+    queryFn: async () => {
+      const { getChessTournamentFixtures } = await import("@/api/chess-tournament.api");
+      return getChessTournamentFixtures(ct.id);
+    },
+    enabled: showDetail && ct.status === "completed",
+  });
+  const champion = (() => {
+    const knockout = (finalFixtures as any[]).filter(f => !f.group_number && f.winner_id);
+    if (!knockout.length) return null;
+    const final = knockout.reduce((max, f) => f.round_number > max.round_number ? f : max, knockout[0]);
+    return final.winner_id === final.player1_id ? final.player1 : final.player2;
+  })();
 
   // React Query v5 removed the onSuccess callback from useQuery — this
   // effect is what actually keeps `registered`/`activeFixture` in sync now.
@@ -848,9 +866,41 @@ function ChessTCard({ ct }: { ct: any }) {
                   </div>
                 ))}
               </div>
-              <div style={{ height: 4, borderRadius: 2, background: "var(--muted)", overflow: "hidden", marginBottom: 14 }}>
-                <div style={{ height: "100%", width: `${fill}%`, borderRadius: 2, background: "linear-gradient(90deg,#7c3aed,#a855f7)" }} />
-              </div>
+              {ct.status !== "completed" && (
+                <div style={{ height: 4, borderRadius: 2, background: "var(--muted)", overflow: "hidden", marginBottom: 14 }}>
+                  <div style={{ height: "100%", width: `${fill}%`, borderRadius: 2, background: "linear-gradient(90deg,#7c3aed,#a855f7)" }} />
+                </div>
+              )}
+              {ct.status === "completed" && (
+                <div style={{ marginBottom: 14 }}>
+                  {champion && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, background: "rgba(234,179,8,0.08)", border: "1px solid rgba(234,179,8,0.25)", borderRadius: 12, padding: "12px 14px", marginBottom: 8 }}>
+                      <span style={{ fontSize: 24 }}>🏆</span>
+                      <div>
+                        <p style={{ fontSize: 9, fontWeight: 700, color: "rgba(234,179,8,0.7)", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 2px" }}>Champion</p>
+                        <p style={{ fontSize: 14, fontWeight: 800, color: "#eab308", margin: 0 }}>{champion.username}</p>
+                      </div>
+                    </div>
+                  )}
+                  {myFinalRank ? (
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(124,58,237,0.06)", border: "1px solid rgba(124,58,237,0.15)", borderRadius: 12, padding: "12px 14px" }}>
+                      <div>
+                        <p style={{ fontSize: 9, fontWeight: 700, color: "var(--muted-foreground)", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 2px" }}>Your Result</p>
+                        <p style={{ fontSize: 14, fontWeight: 800, color: "var(--foreground)", margin: 0 }}>{myFinalRank === 1 ? "🏆 Winner" : `#${myFinalRank} Place`}</p>
+                      </div>
+                      {typeof myPrizeWon === "number" && myPrizeWon > 0 && (
+                        <span style={{ fontSize: 13, fontWeight: 800, color: "#22c55e" }}>+{myPrizeWon.toLocaleString()} ZA</span>
+                      )}
+                    </div>
+                  ) : !champion ? (
+                    <p style={{ fontSize: 11, color: "var(--muted-foreground)", textAlign: "center", margin: 0 }}>Loading results…</p>
+                  ) : null}
+                  <button onClick={() => { setShowDetail(false); navigate(`/chess-tournament/${ct.id}`); }}
+                    style={{ width: "100%", marginTop: 8, padding: "10px", borderRadius: 10, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", background: "var(--muted)", color: "var(--muted-foreground)", border: "1px solid var(--border)", cursor: "pointer" }}>
+                    View Full Bracket & Standings
+                  </button>
+                </div>
+              )}
             </div>
             <div style={{ padding: "0 16px 16px" }}>
               {ct.status === "registration" && !registered && !isFull && (
