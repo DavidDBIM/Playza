@@ -36,6 +36,20 @@ interface ChessArenaProps {
    * so players land back on their bracket instead of the generic H2H lobby. */
   backTo?: string;
   backLabel?: string;
+  /** Optional override for the post-game result screen. When provided, this
+   * is rendered instead of the default H2HWinner card — used by the
+   * tournament match page to show a richer result screen (points earned,
+   * next-match / standings buttons, game analytics) instead of the generic
+   * stake-based H2H winner screen. */
+  renderWinner?: (ctx: {
+    finalWinnerId: string | null;
+    isDraw: boolean;
+    isSyncing: boolean;
+    resultReason: "checkmate" | "resignation" | "timeout" | "stalemate" | "insufficient_material" | "threefold_repetition" | "draw" | "unknown";
+    moveCount: number;
+    whiteTimeLeft: number;
+    blackTimeLeft: number;
+  }) => ReactElement;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -96,7 +110,7 @@ function parseSAN(san: string) {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-const ChessArena = ({ room, user, backTo = "/h2h", backLabel = "H2H ZONE" }: ChessArenaProps) => {
+const ChessArena = ({ room, user, backTo = "/h2h", backLabel = "H2H ZONE", renderWinner }: ChessArenaProps) => {
   const toast = useToast();
   const logEndRef = useRef<HTMLDivElement>(null);
 
@@ -608,6 +622,31 @@ const ChessArena = ({ room, user, backTo = "/h2h", backLabel = "H2H ZONE" }: Che
   const myTurn = isYourTurn;
   const oppTurn = !myTurn && room.status === "active";
 
+  // ── Game-over summary (winner + reason + move count) ───────────────────────
+  // Computed once here so both the default H2HWinner screen and any caller-
+  // supplied `renderWinner` override (e.g. the tournament result screen) see
+  // exactly the same result.
+  const finalWinnerId: string | null =
+    room.winner_id ||
+    resignationWinnerId ||
+    timeoutWinnerId ||
+    (game.isDraw() || game.isStalemate() || game.isThreefoldRepetition() || game.isInsufficientMaterial()
+      ? null
+      : game.turn() === "w"
+        ? room.guest_id || "00000000-0000-0000-0000-000000000000"
+        : room.host_id);
+  const isDraw = !finalWinnerId;
+  const resultReason: "checkmate" | "resignation" | "timeout" | "stalemate" | "insufficient_material" | "threefold_repetition" | "draw" | "unknown" =
+    resignationWinnerId ? "resignation"
+    : timeoutWinnerId ? "timeout"
+    : game.isCheckmate() ? "checkmate"
+    : game.isStalemate() ? "stalemate"
+    : game.isInsufficientMaterial() ? "insufficient_material"
+    : game.isThreefoldRepetition() ? "threefold_repetition"
+    : isDraw ? "draw"
+    : "unknown";
+  const moveCount = game.history().length;
+
   // Absolute move counts derived from FEN to stay in sync even if history is partial
   const fenParts = game.fen().split(" ");
   const fullMoveNum = parseInt(fenParts[fenParts.length - 1] || "1", 10);
@@ -1110,29 +1149,28 @@ const ChessArena = ({ room, user, backTo = "/h2h", backLabel = "H2H ZONE" }: Che
 
       {showWinnerDelayed && (
         <div className="fixed inset-0 z-200 overflow-y-auto bg-slate-950/90 flex items-center justify-center p-2">
-          <div className="w-full max-w-2xl bg-white dark:bg-slate-900 rounded-xl overflow-hidden border border-white/10">
-            <H2HWinner
-              room={room}
-              user={user}
-              localWinnerId={
-                resignationWinnerId || 
-                timeoutWinnerId ||
-                (
-                game.isDraw() ||
-                game.isStalemate() ||
-                game.isThreefoldRepetition() ||
-                game.isInsufficientMaterial()
-                  ? null
-                  : game.turn() === "w"
-                    ? room.guest_id || "00000000-0000-0000-0000-000000000000"
-                    : room.host_id
-                )
-              }
-              isSyncing={room.status !== "finished"}
-              backTo={backTo}
-              backLabel={backLabel}
-            />
-          </div>
+          {renderWinner ? (
+            renderWinner({
+              finalWinnerId,
+              isDraw,
+              isSyncing: room.status !== "finished",
+              resultReason,
+              moveCount,
+              whiteTimeLeft: whiteTime,
+              blackTimeLeft: blackTime,
+            })
+          ) : (
+            <div className="w-full max-w-2xl bg-white dark:bg-slate-900 rounded-xl overflow-hidden border border-white/10">
+              <H2HWinner
+                room={room}
+                user={user}
+                localWinnerId={finalWinnerId}
+                isSyncing={room.status !== "finished"}
+                backTo={backTo}
+                backLabel={backLabel}
+              />
+            </div>
+          )}
         </div>
       )}
 

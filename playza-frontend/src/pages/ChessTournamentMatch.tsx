@@ -4,12 +4,15 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/context/auth";
 import { useH2HRoom } from "@/hooks/h2h/useH2H";
 import { getChessTournament, getChessTournamentFixtures } from "@/api/chess-tournament.api";
+import ChessTournamentWinner from "@/components/h2h/chess/ChessTournamentWinner";
 
 const ChessArena = lazy(() => import("@/components/h2h/chess/ChessArena"));
 
 // ── Chess Tournament Match ────────────────────────────────────────────────────
-// Wraps the existing ChessArena (unchanged) with a tournament context banner
-// showing which round/match they're in and a back-to-bracket button.
+// Wraps the shared ChessArena with a tournament context banner (round/match,
+// back-to-bracket) and a tournament-specific result screen (opponent name,
+// points earned, game analytics, next-match & standings buttons) shown
+// instead of the generic H2H winner screen.
 // URL: /chess-tournament/:tournamentId/match/:roomId
 export default function ChessTournamentMatch() {
   const { tournamentId, roomId } = useParams<{ tournamentId: string; roomId: string }>();
@@ -35,6 +38,17 @@ export default function ChessTournamentMatch() {
   });
 
   const myFixture = fixtures.find(f => f.chess_room_id === roomId);
+
+  // The next fixture this player is due to play — a different fixture,
+  // involving them, that hasn't finished yet. Once the backend advances
+  // them (new round / rematch after a draw) this shows up here via the
+  // 5s fixtures poll, and the winner screen surfaces it as "Next Match".
+  const nextFixture = fixtures.find(f =>
+    f.id !== myFixture?.id &&
+    f.status !== "completed" &&
+    f.status !== "bye" &&
+    (f.player1_id === user?.id || f.player2_id === user?.id)
+  );
 
   const opponent = myFixture
     ? myFixture.player1_id === user?.id
@@ -124,14 +138,36 @@ export default function ChessTournamentMatch() {
         </div>
       )}
 
-      {/* Chess arena — completely unmodified, same component as H2H */}
+      {/* Chess arena — same shared component as H2H, with a tournament-aware
+          result screen swapped in via the renderWinner override */}
       <div className="flex-1">
         <Suspense fallback={
           <div className="flex items-center justify-center h-full py-20">
             <div className="w-8 h-8 border-2 border-violet-500/30 border-t-violet-500 rounded-full animate-spin" />
           </div>
         }>
-          <ChessArena room={room} user={user} backTo={`/chess-tournament/${tournamentId}`} backLabel="BACK TO TOURNAMENT" />
+          <ChessArena
+            room={room}
+            user={user}
+            backTo={`/chess-tournament/${tournamentId}`}
+            backLabel="BACK TO TOURNAMENT"
+            renderWinner={(ctx) => (
+              <ChessTournamentWinner
+                room={room}
+                user={user}
+                tournamentId={tournamentId!}
+                fixture={myFixture}
+                nextFixture={nextFixture}
+                finalWinnerId={ctx.finalWinnerId}
+                isDraw={ctx.isDraw}
+                isSyncing={ctx.isSyncing}
+                resultReason={ctx.resultReason}
+                moveCount={ctx.moveCount}
+                whiteTimeLeft={ctx.whiteTimeLeft}
+                blackTimeLeft={ctx.blackTimeLeft}
+              />
+            )}
+          />
         </Suspense>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router";
+import { useNavigate, useParams, useSearchParams } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/auth";
 import SEO from "@/components/SEO";
@@ -177,16 +177,21 @@ function GroupStandings({ standings, userId }: { standings: TournamentStanding[]
 }
 
 // ── Tournament detail modal ───────────────────────────────────────────────────
-function TournamentModal({ t, onClose, onRegister, isRegistering, registered }: {
+function TournamentModal({ t, onClose, onRegister, isRegistering, registered, initialDetailTab }: {
   t: ChessTournament;
   onClose: () => void;
   onRegister: () => void;
   isRegistering: boolean;
   registered: boolean;
+  /** Opens the modal straight onto the standings tab — used when arriving
+   * via a "View Table" link from a just-finished tournament match. */
+  initialDetailTab?: "bracket" | "standings";
 }) {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [tab, setTab] = useState<"bracket" | "standings">("bracket");
+  const [tab, setTab] = useState<"bracket" | "standings">(
+    initialDetailTab === "standings" && t.format === "group_knockout" ? "standings" : "bracket"
+  );
   const sc = STATUS_CFG[t.status] ?? STATUS_CFG.registration;
 
   const { data: fixtures = [] } = useQuery({
@@ -513,8 +518,10 @@ export default function ChessTournamentPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const { tournamentId } = useParams<{ tournamentId?: string }>();
+  const [searchParams] = useSearchParams();
   const [selected, setSelected] = useState<ChessTournament | null>(null);
   const [tab, setTab] = useState<"registration" | "active" | "completed">("registration");
+  const requestedDetailTab = searchParams.get("tab") === "standings" ? "standings" : undefined;
 
   const { data: tournaments = [], isLoading } = useQuery({
     queryKey: ["chess-tournaments"],
@@ -630,6 +637,7 @@ export default function ChessTournamentPage() {
           onRegister={() => registerM.mutate(selectedFresh.id)}
           isRegistering={registerM.isPending}
           registered={!!selectedFresh.user_registered}
+          initialDetailTab={requestedDetailTab}
         />
       )}
     </>

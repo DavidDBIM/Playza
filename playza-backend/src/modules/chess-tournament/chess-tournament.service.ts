@@ -457,7 +457,8 @@ export async function recordGroupResult(
         won: standing.won + (isWinner ? 1 : 0),
         drawn: standing.drawn + (isDraw ? 1 : 0),
         lost: standing.lost + (isLoser ? 1 : 0),
-        points: standing.points + (isWinner ? 1 : isDraw ? 0.5 : 0),
+        // Football-style scoring: win = 3 points, draw = 1 point, loss = 0 points
+        points: standing.points + (isWinner ? 3 : isDraw ? 1 : 0),
         game_wins_margin: standing.game_wins_margin + (isWinner ? 1 : isLoser ? -1 : 0),
       })
       .eq('id', standing.id)
