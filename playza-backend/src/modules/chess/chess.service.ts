@@ -626,6 +626,38 @@ export async function resignGame(roomId: string, userId: string) {
   return { winner_id: winnerId, message: 'Resigned' }
 }
 
+// ── Timeout claim ────────────────────────────────────────────────────────────
+// Previously a clock hitting zero was only ever enforced as a side-effect of
+// the *timed-out player themselves* attempting a move (see the checks inside
+// makeMove above) — which they have no reason to do. With nobody else able to
+// finish the game, the room just sat "active" forever: no winnings paid, no
+// game_history entry, and (for tournament matches) the bracket/standings
+// never advanced, even though every client's clock UI showed 0:00.
+// This lets the OTHER player (or either player) claim the win once the
+// player on the clock has genuinely run out of time, verified authoritatively
+// against turn_started_at rather than trusting the caller's own clock.
+export async function claimTimeout(roomId: string, userId: string) {
+  const { data: room } = await supabaseAdmin.from('chess_rooms').select('*').eq('id', roomId).single()
+  if (!room || room.status !== 'active') throw new Error('Invalid game state')
+  if (room.host_id !== userId && room.guest_id !== userId) throw new Error('Not a participant in this game')
+
+  const turnStartedAt = room.board_state?.turn_started_at
+  if (!turnStartedAt) throw new Error('Game clock not started yet')
+
+  const turnColor = room.current_turn === room.host_id ? 'w' : 'b'
+  const baseTime = turnColor === 'w' ? (room.board_state?.white_time ?? 600) : (room.board_state?.black_time ?? 600)
+  const elapsedSeconds = Math.max(0, Math.floor((Date.now() - new Date(turnStartedAt).getTime()) / 1000))
+  const remaining = baseTime - elapsedSeconds
+
+  if (remaining > 0) throw new Error('Opponent still has time on the clock')
+
+  // The player whose turn it is has run out — the other player wins.
+  const winnerId = room.current_turn === room.host_id ? (room.guest_id || SYSTEM_BOT_ID) : room.host_id
+  await handleGameOver(roomId, winnerId, room.stake)
+
+  return { winner_id: winnerId, message: turnColor === 'w' ? 'White ran out of time' : 'Black ran out of time' }
+}
+
 export async function cancelChessRoom(roomId: string, userId: string) {
   const { data: room } = await supabaseAdmin.from('chess_rooms').select('*').eq('id', roomId).single()
   if (!room) throw new Error('Room not found')

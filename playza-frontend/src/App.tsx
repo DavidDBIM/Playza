@@ -103,8 +103,10 @@ const AppContent = () => {
   const [showVerificationModal, setShowVerificationModal] = useState(false);
 
   const isGameSessionPage = pathname.includes("/session");
+  const isTournamentMatchPage = /^\/chess-tournament\/[^/]+\/match\/[^/]+/.test(pathname);
   const isGamePlayPage =
     pathname.endsWith("/play") ||
+    isTournamentMatchPage ||
     (pathname.startsWith("/h2h") &&
       pathname.split("/").filter(Boolean).length >= 3);
   const isRegistrationPage = pathname.includes("/registration");

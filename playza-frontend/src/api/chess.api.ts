@@ -25,6 +25,15 @@ export const resignChessGame = async (roomId: string) => {
   return data.data;
 };
 
+// Called client-side once a player's clock has visibly hit 0:00, so the
+// game actually finishes server-side (payout, game_history, tournament
+// bracket/standings advance) instead of sitting "active" forever waiting
+// for the timed-out player to move.
+export const claimChessTimeout = async (roomId: string) => {
+  const { data } = await axiosInstance.post(`/chess/room/${roomId}/claim-timeout`);
+  return data.data;
+};
+
 export const createBotRoom = async (stake: number) => {
   const { data } = await axiosInstance.post("/chess/bot", { stake });
   return data.data;

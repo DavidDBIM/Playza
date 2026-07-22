@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import H2HGamePrep from "../H2HGamePrep";
-import { makeChessMove, resignChessGame } from "@/api/chess.api";
+import { makeChessMove, resignChessGame, claimChessTimeout } from "@/api/chess.api";
 import { useToast } from "@/context/toast";
 import { ZASymbol } from "@/components/currency/ZASymbol";
 import type { ChessRoom } from "@/types/chess";
@@ -36,6 +36,11 @@ interface ChessArenaProps {
    * so players land back on their bracket instead of the generic H2H lobby. */
   backTo?: string;
   backLabel?: string;
+  /** Set when this arena is rendered inside a tournament match. Tournament
+   * matches have no per-match stake and already show their own rules modal
+   * on the tournament page, so the H2H "Stake Committed" / "Battle
+   * Conditions" pre-game screens are skipped entirely — those stay H2H-only. */
+  isTournament?: boolean;
   /** Optional override for the post-game result screen. When provided, this
    * is rendered instead of the default H2HWinner card — used by the
    * tournament match page to show a richer result screen (points earned,
@@ -110,7 +115,7 @@ function parseSAN(san: string) {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-const ChessArena = ({ room, user, backTo = "/h2h", backLabel = "H2H ZONE", renderWinner }: ChessArenaProps) => {
+const ChessArena = ({ room, user, backTo = "/h2h", backLabel = "H2H ZONE", renderWinner, isTournament = false }: ChessArenaProps) => {
   const toast = useToast();
   const logEndRef = useRef<HTMLDivElement>(null);
 
@@ -141,6 +146,8 @@ const ChessArena = ({ room, user, backTo = "/h2h", backLabel = "H2H ZONE", rende
   const [whiteTime, setWhiteTime] = useState(() => room.board_state?.white_time ?? 600);
   const [blackTime, setBlackTime] = useState(() => room.board_state?.black_time ?? 600);
   const [timeoutWinnerId, setTimeoutWinnerId] = useState<string | null>(null);
+  // Guards against firing the claim-timeout request more than once per game
+  const timeoutClaimSentRef = useRef(false);
 
   // Sync timers from authoritative server changes
   useEffect(() => {
@@ -164,7 +171,7 @@ const ChessArena = ({ room, user, backTo = "/h2h", backLabel = "H2H ZONE", rende
   const pendingMoveRef = useRef(false);
 
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [phase, setPhase] = useState<"prep" | "playing">("prep");
+  const [phase, setPhase] = useState<"prep" | "playing">(isTournament ? "playing" : "prep");
 
   // ── Battle Sentinel States (Network & Inactivity) ──────────────────────────
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -364,8 +371,34 @@ const ChessArena = ({ room, user, backTo = "/h2h", backLabel = "H2H ZONE", rende
   }, [game, checkmateDeclared, room.host_id, user?.id, toast]);
 
   // ── Timer Logic ────────────────────────────────────────────────────────────
+  // Note: this always reflects the authoritative server clock (based on
+  // turn_started_at), even before the local player has clicked through the
+  // H2H "Stake Committed" / "Battle Conditions" screens — the server clock
+  // starts the moment the room goes active, so freezing this display during
+  // "prep" made it look broken (frozen, then suddenly jumping once dismissed).
   useEffect(() => {
-    if (room.status !== "active" || game.isGameOver() || timeoutWinnerId || phase !== "playing") return;
+    if (room.status !== "active" || game.isGameOver() || timeoutWinnerId) return;
+
+    const handleTimeout = (winnerId: string, whoRanOut: "White" | "Black") => {
+      setTimeoutWinnerId(winnerId);
+      toast.error(`${whoRanOut} ran out of time!`);
+      // Persist this server-side — otherwise the room stays "active" forever,
+      // since only the timed-out player's own move attempt would normally
+      // trigger the backend's timeout check, and they have no reason to
+      // move. Either player can safely claim this; the server re-verifies
+      // the clock before finishing the game.
+      if (!timeoutClaimSentRef.current) {
+        timeoutClaimSentRef.current = true;
+        claimChessTimeout(room.id).catch(() => {
+          // Opponent's client may have already claimed it, or the room
+          // already finished via another path — safe to ignore.
+        });
+      }
+      // Show the result screen right away rather than waiting for the next
+      // poll/realtime update to confirm room.status === "finished" —
+      // mirrors the resignation flow's immediate feedback.
+      setTimeout(() => setShowWinnerDelayed(true), 1500);
+    };
 
     const interval = setInterval(() => {
       const turn = game.turn();
@@ -381,8 +414,7 @@ const ChessArena = ({ room, user, backTo = "/h2h", backLabel = "H2H ZONE", rende
         setWhiteTime(currentRemaining);
         if (currentRemaining <= 0) {
           clearInterval(interval);
-          setTimeoutWinnerId(room.guest_id || "GUEST_WIN");
-          toast.error("White ran out of time!");
+          handleTimeout(room.guest_id || "GUEST_WIN", "White");
         }
       } else {
         const baseTime = room.board_state?.black_time ?? 600;
@@ -390,14 +422,13 @@ const ChessArena = ({ room, user, backTo = "/h2h", backLabel = "H2H ZONE", rende
         setBlackTime(currentRemaining);
         if (currentRemaining <= 0) {
           clearInterval(interval);
-          setTimeoutWinnerId(room.host_id || "HOST_WIN");
-          toast.error("Black ran out of time!");
+          handleTimeout(room.host_id || "HOST_WIN", "Black");
         }
       }
     }, 500);
 
     return () => clearInterval(interval);
-  }, [game, room.status, room.board_state?.white_time, room.board_state?.black_time, room.board_state?.turn_started_at, room.host_id, room.guest_id, timeoutWinnerId, toast, phase]);
+  }, [game, room.status, room.id, room.board_state?.white_time, room.board_state?.black_time, room.board_state?.turn_started_at, room.host_id, room.guest_id, timeoutWinnerId, toast]);
 
   // ── Sync opponent move from server ─────────────────────────────────────────
   useEffect(() => {
@@ -1175,7 +1206,9 @@ const ChessArena = ({ room, user, backTo = "/h2h", backLabel = "H2H ZONE", rende
       )}
 
       {/* ─── PRE-GAME PREP (Both Players) ─── */}
-      {phase === "prep" && !game.isGameOver() && (
+      {/* H2H-only: stake-committed + battle-conditions screens. Tournament
+          matches skip this entirely (isTournament starts phase at "playing"). */}
+      {!isTournament && phase === "prep" && !game.isGameOver() && (
         <H2HGamePrep
           gameType="chess"
           stake={room.stake}

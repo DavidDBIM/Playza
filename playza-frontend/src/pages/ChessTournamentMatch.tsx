@@ -151,6 +151,7 @@ export default function ChessTournamentMatch() {
             user={user}
             backTo={`/chess-tournament/${tournamentId}`}
             backLabel="BACK TO TOURNAMENT"
+            isTournament
             renderWinner={(ctx) => (
               <ChessTournamentWinner
                 room={room}
