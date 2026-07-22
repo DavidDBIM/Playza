@@ -1155,8 +1155,33 @@ const ChessArena = ({ room, user, backTo = "/h2h", backLabel = "H2H ZONE", rende
             customBoardStyle={{
               borderRadius: "8px",
               border: "6px solid #1a0a2e",
+              // border-box keeps this 6px border *inside* the board's own
+              // 100%×100% footprint instead of adding to it. Without this,
+              // the board rendered ~12px larger than its container on each
+              // axis, so the parent's overflow-hidden clipped the bottom
+              // and right edges — exactly where react-chessboard draws the
+              // file (a–h) and rank (1–8) coordinate labels, which is why
+              // one set of coordinates looked fine while the other got cut
+              // off / covered.
+              boxSizing: "border-box",
               boxShadow: "0 0 32px rgba(124,58,237,0.4), 0 8px 32px rgba(0,0,0,0.6)",
             }}
+          />
+        </div>
+
+        {/* Subtle centered brand watermark — sits above the board at very
+            low opacity so it never competes with the squares, coordinates,
+            or pieces for visibility. Purely decorative, so it's excluded
+            from interaction and from screen readers. */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 z-[5] flex items-center justify-center pointer-events-none opacity-[0.07] dark:opacity-[0.09]"
+        >
+          <img
+            src="/logo/monogram.svg"
+            alt=""
+            className="w-1/3 h-1/3 object-contain grayscale"
+            draggable={false}
           />
         </div>
       </div>
