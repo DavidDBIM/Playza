@@ -138,7 +138,6 @@ const ChessArena = ({ room, user, backTo = "/h2h", backLabel = "H2H ZONE", rende
   const [inCheck, setInCheck] = useState(false);
   const [checkmateDeclared, setCheckmateDeclared] = useState(false);
   const [showWinnerDelayed, setShowWinnerDelayed] = useState(false);
-  const [showGameOverAcknowledge, setShowGameOverAcknowledge] = useState(false);
   const [showResignModal, setShowResignModal] = useState(false);
   const [resignationWinnerId, setResignationWinnerId] = useState<string | null>(null);
 
@@ -312,40 +311,48 @@ const ChessArena = ({ room, user, backTo = "/h2h", backLabel = "H2H ZONE", rende
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
 
-  // ── Delay Winner Screen ───────────────────────────────────────────────────
+  // ── Show Winner Screen once the game ends ──────────────────────────────────
+  // Previously this waited 10s then showed a small "Game Over — Acknowledge &
+  // Proceed" card that the player had to click through before the real,
+  // persistent result screen appeared. That extra step is what made the
+  // result look like it "disappeared" — players saw the small card, then
+  // (if they didn't click through in time / looked away) nothing. Now the
+  // one persistent result screen (with its own Next Match / Table / Bracket
+  // buttons) shows directly, after a short pause so the final move finishes
+  // animating on the board. It never auto-closes — the player leaves it via
+  // its own buttons, whenever they choose.
   useEffect(() => {
-    let timeoutId: ReturnType<typeof setTimeout>;
-    if (game.isGameOver() && (room.status === "finished" || game.isGameOver()) && !showWinnerDelayed && !showGameOverAcknowledge) {
-      timeoutId = setTimeout(() => {
-        setShowGameOverAcknowledge(true);
-      }, 10000); // 15-second delay to let users analyze the final board state
+    if (game.isGameOver() && !showWinnerDelayed) {
+      const timeoutId = setTimeout(() => {
+        setShowWinnerDelayed(true);
+      }, 1200);
+      return () => clearTimeout(timeoutId);
     }
-    return () => {
-      if (timeoutId) clearTimeout(timeoutId);
-    };
-  }, [game, room.status, showWinnerDelayed, showGameOverAcknowledge]);
+  }, [game, showWinnerDelayed]);
 
   // Prevent body scrolling when winner modal is open
   useEffect(() => {
-    if (showWinnerDelayed || showGameOverAcknowledge) {
+    if (showWinnerDelayed) {
       document.body.classList.add("overflow-hidden");
     } else {
       document.body.classList.remove("overflow-hidden");
     }
     return () => document.body.classList.remove("overflow-hidden");
-  }, [showWinnerDelayed, showGameOverAcknowledge]);
+  }, [showWinnerDelayed]);
 
-  // ── Sync Winner Screen for Opponent when Resignation occurs ─────────────────
+  // ── Sync Winner Screen for Opponent when Resignation/Timeout occurs ────────
   useEffect(() => {
-    if (room.status === "finished" && !showWinnerDelayed && !showGameOverAcknowledge) {
-      // If the room status is finished but we haven't shown the winner screen yet
-      // (which happens for the player who didn't resign), show it now!
+    if (room.status === "finished" && !showWinnerDelayed) {
+      // If the room status is finished but we haven't shown the winner screen
+      // yet (which happens for the player who didn't trigger the game-over
+      // themselves), show it now! It stays up until the player navigates
+      // away using one of its own buttons — nothing here ever hides it again.
       const timer = setTimeout(() => {
         setShowWinnerDelayed(true);
       }, 1500);
       return () => clearTimeout(timer);
     }
-  }, [room.status, showWinnerDelayed, showGameOverAcknowledge]);
+  }, [room.status, showWinnerDelayed]);
 
   // ── Detect check / checkmate from local game state ──────────────────────────
   useEffect(() => {
@@ -1069,58 +1076,67 @@ const ChessArena = ({ room, user, backTo = "/h2h", backLabel = "H2H ZONE", rende
 
 
       {/* ── Context Info Banner ── */}
-      {(() => {
-        if (game.isCheckmate()) {
-          return (
-            <div className="text-[10px] text-center md:text-sm text-amber-500 font-bold md:col-start-1 md:row-start-4 mt-1">
-              Checkmate: The King is under attack and has no legal moves to escape.
-            </div>
-          );
-        }
-        if (game.isStalemate()) {
-          return (
-            <div className="text-[10px] text-center md:text-sm text-slate-500 font-bold md:col-start-1 md:row-start-4 mt-1">
-              Stalemate: The player to move has no legal moves and is not in check. The game is a draw.
-            </div>
-          );
-        }
-        if (game.isThreefoldRepetition()) {
-          return (
-            <div className="text-[10px] text-center md:text-sm text-slate-500 font-bold md:col-start-1 md:row-start-4 mt-1">
-              Draw: Threefold repetition. The exact same board position has occurred three times.
-            </div>
-          );
-        }
-        if (game.isInsufficientMaterial()) {
-          return (
-            <div className="text-[10px] text-center md:text-sm text-slate-500 font-bold md:col-start-1 md:row-start-4 mt-1">
-              Draw: Insufficient material to force a checkmate.
-            </div>
-          );
-        }
-        if (game.isDraw()) {
-          return (
-            <div className="text-[10px] text-center md:text-sm text-slate-500 font-bold md:col-start-1 md:row-start-4 mt-1">
-              Draw: The game has ended in a tie.
-            </div>
-          );
-        }
-        if (timeoutWinnerId) {
-          return (
-            <div className="text-[10px] text-center md:text-sm text-red-500 font-bold md:col-start-1 md:row-start-4 mt-1">
-              Time Out: {timeoutWinnerId === room.host_id ? "White" : "Black"} ran out of time!
-            </div>
-          );
-        }
-        if (inCheck) {
-          return (
-            <div className="text-[10px] text-center md:text-sm text-red-500 font-bold md:col-start-1 md:row-start-4 mt-1">
-              Check: The King is under immediate attack! Move it, block the attack, or capture the attacking piece.
-            </div>
-          );
-        }
-        return null;
-      })()}
+      {/* Fixed-height wrapper: this cell always reserves the same amount of
+          grid space (md:row-start-4) whether or not a message is showing.
+          Previously this row was "auto" sized, so it collapsed to 0px with
+          no message and expanded once one appeared (check/checkmate/draw/
+          timeout) — on a fixed h-screen grid, that growth ate directly into
+          the board's row (1fr), which is why the board visibly shrank the
+          moment checkmate happened. */}
+      <div className="md:col-start-1 md:row-start-4 md:h-7 flex items-center justify-center">
+        {(() => {
+          if (game.isCheckmate()) {
+            return (
+              <div className="text-[10px] text-center md:text-sm text-amber-500 font-bold mt-1">
+                Checkmate: The King is under attack and has no legal moves to escape.
+              </div>
+            );
+          }
+          if (game.isStalemate()) {
+            return (
+              <div className="text-[10px] text-center md:text-sm text-slate-500 font-bold mt-1">
+                Stalemate: The player to move has no legal moves and is not in check. The game is a draw.
+              </div>
+            );
+          }
+          if (game.isThreefoldRepetition()) {
+            return (
+              <div className="text-[10px] text-center md:text-sm text-slate-500 font-bold mt-1">
+                Draw: Threefold repetition. The exact same board position has occurred three times.
+              </div>
+            );
+          }
+          if (game.isInsufficientMaterial()) {
+            return (
+              <div className="text-[10px] text-center md:text-sm text-slate-500 font-bold mt-1">
+                Draw: Insufficient material to force a checkmate.
+              </div>
+            );
+          }
+          if (game.isDraw()) {
+            return (
+              <div className="text-[10px] text-center md:text-sm text-slate-500 font-bold mt-1">
+                Draw: The game has ended in a tie.
+              </div>
+            );
+          }
+          if (timeoutWinnerId) {
+            return (
+              <div className="text-[10px] text-center md:text-sm text-red-500 font-bold mt-1">
+                Time Out: {timeoutWinnerId === room.host_id ? "White" : "Black"} ran out of time!
+              </div>
+            );
+          }
+          if (inCheck) {
+            return (
+              <div className="text-[10px] text-center md:text-sm text-red-500 font-bold mt-1">
+                Check: The King is under immediate attack! Move it, block the attack, or capture the attacking piece.
+              </div>
+            );
+          }
+          return null;
+        })()}
+      </div>
 
       {/* ── Chess Board ── */}
       <div
@@ -1185,23 +1201,6 @@ const ChessArena = ({ room, user, backTo = "/h2h", backLabel = "H2H ZONE", rende
           />
         </div>
       </div>
-
-      {showGameOverAcknowledge && !showWinnerDelayed && (
-        <div className="fixed inset-0 z-200 overflow-y-auto bg-slate-950/70 flex items-center justify-center p-2">
-          <div className="w-full max-w-75 bg-white dark:bg-slate-900 rounded-xl overflow-hidden p-6 text-center">
-             <h3 className="text-xl font-bold mb-2 text-slate-800 dark:text-white">Game Over</h3>
-             <p className="text-sm text-slate-600 dark:text-slate-300 mb-6">
-                {game.isCheckmate() ? "Checkmate! The King is under attack and cannot escape." : 
-                 game.isStalemate() ? "Stalemate! A draw because no legal moves are available." :
-                 game.isInsufficientMaterial() ? "Draw! Insufficient material to force a checkmate." :
-                 "The game has ended in a draw."}
-             </p>
-             <button onClick={() => { setShowGameOverAcknowledge(false); setShowWinnerDelayed(true); }} className="p-2 bg-indigo-600 text-white rounded-xl w-full font-bold md:hover:bg-indigo-500">
-               Acknowledge & Proceed
-             </button>
-          </div>
-        </div>
-      )}
 
       {showWinnerDelayed && (
         <div className="fixed inset-0 z-200 overflow-y-auto bg-slate-950/90 flex items-center justify-center p-2">
