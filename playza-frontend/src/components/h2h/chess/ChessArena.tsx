@@ -504,6 +504,13 @@ const ChessArena = ({ room, user, backTo = "/h2h", backLabel = "H2H ZONE", rende
   }, [room.board_state?.last_move, room.current_turn]);
 
   const boardOrientation = room.host_id === user?.id ? "white" : "black";
+
+  // Board coordinates rendered ourselves (see below) instead of relying on
+  // react-chessboard's built-in showBoardNotation, which was inconsistently
+  // clipping/hiding the file (a–h) letters while the rank (1–8) numbers
+  // stayed visible. Order flips with orientation, same as a real board.
+  const rankLabels = boardOrientation === "white" ? [8, 7, 6, 5, 4, 3, 2, 1] : [1, 2, 3, 4, 5, 6, 7, 8];
+  const fileLabels = boardOrientation === "white" ? ["a", "b", "c", "d", "e", "f", "g", "h"] : ["h", "g", "f", "e", "d", "c", "b", "a"];
   const oppUsername =
     user?.id === room.host_id
       ? room.guest_id
@@ -1139,66 +1146,88 @@ const ChessArena = ({ room, user, backTo = "/h2h", backLabel = "H2H ZONE", rende
       </div>
 
       {/* ── Chess Board ── */}
-      <div
-        className={`relative w-full max-w-[75vh] mx-auto aspect-square rounded-xl overflow-hidden bg-white dark:bg-slate-900 border-4 md:col-start-1 md:row-start-5
-        ${inCheck && myTurn ? "border-red-500/60" : "border-slate-800 dark:border-slate-700"}`}
-        style={{ touchAction: "none" }}
-      >
-        <div className="absolute inset-0 pointer-events-none z-0 bg-[radial-gradient(ellipse_at_center,rgba(99,102,241,0.12),transparent_70%)]" />
-
-        {/* Check overlay badge on board */}
-        {inCheck && (
-          <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5 bg-red-500/90 text-white text-[10px] font-black px-3 py-1 rounded-full tracking-wider uppercase backdrop-blur-sm pointer-events-none">
-            <AlertTriangle size={11} />
-            CHECK!
-          </div>
-        )}
-        <div className="relative z-1 w-full h-full">
-          <Chessboard
-            position={game.fen()}
-            boardOrientation={boardOrientation as "white" | "black"}
-            arePiecesDraggable={isYourTurn}
-            animationDuration={300}
-            onPieceDrop={(sourceSquare, targetSquare) => {
-              if (!targetSquare) return false;
-              return attemptMove(sourceSquare, targetSquare);
-            }}
-            onSquareClick={handleSquareClick}
-            customSquareStyles={squareStyles}
-            customPieces={customPieces}
-            customDarkSquareStyle={{ backgroundColor: "#4a2d6b" }}
-            customLightSquareStyle={{ backgroundColor: "#c9a96e" }}
-            customBoardStyle={{
-              borderRadius: "8px",
-              border: "6px solid #1a0a2e",
-              // border-box keeps this 6px border *inside* the board's own
-              // 100%×100% footprint instead of adding to it. Without this,
-              // the board rendered ~12px larger than its container on each
-              // axis, so the parent's overflow-hidden clipped the bottom
-              // and right edges — exactly where react-chessboard draws the
-              // file (a–h) and rank (1–8) coordinate labels, which is why
-              // one set of coordinates looked fine while the other got cut
-              // off / covered.
-              boxSizing: "border-box",
-              boxShadow: "0 0 32px rgba(124,58,237,0.4), 0 8px 32px rgba(0,0,0,0.6)",
-            }}
-          />
+      <div className="w-full max-w-[75vh] mx-auto md:col-start-1 md:row-start-5 flex gap-1">
+        {/* Rank numbers gutter (1–8) — reserved space, never overlaps the board */}
+        <div className="flex flex-col shrink-0 w-4 md:w-5">
+          {rankLabels.map((r) => (
+            <span
+              key={r}
+              className="flex-1 flex items-center justify-center text-[9px] md:text-[11px] font-bold text-slate-400 dark:text-slate-500 select-none"
+            >
+              {r}
+            </span>
+          ))}
         </div>
 
-        {/* Subtle centered brand watermark — sits above the board at very
-            low opacity so it never competes with the squares, coordinates,
-            or pieces for visibility. Purely decorative, so it's excluded
-            from interaction and from screen readers. */}
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 z-[5] flex items-center justify-center pointer-events-none opacity-[0.07] dark:opacity-[0.09]"
-        >
-          <img
-            src="/logo/monogram.svg"
-            alt=""
-            className="w-1/3 h-1/3 object-contain grayscale"
-            draggable={false}
-          />
+        <div className="flex-1 min-w-0 flex flex-col gap-1">
+          <div
+            className={`relative w-full aspect-square rounded-xl overflow-hidden bg-white dark:bg-slate-900 border-4
+            ${inCheck && myTurn ? "border-red-500/60" : "border-slate-800 dark:border-slate-700"}`}
+            style={{ touchAction: "none" }}
+          >
+            <div className="absolute inset-0 pointer-events-none z-0 bg-[radial-gradient(ellipse_at_center,rgba(99,102,241,0.12),transparent_70%)]" />
+
+            {/* Check overlay badge on board */}
+            {inCheck && (
+              <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5 bg-red-500/90 text-white text-[10px] font-black px-3 py-1 rounded-full tracking-wider uppercase backdrop-blur-sm pointer-events-none">
+                <AlertTriangle size={11} />
+                CHECK!
+              </div>
+            )}
+            <div className="relative z-1 w-full h-full">
+              <Chessboard
+                position={game.fen()}
+                boardOrientation={boardOrientation as "white" | "black"}
+                arePiecesDraggable={isYourTurn}
+                animationDuration={300}
+                showBoardNotation={false}
+                onPieceDrop={(sourceSquare, targetSquare) => {
+                  if (!targetSquare) return false;
+                  return attemptMove(sourceSquare, targetSquare);
+                }}
+                onSquareClick={handleSquareClick}
+                customSquareStyles={squareStyles}
+                customPieces={customPieces}
+                customDarkSquareStyle={{ backgroundColor: "#4a2d6b" }}
+                customLightSquareStyle={{ backgroundColor: "#c9a96e" }}
+                customBoardStyle={{
+                  borderRadius: "8px",
+                  border: "6px solid #1a0a2e",
+                  boxSizing: "border-box",
+                  boxShadow: "0 0 32px rgba(124,58,237,0.4), 0 8px 32px rgba(0,0,0,0.6)",
+                }}
+              />
+            </div>
+
+            {/* Subtle centered Playza brand watermark — full logo (monogram +
+                wordmark) so it reads clearly as Playza rather than an
+                unlabelled mark, at low opacity so it never competes with the
+                squares, coordinates, or pieces for visibility. Purely
+                decorative, so it's excluded from interaction and screen readers. */}
+            <div
+              aria-hidden="true"
+              className="absolute inset-0 z-[5] flex items-center justify-center pointer-events-none opacity-[0.08] dark:opacity-[0.1]"
+            >
+              <img
+                src="/logo/full_logo.svg"
+                alt=""
+                className="w-[30%] h-[30%] object-contain grayscale"
+                draggable={false}
+              />
+            </div>
+          </div>
+
+          {/* File letters gutter (a–h) — reserved space, never overlaps the board */}
+          <div className="flex shrink-0 h-4 md:h-5">
+            {fileLabels.map((f) => (
+              <span
+                key={f}
+                className="flex-1 flex items-center justify-center text-[9px] md:text-[11px] font-bold text-slate-400 dark:text-slate-500 select-none uppercase"
+              >
+                {f}
+              </span>
+            ))}
+          </div>
         </div>
       </div>
 
