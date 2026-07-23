@@ -10,6 +10,7 @@ import { supabaseAdmin as supabase } from './config/supabase'
 import { finalizeSessionAndPayout } from './modules/gamesession/gamesession.service'
 import { runQuizReminderJob, runQuizLifecycleJob, setQuizReminderIo } from './lib/quizReminders'
 import { runChessLifecycleJob, runChessReminderJob } from './lib/chessReminders'
+import { sweepAbandonedChessGames } from './modules/chess/chess.service'
 
 import authRoutes from './modules/auth/auth.routes'
 import referralRoutes from './modules/referral/referral.routes'
@@ -162,6 +163,13 @@ cron.schedule('* * * * *', async () => {
 // Chess tournament 24h / 2h reminders (every 30 minutes)
 cron.schedule('*/30 * * * *', async () => {
   await runChessReminderJob()
+})
+
+// Finalize chess games (H2H or tournament) that have clearly been abandoned
+// by both players — safety net behind the player-triggered claim-timeout
+// flow, for the rare case where nobody ever comes back to trigger it (every 5 minutes)
+cron.schedule('*/5 * * * *', async () => {
+  await sweepAbandonedChessGames()
 })
 
 httpServer.listen(PORT, () => {

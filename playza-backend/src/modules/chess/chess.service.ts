@@ -542,11 +542,13 @@ export async function makeMove(
     return { move, next_turn: null, status: "finished", message: "Black ran out of time" };
   }
 
-  // Apply +5s increment
+  // Apply per-room increment (defaults to 5s; tournament Armageddon deciders
+  // set increment_secs: 0 in board_state for true sudden-death play)
+  const incrementSecs = room.board_state?.increment_secs ?? 5;
   if (turnColor === "w") {
-    whiteTime += 5;
+    whiteTime += incrementSecs;
   } else {
-    blackTime += 5;
+    blackTime += incrementSecs;
   }
 
   const updatedBoard = {
@@ -680,6 +682,51 @@ export async function cancelChessRoom(roomId: string, userId: string) {
   await supabaseAdmin.from('chess_rooms').delete().eq('id', roomId)
 }
 
+// ── Abandoned-game safety net ────────────────────────────────────────────────
+// claimTimeout (above) resolves a stalled game as soon as *either* player next
+// opens it — but if both players close the app and never come back, nothing
+// ever calls claimTimeout, and the room (plus its staked money, for H2H games)
+// would otherwise sit "active" forever. This is a periodic sweep (see the
+// cron job in index.ts) that finds active games whose current mover's clock
+// expired more than GRACE_PERIOD_SECS ago and finishes them the same way a
+// player claiming timeout would. The grace period keeps this from ever racing
+// a real player's own claim — it only touches games that have clearly been
+// abandoned, not ones where someone's client just hasn't polled yet.
+const ABANDONED_GAME_GRACE_SECS = 5 * 60 // 5 minutes past clock expiry
+
+export async function sweepAbandonedChessGames() {
+  const { data: rooms, error } = await supabaseAdmin
+    .from('chess_rooms')
+    .select('id, host_id, guest_id, current_turn, stake, board_state')
+    .eq('status', 'active')
+
+  if (error) {
+    console.error('[Chess] sweepAbandonedChessGames: failed to fetch active rooms:', error.message)
+    return
+  }
+  if (!rooms || rooms.length === 0) return
+
+  for (const room of rooms) {
+    try {
+      const turnStartedAt = room.board_state?.turn_started_at
+      if (!turnStartedAt || !room.current_turn) continue // no clock running yet (e.g. still "waiting" for a bot to think — shouldn't happen for status='active', but be defensive)
+
+      const turnColor = room.current_turn === room.host_id ? 'w' : 'b'
+      const baseTime = turnColor === 'w' ? (room.board_state?.white_time ?? 600) : (room.board_state?.black_time ?? 600)
+      const elapsedSeconds = Math.floor((Date.now() - new Date(turnStartedAt).getTime()) / 1000)
+      const remaining = baseTime - elapsedSeconds
+
+      if (remaining > -ABANDONED_GAME_GRACE_SECS) continue // not clearly abandoned yet
+
+      const winnerId = room.current_turn === room.host_id ? (room.guest_id || SYSTEM_BOT_ID) : room.host_id
+      await handleGameOver(room.id, winnerId, room.stake)
+      console.log(`[Chess] sweepAbandonedChessGames: finalized abandoned room ${room.id} (clock expired ${Math.abs(remaining)}s ago)`)
+    } catch (e: any) {
+      console.error(`[Chess] sweepAbandonedChessGames: failed to finalize room ${room.id}:`, e.message)
+    }
+  }
+}
+
 function getInitialBoard() {
   return {
     fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
@@ -687,6 +734,7 @@ function getInitialBoard() {
     last_move: null,
     white_time: 600,
     black_time: 600,
+    increment_secs: 5,
     turn_started_at: new Date().toISOString(),
   }
 }

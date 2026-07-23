@@ -23,13 +23,14 @@ function roundNameForPlayerCount(playersRemainingBeforeRound: number): string {
   return ROUND_NAMES[playersRemainingBeforeRound] ?? `Round of ${playersRemainingBeforeRound}`
 }
 
-function getInitialBoard(whiteTimeSecs: number, blackTimeSecs: number = whiteTimeSecs) {
+function getInitialBoard(whiteTimeSecs: number, blackTimeSecs: number = whiteTimeSecs, incrementSecs: number = 5) {
   return {
     fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
     moves: [],
     last_move: null,
     white_time: whiteTimeSecs,
     black_time: blackTimeSecs,
+    increment_secs: incrementSecs,
     turn_started_at: new Date().toISOString(),
   }
 }
@@ -53,7 +54,8 @@ export async function createFixtureMatch(
   player1Id: string,
   player2Id: string,
   whiteTimeControlSecs: number,
-  blackTimeControlSecs: number = whiteTimeControlSecs
+  blackTimeControlSecs: number = whiteTimeControlSecs,
+  incrementSecs: number = 5
 ) {
   const code = `TRN-${fixtureId.slice(0, 8).toUpperCase()}`
 
@@ -65,7 +67,7 @@ export async function createFixtureMatch(
       guest_id: player2Id,  // black
       stake: 0,              // entry fee was already paid at tournament registration
       status: 'active',
-      board_state: getInitialBoard(whiteTimeControlSecs, blackTimeControlSecs),
+      board_state: getInitialBoard(whiteTimeControlSecs, blackTimeControlSecs, incrementSecs),
       current_turn: player1Id,
     })
     .select()
@@ -318,7 +320,7 @@ export async function replayDrawnFixture(fixtureId: string, player1Id: string, p
       .update({ draw_count: newDrawCount, is_armageddon: true, armageddon_draw_winner_id: blackGetsDrawOdds })
       .eq('id', fixtureId)
 
-    return createFixtureMatch(fixtureId, whitePlayer, blackGetsDrawOdds, ARMAGEDDON_WHITE_SECS, ARMAGEDDON_BLACK_SECS)
+    return createFixtureMatch(fixtureId, whitePlayer, blackGetsDrawOdds, ARMAGEDDON_WHITE_SECS, ARMAGEDDON_BLACK_SECS, 0)
   }
 
   // Normal shrinking-time replay — swap colors for fairness.

@@ -3,6 +3,7 @@ import { useNavigate, useParams, useSearchParams } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/auth";
 import SEO from "@/components/SEO";
+import { Trophy, Users, Clock, Crown } from "lucide-react";
 import {
   getChessTournaments, registerChessTournament,
   getChessTournamentFixtures, getChessTournamentStandings,
@@ -440,10 +441,17 @@ function TCard({ t, onOpen }: { t: ChessTournament; onOpen: () => void }) {
         border: `1px solid ${t.status === "active" ? "rgba(239,68,68,0.35)" : t.status === "registration" ? "rgba(124,58,237,0.3)" : "color-mix(in srgb, var(--foreground) 7%, transparent)"}`,
         boxShadow: t.status === "active" ? "0 0 24px rgba(239,68,68,0.12)" : t.status === "registration" ? "0 0 24px rgba(124,58,237,0.08)" : "none",
       }}>
-      {/* Header strip — subtle chess-board accent + status */}
+      {/* Header strip — checkerboard motif (the game's own visual language) + status */}
       <div className="relative px-4 pt-3.5 pb-3 overflow-hidden"
         style={{ background: t.status === "active" ? "linear-gradient(135deg,rgba(239,68,68,0.14),rgba(124,58,237,0.08))" : "linear-gradient(135deg,rgba(124,58,237,0.14),rgba(168,85,247,0.06))" }}>
-        <span className="absolute -right-2 -top-3 text-6xl opacity-[0.08] select-none rotate-12">♞</span>
+        {/* Corner checkerboard swatch — a literal chessboard corner, tilted, standing in for the generic chess-piece emoji */}
+        <div className="absolute -right-4 -top-4 w-20 h-20 rotate-12 grid grid-cols-4 grid-rows-4 overflow-hidden rounded-md opacity-[0.14] pointer-events-none select-none">
+          {Array.from({ length: 16 }).map((_, i) => {
+            const row = Math.floor(i / 4);
+            const isLight = (row + i) % 2 === 0;
+            return <div key={i} style={{ background: isLight ? "var(--foreground)" : "transparent" }} />;
+          })}
+        </div>
         <div className="relative flex items-start justify-between mb-1.5">
           <div className="flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: sc.dot, boxShadow: `0 0 6px ${sc.dot}` }} />
@@ -455,28 +463,54 @@ function TCard({ t, onOpen }: { t: ChessTournament; onOpen: () => void }) {
           </div>
           <span className="text-[9px] text-foreground/25 font-bold shrink-0">{t.format === "group_knockout" ? "Group+KO" : "Knockout"}</span>
         </div>
-        <h3 className="relative font-black text-foreground text-[15px] leading-snug line-clamp-2">{t.title}</h3>
+        <div className="relative flex items-center gap-1.5">
+          <Crown className="w-3.5 h-3.5 shrink-0 text-amber-400/70" />
+          <h3 className="font-black text-foreground text-[15px] leading-snug line-clamp-2">{t.title}</h3>
+        </div>
+      </div>
+
+      {/* Thin alternating divider — a one-row chessboard rank, the card's connective tissue between header and stats */}
+      <div className="flex h-[3px]">
+        {Array.from({ length: 20 }).map((_, i) => (
+          <div key={i} className="flex-1" style={{ background: i % 2 === 0 ? "#7c3aed" : "#a855f7", opacity: t.status === "active" ? 0.55 : 0.4 }} />
+        ))}
       </div>
 
       <div className="px-4 pt-3 pb-4">
-        {/* Prize pool — the hero element */}
-        <div className="flex items-end justify-between mb-3">
-          <div>
-            <p className="text-[9px] font-bold uppercase tracking-wider text-foreground/25 mb-0.5">Prize Pool</p>
-            <p className="text-xl font-black leading-none" style={{ background: "linear-gradient(135deg,#fbbf24,#f59e0b)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-              🏆 {t.prize_pool.toLocaleString()} <span className="text-xs">ZA</span>
-            </p>
-          </div>
-          <div className="text-right">
-            <p className="text-[9px] font-bold uppercase tracking-wider text-foreground/25 mb-0.5">Entry</p>
-            <p className="text-sm font-black text-foreground/70">{t.entry_fee > 0 ? `${t.entry_fee} ZA` : "FREE"}</p>
+        {/* Prize pool — the hero element, now a proper card with a coin badge
+            instead of a bare emoji, so it reads as the headline stat it is */}
+        <div className="relative rounded-xl p-3 mb-2.5 overflow-hidden"
+          style={{ background: "linear-gradient(135deg, rgba(251,191,36,0.14), rgba(245,158,11,0.05))", border: "1px solid rgba(251,191,36,0.25)" }}>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+                style={{ background: "linear-gradient(135deg,#fbbf24,#f59e0b)", boxShadow: "0 2px 10px rgba(245,158,11,0.35)" }}>
+                <Trophy className="w-[18px] h-[18px] text-white" strokeWidth={2.25} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[9px] font-bold uppercase tracking-wider text-foreground/40 mb-0.5">Prize Pool</p>
+                <p className="text-xl font-black leading-none truncate" style={{ background: "linear-gradient(135deg,#fbbf24,#f59e0b)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                  {t.prize_pool.toLocaleString()} <span className="text-xs">ZA</span>
+                </p>
+              </div>
+            </div>
+            <div className="text-right shrink-0 pl-2 border-l" style={{ borderColor: "rgba(251,191,36,0.25)" }}>
+              <p className="text-[9px] font-bold uppercase tracking-wider text-foreground/40 mb-0.5">Entry</p>
+              <p className="text-sm font-black text-foreground/70">{t.entry_fee > 0 ? `${t.entry_fee} ZA` : "FREE"}</p>
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 text-[10px] text-foreground/35 mb-3 flex-wrap font-medium">
-          <span className="flex items-center gap-1">👥 {t.bracket_size} players</span>
-          <span>·</span>
-          <span className="flex items-center gap-1">⏱ {fmtTime(t.time_control_secs)}{t.increment_secs ? ` +${t.increment_secs}s` : ""}</span>
+        {/* Players + time control — icon chips instead of a plain emoji line */}
+        <div className="grid grid-cols-2 gap-2 mb-3">
+          <div className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5" style={{ background: "color-mix(in srgb, var(--foreground) 4%, transparent)" }}>
+            <Users className="w-3.5 h-3.5 text-violet-400 shrink-0" strokeWidth={2.25} />
+            <span className="text-[10.5px] font-bold text-foreground/60 truncate">{t.bracket_size} players</span>
+          </div>
+          <div className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5" style={{ background: "color-mix(in srgb, var(--foreground) 4%, transparent)" }}>
+            <Clock className="w-3.5 h-3.5 text-violet-400 shrink-0" strokeWidth={2.25} />
+            <span className="text-[10.5px] font-bold text-foreground/60 truncate">{fmtTime(t.time_control_secs)}{t.increment_secs ? ` +${t.increment_secs}s` : ""}</span>
+          </div>
         </div>
 
         {t.status === "registration" && t.registration_end && !regExpired && regTimeLeft && (
