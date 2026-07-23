@@ -116,7 +116,14 @@ function generateRoomCode(): string {
 }
 
 async function handleGameOver(roomId: string, winnerId: string | null, stake: number) {
-  // 1. Update room status
+  // 1. Update room status — guarded on status='active' so this UPDATE only
+  // ever succeeds once per room. Without this, two near-simultaneous
+  // game-over triggers (both players' clients calling claim-timeout around
+  // the same moment, or a resign racing a checkmate-on-move) could each read
+  // status='active' before either write commits, and each go on to pay the
+  // winner, insert game_history, and advance the tournament fixture —
+  // paying out twice for one game. Whoever's UPDATE actually matches a row
+  // "wins" the race; everyone else sees no row and bails out immediately.
   const { data: room, error: updateErr } = await supabaseAdmin
     .from('chess_rooms')
     .update({ 
@@ -124,11 +131,16 @@ async function handleGameOver(roomId: string, winnerId: string | null, stake: nu
       winner_id: winnerId 
     })
     .eq('id', roomId)
+    .eq('status', 'active')
     .select('host_id, guest_id')
     .single()
 
   if (updateErr) {
-    console.error(`[Chess handleGameOver] Failed to update room ${roomId}:`, updateErr);
+    // PGRST116 = no row matched (already finished by a concurrent call) —
+    // expected in the race case above, not a real error.
+    if (updateErr.code !== 'PGRST116') {
+      console.error(`[Chess handleGameOver] Failed to update room ${roomId}:`, updateErr);
+    }
     return;
   }
   if (!room) {
@@ -619,6 +631,7 @@ export async function findQuickMatch(userId: string, stakeValue: number) {
 export async function resignGame(roomId: string, userId: string) {
   const { data: room } = await supabaseAdmin.from('chess_rooms').select('*').eq('id', roomId).single()
   if (!room || room.status !== 'active') throw new Error('Invalid game state')
+  if (room.host_id !== userId && room.guest_id !== userId) throw new Error('Not a participant in this game')
 
   const winnerId = room.host_id === userId ? (room.guest_id || SYSTEM_BOT_ID) : room.host_id
   await handleGameOver(roomId, winnerId, room.stake)
