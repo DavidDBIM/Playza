@@ -47,8 +47,7 @@ const H2HWinner = ({ room, user, localWinnerId, isSyncing, backTo = "/h2h", back
   const winningAmount = totalPrize - platformFee;
 
   return (
-    <div className="w-full min-h-[90vh] md:min-h-[80vh] flex items-center justify-center relative overflow-visible">
-      
+    <div className="w-full flex items-center justify-center relative overflow-visible px-4 py-8 md:px-0 md:py-10">
       <div className={`absolute top-0 inset-x-0 h-75 md:h-150 w-full ${isWinner ? 'bg-primary/5' : 'bg-red-500/5'} rounded-full -z-1`}></div>
       
       <div className="relative z-10 w-full max-w-3xl text-center space-y-8 md:space-y-12 px-4 md:px-0">

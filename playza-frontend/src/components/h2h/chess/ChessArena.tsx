@@ -1232,7 +1232,7 @@ const ChessArena = ({ room, user, backTo = "/h2h", backLabel = "H2H ZONE", rende
       </div>
 
       {showWinnerDelayed && (
-        <div className="fixed inset-0 z-200 overflow-y-auto bg-slate-950/90 flex items-center justify-center p-2">
+        <div className="fixed inset-0 z-200 overflow-y-auto bg-slate-950/90 flex items-start justify-center p-2 py-6 md:items-center">
           {renderWinner ? (
             renderWinner({
               finalWinnerId,
@@ -1244,7 +1244,7 @@ const ChessArena = ({ room, user, backTo = "/h2h", backLabel = "H2H ZONE", rende
               blackTimeLeft: blackTime,
             })
           ) : (
-            <div className="w-full max-w-2xl bg-white dark:bg-slate-900 rounded-xl overflow-hidden border border-white/10">
+            <div className="w-full max-w-2xl my-auto bg-white dark:bg-slate-900 rounded-xl overflow-hidden border border-white/10">
               <H2HWinner
                 room={room}
                 user={user}
