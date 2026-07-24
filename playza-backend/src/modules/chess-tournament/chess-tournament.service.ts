@@ -19,6 +19,21 @@ const ROUND_NAMES: Record<number, string> = {
   64: 'Round of 64',
 }
 
+// ── Break between rounds ────────────────────────────────────────────────────
+// Previously, the moment the last game of a round finished (or a draw needed
+// a rematch), the next match was created *already active* — clock running,
+// no warning, no break. Real tournaments (World Cup included) always have a
+// scheduled gap between matches: time to see the result, breathe, and get a
+// "your match starts soon" notice. This is that gap: the next pairing is
+// recorded immediately (so the bracket/fixture list updates right away) but
+// stays `status: 'scheduled'` with a future `scheduled_at`, and a cron job
+// (see startScheduledFixtures below) is what actually creates the live
+// chess_room once that time arrives — which is also what makes the existing
+// 30-minute / 5-minute match reminder emails and push notifications
+// (chessReminders.ts) actually have something to fire on; before this change
+// nothing ever stayed in 'scheduled' long enough for them to trigger.
+const ROUND_GAP_MINUTES = 20
+
 function roundNameForPlayerCount(playersRemainingBeforeRound: number): string {
   return ROUND_NAMES[playersRemainingBeforeRound] ?? `Round of ${playersRemainingBeforeRound}`
 }
@@ -113,31 +128,30 @@ async function resolveRoundOutcome(tournamentId: string, roundNumber: number, ti
 
   const nextRoundNumber = roundNumber + 1
   const roundName = roundNameForPlayerCount(winners.length)
-  const nextFixtures: { id: string; player1_id: string | null; player2_id: string | null }[] = []
+  const scheduledAt = new Date(Date.now() + ROUND_GAP_MINUTES * 60 * 1000).toISOString()
 
   for (let i = 0; i < winners.length / 2; i++) {
     const p1 = winners[i * 2]
     const p2 = winners[i * 2 + 1]
-    const { data: nf, error } = await supabaseAdmin
+    const isBye = !p2
+    const { error } = await supabaseAdmin
       .from('chess_tournament_fixtures')
       .insert({
         tournament_id: tournamentId, round_number: nextRoundNumber, round_name: roundName,
         bracket_position: i, player1_id: p1, player2_id: p2 ?? null,
-        is_bye: !p2, winner_id: !p2 ? p1 : null, status: !p2 ? 'bye' : 'pending',
+        is_bye: isBye, winner_id: isBye ? p1 : null, status: isBye ? 'bye' : 'scheduled',
+        scheduled_at: isBye ? null : scheduledAt,
+        scheduled_white_time_secs: isBye ? null : timeControlSecs,
+        scheduled_black_time_secs: isBye ? null : timeControlSecs,
+        scheduled_increment_secs: isBye ? null : 5,
       })
-      .select()
-      .single()
     if (error) throw error
-    nextFixtures.push(nf)
-  }
-
-  for (const f of nextFixtures) {
-    if (f.player1_id && f.player2_id) await createFixtureMatch(f.id, f.player1_id, f.player2_id, timeControlSecs)
   }
 
   await supabaseAdmin.from('chess_tournaments').update({ current_round: nextRoundNumber }).eq('id', tournamentId)
 
-  // Keep cascading if this new round is also entirely byes.
+  // Keep cascading if this new round is also entirely byes — those resolve
+  // instantly since there's no real game (and therefore nothing to schedule).
   await resolveRoundOutcome(tournamentId, nextRoundNumber, timeControlSecs)
 }
 
@@ -166,6 +180,10 @@ export async function generateKnockoutRound1(tournamentId: string) {
 
   const roundName = roundNameForPlayerCount(bracketSize)
   const fixtures: { id: string; player1_id: string | null; player2_id: string | null }[] = []
+  // Announce the draw now, kick off after the same gap every later round
+  // uses — a real bracket reveal → kickoff gap, like a World Cup draw,
+  // instead of matches going live the instant pairings are decided.
+  const scheduledAt = new Date(Date.now() + ROUND_GAP_MINUTES * 60 * 1000).toISOString()
 
   for (let i = 0; i < bracketSize / 2; i++) {
     const p1 = shuffled[i * 2]
@@ -183,7 +201,11 @@ export async function generateKnockoutRound1(tournamentId: string) {
         player2_id: p2,
         is_bye: isBye,
         winner_id: isBye ? (p1 ?? p2) : null,
-        status: isBye ? 'bye' : 'pending',
+        status: isBye ? 'bye' : 'scheduled',
+        scheduled_at: isBye ? null : scheduledAt,
+        scheduled_white_time_secs: isBye ? null : tournament.time_control_secs,
+        scheduled_black_time_secs: isBye ? null : tournament.time_control_secs,
+        scheduled_increment_secs: isBye ? null : 5,
       })
       .select()
       .single()
@@ -199,12 +221,8 @@ export async function generateKnockoutRound1(tournamentId: string) {
     .eq('tournament_id', tournamentId)
     .eq('status', 'registered')
 
-  // Start all non-bye matches immediately
-  for (const f of fixtures) {
-    if (f.player1_id && f.player2_id) {
-      await createFixtureMatch(f.id, f.player1_id, f.player2_id, tournament.time_control_secs)
-    }
-  }
+  // Matches are announced now (see scheduled_at above) and go live once
+  // startScheduledFixtures picks them up at kickoff — no immediate start here.
 
   await supabaseAdmin
     .from('chess_tournaments')
@@ -314,26 +332,75 @@ export async function replayDrawnFixture(fixtureId: string, player1Id: string, p
     // whoever happened to be player1 for this replay.
     const blackGetsDrawOdds = Math.random() < 0.5 ? player2Id : player1Id
     const whitePlayer = blackGetsDrawOdds === player1Id ? player2Id : player1Id
+    const scheduledAt = new Date(Date.now() + ROUND_GAP_MINUTES * 60 * 1000).toISOString()
 
     await supabaseAdmin
       .from('chess_tournament_fixtures')
-      .update({ draw_count: newDrawCount, is_armageddon: true, armageddon_draw_winner_id: blackGetsDrawOdds })
+      .update({
+        draw_count: newDrawCount, is_armageddon: true, armageddon_draw_winner_id: blackGetsDrawOdds,
+        player1_id: whitePlayer, player2_id: blackGetsDrawOdds,
+        status: 'scheduled', scheduled_at: scheduledAt, chess_room_id: null,
+        scheduled_white_time_secs: ARMAGEDDON_WHITE_SECS,
+        scheduled_black_time_secs: ARMAGEDDON_BLACK_SECS,
+        scheduled_increment_secs: 0, // true sudden death — no increment
+      })
       .eq('id', fixtureId)
 
-    return createFixtureMatch(fixtureId, whitePlayer, blackGetsDrawOdds, ARMAGEDDON_WHITE_SECS, ARMAGEDDON_BLACK_SECS, 0)
+    return
   }
 
   // Normal shrinking-time replay — swap colors for fairness.
   const nextTime = Math.max(baseTime - 60 * newDrawCount, 60)
+  const scheduledAt = new Date(Date.now() + ROUND_GAP_MINUTES * 60 * 1000).toISOString()
   await supabaseAdmin
     .from('chess_tournament_fixtures')
-    .update({ draw_count: newDrawCount })
+    .update({
+      draw_count: newDrawCount,
+      player1_id: player2Id, player2_id: player1Id,
+      status: 'scheduled', scheduled_at: scheduledAt, chess_room_id: null,
+      scheduled_white_time_secs: nextTime,
+      scheduled_black_time_secs: nextTime,
+      scheduled_increment_secs: 5,
+    })
     .eq('id', fixtureId)
-
-  return createFixtureMatch(fixtureId, player2Id, player1Id, nextTime)
 }
 
 // ── GROUP STAGE: assign players into groups and generate round-robin fixtures ──
+// ── Start scheduled fixtures once their kickoff time arrives ────────────────
+// Called every minute from runChessLifecycleJob (chessReminders.ts). Finds
+// every fixture sitting in 'scheduled' whose scheduled_at has passed and
+// actually creates the live chess_room for it — this is the other half of
+// the round-gap change above; resolveRoundOutcome/replayDrawnFixture only
+// *record* the pairing and a future kickoff time, this is what makes the
+// match actually go live at that time.
+export async function startScheduledFixtures() {
+  const { data: due, error } = await supabaseAdmin
+    .from('chess_tournament_fixtures')
+    .select('id, player1_id, player2_id, scheduled_white_time_secs, scheduled_black_time_secs, scheduled_increment_secs')
+    .eq('status', 'scheduled')
+    .lte('scheduled_at', new Date().toISOString())
+
+  if (error) {
+    console.error('[ChessTournament] startScheduledFixtures: failed to fetch due fixtures:', error.message)
+    return
+  }
+  if (!due?.length) return
+
+  for (const f of due) {
+    if (!f.player1_id || !f.player2_id) continue // shouldn't happen for a non-bye scheduled fixture, but be defensive
+    try {
+      await createFixtureMatch(
+        f.id, f.player1_id, f.player2_id,
+        f.scheduled_white_time_secs ?? 600,
+        f.scheduled_black_time_secs ?? f.scheduled_white_time_secs ?? 600,
+        f.scheduled_increment_secs ?? 5
+      )
+    } catch (e: any) {
+      console.error(`[ChessTournament] startScheduledFixtures: failed to start fixture ${f.id}:`, e.message)
+    }
+  }
+}
+
 export async function generateGroupStage(tournamentId: string) {
   const { data: tournament } = await supabaseAdmin
     .from('chess_tournaments')
@@ -379,6 +446,9 @@ export async function generateGroupStage(tournamentId: string) {
   // other player in their group exactly once.
   let bracketPosCounter = 0
   const allFixtures: any[] = []
+  // Same reveal → kickoff gap as knockout Round 1 and every later round —
+  // the group draw is announced now, matches go live after the gap.
+  const scheduledAt = new Date(Date.now() + ROUND_GAP_MINUTES * 60 * 1000).toISOString()
 
   for (let g = 0; g < groups.length; g++) {
     const groupPlayers = groups[g]
@@ -394,7 +464,11 @@ export async function generateGroupStage(tournamentId: string) {
             bracket_position: bracketPosCounter++,
             player1_id: groupPlayers[i].user_id,
             player2_id: groupPlayers[j].user_id,
-            status: 'pending',
+            status: 'scheduled',
+            scheduled_at: scheduledAt,
+            scheduled_white_time_secs: tournament.time_control_secs,
+            scheduled_black_time_secs: tournament.time_control_secs,
+            scheduled_increment_secs: 5,
           })
           .select()
           .single()
@@ -405,12 +479,10 @@ export async function generateGroupStage(tournamentId: string) {
     }
   }
 
-  // Start every group-stage match immediately — all matches in the group
-  // stage can run in parallel, unlike knockout rounds which gate on
-  // each other.
-  for (const f of allFixtures) {
-    await createFixtureMatch(f.id, f.player1_id, f.player2_id, tournament.time_control_secs)
-  }
+  // Matches are announced now (see scheduled_at above) and go live once
+  // startScheduledFixtures picks them up at kickoff — all group-stage
+  // matches can run in parallel, unlike knockout rounds which gate on
+  // each other, so they all share the same kickoff time.
 
   await supabaseAdmin
     .from('chess_tournaments')
@@ -546,6 +618,7 @@ async function checkGroupStageComplete(tournamentId: string) {
 
   const roundName = roundNameForPlayerCount(shuffled.length)
   const nextRoundNumber = 2 // group stage was always round 1
+  const scheduledAt = new Date(Date.now() + ROUND_GAP_MINUTES * 60 * 1000).toISOString()
   const fixtures: any[] = []
 
   for (let i = 0; i < shuffled.length / 2; i++) {
@@ -564,19 +637,17 @@ async function checkGroupStageComplete(tournamentId: string) {
         player2_id: p2 ?? null,
         is_bye: isBye,
         winner_id: isBye ? p1 : null,
-        status: isBye ? 'bye' : 'pending',
+        status: isBye ? 'bye' : 'scheduled',
+        scheduled_at: isBye ? null : scheduledAt,
+        scheduled_white_time_secs: isBye ? null : tournament.time_control_secs,
+        scheduled_black_time_secs: isBye ? null : tournament.time_control_secs,
+        scheduled_increment_secs: isBye ? null : 5,
       })
       .select()
       .single()
 
     if (error) throw error
     fixtures.push(fixture)
-  }
-
-  for (const f of fixtures) {
-    if (f.player1_id && f.player2_id) {
-      await createFixtureMatch(f.id, f.player1_id, f.player2_id, tournament.time_control_secs)
-    }
   }
 
   await supabaseAdmin
