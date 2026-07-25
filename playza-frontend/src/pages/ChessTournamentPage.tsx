@@ -45,75 +45,221 @@ const STATUS_CFG = {
 
 const FIXTURE_ACCENT: Record<string, string> = {
   pending: "#94a3b8",
+  scheduled: "#f59e0b",
   active: "#ef4444",
   completed: "#22c55e",
   bye: "#7c3aed",
 };
 
 // ── Bracket tree ──────────────────────────────────────────────────────────────
+const BRACKET_CARD_H = 84;   // fixed card height so connector math is exact
+const BRACKET_CARD_W = 192;  // matches w-48
+const BRACKET_GAP_Y = 14;    // vertical gap between round-1 cards
+const BRACKET_GAP_X = 40;    // horizontal gap between round columns (connector space)
+
 function BracketTree({ fixtures, userId }: { fixtures: TournamentFixture[]; userId?: string }) {
   const knockout = fixtures.filter(f => !f.group_number);
   const byRound = knockout.reduce<Record<number, TournamentFixture[]>>((acc, f) => {
     (acc[f.round_number] = acc[f.round_number] ?? []).push(f);
     return acc;
   }, {});
-  const rounds = Object.keys(byRound).map(Number).sort((a, b) => a - b);
+  const roundNumbers = Object.keys(byRound).map(Number).sort((a, b) => a - b);
 
-  if (!rounds.length) return (
+  if (!roundNumbers.length) return (
     <div className="text-center py-12 text-foreground/20 text-sm">
       <span className="text-4xl block mb-3">♟</span>
       Bracket generates when the tournament launches
     </div>
   );
 
+  const rounds = roundNumbers.map(r => (byRound[r] ?? []).sort((a, b) => a.bracket_position - b.bracket_position));
+
+  // Vertical center (in px, relative to the shared bracket canvas) of every
+  // match in every round — round 0 spaced evenly, each later round centered
+  // exactly between the pair of matches that feed into it. This is what
+  // makes the connector lines meet the next round's card dead center,
+  // exactly like a real World Cup knockout graphic tapering toward the final.
+  const centers: number[][] = [];
+  rounds.forEach((rf, r) => {
+    centers[r] = rf.map((_, i) => {
+      if (r === 0) return i * (BRACKET_CARD_H + BRACKET_GAP_Y) + BRACKET_CARD_H / 2;
+      const a = centers[r - 1]![i * 2]!;
+      const b = centers[r - 1]![i * 2 + 1];
+      // Round sizes normally halve exactly, but group-stage advancement
+      // (group_count × advance_per_group) isn't guaranteed to be a power of
+      // 2, so an odd round can leave one match unpaired here — it just
+      // carries its own center straight through rather than reading past
+      // the end of the previous round's array.
+      return b !== undefined ? (a + b) / 2 : a;
+    });
+  });
+
+  const canvasHeight = rounds[0]!.length * (BRACKET_CARD_H + BRACKET_GAP_Y) - BRACKET_GAP_Y;
+  const colWidth = BRACKET_CARD_W + BRACKET_GAP_X;
+  const canvasWidth = rounds.length * colWidth - BRACKET_GAP_X;
+
   return (
     <div className="overflow-x-auto pb-6">
-      <div className="flex gap-6 items-start min-w-max px-2 pt-2">
-        {rounds.map((round) => {
-          const rf = (byRound[round] ?? []).sort((a, b) => a.bracket_position - b.bracket_position);
-          return (
-            <div key={round} className="flex flex-col gap-3">
-              <p className="text-[9px] font-black uppercase tracking-widest text-foreground/25 text-center">
-                {rf[0]?.round_name ?? `Round ${round}`}
-              </p>
-              {rf.map(f => {
-                const accent = FIXTURE_ACCENT[f.status] ?? "#94a3b8";
-                const p1 = f.player1?.username ?? (f.player1_id ? "Player" : "TBD");
-                const p2 = f.player2?.username ?? (f.is_bye ? "— Bye —" : "TBD");
-                const p1Won = f.winner_id === f.player1_id;
-                const p2Won = f.winner_id === f.player2_id;
-                const meInvolved = userId && (f.player1_id === userId || f.player2_id === userId);
-                return (
-                  <div key={f.id} className="w-48 rounded-xl overflow-hidden"
-                    style={{ border: `1px solid ${meInvolved ? "#a855f7" : accent}30`, background: meInvolved ? "rgba(124,58,237,0.08)" : "color-mix(in srgb, var(--foreground) 2.5%, transparent)", boxShadow: meInvolved ? "0 0 12px rgba(168,85,247,0.2)" : "none" }}>
-                    <div className="flex items-center justify-between px-2.5 py-1" style={{ background: `${accent}15` }}>
-                      <div className="flex items-center gap-1">
-                        <div className="w-1.5 h-1.5 rounded-full" style={{ background: accent }} />
-                        <span className="text-[8px] font-black uppercase tracking-widest" style={{ color: accent }}>
-                          {f.status === "bye" ? "Bye" : f.status === "active" ? "Live" : f.status === "completed" ? "Final" : "Pending"}
-                        </span>
-                      </div>
-                      {meInvolved && <span className="text-[8px] font-black text-violet-400">YOU</span>}
+      <div className="relative px-2 pt-2" style={{ width: canvasWidth, height: canvasHeight + 28 }}>
+        {/* Connector lines — drawn first so cards sit visually on top */}
+        <svg className="absolute left-2 top-7 pointer-events-none" width={canvasWidth - BRACKET_CARD_W} height={canvasHeight} style={{ overflow: "visible" }}>
+          {rounds.slice(0, -1).map((rf, r) =>
+            rf.map((_, i) => {
+              if (i % 2 !== 0) return null; // draw once per pair
+              const hasPartner = i + 1 < rf.length;
+              const yTop = centers[r]![i]!;
+              const yBot = hasPartner ? centers[r]![i + 1]! : yTop;
+              const yMid = centers[r + 1]![i / 2]!;
+              const xStart = r * colWidth + BRACKET_CARD_W;
+              const xMid = xStart + BRACKET_GAP_X / 2;
+              const xEnd = xStart + colWidth;
+              const stroke = "color-mix(in srgb, var(--foreground) 18%, transparent)";
+              if (!hasPartner) {
+                // Odd leftover match — straight pass-through, no elbow needed
+                return <line key={`${r}-${i}`} x1={xStart} y1={yTop} x2={xEnd} y2={yMid} stroke={stroke} strokeWidth={2} />;
+              }
+              return (
+                <g key={`${r}-${i}`}>
+                  <line x1={xStart} y1={yTop} x2={xMid} y2={yTop} stroke={stroke} strokeWidth={2} />
+                  <line x1={xStart} y1={yBot} x2={xMid} y2={yBot} stroke={stroke} strokeWidth={2} />
+                  <line x1={xMid} y1={yTop} x2={xMid} y2={yBot} stroke={stroke} strokeWidth={2} />
+                  <line x1={xMid} y1={yMid} x2={xEnd} y2={yMid} stroke={stroke} strokeWidth={2} />
+                </g>
+              );
+            })
+          )}
+        </svg>
+
+        {/* Round labels + match cards, absolutely positioned to match the connectors exactly */}
+        {rounds.map((rf, r) => (
+          <div key={r}>
+            <p className="absolute text-[9px] font-black uppercase tracking-widest text-foreground/25 text-center"
+              style={{ left: r * colWidth, top: 0, width: BRACKET_CARD_W }}>
+              {rf[0]?.round_name ?? `Round ${roundNumbers[r]}`}
+            </p>
+            {rf.map((f, i) => {
+              const accent = FIXTURE_ACCENT[f.status] ?? "#94a3b8";
+              const p1 = f.player1?.username ?? (f.player1_id ? "Player" : "TBD");
+              const p2 = f.player2?.username ?? (f.is_bye ? "— Bye —" : "TBD");
+              const p1Won = f.winner_id === f.player1_id;
+              const p2Won = f.winner_id === f.player2_id;
+              const meInvolved = userId && (f.player1_id === userId || f.player2_id === userId);
+              return (
+                <div key={f.id} className="absolute rounded-xl overflow-hidden"
+                  style={{
+                    left: r * colWidth, width: BRACKET_CARD_W, height: BRACKET_CARD_H,
+                    top: 28 + centers[r]![i]! - BRACKET_CARD_H / 2,
+                    border: `1px solid ${meInvolved ? "#a855f7" : accent}30`,
+                    background: meInvolved ? "rgba(124,58,237,0.08)" : "var(--card)",
+                    boxShadow: meInvolved ? "0 0 12px rgba(168,85,247,0.2)" : "none",
+                  }}>
+                  <div className="flex items-center justify-between px-2.5 py-1" style={{ background: `${accent}15` }}>
+                    <div className="flex items-center gap-1">
+                      <div className="w-1.5 h-1.5 rounded-full" style={{ background: accent }} />
+                      <span className="text-[8px] font-black uppercase tracking-widest" style={{ color: accent }}>
+                        {f.status === "bye" ? "Bye" : f.status === "active" ? "Live" : f.status === "scheduled" ? "Scheduled" : f.status === "completed" ? "Final" : "Pending"}
+                      </span>
                     </div>
-                    {[{ name: p1, won: p1Won, id: f.player1_id }, { name: p2, won: p2Won, id: f.player2_id }].map((p, pi) => (
-                      <div key={pi} className={`flex items-center gap-2 px-2.5 py-2 ${pi === 0 ? "border-b border-foreground/[0.06]" : ""}`}
-                        style={{ background: p.won ? "rgba(34,197,94,0.06)" : p.id === userId ? "rgba(124,58,237,0.06)" : "transparent" }}>
-                        <div className="w-5 h-5 rounded-full bg-foreground/10 flex items-center justify-center text-[9px] font-black text-foreground/50 shrink-0">
-                          {p.name[0]?.toUpperCase() ?? "?"}
-                        </div>
-                        <span className={`text-xs font-bold truncate flex-1 ${p.won ? "text-green-400" : p.id === userId ? "text-violet-300" : f.is_bye && pi === 1 ? "text-foreground/15 italic" : "text-foreground/50"}`}>
-                          {p.name}
-                        </span>
-                        {p.won && <span className="text-[8px] text-green-400 shrink-0">✓</span>}
-                      </div>
-                    ))}
+                    {meInvolved && <span className="text-[8px] font-black text-violet-400">YOU</span>}
                   </div>
-                );
-              })}
-            </div>
-          );
-        })}
+                  {[{ name: p1, won: p1Won, id: f.player1_id }, { name: p2, won: p2Won, id: f.player2_id }].map((p, pi) => (
+                    <div key={pi} className={`flex items-center gap-2 px-2.5 py-2 ${pi === 0 ? "border-b border-foreground/[0.06]" : ""}`}
+                      style={{ background: p.won ? "rgba(34,197,94,0.06)" : p.id === userId ? "rgba(124,58,237,0.06)" : "transparent" }}>
+                      <div className="w-5 h-5 rounded-full bg-foreground/10 flex items-center justify-center text-[9px] font-black text-foreground/50 shrink-0">
+                        {p.name[0]?.toUpperCase() ?? "?"}
+                      </div>
+                      <span className={`text-xs font-bold truncate flex-1 ${p.won ? "text-green-400" : p.id === userId ? "text-violet-300" : f.is_bye && pi === 1 ? "text-foreground/15 italic" : "text-foreground/50"}`}>
+                        {p.name}
+                      </span>
+                      {p.won && <span className="text-[8px] text-green-400 shrink-0">✓</span>}
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+          </div>
+        ))}
       </div>
+    </div>
+  );
+}
+
+// ── My Fixtures — this user's full match schedule, World-Cup-team-style:
+// one row per round, opponent, kickoff time (or live/result), win/draw/loss ──
+function MyFixtures({ fixtures, userId }: { fixtures: TournamentFixture[]; userId?: string }) {
+  const mine = fixtures
+    .filter(f => userId && (f.player1_id === userId || f.player2_id === userId))
+    .sort((a, b) => a.round_number - b.round_number);
+
+  if (!userId) return (
+    <div className="text-center py-12 text-foreground/20 text-sm">Sign in to see your fixtures</div>
+  );
+  if (!mine.length) return (
+    <div className="text-center py-12 text-foreground/20 text-sm">
+      <span className="text-4xl block mb-3">🗓️</span>
+      Your matches will appear here once the bracket is drawn
+    </div>
+  );
+
+  const fmtWhen = (iso?: string) => {
+    if (!iso) return null;
+    const d = new Date(iso);
+    const now = new Date();
+    const sameDay = d.toDateString() === now.toDateString();
+    return d.toLocaleString(undefined, sameDay
+      ? { hour: "2-digit", minute: "2-digit" }
+      : { weekday: "short", hour: "2-digit", minute: "2-digit" });
+  };
+
+  return (
+    <div className="space-y-2">
+      {mine.map(f => {
+        const isP1 = f.player1_id === userId;
+        const opponent = f.is_bye ? null : (isP1 ? f.player2?.username : f.player1?.username) ?? "TBD";
+        const iWon = f.winner_id === userId;
+        const oppWon = !!f.winner_id && f.winner_id !== userId;
+        const isDraw = f.status === "completed" && !f.winner_id;
+        const accent = FIXTURE_ACCENT[f.status] ?? "#94a3b8";
+
+        return (
+          <div key={f.id} className="flex items-center gap-3 rounded-xl px-3.5 py-2.5"
+            style={{ background: "color-mix(in srgb, var(--foreground) 3%, transparent)", border: `1px solid ${iWon ? "rgba(34,197,94,0.25)" : oppWon ? "rgba(239,68,68,0.15)" : "color-mix(in srgb, var(--foreground) 7%, transparent)"}` }}>
+            <div className="w-14 shrink-0">
+              <p className="text-[8px] font-black uppercase tracking-widest text-foreground/25 leading-tight">{f.round_name}</p>
+            </div>
+
+            <div className="flex-1 min-w-0">
+              {f.is_bye ? (
+                <p className="text-xs font-bold text-foreground/40 italic">Bye — automatic advance</p>
+              ) : (
+                <p className="text-sm font-bold text-foreground/70 truncate">vs {opponent}</p>
+              )}
+              {f.status === "scheduled" && f.scheduled_at && (
+                <p className="text-[10px] text-foreground/30 font-medium">Kicks off {fmtWhen(f.scheduled_at)}</p>
+              )}
+              {f.status === "active" && <p className="text-[10px] font-black" style={{ color: accent }}>● Live now</p>}
+              {f.status === "pending" && <p className="text-[10px] text-foreground/25">Waiting on earlier rounds</p>}
+            </div>
+
+            <div className="shrink-0">
+              {f.is_bye ? (
+                <span className="text-[9px] font-black px-2 py-1 rounded-full text-green-400" style={{ background: "rgba(34,197,94,0.1)" }}>ADVANCED</span>
+              ) : f.status === "completed" ? (
+                <span className="text-[9px] font-black px-2 py-1 rounded-full" style={{
+                  color: iWon ? "#22c55e" : isDraw ? "#f59e0b" : "#ef4444",
+                  background: iWon ? "rgba(34,197,94,0.1)" : isDraw ? "rgba(245,158,11,0.1)" : "rgba(239,68,68,0.1)",
+                }}>{iWon ? "WON" : isDraw ? "DRAW" : "LOST"}</span>
+              ) : f.status === "active" ? (
+                <span className="text-[9px] font-black px-2 py-1 rounded-full text-white animate-pulse" style={{ background: "linear-gradient(135deg,#dc2626,#ef4444)" }}>PLAY →</span>
+              ) : f.status === "scheduled" ? (
+                <span className="text-[9px] font-black px-2 py-1 rounded-full text-violet-400" style={{ background: "rgba(124,58,237,0.12)" }}>SCHEDULED</span>
+              ) : (
+                <span className="text-[9px] font-black px-2 py-1 rounded-full text-foreground/25" style={{ background: "color-mix(in srgb, var(--foreground) 5%, transparent)" }}>PENDING</span>
+              )}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -190,7 +336,7 @@ function TournamentModal({ t, onClose, onRegister, isRegistering, registered, in
 }) {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [tab, setTab] = useState<"bracket" | "standings">(
+  const [tab, setTab] = useState<"bracket" | "standings" | "fixtures">(
     initialDetailTab === "standings" && t.format === "group_knockout" ? "standings" : "bracket"
   );
   const sc = STATUS_CFG[t.status] ?? STATUS_CFG.registration;
@@ -213,6 +359,18 @@ function TournamentModal({ t, onClose, onRegister, isRegistering, registered, in
   const myActiveFixture = fixtures.find(f =>
     f.status === "active" && (f.player1_id === user?.id || f.player2_id === user?.id)
   );
+
+  // Bypass this whole modal the instant we know the player has a live game —
+  // no "Play Now" click needed, no bracket tab to find it on. Clicking
+  // "Watch/Play Live" on the list card should drop a player with a live
+  // match straight into that match.
+  useEffect(() => {
+    if (myActiveFixture?.chess_room_id) {
+      navigate(`/chess-tournament/${t.id}/match/${myActiveFixture.chess_room_id}`);
+      onClose();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [myActiveFixture?.chess_room_id]);
 
   const { timeLeft: regTimeLeft, expired: regExpired } = useCountdown(t.status === "registration" ? t.registration_end : null);
   const [showRules, setShowRules] = useState(false);
@@ -248,19 +406,24 @@ function TournamentModal({ t, onClose, onRegister, isRegistering, registered, in
           <button onClick={onClose} className="text-foreground/30 hover:text-foreground transition-colors text-xl shrink-0 ml-2">✕</button>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-3 divide-x divide-foreground/[0.05] border-b border-foreground/[0.06] shrink-0">
-          {[
-            { v: t.entry_fee > 0 ? `${t.entry_fee} ZA` : "FREE", l: "Entry Fee" },
-            { v: `${t.prize_pool.toLocaleString()} ZA`, l: "Prize Pool" },
-            { v: `${t.player_count ?? 0}/${t.bracket_size}`, l: "Registered" },
-          ].map((s, i) => (
-            <div key={i} className="px-4 py-3 text-center">
-              <p className="font-black text-foreground text-sm">{s.v}</p>
-              <p className="text-[9px] text-foreground/25 uppercase tracking-wider mt-0.5">{s.l}</p>
-            </div>
-          ))}
-        </div>
+        {/* Stats — only relevant pre-tournament (deciding whether to register).
+            Once live/completed, skip straight to the live match banner and
+            bracket/fixtures tabs below instead of repeating info the player
+            already saw on the list card. */}
+        {(t.status === "registration" || t.status === "lobby") && (
+          <div className="grid grid-cols-3 divide-x divide-foreground/[0.05] border-b border-foreground/[0.06] shrink-0">
+            {[
+              { v: t.entry_fee > 0 ? `${t.entry_fee} ZA` : "FREE", l: "Entry Fee" },
+              { v: `${t.prize_pool.toLocaleString()} ZA`, l: "Prize Pool" },
+              { v: `${t.player_count ?? 0}/${t.bracket_size}`, l: "Registered" },
+            ].map((s, i) => (
+              <div key={i} className="px-4 py-3 text-center">
+                <p className="font-black text-foreground text-sm">{s.v}</p>
+                <p className="text-[9px] text-foreground/25 uppercase tracking-wider mt-0.5">{s.l}</p>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Active match banner — shows only when user has a live game in progress */}
         {myActiveFixture && (
@@ -286,7 +449,7 @@ function TournamentModal({ t, onClose, onRegister, isRegistering, registered, in
         {/* Tabs */}
         {(t.status === "active" || t.status === "completed") && (
           <div className="flex border-b border-foreground/[0.06] mt-3 shrink-0">
-            {[{ id: "bracket" as const, label: "Bracket" }, ...(t.format === "group_knockout" ? [{ id: "standings" as const, label: "Group Standings" }] : [])].map(tb => (
+            {[{ id: "bracket" as const, label: "Bracket" }, { id: "fixtures" as const, label: "My Fixtures" }, ...(t.format === "group_knockout" ? [{ id: "standings" as const, label: "Group Standings" }] : [])].map(tb => (
               <button key={tb.id} onClick={() => setTab(tb.id)}
                 className={`px-5 py-2.5 text-xs font-black uppercase tracking-wider border-b-2 transition-colors ${tab === tb.id ? "text-violet-400 border-violet-500" : "text-foreground/25 border-transparent"}`}>
                 {tb.label}
@@ -327,6 +490,9 @@ function TournamentModal({ t, onClose, onRegister, isRegistering, registered, in
           )}
           {tab === "bracket" && (t.status === "active" || t.status === "completed") && (
             <BracketTree fixtures={fixtures} userId={user?.id} />
+          )}
+          {tab === "fixtures" && (t.status === "active" || t.status === "completed") && (
+            <MyFixtures fixtures={fixtures} userId={user?.id} />
           )}
           {tab === "standings" && <GroupStandings standings={standings} userId={user?.id} />}
         </div>
