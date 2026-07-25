@@ -5,7 +5,7 @@ import { useState, useMemo } from "react";
 import TransactionDetailModal from "@/components/transactions/TransactionDetailModal";
 import type { TransactionUI } from "@/types/types";
 import { useTransactions } from "@/hooks/wallet/useWallet";
-import { format } from "date-fns";
+import { toTransactionUI } from "@/lib/transactionTypes";
 import SEO from "@/components/SEO"
 
 const ITEMS_PER_PAGE = 20;
@@ -29,49 +29,13 @@ const Transactions = () => {
 
   const uiTransactions: TransactionUI[] = useMemo(() => {
     const transactions = data?.transactions || [];
-    return transactions.map((t) => {
-      const isPositive = ["deposit", "winnings", "refund", "win"].includes(t.type);
-
-      const typeLabelMap: Record<string, string> = {
-        deposit: "Deposit",
-        withdrawal: "Withdrawal",
-        game_entry: "Game Stake",
-        winnings: "Match Prize",
-        refund: "Stake Refund",
-        bet: "Game Entry",
-      };
-
-      const statusLabelMap: Record<string, string> = {
-        successful: "Completed",
-        pending: "Pending",
-        failed: "Failed",
-        cancelled: "Cancelled",
-      };
-
-      return {
-        id: `#${t.id.slice(-5).toUpperCase()}`,
-        type: typeLabelMap[t.type] || t.type.charAt(0).toUpperCase() + t.type.slice(1),
-        amount: `${isPositive ? "+" : "-"}ZA${t.amount.toLocaleString()}`,
-        status: statusLabelMap[t.status] || t.status.charAt(0).toUpperCase() + t.status.slice(1),
-        reference: t.reference,
-        date: format(new Date(t.created_at), "MMM dd, yyyy · HH:mm"),
-        // Extra field for filtering
-        typeKey: typeLabelMap[t.type] || t.type
-      };
-    });
+    return transactions.map(toTransactionUI);
   }, [data?.transactions]);
 
   const filteredTransactions = useMemo(() => {
     let filtered = uiTransactions;
     if (activeTab !== "All") {
-      // Map tab names to type labels
-      const tabToType: Record<string, string> = {
-        "Deposits": "Deposit",
-        "Withdrawals": "Withdrawal",
-        "Entries": "Game Stake",
-        "Wins": "Match Prize"
-      };
-      filtered = filtered.filter(txn => txn.type === tabToType[activeTab] || txn.type === activeTab);
+      filtered = filtered.filter(txn => txn.typeKey === activeTab);
     }
     if (searchQuery) {
       filtered = filtered.filter(txn => 

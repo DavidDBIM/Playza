@@ -1,6 +1,6 @@
 import { supabaseAdmin } from '../config/supabase'
 import { Resend } from 'resend'
-import { generateKnockoutRound1, generateGroupStage } from '../modules/chess-tournament/chess-tournament.service'
+import { generateKnockoutRound1, generateGroupStage, startScheduledFixtures } from '../modules/chess-tournament/chess-tournament.service'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -34,11 +34,17 @@ async function sendPushToUser(userId: string, title: string, body: string, url?:
 }
 
 function fmtDate(iso: string) {
-  return new Date(iso).toLocaleString('en-NG', {
+  // hour12 must be explicit — 'en-NG' can default to 24-hour under Node's
+  // ICU data, which is what produced a bare "0:50" with no AM/PM in the
+  // reminder emails. Using UTC (labelled explicitly) instead of silently
+  // assuming every player is in Lagos time, since players can be anywhere —
+  // showing an unlabelled local time led to people reading it as their own
+  // local time and showing up at the wrong actual moment.
+  return new Date(iso).toLocaleString('en-US', {
     weekday: 'long', day: 'numeric', month: 'long',
-    year: 'numeric', hour: '2-digit', minute: '2-digit',
-    timeZone: 'Africa/Lagos',
-  })
+    year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true,
+    timeZone: 'UTC',
+  }) + ' UTC'
 }
 
 function fmtTime(secs: number) {
@@ -208,6 +214,12 @@ function tournamentStartingHtml(username: string, t: any) {
 // ── MAIN CHESS CRON — mirrors quiz lifecycle, runs every minute ───────────────
 export async function runChessLifecycleJob() {
   try {
+    // This starts any scheduled fixture (next round, or a draw-rematch) whose
+    // kickoff time has arrived — needs to run every tick regardless of the
+    // registration/lobby query below, since it applies to already-active
+    // tournaments too.
+    await startScheduledFixtures()
+
     const now = new Date()
 
     const { data: tournaments } = await supabaseAdmin

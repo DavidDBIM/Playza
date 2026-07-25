@@ -427,6 +427,15 @@ export async function createBotRoom(userId: string, stakeValue: number) {
       p_user_id: userId,
       p_amount: stake,
     });
+    const { data: w } = await supabaseAdmin.from('wallets').select('balance').eq('user_id', userId).single();
+    await supabaseAdmin.from("transactions").insert({
+      user_id: userId,
+      type: "game_entry",
+      amount: stake,
+      status: "successful",
+      reference: `PLZ-CHESS-BOT-${code}`,
+      meta: { post_balance: w?.balance || 0, opponent: "bot" },
+    });
   }
 
   const initialBoard = {

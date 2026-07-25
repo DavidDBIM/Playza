@@ -5,7 +5,7 @@ import TransactionDetailModal from "@/components/transactions/TransactionDetailM
 import TransactionItem from "@/components/transactions/TransactionItem";
 import type { TransactionUI } from "@/types/types";
 import { useTransactions } from "@/hooks/wallet/useWallet";
-import { format } from "date-fns";
+import { toTransactionUI } from "@/lib/transactionTypes";
 
 const RecentTransactions = () => {
   const [selectedTxn, setSelectedTxn] = useState<TransactionUI | null>(null);
@@ -13,41 +13,7 @@ const RecentTransactions = () => {
   const { data, isLoading: loading } = useTransactions(1, 4);
   const transactions = data?.transactions || [];
 
-  const uiTransactions: TransactionUI[] = transactions.map((t) => {
-    // Determine sign based on backend type
-    // In our backend: 'game_entry' is a deduction, 'winnings' is a credit
-    const isPositive = ["deposit", "winnings", "refund", "win"].includes(t.type);
-
-    const typeLabelMap: Record<string, string> = {
-      deposit: "Deposit",
-      withdrawal: "Withdrawal",
-      game_entry: "Game Stake",
-      winnings: "Match Prize",
-      refund: "Stake Refund",
-      bet: "Game Entry",
-    };
-
-    const statusLabelMap: Record<string, string> = {
-      successful: "Completed",
-      pending: "Pending",
-      failed: "Failed",
-      cancelled: "Cancelled",
-    };
-
-    return {
-      id: `#${t.id.slice(-5).toUpperCase()}`,
-      type:
-        typeLabelMap[t.type] ||
-        t.type.charAt(0).toUpperCase() + t.type.slice(1),
-      amount: `${isPositive ? "+" : "-"}ZA${t.amount.toLocaleString()}`,
-      status:
-        statusLabelMap[t.status] ||
-        t.status.charAt(0).toUpperCase() + t.status.slice(1),
-      reference: t.reference,
-      meta: t.meta,
-      date: format(new Date(t.created_at), "MMM dd, yyyy · HH:mm"),
-    };
-  });
+  const uiTransactions: TransactionUI[] = transactions.map(toTransactionUI);
 
   const handleOpen = (txn: TransactionUI) => {
     setSelectedTxn(txn);

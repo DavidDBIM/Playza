@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/auth";
@@ -206,9 +206,14 @@ function MyFixtures({ fixtures, userId }: { fixtures: TournamentFixture[]; userI
     const d = new Date(iso);
     const now = new Date();
     const sameDay = d.toDateString() === now.toDateString();
+    // hour12 is explicit — without it, some locales/devices default to a
+    // bare 24-hour clock with no AM/PM marker at all, which is exactly what
+    // made kickoff times unreadable. Timezone is left to the browser's own
+    // local zone (no timeZone override), so each player sees kickoff in
+    // their own local time rather than someone else's.
     return d.toLocaleString(undefined, sameDay
-      ? { hour: "2-digit", minute: "2-digit" }
-      : { weekday: "short", hour: "2-digit", minute: "2-digit" });
+      ? { hour: "numeric", minute: "2-digit", hour12: true }
+      : { weekday: "short", hour: "numeric", minute: "2-digit", hour12: true });
   };
 
   return (
@@ -732,10 +737,19 @@ export default function ChessTournamentPage() {
   // Direct link to a specific tournament (e.g. /chess-tournament/:id from a
   // results button or email) — auto-open it and switch to the right tab
   // once the list has loaded, instead of just showing the generic list.
+  // Guarded by a ref so this only fires once per tournamentId: `tournaments`
+  // refetches every 15s (a new array reference each time), and without the
+  // guard this effect re-ran on every single refetch — forcibly resetting
+  // whatever tab the person had manually clicked to back to the URL's
+  // tournament, and even reopening the modal after they'd closed it. That's
+  // exactly what looked like "the tournament filter isn't working."
+  const handledTournamentIdRef = useRef<string | null>(null);
   useEffect(() => {
     if (!tournamentId || !tournaments.length) return;
+    if (handledTournamentIdRef.current === tournamentId) return;
     const t = tournaments.find(x => x.id === tournamentId);
     if (!t) return;
+    handledTournamentIdRef.current = tournamentId;
     setSelected(t);
     setTab(
       t.status === "active" ? "active"
