@@ -66,8 +66,7 @@ async function getChessPlayers(tournamentId: string) {
 
 // ── Email Templates ───────────────────────────────────────────────────────────
 
-function registrationClosedHtml(username: string, t: any) {
-  const drawTime = new Date(new Date(t.registration_end).getTime() + 30 * 60 * 1000)
+function registrationClosedHtml(username: string, t: any, drawTime: Date, drawDelayMinutes: number) {
   return `
   <div style="font-family:sans-serif;max-width:480px;margin:auto;background:#0e0e1a;color:#fff;border-radius:16px;overflow:hidden;">
     <div style="background:linear-gradient(135deg,#7c3aed,#a855f7);padding:32px 24px;text-align:center;">
@@ -91,7 +90,7 @@ function registrationClosedHtml(username: string, t: any) {
       </div>
       <div style="background:rgba(124,58,237,0.12);border:1px solid rgba(124,58,237,0.3);border-radius:12px;padding:14px;margin-bottom:16px;">
         <p style="margin:0;font-size:13px;font-weight:800;color:#c084fc;">
-          🎲 The draw happens automatically in 30 minutes!
+          🎲 The draw happens automatically${drawDelayMinutes > 0 ? ` in ${drawDelayMinutes} minutes!` : ' right now!'}
         </p>
         <p style="margin:6px 0 0;font-size:12px;color:#a855f7;opacity:0.8;">
           Watch the fixtures being drawn live on Playza at ${fmtDate(drawTime.toISOString())}
@@ -232,6 +231,8 @@ export async function runChessLifecycleJob() {
 
     for (const t of tournaments) {
 
+      try {
+
       // ── 1. Close registration → send closure email, schedule draw ──────────
       // Normally triggered by registration_end passing. But registration_end
       // is optional on the admin create form — if an admin only sets a
@@ -255,13 +256,15 @@ export async function runChessLifecycleJob() {
         // already late to start — draw immediately rather than adding
         // another 30 minutes of delay on top.
         const drawDelayMs = t.registration_end ? 30 * 60 * 1000 : 0
+        const drawDelayMinutes = Math.round(drawDelayMs / 60000)
+        const drawTime = new Date(now.getTime() + drawDelayMs)
 
         await supabaseAdmin
           .from('chess_tournaments')
           .update({
             status: 'lobby',
             closure_email_sent: true,
-            draw_scheduled_at: new Date(now.getTime() + drawDelayMs).toISOString(),
+            draw_scheduled_at: drawTime.toISOString(),
           })
           .eq('id', t.id)
 
@@ -271,12 +274,14 @@ export async function runChessLifecycleJob() {
           await sendEmail(
             p.users.email,
             `♟ Registration closed — ${t.title}`,
-            registrationClosedHtml(p.users.username, t)
+            registrationClosedHtml(p.users.username, t, drawTime, drawDelayMinutes)
           )
           await sendPushToUser(
             p.user_id,
             `♟ Registration closed — ${t.title}`,
-            `Your spot is confirmed! The draw happens in 30 minutes — watch live on Playza.`,
+            drawDelayMinutes > 0
+              ? `Your spot is confirmed! The draw happens in ${drawDelayMinutes} minutes — watch live on Playza.`
+              : `Your spot is confirmed! The draw is happening right now — watch live on Playza.`,
             `/tournaments`
           )
         }
@@ -367,6 +372,15 @@ export async function runChessLifecycleJob() {
             )
           }
         }
+      }
+
+      } catch (err) {
+        // Isolated per-tournament: one broken tournament (bad data, a
+        // transient DB error, etc.) is logged and skipped, instead of
+        // silently aborting the whole tick and leaving every other
+        // tournament in this batch — including perfectly healthy ones —
+        // stuck without their draw/reminders running.
+        console.error(`[ChessCron] Failed processing tournament "${t.title}" (${t.id}):`, err)
       }
     }
 
