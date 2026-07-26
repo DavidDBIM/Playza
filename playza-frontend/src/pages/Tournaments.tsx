@@ -662,13 +662,37 @@ function ChessTCard({ ct }: { ct: any }) {
 
   return (
     <>
-      <div onClick={() => setShowDetail(true)}
+      <div onClick={() => {
+          // Live tournaments skip the summary modal entirely — straight to
+          // the actual game. That in-between "CHESS TOURNAMENT — LIVE VIEW
+          // BRACKET" card was an unnecessary extra click for something
+          // that's already live; the modal still makes sense pre-tournament
+          // (registration info, rules) so it stays for that case.
+          if (isLive) {
+            if (activeFixture?.chess_room_id) {
+              navigate(`/chess-tournament/${ct.id}/match/${activeFixture.chess_room_id}`);
+            } else {
+              navigate(`/chess-tournament/${ct.id}`);
+            }
+            return;
+          }
+          setShowDetail(true);
+        }}
         style={{ cursor: "pointer", background: "var(--card)", border: `1px solid ${sc.color}30`, borderRadius: 16, overflow: "hidden", display: "flex", flexDirection: "column", height: "100%", boxShadow: "0 2px 8px rgba(0,0,0,0.06)", transition: "transform 0.15s" }}
         onMouseEnter={e => (e.currentTarget.style.transform = "translateY(-2px)")}
         onMouseLeave={e => (e.currentTarget.style.transform = "")}>
         <div style={{ height: 3, background: sc.color, width: "100%" }} />
         <div style={{ height: 64, display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden", background: `linear-gradient(135deg,${sc.color}12,${sc.color}04)` }}>
-          <span style={{ fontSize: 30 }}>{ct.status === "completed" ? "🏆" : "♟"}</span>
+          {/* Checkerboard corner motif — grounded in the game itself, same
+              treatment as the main tournament page, instead of a bare emoji */}
+          <div style={{ position: "absolute", right: -14, top: -14, width: 72, height: 72, transform: "rotate(12deg)", display: "grid", gridTemplateColumns: "repeat(4,1fr)", gridTemplateRows: "repeat(4,1fr)", overflow: "hidden", borderRadius: 6, opacity: 0.12, pointerEvents: "none" }}>
+            {Array.from({ length: 16 }).map((_, i) => {
+              const row = Math.floor(i / 4);
+              const isLightSq = (row + i) % 2 === 0;
+              return <div key={i} style={{ background: isLightSq ? "var(--foreground)" : "transparent" }} />;
+            })}
+          </div>
+          <span style={{ fontSize: 30, position: "relative" }}>{ct.status === "completed" ? "🏆" : "♟"}</span>
           <div style={{ position: "absolute", top: 8, right: 10, display: "flex", alignItems: "center", gap: 4, background: sc.bg, border: `1px solid ${sc.border}`, borderRadius: 20, padding: "3px 8px" }}>
             {sc.live && <span style={{ width: 5, height: 5, borderRadius: "50%", background: sc.color, display: "block" }} />}
             <span style={{ fontSize: 8, fontWeight: 700, color: sc.color, letterSpacing: "0.1em", textTransform: "uppercase" }}>{sc.short}</span>
@@ -683,17 +707,38 @@ function ChessTCard({ ct }: { ct: any }) {
             </p>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 5 }}>
-            {[
-              { val: ct.prize_pool > 0 ? ct.prize_pool.toLocaleString() : "TBD", lbl: "ZA Prize" },
-              { val: `${ct.player_count ?? 0}/${ct.bracket_size}`, lbl: "Players" },
-              { val: ct.entry_fee > 0 ? `${ct.entry_fee} ZA` : "Free", lbl: "Entry" },
-            ].map((s, i) => (
-              <div key={i} style={{ background: "var(--muted)", borderRadius: 8, padding: "5px 6px", textAlign: "center" }}>
-                <p style={{ fontSize: "clamp(10px,2.5vw,12px)", fontWeight: 700, color: "var(--foreground)", margin: 0, lineHeight: 1, wordBreak: "break-all" }}>{s.val}</p>
-                <p style={{ fontSize: 8, color: "var(--muted-foreground)", margin: "2px 0 0", textTransform: "uppercase", letterSpacing: "0.05em" }}>{s.lbl}</p>
+          {/* Prize pool hero card — coin badge + gradient number, matching
+              the main tournament page instead of a plain 3-column stat grid */}
+          <div style={{ position: "relative", borderRadius: 10, padding: "8px 10px", overflow: "hidden", background: "linear-gradient(135deg, rgba(251,191,36,0.14), rgba(245,158,11,0.05))", border: "1px solid rgba(251,191,36,0.25)" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 7, minWidth: 0 }}>
+                <div style={{ width: 26, height: 26, borderRadius: 7, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, background: "linear-gradient(135deg,#fbbf24,#f59e0b)", boxShadow: "0 2px 6px rgba(245,158,11,0.35)" }}>
+                  <Trophy size={13} color="#fff" strokeWidth={2.25} />
+                </div>
+                <div style={{ minWidth: 0 }}>
+                  <p style={{ fontSize: 7.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--muted-foreground)", margin: "0 0 1px" }}>Prize Pool</p>
+                  <p style={{ fontSize: 13, fontWeight: 900, lineHeight: 1, margin: 0, background: "linear-gradient(135deg,#fbbf24,#f59e0b)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {ct.prize_pool > 0 ? `${ct.prize_pool.toLocaleString()} ZA` : "TBD"}
+                  </p>
+                </div>
               </div>
-            ))}
+              <div style={{ textAlign: "right", flexShrink: 0, paddingLeft: 8, borderLeft: "1px solid rgba(251,191,36,0.25)" }}>
+                <p style={{ fontSize: 7.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--muted-foreground)", margin: "0 0 1px" }}>Entry</p>
+                <p style={{ fontSize: 11, fontWeight: 900, color: "var(--foreground)", opacity: 0.7, margin: 0 }}>{ct.entry_fee > 0 ? `${ct.entry_fee} ZA` : "FREE"}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Players + time control — icon chips instead of a plain number */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 5 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 5, borderRadius: 8, padding: "5px 7px", background: "var(--muted)" }}>
+              <Users size={11} color={sc.color} strokeWidth={2.25} style={{ flexShrink: 0 }} />
+              <span style={{ fontSize: 9.5, fontWeight: 700, color: "var(--foreground)", opacity: 0.75, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{ct.player_count ?? 0}/{ct.bracket_size} players</span>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 5, borderRadius: 8, padding: "5px 7px", background: "var(--muted)" }}>
+              <Clock size={11} color={sc.color} strokeWidth={2.25} style={{ flexShrink: 0 }} />
+              <span style={{ fontSize: 9.5, fontWeight: 700, color: "var(--foreground)", opacity: 0.75, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{fmtTime(ct.time_control_secs)}{ct.increment_secs > 0 ? ` +${ct.increment_secs}s` : ""}</span>
+            </div>
           </div>
 
           {ct.status !== "completed" && ct.status !== "cancelled" && (() => {
@@ -748,7 +793,7 @@ function ChessTCard({ ct }: { ct: any }) {
                   ⚔️ Play Now
                 </button>
               ) : (
-                <button onClick={e => { e.stopPropagation(); setShowDetail(true); }}
+                <button onClick={e => { e.stopPropagation(); navigate(`/chess-tournament/${ct.id}`); }}
                   style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 5, padding: "9px", borderRadius: 9, fontSize: 10, fontWeight: 700, textTransform: "uppercase", background: sc.color, color: "#fff", border: "none", cursor: "pointer" }}>
                   👁 Watch Live
                 </button>
