@@ -44,7 +44,7 @@ router.get('/tournaments/:id/players', requireAdmin, async (req: AuthRequest, re
   try {
     const { data, error } = await supabaseAdmin
       .from('chess_tournament_players')
-      .select('user_id, username, avatar_url, status, final_rank, prize_won, group_number, seed, created_at')
+      .select('user_id, username, avatar_url, status, final_rank, prize_won, group_number, created_at')
       .eq('tournament_id', req.params.id)
       .order('created_at', { ascending: true })
     if (error) throw error

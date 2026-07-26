@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Link, useNavigate } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getQuizTournamentsApi, joinQuizTournamentApi, getLobbyPlayersApi, type QuizTournament, type PrizeTier } from "@/api/quiz.api";
@@ -964,7 +965,7 @@ function ChessLobbyModal({ tournamentId, title, scheduledAt, playerCount, maxPla
     return () => { document.removeEventListener("keydown", handler); document.body.style.overflow = ""; };
   }, [onClose]);
   function handleSend() { if (!msg.trim()) return; sendMessage(msg.trim()); setMsg(""); }
-  return (
+  return createPortal(
     <div onClick={e => { if (e.target === e.currentTarget) onClose(); }}
       style={{ position: "fixed", inset: 0, zIndex: 1000, background: "rgba(0,0,0,0.8)", backdropFilter: "blur(8px)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
       <div style={{ width: "100%", maxWidth: 540, maxHeight: "95dvh", background: "var(--card)", borderRadius: "20px 20px 0 0", overflow: "hidden", display: "flex", flexDirection: "column" }}>
@@ -1048,7 +1049,8 @@ function ChessLobbyModal({ tournamentId, title, scheduledAt, playerCount, maxPla
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

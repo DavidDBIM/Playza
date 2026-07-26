@@ -151,7 +151,7 @@ router.get('/tournaments/:id/my-status', requireAuth, async (req: AuthRequest, r
     const userId = req.user!.id
     const { data: player } = await supabaseAdmin
       .from('chess_tournament_players')
-      .select('status, final_rank, prize_won, group_number, seed')
+      .select('status, final_rank, prize_won, group_number')
       .eq('tournament_id', req.params.id)
       .eq('user_id', userId)
       .maybeSingle()
