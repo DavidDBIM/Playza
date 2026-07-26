@@ -164,7 +164,13 @@ router.post('/tournaments/:id/launch', requireAdmin, async (req: AuthRequest, re
       .eq('id', req.params.id)
       .single()
     if (!tournament) return res.status(404).json({ success: false, message: 'Tournament not found' })
-    if (tournament.status !== 'registration') {
+    // 'lobby' = registration already closed, waiting on the automatic draw
+    // (which runs 30 min later via cron). If that cron tick is ever missed
+    // or delayed, this was previously a dead end — status !== 'registration'
+    // always rejected it, even though the admin UI told people to "launch it
+    // manually below" for exactly this stuck state. Now both states can be
+    // launched from here.
+    if (tournament.status !== 'registration' && tournament.status !== 'lobby') {
       return res.status(400).json({ success: false, message: 'Tournament already launched' })
     }
 

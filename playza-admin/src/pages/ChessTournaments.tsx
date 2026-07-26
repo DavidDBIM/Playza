@@ -696,18 +696,12 @@ function TournamentDetail({ t, onClose, onLaunch, onCancel, onEdit, onDelete, is
                 <X size={12} /> Cancel Tournament
               </button>
             )}
-            {t.status === "registration" && (
+            {(t.status === "registration" || t.status === "lobby") && (
               <button onClick={onLaunch} disabled={isLaunching || (t.player_count ?? 0) < 2}
                 className="flex items-center gap-1.5 px-5 py-2 rounded-xl text-xs font-black text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:scale-105"
                 style={{ background: "linear-gradient(135deg,#7c3aed,#a855f7)" }}>
-                <Play size={12} /> {isLaunching ? "Launching…" : "Launch Tournament"}
+                <Play size={12} /> {isLaunching ? (t.status === "lobby" ? "Running draw…" : "Launching…") : (t.status === "lobby" ? "Run Draw Now" : "Launch Tournament")}
               </button>
-            )}
-            {t.status === "lobby" && (
-              <div className="flex items-center gap-2 text-xs text-amber-400 font-bold">
-                <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                In lobby — waiting to launch
-              </div>
             )}
             {t.status === "active" && (
               <div className="flex items-center gap-3 flex-wrap">
