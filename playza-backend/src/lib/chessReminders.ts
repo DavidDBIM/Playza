@@ -109,6 +109,9 @@ function drawCompleteHtml(username: string, t: any, fixture: any) {
     ? fixture?.player2?.username
     : fixture?.player1?.username
   const isWhite = fixture?.player1_id !== null && fixture?.player1?.username === username
+  // Truncate long names so the two side-by-side name cells never wrap
+  // awkwardly against each other on narrow mobile email clients.
+  const shortName = (n?: string) => !n ? 'TBD' : (n.length > 12 ? `${n.slice(0, 11)}…` : n)
   return `
   <div style="font-family:sans-serif;max-width:480px;margin:auto;background:#0e0e1a;color:#fff;border-radius:16px;overflow:hidden;">
     <div style="background:linear-gradient(135deg,#1e3a5f,#2563eb);padding:32px 24px;text-align:center;">
@@ -121,26 +124,34 @@ function drawCompleteHtml(username: string, t: any, fixture: any) {
         Hey <strong>${username}</strong>,<br><br>
         The bracket for <strong>${t.title}</strong> has been drawn. Here's your first match:
       </p>
-      <div style="background:rgba(37,99,235,0.1);border:1px solid rgba(37,99,235,0.3);border-radius:12px;padding:16px;margin-bottom:16px;text-align:center;">
-        <p style="margin:0 0 8px;font-size:11px;opacity:0.5;text-transform:uppercase;letter-spacing:0.1em;">${fixture?.round_name ?? 'Round 1'}</p>
-        <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin:12px 0;">
-          <div style="text-align:center;">
-            <div style="width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;margin:0 auto 6px;">${username[0]?.toUpperCase()}</div>
-            <p style="margin:0;font-weight:800;font-size:13px;color:#a855f7;">You</p>
-            <p style="margin:2px 0 0;font-size:10px;opacity:0.5;">${isWhite ? '♔ White' : '♚ Black'}</p>
-          </div>
-          <div style="font-size:20px;font-weight:900;opacity:0.4;">VS</div>
-          <div style="text-align:center;">
-            <div style="width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;margin:0 auto 6px;">${opponentName?.[0]?.toUpperCase() ?? '?'}</div>
-            <p style="margin:0;font-weight:800;font-size:13px;">${opponentName ?? 'TBD'}</p>
-            <p style="margin:2px 0 0;font-size:10px;opacity:0.5;">${isWhite ? '♚ Black' : '♔ White'}</p>
-          </div>
-        </div>
-        <p style="margin:8px 0 0;font-size:12px;color:#60a5fa;">⏱️ ${fmtTime(t.time_control_secs)} per side</p>
+      <div style="background:rgba(37,99,235,0.1);border:1px solid rgba(37,99,235,0.3);border-radius:12px;padding:18px 12px;margin-bottom:16px;">
+        <p style="margin:0 0 14px;font-size:11px;opacity:0.5;text-transform:uppercase;letter-spacing:0.1em;text-align:center;">${fixture?.round_name ?? 'Round 1'}</p>
+        <!-- Table layout (not flexbox) — this renders identically across
+             every email client, including Outlook, which doesn't support
+             flexbox at all and was collapsing "VS" against the opponent's
+             name instead of keeping them apart. -->
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+          <tr>
+            <td width="42%" style="text-align:center;vertical-align:top;">
+              <div style="width:48px;height:48px;border-radius:50%;background:rgba(168,85,247,0.2);display:inline-block;line-height:48px;font-size:20px;font-weight:900;color:#c084fc;margin-bottom:6px;">${username[0]?.toUpperCase() ?? '?'}</div>
+              <p style="margin:0;font-weight:800;font-size:13px;color:#c084fc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">You</p>
+              <p style="margin:2px 0 0;font-size:10px;opacity:0.5;">${isWhite ? '♔ White' : '♚ Black'}</p>
+            </td>
+            <td width="16%" style="text-align:center;vertical-align:middle;">
+              <span style="font-size:16px;font-weight:900;opacity:0.35;letter-spacing:0.05em;">VS</span>
+            </td>
+            <td width="42%" style="text-align:center;vertical-align:top;">
+              <div style="width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,0.1);display:inline-block;line-height:48px;font-size:20px;font-weight:900;margin-bottom:6px;">${opponentName?.[0]?.toUpperCase() ?? '?'}</div>
+              <p style="margin:0;font-weight:800;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${shortName(opponentName)}</p>
+              <p style="margin:2px 0 0;font-size:10px;opacity:0.5;">${isWhite ? '♚ Black' : '♔ White'}</p>
+            </td>
+          </tr>
+        </table>
+        <p style="margin:14px 0 0;font-size:12px;color:#60a5fa;text-align:center;">⏱️ ${fmtTime(t.time_control_secs)} per side</p>
       </div>
-      ${t.scheduled_at ? `
+      ${fixture?.scheduled_at ? `
       <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:12px;margin-bottom:16px;">
-        <p style="margin:0;font-size:12px;color:#93c5fd;">📅 Tournament starts: <strong>${fmtDate(t.scheduled_at)}</strong></p>
+        <p style="margin:0;font-size:12px;color:#93c5fd;">📅 Your first match is on <strong>${fmtDate(fixture.scheduled_at)}</strong></p>
       </div>` : ''}
       <a href="https://playza.games/tournaments" style="display:block;text-align:center;background:linear-gradient(135deg,#1e3a5f,#2563eb);color:#fff;text-decoration:none;padding:14px;border-radius:12px;font-weight:900;font-size:14px;">
         View Full Bracket →

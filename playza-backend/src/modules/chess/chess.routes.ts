@@ -1,5 +1,5 @@
 import { Router, Response } from 'express'
-import { requireAuth, AuthRequest } from '../../middleware/auth'
+import { requireAuth, optionalAuth, AuthRequest } from '../../middleware/auth'
 import { createChessRoom, joinChessRoom, getRoom, makeMove, resignGame, claimTimeout, createBotRoom, findQuickMatch, listWaitingRooms, cancelChessRoom } from './chess.service'
 
 const router = Router()
@@ -54,9 +54,9 @@ router.post('/join', requireAuth, async (req: AuthRequest, res: Response) => {
   }
 })
 
-router.get('/room/:roomId', requireAuth, async (req: AuthRequest, res: Response) => {
+router.get('/room/:roomId', optionalAuth, async (req: AuthRequest, res: Response) => {
   try {
-    const data = await getRoom(req.params.roomId, req.user!.id)
+    const data = await getRoom(req.params.roomId, req.user?.id ?? null)
     res.json({ success: true, data })
   } catch (err: any) {
     res.status(400).json({ success: false, message: err.message })

@@ -503,7 +503,12 @@ const ChessArena = ({ room, user, backTo = "/h2h", backLabel = "H2H ZONE", rende
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [room.board_state?.last_move, room.current_turn]);
 
-  const boardOrientation = room.host_id === user?.id ? "white" : "black";
+  // Spectators (anyone who isn't the host or guest — e.g. an anonymous
+  // visitor watching a live tournament match) default to White's
+  // perspective, the conventional neutral view, rather than always
+  // flipping to Black just because they don't match host_id.
+  const isParticipant = room.host_id === user?.id || room.guest_id === user?.id;
+  const boardOrientation = room.guest_id === user?.id ? "black" : "white";
 
   // Board coordinates rendered ourselves (see below) instead of relying on
   // react-chessboard's built-in showBoardNotation, which was inconsistently
@@ -517,6 +522,13 @@ const ChessArena = ({ room, user, backTo = "/h2h", backLabel = "H2H ZONE", rende
         ? room.guest?.username || "GUEST"
         : (room.board_state?.bot?.username || "COMPUTER")
       : room.host?.username || "HOST";
+  // For spectators, oppUsername above doesn't mean anything (it's relative
+  // to "you", and a spectator isn't a participant) — this instead names
+  // whoever's turn it actually is, for the "Live — X's move" banner.
+  const currentMoverUsername =
+    room.current_turn === room.host_id
+      ? room.host?.username || "White"
+      : room.guest?.username || "Black";
 
   const attemptMove = useCallback(
     (sourceSquare: string, targetSquare: string, promotion: string = "q"): boolean => {
@@ -1066,7 +1078,7 @@ const ChessArena = ({ room, user, backTo = "/h2h", backLabel = "H2H ZONE", rende
               <Zap size={12} className="shrink-0 animate-bounce" />
               <span>Your turn — make your move</span>
             </>
-          ) : (
+          ) : isParticipant ? (
             <>
               <span className="flex gap-0.5 shrink-0">
                 <span className="w-1 h-1 rounded-full bg-slate-500 animate-bounce [animation-delay:0ms]" />
@@ -1075,6 +1087,13 @@ const ChessArena = ({ room, user, backTo = "/h2h", backLabel = "H2H ZONE", rende
               </span>
               <span className="truncate">
                 Waiting for {oppUsername || "opponent"}…
+              </span>
+            </>
+          ) : (
+            <>
+              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse shrink-0" />
+              <span className="truncate">
+                Live — {currentMoverUsername}'s move
               </span>
             </>
           )}
@@ -1534,15 +1553,24 @@ const ChessArena = ({ room, user, backTo = "/h2h", backLabel = "H2H ZONE", rende
           </div>
         </div>
 
-        {/* Resign */}
-        <button
-          id="resign-btn"
-          onClick={handleResign}
-          disabled={isResigning || room.status !== "active"}
-          className="w-full py-4 rounded-xl border-2 border-red-500/20 bg-transparent text-red-500 text-[10px] font-black tracking-widest uppercase cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed hover:bg-red-500/5 active:translate-y-1 transition-all"
-        >
-          {isResigning ? "Resigning…" : "⚑ Resign"}
-        </button>
+        {/* Resign — only shown to the two actual players. Spectators get a
+            simple "watching" indicator instead of a button that would just
+            error out for them (the backend already rejects a non-participant
+            resign, but hiding it here is a much cleaner experience). */}
+        {isParticipant ? (
+          <button
+            id="resign-btn"
+            onClick={handleResign}
+            disabled={isResigning || room.status !== "active"}
+            className="w-full py-4 rounded-xl border-2 border-red-500/20 bg-transparent text-red-500 text-[10px] font-black tracking-widest uppercase cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed hover:bg-red-500/5 active:translate-y-1 transition-all"
+          >
+            {isResigning ? "Resigning…" : "⚑ Resign"}
+          </button>
+        ) : (
+          <div className="w-full py-4 rounded-xl border-2 border-foreground/10 bg-transparent text-foreground/40 text-[10px] font-black tracking-widest uppercase text-center flex items-center justify-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-foreground/30" /> Spectating
+          </div>
+        )}
       </div>
     </div>
   );

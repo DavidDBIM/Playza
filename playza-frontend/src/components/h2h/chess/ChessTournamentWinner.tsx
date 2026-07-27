@@ -85,6 +85,26 @@ export default function ChessTournamentWinner({
   const accent = isWinner ? "#22c55e" : isDraw ? "#f59e0b" : "#ef4444";
   const accentBg = isWinner ? "rgba(34,197,94,0.12)" : isDraw ? "rgba(245,158,11,0.12)" : "rgba(239,68,68,0.12)";
 
+  const nextOpponentName = nextFixture
+    ? nextFixture.player1_id === user?.id
+      ? nextFixture.player2?.username ?? "TBD"
+      : nextFixture.player1?.username ?? "TBD"
+    : null;
+
+  const fmtNextMatchTime = (iso?: string) => {
+    if (!iso) return null;
+    const d = new Date(iso);
+    const now = new Date();
+    const sameDay = d.toDateString() === now.toDateString();
+    // hour12 explicit — some locales default to a bare 24-hour clock with no
+    // AM/PM otherwise. No timeZone override, so this shows the player's own
+    // device-local time.
+    return d.toLocaleString(undefined, sameDay
+      ? { hour: "numeric", minute: "2-digit", hour12: true }
+      : { weekday: "short", hour: "numeric", minute: "2-digit", hour12: true });
+  };
+  const nextMatchTime = fmtNextMatchTime(nextFixture?.scheduled_at);
+
   return (
     <div className="w-full max-w-lg rounded-3xl overflow-hidden border border-white/10 bg-white dark:bg-slate-950 text-center">
       {/* Header */}
@@ -147,8 +167,31 @@ export default function ChessTournamentWinner({
         </div>
       </div>
 
+      {/* Next match — opponent + kickoff time shown directly here, instead
+          of only being discoverable after tapping through to the bracket */}
+      {nextFixture && (
+        <div className="px-6 pt-5 border-t border-black/5 dark:border-white/10">
+          <div className="rounded-2xl p-4 flex items-center gap-3" style={{ background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.2)" }}>
+            <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg,#7c3aed,#a855f7)" }}>
+              <Swords className="w-5 h-5 text-white" />
+            </div>
+            <div className="text-left min-w-0">
+              <p className="text-[9px] font-black uppercase tracking-widest text-violet-500">
+                {nextFixture.round_name ?? "Next Match"}
+              </p>
+              <p className="text-sm font-black text-slate-900 dark:text-white truncate">
+                Your next match is against {nextOpponentName}
+              </p>
+              <p className="text-xs font-bold text-slate-500 mt-0.5">
+                {nextMatchTime ? `Kicks off ${nextMatchTime}` : nextFixture.chess_room_id ? "Ready now" : "Time TBD"}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Actions */}
-      <div className="px-6 pb-6 pt-2 flex flex-col gap-3">
+      <div className="px-6 pb-6 pt-5 flex flex-col gap-3">
         <button
           onClick={() => nextFixture?.chess_room_id && navigate(nextMatchPath)}
           disabled={!nextFixture?.chess_room_id}

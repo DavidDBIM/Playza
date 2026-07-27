@@ -53,7 +53,7 @@ const FIXTURE_ACCENT: Record<string, string> = {
 
 // ── Bracket tree ──────────────────────────────────────────────────────────────
 const BRACKET_CARD_H = 84;   // fixed card height so connector math is exact
-const BRACKET_CARD_W = 192;  // matches w-48
+const BRACKET_CARD_W = 208;  // widened slightly for more breathing room around names
 const BRACKET_GAP_Y = 14;    // vertical gap between round-1 cards
 const BRACKET_GAP_X = 40;    // horizontal gap between round columns (connector space)
 
@@ -162,18 +162,26 @@ function BracketTree({ fixtures, userId }: { fixtures: TournamentFixture[]; user
                     </div>
                     {meInvolved && <span className="text-[8px] font-black text-violet-400">YOU</span>}
                   </div>
-                  {[{ name: p1, won: p1Won, id: f.player1_id }, { name: p2, won: p2Won, id: f.player2_id }].map((p, pi) => (
-                    <div key={pi} className={`flex items-center gap-2 px-2.5 py-2 ${pi === 0 ? "border-b border-foreground/[0.06]" : ""}`}
-                      style={{ background: p.won ? "rgba(34,197,94,0.06)" : p.id === userId ? "rgba(124,58,237,0.06)" : "transparent" }}>
-                      <div className="w-5 h-5 rounded-full bg-foreground/10 flex items-center justify-center text-[9px] font-black text-foreground/50 shrink-0">
+                  {[{ name: p1, won: p1Won, id: f.player1_id }, { name: p2, won: p2Won, id: f.player2_id }].map((p, pi) => {
+                    const isMe = p.id === userId;
+                    return (
+                    <div key={pi} className={`flex items-center gap-2 px-2.5 py-2 min-w-0 ${pi === 0 ? "border-b border-foreground/[0.06]" : ""}`}
+                      style={{ background: p.won ? "rgba(34,197,94,0.06)" : isMe ? "rgba(124,58,237,0.06)" : "transparent" }}>
+                      <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black shrink-0"
+                        style={{
+                          background: isMe ? "linear-gradient(135deg,#7c3aed,#a855f7)" : p.won ? "rgba(34,197,94,0.18)" : "color-mix(in srgb, var(--foreground) 10%, transparent)",
+                          color: isMe ? "#fff" : p.won ? "#4ade80" : "var(--foreground)",
+                          opacity: isMe || p.won ? 1 : 0.5,
+                          boxShadow: isMe ? "0 0 0 2px rgba(168,85,247,0.35)" : "none",
+                        }}>
                         {p.name[0]?.toUpperCase() ?? "?"}
                       </div>
-                      <span className={`text-xs font-bold truncate flex-1 ${p.won ? "text-green-400" : p.id === userId ? "text-violet-300" : f.is_bye && pi === 1 ? "text-foreground/15 italic" : "text-foreground/50"}`}>
+                      <span title={p.name} className={`text-xs font-bold truncate min-w-0 flex-1 ${p.won ? "text-green-400" : isMe ? "text-violet-300" : f.is_bye && pi === 1 ? "text-foreground/15 italic" : "text-foreground/50"}`}>
                         {p.name}
                       </span>
-                      {p.won && <span className="text-[8px] text-green-400 shrink-0">✓</span>}
+                      {p.won && <span className="text-[10px] shrink-0">🏆</span>}
                     </div>
-                  ))}
+                  );})}
                 </div>
               );
             })}

@@ -52,6 +52,32 @@ export async function requireAuth(req: AuthRequest, res: Response, next: NextFun
   next();
 }
 
+// Identifies the user if a valid token is present, but — unlike requireAuth —
+// never rejects the request when one isn't. Used for routes that should work
+// for anonymous visitors too (e.g. spectating a live tournament match)
+// while still personalizing the response (board orientation, "YOU" labels,
+// move permissions) for whoever's actually signed in.
+export async function optionalAuth(req: AuthRequest, res: Response, next: NextFunction) {
+  let token: string | undefined = req.cookies?.playza_token || req.cookies?.admin_token;
+  let user: any = null;
+
+  if (token) {
+    const { data, error } = await supabaseAdmin.auth.getUser(token);
+    if (!error && data.user) user = data.user;
+  }
+
+  if (!user) {
+    const header = req.headers.authorization;
+    if (header && header.startsWith("Bearer ")) {
+      const { data, error } = await supabaseAdmin.auth.getUser(header.split(" ")[1]);
+      if (!error && data.user) user = data.user;
+    }
+  }
+
+  if (user) req.user = { id: user.id, email: user.email! };
+  next();
+}
+
 export async function requireAdmin(req: AuthRequest, res: Response, next: NextFunction) {
   let token: string | undefined = req.cookies?.admin_token || req.cookies?.playza_token;
   let user: any = null;

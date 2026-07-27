@@ -342,6 +342,28 @@ function toDatetimeLocal(iso?: string): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+// Converts a <input type="datetime-local"> value (e.g. "2026-01-15T09:00",
+// with NO timezone marker) into a real UTC ISO string.
+//
+// This is the fix for admin-set times silently shifting by an hour: a
+// datetime-local string was previously sent to the backend as-is. Since it
+// has no timezone info, "09:00" is ambiguous — it only means "9am" in
+// whichever timezone eventually parses it. If the admin's browser is in
+// Lagos (UTC+1) but the backend server runs in UTC, `new Date("...09:00")`
+// on the server reads it as 9am UTC — which is 10am back in Lagos once
+// re-displayed. Constructing the Date from its individual components here
+// (which the JS Date constructor always interprets as *this browser's*
+// local time) and converting to ISO ourselves removes that ambiguity
+// entirely — the backend just gets an unambiguous UTC instant, regardless
+// of what timezone the server process happens to run in.
+function fromDatetimeLocal(local: string): string | undefined {
+  if (!local) return undefined;
+  const [datePart, timePart] = local.split("T");
+  const [year, month, day] = datePart.split("-").map(Number);
+  const [hour, minute] = (timePart ?? "00:00").split(":").map(Number);
+  return new Date(year, month - 1, day, hour, minute).toISOString();
+}
+
 function toFormState(t: ChessTournament): FormState {
   return {
     title: t.title,
@@ -399,10 +421,15 @@ function TournamentForm({ initial, onSave, onCancel, editId, lockStructural }: {
   const STRUCTURAL_KEYS: (keyof FormState)[] = ["format", "bracket_size", "group_count", "advance_per_group", "time_control_secs", "increment_secs", "entry_fee"];
 
   function handleSave() {
-    if (!lockStructural) return onSave(editId ? { id: editId, ...form } : form);
+    const converted = {
+      ...form,
+      registration_end: fromDatetimeLocal(form.registration_end) ?? "",
+      scheduled_at: fromDatetimeLocal(form.scheduled_at) ?? "",
+    };
+    if (!lockStructural) return onSave(editId ? { id: editId, ...converted } : converted);
     // Bracket already exists — strip structural fields so the backend's
     // registration-only guard doesn't reject the whole edit.
-    const safeForm = { ...form };
+    const safeForm = { ...converted };
     for (const k of STRUCTURAL_KEYS) delete (safeForm as any)[k];
     onSave(editId ? { id: editId, ...safeForm } : safeForm);
   }

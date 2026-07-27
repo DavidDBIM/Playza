@@ -480,7 +480,7 @@ export async function createBotRoom(userId: string, stakeValue: number) {
   };
 }
 
-export async function getRoom(roomId: string, userId: string) {
+export async function getRoom(roomId: string, userId: string | null) {
   const { data: room, error } = await supabaseAdmin
     .from("chess_rooms")
     .select(
@@ -495,8 +495,19 @@ export async function getRoom(roomId: string, userId: string) {
 
   if (error) throw error;
   if (!room) throw new Error("Room not found");
-  if (room.host_id !== userId && room.guest_id !== userId)
-    throw new Error("Unauthorized access");
+
+  const isParticipant = room.host_id === userId || room.guest_id === userId;
+  if (!isParticipant) {
+    // Not a participant — only allow this for tournament matches (public by
+    // nature, like watching any real tournament), never for private H2H
+    // rooms, which have real money staked between two specific people.
+    const { data: fixture } = await supabaseAdmin
+      .from("chess_tournament_fixtures")
+      .select("id")
+      .eq("chess_room_id", roomId)
+      .maybeSingle();
+    if (!fixture) throw new Error("Unauthorized access");
+  }
 
   return room;
 }
