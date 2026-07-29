@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/auth";
@@ -133,7 +134,8 @@ function BracketTree({ fixtures, userId }: { fixtures: TournamentFixture[]; user
         {/* Round labels + match cards, absolutely positioned to match the connectors exactly */}
         {rounds.map((rf, r) => (
           <div key={r}>
-            <p className="absolute text-[9px] font-black uppercase tracking-widest text-foreground/25 text-center"
+            <p title={rf[0]?.round_name ?? `Round ${roundNumbers[r]}`}
+              className="absolute text-[9px] font-black uppercase tracking-widest text-foreground/25 text-center truncate px-1"
               style={{ left: r * colWidth, top: 0, width: BRACKET_CARD_W }}>
               {rf[0]?.round_name ?? `Round ${roundNumbers[r]}`}
             </p>
@@ -197,7 +199,16 @@ function BracketTree({ fixtures, userId }: { fixtures: TournamentFixture[]; user
 function MyFixtures({ fixtures, userId }: { fixtures: TournamentFixture[]; userId?: string }) {
   const mine = fixtures
     .filter(f => userId && (f.player1_id === userId || f.player2_id === userId))
-    .sort((a, b) => a.round_number - b.round_number);
+    .sort((a, b) => {
+      // Not-yet-decided matches (active/scheduled/pending) always sort
+      // above completed/bye ones — that's "what do I need to do next."
+      const aDone = a.status === "completed" || a.status === "bye";
+      const bDone = b.status === "completed" || b.status === "bye";
+      if (aDone !== bDone) return aDone ? 1 : -1;
+      // Within the upcoming group: soonest round first.
+      // Within the completed group: most recently played first.
+      return aDone ? b.round_number - a.round_number : a.round_number - b.round_number;
+    });
 
   if (!userId) return (
     <div className="text-center py-12 text-foreground/20 text-sm">Sign in to see your fixtures</div>
@@ -388,8 +399,8 @@ function TournamentModal({ t, onClose, onRegister, isRegistering, registered, in
   const { timeLeft: regTimeLeft, expired: regExpired } = useCountdown(t.status === "registration" ? t.registration_end : null);
   const [showRules, setShowRules] = useState(false);
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
+  return createPortal(
+    <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-4"
       style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(16px)" }} onClick={onClose}>
       <div className="w-full sm:max-w-2xl max-h-[90vh] flex flex-col rounded-t-3xl sm:rounded-3xl overflow-hidden"
         style={{ background: "var(--card)", border: "1px solid rgba(124,58,237,0.2)" }}
@@ -542,7 +553,8 @@ function TournamentModal({ t, onClose, onRegister, isRegistering, registered, in
       </div>
 
       {showRules && <ChessRulesModal t={t} onClose={() => setShowRules(false)} />}
-    </div>
+    </div>,
+    document.body
   );
 }
 

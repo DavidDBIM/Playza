@@ -597,6 +597,7 @@ function ChessTCard({ ct }: { ct: any }) {
   const [showLobby, setShowLobby] = useState(false);
   const [registered, setRegistered] = useState(!!ct.user_registered);
   const [activeFixture, setActiveFixture] = useState<any>(null);
+  const { timeLeft: regTimeLeft } = useCountdown(ct.status === "registration" ? (ct.registration_end ?? null) : null);
 
   // Fetch per-user status — picks up registration from previous sessions
   // and surfaces any active fixture link if tournament is live
@@ -740,6 +741,17 @@ function ChessTCard({ ct }: { ct: any }) {
               <span style={{ fontSize: 9.5, fontWeight: 700, color: "var(--foreground)", opacity: 0.75, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{fmtTime(ct.time_control_secs)}{ct.increment_secs > 0 ? ` +${ct.increment_secs}s` : ""}</span>
             </div>
           </div>
+
+          {/* Registration-closing countdown — was missing entirely on chess
+              cards even though the quiz card already had it. */}
+          {ct.status === "registration" && regTimeLeft && ct.registration_end && (
+            <div style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 8, padding: "6px 10px" }}>
+              <p style={{ fontSize: 8, fontWeight: 700, color: "rgba(239,68,68,0.7)", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 3px" }}>⏳ Registration closes in</p>
+              <p style={{ fontSize: 12, fontWeight: 800, color: "#ef4444", margin: 0 }}>
+                {regTimeLeft.d > 0 ? `${regTimeLeft.d}d ` : ""}{String(regTimeLeft.h).padStart(2, "0")}:{String(regTimeLeft.m).padStart(2, "0")}:{String(regTimeLeft.s).padStart(2, "0")}
+              </p>
+            </div>
+          )}
 
           {ct.status !== "completed" && ct.status !== "cancelled" && (() => {
             const pct = fill;
@@ -1160,8 +1172,10 @@ const Tournaments = () => {
     }
     return 0;
   });
-  const totalPlayers = quizTournaments.reduce((s, t) => s + t.player_count, 0);
-  const totalPrize = quizTournaments.reduce((s, t) => s + t.prize_pool, 0);
+  const totalPlayers = quizTournaments.reduce((s, t) => s + t.player_count, 0)
+    + (chessTournaments as any[]).reduce((s, t) => s + (t.player_count ?? 0), 0);
+  const totalPrize = quizTournaments.reduce((s, t) => s + t.prize_pool, 0)
+    + (chessTournaments as any[]).reduce((s, t) => s + (t.prize_pool ?? 0), 0);
   const liveCount = quizTournaments.filter(t => t.status === "active").length + (chessTournaments as any[]).filter((t: any) => t.status === "active").length;
   function handleRegistered(id: string) { queryClient.setQueryData<QuizTournament[]>(["quiz-tournaments-public"], old => (old ?? []).map(t => t.id === id ? { ...t, player_count: t.player_count + 1, user_registered: true } : t)); }
   // ── Sponsor slides ────────────────────────────────────────────────────────
@@ -1238,7 +1252,7 @@ const Tournaments = () => {
                   },
                   {
                     icon: <Zap size={20} style={{ color: "#fbbf24" }} />,
-                    val: String(quizTournaments.length),
+                    val: String(quizTournaments.length + (chessTournaments as any[]).length),
                     lbl: "Tournaments Played",
                     accent: "#f59e0b",
                     glow: "rgba(245,158,11,0.3)",

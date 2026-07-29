@@ -33,6 +33,36 @@ const ROUND_NAMES: Record<number, string> = {
 // (chessReminders.ts) actually have something to fire on; before this change
 // nothing ever stayed in 'scheduled' long enough for them to trigger.
 const ROUND_GAP_MINUTES = 20
+// Gap between each internal round-robin round within a group stage — long
+// enough for a game at this tournament's time control to realistically
+// finish before a player's next group match kicks off.
+const GROUP_ROUND_GAP_MINUTES = 45
+
+// Circle-method round-robin scheduler: splits a group's pairings into
+// internal "rounds" where every player appears in at most one match per
+// round. This is what makes staggering kickoff times per player possible —
+// without it, every match in the group would need to share one timestamp,
+// which is what caused every one of a player's group matches to show the
+// exact same "kicks off" time (a player can only play one game at a time).
+function scheduleGroupRoundRobin<T>(players: T[]): [T, T][][] {
+  const list: (T | null)[] = [...players]
+  if (list.length % 2 !== 0) list.push(null) // bye slot for odd-sized groups
+  const n = list.length
+  const rounds: [T, T][][] = []
+
+  for (let round = 0; round < n - 1; round++) {
+    const pairs: [T, T][] = []
+    for (let i = 0; i < n / 2; i++) {
+      const p1 = list[i]
+      const p2 = list[n - 1 - i]
+      if (p1 !== null && p2 !== null) pairs.push([p1, p2])
+    }
+    rounds.push(pairs)
+    // Rotate everyone except the fixed first slot
+    list.splice(1, 0, list.pop() as T | null)
+  }
+  return rounds
+}
 
 function roundNameForPlayerCount(playersRemainingBeforeRound: number): string {
   return ROUND_NAMES[playersRemainingBeforeRound] ?? `Round of ${playersRemainingBeforeRound}`
@@ -443,27 +473,36 @@ export async function generateGroupStage(tournamentId: string) {
   }
 
   // Round-robin fixtures within each group — every player plays every
-  // other player in their group exactly once.
+  // other player in their group exactly once, scheduled via the circle
+  // method so no single player has two matches at the same kickoff time.
   let bracketPosCounter = 0
   const allFixtures: any[] = []
   // Same reveal → kickoff gap as knockout Round 1 and every later round —
-  // the group draw is announced now, matches go live after the gap.
-  const scheduledAt = new Date(Date.now() + ROUND_GAP_MINUTES * 60 * 1000).toISOString()
+  // the group draw is announced now, the first internal round kicks off
+  // after this gap, and each subsequent internal round is staggered
+  // further out by GROUP_ROUND_GAP_MINUTES.
+  const firstKickoff = Date.now() + ROUND_GAP_MINUTES * 60 * 1000
 
   for (let g = 0; g < groups.length; g++) {
     const groupPlayers = groups[g]
-    for (let i = 0; i < groupPlayers.length; i++) {
-      for (let j = i + 1; j < groupPlayers.length; j++) {
+    const roundRobinRounds = scheduleGroupRoundRobin(groupPlayers)
+    let matchNumberInGroup = 0
+
+    for (let internalRound = 0; internalRound < roundRobinRounds.length; internalRound++) {
+      const scheduledAt = new Date(firstKickoff + internalRound * GROUP_ROUND_GAP_MINUTES * 60 * 1000).toISOString()
+
+      for (const [p1, p2] of roundRobinRounds[internalRound]) {
+        matchNumberInGroup++
         const { data: fixture, error } = await supabaseAdmin
           .from('chess_tournament_fixtures')
           .insert({
             tournament_id: tournamentId,
             round_number: 1,
-            round_name: `Group ${String.fromCharCode(65 + g)} — Match ${allFixtures.filter(f => f.group_number === g + 1).length + 1}`,
+            round_name: `Group ${String.fromCharCode(65 + g)} — Match ${matchNumberInGroup}`,
             group_number: g + 1,
             bracket_position: bracketPosCounter++,
-            player1_id: groupPlayers[i].user_id,
-            player2_id: groupPlayers[j].user_id,
+            player1_id: p1.user_id,
+            player2_id: p2.user_id,
             status: 'scheduled',
             scheduled_at: scheduledAt,
             scheduled_white_time_secs: tournament.time_control_secs,
@@ -479,10 +518,11 @@ export async function generateGroupStage(tournamentId: string) {
     }
   }
 
-  // Matches are announced now (see scheduled_at above) and go live once
-  // startScheduledFixtures picks them up at kickoff — all group-stage
-  // matches can run in parallel, unlike knockout rounds which gate on
-  // each other, so they all share the same kickoff time.
+  // Matches are announced now (see firstKickoff above) and go live once
+  // startScheduledFixtures picks them up at each internal round's kickoff.
+  // Different players' matches within the same internal round can run in
+  // parallel — but a single player's own matches are now staggered across
+  // internal rounds instead of all sharing one timestamp.
 
   await supabaseAdmin
     .from('chess_tournaments')

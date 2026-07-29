@@ -5,12 +5,50 @@ import { generateKnockoutRound1, generateGroupStage, startScheduledFixtures } fr
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-async function sendEmail(to: string, subject: string, html: string) {
+async function sendEmail(to: string, subject: string, html: string, text?: string) {
   try {
-    await resend.emails.send({ from: 'Playza <noreply@playza.games>', to, subject, html })
+    await resend.emails.send({
+      from: 'Playza Tournaments <tournaments@playza.games>',
+      to, subject, html,
+      // A plain-text part alongside the HTML makes this read as a genuine
+      // transactional message to spam/promotions classifiers — HTML-only
+      // sends are more associated with bulk/marketing mail.
+      text: text ?? html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(),
+    })
   } catch (err) {
     console.error('[ChessCron] Email failed:', err)
   }
+}
+
+// Shared shell for every chess tournament email — deliberately plain and
+// transactional-looking (white background, a single thin colored accent
+// bar, no gradients, no big emoji hero banners, small solid-color button)
+// instead of the marketing-style design used previously. Gmail's Promotions
+// classifier weighs visual style heavily; this reads much closer to a
+// receipt or a GitHub/Stripe-style notification than a promotional email.
+function transactionalShell(opts: { accentColor: string; preheader: string; body: string; ctaLabel?: string; ctaUrl?: string }) {
+  const { accentColor, preheader, body, ctaLabel, ctaUrl } = opts
+  return `
+  <div style="font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;max-width:520px;margin:auto;background:#ffffff;color:#1a1a1a;">
+    <!-- Preheader: hidden preview text shown in the inbox list, before the subject reads as marketing copy -->
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0;">${preheader}</div>
+    <div style="border-top:3px solid ${accentColor};padding:20px 24px 4px;">
+      <p style="margin:0;font-size:13px;font-weight:700;color:#555;">Playza Tournaments</p>
+    </div>
+    <div style="padding:8px 24px 24px;">
+      ${body}
+      ${ctaLabel && ctaUrl ? `
+      <p style="margin:20px 0 0;">
+        <a href="${ctaUrl}" style="display:inline-block;background:${accentColor};color:#ffffff;text-decoration:none;padding:10px 20px;border-radius:6px;font-weight:600;font-size:14px;">${ctaLabel}</a>
+      </p>` : ''}
+    </div>
+    <div style="padding:14px 24px;border-top:1px solid #eee;">
+      <p style="margin:0;font-size:11px;color:#999;">
+        Playza Games · This is a tournament notification for a match you're registered in.
+        <a href="https://playza.games/profile" style="color:#999;">Manage notification preferences</a>
+      </p>
+    </div>
+  </div>`
 }
 
 async function sendPushToUser(userId: string, title: string, body: string, url?: string) {
@@ -67,41 +105,28 @@ async function getChessPlayers(tournamentId: string) {
 // ── Email Templates ───────────────────────────────────────────────────────────
 
 function registrationClosedHtml(username: string, t: any, drawTime: Date, drawDelayMinutes: number) {
-  return `
-  <div style="font-family:sans-serif;max-width:480px;margin:auto;background:#0e0e1a;color:#fff;border-radius:16px;overflow:hidden;">
-    <div style="background:linear-gradient(135deg,#7c3aed,#a855f7);padding:32px 24px;text-align:center;">
-      <div style="font-size:48px;margin-bottom:8px;">♟</div>
-      <h1 style="margin:0;font-size:22px;font-weight:900;">Registration Closed</h1>
-      <p style="margin:8px 0 0;opacity:0.8;font-size:13px;">Your spot is secured!</p>
-    </div>
-    <div style="padding:24px;">
-      <p style="font-size:15px;line-height:1.6;margin:0 0 16px;">
-        Hey <strong>${username}</strong>,<br><br>
-        Registration for <strong>${t.title}</strong> is now closed.
-        Your spot is confirmed — prepare your opening moves!
-      </p>
-      <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:16px;margin-bottom:16px;">
-        <p style="margin:0 0 8px;font-size:12px;opacity:0.5;text-transform:uppercase;letter-spacing:0.1em;">Tournament Details</p>
-        <p style="margin:6px 0;font-weight:700;">♟ ${t.title}</p>
-        <p style="margin:6px 0;font-weight:700;">📐 Format: ${t.format === 'group_knockout' ? 'Group Stage → Knockout' : 'Single Elimination'}</p>
-        <p style="margin:6px 0;font-weight:700;">⏱️ Time Control: ${fmtTime(t.time_control_secs)}</p>
-        ${t.prize_pool > 0 ? `<p style="margin:6px 0;font-weight:700;">💰 Prize Pool: ${t.prize_pool.toLocaleString()} ZA</p>` : ''}
-        ${t.entry_fee > 0 ? `<p style="margin:6px 0;font-weight:700;">⚡ Entry Fee Paid: ${t.entry_fee} ZA</p>` : '<p style="margin:6px 0;font-weight:700;color:#4ade80;">🎁 Free Entry</p>'}
-      </div>
-      <div style="background:rgba(124,58,237,0.12);border:1px solid rgba(124,58,237,0.3);border-radius:12px;padding:14px;margin-bottom:16px;">
-        <p style="margin:0;font-size:13px;font-weight:800;color:#c084fc;">
-          🎲 The draw happens automatically${drawDelayMinutes > 0 ? ` in ${drawDelayMinutes} minutes!` : ' right now!'}
-        </p>
-        <p style="margin:6px 0 0;font-size:12px;color:#a855f7;opacity:0.8;">
-          Watch the fixtures being drawn live on Playza at ${fmtDate(drawTime.toISOString())}
-        </p>
-      </div>
-      <a href="https://playza.games/tournaments" style="display:block;text-align:center;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;text-decoration:none;padding:14px;border-radius:12px;font-weight:900;font-size:14px;">
-        Watch the Draw Live →
-      </a>
-    </div>
-    <div style="padding:16px 24px;text-align:center;opacity:0.4;font-size:11px;">Playza Games · You registered for this chess tournament</div>
-  </div>`
+  const body = `
+    <p style="font-size:15px;line-height:1.6;margin:0 0 16px;">Hi ${username},</p>
+    <p style="font-size:15px;line-height:1.6;margin:0 0 16px;">
+      Registration for <strong>${t.title}</strong> is now closed. Your spot is confirmed.
+    </p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-bottom:16px;">
+      <tr><td style="padding:6px 0;color:#555;font-size:13px;width:140px;">Tournament</td><td style="padding:6px 0;font-size:13px;font-weight:600;">${t.title}</td></tr>
+      <tr><td style="padding:6px 0;color:#555;font-size:13px;">Format</td><td style="padding:6px 0;font-size:13px;font-weight:600;">${t.format === 'group_knockout' ? 'Group Stage → Knockout' : 'Single Elimination'}</td></tr>
+      <tr><td style="padding:6px 0;color:#555;font-size:13px;">Time control</td><td style="padding:6px 0;font-size:13px;font-weight:600;">${fmtTime(t.time_control_secs)}</td></tr>
+      ${t.prize_pool > 0 ? `<tr><td style="padding:6px 0;color:#555;font-size:13px;">Prize pool</td><td style="padding:6px 0;font-size:13px;font-weight:600;">${t.prize_pool.toLocaleString()} ZA</td></tr>` : ''}
+      ${t.entry_fee > 0 ? `<tr><td style="padding:6px 0;color:#555;font-size:13px;">Entry fee paid</td><td style="padding:6px 0;font-size:13px;font-weight:600;">${t.entry_fee} ZA</td></tr>` : ''}
+    </table>
+    <p style="font-size:14px;line-height:1.6;margin:0 0 4px;">
+      The bracket draw happens automatically${drawDelayMinutes > 0 ? ` in ${drawDelayMinutes} minutes` : ' now'}, on <strong>${fmtDate(drawTime.toISOString())}</strong>.
+    </p>`
+  return transactionalShell({
+    accentColor: '#7c3aed',
+    preheader: `Registration for ${t.title} is closed — the draw happens ${drawDelayMinutes > 0 ? `in ${drawDelayMinutes} minutes` : 'now'}.`,
+    body,
+    ctaLabel: 'View tournament',
+    ctaUrl: 'https://playza.games/tournaments',
+  })
 }
 
 function drawCompleteHtml(username: string, t: any, fixture: any) {
@@ -109,116 +134,79 @@ function drawCompleteHtml(username: string, t: any, fixture: any) {
     ? fixture?.player2?.username
     : fixture?.player1?.username
   const isWhite = fixture?.player1_id !== null && fixture?.player1?.username === username
-  // Truncate long names so the two side-by-side name cells never wrap
-  // awkwardly against each other on narrow mobile email clients.
-  const shortName = (n?: string) => !n ? 'TBD' : (n.length > 12 ? `${n.slice(0, 11)}…` : n)
-  return `
-  <div style="font-family:sans-serif;max-width:480px;margin:auto;background:#0e0e1a;color:#fff;border-radius:16px;overflow:hidden;">
-    <div style="background:linear-gradient(135deg,#1e3a5f,#2563eb);padding:32px 24px;text-align:center;">
-      <div style="font-size:48px;margin-bottom:8px;">🎲</div>
-      <h1 style="margin:0;font-size:22px;font-weight:900;">The Draw is Done!</h1>
-      <p style="margin:8px 0 0;opacity:0.8;font-size:13px;">${t.title} fixtures are set</p>
-    </div>
-    <div style="padding:24px;">
-      <p style="font-size:15px;line-height:1.6;margin:0 0 16px;">
-        Hey <strong>${username}</strong>,<br><br>
-        The bracket for <strong>${t.title}</strong> has been drawn. Here's your first match:
-      </p>
-      <div style="background:rgba(37,99,235,0.1);border:1px solid rgba(37,99,235,0.3);border-radius:12px;padding:18px 12px;margin-bottom:16px;">
-        <p style="margin:0 0 14px;font-size:11px;opacity:0.5;text-transform:uppercase;letter-spacing:0.1em;text-align:center;">${fixture?.round_name ?? 'Round 1'}</p>
-        <!-- Table layout (not flexbox) — this renders identically across
-             every email client, including Outlook, which doesn't support
-             flexbox at all and was collapsing "VS" against the opponent's
-             name instead of keeping them apart. -->
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
-          <tr>
-            <td width="42%" style="text-align:center;vertical-align:top;">
-              <div style="width:48px;height:48px;border-radius:50%;background:rgba(168,85,247,0.2);display:inline-block;line-height:48px;font-size:20px;font-weight:900;color:#c084fc;margin-bottom:6px;">${username[0]?.toUpperCase() ?? '?'}</div>
-              <p style="margin:0;font-weight:800;font-size:13px;color:#c084fc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">You</p>
-              <p style="margin:2px 0 0;font-size:10px;opacity:0.5;">${isWhite ? '♔ White' : '♚ Black'}</p>
-            </td>
-            <td width="16%" style="text-align:center;vertical-align:middle;">
-              <span style="font-size:16px;font-weight:900;opacity:0.35;letter-spacing:0.05em;">VS</span>
-            </td>
-            <td width="42%" style="text-align:center;vertical-align:top;">
-              <div style="width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,0.1);display:inline-block;line-height:48px;font-size:20px;font-weight:900;margin-bottom:6px;">${opponentName?.[0]?.toUpperCase() ?? '?'}</div>
-              <p style="margin:0;font-weight:800;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${shortName(opponentName)}</p>
-              <p style="margin:2px 0 0;font-size:10px;opacity:0.5;">${isWhite ? '♚ Black' : '♔ White'}</p>
-            </td>
-          </tr>
-        </table>
-        <p style="margin:14px 0 0;font-size:12px;color:#60a5fa;text-align:center;">⏱️ ${fmtTime(t.time_control_secs)} per side</p>
-      </div>
-      ${fixture?.scheduled_at ? `
-      <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:12px;margin-bottom:16px;">
-        <p style="margin:0;font-size:12px;color:#93c5fd;">📅 Your first match is on <strong>${fmtDate(fixture.scheduled_at)}</strong></p>
-      </div>` : ''}
-      <a href="https://playza.games/tournaments" style="display:block;text-align:center;background:linear-gradient(135deg,#1e3a5f,#2563eb);color:#fff;text-decoration:none;padding:14px;border-radius:12px;font-weight:900;font-size:14px;">
-        View Full Bracket →
-      </a>
-    </div>
-    <div style="padding:16px 24px;text-align:center;opacity:0.4;font-size:11px;">Playza Games · Chess Tournament</div>
-  </div>`
+  const body = `
+    <p style="font-size:15px;line-height:1.6;margin:0 0 16px;">Hi ${username},</p>
+    <p style="font-size:15px;line-height:1.6;margin:0 0 16px;">
+      The bracket for <strong>${t.title}</strong> has been drawn. Here's your first match:
+    </p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border:1px solid #e5e5e5;border-radius:8px;">
+      <tr>
+        <td style="padding:12px 16px;font-size:12px;color:#555;">${fixture?.round_name ?? 'Round 1'}</td>
+      </tr>
+      <tr>
+        <td style="padding:0 16px 14px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+            <tr>
+              <td width="45%" style="font-size:14px;font-weight:700;">${username} <span style="font-weight:400;color:#888;">(${isWhite ? 'White' : 'Black'})</span></td>
+              <td width="10%" style="text-align:center;font-size:12px;color:#999;">vs</td>
+              <td width="45%" style="font-size:14px;font-weight:700;text-align:right;">${opponentName ?? 'TBD'} <span style="font-weight:400;color:#888;">(${isWhite ? 'Black' : 'White'})</span></td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+    <p style="font-size:13px;color:#555;margin:14px 0 0;">Time control: ${fmtTime(t.time_control_secs)} per side</p>
+    ${fixture?.scheduled_at ? `<p style="font-size:14px;margin:8px 0 0;">Your first match is on <strong>${fmtDate(fixture.scheduled_at)}</strong>.</p>` : ''}`
+  return transactionalShell({
+    accentColor: '#2563eb',
+    preheader: `Your first match in ${t.title} is against ${opponentName ?? 'your opponent'}.`,
+    body,
+    ctaLabel: 'View full bracket',
+    ctaUrl: 'https://playza.games/tournaments',
+  })
 }
 
 function matchReminderHtml(username: string, t: any, fixture: any, minutesLeft: number) {
   const opponentName = fixture?.player1?.username === username
     ? fixture?.player2?.username
     : fixture?.player1?.username
-  const urgencyColor = minutesLeft <= 5 ? '#ef4444' : minutesLeft <= 30 ? '#f97316' : '#7c3aed'
-  const urgencyEmoji = minutesLeft <= 5 ? '🚨' : minutesLeft <= 30 ? '⚡' : '⏰'
-  return `
-  <div style="font-family:sans-serif;max-width:480px;margin:auto;background:#0e0e1a;color:#fff;border-radius:16px;overflow:hidden;">
-    <div style="background:linear-gradient(135deg,${urgencyColor},${urgencyColor}cc);padding:32px 24px;text-align:center;">
-      <div style="font-size:48px;margin-bottom:8px;">${urgencyEmoji}</div>
-      <h1 style="margin:0;font-size:22px;font-weight:900;">
-        ${minutesLeft <= 5 ? 'Your Match Is Starting!' : `${minutesLeft} Minutes to Your Match!`}
-      </h1>
-      <p style="margin:8px 0 0;opacity:0.8;font-size:13px;">${fixture?.round_name ?? 'Match'} — ${t.title}</p>
-    </div>
-    <div style="padding:24px;">
-      <p style="font-size:15px;line-height:1.6;margin:0 0 16px;">
-        Hey <strong>${username}</strong>,<br><br>
-        Your chess match ${minutesLeft <= 5 ? 'is starting <strong>right now</strong>' : `starts in <strong>${minutesLeft} minutes</strong>`}!
-        ${minutesLeft <= 5 ? 'Open the app immediately and make your first move.' : 'Get ready and open the app.'}
-      </p>
-      <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:14px;margin-bottom:16px;text-align:center;">
-        <p style="margin:0 0 4px;font-size:11px;opacity:0.5;">Your opponent</p>
-        <p style="margin:0;font-size:18px;font-weight:900;">${opponentName ?? 'TBD'}</p>
-        <p style="margin:4px 0 0;font-size:11px;color:#a855f7;">⏱️ ${fmtTime(t.time_control_secs)} per side</p>
-      </div>
-      <a href="https://playza.games/tournaments" style="display:block;text-align:center;background:linear-gradient(135deg,${urgencyColor},${urgencyColor}cc);color:#fff;text-decoration:none;padding:14px;border-radius:12px;font-weight:900;font-size:14px;">
-        ${minutesLeft <= 5 ? 'Play Now →' : 'Open Match →'}
-      </a>
-    </div>
-    <div style="padding:16px 24px;text-align:center;opacity:0.4;font-size:11px;">Playza Games · Chess Tournament</div>
-  </div>`
+  const accentColor = minutesLeft <= 5 ? '#dc2626' : '#7c3aed'
+  const body = `
+    <p style="font-size:15px;line-height:1.6;margin:0 0 16px;">Hi ${username},</p>
+    <p style="font-size:15px;line-height:1.6;margin:0 0 16px;">
+      Your chess match ${minutesLeft <= 5 ? '<strong>is starting now</strong>' : `starts in <strong>${minutesLeft} minutes</strong>`} —
+      ${fixture?.round_name ?? 'match'} in <strong>${t.title}</strong>.
+    </p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-bottom:16px;">
+      <tr><td style="padding:6px 0;color:#555;font-size:13px;width:140px;">Opponent</td><td style="padding:6px 0;font-size:13px;font-weight:600;">${opponentName ?? 'TBD'}</td></tr>
+      <tr><td style="padding:6px 0;color:#555;font-size:13px;">Time control</td><td style="padding:6px 0;font-size:13px;font-weight:600;">${fmtTime(t.time_control_secs)} per side</td></tr>
+    </table>
+    <p style="font-size:14px;line-height:1.6;margin:0;">
+      ${minutesLeft <= 5 ? 'Open the app now to make your first move.' : 'Open the app when you\'re ready to play.'}
+    </p>`
+  return transactionalShell({
+    accentColor,
+    preheader: minutesLeft <= 5 ? 'Your chess match is starting now.' : `Your chess match starts in ${minutesLeft} minutes.`,
+    body,
+    ctaLabel: minutesLeft <= 5 ? 'Play now' : 'Open match',
+    ctaUrl: 'https://playza.games/tournaments',
+  })
 }
 
 function tournamentStartingHtml(username: string, t: any) {
-  return `
-  <div style="font-family:sans-serif;max-width:480px;margin:auto;background:#0e0e1a;color:#fff;border-radius:16px;overflow:hidden;">
-    <div style="background:linear-gradient(135deg,#16a34a,#15803d);padding:32px 24px;text-align:center;">
-      <div style="font-size:48px;margin-bottom:8px;">🚀</div>
-      <h1 style="margin:0;font-size:22px;font-weight:900;">Tournament Is Live!</h1>
-      <p style="margin:8px 0 0;opacity:0.8;font-size:13px;">${t.title} has started</p>
-    </div>
-    <div style="padding:24px;">
-      <p style="font-size:15px;line-height:1.6;margin:0 0 16px;">
-        Hey <strong>${username}</strong>,<br><br>
-        <strong>${t.title}</strong> is now <strong>LIVE</strong>! Your first match is ready. 
-        Open the app, find your opponent, and start playing.
-      </p>
-      ${t.prize_pool > 0 ? `
-      <div style="background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.2);border-radius:12px;padding:14px;margin-bottom:16px;">
-        <p style="margin:0;font-size:13px;font-weight:700;color:#fbbf24;">🏆 ${t.prize_pool.toLocaleString()} ZA prize pool — play your best chess!</p>
-      </div>` : ''}
-      <a href="https://playza.games/tournaments" style="display:block;text-align:center;background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;text-decoration:none;padding:14px;border-radius:12px;font-weight:900;font-size:14px;">
-        Play Now →
-      </a>
-    </div>
-    <div style="padding:16px 24px;text-align:center;opacity:0.4;font-size:11px;">Playza Games · Chess Tournament</div>
-  </div>`
+  const body = `
+    <p style="font-size:15px;line-height:1.6;margin:0 0 16px;">Hi ${username},</p>
+    <p style="font-size:15px;line-height:1.6;margin:0 0 16px;">
+      <strong>${t.title}</strong> starts in 30 minutes. Your first match will be ready shortly after — open the app when you get a chance.
+    </p>
+    ${t.prize_pool > 0 ? `<p style="font-size:14px;color:#555;margin:0;">Prize pool: <strong style="color:#1a1a1a;">${t.prize_pool.toLocaleString()} ZA</strong></p>` : ''}`
+  return transactionalShell({
+    accentColor: '#16a34a',
+    preheader: `${t.title} starts in 30 minutes.`,
+    body,
+    ctaLabel: 'Open tournament',
+    ctaUrl: 'https://playza.games/tournaments',
+  })
 }
 
 // ── MAIN CHESS CRON — mirrors quiz lifecycle, runs every minute ───────────────
@@ -284,7 +272,7 @@ export async function runChessLifecycleJob() {
           if (!p.users?.email) continue
           await sendEmail(
             p.users.email,
-            `♟ Registration closed — ${t.title}`,
+            `Registration closed for ${t.title}`,
             registrationClosedHtml(p.users.username, t, drawTime, drawDelayMinutes)
           )
           await sendPushToUser(
@@ -335,7 +323,7 @@ export async function runChessLifecycleJob() {
             if (!p.users?.email) continue
             await sendEmail(
               p.users.email,
-              `🎲 The draw is done! Your first match is set — ${t.title}`,
+              `Your first match is set — ${t.title}`,
               drawCompleteHtml(p.users.username, t, myFixture)
             )
             await sendPushToUser(
@@ -372,7 +360,7 @@ export async function runChessLifecycleJob() {
             if (!p.users?.email) continue
             await sendEmail(
               p.users.email,
-              `⚡ ${t.title} starts in 30 minutes!`,
+              `${t.title} starts in 30 minutes`,
               tournamentStartingHtml(p.users.username, t)
             )
             await sendPushToUser(
@@ -436,7 +424,7 @@ export async function runChessLifecycleJob() {
 
           await sendEmail(
             email,
-            mins === 5 ? `🚨 Your chess match is starting in 5 minutes!` : `⚡ Your match starts in 30 minutes — ${t.title}`,
+            mins === 5 ? `Your chess match is starting now` : `Your match starts in 30 minutes — ${t.title}`,
             matchReminderHtml(username, t, fixture, mins)
           )
           await sendPushToUser(
