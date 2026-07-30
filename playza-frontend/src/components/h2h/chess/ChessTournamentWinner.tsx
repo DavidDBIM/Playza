@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router";
-import { Trophy, Swords, Handshake, Clock, ListOrdered, Table2 } from "lucide-react";
+import { Trophy, Swords, Handshake, Clock, ListOrdered, Table2, X } from "lucide-react";
 import type { UserProfile } from "@/context/auth";
 import type { ChessRoom } from "@/types/chess";
 import type { TournamentFixture } from "@/api/chess-tournament.api";
@@ -41,6 +41,9 @@ interface ChessTournamentWinnerProps {
   moveCount: number;
   whiteTimeLeft: number;
   blackTimeLeft: number;
+  /** Dismiss the result screen and stay on the board (e.g. to review the
+   * final position) without being forced through a navigation button. */
+  onClose?: () => void;
 }
 
 export default function ChessTournamentWinner({
@@ -56,6 +59,7 @@ export default function ChessTournamentWinner({
   moveCount,
   whiteTimeLeft,
   blackTimeLeft,
+  onClose,
 }: ChessTournamentWinnerProps) {
   const navigate = useNavigate();
 
@@ -106,7 +110,16 @@ export default function ChessTournamentWinner({
   const nextMatchTime = fmtNextMatchTime(nextFixture?.scheduled_at);
 
   return (
-    <div className="w-full max-w-lg rounded-3xl overflow-hidden border border-white/10 bg-white dark:bg-slate-950 text-center">
+    <div className="relative w-full max-w-lg rounded-3xl overflow-hidden border border-white/10 bg-white dark:bg-slate-950 text-center">
+      {onClose && (
+        <button
+          onClick={onClose}
+          aria-label="Close"
+          className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full flex items-center justify-center bg-black/10 dark:bg-white/10 text-slate-500 dark:text-slate-300 hover:bg-black/20 dark:hover:bg-white/20 transition-colors"
+        >
+          <X size={16} />
+        </button>
+      )}
       {/* Header */}
       <div className="px-6 pt-8 pb-6" style={{ background: accentBg }}>
         <div className="w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-3"

@@ -166,6 +166,7 @@ export default function ChessTournamentMatch() {
                 moveCount={ctx.moveCount}
                 whiteTimeLeft={ctx.whiteTimeLeft}
                 blackTimeLeft={ctx.blackTimeLeft}
+                onClose={ctx.onClose}
               />
             )}
           />

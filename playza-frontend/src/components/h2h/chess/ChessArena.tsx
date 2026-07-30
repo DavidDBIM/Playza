@@ -17,6 +17,7 @@ import {
   Maximize,
   Minimize,
   Clock,
+  X,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import H2HGamePrep from "../H2HGamePrep";
@@ -54,6 +55,9 @@ interface ChessArenaProps {
     moveCount: number;
     whiteTimeLeft: number;
     blackTimeLeft: number;
+    /** Dismiss the result screen and stay on the board (e.g. to review the
+     * final position) without being forced through a navigation button. */
+    onClose: () => void;
   }) => ReactElement;
 }
 
@@ -1261,9 +1265,17 @@ const ChessArena = ({ room, user, backTo = "/h2h", backLabel = "H2H ZONE", rende
               moveCount,
               whiteTimeLeft: whiteTime,
               blackTimeLeft: blackTime,
+              onClose: () => setShowWinnerDelayed(false),
             })
           ) : (
-            <div className="w-full max-w-2xl my-auto bg-white dark:bg-slate-900 rounded-xl overflow-hidden border border-white/10">
+            <div className="relative w-full max-w-2xl my-auto bg-white dark:bg-slate-900 rounded-xl overflow-hidden border border-white/10">
+              <button
+                onClick={() => setShowWinnerDelayed(false)}
+                aria-label="Close"
+                className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full flex items-center justify-center bg-black/10 dark:bg-white/10 text-slate-500 dark:text-slate-300 hover:bg-black/20 dark:hover:bg-white/20 transition-colors"
+              >
+                <X size={16} />
+              </button>
               <H2HWinner
                 room={room}
                 user={user}

@@ -82,8 +82,8 @@ const api = {
   launch:  async (id: string) => { const { data } = await apiClient.post(`/admin/chess-tournament/tournaments/${id}/launch`); return data; },
   cancel:  async (id: string) => { const { data } = await apiClient.post(`/admin/chess-tournament/tournaments/${id}/cancel`); return data; },
   delete:  async (id: string) => { const { data } = await apiClient.delete(`/admin/chess-tournament/tournaments/${id}`); return data; },
-  fixtures:  async (id: string): Promise<Fixture[]> => { const { data } = await apiClient.get(`/api/chess-tournament/tournaments/${id}/fixtures`); return data.data ?? []; },
-  standings: async (id: string): Promise<Standing[]> => { const { data } = await apiClient.get(`/api/chess-tournament/tournaments/${id}/standings`); return data.data ?? []; },
+  fixtures:  async (id: string): Promise<Fixture[]> => { const { data } = await apiClient.get(`/chess-tournament/tournaments/${id}/fixtures`); return data.data ?? []; },
+  standings: async (id: string): Promise<Standing[]> => { const { data } = await apiClient.get(`/chess-tournament/tournaments/${id}/standings`); return data.data ?? []; },
   players:   async (id: string): Promise<PlayerEntry[]> => { const { data } = await apiClient.get(`/admin/chess-tournament/tournaments/${id}/players`); return data.data ?? []; },
 };
 
