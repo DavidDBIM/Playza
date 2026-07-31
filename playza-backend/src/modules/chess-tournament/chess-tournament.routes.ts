@@ -213,6 +213,25 @@ router.get('/tournaments/:id/standings', async (req: AuthRequest, res: Response)
   }
 })
 
+// Final placement + prize per player — used to show a "Final Results" podium
+// once a tournament completes. Previously final_rank/prize_won only had an
+// admin-only route, so there was nowhere in the player-facing app that could
+// ever surface who placed 3rd (or any rank) and what they were paid.
+router.get('/tournaments/:id/results', async (req: AuthRequest, res: Response) => {
+  try {
+    const { data: results, error } = await supabaseAdmin
+      .from('chess_tournament_players')
+      .select('user_id, username, avatar_url, final_rank, prize_won, status')
+      .eq('tournament_id', req.params.id)
+      .not('final_rank', 'is', null)
+      .order('final_rank', { ascending: true })
+    if (error) throw error
+    res.json({ success: true, data: results ?? [] })
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message })
+  }
+})
+
 // ── Register ───────────────────────────────────────────────────────────────
 router.post('/tournaments/:id/register', requireAuth, async (req: AuthRequest, res: Response) => {
   try {

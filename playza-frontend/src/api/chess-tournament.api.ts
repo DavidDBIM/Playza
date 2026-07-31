@@ -70,6 +70,15 @@ export interface MyChessStatus {
   active_fixture: TournamentFixture | null;
 }
 
+export interface TournamentResult {
+  user_id: string;
+  username: string;
+  avatar_url?: string;
+  final_rank: number;
+  prize_won: number;
+  status: string;
+}
+
 export const getChessTournaments = async (): Promise<ChessTournament[]> => {
   const { data } = await axiosInstance.get("/chess-tournament/tournaments");
   return data.data ?? [];
@@ -96,5 +105,10 @@ export const getChessTournamentFixtures = async (id: string): Promise<Tournament
 
 export const getChessTournamentStandings = async (id: string): Promise<TournamentStanding[]> => {
   const { data } = await axiosInstance.get(`/chess-tournament/tournaments/${id}/standings`);
+  return data.data ?? [];
+};
+
+export const getChessTournamentResults = async (id: string): Promise<TournamentResult[]> => {
+  const { data } = await axiosInstance.get(`/chess-tournament/tournaments/${id}/results`);
   return data.data ?? [];
 };

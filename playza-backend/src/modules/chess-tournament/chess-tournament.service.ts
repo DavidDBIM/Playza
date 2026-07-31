@@ -841,12 +841,19 @@ export async function finishChessTournament(tournamentId: string, championId: st
             reference: `CHESS-PZA-${tournamentId}-${p.user_id}`,
             meta: { tournament_id: tournamentId },
           })
-          const { data: pzaRow } = await supabaseAdmin.from('pza_points').select('total_points').eq('user_id', p.user_id).single()
+          // maybeSingle (not single) — most participants have never
+          // received PZA before and have no existing pza_points row yet.
+          // .single() throws when zero rows match, which silently aborted
+          // this whole block (event logged, but the actual points total
+          // never updated) for exactly that common case.
+          const { data: pzaRow } = await supabaseAdmin.from('pza_points').select('total_points').eq('user_id', p.user_id).maybeSingle()
           await supabaseAdmin.from('pza_points').upsert({
             user_id: p.user_id,
             total_points: (pzaRow?.total_points ?? 0) + consolation,
           }, { onConflict: 'user_id' })
-        } catch (_) {}
+        } catch (err) {
+          console.error(`[ChessEnd] Consolation PZA failed for ${p.user_id} in tournament ${tournamentId}:`, err)
+        }
       }
     }
   } catch (err) {

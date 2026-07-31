@@ -1,14 +1,13 @@
 import { useState, useEffect, useRef } from "react";
-import { createPortal } from "react-dom";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/auth";
 import SEO from "@/components/SEO";
-import { Trophy, Users, Clock, Crown } from "lucide-react";
+import { Trophy, Users, Clock, Crown, ArrowLeft } from "lucide-react";
 import {
   getChessTournaments, registerChessTournament,
-  getChessTournamentFixtures, getChessTournamentStandings,
-  type ChessTournament, type TournamentFixture, type TournamentStanding,
+  getChessTournamentFixtures, getChessTournamentStandings, getChessTournamentResults,
+  type ChessTournament, type TournamentFixture, type TournamentStanding, type TournamentResult,
 } from "@/api/chess-tournament.api";
 
 // ── Countdown ──────────────────────────────────────────────────────────────────
@@ -347,36 +346,133 @@ function GroupStandings({ standings, userId }: { standings: TournamentStanding[]
   );
 }
 
-// ── Tournament detail modal ───────────────────────────────────────────────────
-function TournamentModal({ t, onClose, onRegister, isRegistering, registered, initialDetailTab }: {
-  t: ChessTournament;
-  onClose: () => void;
-  onRegister: () => void;
-  isRegistering: boolean;
-  registered: boolean;
-  /** Opens the modal straight onto the standings tab — used when arriving
-   * via a "View Table" link from a just-finished tournament match. */
+// ── Final results podium — shown once a tournament completes ─────────────────
+function FinalResults({ results, userId }: { results: TournamentResult[]; userId?: string }) {
+  if (!results.length) return (
+    <div className="text-center py-10 text-foreground/20 text-sm">Final results will appear once the tournament completes</div>
+  );
+
+  // Group by rank — ties (e.g. two semifinal losers both placed 3rd) share a
+  // slot and split the prize, rather than assuming one recipient per rank.
+  const byRank = results.reduce<Record<number, TournamentResult[]>>((acc, r) => {
+    (acc[r.final_rank] = acc[r.final_rank] ?? []).push(r);
+    return acc;
+  }, {});
+  const ranks = Object.keys(byRank).map(Number).sort((a, b) => a - b);
+  const podiumRanks = ranks.slice(0, 3);
+  const restRanks = ranks.slice(3);
+
+  const medal: Record<number, { emoji: string; color: string; bg: string; label: string }> = {
+    1: { emoji: "🥇", color: "#fbbf24", bg: "linear-gradient(135deg,#fbbf24,#f59e0b)", label: "Champion" },
+    2: { emoji: "🥈", color: "#cbd5e1", bg: "linear-gradient(135deg,#cbd5e1,#94a3b8)", label: "Runner-up" },
+    3: { emoji: "🥉", color: "#d97706", bg: "linear-gradient(135deg,#d97706,#b45309)", label: "3rd Place" },
+  };
+
+  // Podium display order: 2nd (left), 1st (center, taller), 3rd (right) —
+  // the classic podium arrangement, built from whichever ranks actually
+  // have recipients (a tiny bracket might only have rank 1 + 2, no 3rd).
+  const podiumOrder = [2, 1, 3].filter(r => podiumRanks.includes(r));
+
+  return (
+    <div className="space-y-6">
+      {/* Podium */}
+      <div className="flex items-end justify-center gap-2 md:gap-4 px-2">
+        {podiumOrder.map(rank => {
+          const recipients = byRank[rank];
+          const m = medal[rank];
+          const height = rank === 1 ? "h-36" : rank === 2 ? "h-28" : "h-24";
+          const iAmHere = recipients.some(r => r.user_id === userId);
+          return (
+            <div key={rank} className={`flex flex-col items-center justify-end ${rank === 1 ? "flex-[1.15]" : "flex-1"} max-w-[150px]`}>
+              <div className="text-3xl mb-1">{m.emoji}</div>
+              {recipients.map((r, i) => (
+                <div key={r.user_id} className="w-full text-center mb-1">
+                  <p className={`text-xs font-black truncate ${r.user_id === userId ? "text-violet-400" : "text-foreground"}`}>{r.username}</p>
+                  {r.prize_won > 0 && <p className="text-[10px] font-bold" style={{ color: m.color }}>+{r.prize_won.toLocaleString()} ZA</p>}
+                </div>
+              ))}
+              <div className={`w-full ${height} rounded-t-xl flex items-start justify-center pt-2 relative overflow-hidden`}
+                style={{ background: m.bg, boxShadow: iAmHere ? `0 0 0 3px rgba(124,58,237,0.6), 0 0 24px ${m.color}55` : `0 0 20px ${m.color}33` }}>
+                <span className="text-white/90 font-black text-lg">{rank}</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Everyone else */}
+      {restRanks.length > 0 && (
+        <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid color-mix(in srgb, var(--foreground) 7%, transparent)" }}>
+          {restRanks.map(rank => (
+            <div key={rank}>
+              {byRank[rank].map((r, i) => (
+                <div key={r.user_id} className="flex items-center gap-3 px-4 py-2.5"
+                  style={{
+                    borderBottom: "1px solid color-mix(in srgb, var(--foreground) 4%, transparent)",
+                    background: r.user_id === userId ? "rgba(124,58,237,0.08)" : "transparent",
+                  }}>
+                  <span className="w-8 text-center text-[11px] font-black text-foreground/30 shrink-0">#{rank}</span>
+                  <span className={`flex-1 min-w-0 truncate text-xs font-bold ${r.user_id === userId ? "text-violet-300" : "text-foreground/60"}`}>{r.username}</span>
+                  {r.user_id === userId && <span className="text-[8px] bg-violet-500/20 text-violet-400 px-1.5 py-0.5 rounded-full font-black shrink-0">YOU</span>}
+                  {r.prize_won > 0 && <span className="text-xs font-black text-green-400 shrink-0">+{r.prize_won.toLocaleString()} ZA</span>}
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Tournament detail — full page ─────────────────────────────────────────────
+function TournamentDetailPage({ tournamentId, initialDetailTab }: {
+  tournamentId: string;
+  /** Opens straight onto the standings tab — used when arriving via a "View
+   * Table" link from a just-finished tournament match. */
   initialDetailTab?: "bracket" | "standings";
 }) {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [tab, setTab] = useState<"bracket" | "standings" | "fixtures">(
-    initialDetailTab === "standings" && t.format === "group_knockout" ? "standings" : "bracket"
+  const qc = useQueryClient();
+
+  const { data: t, isLoading: tLoading } = useQuery({
+    queryKey: ["ct-detail", tournamentId],
+    queryFn: () => getChessTournament(tournamentId),
+    refetchInterval: 15000,
+  });
+
+  const registerM = useMutation({
+    mutationFn: () => registerChessTournament(tournamentId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["ct-detail", tournamentId] });
+      qc.invalidateQueries({ queryKey: ["chess-tournaments"] });
+    },
+  });
+
+  const [tab, setTab] = useState<"bracket" | "standings" | "fixtures" | "results">(
+    initialDetailTab === "standings" && t?.format === "group_knockout" ? "standings" : "bracket"
   );
-  const sc = STATUS_CFG[t.status] ?? STATUS_CFG.registration;
+  const [showRules, setShowRules] = useState(false);
 
   const { data: fixtures = [] } = useQuery({
-    queryKey: ["ct-fixtures", t.id],
-    queryFn: () => getChessTournamentFixtures(t.id),
-    enabled: t.status === "active" || t.status === "completed",
-    refetchInterval: t.status === "active" ? 8000 : false,
+    queryKey: ["ct-fixtures", tournamentId],
+    queryFn: () => getChessTournamentFixtures(tournamentId),
+    enabled: !!t && (t.status === "active" || t.status === "completed"),
+    refetchInterval: t?.status === "active" ? 8000 : false,
   });
 
   const { data: standings = [] } = useQuery({
-    queryKey: ["ct-standings", t.id],
-    queryFn: () => getChessTournamentStandings(t.id),
-    enabled: t.format === "group_knockout" && (t.status === "active" || t.status === "completed"),
-    refetchInterval: t.status === "active" ? 8000 : false,
+    queryKey: ["ct-standings", tournamentId],
+    queryFn: () => getChessTournamentStandings(tournamentId),
+    enabled: !!t && t.format === "group_knockout" && (t.status === "active" || t.status === "completed"),
+    refetchInterval: t?.status === "active" ? 8000 : false,
+  });
+
+  const { data: results = [] } = useQuery({
+    queryKey: ["ct-results", tournamentId],
+    queryFn: () => getChessTournamentResults(tournamentId),
+    enabled: !!t && t.status === "completed",
   });
 
   // Find this user's active fixture — the game they need to play right now
@@ -384,85 +480,102 @@ function TournamentModal({ t, onClose, onRegister, isRegistering, registered, in
     f.status === "active" && (f.player1_id === user?.id || f.player2_id === user?.id)
   );
 
-  // Bypass this whole modal the instant we know the player has a live game —
-  // no "Play Now" click needed, no bracket tab to find it on. Clicking
-  // "Watch/Play Live" on the list card should drop a player with a live
-  // match straight into that match.
+  // The instant we know the player has a live game, drop them straight into
+  // it — no "Play Now" click needed, no bracket tab to find it on.
+  const autoRedirectedRef = useRef(false);
   useEffect(() => {
-    if (myActiveFixture?.chess_room_id) {
-      navigate(`/chess-tournament/${t.id}/match/${myActiveFixture.chess_room_id}`);
-      onClose();
+    if (myActiveFixture?.chess_room_id && !autoRedirectedRef.current) {
+      autoRedirectedRef.current = true;
+      navigate(`/chess-tournament/${tournamentId}/match/${myActiveFixture.chess_room_id}`);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [myActiveFixture?.chess_room_id]);
+  }, [myActiveFixture?.chess_room_id, tournamentId, navigate]);
 
-  const { timeLeft: regTimeLeft, expired: regExpired } = useCountdown(t.status === "registration" ? t.registration_end : null);
-  const [showRules, setShowRules] = useState(false);
+  const { timeLeft: regTimeLeft, expired: regExpired } = useCountdown(t?.status === "registration" ? t?.registration_end : null);
 
-  return createPortal(
-    <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-4"
-      style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(16px)" }} onClick={onClose}>
-      <div className="w-full sm:max-w-2xl max-h-[90vh] flex flex-col rounded-t-3xl sm:rounded-3xl overflow-hidden"
-        style={{ background: "var(--card)", border: "1px solid rgba(124,58,237,0.2)" }}
-        onClick={e => e.stopPropagation()}>
+  if (tLoading || !t) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--background)" }}>
+        <div className="w-8 h-8 border-2 border-violet-500/20 border-t-violet-500 rounded-full animate-spin" />
+      </div>
+    );
+  }
 
-        {/* Header */}
-        <div className="flex items-start justify-between px-5 pt-5 pb-4 border-b border-foreground/[0.06] shrink-0">
-          <div className="flex gap-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0"
-              style={{ background: "rgba(124,58,237,0.15)", border: "1px solid rgba(124,58,237,0.25)" }}>♟</div>
-            <div>
-              <h2 className="font-black text-foreground text-base leading-snug">{t.title}</h2>
-              <div className="flex items-center gap-2 mt-1 flex-wrap">
-                <div className="flex items-center gap-1.5">
-                  <div className="w-1.5 h-1.5 rounded-full" style={{ background: sc.dot, boxShadow: `0 0 6px ${sc.dot}` }} />
-                  <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: sc.dot }}>{sc.label}</span>
-                </div>
-                <span className="text-[9px] text-foreground/20">·</span>
-                <span className="text-[9px] text-foreground/30 font-bold">{t.format === "group_knockout" ? "Group Stage → Knockout" : "Single Elimination"}</span>
-                <span className="text-[9px] text-foreground/20">·</span>
-                <span className="text-[9px] text-foreground/30 font-bold">{t.bracket_size} players</span>
-                <span className="text-[9px] text-foreground/20">·</span>
-                <span className="text-[9px] text-foreground/30 font-bold">{fmtTime(t.time_control_secs)}{t.increment_secs > 0 ? ` +${t.increment_secs}s` : ""}</span>
-              </div>
+  const sc = STATUS_CFG[t.status] ?? STATUS_CFG.registration;
+  const registered = !!t.user_registered;
+
+  return (
+    <div className="min-h-screen pb-28" style={{ background: "var(--background)" }}>
+      <div className="max-w-3xl mx-auto px-4 pt-6">
+        <button onClick={() => navigate("/chess-tournament")}
+          className="flex items-center gap-1.5 text-xs font-bold text-foreground/40 hover:text-foreground/70 transition-colors mb-4">
+          <ArrowLeft size={14} /> All tournaments
+        </button>
+
+        {/* Hero header — checkerboard motif matching the list card design */}
+        <div className="relative rounded-3xl overflow-hidden mb-4"
+          style={{ background: t.status === "active" ? "linear-gradient(135deg,rgba(239,68,68,0.14),rgba(124,58,237,0.08))" : "linear-gradient(135deg,rgba(124,58,237,0.16),rgba(168,85,247,0.06))" }}>
+          <div className="absolute -right-8 -top-8 w-40 h-40 rotate-12 grid grid-cols-4 grid-rows-4 overflow-hidden rounded-2xl opacity-[0.12] pointer-events-none select-none">
+            {Array.from({ length: 16 }).map((_, i) => {
+              const row = Math.floor(i / 4);
+              const isLight = (row + i) % 2 === 0;
+              return <div key={i} style={{ background: isLight ? "var(--foreground)" : "transparent" }} />;
+            })}
+          </div>
+          <div className="relative px-6 pt-7 pb-6">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-2 h-2 rounded-full" style={{ background: sc.dot, boxShadow: `0 0 8px ${sc.dot}` }} />
+              <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: sc.dot }}>{sc.label}</span>
+              <span className="text-[10px] text-foreground/20">·</span>
+              <span className="text-[10px] text-foreground/40 font-bold">{t.format === "group_knockout" ? "Group Stage → Knockout" : "Single Elimination"}</span>
+            </div>
+            <div className="flex items-center gap-2 mb-1">
+              <Crown className="w-5 h-5 shrink-0 text-amber-400/70" />
+              <h1 className="font-black text-foreground text-2xl leading-snug">{t.title}</h1>
+            </div>
+            <div className="flex items-center gap-3 flex-wrap mt-3">
+              <span className="flex items-center gap-1.5 text-xs font-bold text-foreground/50"><Users size={13} /> {t.bracket_size} players</span>
+              <span className="flex items-center gap-1.5 text-xs font-bold text-foreground/50"><Clock size={13} /> {fmtTime(t.time_control_secs)}{t.increment_secs > 0 ? ` +${t.increment_secs}s` : ""}</span>
             </div>
           </div>
-          <button onClick={onClose} className="text-foreground/30 hover:text-foreground transition-colors text-xl shrink-0 ml-2">✕</button>
         </div>
 
-        {/* Stats — only relevant pre-tournament (deciding whether to register).
-            Once live/completed, skip straight to the live match banner and
-            bracket/fixtures tabs below instead of repeating info the player
-            already saw on the list card. */}
-        {(t.status === "registration" || t.status === "lobby") && (
-          <div className="grid grid-cols-3 divide-x divide-foreground/[0.05] border-b border-foreground/[0.06] shrink-0">
-            {[
-              { v: t.entry_fee > 0 ? `${t.entry_fee} ZA` : "FREE", l: "Entry Fee" },
-              { v: `${t.prize_pool.toLocaleString()} ZA`, l: "Prize Pool" },
-              { v: `${t.player_count ?? 0}/${t.bracket_size}`, l: "Registered" },
-            ].map((s, i) => (
-              <div key={i} className="px-4 py-3 text-center">
-                <p className="font-black text-foreground text-sm">{s.v}</p>
-                <p className="text-[9px] text-foreground/25 uppercase tracking-wider mt-0.5">{s.l}</p>
+        {/* Prize pool hero card */}
+        <div className="relative rounded-2xl p-4 mb-4 overflow-hidden"
+          style={{ background: "linear-gradient(135deg, rgba(251,191,36,0.14), rgba(245,158,11,0.05))", border: "1px solid rgba(251,191,36,0.25)" }}>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
+                style={{ background: "linear-gradient(135deg,#fbbf24,#f59e0b)", boxShadow: "0 2px 10px rgba(245,158,11,0.35)" }}>
+                <Trophy className="w-5 h-5 text-white" strokeWidth={2.25} />
               </div>
-            ))}
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-foreground/40 mb-0.5">Prize Pool</p>
+                <p className="text-2xl font-black leading-none truncate" style={{ background: "linear-gradient(135deg,#fbbf24,#f59e0b)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                  {t.prize_pool.toLocaleString()} <span className="text-sm">ZA</span>
+                </p>
+              </div>
+            </div>
+            <div className="text-right shrink-0 pl-3 border-l" style={{ borderColor: "rgba(251,191,36,0.25)" }}>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-foreground/40 mb-0.5">Entry</p>
+              <p className="text-base font-black text-foreground/70">{t.entry_fee > 0 ? `${t.entry_fee} ZA` : "FREE"}</p>
+            </div>
           </div>
-        )}
+        </div>
 
-        {/* Active match banner — shows only when user has a live game in progress */}
+        {/* Active match banner */}
         {myActiveFixture && (
-          <div className="mx-4 mt-3 shrink-0 rounded-2xl overflow-hidden" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)" }}>
-            <div className="flex items-center justify-between px-4 py-3">
-              <div className="flex items-center gap-2">
+          <div className="mb-4 rounded-2xl overflow-hidden" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)" }}>
+            <div className="flex items-center justify-between px-4 py-3.5">
+              <div className="flex items-center gap-2.5">
                 <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
                 <div>
-                  <p className="text-xs font-black text-foreground">Your match is live now!</p>
-                  <p className="text-[9px] text-foreground/40">{myActiveFixture.round_name} — vs {myActiveFixture.player1_id === user?.id ? myActiveFixture.player2?.username : myActiveFixture.player1?.username}</p>
+                  <p className="text-sm font-black text-foreground">Your match is live now!</p>
+                  <p className="text-[10px] text-foreground/40">{myActiveFixture.round_name} — vs {myActiveFixture.player1_id === user?.id ? myActiveFixture.player2?.username : myActiveFixture.player1?.username}</p>
                 </div>
               </div>
               <button
                 onClick={() => navigate(`/chess-tournament/${t.id}/match/${myActiveFixture.chess_room_id}`)}
-                className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-black text-white"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black text-white shrink-0"
                 style={{ background: "linear-gradient(135deg,#dc2626,#ef4444)" }}>
                 ♟ Play Now
               </button>
@@ -470,12 +583,46 @@ function TournamentModal({ t, onClose, onRegister, isRegistering, registered, in
           </div>
         )}
 
+        {/* Registration state: countdown or progress */}
+        {(t.status === "registration" || t.status === "lobby") && (
+          <div className="rounded-2xl p-6 mb-4 text-center" style={{ border: "1px solid color-mix(in srgb, var(--foreground) 7%, transparent)" }}>
+            <p className="text-foreground/40 text-xs mb-4">{t.player_count ?? 0} of {t.bracket_size} spots filled</p>
+            <div className="w-full max-w-xs mx-auto bg-foreground/[0.06] rounded-full h-2 mb-5">
+              <div className="h-2 rounded-full transition-all" style={{ width: `${Math.min(((t.player_count ?? 0) / t.bracket_size) * 100, 100)}%`, background: "linear-gradient(90deg,#7c3aed,#a855f7)" }} />
+            </div>
+            {t.format === "group_knockout" && (
+              <p className="text-[11px] text-foreground/25 mb-3">{t.group_count} groups · top {t.advance_per_group} per group advance to knockout</p>
+            )}
+            {t.status === "registration" && t.registration_end && !regExpired && regTimeLeft ? (
+              <div className="w-full max-w-xs mx-auto rounded-2xl p-4" style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)" }}>
+                <p className="text-[10px] font-black uppercase tracking-widest mb-2" style={{ color: "#ef4444" }}>⏳ Registration closes in</p>
+                <div className="flex items-center justify-center gap-4">
+                  {regTimeLeft.d > 0 && (
+                    <div className="text-center"><p className="text-2xl font-black leading-none" style={{ color: "#ef4444" }}>{regTimeLeft.d}</p><p className="text-[9px] mt-1" style={{ color: "rgba(239,68,68,0.6)" }}>DAYS</p></div>
+                  )}
+                  <div className="text-center"><p className="text-2xl font-black leading-none" style={{ color: "#ef4444" }}>{String(regTimeLeft.h).padStart(2, "0")}</p><p className="text-[9px] mt-1" style={{ color: "rgba(239,68,68,0.6)" }}>HRS</p></div>
+                  <div className="text-center"><p className="text-2xl font-black leading-none" style={{ color: "#ef4444" }}>{String(regTimeLeft.m).padStart(2, "0")}</p><p className="text-[9px] mt-1" style={{ color: "rgba(239,68,68,0.6)" }}>MIN</p></div>
+                  <div className="text-center"><p className="text-2xl font-black leading-none" style={{ color: "#ef4444" }}>{String(regTimeLeft.s).padStart(2, "0")}</p><p className="text-[9px] mt-1" style={{ color: "rgba(239,68,68,0.6)" }}>SEC</p></div>
+                </div>
+              </div>
+            ) : (
+              <p className="text-[11px] text-foreground/20">Bracket generates automatically when registration closes</p>
+            )}
+          </div>
+        )}
+
         {/* Tabs */}
         {(t.status === "active" || t.status === "completed") && (
-          <div className="flex border-b border-foreground/[0.06] mt-3 shrink-0">
-            {[{ id: "bracket" as const, label: "Bracket" }, { id: "fixtures" as const, label: "My Fixtures" }, ...(t.format === "group_knockout" ? [{ id: "standings" as const, label: "Group Standings" }] : [])].map(tb => (
+          <div className="flex gap-1 p-1 rounded-xl w-fit mb-5" style={{ background: "color-mix(in srgb, var(--foreground) 4%, transparent)" }}>
+            {[
+              { id: "bracket" as const, label: "Bracket" },
+              { id: "fixtures" as const, label: "My Fixtures" },
+              ...(t.format === "group_knockout" ? [{ id: "standings" as const, label: "Standings" }] : []),
+              ...(t.status === "completed" ? [{ id: "results" as const, label: "🏆 Results" }] : []),
+            ].map(tb => (
               <button key={tb.id} onClick={() => setTab(tb.id)}
-                className={`px-5 py-2.5 text-xs font-black uppercase tracking-wider border-b-2 transition-colors ${tab === tb.id ? "text-violet-400 border-violet-500" : "text-foreground/25 border-transparent"}`}>
+                className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${tab === tb.id ? "text-foreground" : "text-foreground/30 hover:text-foreground/50"}`}
+                style={tab === tb.id ? { background: "rgba(124,58,237,0.5)" } : {}}>
                 {tb.label}
               </button>
             ))}
@@ -483,35 +630,7 @@ function TournamentModal({ t, onClose, onRegister, isRegistering, registered, in
         )}
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-4">
-          {(t.status === "registration" || t.status === "lobby") && (
-            <div className="text-center py-8">
-              <p className="text-foreground/30 text-xs mb-4">
-                {t.player_count ?? 0} of {t.bracket_size} spots filled
-              </p>
-              <div className="w-full max-w-xs mx-auto bg-foreground/[0.05] rounded-full h-2 mb-4">
-                <div className="h-2 rounded-full transition-all" style={{ width: `${Math.min(((t.player_count ?? 0) / t.bracket_size) * 100, 100)}%`, background: "linear-gradient(90deg,#7c3aed,#a855f7)" }} />
-              </div>
-              {t.format === "group_knockout" && (
-                <p className="text-[10px] text-foreground/20 mb-2">{t.group_count} groups · top {t.advance_per_group} per group advance to knockout</p>
-              )}
-              {t.status === "registration" && t.registration_end && !regExpired && regTimeLeft ? (
-                <div className="w-full max-w-xs mx-auto rounded-2xl p-4 mb-2" style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)" }}>
-                  <p className="text-[9px] font-black uppercase tracking-widest mb-2" style={{ color: "#ef4444" }}>⏳ Registration closes in</p>
-                  <div className="flex items-center justify-center gap-4">
-                    {regTimeLeft.d > 0 && (
-                      <div className="text-center"><p className="text-2xl font-black leading-none" style={{ color: "#ef4444" }}>{regTimeLeft.d}</p><p className="text-[8px] mt-1" style={{ color: "rgba(239,68,68,0.6)" }}>DAYS</p></div>
-                    )}
-                    <div className="text-center"><p className="text-2xl font-black leading-none" style={{ color: "#ef4444" }}>{String(regTimeLeft.h).padStart(2, "0")}</p><p className="text-[8px] mt-1" style={{ color: "rgba(239,68,68,0.6)" }}>HRS</p></div>
-                    <div className="text-center"><p className="text-2xl font-black leading-none" style={{ color: "#ef4444" }}>{String(regTimeLeft.m).padStart(2, "0")}</p><p className="text-[8px] mt-1" style={{ color: "rgba(239,68,68,0.6)" }}>MIN</p></div>
-                    <div className="text-center"><p className="text-2xl font-black leading-none" style={{ color: "#ef4444" }}>{String(regTimeLeft.s).padStart(2, "0")}</p><p className="text-[8px] mt-1" style={{ color: "rgba(239,68,68,0.6)" }}>SEC</p></div>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-[10px] text-foreground/20">Bracket generates automatically when admin launches</p>
-              )}
-            </div>
-          )}
+        <div className="mb-6">
           {tab === "bracket" && (t.status === "active" || t.status === "completed") && (
             <BracketTree fixtures={fixtures} userId={user?.id} />
           )}
@@ -519,19 +638,20 @@ function TournamentModal({ t, onClose, onRegister, isRegistering, registered, in
             <MyFixtures fixtures={fixtures} userId={user?.id} />
           )}
           {tab === "standings" && <GroupStandings standings={standings} userId={user?.id} />}
+          {tab === "results" && <FinalResults results={results} userId={user?.id} />}
         </div>
 
         {/* CTA */}
-        <div className="px-5 py-4 border-t border-foreground/[0.06] shrink-0">
+        <div className="rounded-2xl p-5" style={{ border: "1px solid color-mix(in srgb, var(--foreground) 7%, transparent)" }}>
           <button onClick={() => setShowRules(true)}
-            className="w-full flex items-center justify-center gap-1.5 mb-3 text-[11px] font-bold text-foreground/40 hover:text-violet-400 transition-colors">
+            className="w-full flex items-center justify-center gap-1.5 mb-3 text-xs font-bold text-foreground/40 hover:text-violet-400 transition-colors">
             📜 How this tournament works — rules, time control & tiebreaks
           </button>
           {t.status === "registration" && !registered && (
-            <button onClick={onRegister} disabled={isRegistering || (t.player_count ?? 0) >= t.bracket_size}
+            <button onClick={() => registerM.mutate()} disabled={registerM.isPending || (t.player_count ?? 0) >= t.bracket_size}
               className="w-full py-3.5 rounded-2xl font-black text-sm text-white transition-all hover:scale-[1.01] disabled:opacity-40 disabled:cursor-not-allowed"
               style={{ background: "linear-gradient(135deg,#7c3aed,#a855f7)", boxShadow: "0 0 24px rgba(124,58,237,0.35)" }}>
-              {isRegistering ? "Registering…" : (t.player_count ?? 0) >= t.bracket_size ? "Tournament Full" : t.entry_fee > 0 ? `Register — Pay ${t.entry_fee} ZA` : "Register Free"}
+              {registerM.isPending ? "Registering…" : (t.player_count ?? 0) >= t.bracket_size ? "Tournament Full" : t.entry_fee > 0 ? `Register — Pay ${t.entry_fee} ZA` : "Register Free"}
             </button>
           )}
           {t.status === "registration" && registered && (
@@ -553,8 +673,7 @@ function TournamentModal({ t, onClose, onRegister, isRegistering, registered, in
       </div>
 
       {showRules && <ChessRulesModal t={t} onClose={() => setShowRules(false)} />}
-    </div>,
-    document.body
+    </div>
   );
 }
 
@@ -740,57 +859,41 @@ function TCard({ t, onOpen }: { t: ChessTournament; onOpen: () => void }) {
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function ChessTournamentPage() {
-  const { user } = useAuth();
-  const qc = useQueryClient();
   const { tournamentId } = useParams<{ tournamentId?: string }>();
-  const [searchParams] = useSearchParams();
-  const [selected, setSelected] = useState<ChessTournament | null>(null);
-  const [tab, setTab] = useState<"registration" | "active" | "completed">("registration");
+  const [searchParams, setSearchParams] = useSearchParams();
   const requestedDetailTab = searchParams.get("tab") === "standings" ? "standings" : undefined;
+
+  // A tournament ID in the URL now renders a full, dedicated page instead of
+  // a modal overlaying the list — more room for the bracket, fixtures, and
+  // (new) final results podium, and it's a real deep-linkable page.
+  if (tournamentId) {
+    return (
+      <>
+        <SEO title="Chess Tournament — Playza" description="Bracket, fixtures, standings, and results for this Playza chess tournament." />
+        <TournamentDetailPage tournamentId={tournamentId} initialDetailTab={requestedDetailTab} />
+      </>
+    );
+  }
+
+  const validFilterTabs = ["registration", "active", "completed"] as const;
+  const initialFilterTab = validFilterTabs.includes(searchParams.get("filter") as any)
+    ? (searchParams.get("filter") as typeof validFilterTabs[number])
+    : "registration";
+  const [tab, setTabState] = useState<"registration" | "active" | "completed">(initialFilterTab);
+  const setTab = (next: "registration" | "active" | "completed") => {
+    setTabState(next);
+    setSearchParams(prev => {
+      const p = new URLSearchParams(prev);
+      p.set("filter", next);
+      return p;
+    }, { replace: true });
+  };
+  const navigate = useNavigate();
 
   const { data: tournaments = [], isLoading } = useQuery({
     queryKey: ["chess-tournaments"],
     queryFn: getChessTournaments,
     refetchInterval: 15000,
-  });
-
-  // Direct link to a specific tournament (e.g. /chess-tournament/:id from a
-  // results button or email) — auto-open it and switch to the right tab
-  // once the list has loaded, instead of just showing the generic list.
-  // Guarded by a ref so this only fires once per tournamentId: `tournaments`
-  // refetches every 15s (a new array reference each time), and without the
-  // guard this effect re-ran on every single refetch — forcibly resetting
-  // whatever tab the person had manually clicked to back to the URL's
-  // tournament, and even reopening the modal after they'd closed it. That's
-  // exactly what looked like "the tournament filter isn't working."
-  const handledTournamentIdRef = useRef<string | null>(null);
-  useEffect(() => {
-    if (!tournamentId || !tournaments.length) return;
-    if (handledTournamentIdRef.current === tournamentId) return;
-    const t = tournaments.find(x => x.id === tournamentId);
-    if (!t) return;
-    handledTournamentIdRef.current = tournamentId;
-    setSelected(t);
-    setTab(
-      t.status === "active" ? "active"
-      : t.status === "completed" || t.status === "cancelled" ? "completed"
-      : "registration"
-    );
-  }, [tournamentId, tournaments]);
-
-  // Track which tournaments this user is registered in
-  useQuery({
-    queryKey: ["chess-my-tournaments", user?.id],
-    queryFn: async () => {
-      if (!user?.id) return [];
-      return getChessTournaments();
-    },
-    enabled: !!user,
-  });
-
-  const registerM = useMutation({
-    mutationFn: (id: string) => registerChessTournament(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["chess-tournaments"] }),
   });
 
   const filtered = tournaments
@@ -806,13 +909,13 @@ export default function ChessTournamentPage() {
       return 0; // preserve backend order (created_at desc) for other tabs
     });
 
-  // Update selected tournament when query data refreshes
-  const selectedFresh = selected ? (tournaments.find(t => t.id === selected.id) ?? selected) : null;
-
-  const TABS: { id: typeof tab; label: string }[] = [
-    { id: "registration", label: "Open" },
-    { id: "active", label: "🔴 Live" },
-    { id: "completed", label: "Completed" },
+  const openCount = tournaments.filter(t => t.status === "registration" || t.status === "lobby").length;
+  const liveCount = tournaments.filter(t => t.status === "active").length;
+  const completedCount = tournaments.filter(t => t.status === "completed" || t.status === "cancelled").length;
+  const TABS: { id: typeof tab; label: string; count: number }[] = [
+    { id: "registration", label: "Open", count: openCount },
+    { id: "active", label: "🔴 Live", count: liveCount },
+    { id: "completed", label: "Completed", count: completedCount },
   ];
 
   return (
@@ -837,9 +940,12 @@ export default function ChessTournamentPage() {
           <div className="flex gap-1 p-1 rounded-xl w-fit mb-5" style={{ background: "color-mix(in srgb, var(--foreground) 4%, transparent)" }}>
             {TABS.map(t => (
               <button key={t.id} onClick={() => setTab(t.id)}
-                className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${tab === t.id ? "text-foreground" : "text-foreground/30 hover:text-foreground/50"}`}
+                className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 ${tab === t.id ? "text-foreground" : "text-foreground/30 hover:text-foreground/50"}`}
                 style={tab === t.id ? { background: "rgba(124,58,237,0.5)" } : {}}>
                 {t.label}
+                <span className="text-[9px] px-1.5 py-0.5 rounded-full" style={{ background: tab === t.id ? "rgba(255,255,255,0.2)" : "color-mix(in srgb, var(--foreground) 8%, transparent)" }}>
+                  {t.count}
+                </span>
               </button>
             ))}
           </div>
@@ -857,23 +963,12 @@ export default function ChessTournamentPage() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {filtered.map(t => (
-                <TCard key={t.id} t={t} onOpen={() => setSelected(t)} />
+                <TCard key={t.id} t={t} onOpen={() => navigate(`/chess-tournament/${t.id}`)} />
               ))}
             </div>
           )}
         </div>
       </div>
-
-      {selectedFresh && (
-        <TournamentModal
-          t={selectedFresh}
-          onClose={() => setSelected(null)}
-          onRegister={() => registerM.mutate(selectedFresh.id)}
-          isRegistering={registerM.isPending}
-          registered={!!selectedFresh.user_registered}
-          initialDetailTab={requestedDetailTab}
-        />
-      )}
     </>
   );
 }
