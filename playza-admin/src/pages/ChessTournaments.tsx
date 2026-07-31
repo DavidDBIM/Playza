@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "../lib/api-client";
-import { Trophy, Users, Zap, Plus, Play, X, ChevronRight, Shield, Trash2, Pencil } from "lucide-react";
+import { Trophy, Users, Zap, Plus, Play, X, ChevronRight, Shield, Trash2, Pencil, Link2, Check } from "lucide-react";
 import { MdSportsEsports } from "react-icons/md";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -109,7 +109,7 @@ function fmtTime(secs: number): string {
 }
 
 // ── Bracket Tree Visualiser ──────────────────────────────────────────────────
-function BracketViewer({ fixtures }: { fixtures: Fixture[] }) {
+function BracketViewer({ fixtures, tournamentId }: { fixtures: Fixture[]; tournamentId: string }) {
   const byRound = fixtures
     .filter(f => !f.group_number)
     .reduce<Record<number, Fixture[]>>((acc, f) => {
@@ -138,7 +138,7 @@ function BracketViewer({ fixtures }: { fixtures: Fixture[] }) {
                   {roundFixtures[0]?.round_name ?? `Round ${round}`}
                 </p>
                 {roundFixtures.map(f => (
-                  <FixtureCard key={f.id} fixture={f} />
+                  <FixtureCard key={f.id} fixture={f} tournamentId={tournamentId} />
                 ))}
               </div>
               {!isLast && (
@@ -154,20 +154,39 @@ function BracketViewer({ fixtures }: { fixtures: Fixture[] }) {
   );
 }
 
-function FixtureCard({ fixture }: { fixture: Fixture }) {
+function FixtureCard({ fixture, tournamentId }: { fixture: Fixture; tournamentId: string }) {
   const accentColor = FIXTURE_STATUS_COLOR[fixture.status] ?? "#94a3b8";
   const p1 = fixture.player1?.username ?? (fixture.player1_id ? "Player" : "TBD");
   const p2 = fixture.player2?.username ?? (fixture.is_bye ? "— Bye —" : fixture.player2_id ? "Player" : "TBD");
   const p1Won = fixture.winner_id === fixture.player1_id;
   const p2Won = fixture.winner_id === fixture.player2_id;
+  const [copied, setCopied] = useState(false);
+
+  const matchUrl = fixture.chess_room_id
+    ? `https://playza.games/chess-tournament/${tournamentId}/match/${fixture.chess_room_id}`
+    : null;
+
+  const copyLink = () => {
+    if (!matchUrl) return;
+    navigator.clipboard.writeText(matchUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
 
   return (
     <div className="w-44 rounded-xl overflow-hidden" style={{ border: `1px solid ${accentColor}30`, background: "color-mix(in srgb, var(--foreground) 3%, transparent)" }}>
-      <div className="flex items-center gap-1 px-2 py-0.5" style={{ background: `${accentColor}18` }}>
-        <div className="w-1.5 h-1.5 rounded-full" style={{ background: accentColor }} />
-        <span className="text-[8px] font-black uppercase tracking-widest" style={{ color: accentColor }}>
-          {fixture.status === "bye" ? "Bye" : fixture.status === "active" ? "Live" : fixture.status === "completed" ? "Done" : "Pending"}
-        </span>
+      <div className="flex items-center justify-between gap-1 px-2 py-0.5" style={{ background: `${accentColor}18` }}>
+        <div className="flex items-center gap-1">
+          <div className="w-1.5 h-1.5 rounded-full" style={{ background: accentColor }} />
+          <span className="text-[8px] font-black uppercase tracking-widest" style={{ color: accentColor }}>
+            {fixture.status === "bye" ? "Bye" : fixture.status === "active" ? "Live" : fixture.status === "completed" ? "Done" : "Pending"}
+          </span>
+        </div>
+        {matchUrl && (
+          <button onClick={copyLink} title="Copy shareable match link" className="shrink-0 opacity-60 hover:opacity-100 transition-opacity">
+            {copied ? <Check size={10} className="text-green-400" /> : <Link2 size={10} style={{ color: accentColor }} />}
+          </button>
+        )}
       </div>
       {[{ name: p1, won: p1Won }, { name: p2, won: p2Won }].map((p, i) => (
         <div key={i} className={`flex items-center gap-2 px-2 py-1.5 ${i === 0 ? "border-b border-foreground/[0.06]" : ""}`}
@@ -698,7 +717,7 @@ function TournamentDetail({ t, onClose, onLaunch, onCancel, onEdit, onDelete, is
             </div>
           )}
 
-          {tab === "bracket" && <BracketViewer fixtures={fixtures} />}
+          {tab === "bracket" && <BracketViewer fixtures={fixtures} tournamentId={t.id} />}
           {tab === "standings" && standings.length > 0 && <StandingsTable standings={standings} />}
           {tab === "standings" && standings.length === 0 && (
             <div className="text-center py-10 text-foreground/20 text-sm">No standings data yet</div>

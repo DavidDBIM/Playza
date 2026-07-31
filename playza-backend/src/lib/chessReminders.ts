@@ -26,10 +26,10 @@ async function sendEmail(to: string, subject: string, html: string, text?: strin
 // instead of the marketing-style design used previously. Gmail's Promotions
 // classifier weighs visual style heavily; this reads much closer to a
 // receipt or a GitHub/Stripe-style notification than a promotional email.
-function transactionalShell(opts: { accentColor: string; preheader: string; body: string; ctaLabel?: string; ctaUrl?: string }) {
-  const { accentColor, preheader, body, ctaLabel, ctaUrl } = opts
+function transactionalShell(opts: { accentColor: string; bgTint: string; preheader: string; body: string; ctaLabel?: string; ctaUrl?: string }) {
+  const { accentColor, bgTint, preheader, body, ctaLabel, ctaUrl } = opts
   return `
-  <div style="font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;max-width:520px;margin:auto;background:#ffffff;color:#1a1a1a;">
+  <div style="font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;max-width:520px;margin:auto;background:${bgTint};color:#1a1a1a;">
     <!-- Preheader: hidden preview text shown in the inbox list, before the subject reads as marketing copy -->
     <div style="display:none;max-height:0;overflow:hidden;opacity:0;">${preheader}</div>
     <div style="border-top:3px solid ${accentColor};padding:20px 24px 4px;">
@@ -42,7 +42,7 @@ function transactionalShell(opts: { accentColor: string; preheader: string; body
         <a href="${ctaUrl}" style="display:inline-block;background:${accentColor};color:#ffffff;text-decoration:none;padding:10px 20px;border-radius:6px;font-weight:600;font-size:14px;">${ctaLabel}</a>
       </p>` : ''}
     </div>
-    <div style="padding:14px 24px;border-top:1px solid #eee;">
+    <div style="padding:14px 24px;border-top:1px solid rgba(0,0,0,0.06);">
       <p style="margin:0;font-size:11px;color:#999;">
         Playza Games · This is a tournament notification for a match you're registered in.
         <a href="https://playza.games/profile" style="color:#999;">Manage notification preferences</a>
@@ -122,6 +122,7 @@ function registrationClosedHtml(username: string, t: any, drawTime: Date, drawDe
     </p>`
   return transactionalShell({
     accentColor: '#7c3aed',
+    bgTint: '#f5f3ff',
     preheader: `Registration for ${t.title} is closed — the draw happens ${drawDelayMinutes > 0 ? `in ${drawDelayMinutes} minutes` : 'now'}.`,
     body,
     ctaLabel: 'View tournament',
@@ -159,6 +160,7 @@ function drawCompleteHtml(username: string, t: any, fixture: any) {
     ${fixture?.scheduled_at ? `<p style="font-size:14px;margin:8px 0 0;">Your first match is on <strong>${fmtDate(fixture.scheduled_at)}</strong>.</p>` : ''}`
   return transactionalShell({
     accentColor: '#2563eb',
+    bgTint: '#eff6ff',
     preheader: `Your first match in ${t.title} is against ${opponentName ?? 'your opponent'}.`,
     body,
     ctaLabel: 'View full bracket',
@@ -171,6 +173,7 @@ function matchReminderHtml(username: string, t: any, fixture: any, minutesLeft: 
     ? fixture?.player2?.username
     : fixture?.player1?.username
   const accentColor = minutesLeft <= 5 ? '#dc2626' : '#7c3aed'
+  const bgTint = minutesLeft <= 5 ? '#fef2f2' : '#f5f3ff'
   const body = `
     <p style="font-size:15px;line-height:1.6;margin:0 0 16px;">Hi ${username},</p>
     <p style="font-size:15px;line-height:1.6;margin:0 0 16px;">
@@ -186,6 +189,7 @@ function matchReminderHtml(username: string, t: any, fixture: any, minutesLeft: 
     </p>`
   return transactionalShell({
     accentColor,
+    bgTint,
     preheader: minutesLeft <= 5 ? 'Your chess match is starting now.' : `Your chess match starts in ${minutesLeft} minutes.`,
     body,
     ctaLabel: minutesLeft <= 5 ? 'Play now' : 'Open match',
@@ -202,6 +206,7 @@ function tournamentStartingHtml(username: string, t: any) {
     ${t.prize_pool > 0 ? `<p style="font-size:14px;color:#555;margin:0;">Prize pool: <strong style="color:#1a1a1a;">${t.prize_pool.toLocaleString()} ZA</strong></p>` : ''}`
   return transactionalShell({
     accentColor: '#16a34a',
+    bgTint: '#f0fdf4',
     preheader: `${t.title} starts in 30 minutes.`,
     body,
     ctaLabel: 'Open tournament',

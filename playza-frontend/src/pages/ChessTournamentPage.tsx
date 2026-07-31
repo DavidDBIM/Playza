@@ -5,7 +5,7 @@ import { useAuth } from "@/context/auth";
 import SEO from "@/components/SEO";
 import { Trophy, Users, Clock, Crown, ArrowLeft } from "lucide-react";
 import {
-  getChessTournaments, registerChessTournament,
+  getChessTournaments, getChessTournament, registerChessTournament,
   getChessTournamentFixtures, getChessTournamentStandings, getChessTournamentResults,
   type ChessTournament, type TournamentFixture, type TournamentStanding, type TournamentResult,
 } from "@/api/chess-tournament.api";
@@ -57,7 +57,8 @@ const BRACKET_CARD_W = 208;  // widened slightly for more breathing room around 
 const BRACKET_GAP_Y = 14;    // vertical gap between round-1 cards
 const BRACKET_GAP_X = 40;    // horizontal gap between round columns (connector space)
 
-function BracketTree({ fixtures, userId }: { fixtures: TournamentFixture[]; userId?: string }) {
+function BracketTree({ fixtures, userId, tournamentId }: { fixtures: TournamentFixture[]; userId?: string; tournamentId: string }) {
+  const navigate = useNavigate();
   const knockout = fixtures.filter(f => !f.group_number);
   const byRound = knockout.reduce<Record<number, TournamentFixture[]>>((acc, f) => {
     (acc[f.round_number] = acc[f.round_number] ?? []).push(f);
@@ -145,23 +146,25 @@ function BracketTree({ fixtures, userId }: { fixtures: TournamentFixture[]; user
               const p1Won = f.winner_id === f.player1_id;
               const p2Won = f.winner_id === f.player2_id;
               const meInvolved = userId && (f.player1_id === userId || f.player2_id === userId);
+              const isWatchable = f.status === "active" && !!f.chess_room_id;
               return (
-                <div key={f.id} className="absolute rounded-xl overflow-hidden"
+                <div key={f.id} className={`absolute rounded-xl overflow-hidden transition-transform ${isWatchable ? "cursor-pointer hover:scale-[1.03]" : ""}`}
+                  onClick={isWatchable ? () => navigate(`/chess-tournament/${tournamentId}/match/${f.chess_room_id}`) : undefined}
                   style={{
                     left: r * colWidth, width: BRACKET_CARD_W, height: BRACKET_CARD_H,
                     top: 28 + centers[r]![i]! - BRACKET_CARD_H / 2,
-                    border: `1px solid ${meInvolved ? "#a855f7" : accent}30`,
+                    border: `1px solid ${meInvolved ? "#a855f7" : isWatchable ? "#ef4444" : accent}30`,
                     background: meInvolved ? "rgba(124,58,237,0.08)" : "var(--card)",
-                    boxShadow: meInvolved ? "0 0 12px rgba(168,85,247,0.2)" : "none",
+                    boxShadow: meInvolved ? "0 0 12px rgba(168,85,247,0.2)" : isWatchable ? "0 0 12px rgba(239,68,68,0.15)" : "none",
                   }}>
                   <div className="flex items-center justify-between px-2.5 py-1" style={{ background: `${accent}15` }}>
                     <div className="flex items-center gap-1">
-                      <div className="w-1.5 h-1.5 rounded-full" style={{ background: accent }} />
+                      <div className={`w-1.5 h-1.5 rounded-full ${isWatchable ? "animate-pulse" : ""}`} style={{ background: accent }} />
                       <span className="text-[8px] font-black uppercase tracking-widest" style={{ color: accent }}>
                         {f.status === "bye" ? "Bye" : f.status === "active" ? "Live" : f.status === "scheduled" ? "Scheduled" : f.status === "completed" ? "Final" : "Pending"}
                       </span>
                     </div>
-                    {meInvolved && <span className="text-[8px] font-black text-violet-400">YOU</span>}
+                    {meInvolved ? <span className="text-[8px] font-black text-violet-400">YOU</span> : isWatchable ? <span className="text-[8px] font-black text-red-400">👁 WATCH</span> : null}
                   </div>
                   {[{ name: p1, won: p1Won, id: f.player1_id }, { name: p2, won: p2Won, id: f.player2_id }].map((p, pi) => {
                     const isMe = p.id === userId;
@@ -385,7 +388,7 @@ function FinalResults({ results, userId }: { results: TournamentResult[]; userId
           return (
             <div key={rank} className={`flex flex-col items-center justify-end ${rank === 1 ? "flex-[1.15]" : "flex-1"} max-w-[150px]`}>
               <div className="text-3xl mb-1">{m.emoji}</div>
-              {recipients.map((r, i) => (
+              {recipients.map((r) => (
                 <div key={r.user_id} className="w-full text-center mb-1">
                   <p className={`text-xs font-black truncate ${r.user_id === userId ? "text-violet-400" : "text-foreground"}`}>{r.username}</p>
                   {r.prize_won > 0 && <p className="text-[10px] font-bold" style={{ color: m.color }}>+{r.prize_won.toLocaleString()} ZA</p>}
@@ -405,7 +408,7 @@ function FinalResults({ results, userId }: { results: TournamentResult[]; userId
         <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid color-mix(in srgb, var(--foreground) 7%, transparent)" }}>
           {restRanks.map(rank => (
             <div key={rank}>
-              {byRank[rank].map((r, i) => (
+              {byRank[rank].map((r) => (
                 <div key={r.user_id} className="flex items-center gap-3 px-4 py-2.5"
                   style={{
                     borderBottom: "1px solid color-mix(in srgb, var(--foreground) 4%, transparent)",
@@ -500,7 +503,7 @@ function TournamentDetailPage({ tournamentId, initialDetailTab }: {
     );
   }
 
-  const sc = STATUS_CFG[t.status] ?? STATUS_CFG.registration;
+  const sc = STATUS_CFG[t.status as keyof typeof STATUS_CFG] ?? STATUS_CFG.registration;
   const registered = !!t.user_registered;
 
   return (
@@ -632,7 +635,7 @@ function TournamentDetailPage({ tournamentId, initialDetailTab }: {
         {/* Content */}
         <div className="mb-6">
           {tab === "bracket" && (t.status === "active" || t.status === "completed") && (
-            <BracketTree fixtures={fixtures} userId={user?.id} />
+            <BracketTree fixtures={fixtures} userId={user?.id} tournamentId={tournamentId} />
           )}
           {tab === "fixtures" && (t.status === "active" || t.status === "completed") && (
             <MyFixtures fixtures={fixtures} userId={user?.id} />
@@ -738,7 +741,7 @@ function ChessRulesModal({ t, onClose }: { t: ChessTournament; onClose: () => vo
 
 // ── Tournament card ───────────────────────────────────────────────────────────
 function TCard({ t, onOpen }: { t: ChessTournament; onOpen: () => void }) {
-  const sc = STATUS_CFG[t.status] ?? STATUS_CFG.registration;
+  const sc = STATUS_CFG[t.status as keyof typeof STATUS_CFG] ?? STATUS_CFG.registration;
   const fill = Math.min(((t.player_count ?? 0) / t.bracket_size) * 100, 100);
   const { timeLeft: regTimeLeft, expired: regExpired } = useCountdown(t.status === "registration" ? t.registration_end : null);
   const spotsLeft = t.bracket_size - (t.player_count ?? 0);

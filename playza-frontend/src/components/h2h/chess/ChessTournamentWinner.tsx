@@ -192,11 +192,11 @@ export default function ChessTournamentWinner({
               <p className="text-[9px] font-black uppercase tracking-widest text-violet-500">
                 {nextFixture.round_name ?? "Next Match"}
               </p>
-              <p className="text-sm font-black text-slate-900 dark:text-white truncate">
-                Your next match is against {nextOpponentName}
+              <p className="text-base font-black text-slate-900 dark:text-white leading-snug">
+                Your next match is against <span className="text-violet-500">{nextOpponentName}</span>
               </p>
-              <p className="text-xs font-bold text-slate-500 mt-0.5">
-                {nextMatchTime ? `Kicks off ${nextMatchTime}` : nextFixture.chess_room_id ? "Ready now" : "Time TBD"}
+              <p className="text-sm font-black mt-1" style={{ color: "#f59e0b" }}>
+                {nextMatchTime ? `⏰ Kicks off ${nextMatchTime}` : nextFixture.chess_room_id ? "Ready now" : "Time TBD"}
               </p>
             </div>
           </div>

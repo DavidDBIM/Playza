@@ -1,10 +1,11 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useState } from "react";
 import { useParams, useNavigate } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/context/auth";
 import { useH2HRoom } from "@/hooks/h2h/useH2H";
 import { getChessTournament, getChessTournamentFixtures } from "@/api/chess-tournament.api";
 import ChessTournamentWinner from "@/components/h2h/chess/ChessTournamentWinner";
+import { Share2, Check } from "lucide-react";
 
 const ChessArena = lazy(() => import("@/components/h2h/chess/ChessArena"));
 
@@ -55,6 +56,30 @@ export default function ChessTournamentMatch() {
       ? myFixture.player2?.username
       : myFixture.player1?.username
     : null;
+
+  const [linkCopied, setLinkCopied] = useState(false);
+  const handleShare = async () => {
+    const url = `https://playza.games/chess-tournament/${tournamentId}/match/${roomId}`;
+    const title = tournament ? `${tournament.title} — live on Playza` : "Live chess match on Playza";
+    const text = myFixture
+      ? `Watch this live chess match on Playza: ${myFixture.player1?.username ?? "Player 1"} vs ${myFixture.player2?.username ?? "Player 2"}`
+      : "Watch this live chess match on Playza";
+    // Web Share API opens the native share sheet on mobile (WhatsApp, SMS,
+    // etc.) — the ideal path for "show family and friends". Falls back to
+    // copying the link on desktop browsers that don't support it.
+    if (navigator.share) {
+      try {
+        await navigator.share({ title, text, url });
+        return;
+      } catch {
+        // user cancelled the share sheet — fall through silently
+        return;
+      }
+    }
+    navigator.clipboard.writeText(url);
+    setLinkCopied(true);
+    setTimeout(() => setLinkCopied(false), 1800);
+  };
 
   if (roomError) {
     return (
@@ -113,9 +138,17 @@ export default function ChessTournamentMatch() {
           )}
         </div>
 
-        <div className="flex items-center gap-1.5">
-          <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-          <span className="text-[9px] font-black uppercase tracking-widest text-red-400">Live</span>
+        <div className="flex items-center gap-2 shrink-0">
+          <button onClick={handleShare} title="Share this match"
+            className="flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider transition-colors"
+            style={{ background: "rgba(124,58,237,0.15)", color: linkCopied ? "#4ade80" : "#a855f7" }}>
+            {linkCopied ? <Check size={11} /> : <Share2 size={11} />}
+            <span className="hidden sm:inline">{linkCopied ? "Copied!" : "Share"}</span>
+          </button>
+          <div className="flex items-center gap-1.5">
+            <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+            <span className="text-[9px] font-black uppercase tracking-widest text-red-400">Live</span>
+          </div>
         </div>
       </div>
 
