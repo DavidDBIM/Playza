@@ -752,8 +752,40 @@ export async function finishChessTournament(tournamentId: string, championId: st
       .select('user_id, username')
       .eq('tournament_id', tournamentId)
 
-    // Sort: champion first, then by elimination round desc
-    const sortedPlayers = (players ?? []).sort((a, b) => {
+    // Group-stage standings, needed to fairly order players who never made
+    // it into the knockout phase at all (group+knockout tournaments only —
+    // empty array for pure knockout, where this is a no-op).
+    const { data: groupStandings } = await supabaseAdmin
+      .from('chess_tournament_standings')
+      .select('user_id, points, game_wins_margin')
+      .eq('tournament_id', tournamentId)
+    const standingByUser: Record<string, { points: number; game_wins_margin: number }> = {}
+    for (const s of (groupStandings ?? [])) standingByUser[s.user_id] = s
+
+    // Players who reached the knockout phase (they, or their eventual
+    // eliminator, appear in a knockout fixture) vs. players eliminated
+    // purely in the group stage and never played a knockout match at all.
+    // These two pools must never be merged: previously, EVERY group-only
+    // elimination defaulted to the same eliminationRound (0) as every other
+    // one, so in a group+knockout tournament with a small knockout bracket
+    // (e.g. only 2 players advance, meaning there's no separate semifinal
+    // round), all of them got tied together into one giant group at
+    // whatever rank came right after the finalist — often exactly rank 3.
+    // With that many people sharing one rank, the per-person prize floored
+    // to 0 and the entire tier was silently skipped — nobody got paid.
+    const knockoutPlayerIds = new Set(Object.keys(eliminationRound))
+    knockoutPlayerIds.add(championId)
+    for (const f of (allFixtures ?? [])) {
+      if (f.player1_id) knockoutPlayerIds.add(f.player1_id)
+      if (f.player2_id) knockoutPlayerIds.add(f.player2_id)
+    }
+
+    const knockoutPlayers = (players ?? []).filter(p => knockoutPlayerIds.has(p.user_id))
+    const groupOnlyPlayers = (players ?? []).filter(p => !knockoutPlayerIds.has(p.user_id))
+
+    // Sort: champion first, then by elimination round desc — only among
+    // players who actually reached the knockout phase.
+    const sortedKnockoutPlayers = knockoutPlayers.sort((a, b) => {
       if (a.user_id === championId) return -1
       if (b.user_id === championId) return 1
       const ra = eliminationRound[a.user_id] ?? 0
@@ -761,10 +793,21 @@ export async function finishChessTournament(tournamentId: string, championId: st
       return rb - ra
     })
 
+    // Group-only eliminations rank strictly below every knockout finisher,
+    // ordered fairly by their own group performance instead of one flat tie.
+    const sortedGroupOnlyPlayers = groupOnlyPlayers.sort((a, b) => {
+      const sa = standingByUser[a.user_id], sb = standingByUser[b.user_id]
+      if (!sa || !sb) return 0
+      if (sb.points !== sa.points) return sb.points - sa.points
+      return sb.game_wins_margin - sa.game_wins_margin
+    })
+
+    const sortedPlayers = [...sortedKnockoutPlayers, ...sortedGroupOnlyPlayers]
+
     // Assign final ranks
     let currentRank = 1
     let i = 0
-    while (i < sortedPlayers.length) {
+    while (i < sortedKnockoutPlayers.length) {
       const player = sortedPlayers[i]
       if (player.user_id === championId) {
         rankAssignments[player.user_id] = 1
@@ -774,13 +817,19 @@ export async function finishChessTournament(tournamentId: string, championId: st
       }
       // Group players eliminated in the same round — they share the same rank
       const sameRound = eliminationRound[player.user_id] ?? 0
-      const groupEnd = sortedPlayers.slice(i).findIndex(p => (eliminationRound[p.user_id] ?? 0) !== sameRound)
-      const groupSize = groupEnd === -1 ? sortedPlayers.length - i : groupEnd
+      const groupEnd = sortedKnockoutPlayers.slice(i).findIndex(p => (eliminationRound[p.user_id] ?? 0) !== sameRound)
+      const groupSize = groupEnd === -1 ? sortedKnockoutPlayers.length - i : groupEnd
       for (let j = i; j < i + groupSize; j++) {
         rankAssignments[sortedPlayers[j].user_id] = currentRank
       }
       currentRank += groupSize
       i += groupSize
+    }
+    // Group-only eliminations continue the rank sequence individually
+    // (each their own distinct rank, ordered by group performance) rather
+    // than sharing one rank between all of them.
+    for (let k = 0; k < sortedGroupOnlyPlayers.length; k++) {
+      rankAssignments[sortedGroupOnlyPlayers[k].user_id] = currentRank + k
     }
 
     // ── Pay prizes by rank ────────────────────────────────────────────────
