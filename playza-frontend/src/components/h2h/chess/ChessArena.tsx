@@ -142,6 +142,13 @@ const ChessArena = ({ room, user, backTo = "/h2h", backLabel = "H2H ZONE", rende
   const [inCheck, setInCheck] = useState(false);
   const [checkmateDeclared, setCheckmateDeclared] = useState(false);
   const [showWinnerDelayed, setShowWinnerDelayed] = useState(false);
+  // Set once the player manually closes the result card via its X button.
+  // Without this, the two effects below — which show the card whenever the
+  // game is over / the room is finished — would just see showWinnerDelayed
+  // flip back to false and immediately re-schedule showing it again, since
+  // "the game is over" never stops being true. This makes a manual close
+  // permanent for the rest of this game.
+  const dismissedByUserRef = useRef(false);
   const [showResignModal, setShowResignModal] = useState(false);
   const [resignationWinnerId, setResignationWinnerId] = useState<string | null>(null);
 
@@ -326,7 +333,7 @@ const ChessArena = ({ room, user, backTo = "/h2h", backLabel = "H2H ZONE", rende
   // animating on the board. It never auto-closes — the player leaves it via
   // its own buttons, whenever they choose.
   useEffect(() => {
-    if (game.isGameOver() && !showWinnerDelayed) {
+    if (game.isGameOver() && !showWinnerDelayed && !dismissedByUserRef.current) {
       const timeoutId = setTimeout(() => {
         setShowWinnerDelayed(true);
       }, 1200);
@@ -346,7 +353,7 @@ const ChessArena = ({ room, user, backTo = "/h2h", backLabel = "H2H ZONE", rende
 
   // ── Sync Winner Screen for Opponent when Resignation/Timeout occurs ────────
   useEffect(() => {
-    if (room.status === "finished" && !showWinnerDelayed) {
+    if (room.status === "finished" && !showWinnerDelayed && !dismissedByUserRef.current) {
       // If the room status is finished but we haven't shown the winner screen
       // yet (which happens for the player who didn't trigger the game-over
       // themselves), show it now! It stays up until the player navigates
@@ -1265,12 +1272,12 @@ const ChessArena = ({ room, user, backTo = "/h2h", backLabel = "H2H ZONE", rende
               moveCount,
               whiteTimeLeft: whiteTime,
               blackTimeLeft: blackTime,
-              onClose: () => setShowWinnerDelayed(false),
+              onClose: () => { dismissedByUserRef.current = true; setShowWinnerDelayed(false); },
             })
           ) : (
             <div className="relative w-full max-w-2xl my-auto bg-white dark:bg-slate-900 rounded-xl overflow-hidden border border-white/10">
               <button
-                onClick={() => setShowWinnerDelayed(false)}
+                onClick={() => { dismissedByUserRef.current = true; setShowWinnerDelayed(false); }}
                 aria-label="Close"
                 className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full flex items-center justify-center bg-black/10 dark:bg-white/10 text-slate-500 dark:text-slate-300 hover:bg-black/20 dark:hover:bg-white/20 transition-colors"
               >
