@@ -52,7 +52,7 @@ const FIXTURE_ACCENT: Record<string, string> = {
 };
 
 // ── Bracket tree ──────────────────────────────────────────────────────────────
-const BRACKET_CARD_H = 84;   // fixed card height so connector math is exact
+const BRACKET_CARD_H = 104;  // fixed card height so connector math is exact — was 84, too small for the actual header (~20px) + two player rows (~40px each) content, causing the bottom row to clip against overflow-hidden
 const BRACKET_CARD_W = 208;  // widened slightly for more breathing room around names
 const BRACKET_GAP_Y = 14;    // vertical gap between round-1 cards
 const BRACKET_GAP_X = 40;    // horizontal gap between round columns (connector space)
@@ -497,7 +497,7 @@ function TournamentDetailPage({ tournamentId, initialDetailTab }: {
 
   if (tLoading || !t) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--background)" }}>
+      <div className="dark min-h-screen flex items-center justify-center" style={{ background: "radial-gradient(ellipse at top, rgba(124,58,237,0.1), transparent 60%), #0a0a12" }}>
         <div className="w-8 h-8 border-2 border-violet-500/20 border-t-violet-500 rounded-full animate-spin" />
       </div>
     );
@@ -507,7 +507,7 @@ function TournamentDetailPage({ tournamentId, initialDetailTab }: {
   const registered = !!t.user_registered;
 
   return (
-    <div className="min-h-screen pb-28" style={{ background: "var(--background)" }}>
+    <div className="dark min-h-screen pb-28" style={{ background: "radial-gradient(ellipse at top, rgba(124,58,237,0.1), transparent 60%), #0a0a12" }}>
       <div className="max-w-3xl mx-auto px-4 pt-6">
         <button onClick={() => navigate("/chess-tournament")}
           className="flex items-center gap-1.5 text-xs font-bold text-foreground/40 hover:text-foreground/70 transition-colors mb-4">
@@ -535,6 +535,11 @@ function TournamentDetailPage({ tournamentId, initialDetailTab }: {
               <Crown className="w-5 h-5 shrink-0 text-amber-400/70" />
               <h1 className="font-black text-foreground text-2xl leading-snug">{t.title}</h1>
             </div>
+            {t.description && (
+              <p className="text-sm text-foreground/50 font-medium leading-relaxed mt-2 max-w-lg">
+                {t.description}
+              </p>
+            )}
             <div className="flex items-center gap-3 flex-wrap mt-3">
               <span className="flex items-center gap-1.5 text-xs font-bold text-foreground/50"><Users size={13} /> {t.bracket_size} players</span>
               <span className="flex items-center gap-1.5 text-xs font-bold text-foreground/50"><Clock size={13} /> {fmtTime(t.time_control_secs)}{t.increment_secs > 0 ? ` +${t.increment_secs}s` : ""}</span>
@@ -780,6 +785,11 @@ function TCard({ t, onOpen }: { t: ChessTournament; onOpen: () => void }) {
           <Crown className="w-3.5 h-3.5 shrink-0 text-amber-400/70" />
           <h3 className="font-black text-foreground text-[15px] leading-snug line-clamp-2">{t.title}</h3>
         </div>
+        {t.description && (
+          <p className="relative text-[11px] text-foreground/40 font-medium leading-snug line-clamp-2 mt-1.5">
+            {t.description}
+          </p>
+        )}
       </div>
 
       {/* Thin alternating divider — a one-row chessboard rank, the card's connective tissue between header and stats */}
@@ -925,7 +935,7 @@ export default function ChessTournamentPage() {
     <>
       <SEO title="Chess Tournaments — Playza" description="Compete in Playza chess tournaments. Bracket and group-stage formats, real prizes." />
 
-      <div className="min-h-screen pb-28" style={{ background: "var(--background)" }}>
+      <div className="dark min-h-screen pb-28" style={{ background: "radial-gradient(ellipse at top, rgba(124,58,237,0.1), transparent 60%), #0a0a12" }}>
         {/* Hero */}
         <div className="px-4 pt-8 pb-6 max-w-2xl mx-auto">
           <div className="flex items-center gap-3 mb-4">
