@@ -12,6 +12,7 @@ import { useSignup } from "@/hooks/auth/useSignup";
 import { useRegistration } from "@/hooks/auth/useRegistration";
 import { useValidateReferral } from "@/hooks/referral/useValidateReferral";
 import { Link, useLocation } from "react-router";
+import Turnstile from "@/components/common/Turnstile";
 
 interface RegistrationFormProps {
   onClick: (value: string) => void;
@@ -47,6 +48,8 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
   const [countrySearch, setCountrySearch] = useState("");
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState(COUNTRIES[0]);
+  const [captchaToken, setCaptchaToken] = useState("");
+  const [turnstileKey, setTurnstileKey] = useState(0);
 
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
@@ -144,6 +147,7 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
       country: data.country,
       phone: `${data.dialCode}${data.phone}`,
       password: data.password,
+      captcha_token: captchaToken,
       ...(data.referralCode?.trim() ? { referral_code: data.referralCode.trim() } : {}),
     };
 
@@ -156,6 +160,10 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
       onError: (err: unknown) => {
         const error = err as { response?: { data?: { message?: string } }; message?: string };
         setFormError(error.response?.data?.message || error.message || "An error occurred during signup");
+        // Token is single-use — Cloudflare invalidates it the moment the
+        // backend checks it, so a fresh widget is needed for the retry.
+        setCaptchaToken("");
+        setTurnstileKey((k) => k + 1);
       },
     });
   };
@@ -396,9 +404,13 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
             {errors.acceptedTerms && <p className="text-[10px] text-red-500 font-bold ml-1 italic">{errors.acceptedTerms.message}</p>}
           </div>
 
+          <div className="flex justify-center pt-2">
+            <Turnstile key={turnstileKey} onVerify={setCaptchaToken} />
+          </div>
+
           <div className="pt-4">
             <Button
-              disabled={isPending || !isValid || (!!referralCodeValue && referralCodeValue.length >= 4 && validationData?.valid === false)}
+              disabled={isPending || !isValid || (!!referralCodeValue && referralCodeValue.length >= 4 && validationData?.valid === false) || (!!import.meta.env.VITE_TURNSTILE_SITE_KEY && !captchaToken)}
               className="w-full h-14 bg-primary text-black font-black uppercase tracking-widest rounded-xl shadow-lg shadow-primary/10 hover:shadow-primary/30 hover:-translate-y-0.5 transition-all group border-none relative overflow-hidden disabled:opacity-50 disabled:translate-y-0 disabled:shadow-none"
               type="submit"
             >

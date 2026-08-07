@@ -6,6 +6,7 @@ export interface SignupPayload {
   phone: string;
   password: string;
   referral_code?: string;
+  captcha_token: string;
 }
 export interface SignupResponse {
   success: boolean;
@@ -28,7 +29,7 @@ export interface VerifyOtpResponse {
 }
 export interface ResendOtpPayload { email: string }
 export interface ResendOtpResponse { success: boolean; data: { message: string } }
-export interface SigninPayload { identifier: string; password: string }
+export interface SigninPayload { identifier: string; password: string; captcha_token: string }
 export interface SigninResponse {
   success: boolean;
   data: {

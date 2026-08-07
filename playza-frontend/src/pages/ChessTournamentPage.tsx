@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import type { ReactNode } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/auth";
@@ -33,6 +34,39 @@ function useCountdown(targetIso: string | null | undefined) {
 function fmtTime(secs: number) {
   if (secs >= 60) return `${Math.floor(secs / 60)}m${secs % 60 > 0 ? `+${secs % 60}s` : ""}`;
   return `${secs}s`;
+}
+
+// Turns any URL or bare domain (facebook.com, https://x.com/foo, www.site.io)
+// found inside admin-entered free text into a clickable "🔗 Click me" pill,
+// leaving everything else exactly as written. Used anywhere a tournament
+// description is rendered so admins can safely drop plain links in.
+const LINK_PATTERN = /((?:https?:\/\/)?(?:www\.)?[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,62}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,62}[a-zA-Z0-9])?)+(?:\/[^\s]*)?)/g;
+function linkifyText(text: string): ReactNode {
+  // split() with a single capturing group interleaves the matches into the
+  // result: [text, match, text, match, ..., text] — so odd indices are
+  // always the matched links, no regex.lastIndex statefulness to worry about.
+  const parts = text.split(LINK_PATTERN);
+  return parts.map((part, i) => {
+    if (!part) return null;
+    if (i % 2 === 0) return <span key={i}>{part}</span>;
+    // Strip trailing punctuation that's clearly sentence punctuation, not
+    // part of the URL (e.g. "...visit facebook.com." shouldn't link the dot)
+    const trailingMatch = part.match(/[),.!?;:'"]+$/);
+    const trailing = trailingMatch ? trailingMatch[0] : "";
+    const core = trailing ? part.slice(0, -trailing.length) : part;
+    if (!core || !/[a-zA-Z]{2,}$/.test(core.replace(/\/[^\s]*$/, ""))) return <span key={i}>{part}</span>;
+    const href = /^https?:\/\//i.test(core) ? core : `https://${core}`;
+    return (
+      <span key={i}>
+        <a href={href} target="_blank" rel="noopener noreferrer nofollow" onClick={e => e.stopPropagation()}
+          className="inline-flex items-center gap-1 px-2 py-0.5 mx-0.5 rounded-full text-[10px] font-black align-middle transition-transform hover:scale-105"
+          style={{ background: "rgba(124,58,237,0.18)", color: "#c084fc" }}>
+          🔗 Click me
+        </a>
+        {trailing}
+      </span>
+    );
+  });
 }
 
 const STATUS_CFG = {
@@ -349,6 +383,52 @@ function GroupStandings({ standings, userId }: { standings: TournamentStanding[]
   );
 }
 
+// ── Live matches spectator picker ─────────────────────────────────────────────
+// Anyone without a game of their own to play right now — a visitor who never
+// registered, a registered player still waiting on their next round, or a
+// registered player who's already been eliminated — lands here instead of an
+// empty state. If several matches are live at once, this is the "which one
+// do you want to watch" picker rather than making them dig through the
+// bracket to find a live card.
+function LiveMatchesPanel({ fixtures, userId, tournamentId }: { fixtures: TournamentFixture[]; userId?: string; tournamentId: string }) {
+  const navigate = useNavigate();
+  const live = fixtures.filter(f => f.status === "active" && !!f.chess_room_id);
+
+  if (!live.length) return null;
+
+  return (
+    <div className="mb-4 rounded-2xl overflow-hidden" style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.22)" }}>
+      <div className="flex items-center gap-2 px-4 pt-3.5 pb-2.5">
+        <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+        <p className="text-xs font-black text-foreground">
+          {live.length === 1 ? "1 match live right now" : `${live.length} matches live right now`}
+        </p>
+        <span className="text-[9px] text-foreground/30 font-bold">— pick one to watch</span>
+      </div>
+      <div className="px-3 pb-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+        {live.map(f => {
+          const meInvolved = userId && (f.player1_id === userId || f.player2_id === userId);
+          const p1 = f.player1?.username ?? "Player";
+          const p2 = f.player2?.username ?? "Player";
+          return (
+            <button key={f.id} onClick={() => navigate(`/chess-tournament/${tournamentId}/match/${f.chess_room_id}`)}
+              className="flex items-center justify-between gap-2 rounded-xl px-3.5 py-2.5 text-left transition-transform hover:scale-[1.02]"
+              style={{ background: "var(--card)", border: `1px solid ${meInvolved ? "rgba(168,85,247,0.4)" : "rgba(239,68,68,0.25)"}` }}>
+              <div className="min-w-0">
+                <p className="text-[8px] font-black uppercase tracking-widest text-foreground/25 mb-0.5">{f.round_name}</p>
+                <p className="text-xs font-bold text-foreground/70 truncate">{p1} <span className="text-foreground/25">vs</span> {p2}</p>
+              </div>
+              <span className="shrink-0 text-[9px] font-black px-2.5 py-1.5 rounded-full text-white animate-pulse" style={{ background: "linear-gradient(135deg,#dc2626,#ef4444)" }}>
+                👁 WATCH
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ── Final results podium — shown once a tournament completes ─────────────────
 function FinalResults({ results, userId }: { results: TournamentResult[]; userId?: string }) {
   if (!results.length) return (
@@ -454,7 +534,7 @@ function TournamentDetailPage({ tournamentId, initialDetailTab }: {
   });
 
   const [tab, setTab] = useState<"bracket" | "standings" | "fixtures" | "results">(
-    initialDetailTab === "standings" && t?.format === "group_knockout" ? "standings" : "bracket"
+    initialDetailTab === "standings" && t?.format === "group_knockout" ? "standings" : "fixtures"
   );
   const [showRules, setShowRules] = useState(false);
 
@@ -537,7 +617,7 @@ function TournamentDetailPage({ tournamentId, initialDetailTab }: {
             </div>
             {t.description && (
               <p className="text-sm text-foreground/50 font-medium leading-relaxed mt-2 max-w-lg">
-                {t.description}
+                {linkifyText(t.description)}
               </p>
             )}
             <div className="flex items-center gap-3 flex-wrap mt-3">
@@ -591,6 +671,13 @@ function TournamentDetailPage({ tournamentId, initialDetailTab }: {
           </div>
         )}
 
+        {/* Live matches — anyone without a game of their own right now (never
+            registered, eliminated already, or just waiting on their next
+            round) gets a picker for whichever matches are currently live. */}
+        {t.status === "active" && !myActiveFixture && (
+          <LiveMatchesPanel fixtures={fixtures} userId={user?.id} tournamentId={tournamentId} />
+        )}
+
         {/* Registration state: countdown or progress */}
         {(t.status === "registration" || t.status === "lobby") && (
           <div className="rounded-2xl p-6 mb-4 text-center" style={{ border: "1px solid color-mix(in srgb, var(--foreground) 7%, transparent)" }}>
@@ -623,8 +710,8 @@ function TournamentDetailPage({ tournamentId, initialDetailTab }: {
         {(t.status === "active" || t.status === "completed") && (
           <div className="flex gap-1 p-1 rounded-xl w-fit mb-5" style={{ background: "color-mix(in srgb, var(--foreground) 4%, transparent)" }}>
             {[
-              { id: "bracket" as const, label: "Bracket" },
               { id: "fixtures" as const, label: "My Fixtures" },
+              { id: "bracket" as const, label: "Bracket" },
               ...(t.format === "group_knockout" ? [{ id: "standings" as const, label: "Standings" }] : []),
               ...(t.status === "completed" ? [{ id: "results" as const, label: "🏆 Results" }] : []),
             ].map(tb => (
@@ -787,7 +874,7 @@ function TCard({ t, onOpen }: { t: ChessTournament; onOpen: () => void }) {
         </div>
         {t.description && (
           <p className="relative text-[11px] text-foreground/40 font-medium leading-snug line-clamp-2 mt-1.5">
-            {t.description}
+            {linkifyText(t.description)}
           </p>
         )}
       </div>

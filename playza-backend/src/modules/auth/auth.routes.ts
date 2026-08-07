@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { validate } from '../../middleware/validate'
 import { authLimiter, otpLimiter, passwordResetLimiter, refreshLimiter } from '../../middleware/rateLimit'
+import { verifyCaptcha } from '../../middleware/captcha'
 import {
   signupController,
   signinController,
@@ -23,8 +24,12 @@ import {
 
 const router = Router()
 
-router.post('/signup', authLimiter, validate(signupSchema), signupController)
-router.post('/signin', authLimiter, validate(signinSchema), signinController)
+// Signup and signin are the two endpoints bots actually hit at scale (fake
+// account farming, credential stuffing) — captcha runs after the rate
+// limiter but before the request touches Supabase, so an unverified
+// request never even gets a validation error to learn from.
+router.post('/signup', authLimiter, verifyCaptcha, validate(signupSchema), signupController)
+router.post('/signin', authLimiter, verifyCaptcha, validate(signinSchema), signinController)
 router.post('/admin/signin', authLimiter, validate(signinSchema), adminSigninController)
 router.post('/admin/verify-mfa', otpLimiter, verifyAdminMfaController)
 router.post('/verify-otp', otpLimiter, validate(verifyOtpSchema), verifyOtpController)

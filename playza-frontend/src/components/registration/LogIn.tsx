@@ -2,6 +2,7 @@ import { useState } from "react";
 import { User, Lock, Loader2, Eye, EyeOff, ArrowRight } from "lucide-react";
 import { useLogin } from "@/hooks/auth/useLogin";
 import { useNavigate, useSearchParams } from "react-router";
+import Turnstile from "@/components/common/Turnstile";
 
 import { useAuth } from "@/context/auth";
 
@@ -13,6 +14,8 @@ const LogIn = ({ onClick }: LogInProps) => {
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState("");
+  const [turnstileKey, setTurnstileKey] = useState(0);
   const [searchParams] = useSearchParams();
   const { mutate: login, isPending, error } = useLogin();
 
@@ -22,7 +25,7 @@ const LogIn = ({ onClick }: LogInProps) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     login(
-      { identifier, password },
+      { identifier, password, captcha_token: captchaToken },
       {
         onSuccess: (data) => {
           const { access_token, refresh_token, user } = data.data;
@@ -46,7 +49,15 @@ const LogIn = ({ onClick }: LogInProps) => {
           navigate(redirectTo);
         },
 
-        onError: () => {},
+        // A Turnstile token is single-use — Cloudflare invalidates it the
+        // moment the backend checks it, success or fail. So on a failed
+        // login (e.g. wrong password) we have to re-mount the widget to
+        // get a fresh token, otherwise the next attempt would fail captcha
+        // even with the right password.
+        onError: () => {
+          setCaptchaToken("");
+          setTurnstileKey((k) => k + 1);
+        },
       },
     );
   };
@@ -129,10 +140,14 @@ const LogIn = ({ onClick }: LogInProps) => {
             </p>
           )}
 
+          <div className="flex justify-center">
+            <Turnstile key={turnstileKey} onVerify={setCaptchaToken} />
+          </div>
+
           <div className="space-y-4 pt-2">
             <button
               type="submit"
-              disabled={isPending}
+              disabled={isPending || !identifier || !password || (!!import.meta.env.VITE_TURNSTILE_SITE_KEY && !captchaToken)}
               className="w-full bg-primary hover:bg-primary/90 text-slate-950 font-black py-4.5 rounded-2xl transition-all shadow-lg shadow-primary/10 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 uppercase tracking-[0.2em] text-sm group"
             >
               {isPending ? (
