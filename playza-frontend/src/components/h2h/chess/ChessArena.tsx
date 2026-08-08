@@ -1262,7 +1262,8 @@ const ChessArena = ({ room, user, backTo = "/h2h", backLabel = "H2H ZONE", rende
       </div>
 
       {showWinnerDelayed && (
-        <div className="fixed inset-0 z-200 overflow-y-auto bg-slate-950/90 flex items-start justify-center p-2 py-6 md:items-center">
+        <div className="fixed inset-0 z-200 overflow-y-auto overscroll-contain bg-slate-950/90 flex items-start justify-center p-3 py-6 md:items-center"
+          style={{ WebkitOverflowScrolling: "touch" }}>
           {renderWinner ? (
             renderWinner({
               finalWinnerId,

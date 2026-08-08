@@ -1,4 +1,5 @@
 import { supabaseAdmin } from '../../config/supabase'
+import { sendTournamentResultEmail } from '../../lib/tournamentResultEmail'
 
 // ============================================================================
 // CHESS TOURNAMENT — bracket/fixture foundation
@@ -702,7 +703,7 @@ async function checkGroupStageComplete(tournamentId: string) {
 export async function finishChessTournament(tournamentId: string, championId: string) {
   const { data: tournament } = await supabaseAdmin
     .from('chess_tournaments')
-    .select('prize_pool, prize_distribution, platform_fee_percentage, consolation_pza, status')
+    .select('title, prize_pool, prize_distribution, platform_fee_percentage, consolation_pza, status')
     .eq('id', tournamentId)
     .single()
   if (!tournament) throw new Error('Tournament not found')
@@ -749,7 +750,7 @@ export async function finishChessTournament(tournamentId: string, championId: st
     // Get all players sorted by elimination round descending (later = better finish)
     const { data: players } = await supabaseAdmin
       .from('chess_tournament_players')
-      .select('user_id, username')
+      .select('user_id, username, users!inner(email)')
       .eq('tournament_id', tournamentId)
 
     // Group-stage standings, needed to fairly order players who never made
@@ -833,6 +834,7 @@ export async function finishChessTournament(tournamentId: string, championId: st
     }
 
     // ── Pay prizes by rank ────────────────────────────────────────────────
+    const prizesByUser: Record<string, number> = {}
     for (const tier of prizeDist) {
       const recipients = sortedPlayers.filter(p => rankAssignments[p.user_id] === tier.rank)
       if (!recipients.length) continue
@@ -861,6 +863,7 @@ export async function finishChessTournament(tournamentId: string, championId: st
             })
             .eq('tournament_id', tournamentId)
             .eq('user_id', recipient.user_id)
+          prizesByUser[recipient.user_id] = prizeEach
           console.log(`[ChessEnd] Rank ${tier.rank}: ${recipient.username} paid ${prizeEach} ZA`)
         } catch (err) {
           console.error(`[ChessEnd] Prize payment failed rank ${tier.rank} for ${recipient.user_id}:`, err)
@@ -903,6 +906,26 @@ export async function finishChessTournament(tournamentId: string, championId: st
         } catch (err) {
           console.error(`[ChessEnd] Consolation PZA failed for ${p.user_id} in tournament ${tournamentId}:`, err)
         }
+      }
+    }
+    // ── Result emails — every registered player gets exactly one email:
+    // a win email if they placed in the prizes, or a "here's your PZA
+    // consolation reward" email otherwise. Previously nobody got emailed
+    // at all when a tournament finished.
+    for (const p of (players ?? []) as unknown as Array<{ user_id: string; username: string; users: { email: string } }>) {
+      try {
+        await sendTournamentResultEmail({
+          to: p.users?.email,
+          username: p.username,
+          gameLabel: 'Chess',
+          tournamentTitle: tournament.title ?? 'Chess Tournament',
+          rank: rankAssignments[p.user_id] ?? null,
+          prize: prizesByUser[p.user_id] ?? 0,
+          consolationPza: consolation,
+          tournamentUrl: `https://playza.games/chess-tournament/${tournamentId}`,
+        })
+      } catch (err) {
+        console.error(`[ChessEnd] Result email failed for ${p.user_id}:`, err)
       }
     }
   } catch (err) {

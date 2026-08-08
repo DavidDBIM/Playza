@@ -130,7 +130,8 @@ export default function ChessTournamentWinner({
   const nextMatchTime = fmtNextMatchTime(nextFixture?.scheduled_at);
 
   return (
-    <div className="relative w-full max-w-lg rounded-3xl overflow-hidden border border-white/10 bg-white dark:bg-slate-950 text-center">
+    <div className="relative w-full max-w-lg mx-auto rounded-3xl overflow-y-auto overscroll-contain border border-white/10 bg-white dark:bg-slate-950 text-center"
+      style={{ maxHeight: "calc(100dvh - 3rem)", WebkitOverflowScrolling: "touch" }}>
       {onClose && (
         <button
           onClick={onClose}
@@ -140,8 +141,10 @@ export default function ChessTournamentWinner({
           <X size={16} />
         </button>
       )}
-      {/* Header */}
-      <div className="px-6 pt-8 pb-6" style={{ background: accentBg }}>
+      {/* Header — rounded-t explicitly, since the card itself now scrolls
+          (overflow-y-auto) instead of clipping (overflow-hidden), which
+          would otherwise square off these corners */}
+      <div className="px-4 sm:px-6 pt-8 pb-6 rounded-t-3xl" style={{ background: accentBg }}>
         <div className="w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-3"
           style={{ background: accent }}>
           {!isParticipant
@@ -178,7 +181,7 @@ export default function ChessTournamentWinner({
 
       {/* Points earned — not applicable to a spectator, they didn't play */}
       {isParticipant && (
-        <div className="px-6 py-5 border-t border-black/5 dark:border-white/10">
+        <div className="px-4 sm:px-6 py-5 border-t border-black/5 dark:border-white/10">
           <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mb-2">Tournament Points Earned</p>
           <div className="text-4xl md:text-5xl font-black italic" style={{ color: accent }}>
             +{points}
@@ -190,18 +193,18 @@ export default function ChessTournamentWinner({
       )}
 
       {/* Analytics */}
-      <div className="px-6 py-5 border-t border-black/5 dark:border-white/10 grid grid-cols-3 gap-3 text-left">
-        <div className="rounded-xl p-3 bg-black/5 dark:bg-white/5">
+      <div className="px-4 sm:px-6 py-5 border-t border-black/5 dark:border-white/10 grid grid-cols-3 gap-2 sm:gap-3 text-left">
+        <div className="rounded-xl p-2 sm:p-3 bg-black/5 dark:bg-white/5">
           <ListOrdered className="w-4 h-4 text-slate-400 mb-1" />
           <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Moves</p>
           <p className="text-sm font-black text-slate-900 dark:text-white">{moveCount}</p>
         </div>
-        <div className="rounded-xl p-3 bg-black/5 dark:bg-white/5">
+        <div className="rounded-xl p-2 sm:p-3 bg-black/5 dark:bg-white/5">
           <Swords className="w-4 h-4 text-slate-400 mb-1" />
           <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Result</p>
           <p className="text-xs font-black text-slate-900 dark:text-white leading-tight">{RESULT_LABEL[resultReason] ?? "Game Over"}</p>
         </div>
-        <div className="rounded-xl p-3 bg-black/5 dark:bg-white/5">
+        <div className="rounded-xl p-2 sm:p-3 bg-black/5 dark:bg-white/5">
           <Clock className="w-4 h-4 text-slate-400 mb-1" />
           <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Clock Left</p>
           <p className="text-xs font-black text-slate-900 dark:text-white">
@@ -214,7 +217,7 @@ export default function ChessTournamentWinner({
           of only being discoverable after tapping through to the bracket.
           Only meaningful for the two people who actually played. */}
       {isParticipant && nextFixture && (
-        <div className="px-6 pt-5 border-t border-black/5 dark:border-white/10">
+        <div className="px-4 sm:px-6 pt-5 border-t border-black/5 dark:border-white/10">
           <div className="rounded-2xl p-4 flex items-center gap-3" style={{ background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.2)" }}>
             <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg,#7c3aed,#a855f7)" }}>
               <Swords className="w-5 h-5 text-white" />
@@ -235,7 +238,7 @@ export default function ChessTournamentWinner({
       )}
 
       {/* Actions */}
-      <div className="px-6 pb-6 pt-5 flex flex-col gap-3">
+      <div className="px-4 sm:px-6 pb-6 pt-5 flex flex-col gap-3">
         {isParticipant ? (
           <button
             onClick={() => nextFixture?.chess_room_id && navigate(nextMatchPath)}

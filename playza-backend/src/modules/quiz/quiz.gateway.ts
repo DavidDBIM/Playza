@@ -1,6 +1,7 @@
 import { Server as SocketServer, Socket } from 'socket.io'
 import { supabaseAdmin } from '../../config/supabase'
 import { ROUND_CONFIG, PRIZE_SPLIT } from './quiz.types'
+import { sendTournamentResultEmail } from '../../lib/tournamentResultEmail'
 
 // ─── In-memory game state (fast, no DB round-trips during live play) ──────────
 
@@ -146,7 +147,7 @@ async function endTournament(tournamentId: string, io: SocketServer, game: GameS
     // ── 3. Load tournament prize config ─────────────────────────────────────
     const { data: tournament } = await supabaseAdmin
       .from('quiz_tournaments')
-      .select('prize_pool, prize_distribution, platform_fee_percentage, consolation_pza')
+      .select('title, prize_pool, prize_distribution, platform_fee_percentage, consolation_pza')
       .eq('id', tournamentId)
       .single()
 
@@ -170,6 +171,7 @@ async function endTournament(tournamentId: string, io: SocketServer, game: GameS
     // wins the prize. "Eliminated" just means they're not still playing —
     // it does not disqualify them from being the best-ranked finisher.
     const prizeWinners: { rank: number; username: string; prize: number }[] = []
+    const prizesByUser: Record<string, number> = {}
 
     for (const tier of prizeDist) {
       const recipient = ranked.find(r => r.rank === tier.rank)
@@ -206,6 +208,7 @@ async function endTournament(tournamentId: string, io: SocketServer, game: GameS
           .eq('user_id', recipient.user_id)
 
         prizeWinners.push({ rank: tier.rank, username: recipient.username ?? 'Player', prize })
+        prizesByUser[recipient.user_id] = prize
       } catch (err) {
         console.error(`[QuizEnd] Prize payment failed for rank ${tier.rank}:`, err)
       }
@@ -255,13 +258,44 @@ async function endTournament(tournamentId: string, io: SocketServer, game: GameS
       }
     }
 
-    // ── 6. Mark tournament completed ─────────────────────────────────────────
+    // ── 6. Result emails — every registered player gets exactly one email:
+    // a win email if they placed in the prizes, or a "here's your PZA
+    // consolation reward" email otherwise.
+    try {
+      const { data: userRows } = await supabaseAdmin
+        .from('users')
+        .select('id, email')
+        .in('id', ranked.map(r => r.user_id))
+      const emailByUser: Record<string, string> = {}
+      for (const u of (userRows ?? [])) emailByUser[u.id] = u.email
+
+      for (const row of ranked) {
+        try {
+          await sendTournamentResultEmail({
+            to: emailByUser[row.user_id],
+            username: row.username ?? 'Player',
+            gameLabel: 'Quiz',
+            tournamentTitle: tournament?.title ?? 'Quiz Tournament',
+            rank: row.rank ?? null,
+            prize: prizesByUser[row.user_id] ?? 0,
+            consolationPza,
+            tournamentUrl: `https://playza.games/quiz-tournament/${tournamentId}`,
+          })
+        } catch (err) {
+          console.error(`[QuizEnd] Result email failed for ${row.user_id}:`, err)
+        }
+      }
+    } catch (err) {
+      console.error(`[QuizEnd] Result email batch failed:`, err)
+    }
+
+    // ── 7. Mark tournament completed ─────────────────────────────────────────
     await supabaseAdmin
       .from('quiz_tournaments')
       .update({ status: 'completed', ended_at: new Date().toISOString() })
       .eq('id', tournamentId)
 
-    // ── 7. Broadcast game over ────────────────────────────────────────────────
+    // ── 8. Broadcast game over ────────────────────────────────────────────────
     io.to(`quiz:${tournamentId}`).emit('quiz:game_over', {
       leaderboard: ranked.slice(0, 10),
       winners: prizeWinners,
