@@ -134,20 +134,25 @@ function BracketTree({ fixtures, userId, tournamentId }: { fixtures: TournamentF
   const canvasWidth = rounds.length * colWidth - BRACKET_GAP_X;
 
   return (
-    <div className="overflow-x-auto pb-6">
-      <div className="relative px-2 pt-2" style={{ width: canvasWidth, height: canvasHeight + 28 }}>
+    <div className="overflow-x-auto pb-6 px-2 pt-2">
+      {/* Everything below — the connector SVG and every card — is positioned
+          in one single coordinate space (0,0 = this div's top-left corner),
+          so a connector line's endpoint always lands exactly on a card's
+          edge instead of drifting off by whatever offset a wrapping
+          className happened to add. */}
+      <div className="relative" style={{ width: canvasWidth, height: canvasHeight + 28 }}>
         {/* Connector lines — drawn first so cards sit visually on top */}
-        <svg className="absolute left-2 top-7 pointer-events-none" width={canvasWidth - BRACKET_CARD_W} height={canvasHeight} style={{ overflow: "visible" }}>
+        <svg className="absolute left-0 top-0 pointer-events-none" width={canvasWidth} height={canvasHeight + 28} style={{ overflow: "visible" }}>
           {rounds.slice(0, -1).map((rf, r) =>
             rf.map((_, i) => {
               if (i % 2 !== 0) return null; // draw once per pair
               const hasPartner = i + 1 < rf.length;
-              const yTop = centers[r]![i]!;
-              const yBot = hasPartner ? centers[r]![i + 1]! : yTop;
-              const yMid = centers[r + 1]![i / 2]!;
+              const yTop = 28 + centers[r]![i]!;
+              const yBot = 28 + (hasPartner ? centers[r]![i + 1]! : centers[r]![i]!);
+              const yMid = 28 + centers[r + 1]![i / 2]!;
               const xStart = r * colWidth + BRACKET_CARD_W;
               const xMid = xStart + BRACKET_GAP_X / 2;
-              const xEnd = xStart + colWidth;
+              const xEnd = xStart + BRACKET_GAP_X;
               const stroke = "color-mix(in srgb, var(--foreground) 18%, transparent)";
               if (!hasPartner) {
                 // Odd leftover match — straight pass-through, no elbow needed
@@ -165,7 +170,8 @@ function BracketTree({ fixtures, userId, tournamentId }: { fixtures: TournamentF
           )}
         </svg>
 
-        {/* Round labels + match cards, absolutely positioned to match the connectors exactly */}
+        {/* Round labels + match cards, absolutely positioned in the exact
+            same coordinate space as the connectors above */}
         {rounds.map((rf, r) => (
           <div key={r}>
             <p title={rf[0]?.round_name ?? `Round ${roundNumbers[r]}`}

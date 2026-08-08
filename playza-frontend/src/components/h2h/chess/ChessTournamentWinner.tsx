@@ -69,7 +69,11 @@ export default function ChessTournamentWinner({
     }
   }, []);
 
-  const isWinner = finalWinnerId === user?.id;
+  const isParticipant =
+    (fixture ? fixture.player1_id === user?.id || fixture.player2_id === user?.id
+      : room.host_id === user?.id || room.guest_id === user?.id);
+
+  const isWinner = isParticipant && finalWinnerId === user?.id;
 
   const opponentName = fixture
     ? fixture.player1_id === user?.id
@@ -79,6 +83,16 @@ export default function ChessTournamentWinner({
       ? room.guest?.username ?? "Opponent"
       : room.host?.username ?? "Opponent";
 
+  // Names as seen by a spectator, who isn't "you" vs "opponent" to anyone —
+  // both players need to be named plainly.
+  const player1Name = fixture ? fixture.player1?.username ?? "Player 1" : room.host?.username ?? "Player 1";
+  const player2Name = fixture ? fixture.player2?.username ?? "Player 2" : room.guest?.username ?? "Player 2";
+  const winnerName = !finalWinnerId ? null
+    : fixture
+      ? (fixture.player1_id === finalWinnerId ? fixture.player1?.username : fixture.player2?.username) ?? "Winner"
+      : (room.host_id === finalWinnerId ? room.host?.username : room.guest?.username) ?? "Winner";
+  const loserName = winnerName === player1Name ? player2Name : player1Name;
+
   const points = isWinner ? POINTS_WIN : isDraw ? POINTS_DRAW : POINTS_LOSS;
 
   const bracketPath = `/chess-tournament/${tournamentId}`;
@@ -86,8 +100,14 @@ export default function ChessTournamentWinner({
     ? `/chess-tournament/${tournamentId}/match/${nextFixture.chess_room_id}`
     : bracketPath;
 
-  const accent = isWinner ? "#22c55e" : isDraw ? "#f59e0b" : "#ef4444";
-  const accentBg = isWinner ? "rgba(34,197,94,0.12)" : isDraw ? "rgba(245,158,11,0.12)" : "rgba(239,68,68,0.12)";
+  // Spectators get a neutral violet/amber treatment — there's no "your"
+  // result to color green or red for someone who wasn't playing.
+  const accent = !isParticipant
+    ? (isDraw ? "#f59e0b" : "#a855f7")
+    : isWinner ? "#22c55e" : isDraw ? "#f59e0b" : "#ef4444";
+  const accentBg = !isParticipant
+    ? (isDraw ? "rgba(245,158,11,0.12)" : "rgba(168,85,247,0.12)")
+    : isWinner ? "rgba(34,197,94,0.12)" : isDraw ? "rgba(245,158,11,0.12)" : "rgba(239,68,68,0.12)";
 
   const nextOpponentName = nextFixture
     ? nextFixture.player1_id === user?.id
@@ -124,17 +144,25 @@ export default function ChessTournamentWinner({
       <div className="px-6 pt-8 pb-6" style={{ background: accentBg }}>
         <div className="w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-3"
           style={{ background: accent }}>
-          {isWinner ? <Trophy className="w-8 h-8 text-white" /> : isDraw ? <Handshake className="w-8 h-8 text-white" /> : <Swords className="w-8 h-8 text-white" />}
+          {!isParticipant
+            ? (isDraw ? <Handshake className="w-8 h-8 text-white" /> : <Trophy className="w-8 h-8 text-white" />)
+            : isWinner ? <Trophy className="w-8 h-8 text-white" /> : isDraw ? <Handshake className="w-8 h-8 text-white" /> : <Swords className="w-8 h-8 text-white" />}
         </div>
         <h1 className="font-black italic uppercase tracking-tighter text-3xl md:text-4xl" style={{ color: accent }}>
-          {isWinner ? "Victory!" : isDraw ? "Draw" : "Defeat"}
+          {!isParticipant
+            ? (isDraw ? "Draw" : "Game Over")
+            : isWinner ? "Victory!" : isDraw ? "Draw" : "Defeat"}
         </h1>
         <p className="mt-2 text-sm md:text-base font-bold text-slate-700 dark:text-slate-200">
-          {isWinner
-            ? `Congratulations — you won against ${opponentName}!`
-            : isDraw
-              ? `The game ended in a draw against ${opponentName}.`
-              : `You lost to ${opponentName}.`}
+          {!isParticipant
+            ? (isDraw
+                ? `${player1Name} and ${player2Name} played to a draw.`
+                : `${winnerName} won against ${loserName}.`)
+            : isWinner
+              ? `Congratulations — you won against ${opponentName}!`
+              : isDraw
+                ? `The game ended in a draw against ${opponentName}.`
+                : `You lost to ${opponentName}.`}
         </p>
         {isSyncing && (
           <p className="mt-2 text-[10px] font-black text-amber-500 uppercase tracking-widest">
@@ -148,16 +176,18 @@ export default function ChessTournamentWinner({
         )}
       </div>
 
-      {/* Points earned */}
-      <div className="px-6 py-5 border-t border-black/5 dark:border-white/10">
-        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mb-2">Tournament Points Earned</p>
-        <div className="text-4xl md:text-5xl font-black italic" style={{ color: accent }}>
-          +{points}
+      {/* Points earned — not applicable to a spectator, they didn't play */}
+      {isParticipant && (
+        <div className="px-6 py-5 border-t border-black/5 dark:border-white/10">
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mb-2">Tournament Points Earned</p>
+          <div className="text-4xl md:text-5xl font-black italic" style={{ color: accent }}>
+            +{points}
+          </div>
+          <p className="mt-2 text-[11px] text-slate-500 font-medium">
+            Win = {POINTS_WIN} pts · Draw = {POINTS_DRAW} pt · Loss = {POINTS_LOSS} pts
+          </p>
         </div>
-        <p className="mt-2 text-[11px] text-slate-500 font-medium">
-          Win = {POINTS_WIN} pts · Draw = {POINTS_DRAW} pt · Loss = {POINTS_LOSS} pts
-        </p>
-      </div>
+      )}
 
       {/* Analytics */}
       <div className="px-6 py-5 border-t border-black/5 dark:border-white/10 grid grid-cols-3 gap-3 text-left">
@@ -181,8 +211,9 @@ export default function ChessTournamentWinner({
       </div>
 
       {/* Next match — opponent + kickoff time shown directly here, instead
-          of only being discoverable after tapping through to the bracket */}
-      {nextFixture && (
+          of only being discoverable after tapping through to the bracket.
+          Only meaningful for the two people who actually played. */}
+      {isParticipant && nextFixture && (
         <div className="px-6 pt-5 border-t border-black/5 dark:border-white/10">
           <div className="rounded-2xl p-4 flex items-center gap-3" style={{ background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.2)" }}>
             <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg,#7c3aed,#a855f7)" }}>
@@ -205,18 +236,28 @@ export default function ChessTournamentWinner({
 
       {/* Actions */}
       <div className="px-6 pb-6 pt-5 flex flex-col gap-3">
-        <button
-          onClick={() => nextFixture?.chess_room_id && navigate(nextMatchPath)}
-          disabled={!nextFixture?.chess_room_id}
-          className="w-full py-3.5 rounded-2xl font-black text-sm uppercase tracking-widest text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-          style={{ background: "linear-gradient(135deg,#7c3aed,#a855f7)" }}
-        >
-          {nextFixture?.chess_room_id
-            ? "Next Match →"
-            : nextFixture
-              ? "Next Match — Starting Soon"
-              : "No Match Scheduled Yet"}
-        </button>
+        {isParticipant ? (
+          <button
+            onClick={() => nextFixture?.chess_room_id && navigate(nextMatchPath)}
+            disabled={!nextFixture?.chess_room_id}
+            className="w-full py-3.5 rounded-2xl font-black text-sm uppercase tracking-widest text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{ background: "linear-gradient(135deg,#7c3aed,#a855f7)" }}
+          >
+            {nextFixture?.chess_room_id
+              ? "Next Match →"
+              : nextFixture
+                ? "Next Match — Starting Soon"
+                : "No Match Scheduled Yet"}
+          </button>
+        ) : (
+          <button
+            onClick={() => navigate(bracketPath)}
+            className="w-full py-3.5 rounded-2xl font-black text-sm uppercase tracking-widest text-white transition-all"
+            style={{ background: "linear-gradient(135deg,#7c3aed,#a855f7)" }}
+          >
+            Watch Another Live Match →
+          </button>
+        )}
         <div className="grid grid-cols-2 gap-3">
           <button
             onClick={() => navigate(`${bracketPath}?tab=standings`)}
