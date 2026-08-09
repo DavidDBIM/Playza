@@ -1,5 +1,6 @@
 import { supabaseAdmin } from '../../config/supabase'
 import { sendTournamentResultEmail } from '../../lib/tournamentResultEmail'
+import { maybeQualifyReferral } from '../referral/referral.service'
 
 // ============================================================================
 // CHESS TOURNAMENT — bracket/fixture foundation
@@ -845,7 +846,7 @@ export async function finishChessTournament(tournamentId: string, championId: st
 
       for (const recipient of recipients) {
         try {
-          await supabaseAdmin.rpc('increment_wallet_balance', { p_user_id: recipient.user_id, p_amount: prizeEach })
+          await supabaseAdmin.rpc('adjust_wallet_balance', { p_user_id: recipient.user_id, p_amount: prizeEach })
           await supabaseAdmin.from('transactions').insert({
             user_id: recipient.user_id,
             type: 'chess_tournament_prize',
@@ -927,6 +928,9 @@ export async function finishChessTournament(tournamentId: string, championId: st
       } catch (err) {
         console.error(`[ChessEnd] Result email failed for ${p.user_id}:`, err)
       }
+      // Finishing a tournament is the "real activity" a referred player has
+      // to complete before their referrer's 500 ZA becomes earnable.
+      await maybeQualifyReferral(p.user_id)
     }
   } catch (err) {
     console.error(`[ChessEnd] Ranking/payout logic failed for tournament ${tournamentId} — tournament will still be marked completed:`, err)

@@ -350,39 +350,41 @@ function GroupStandings({ standings, userId }: { standings: TournamentStanding[]
               Group {String.fromCharCode(64 + g)}
             </span>
           </div>
-          <table className="w-full text-xs border-collapse">
-            <thead>
-              <tr style={{ borderBottom: "1px solid color-mix(in srgb, var(--foreground) 6%, transparent)" }}>
-                {["#", "Player", "P", "W", "D", "L", "Pts"].map(h => (
-                  <th key={h} className={`py-2 text-[9px] font-black uppercase tracking-widest text-foreground/25 ${h === "Player" ? "text-left px-3" : "text-center px-2"}`}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {(byGroup[g] ?? [])
-                .sort((a, b) => b.points - a.points || b.game_wins_margin - a.game_wins_margin)
-                .map((s, i) => (
-                  <tr key={s.id} style={{
-                    borderBottom: "1px solid color-mix(in srgb, var(--foreground) 4%, transparent)",
-                    background: s.user_id === userId ? "rgba(124,58,237,0.08)" : s.advanced ? "rgba(34,197,94,0.04)" : "transparent",
-                  }}>
-                    <td className="text-center px-2 py-2.5 text-foreground/25 font-black text-[10px]">{i + 1}</td>
-                    <td className="px-3 py-2.5">
-                      <div className="flex items-center gap-2">
-                        <span className={`font-bold ${s.user_id === userId ? "text-violet-300" : "text-foreground/60"}`}>{s.username}</span>
-                        {s.user_id === userId && <span className="text-[8px] bg-violet-500/20 text-violet-400 px-1.5 py-0.5 rounded-full font-black">YOU</span>}
-                        {s.advanced && <span className="text-[8px] bg-green-500/15 text-green-400 px-1.5 py-0.5 rounded-full font-black">ADV</span>}
-                      </div>
-                    </td>
-                    <td className="text-center px-2 py-2.5 text-foreground/35">{s.played}</td>
-                    <td className="text-center px-2 py-2.5 text-green-400 font-bold">{s.won}</td>
-                    <td className="text-center px-2 py-2.5 text-yellow-400/70">{s.drawn}</td>
-                    <td className="text-center px-2 py-2.5 text-red-400/50">{s.lost}</td>
-                    <td className="text-center px-3 py-2.5 font-black text-violet-300 text-sm">{s.points}</td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs border-collapse min-w-[380px]">
+              <thead>
+                <tr style={{ borderBottom: "1px solid color-mix(in srgb, var(--foreground) 6%, transparent)" }}>
+                  {["#", "Player", "P", "W", "D", "L", "Pts"].map(h => (
+                    <th key={h} className={`py-2 text-[9px] font-black uppercase tracking-widest text-foreground/25 ${h === "Player" ? "text-left px-3" : "text-center px-2"}`}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {(byGroup[g] ?? [])
+                  .sort((a, b) => b.points - a.points || b.game_wins_margin - a.game_wins_margin)
+                  .map((s, i) => (
+                    <tr key={s.id} style={{
+                      borderBottom: "1px solid color-mix(in srgb, var(--foreground) 4%, transparent)",
+                      background: s.user_id === userId ? "rgba(124,58,237,0.08)" : s.advanced ? "rgba(34,197,94,0.04)" : "transparent",
+                    }}>
+                      <td className="text-center px-2 py-2.5 text-foreground/25 font-black text-[10px]">{i + 1}</td>
+                      <td className="px-3 py-2.5 max-w-[140px]">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className={`font-bold truncate ${s.user_id === userId ? "text-violet-300" : "text-foreground/60"}`}>{s.username}</span>
+                          {s.user_id === userId && <span className="shrink-0 text-[8px] bg-violet-500/20 text-violet-400 px-1.5 py-0.5 rounded-full font-black">YOU</span>}
+                          {s.advanced && <span className="shrink-0 text-[8px] bg-green-500/15 text-green-400 px-1.5 py-0.5 rounded-full font-black">ADV</span>}
+                        </div>
+                      </td>
+                      <td className="text-center px-2 py-2.5 text-foreground/35">{s.played}</td>
+                      <td className="text-center px-2 py-2.5 text-green-400 font-bold">{s.won}</td>
+                      <td className="text-center px-2 py-2.5 text-yellow-400/70">{s.drawn}</td>
+                      <td className="text-center px-2 py-2.5 text-red-400/50">{s.lost}</td>
+                      <td className="text-center px-3 py-2.5 font-black text-violet-300 text-sm">{s.points}</td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       ))}
     </div>
@@ -472,7 +474,7 @@ function FinalResults({ results, userId }: { results: TournamentResult[]; userId
           const height = rank === 1 ? "h-36" : rank === 2 ? "h-28" : "h-24";
           const iAmHere = recipients.some(r => r.user_id === userId);
           return (
-            <div key={rank} className={`flex flex-col items-center justify-end ${rank === 1 ? "flex-[1.15]" : "flex-1"} max-w-[150px]`}>
+            <div key={rank} className={`flex flex-col items-center justify-end min-w-0 ${rank === 1 ? "flex-[1.15]" : "flex-1"} max-w-[150px]`}>
               <div className="text-3xl mb-1">{m.emoji}</div>
               {recipients.map((r) => (
                 <div key={r.user_id} className="w-full text-center mb-1">

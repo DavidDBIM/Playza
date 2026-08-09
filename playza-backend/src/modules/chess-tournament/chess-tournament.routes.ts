@@ -268,7 +268,7 @@ router.post('/tournaments/:id/register', requireAuth, async (req: AuthRequest, r
       if (!wallet || wallet.balance < tournament.entry_fee) {
         return res.status(400).json({ success: false, message: 'Insufficient balance' })
       }
-      await supabaseAdmin.rpc('decrement_wallet_balance', { p_user_id: userId, p_amount: tournament.entry_fee })
+      await supabaseAdmin.rpc('adjust_wallet_balance', { p_user_id: userId, p_amount: -tournament.entry_fee })
       await supabaseAdmin.from('transactions').insert({
         user_id: userId, type: 'chess_tournament_entry', amount: tournament.entry_fee,
         status: 'completed', reference: `CHESS-ENTRY-${tournamentId}-${userId}`,

@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getQuizTournamentsApi, joinQuizTournamentApi, getLobbyPlayersApi, type QuizTournament, type PrizeTier } from "@/api/quiz.api";
 import { Search, Trophy, X, Users, ChevronDown, Zap, Eye, Brain, CheckCircle, Loader2, Info, Calendar, Clock, Shield, Send, MessageCircle } from "lucide-react";
@@ -1135,7 +1135,23 @@ const Tournaments = () => {
     document.head.appendChild(el);
   }, []);
 
-  const [activeTab, setActiveTab] = useState<"live" | "upcoming" | "completed">("upcoming");
+  // Tab state lives in the URL (?tab=live) instead of plain useState — a
+  // plain useState reset to "upcoming" every time this page remounted,
+  // which is exactly what happens on browser/in-app Back after following a
+  // live match into its bracket/fixtures view. With it in the URL, Back
+  // restores the exact query string you left on, so Live stays Live.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = (["live", "upcoming", "completed"].includes(searchParams.get("tab") ?? "")
+    ? searchParams.get("tab")
+    : "upcoming") as "live" | "upcoming" | "completed";
+  const setActiveTab = (tab: "live" | "upcoming" | "completed") => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      next.set("tab", tab);
+      return next;
+    }, { replace: true }); // replace, not push — so switching tabs doesn't
+    // pile up extra Back-button stops before you get back off this page
+  };
   const [searchQuery, setSearchQuery] = useState("");
   const [filterPrize, setFilterPrize] = useState("all");
   const queryClient = useQueryClient();

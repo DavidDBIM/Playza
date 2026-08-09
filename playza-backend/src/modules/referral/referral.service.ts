@@ -1,6 +1,6 @@
 import { supabaseAdmin } from '../../config/supabase'
 
-const ZA_PER_VERIFIED_REFERRAL = 500   // ZA earned per verified referral
+const ZA_PER_VERIFIED_REFERRAL = 500   // ZA earned per qualified referral
 const REFERRAL_MILESTONES: Record<number, number> = {
   1: 5,
   10: 50,
@@ -9,6 +9,47 @@ const REFERRAL_MILESTONES: Record<number, number> = {
   500: 1000,
   1000: 5000,
   5000: 10000,
+}
+
+// Called once a referred user actually finishes a real tournament (chess or
+// quiz) — the concrete activity that has to happen before the referrer's
+// 500 ZA becomes earnable. Before this existed, the reward was counted the
+// instant the referred person's email was verified, with no requirement
+// that they ever played anything — wide open to someone farming 500 ZA per
+// throwaway account. This reuses the 'rewarded' status the referrals table
+// already had defined (it just was never actually used by any code path),
+// so no schema migration is needed.
+export async function maybeQualifyReferral(userId: string) {
+  try {
+    const { data: referredUser } = await supabaseAdmin
+      .from('users')
+      .select('referred_by')
+      .eq('id', userId)
+      .single()
+
+    if (!referredUser?.referred_by) return
+
+    const { data: referral } = await supabaseAdmin
+      .from('referrals')
+      .select('id, status')
+      .eq('referrer_id', referredUser.referred_by)
+      .eq('referred_id', userId)
+      .maybeSingle()
+
+    // Already qualified, or somehow no referral row exists — nothing to do.
+    // (status starts at 'email_verified' per auth.service.ts, so this only
+    // ever moves forward once, from 'email_verified' to 'rewarded'.)
+    if (!referral || referral.status === 'rewarded') return
+
+    const { error } = await supabaseAdmin
+      .from('referrals')
+      .update({ status: 'rewarded', updated_at: new Date().toISOString() })
+      .eq('id', referral.id)
+
+    if (error) console.error(`[Referral] Failed to mark referral ${referral.id} as rewarded:`, error)
+  } catch (err) {
+    console.error(`[Referral] Qualify check failed for user ${userId}:`, err)
+  }
 }
 
 export async function getReferralStats(userId: string) {
@@ -21,7 +62,11 @@ export async function getReferralStats(userId: string) {
   if (error) throw error
 
   const total = referrals?.length ?? 0
-  const verified = referrals?.filter(r => r.status !== 'pending').length ?? 0
+  // Only referrals that actually reached the qualifying activity (played a
+  // tournament — see maybeQualifyReferral) count toward the 500 ZA. Merely
+  // verifying an email is tracked separately (small PZA points only) but no
+  // longer counted here.
+  const verified = referrals?.filter(r => r.status === 'rewarded').length ?? 0
 
   const { data: profile } = await supabaseAdmin
     .from('users')
@@ -188,32 +233,30 @@ export async function reviewPayoutRequest(
 
   // If approved: credit user wallet
   if (action === 'approved') {
-    const { data: wallet, error: walletErr } = await supabaseAdmin
-      .from('wallets')
-      .select('balance')
-      .eq('user_id', request.user_id)
-      .single()
-
-    if (walletErr || !wallet) throw new Error('Wallet not found')
-
-    const newBalance = (wallet.balance ?? 0) + request.amount
-
-    const { error: creditErr } = await supabaseAdmin
-      .from('wallets')
-      .update({ balance: newBalance })
-      .eq('user_id', request.user_id)
-
+    // Atomic RPC instead of a manual select-then-update — avoids losing an
+    // update if the user's balance changes from something else (a deposit,
+    // a game payout) in between the read and the write.
+    const { error: creditErr } = await supabaseAdmin.rpc('adjust_wallet_balance', {
+      p_user_id: request.user_id,
+      p_amount: request.amount,
+    })
     if (creditErr) throw creditErr
 
-    // Log transaction
-    await supabaseAdmin.from('transactions').insert({
+    // Log transaction — must match the transactions table's actual columns
+    // (id, user_id, type, amount, status, reference, meta, created_at).
+    // The previous version wrote a `description` field that column doesn't
+    // exist, so this insert was silently failing on every approved payout —
+    // the ZA still landed in the wallet, but it never showed up in the
+    // user's transaction history.
+    const { error: txErr } = await supabaseAdmin.from('transactions').insert({
       user_id: request.user_id,
       type: 'referral_payout',
       amount: request.amount,
       status: 'completed',
-      description: `Referral ZA payout approved`,
-      created_at: new Date().toISOString(),
+      reference: `REFERRAL-PAYOUT-${requestId}`,
+      meta: { reason: 'Referral ZA payout approved', request_id: requestId },
     })
+    if (txErr) console.error(`[Referral] Transaction log failed for payout ${requestId}:`, txErr)
   }
 
   return { success: true, action }

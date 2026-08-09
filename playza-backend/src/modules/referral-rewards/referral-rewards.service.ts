@@ -53,7 +53,7 @@ async function creditReward(userId: string, amount: number, type: 'za' | 'pza', 
     if (!wallet) {
       await supabaseAdmin.from('wallets').insert({ user_id: userId, balance: amount })
     } else {
-      await supabaseAdmin.rpc('increment_wallet_balance', {
+      await supabaseAdmin.rpc('adjust_wallet_balance', {
         p_user_id: userId,
         p_amount: amount,
       })

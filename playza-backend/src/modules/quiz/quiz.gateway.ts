@@ -2,6 +2,7 @@ import { Server as SocketServer, Socket } from 'socket.io'
 import { supabaseAdmin } from '../../config/supabase'
 import { ROUND_CONFIG, PRIZE_SPLIT } from './quiz.types'
 import { sendTournamentResultEmail } from '../../lib/tournamentResultEmail'
+import { maybeQualifyReferral } from '../referral/referral.service'
 
 // ─── In-memory game state (fast, no DB round-trips during live play) ──────────
 
@@ -181,7 +182,7 @@ async function endTournament(tournamentId: string, io: SocketServer, game: GameS
       if (prize <= 0) continue
 
       try {
-        await supabaseAdmin.rpc('increment_wallet_balance', {
+        await supabaseAdmin.rpc('adjust_wallet_balance', {
           p_user_id: recipient.user_id,
           p_amount: prize,
         })
@@ -284,6 +285,9 @@ async function endTournament(tournamentId: string, io: SocketServer, game: GameS
         } catch (err) {
           console.error(`[QuizEnd] Result email failed for ${row.user_id}:`, err)
         }
+        // Finishing a tournament is the "real activity" a referred player
+        // has to complete before their referrer's 500 ZA becomes earnable.
+        await maybeQualifyReferral(row.user_id)
       }
     } catch (err) {
       console.error(`[QuizEnd] Result email batch failed:`, err)

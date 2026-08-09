@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { MdCheckCircle, MdPending, MdCancel, MdSearch } from "react-icons/md";
+import { MdCheckCircle, MdPending, MdVerified, MdCancel, MdSearch } from "react-icons/md";
 import {
   Table,
   TableBody,
@@ -15,6 +15,22 @@ interface ReferralHistoryTableProps {
   referrals: ReferralRecordType[];
 }
 
+// Three real stages a referral goes through — not two:
+//  1. Pending        → they haven't finished signing up yet
+//  2. Verified        → email verified, small PZA loyalty points already paid,
+//                        but the 500 ZA cash reward is NOT earned yet
+//  3. Reward Ready    → they've actually played a tournament — the 500 ZA is
+//                        now earned and counted toward your payout balance
+// Previously step 2 and 3 were the same thing (email verification alone was
+// treated as "Completed" and shown as if the ZA reward had been earned),
+// which is exactly the gap that let the 500 ZA be earned by an account that
+// never played anything.
+const STATUS_LABEL: Record<string, string> = {
+  pending: "Pending",
+  email_verified: "Verified",
+  rewarded: "Reward Ready",
+};
+
 const ReferralHistoryTable = ({ referrals: apiReferrals }: ReferralHistoryTableProps) => {
   const [filter, setFilter] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
@@ -26,8 +42,12 @@ const ReferralHistoryTable = ({ referrals: apiReferrals }: ReferralHistoryTableP
       name: r.users?.username || "Unknown Gamer",
       avatar: (r.users?.username || "U").charAt(0).toUpperCase(),
       date: new Date(r.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-      status: r.status === "email_verified" ? "Completed" : r.status === "pending" ? "Pending" : "Failed",
-      reward: r.status === "email_verified" ? "15" : "--" // SIGNUP(5) + EMAIL(10)
+      status: STATUS_LABEL[r.status] ?? "Pending",
+      // 500 ZA only counts once they've actually played a tournament — the
+      // 15 PZA loyalty points for signing up are shown elsewhere (PZA
+      // balance), not here, since mixing them with a ZA symbol was
+      // misleading about which currency was actually earned.
+      reward: r.status === "rewarded" ? "500" : "--",
     }));
   }, [apiReferrals]);
 
@@ -83,7 +103,7 @@ const ReferralHistoryTable = ({ referrals: apiReferrals }: ReferralHistoryTableP
       </div>
 
       <div className="flex gap-2 md:gap-4 mb-4 overflow-x-auto px-2 md:px-0 scrollbar-hide">
-        {["All", "Pending", "Completed"].map((tab) => (
+        {["All", "Pending", "Verified", "Reward Ready"].map((tab) => (
           <button
             key={tab}
             onClick={() => {
@@ -147,20 +167,25 @@ const ReferralHistoryTable = ({ referrals: apiReferrals }: ReferralHistoryTableP
                   <TableCell>
                     <div
                       className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
-                        referral.status === "Completed"
+                        referral.status === "Reward Ready"
                           ? "bg-green-500/10 text-green-500 border border-green-500/20"
-                          : referral.status === "Pending"
-                            ? "bg-amber-500/10 text-amber-500 border border-amber-500/20"
-                            : "bg-red-500/10 text-red-500 border border-red-500/20"
+                          : referral.status === "Verified"
+                            ? "bg-sky-500/10 text-sky-500 border border-sky-500/20"
+                            : referral.status === "Pending"
+                              ? "bg-amber-500/10 text-amber-500 border border-amber-500/20"
+                              : "bg-red-500/10 text-red-500 border border-red-500/20"
                       }`}
                     >
-                      {referral.status === "Completed" && (
+                      {referral.status === "Reward Ready" && (
                         <MdCheckCircle className="text-xs" />
+                      )}
+                      {referral.status === "Verified" && (
+                        <MdVerified className="text-xs" />
                       )}
                       {referral.status === "Pending" && (
                         <MdPending className="text-xs" />
                       )}
-                      {referral.status === "Failed" && (
+                      {referral.status !== "Reward Ready" && referral.status !== "Verified" && referral.status !== "Pending" && (
                         <MdCancel className="text-xs" />
                       )}
                       <span className="hidden xs:inline">{referral.status}</span>

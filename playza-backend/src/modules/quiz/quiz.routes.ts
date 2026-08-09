@@ -293,7 +293,7 @@ router.post('/tournaments/:id/join', requireAuth, async (req: AuthRequest, res) 
         return
       }
 
-      await supabaseAdmin.rpc('decrement_wallet_balance', { p_user_id: userId, p_amount: tournament.entry_fee })
+      await supabaseAdmin.rpc('adjust_wallet_balance', { p_user_id: userId, p_amount: -tournament.entry_fee })
 
       await supabaseAdmin.from('transactions').insert({
         user_id: userId,

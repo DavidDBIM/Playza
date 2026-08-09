@@ -106,12 +106,31 @@ alter table referrals enable row level security;
 alter table referral_milestones enable row level security;
 
 -- TRANSACTIONS (run this if not already created)
+-- NOTE: the `type`/`status` check constraints below must include every value
+-- actually written by the backend, or Postgres silently rejects the insert
+-- with a constraint-violation error. Because most of the ~48 call sites that
+-- write to this table (chess-tournament.routes.ts, quiz.routes.ts, wallet
+-- deducts/prizes, admin grants, referral payouts, etc.) don't check the
+-- `{ error }` returned by supabase-js's `.insert()`, that failure was
+-- silent: the wallet balance RPC still ran and the user's balance changed,
+-- but no row ever landed in `transactions`, so it never showed in their
+-- history. This list is kept in sync with every `type`/`status` literal used
+-- across the backend — see chess-tournament.routes.ts (chess_tournament_entry/
+-- prize/refund), quiz.routes.ts (quiz_entry/prize), wallet.service.ts
+-- (purchase), and admin/referral payout paths (admin_grant, signup_bonus,
+-- referral_payout, bonus, stake). If a new transaction type is added later,
+-- it must be added here too or the same silent-failure bug returns.
 create table if not exists transactions (
   id uuid primary key default uuid_generate_v4(),
   user_id uuid not null references users(id) on delete cascade,
-  type text not null check (type in ('deposit', 'withdrawal', 'game_entry', 'winnings', 'bonus')),
+  type text not null check (type in (
+    'deposit', 'withdrawal', 'game_entry', 'winnings', 'bonus',
+    'stake', 'purchase', 'admin_grant', 'signup_bonus', 'referral_payout',
+    'chess_tournament_entry', 'chess_tournament_prize', 'chess_tournament_refund',
+    'quiz_entry', 'quiz_prize'
+  )),
   amount numeric(12, 2) not null,
-  status text default 'pending' check (status in ('pending', 'successful', 'failed')),
+  status text default 'pending' check (status in ('pending', 'successful', 'completed', 'failed', 'cancelled')),
   reference text unique,
   meta jsonb default '{}',
   created_at timestamptz default now()
@@ -153,6 +172,24 @@ returns void as $$
   update wallets
   set balance = balance - p_amount,
       total_withdrawn = total_withdrawn + p_amount,
+      updated_at = now()
+  where user_id = p_user_id;
+$$ language sql;
+
+-- Pure balance adjustment — moves the wallet balance up or down (positive
+-- or negative p_amount) WITHOUT touching total_deposited/total_withdrawn.
+-- increment_wallet_balance/decrement_wallet_balance above are correct only
+-- for genuine Paystack deposits and genuine withdrawal payouts — every
+-- other kind of ZA movement (tournament entry fees, tournament prizes,
+-- game stakes/winnings, referral payouts, admin grants, bonuses) was
+-- reusing those same two functions, which meant the admin dashboard's
+-- "Total Deposits" / "Total Withdrawals" cards were being inflated by
+-- money that never actually passed through the payment gateway. Use this
+-- function for anything that isn't a real deposit or a real withdrawal.
+create or replace function adjust_wallet_balance(p_user_id uuid, p_amount numeric)
+returns void as $$
+  update wallets
+  set balance = balance + p_amount,
       updated_at = now()
   where user_id = p_user_id;
 $$ language sql;
@@ -476,6 +513,3 @@ create table if not exists emojipop_results (
 
 alter table emojipop_rooms enable row level security;
 alter table emojipop_results enable row level security;
-
-
-

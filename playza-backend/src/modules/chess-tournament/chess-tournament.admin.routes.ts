@@ -214,7 +214,7 @@ router.post('/tournaments/:id/cancel', requireAdmin, async (req: AuthRequest, re
         .eq('tournament_id', req.params.id)
 
       for (const p of (players ?? [])) {
-        await supabaseAdmin.rpc('increment_wallet_balance', { p_user_id: p.user_id, p_amount: tournament.entry_fee })
+        await supabaseAdmin.rpc('adjust_wallet_balance', { p_user_id: p.user_id, p_amount: tournament.entry_fee })
         await supabaseAdmin.from('transactions').insert({
           user_id: p.user_id,
           type: 'chess_tournament_refund',
@@ -354,7 +354,7 @@ router.delete('/tournaments/:id', requireAdmin, async (req: AuthRequest, res: Re
         .eq('tournament_id', id)
 
       for (const p of (players ?? [])) {
-        await supabaseAdmin.rpc('increment_wallet_balance', { p_user_id: p.user_id, p_amount: tournament.entry_fee })
+        await supabaseAdmin.rpc('adjust_wallet_balance', { p_user_id: p.user_id, p_amount: tournament.entry_fee })
         await supabaseAdmin.from('transactions').insert({
           user_id: p.user_id,
           type: 'chess_tournament_refund',
