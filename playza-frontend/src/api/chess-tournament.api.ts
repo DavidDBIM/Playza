@@ -46,6 +46,16 @@ export interface TournamentFixture {
   player2?: { username: string; avatar_url?: string };
 }
 
+export interface TiebreakBreakdownRow {
+  user_id: string;
+  username: string;
+  points: number;
+  head_to_head_points: number;
+  head_to_head_margin: number;
+  overall_margin: number;
+  final_group_rank: number;
+}
+
 export interface TournamentStanding {
   id: string;
   group_number: number;
@@ -59,6 +69,10 @@ export interface TournamentStanding {
   game_wins_margin: number;
   group_rank?: number;
   advanced: boolean;
+  // Only present for players who were genuinely tied with someone on
+  // points — shows the head-to-head numbers that decided the tie, so a
+  // player who gets cut on a tiebreak can see exactly why.
+  tiebreak_breakdown?: TiebreakBreakdownRow[] | null;
 }
 
 export interface MyChessStatus {

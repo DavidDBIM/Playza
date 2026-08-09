@@ -332,6 +332,8 @@ function MyFixtures({ fixtures, userId }: { fixtures: TournamentFixture[]; userI
 
 // ── Group standings table ─────────────────────────────────────────────────────
 function GroupStandings({ standings, userId }: { standings: TournamentStanding[]; userId?: string }) {
+  const [openBreakdown, setOpenBreakdown] = useState<string | null>(null); // key: `${group}-${points}`
+
   const byGroup = standings.reduce<Record<number, TournamentStanding[]>>((acc, s) => {
     (acc[s.group_number] = acc[s.group_number] ?? []).push(s);
     return acc;
@@ -373,6 +375,18 @@ function GroupStandings({ standings, userId }: { standings: TournamentStanding[]
                           <span className={`font-bold truncate ${s.user_id === userId ? "text-violet-300" : "text-foreground/60"}`}>{s.username}</span>
                           {s.user_id === userId && <span className="shrink-0 text-[8px] bg-violet-500/20 text-violet-400 px-1.5 py-0.5 rounded-full font-black">YOU</span>}
                           {s.advanced && <span className="shrink-0 text-[8px] bg-green-500/15 text-green-400 px-1.5 py-0.5 rounded-full font-black">ADV</span>}
+                          {/* Only rendered for players who were actually tied
+                              with someone — everyone else was ranked on
+                              points alone, nothing to explain */}
+                          {s.tiebreak_breakdown && s.tiebreak_breakdown.length > 1 && (
+                            <button
+                              onClick={() => setOpenBreakdown(k => k === `${g}-${s.points}` ? null : `${g}-${s.points}`)}
+                              className="shrink-0 w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-black bg-amber-500/15 text-amber-400 hover:bg-amber-500/25 transition-colors"
+                              title="Why this rank? Tap for the tiebreak breakdown"
+                            >
+                              ?
+                            </button>
+                          )}
                         </div>
                       </td>
                       <td className="text-center px-2 py-2.5 text-foreground/35">{s.played}</td>
@@ -385,6 +399,48 @@ function GroupStandings({ standings, userId }: { standings: TournamentStanding[]
               </tbody>
             </table>
           </div>
+
+          {/* Tiebreak breakdown panel — same numbers sent in the email,
+              shown inline so anyone can check it without digging through
+              their inbox. Opens below the table rather than inline in a
+              row, so the table itself never has to resize/reflow. */}
+          {openBreakdown?.startsWith(`${g}-`) && (() => {
+            const tiedPlayer = (byGroup[g] ?? []).find(s => `${g}-${s.points}` === openBreakdown && s.tiebreak_breakdown);
+            const breakdown = tiedPlayer?.tiebreak_breakdown;
+            if (!breakdown) return null;
+            return (
+              <div className="px-3 sm:px-4 py-3 border-t" style={{ borderColor: "color-mix(in srgb, var(--foreground) 6%, transparent)", background: "rgba(245,158,11,0.05)" }}>
+                <p className="text-[9px] font-black uppercase tracking-widest text-amber-400 mb-2">
+                  Tiebreak breakdown — {breakdown.length} players tied on {tiedPlayer.points} pts
+                </p>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-[10px] border-collapse min-w-[320px]">
+                    <thead>
+                      <tr>
+                        {["Rank", "Player", "H2H Pts", "H2H Margin", "Overall Margin"].map(h => (
+                          <th key={h} className="py-1 px-2 text-left text-[8px] font-black uppercase tracking-widest text-foreground/30">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[...breakdown].sort((a, b) => a.final_group_rank - b.final_group_rank).map(row => (
+                        <tr key={row.user_id} style={{ background: row.user_id === userId ? "rgba(124,58,237,0.1)" : "transparent" }}>
+                          <td className="py-1 px-2 font-black text-foreground/40">{row.final_group_rank}</td>
+                          <td className="py-1 px-2 font-bold truncate max-w-[100px]" style={{ color: row.user_id === userId ? "#c084fc" : undefined }}>{row.username}{row.user_id === userId ? " (you)" : ""}</td>
+                          <td className="py-1 px-2">{row.head_to_head_points}</td>
+                          <td className="py-1 px-2">{row.head_to_head_margin > 0 ? "+" : ""}{row.head_to_head_margin}</td>
+                          <td className="py-1 px-2">{row.overall_margin > 0 ? "+" : ""}{row.overall_margin}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <p className="text-[9px] text-foreground/30 font-medium mt-2 leading-relaxed">
+                  H2H = results only from games these players played against each other, checked first. Overall margin (whole group) is the next tiebreak if H2H is also level.
+                </p>
+              </div>
+            );
+          })()}
         </div>
       ))}
     </div>
@@ -519,9 +575,10 @@ function FinalResults({ results, userId }: { results: TournamentResult[]; userId
 // ── Tournament detail — full page ─────────────────────────────────────────────
 function TournamentDetailPage({ tournamentId, initialDetailTab }: {
   tournamentId: string;
-  /** Opens straight onto the standings tab — used when arriving via a "View
-   * Table" link from a just-finished tournament match. */
-  initialDetailTab?: "bracket" | "standings";
+  /** Opens straight onto a specific tab — used when arriving via a "View
+   * Table" link from a just-finished match, or a "Results" link from the
+   * tournament listing page for an already-completed tournament. */
+  initialDetailTab?: "bracket" | "standings" | "results";
 }) {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -542,7 +599,9 @@ function TournamentDetailPage({ tournamentId, initialDetailTab }: {
   });
 
   const [tab, setTab] = useState<"bracket" | "standings" | "fixtures" | "results">(
-    initialDetailTab === "standings" && t?.format === "group_knockout" ? "standings" : "fixtures"
+    initialDetailTab === "results" ? "results"
+      : initialDetailTab === "standings" && t?.format === "group_knockout" ? "standings"
+      : "fixtures"
   );
   const [showRules, setShowRules] = useState(false);
 
@@ -969,7 +1028,9 @@ function TCard({ t, onOpen }: { t: ChessTournament; onOpen: () => void }) {
 export default function ChessTournamentPage() {
   const { tournamentId } = useParams<{ tournamentId?: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
-  const requestedDetailTab = searchParams.get("tab") === "standings" ? "standings" : undefined;
+  const requestedDetailTab = searchParams.get("tab") === "standings" ? "standings"
+    : searchParams.get("tab") === "results" ? "results"
+    : undefined;
 
   // A tournament ID in the URL now renders a full, dedicated page instead of
   // a modal overlaying the list — more room for the bracket, fixtures, and

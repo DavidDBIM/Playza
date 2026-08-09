@@ -1,5 +1,5 @@
 import { supabaseAdmin } from '../../config/supabase'
-import { sendTournamentResultEmail } from '../../lib/tournamentResultEmail'
+import { sendTournamentResultEmail, sendTiebreakBreakdownEmail } from '../../lib/tournamentResultEmail'
 import { maybeQualifyReferral } from '../referral/referral.service'
 
 // ============================================================================
@@ -583,6 +583,90 @@ export async function recordGroupResult(
   return checkGroupStageComplete(fixture.tournament_id)
 }
 
+// ── Group-stage tiebreaks — a real, transparent chain instead of a coin flip
+//
+// When players in the same group finish level on points, this decides who
+// advances, in order:
+//   1. Points (already sorted by the caller before this runs)
+//   2. Head-to-head — a mini-table using ONLY the games the tied players
+//      played against each other (the standard, most intuitive tiebreak:
+//      "you beat them directly, you rank above them")
+//   3. Head-to-head game margin, if step 2 ties on mini-points too
+//   4. Overall game margin across the whole group (game_wins_margin)
+//   5. Standings row id, as a last-resort deterministic tiebreak — this
+//      only gets reached if two players have identical points, identical
+//      head-to-head results, and identical overall margin, which in
+//      practice means their group results were fully symmetric.
+//
+// The previous version fell back to `Math.random() - 0.5` directly inside
+// the sort comparator once points and margin both tied. That's not just
+// "the tiebreak is arbitrary" — a comparator that returns a different
+// value on every call breaks the sort algorithm's correctness guarantees
+// entirely (Array.prototype.sort assumes a stable, transitive ordering),
+// which can produce genuinely inconsistent rankings — duplicate ranks, a
+// player who should've advanced getting cut, races between re-runs. This
+// replaces that with a chain that's always the same answer every time it's
+// computed, and one you can actually explain to a player who asks why they
+// were the one eliminated.
+//
+// Returns both the resolved order AND a breakdown object per player — the
+// breakdown is what gets shown on the Standings tab and emailed to anyone
+// who was actually part of the tie, so "you were tied and lost" always
+// comes with the real numbers instead of looking arbitrary.
+interface TiebreakBreakdownEntry {
+  user_id: string
+  username: string
+  points: number
+  head_to_head_points: number
+  head_to_head_margin: number
+  overall_margin: number
+  final_group_rank: number
+}
+function resolveGroupTiebreak(
+  tiedPlayers: { id: string; user_id: string; username: string; points: number; game_wins_margin: number }[],
+  groupFixtures: { player1_id: string; player2_id: string; winner_id: string | null }[],
+  rankOffset: number, // rank of the first player in this tied block, e.g. 2 if this is the block starting at rank 2
+): { sorted: typeof tiedPlayers; breakdown: TiebreakBreakdownEntry[] | null } {
+  if (tiedPlayers.length <= 1) return { sorted: tiedPlayers, breakdown: null }
+
+  const ids = new Set(tiedPlayers.map(p => p.user_id))
+  const miniPoints: Record<string, number> = {}
+  const miniMargin: Record<string, number> = {}
+  for (const p of tiedPlayers) { miniPoints[p.user_id] = 0; miniMargin[p.user_id] = 0 }
+
+  for (const f of groupFixtures) {
+    if (!ids.has(f.player1_id) || !ids.has(f.player2_id)) continue
+    if (f.winner_id) {
+      const loser = f.winner_id === f.player1_id ? f.player2_id : f.player1_id
+      miniPoints[f.winner_id] = (miniPoints[f.winner_id] ?? 0) + 3
+      miniMargin[f.winner_id] = (miniMargin[f.winner_id] ?? 0) + 1
+      miniMargin[loser] = (miniMargin[loser] ?? 0) - 1
+    } else {
+      miniPoints[f.player1_id] = (miniPoints[f.player1_id] ?? 0) + 1
+      miniPoints[f.player2_id] = (miniPoints[f.player2_id] ?? 0) + 1
+    }
+  }
+
+  const sorted = [...tiedPlayers].sort((a, b) => {
+    if (miniPoints[b.user_id] !== miniPoints[a.user_id]) return miniPoints[b.user_id] - miniPoints[a.user_id]
+    if (miniMargin[b.user_id] !== miniMargin[a.user_id]) return miniMargin[b.user_id] - miniMargin[a.user_id]
+    if (b.game_wins_margin !== a.game_wins_margin) return b.game_wins_margin - a.game_wins_margin
+    return a.id.localeCompare(b.id) // deterministic, never random
+  })
+
+  const breakdown: TiebreakBreakdownEntry[] = sorted.map((p, i) => ({
+    user_id: p.user_id,
+    username: p.username,
+    points: p.points,
+    head_to_head_points: miniPoints[p.user_id] ?? 0,
+    head_to_head_margin: miniMargin[p.user_id] ?? 0,
+    overall_margin: p.game_wins_margin,
+    final_group_rank: rankOffset + i,
+  }))
+
+  return { sorted, breakdown }
+}
+
 // ── GROUP STAGE: check if all group matches are done, and if so, rank +
 //    cut to the knockout phase using advance_per_group ──────────────────────
 async function checkGroupStageComplete(tournamentId: string) {
@@ -615,20 +699,54 @@ async function checkGroupStageComplete(tournamentId: string) {
     byGroup[s.group_number]!.push(s)
   }
 
+  // Completed group-stage fixtures, used to resolve ties via head-to-head —
+  // fetched once here rather than per-group inside the loop below.
+  const { data: groupFixtures } = await supabaseAdmin
+    .from('chess_tournament_fixtures')
+    .select('player1_id, player2_id, winner_id, group_number')
+    .eq('tournament_id', tournamentId)
+    .not('group_number', 'is', null)
+    .eq('status', 'completed')
+
   const advancingPlayers: string[] = []
+  // Collected across all groups, only for players who were genuinely tied
+  // with someone — this is what the "only if a tie occurred" email goes to.
+  const tieNotifications: { user_id: string; breakdown: TiebreakBreakdownEntry[] }[] = []
 
   for (const groupNum of Object.keys(byGroup).map(Number).sort((a, b) => a - b)) {
-    const sorted = (byGroup[groupNum] ?? []).sort((a, b) => {
-      if (b.points !== a.points) return b.points - a.points
-      if (b.game_wins_margin !== a.game_wins_margin) return b.game_wins_margin - a.game_wins_margin
-      return Math.random() - 0.5
-    })
+    // Sort by points only first, then resolve each block of tied players
+    // (possibly more than 2 at once — e.g. three players all on 6 points)
+    // using the real tiebreak chain instead of a coin flip.
+    const byPoints = [...(byGroup[groupNum] ?? [])].sort((a, b) => b.points - a.points)
+    const fixturesForGroup = (groupFixtures ?? []).filter(f => f.group_number === groupNum)
+
+    const sorted: typeof byPoints = []
+    let i = 0
+    while (i < byPoints.length) {
+      let j = i
+      while (j < byPoints.length && byPoints[j]!.points === byPoints[i]!.points) j++
+      const tiedBlock = byPoints.slice(i, j)
+      const { sorted: resolvedBlock, breakdown } = resolveGroupTiebreak(tiedBlock, fixturesForGroup, i + 1)
+      sorted.push(...resolvedBlock)
+      if (breakdown) {
+        for (const entry of breakdown) {
+          tieNotifications.push({ user_id: entry.user_id, breakdown })
+        }
+      }
+      i = j
+    }
 
     for (let i = 0; i < sorted.length; i++) {
       const rank = i + 1
       await supabaseAdmin
         .from('chess_tournament_standings')
-        .update({ group_rank: rank, advanced: rank <= advancePerGroup })
+        .update({
+          group_rank: rank,
+          advanced: rank <= advancePerGroup,
+          // Only players who were part of an actual tie get a breakdown —
+          // everyone else was ranked on points alone, nothing to explain.
+          tiebreak_breakdown: tieNotifications.find(t => t.user_id === sorted[i]!.user_id)?.breakdown ?? null,
+        })
         .eq('id', sorted[i].id)
 
       if (rank <= advancePerGroup) {
@@ -639,6 +757,39 @@ async function checkGroupStageComplete(tournamentId: string) {
           .update({ status: 'eliminated' })
           .eq('tournament_id', tournamentId)
           .eq('user_id', sorted[i].user_id)
+      }
+    }
+  }
+
+  // Tie-break emails — sent only to players who were actually tied with
+  // someone. A player who simply had fewer points than the group above
+  // them never gets one; there's nothing to explain there.
+  if (tieNotifications.length) {
+    const { data: tiedUserRows } = await supabaseAdmin
+      .from('chess_tournament_players')
+      .select('user_id, username, users!inner(email)')
+      .eq('tournament_id', tournamentId)
+      .in('user_id', tieNotifications.map(t => t.user_id))
+    const { data: tTitle } = await supabaseAdmin
+      .from('chess_tournaments')
+      .select('title')
+      .eq('id', tournamentId)
+      .single()
+
+    for (const row of (tiedUserRows ?? []) as unknown as Array<{ user_id: string; username: string; users: { email: string } }>) {
+      const notification = tieNotifications.find(t => t.user_id === row.user_id)
+      if (!notification) continue
+      try {
+        await sendTiebreakBreakdownEmail({
+          to: row.users?.email,
+          username: row.username,
+          tournamentTitle: tTitle?.title ?? 'Chess Tournament',
+          advanced: notification.breakdown.find(b => b.user_id === row.user_id)!.final_group_rank <= advancePerGroup,
+          breakdown: notification.breakdown,
+          tournamentUrl: `https://playza.games/chess-tournament/${tournamentId}?tab=standings`,
+        })
+      } catch (err) {
+        console.error(`[GroupTiebreak] Breakdown email failed for ${row.user_id}:`, err)
       }
     }
   }

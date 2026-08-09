@@ -665,16 +665,20 @@ function ChessTCard({ ct }: { ct: any }) {
     <>
       <div onClick={() => {
           // Live tournaments skip the summary modal entirely — straight to
-          // the actual game. That in-between "CHESS TOURNAMENT — LIVE VIEW
-          // BRACKET" card was an unnecessary extra click for something
-          // that's already live; the modal still makes sense pre-tournament
-          // (registration info, rules) so it stays for that case.
+          // the actual game. Completed tournaments skip it too — straight
+          // to the results page, since that's the only thing left to see.
+          // The modal still makes sense pre-tournament (registration info,
+          // rules) so it stays for that case.
           if (isLive) {
             if (activeFixture?.chess_room_id) {
               navigate(`/chess-tournament/${ct.id}/match/${activeFixture.chess_room_id}`);
             } else {
               navigate(`/chess-tournament/${ct.id}`);
             }
+            return;
+          }
+          if (ct.status === "completed") {
+            navigate(`/chess-tournament/${ct.id}?tab=results`);
             return;
           }
           setShowDetail(true);
@@ -794,7 +798,18 @@ function ChessTCard({ ct }: { ct: any }) {
               📜 Rules
             </button>
             {(ct.status === "completed" || ct.status === "cancelled") ? (
-              <button onClick={e => { e.stopPropagation(); setShowDetail(true); }}
+              <button onClick={e => {
+                e.stopPropagation();
+                // Completed tournaments jump straight to the results page —
+                // no reason to make someone go through a summary modal
+                // first just to see who won. Cancelled tournaments have no
+                // results to show, so those still open the details modal.
+                if (ct.status === "completed") {
+                  navigate(`/chess-tournament/${ct.id}?tab=results`);
+                } else {
+                  setShowDetail(true);
+                }
+              }}
                 style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 4, padding: "9px", borderRadius: 9, fontSize: 10, fontWeight: 700, textTransform: "uppercase", background: "var(--muted)", color: "var(--muted-foreground)", border: "none", cursor: "pointer" }}>
                 {ct.status === "cancelled" ? "View Details" : "🏆 Results"}
               </button>

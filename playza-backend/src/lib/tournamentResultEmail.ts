@@ -122,3 +122,87 @@ export async function sendTournamentResultEmail(opts: TournamentResultEmailInput
 
   await sendEmail(to, subject, html)
 }
+
+// ── Group-stage tiebreak breakdown email ─────────────────────────────────
+//
+// Sent ONLY to players who were genuinely tied with at least one other
+// player on points at the end of their group — never to a player who
+// simply finished with fewer points than the group above them, since
+// there's nothing to explain there. Shows the actual head-to-head numbers
+// that decided the tie, so "you didn't advance" never looks like a fluke.
+export interface TiebreakBreakdownRow {
+  user_id: string
+  username: string
+  points: number
+  head_to_head_points: number
+  head_to_head_margin: number
+  overall_margin: number
+  final_group_rank: number
+}
+
+export interface TiebreakBreakdownEmailInput {
+  to: string
+  username: string
+  tournamentTitle: string
+  advanced: boolean
+  breakdown: TiebreakBreakdownRow[]
+  tournamentUrl: string
+}
+
+export async function sendTiebreakBreakdownEmail(opts: TiebreakBreakdownEmailInput) {
+  const { to, username, tournamentTitle, advanced, breakdown, tournamentUrl } = opts
+  if (!to) return
+
+  const accentColor = advanced ? '#16a34a' : '#f59e0b'
+  const bgTint = advanced ? '#f0fdf4' : '#fffbeb'
+  const sorted = [...breakdown].sort((a, b) => a.final_group_rank - b.final_group_rank)
+
+  const subject = advanced
+    ? `You were tied in ${tournamentTitle} — here's how you advanced`
+    : `You were tied in ${tournamentTitle} — here's the tiebreak breakdown`
+
+  const rowsHtml = sorted.map(row => `
+    <tr style="${row.username === username ? 'background:rgba(0,0,0,0.03);' : ''}">
+      <td style="padding:6px 8px;font-size:13px;font-weight:${row.username === username ? '800' : '500'};border-bottom:1px solid rgba(0,0,0,0.06);">${row.final_group_rank}. ${row.username}${row.username === username ? ' (you)' : ''}</td>
+      <td style="padding:6px 8px;font-size:13px;text-align:center;border-bottom:1px solid rgba(0,0,0,0.06);">${row.points}</td>
+      <td style="padding:6px 8px;font-size:13px;text-align:center;border-bottom:1px solid rgba(0,0,0,0.06);">${row.head_to_head_points}</td>
+      <td style="padding:6px 8px;font-size:13px;text-align:center;border-bottom:1px solid rgba(0,0,0,0.06);">${row.head_to_head_margin > 0 ? '+' : ''}${row.head_to_head_margin}</td>
+      <td style="padding:6px 8px;font-size:13px;text-align:center;border-bottom:1px solid rgba(0,0,0,0.06);">${row.overall_margin > 0 ? '+' : ''}${row.overall_margin}</td>
+    </tr>
+  `).join('')
+
+  const body = `
+    <h2 style="margin:0 0 12px;font-size:20px;font-weight:800;color:#111;">
+      ${advanced ? `You made it through, ${username} 👍` : `Close one, ${username}`}
+    </h2>
+    <p style="margin:0 0 14px;font-size:15px;line-height:1.5;">
+      You finished level on points with ${sorted.length - 1} other player${sorted.length - 1 === 1 ? '' : 's'} in your group in <strong>${tournamentTitle}</strong>. Here's exactly how the tie was broken — head-to-head results first, then overall game margin:
+    </p>
+    <table style="width:100%;border-collapse:collapse;margin-top:8px;">
+      <thead>
+        <tr>
+          <th style="padding:6px 8px;font-size:10px;text-transform:uppercase;letter-spacing:0.05em;color:#888;text-align:left;">Player</th>
+          <th style="padding:6px 8px;font-size:10px;text-transform:uppercase;letter-spacing:0.05em;color:#888;">Pts</th>
+          <th style="padding:6px 8px;font-size:10px;text-transform:uppercase;letter-spacing:0.05em;color:#888;">H2H Pts</th>
+          <th style="padding:6px 8px;font-size:10px;text-transform:uppercase;letter-spacing:0.05em;color:#888;">H2H Margin</th>
+          <th style="padding:6px 8px;font-size:10px;text-transform:uppercase;letter-spacing:0.05em;color:#888;">Overall Margin</th>
+        </tr>
+      </thead>
+      <tbody>${rowsHtml}</tbody>
+    </table>
+    <p style="margin:16px 0 0;font-size:12px;line-height:1.5;color:#777;">
+      <strong>H2H Pts/Margin</strong> = results only from the games you and the other tied players played against each other. That's checked first; overall margin across the whole group is the next tiebreak if H2H is also level.
+    </p>
+  `
+
+  const html = transactionalShell({
+    accentColor,
+    bgTint,
+    preheader: `See the tiebreak breakdown for ${tournamentTitle}`,
+    body,
+    ctaLabel: 'View Full Standings',
+    ctaUrl: tournamentUrl,
+  })
+
+  await sendEmail(to, subject, html)
+}
