@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import SEO from "@/components/SEO";
 import { ZASymbol } from "@/components/currency/ZASymbol";
+import { linkifyText } from "./ChessTournamentPage";
 
 const STATUS = {
   active:       { label: "LIVE NOW",     short: "LIVE",     color: "#ef4444", bg: "rgba(239,68,68,0.12)",   border: "rgba(239,68,68,0.3)",   live: true  },
@@ -924,21 +925,22 @@ function ChessTCard({ ct }: { ct: any }) {
                   <X size={14} style={{ color: "var(--muted-foreground)" }} />
                 </button>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8, marginBottom: 14 }}>
-                {[
-                  { label: "Format", value: ct.format === "group_knockout" ? "Group+KO" : "Knockout" },
-                  { label: "Time", value: `${fmtTime(ct.time_control_secs)}${ct.increment_secs > 0 ? `+${ct.increment_secs}` : ""}` },
-                  { label: "Players", value: `${ct.player_count ?? 0}/${ct.bracket_size}` },
-                  { label: "Entry", value: ct.entry_fee > 0 ? `${ct.entry_fee} ZA` : "FREE" },
-                  { label: "Prize Pool", value: `${(ct.prize_pool ?? 0).toLocaleString()} ZA` },
-                  { label: "Status", value: ct.status === "registration" ? "Open" : ct.status === "lobby" ? "Lobby" : ct.status === "active" ? "Live" : "Done" },
-                ].map((s, i) => (
-                  <div key={i} style={{ background: "var(--muted)", borderRadius: 10, padding: "10px 8px", textAlign: "center" }}>
-                    <p style={{ fontSize: 13, fontWeight: 800, color: "var(--foreground)", margin: 0 }}>{s.value}</p>
-                    <p style={{ fontSize: 9, color: "var(--muted-foreground)", margin: "3px 0 0", textTransform: "uppercase", letterSpacing: "0.06em" }}>{s.label}</p>
-                  </div>
-                ))}
-              </div>
+              {/* Description instead of the format/time/players/entry/prize/status
+                  grid — those numbers are already visible on the card itself
+                  right behind this modal, so repeating them here added
+                  nothing. The description is the one thing that wasn't
+                  already on screen. */}
+              {ct.description ? (
+                <div style={{ borderRadius: 14, padding: 14, background: "rgba(124,58,237,0.05)", border: "1px solid rgba(124,58,237,0.15)", marginBottom: 14 }}>
+                  <p style={{ fontSize: 12.5, color: "var(--foreground)", lineHeight: 1.6, margin: 0, fontWeight: 500 }}>
+                    {linkifyText(ct.description)}
+                  </p>
+                </div>
+              ) : (
+                <div style={{ borderRadius: 14, padding: 14, background: "var(--muted)", textAlign: "center", marginBottom: 14 }}>
+                  <p style={{ fontSize: 11.5, color: "var(--muted-foreground)", margin: 0 }}>No description provided for this tournament.</p>
+                </div>
+              )}
               {ct.status !== "completed" && (
                 <div style={{ height: 4, borderRadius: 2, background: "var(--muted)", overflow: "hidden", marginBottom: 14 }}>
                   <div style={{ height: "100%", width: `${fill}%`, borderRadius: 2, background: "linear-gradient(90deg,#7c3aed,#a855f7)" }} />

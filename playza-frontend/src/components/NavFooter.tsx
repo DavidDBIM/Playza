@@ -93,7 +93,7 @@ const NavFooter = () => {
     return allPotentialMoreItems.filter(item => !currentBar.some(barItem => barItem.label === item.label));
   };
 
-  const mobileMoreItems = getMoreItems(mobileBarItems);
+  const mobileMoreItems = getMoreItems(mobileBarItems).filter(item => item.label !== "My Games");
   const tabletMoreItems = getMoreItems(tabletBarItems);
 
   // Add More button only if there are items to show

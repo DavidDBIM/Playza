@@ -41,7 +41,7 @@ function fmtTime(secs: number) {
 // leaving everything else exactly as written. Used anywhere a tournament
 // description is rendered so admins can safely drop plain links in.
 const LINK_PATTERN = /((?:https?:\/\/)?(?:www\.)?[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,62}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,62}[a-zA-Z0-9])?)+(?:\/[^\s]*)?)/g;
-function linkifyText(text: string): ReactNode {
+export function linkifyText(text: string): ReactNode {
   // split() with a single capturing group interleaves the matches into the
   // result: [text, match, text, match, ..., text] — so odd indices are
   // always the matched links, no regex.lastIndex statefulness to worry about.
