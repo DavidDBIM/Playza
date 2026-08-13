@@ -593,26 +593,30 @@ export async function recordGroupResult(
 //      "you beat them directly, you rank above them")
 //   3. Head-to-head game margin, if step 2 ties on mini-points too
 //   4. Overall game margin across the whole group (game_wins_margin)
-//   5. Standings row id, as a last-resort deterministic tiebreak — this
-//      only gets reached if two players have identical points, identical
-//      head-to-head results, and identical overall margin, which in
-//      practice means their group results were fully symmetric.
+//   5. Sonneborn-Berger score — sum of the group points of every opponent
+//      you beat, plus half the points of every opponent you drew, across
+//      ALL your group games (not just the tied ones). This is the standard
+//      chess/round-robin tiebreak specifically because it can resolve a
+//      circular tie (A beat B, B beat C, C beat A) that steps 2–4 cannot —
+//      those are symmetric by construction in a 3-way cycle, so every
+//      number in them comes out identical for all three players. SB looks
+//      at the STRENGTH of who you beat, which usually isn't symmetric.
+//   6. Registration time, as the final, fully disclosed tiebreak — reached
+//      only if a group is so perfectly symmetric that even SB ties (a
+//      genuine mathematical possibility with a 3-way cycle where the
+//      players also have identical results against everyone else). This
+//      earlier version fell back to a database row id here, which is
+//      deterministic but invisible — it looked exactly as arbitrary as a
+//      coin flip because nothing about it was shown anywhere. Registration
+//      time is real, visible, and explainable ("you signed up first").
 //
-// The previous version fell back to `Math.random() - 0.5` directly inside
-// the sort comparator once points and margin both tied. That's not just
-// "the tiebreak is arbitrary" — a comparator that returns a different
-// value on every call breaks the sort algorithm's correctness guarantees
-// entirely (Array.prototype.sort assumes a stable, transitive ordering),
-// which can produce genuinely inconsistent rankings — duplicate ranks, a
-// player who should've advanced getting cut, races between re-runs. This
-// replaces that with a chain that's always the same answer every time it's
-// computed, and one you can actually explain to a player who asks why they
-// were the one eliminated.
-//
-// Returns both the resolved order AND a breakdown object per player — the
-// breakdown is what gets shown on the Standings tab and emailed to anyone
-// who was actually part of the tie, so "you were tied and lost" always
-// comes with the real numbers instead of looking arbitrary.
+// The version before this one fell back to `Math.random() - 0.5` directly
+// inside the sort comparator once points and margin both tied — which
+// isn't just "arbitrary," a comparator that returns a different value on
+// every call breaks Array.prototype.sort's correctness guarantees outright
+// (duplicate ranks, races between re-runs). Both issues are fixed here:
+// every tier is deterministic, and every tier that actually decided
+// something is shown in the breakdown — nothing invisible settles it.
 interface TiebreakBreakdownEntry {
   user_id: string
   username: string
@@ -620,13 +624,25 @@ interface TiebreakBreakdownEntry {
   head_to_head_points: number
   head_to_head_margin: number
   overall_margin: number
+  sonneborn_berger: number
+  registered_at: string
   final_group_rank: number
+}
+type TiebreakDecidedBy = 'head_to_head' | 'head_to_head_margin' | 'overall_margin' | 'sonneborn_berger' | 'registration_order'
+interface TiebreakBreakdown {
+  // Which tier actually separated the tied players — shown as a plain
+  // sentence in the UI/email ("Decided by: Sonneborn-Berger score") so
+  // nobody has to reverse-engineer which column mattered.
+  decided_by: TiebreakDecidedBy
+  entries: TiebreakBreakdownEntry[]
 }
 function resolveGroupTiebreak(
   tiedPlayers: { id: string; user_id: string; username: string; points: number; game_wins_margin: number }[],
   groupFixtures: { player1_id: string; player2_id: string; winner_id: string | null }[],
+  allGroupPointsByUser: Record<string, number>, // every player's points in the group — needed for Sonneborn-Berger
+  registeredAtByUser: Record<string, string>,
   rankOffset: number, // rank of the first player in this tied block, e.g. 2 if this is the block starting at rank 2
-): { sorted: typeof tiedPlayers; breakdown: TiebreakBreakdownEntry[] | null } {
+): { sorted: typeof tiedPlayers; breakdown: TiebreakBreakdown | null } {
   if (tiedPlayers.length <= 1) return { sorted: tiedPlayers, breakdown: null }
 
   const ids = new Set(tiedPlayers.map(p => p.user_id))
@@ -647,24 +663,55 @@ function resolveGroupTiebreak(
     }
   }
 
+  // Sonneborn-Berger — uses ALL of each tied player's group games (not just
+  // the ones against each other), weighted by how many points the opponent
+  // they beat/drew actually finished with.
+  const sbScore: Record<string, number> = {}
+  for (const p of tiedPlayers) sbScore[p.user_id] = 0
+  for (const f of groupFixtures) {
+    for (const p of tiedPlayers) {
+      if (f.player1_id !== p.user_id && f.player2_id !== p.user_id) continue
+      const oppId = f.player1_id === p.user_id ? f.player2_id : f.player1_id
+      const oppPoints = allGroupPointsByUser[oppId] ?? 0
+      if (f.winner_id === p.user_id) sbScore[p.user_id] += oppPoints
+      else if (!f.winner_id) sbScore[p.user_id] += oppPoints * 0.5
+      // a loss contributes 0, no line needed
+    }
+  }
+
   const sorted = [...tiedPlayers].sort((a, b) => {
     if (miniPoints[b.user_id] !== miniPoints[a.user_id]) return miniPoints[b.user_id] - miniPoints[a.user_id]
     if (miniMargin[b.user_id] !== miniMargin[a.user_id]) return miniMargin[b.user_id] - miniMargin[a.user_id]
     if (b.game_wins_margin !== a.game_wins_margin) return b.game_wins_margin - a.game_wins_margin
-    return a.id.localeCompare(b.id) // deterministic, never random
+    if (sbScore[b.user_id] !== sbScore[a.user_id]) return sbScore[b.user_id] - sbScore[a.user_id]
+    // Final, fully disclosed tiebreak — earlier registration wins. Never a
+    // hidden id: this is exactly what gets shown as the reason.
+    const at = registeredAtByUser[a.user_id] ?? ''
+    const bt = registeredAtByUser[b.user_id] ?? ''
+    return at.localeCompare(bt)
   })
 
-  const breakdown: TiebreakBreakdownEntry[] = sorted.map((p, i) => ({
+  const anyDiffers = (rec: Record<string, number>) => tiedPlayers.some(p => rec[p.user_id] !== rec[tiedPlayers[0]!.user_id])
+  const decided_by: TiebreakDecidedBy =
+    anyDiffers(miniPoints) ? 'head_to_head'
+    : anyDiffers(miniMargin) ? 'head_to_head_margin'
+    : tiedPlayers.some(p => p.game_wins_margin !== tiedPlayers[0]!.game_wins_margin) ? 'overall_margin'
+    : anyDiffers(sbScore) ? 'sonneborn_berger'
+    : 'registration_order'
+
+  const entries: TiebreakBreakdownEntry[] = sorted.map((p, i) => ({
     user_id: p.user_id,
     username: p.username,
     points: p.points,
     head_to_head_points: miniPoints[p.user_id] ?? 0,
     head_to_head_margin: miniMargin[p.user_id] ?? 0,
     overall_margin: p.game_wins_margin,
+    sonneborn_berger: sbScore[p.user_id] ?? 0,
+    registered_at: registeredAtByUser[p.user_id] ?? '',
     final_group_rank: rankOffset + i,
   }))
 
-  return { sorted, breakdown }
+  return { sorted, breakdown: { decided_by, entries } }
 }
 
 // ── GROUP STAGE: check if all group matches are done, and if so, rank +
@@ -708,10 +755,19 @@ async function checkGroupStageComplete(tournamentId: string) {
     .not('group_number', 'is', null)
     .eq('status', 'completed')
 
+  // Registration timestamps — the final, fully-disclosed tiebreak tier if
+  // even Sonneborn-Berger ties (a genuinely symmetric group).
+  const { data: playerRows } = await supabaseAdmin
+    .from('chess_tournament_players')
+    .select('user_id, created_at')
+    .eq('tournament_id', tournamentId)
+  const registeredAtByUser: Record<string, string> = {}
+  for (const p of (playerRows ?? [])) registeredAtByUser[p.user_id] = p.created_at
+
   const advancingPlayers: string[] = []
   // Collected across all groups, only for players who were genuinely tied
   // with someone — this is what the "only if a tie occurred" email goes to.
-  const tieNotifications: { user_id: string; breakdown: TiebreakBreakdownEntry[] }[] = []
+  const tieNotifications: { user_id: string; breakdown: TiebreakBreakdown }[] = []
 
   for (const groupNum of Object.keys(byGroup).map(Number).sort((a, b) => a - b)) {
     // Sort by points only first, then resolve each block of tied players
@@ -719,6 +775,10 @@ async function checkGroupStageComplete(tournamentId: string) {
     // using the real tiebreak chain instead of a coin flip.
     const byPoints = [...(byGroup[groupNum] ?? [])].sort((a, b) => b.points - a.points)
     const fixturesForGroup = (groupFixtures ?? []).filter(f => f.group_number === groupNum)
+    // Every player's points in this group — Sonneborn-Berger needs the full
+    // picture, not just the tied players' own points against each other.
+    const groupPointsByUser: Record<string, number> = {}
+    for (const s of byPoints) groupPointsByUser[s.user_id] = s.points
 
     const sorted: typeof byPoints = []
     let i = 0
@@ -726,10 +786,10 @@ async function checkGroupStageComplete(tournamentId: string) {
       let j = i
       while (j < byPoints.length && byPoints[j]!.points === byPoints[i]!.points) j++
       const tiedBlock = byPoints.slice(i, j)
-      const { sorted: resolvedBlock, breakdown } = resolveGroupTiebreak(tiedBlock, fixturesForGroup, i + 1)
+      const { sorted: resolvedBlock, breakdown } = resolveGroupTiebreak(tiedBlock, fixturesForGroup, groupPointsByUser, registeredAtByUser, i + 1)
       sorted.push(...resolvedBlock)
       if (breakdown) {
-        for (const entry of breakdown) {
+        for (const entry of breakdown.entries) {
           tieNotifications.push({ user_id: entry.user_id, breakdown })
         }
       }
@@ -784,8 +844,9 @@ async function checkGroupStageComplete(tournamentId: string) {
           to: row.users?.email,
           username: row.username,
           tournamentTitle: tTitle?.title ?? 'Chess Tournament',
-          advanced: notification.breakdown.find(b => b.user_id === row.user_id)!.final_group_rank <= advancePerGroup,
-          breakdown: notification.breakdown,
+          advanced: notification.breakdown.entries.find(b => b.user_id === row.user_id)!.final_group_rank <= advancePerGroup,
+          decidedBy: notification.breakdown.decided_by,
+          breakdown: notification.breakdown.entries,
           tournamentUrl: `https://playza.games/chess-tournament/${tournamentId}?tab=standings`,
         })
       } catch (err) {

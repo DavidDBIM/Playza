@@ -331,6 +331,14 @@ function MyFixtures({ fixtures, userId }: { fixtures: TournamentFixture[]; userI
 }
 
 // ── Group standings table ─────────────────────────────────────────────────────
+const DECIDED_BY_LABEL: Record<string, string> = {
+  head_to_head: "head-to-head results",
+  head_to_head_margin: "head-to-head game margin",
+  overall_margin: "overall game margin across the group",
+  sonneborn_berger: "Sonneborn-Berger score (strength of who you beat)",
+  registration_order: "registration time — everything else was fully identical, right down to Sonneborn-Berger",
+};
+
 function GroupStandings({ standings, userId }: { standings: TournamentStanding[]; userId?: string }) {
   const [openBreakdown, setOpenBreakdown] = useState<string | null>(null); // key: `${group}-${points}`
 
@@ -378,7 +386,7 @@ function GroupStandings({ standings, userId }: { standings: TournamentStanding[]
                           {/* Only rendered for players who were actually tied
                               with someone — everyone else was ranked on
                               points alone, nothing to explain */}
-                          {s.tiebreak_breakdown && s.tiebreak_breakdown.length > 1 && (
+                          {s.tiebreak_breakdown && s.tiebreak_breakdown.entries.length > 1 && (
                             <button
                               onClick={() => setOpenBreakdown(k => k === `${g}-${s.points}` ? null : `${g}-${s.points}`)}
                               className="shrink-0 w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-black bg-amber-500/15 text-amber-400 hover:bg-amber-500/25 transition-colors"
@@ -408,35 +416,46 @@ function GroupStandings({ standings, userId }: { standings: TournamentStanding[]
             const tiedPlayer = (byGroup[g] ?? []).find(s => `${g}-${s.points}` === openBreakdown && s.tiebreak_breakdown);
             const breakdown = tiedPlayer?.tiebreak_breakdown;
             if (!breakdown) return null;
+            const entries = [...breakdown.entries].sort((a, b) => a.final_group_rank - b.final_group_rank);
             return (
               <div className="px-3 sm:px-4 py-3 border-t" style={{ borderColor: "color-mix(in srgb, var(--foreground) 6%, transparent)", background: "rgba(245,158,11,0.05)" }}>
                 <p className="text-[9px] font-black uppercase tracking-widest text-amber-400 mb-2">
-                  Tiebreak breakdown — {breakdown.length} players tied on {tiedPlayer.points} pts
+                  Tiebreak breakdown — {entries.length} players tied on {tiedPlayer.points} pts
                 </p>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-[10px] border-collapse min-w-[320px]">
+                  <table className="w-full text-[10px] border-collapse min-w-[380px]">
                     <thead>
                       <tr>
-                        {["Rank", "Player", "H2H Pts", "H2H Margin", "Overall Margin"].map(h => (
+                        {["Rank", "Player", "H2H Pts", "H2H Margin", "Overall Margin", "SB Score"].map(h => (
                           <th key={h} className="py-1 px-2 text-left text-[8px] font-black uppercase tracking-widest text-foreground/30">{h}</th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
-                      {[...breakdown].sort((a, b) => a.final_group_rank - b.final_group_rank).map(row => (
+                      {entries.map(row => (
                         <tr key={row.user_id} style={{ background: row.user_id === userId ? "rgba(124,58,237,0.1)" : "transparent" }}>
                           <td className="py-1 px-2 font-black text-foreground/40">{row.final_group_rank}</td>
                           <td className="py-1 px-2 font-bold truncate max-w-[100px]" style={{ color: row.user_id === userId ? "#c084fc" : undefined }}>{row.username}{row.user_id === userId ? " (you)" : ""}</td>
                           <td className="py-1 px-2">{row.head_to_head_points}</td>
                           <td className="py-1 px-2">{row.head_to_head_margin > 0 ? "+" : ""}{row.head_to_head_margin}</td>
                           <td className="py-1 px-2">{row.overall_margin > 0 ? "+" : ""}{row.overall_margin}</td>
+                          <td className="py-1 px-2">{row.sonneborn_berger}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
+                {/* The actual answer to "why am I ranked where I am" — not
+                    left for the reader to infer from the columns above,
+                    which can all be identical in a circular tie (A beat B,
+                    B beat C, C beat A is symmetric in every one of them). */}
+                <div className="mt-2.5 px-2.5 py-2 rounded-lg" style={{ background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.2)" }}>
+                  <p className="text-[9px] font-black text-amber-400">
+                    Decided by: {DECIDED_BY_LABEL[breakdown.decided_by]}
+                  </p>
+                </div>
                 <p className="text-[9px] text-foreground/30 font-medium mt-2 leading-relaxed">
-                  H2H = results only from games these players played against each other, checked first. Overall margin (whole group) is the next tiebreak if H2H is also level.
+                  Checked in order: head-to-head → head-to-head margin → overall margin → Sonneborn-Berger score (sum of the group points of everyone you beat, half for a draw — resolves circular ties like A beat B, B beat C, C beat A, where the columns above are identical for everyone) → registration time, as an absolute last resort.
                 </p>
               </div>
             );
@@ -532,12 +551,19 @@ function FinalResults({ results, userId }: { results: TournamentResult[]; userId
           return (
             <div key={rank} className={`flex flex-col items-center justify-end min-w-0 ${rank === 1 ? "flex-[1.15]" : "flex-1"} max-w-[150px]`}>
               <div className="text-3xl mb-1">{m.emoji}</div>
-              {recipients.map((r) => (
-                <div key={r.user_id} className="w-full text-center mb-1">
-                  <p className={`text-xs font-black truncate ${r.user_id === userId ? "text-violet-400" : "text-foreground"}`}>{r.username}</p>
-                  {r.prize_won > 0 && <p className="text-[10px] font-bold" style={{ color: m.color }}>+{r.prize_won.toLocaleString()} ZA</p>}
-                </div>
-              ))}
+              {recipients.length > 1 && (
+                <span className="text-[7px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full mb-1 shrink-0" style={{ background: "rgba(148,163,184,0.15)", color: "var(--foreground)", opacity: 0.5 }}>
+                  {recipients.length}-way tie
+                </span>
+              )}
+              <div className="w-full space-y-0.5 mb-1">
+                {recipients.map((r) => (
+                  <div key={r.user_id} className="w-full text-center">
+                    <p className={`text-xs font-black truncate ${r.user_id === userId ? "text-violet-400" : "text-foreground"}`}>{r.username}</p>
+                    {r.prize_won > 0 && <p className="text-[10px] font-bold leading-tight" style={{ color: m.color }}>+{r.prize_won.toLocaleString()} ZA</p>}
+                  </div>
+                ))}
+              </div>
               <div className={`w-full ${height} rounded-t-xl flex items-start justify-center pt-2 relative overflow-hidden`}
                 style={{ background: m.bg, boxShadow: iAmHere ? `0 0 0 3px rgba(124,58,237,0.6), 0 0 24px ${m.color}55` : `0 0 20px ${m.color}33` }}>
                 <span className="text-white/90 font-black text-lg">{rank}</span>

@@ -137,7 +137,19 @@ export interface TiebreakBreakdownRow {
   head_to_head_points: number
   head_to_head_margin: number
   overall_margin: number
+  sonneborn_berger: number
+  registered_at: string
   final_group_rank: number
+}
+
+export type TiebreakDecidedBy = 'head_to_head' | 'head_to_head_margin' | 'overall_margin' | 'sonneborn_berger' | 'registration_order'
+
+const DECIDED_BY_LABEL: Record<TiebreakDecidedBy, string> = {
+  head_to_head: 'head-to-head results',
+  head_to_head_margin: 'head-to-head game margin',
+  overall_margin: 'overall game margin across the group',
+  sonneborn_berger: 'Sonneborn-Berger score (strength of who you beat)',
+  registration_order: 'registration time — every other measurable result was completely identical, right down to Sonneborn-Berger, so the tie genuinely could not be broken by results alone',
 }
 
 export interface TiebreakBreakdownEmailInput {
@@ -145,12 +157,13 @@ export interface TiebreakBreakdownEmailInput {
   username: string
   tournamentTitle: string
   advanced: boolean
+  decidedBy: TiebreakDecidedBy
   breakdown: TiebreakBreakdownRow[]
   tournamentUrl: string
 }
 
 export async function sendTiebreakBreakdownEmail(opts: TiebreakBreakdownEmailInput) {
-  const { to, username, tournamentTitle, advanced, breakdown, tournamentUrl } = opts
+  const { to, username, tournamentTitle, advanced, decidedBy, breakdown, tournamentUrl } = opts
   if (!to) return
 
   const accentColor = advanced ? '#16a34a' : '#f59e0b'
@@ -168,6 +181,7 @@ export async function sendTiebreakBreakdownEmail(opts: TiebreakBreakdownEmailInp
       <td style="padding:6px 8px;font-size:13px;text-align:center;border-bottom:1px solid rgba(0,0,0,0.06);">${row.head_to_head_points}</td>
       <td style="padding:6px 8px;font-size:13px;text-align:center;border-bottom:1px solid rgba(0,0,0,0.06);">${row.head_to_head_margin > 0 ? '+' : ''}${row.head_to_head_margin}</td>
       <td style="padding:6px 8px;font-size:13px;text-align:center;border-bottom:1px solid rgba(0,0,0,0.06);">${row.overall_margin > 0 ? '+' : ''}${row.overall_margin}</td>
+      <td style="padding:6px 8px;font-size:13px;text-align:center;border-bottom:1px solid rgba(0,0,0,0.06);">${row.sonneborn_berger}</td>
     </tr>
   `).join('')
 
@@ -175,8 +189,8 @@ export async function sendTiebreakBreakdownEmail(opts: TiebreakBreakdownEmailInp
     <h2 style="margin:0 0 12px;font-size:20px;font-weight:800;color:#111;">
       ${advanced ? `You made it through, ${username} 👍` : `Close one, ${username}`}
     </h2>
-    <p style="margin:0 0 14px;font-size:15px;line-height:1.5;">
-      You finished level on points with ${sorted.length - 1} other player${sorted.length - 1 === 1 ? '' : 's'} in your group in <strong>${tournamentTitle}</strong>. Here's exactly how the tie was broken — head-to-head results first, then overall game margin:
+    <p style="margin:0 0 10px;font-size:15px;line-height:1.5;">
+      You finished level on points with ${sorted.length - 1} other player${sorted.length - 1 === 1 ? '' : 's'} in your group in <strong>${tournamentTitle}</strong>. Here's every number that was checked:
     </p>
     <table style="width:100%;border-collapse:collapse;margin-top:8px;">
       <thead>
@@ -186,12 +200,16 @@ export async function sendTiebreakBreakdownEmail(opts: TiebreakBreakdownEmailInp
           <th style="padding:6px 8px;font-size:10px;text-transform:uppercase;letter-spacing:0.05em;color:#888;">H2H Pts</th>
           <th style="padding:6px 8px;font-size:10px;text-transform:uppercase;letter-spacing:0.05em;color:#888;">H2H Margin</th>
           <th style="padding:6px 8px;font-size:10px;text-transform:uppercase;letter-spacing:0.05em;color:#888;">Overall Margin</th>
+          <th style="padding:6px 8px;font-size:10px;text-transform:uppercase;letter-spacing:0.05em;color:#888;">SB Score</th>
         </tr>
       </thead>
       <tbody>${rowsHtml}</tbody>
     </table>
-    <p style="margin:16px 0 0;font-size:12px;line-height:1.5;color:#777;">
-      <strong>H2H Pts/Margin</strong> = results only from the games you and the other tied players played against each other. That's checked first; overall margin across the whole group is the next tiebreak if H2H is also level.
+    <p style="margin:14px 0 0;font-size:13px;line-height:1.6;padding:10px 12px;background:${bgTint};border-radius:8px;border:1px solid ${accentColor}33;">
+      <strong>Decided by:</strong> ${DECIDED_BY_LABEL[decidedBy]}.
+    </p>
+    <p style="margin:12px 0 0;font-size:12px;line-height:1.5;color:#777;">
+      Checked in order: head-to-head results (games you played against just the tied players) → head-to-head margin → overall game margin (whole group) → Sonneborn-Berger score (sum of the group points of everyone you beat, half for a draw — the standard way to break a tie where head-to-head is symmetric, e.g. A beat B, B beat C, C beat A) → registration time, as an absolute last resort.
     </p>
   `
 

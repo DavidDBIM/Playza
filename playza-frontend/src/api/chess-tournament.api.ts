@@ -53,7 +53,16 @@ export interface TiebreakBreakdownRow {
   head_to_head_points: number;
   head_to_head_margin: number;
   overall_margin: number;
+  sonneborn_berger: number;
+  registered_at: string;
   final_group_rank: number;
+}
+
+export type TiebreakDecidedBy = "head_to_head" | "head_to_head_margin" | "overall_margin" | "sonneborn_berger" | "registration_order";
+
+export interface TiebreakBreakdown {
+  decided_by: TiebreakDecidedBy;
+  entries: TiebreakBreakdownRow[];
 }
 
 export interface TournamentStanding {
@@ -70,9 +79,9 @@ export interface TournamentStanding {
   group_rank?: number;
   advanced: boolean;
   // Only present for players who were genuinely tied with someone on
-  // points — shows the head-to-head numbers that decided the tie, so a
-  // player who gets cut on a tiebreak can see exactly why.
-  tiebreak_breakdown?: TiebreakBreakdownRow[] | null;
+  // points — shows every number that was checked and which one actually
+  // decided it, so a player who gets cut on a tiebreak can see exactly why.
+  tiebreak_breakdown?: TiebreakBreakdown | null;
 }
 
 export interface MyChessStatus {

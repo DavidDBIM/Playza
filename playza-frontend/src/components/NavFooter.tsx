@@ -82,7 +82,6 @@ const NavFooter = () => {
     user ? getItem("Profile") : undefined,
     getItem("Loyalty"),
     getItem("Referral"),
-    user ? getItem("My Games") : undefined,
     user ? getItem("Wallet") : undefined,
     getItem("Leaderboards"),
     user ? { label: "Support", icon: MessageSquare, path: "/support" } : undefined,
@@ -93,7 +92,7 @@ const NavFooter = () => {
     return allPotentialMoreItems.filter(item => !currentBar.some(barItem => barItem.label === item.label));
   };
 
-  const mobileMoreItems = getMoreItems(mobileBarItems).filter(item => item.label !== "My Games");
+  const mobileMoreItems = getMoreItems(mobileBarItems);
   const tabletMoreItems = getMoreItems(tabletBarItems);
 
   // Add More button only if there are items to show
