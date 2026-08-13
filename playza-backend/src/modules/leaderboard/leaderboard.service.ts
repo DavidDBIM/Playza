@@ -23,7 +23,7 @@ function getPeriodCutoff(period: LeaderboardPeriod): string | null {
 // ─────────────────────────────────────────────
 // 1. LOYALTY LEADERBOARD (by PZA points)
 // ─────────────────────────────────────────────
-export async function getLoyaltyLeaderboard(period: LeaderboardPeriod = 'all', limit = 50) {
+export async function getLoyaltyLeaderboard(period: LeaderboardPeriod = 'all', limit = 50, offset = 0) {
   const cutoff = getPeriodCutoff(period)
 
   if (period === 'all' || !cutoff) {
@@ -31,12 +31,12 @@ export async function getLoyaltyLeaderboard(period: LeaderboardPeriod = 'all', l
       .from('pza_points')
       .select('user_id, total_points, users!inner(username, avatar_url)')
       .order('total_points', { ascending: false })
-      .limit(limit)
+      .range(offset, offset + limit - 1)
 
     if (error) throw error
 
     return (data ?? []).map((row: any, i: number) => ({
-      rank: i + 1,
+      rank: offset + i + 1,
       user_id: row.user_id,
       username: row.users?.username ?? 'Unknown',
       avatar_url: row.users?.avatar_url ?? null,
@@ -68,8 +68,8 @@ export async function getLoyaltyLeaderboard(period: LeaderboardPeriod = 'all', l
   return Array.from(map.entries())
     .map(([user_id, v]) => ({ user_id, ...v, pza_points: v.points }))
     .sort((a, b) => b.pza_points - a.pza_points)
-    .slice(0, limit)
-    .map((row, i) => ({ rank: i + 1, ...row }))
+    .slice(offset, offset + limit)
+    .map((row, i) => ({ rank: offset + i + 1, ...row }))
 }
 
 // ─────────────────────────────────────────────

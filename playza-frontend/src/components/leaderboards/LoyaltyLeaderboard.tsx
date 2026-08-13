@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Loader2, Trophy, Award, Medal, Star, Search as SearchIcon } from "lucide-react";
+import { Loader2, Trophy, Award, Medal, Star, Search as SearchIcon, ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
 import Search from "@/components/Search";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -13,19 +13,52 @@ const podiumConfig = [
   { bg: "from-amber-700/20 to-amber-700/5", border: "border-amber-700/30", icon: <Medal className="text-amber-700 w-3 h-3" /> },
 ];
 
+// Ranks per page — was previously one unbounded list that kept fetching up
+// to 100 entries and rendering all of them in one ever-growing scroll.
+const PAGE_SIZE = 30;
+// While actively searching, we widen the fetch instead of paging, since a
+// search needs to look across more than just the current 30-rank window —
+// there's no dedicated search-by-name endpoint on the backend, so this is
+// the practical compromise: search reaches the top 100, paging goes as
+// deep as the person wants via the jump control below.
+const SEARCH_LIMIT = 100;
+
 const LoyaltyLeaderboard = () => {
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
-  const { data: loyaltyData, isLoading } = useLoyaltyLeaderboard("all", 100);
+  const [page, setPage] = useState(0); // 0-indexed
+  const [jumpValue, setJumpValue] = useState("");
+
+  const isSearching = searchQuery.trim().length > 0;
+  const { data: loyaltyData, isLoading, isFetching } = useLoyaltyLeaderboard(
+    "all",
+    isSearching ? SEARCH_LIMIT : PAGE_SIZE,
+    isSearching ? 0 : page * PAGE_SIZE,
+  );
 
   const filteredItems = useMemo(() => {
     if (!loyaltyData) return [];
-    if (!searchQuery) return loyaltyData;
+    if (!isSearching) return loyaltyData;
     return loyaltyData.filter(u => u.username.toLowerCase().includes(searchQuery.toLowerCase()));
-  }, [loyaltyData, searchQuery]);
+  }, [loyaltyData, searchQuery, isSearching]);
 
-  const topThree = useMemo(() => loyaltyData?.slice(0, 3) ?? [], [loyaltyData]);
-  const restOfPlayers = useMemo(() => searchQuery ? filteredItems : filteredItems.slice(3), [filteredItems, searchQuery]);
+  // Podium only makes sense for the true top 3 — only fetched/shown on the
+  // first page (and hidden entirely while searching, since search results
+  // aren't rank-ordered around a "top 3" concept).
+  const topThree = useMemo(() => (!isSearching && page === 0) ? (loyaltyData?.slice(0, 3) ?? []) : [], [loyaltyData, isSearching, page]);
+  const restOfPlayers = useMemo(() => {
+    if (isSearching) return filteredItems;
+    return page === 0 ? filteredItems.slice(3) : filteredItems;
+  }, [filteredItems, isSearching, page]);
+
+  const rangeLabel = `#${page * PAGE_SIZE + 1}–${page * PAGE_SIZE + PAGE_SIZE}`;
+
+  const handleJump = () => {
+    const rank = parseInt(jumpValue, 10);
+    if (isNaN(rank) || rank < 1) return;
+    setPage(Math.floor((rank - 1) / PAGE_SIZE));
+    setJumpValue("");
+  };
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden relative">
@@ -39,12 +72,12 @@ const LoyaltyLeaderboard = () => {
           <p className="text-[11px] text-slate-500 font-bold">Consistently engage with quests and referrals to accumulate PZA.</p>
         </div>
         <div className="w-full md:w-64">
-          <Search placeholder="Search operatives..." value={searchQuery} onChange={setSearchQuery} />
+          <Search placeholder="Search operatives (top 100)..." value={searchQuery} onChange={setSearchQuery} />
         </div>
       </div>
 
       {/* Top 3 — always 3 columns, names wrap not truncate */}
-      {!searchQuery && topThree.length > 0 && !isLoading && (
+      {topThree.length > 0 && !isLoading && (
         <div className="grid grid-cols-3 gap-2 mb-3">
           {topThree.map((player, idx) => {
             const cfg = podiumConfig[idx];
@@ -73,6 +106,16 @@ const LoyaltyLeaderboard = () => {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Which ranks are currently on screen — the whole point of this bar
+          existing is so the list never again feels like an endless scroll
+          with no sense of where you are in it. */}
+      {!isSearching && (
+        <div className="flex items-center justify-between gap-2 mb-2 px-0.5">
+          <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Showing {rangeLabel}</span>
+          {isFetching && <Loader2 className="w-3 h-3 animate-spin text-primary" />}
         </div>
       )}
 
@@ -138,8 +181,10 @@ const LoyaltyLeaderboard = () => {
                     <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center">
                       <SearchIcon className="w-5 h-5 text-slate-300 dark:text-slate-700" />
                     </div>
-                    <p className="text-[11px] font-black uppercase tracking-widest text-slate-500">No results for "{searchQuery}"</p>
-                    <button onClick={() => setSearchQuery("")} className="text-[10px] font-black text-primary uppercase border-b border-primary/30 hover:border-primary transition-all">Clear Search</button>
+                    <p className="text-[11px] font-black uppercase tracking-widest text-slate-500">
+                      {isSearching ? `No results for "${searchQuery}" in the top 100` : "No one here yet"}
+                    </p>
+                    {isSearching && <button onClick={() => setSearchQuery("")} className="text-[10px] font-black text-primary uppercase border-b border-primary/30 hover:border-primary transition-all">Clear Search</button>}
                   </div>
                 </TableCell>
               </TableRow>
@@ -147,6 +192,50 @@ const LoyaltyLeaderboard = () => {
           </TableBody>
         </Table>
       </div>
+
+      {/* Paging controls — Prev/Next through 30-rank pages, plus a jump
+          straight to any rank (e.g. type 150 to land on the 121–150 page)
+          instead of scrolling through everything in between. */}
+      {!isSearching && (
+        <div className="mt-3 flex flex-col sm:flex-row items-center justify-between gap-2.5">
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => setPage(p => Math.max(0, p - 1))}
+              disabled={page === 0}
+              className="flex items-center justify-center w-8 h-8 rounded-lg bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
+            >
+              <ChevronLeft size={15} />
+            </button>
+            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 px-1 min-w-[70px] text-center">{rangeLabel}</span>
+            <button
+              onClick={() => setPage(p => p + 1)}
+              disabled={!loyaltyData || loyaltyData.length < PAGE_SIZE}
+              className="flex items-center justify-center w-8 h-8 rounded-lg bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
+            >
+              <ChevronRight size={15} />
+            </button>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Jump to rank</span>
+            <input
+              type="number"
+              min={1}
+              value={jumpValue}
+              onChange={e => setJumpValue(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && handleJump()}
+              placeholder="e.g. 150"
+              className="w-20 px-2 py-1.5 rounded-lg text-[11px] font-bold bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white outline-none focus:border-primary"
+            />
+            <button
+              onClick={handleJump}
+              className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/15 text-primary hover:bg-primary/25 transition-colors"
+            >
+              <ArrowRight size={14} />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

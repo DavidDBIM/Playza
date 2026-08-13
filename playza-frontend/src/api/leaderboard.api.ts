@@ -20,10 +20,11 @@ export interface ReferralLeaderboardEntry {
 
 export const getLoyaltyLeaderboardApi = async (
   period: LeaderboardPeriod = "all",
-  limit = 50
+  limit = 50,
+  offset = 0
 ): Promise<LoyaltyLeaderboardEntry[]> => {
   const { data } = await axiosInstance.get(`/leaderboard/loyalty`, {
-    params: { period, limit },
+    params: { period, limit, offset },
   });
   return data.data;
 };

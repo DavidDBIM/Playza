@@ -4,7 +4,7 @@ import { useNavigate, useParams, useSearchParams } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/auth";
 import SEO from "@/components/SEO";
-import { Trophy, Users, Clock, Crown, ArrowLeft } from "lucide-react";
+import { Trophy, Users, Clock, Crown, ArrowLeft, ArrowUpRight } from "lucide-react";
 import {
   getChessTournaments, getChessTournament, registerChessTournament,
   getChessTournamentFixtures, getChessTournamentStandings, getChessTournamentResults,
@@ -56,12 +56,24 @@ export function linkifyText(text: string): ReactNode {
     const core = trailing ? part.slice(0, -trailing.length) : part;
     if (!core || !/[a-zA-Z]{2,}$/.test(core.replace(/\/[^\s]*$/, ""))) return <span key={i}>{part}</span>;
     const href = /^https?:\/\//i.test(core) ? core : `https://${core}`;
+    // Show where the link actually goes rather than a generic "Click me" —
+    // on a platform that moves real money, a link that doesn't disclose
+    // its destination reads as suspicious rather than convenient. Falls
+    // back to the raw text if the URL is somehow unparseable.
+    let label = core;
+    try {
+      const hostname = new URL(href).hostname.replace(/^www\./, "");
+      label = hostname.length > 28 ? `${hostname.slice(0, 26)}…` : hostname;
+    } catch {
+      // keep raw core as label
+    }
     return (
       <span key={i}>
         <a href={href} target="_blank" rel="noopener noreferrer nofollow" onClick={e => e.stopPropagation()}
-          className="inline-flex items-center gap-1 px-2 py-0.5 mx-0.5 rounded-full text-[10px] font-black align-middle transition-transform hover:scale-105"
-          style={{ background: "rgba(124,58,237,0.18)", color: "#c084fc" }}>
-          🔗 Click me
+          className="inline-flex items-center gap-1 px-2.5 py-1 mx-0.5 rounded-full text-[10px] font-black align-middle transition-all hover:scale-105 hover:shadow-lg"
+          style={{ background: "linear-gradient(135deg, rgba(124,58,237,0.2), rgba(168,85,247,0.15))", color: "#c084fc", border: "1px solid rgba(168,85,247,0.3)" }}>
+          {label}
+          <ArrowUpRight size={11} strokeWidth={2.5} />
         </a>
         {trailing}
       </span>

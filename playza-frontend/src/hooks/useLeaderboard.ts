@@ -8,10 +8,11 @@ import {
 export const useLoyaltyLeaderboard = (
   period: LeaderboardPeriod = "all",
   limit = 50,
+  offset = 0,
 ) => {
   return useQuery({
-    queryKey: ["leaderboard", "loyalty", period, limit],
-    queryFn: () => getLoyaltyLeaderboardApi(period, limit),
+    queryKey: ["leaderboard", "loyalty", period, limit, offset],
+    queryFn: () => getLoyaltyLeaderboardApi(period, limit, offset),
     staleTime: 5 * 60 * 1000,      // fresh for 5 minutes
     refetchInterval: 5 * 60 * 1000, // poll every 5 min (was every 1 min)
   });

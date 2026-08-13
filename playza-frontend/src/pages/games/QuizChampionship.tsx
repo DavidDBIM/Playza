@@ -6,6 +6,7 @@ import { useQuizSocket, type LeaderboardEntry } from "@/hooks/quiz/useQuizSocket
 import { useAuth } from "@/context/auth";
 import { useToast } from "@/context/toast";
 import axiosInstance from "@/api/axiosInstance";
+import { linkifyText } from "@/pages/ChessTournamentPage";
 
 const ROUNDS = [
   { name: "Warm Up",        emoji: "🟢", color: "#22c55e", secs: 60 },
@@ -381,7 +382,7 @@ export default function QuizChampionship() {
               </span>
             </div>
             <h1 className="text-2xl font-black text-white mb-1">{tournament.title}</h1>
-            {tournament.description && <p className="text-white/40 text-sm">{tournament.description}</p>}
+            {tournament.description && <p className="text-white/40 text-sm">{linkifyText(tournament.description)}</p>}
           </div>
           <div className="grid grid-cols-3 gap-2 mb-5">
             {[

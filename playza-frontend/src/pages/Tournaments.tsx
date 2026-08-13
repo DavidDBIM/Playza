@@ -208,7 +208,7 @@ function TournamentDetailModal({ qt, onClose, onRegister, isRegistering, registe
               <span style={{ fontSize: 9, fontWeight: 700, color: sc.color, letterSpacing: "0.12em", textTransform: "uppercase" }}>{sc.label}</span>
             </div>
             <h2 style={{ fontSize: "clamp(16px,4vw,20px)", fontWeight: 800, color: "var(--foreground)", margin: "0 0 5px", lineHeight: 1.2, wordBreak: "break-word" }}>{qt.title}</h2>
-            {qt.description && <p style={{ fontSize: "clamp(11px,3vw,13px)", color: "var(--muted-foreground)", lineHeight: 1.5, margin: 0 }}>{qt.description}</p>}
+            {qt.description && <p style={{ fontSize: "clamp(11px,3vw,13px)", color: "var(--muted-foreground)", lineHeight: 1.5, margin: 0 }}>{linkifyText(qt.description)}</p>}
           </div>
           <button onClick={onClose} style={{ background: "var(--muted)", border: "1px solid var(--border)", borderRadius: "50%", width: 32, height: 32, minWidth: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}><X size={14} style={{ color: "var(--muted-foreground)" }} /></button>
         </div>
@@ -398,7 +398,7 @@ function TCard({ qt, featured, onRegistered }: { qt: QuizTournament; featured?: 
           <div style={{ padding: "12px 14px 14px", display: "flex", flexDirection: "column", flex: 1, gap: 9 }}>
             <div>
               <h3 style={{ fontSize: "clamp(12px,3vw,14px)", fontWeight: 700, color: "var(--foreground)", lineHeight: 1.3, margin: "0 0 3px", wordBreak: "break-word" }}>{qt.title}</h3>
-              {qt.description && <p style={{ fontSize: "clamp(10px,2.5vw,11px)", color: "var(--muted-foreground)", lineHeight: 1.4, margin: 0, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" } as any}>{qt.description}</p>}
+              {qt.description && <p style={{ fontSize: "clamp(10px,2.5vw,11px)", color: "var(--muted-foreground)", lineHeight: 1.4, margin: 0, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" } as any}>{linkifyText(qt.description)}</p>}
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 5 }}>
               {[{ val: qt.prize_pool > 0 ? qt.prize_pool.toLocaleString() : "TBD", lbl: "ZA Prize" }, { val: maxPlayers ? qt.player_count + "/" + maxPlayers : qt.player_count.toString(), lbl: "Players" }, { val: qt.entry_fee > 0 ? qt.entry_fee + " ZA" : "Free", lbl: "Entry" }].map((s, i) => (

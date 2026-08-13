@@ -33,16 +33,25 @@ function parseLimit(raw: unknown, max = 100): number {
   return Math.min(n, max)
 }
 
-// GET /api/leaderboard/loyalty?period=all&limit=50
-// Returns PZA loyalty leaderboard
+function parseOffset(raw: unknown): number {
+  const n = parseInt(raw as string, 10)
+  if (isNaN(n) || n < 0) return 0
+  return n
+}
+
+// GET /api/leaderboard/loyalty?period=all&limit=30&offset=0
+// Returns PZA loyalty leaderboard. `offset` lets the client page through a
+// long board (e.g. offset=100&limit=30 for ranks 101-130) instead of
+// pulling everyone into one ever-growing list.
 router.get('/loyalty', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
     const period = parsePeriod(req.query.period)
     const limit = parseLimit(req.query.limit)
+    const offset = parseOffset(req.query.offset)
     const data = await cached(
-      `leaderboard:loyalty:${period}:${limit}`,
+      `leaderboard:loyalty:${period}:${limit}:${offset}`,
       LEADERBOARD_TTL_MS,
-      () => getLoyaltyLeaderboard(period, limit)
+      () => getLoyaltyLeaderboard(period, limit, offset)
     )
     res.json({ success: true, data })
   } catch (err: any) {
