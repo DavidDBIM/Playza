@@ -28,6 +28,7 @@ import type { ChessRoom } from "@/types/chess";
 import type { UserProfile } from "@/context/auth";
 import H2HWinner from "../H2HWinner";
 import ResignConfirmationModal from "./ResignConfirmationModal";
+import MusicToggle from "@/components/common/MusicToggle";
 
 interface ChessArenaProps {
   room: ChessRoom;
@@ -878,7 +879,8 @@ const ChessArena = ({ room, user, backTo = "/h2h", backLabel = "H2H ZONE", rende
         />
       )}
       {/* ── Fullscreen Toggle (NEW) ── */}
-      <div className="flex justify-end w-full md:col-span-2 md:row-start-1">
+      <div className="flex items-center justify-end gap-2 w-full md:col-span-2 md:row-start-1">
+        <MusicToggle />
         <button
           onClick={toggleFullscreen}
           className="p-2 rounded-xl bg-slate-100 dark:bg-white/5 md:hover:bg-slate-200 dark:md:hover:bg-white/10 text-slate-600 dark:text-slate-400"

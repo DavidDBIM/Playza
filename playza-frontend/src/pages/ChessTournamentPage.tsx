@@ -830,7 +830,7 @@ function TournamentDetailPage({ tournamentId, initialDetailTab }: {
         )}
 
         {/* Content */}
-        <div className="mb-6">
+        <div className="mb-6 mt-1">
           {tab === "bracket" && (t.status === "active" || t.status === "completed") && (
             <BracketTree fixtures={fixtures} userId={user?.id} tournamentId={tournamentId} />
           )}
