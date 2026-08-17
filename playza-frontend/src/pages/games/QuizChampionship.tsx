@@ -33,20 +33,43 @@ function ScoringExplainer({ onClose }: { onClose: () => void }) {
           </div>
           <button onClick={onClose} className="w-7 h-7 rounded-lg bg-white/5 text-white/40 hover:text-white flex items-center justify-center text-sm">✕</button>
         </div>
-        <p className="text-white/40 text-xs mb-5 leading-relaxed">Every player is ranked using the same fair formula — no randomness, no hidden weighting. Here's exactly how it works, in order:</p>
+        <p className="text-white/40 text-xs mb-5 leading-relaxed">Every player is ranked using the same fair formula — no randomness, no hidden weighting. Here's exactly how it works, with a worked example for each step:</p>
         <div className="space-y-3">
           {[
-            { n: 1, title: "Rounds Survived", desc: "Lasting longer always beats lasting a shorter time. A player eliminated in Round 4 always outranks someone eliminated in Round 2.", color: "#a855f7" },
-            { n: 2, title: "Correct Answers", desc: "Among players who survived the same number of rounds, whoever answered more questions correctly ranks higher.", color: "#3b82f6" },
-            { n: 3, title: "Answer Speed", desc: "Still tied? The player who answered faster wins — measured by seconds left on the clock when you submit. Speed only counts from your 2nd question onward, so opening nerves never cost you.", color: "#22c55e" },
-            { n: 4, title: "Exact Milliseconds", desc: "In the extremely rare case speed is still tied to the second, we compare exact millisecond timestamps — virtually impossible to tie.", color: "#f59e0b" },
+            {
+              n: 1, title: "Rounds Survived", color: "#a855f7",
+              desc: "Lasting longer always beats lasting a shorter time — no matter how many questions the other player got right along the way.",
+              example: "Example: Ama is eliminated in Round 2 (Rising). Femi survives all the way to Round 4 (Danger Zone) before going out. Femi ranks above Ama — even if Ama had a perfect score up to the point she was eliminated.",
+            },
+            {
+              n: 2, title: "Correct Answers", color: "#3b82f6",
+              desc: "Among players who survived the exact same number of rounds, whoever answered more questions correctly overall ranks higher.",
+              example: "Example: Ama and Femi are both eliminated in Round 3. Across the whole tournament, Ama answered 7 questions correctly and Femi answered 5. Ama ranks above Femi.",
+            },
+            {
+              n: 3, title: "Speed Score", color: "#22c55e",
+              desc: "Still tied on both of the above? Every correct answer earns you points equal to the seconds left on the clock when you submitted — answer faster, earn more. This only starts counting from your 2nd question of the tournament onward, so opening nerves or a slow first click never cost you.",
+              example: "Example: a question has a 30-second timer. Ama answers with 18 seconds left → +18 speed points for that question. Add that up across every correct answer in the tournament: Ama finishes with a total speed score of 145, Femi finishes with 130 — same rounds survived, same number correct, but Ama was consistently faster, so she ranks above Femi.",
+            },
+            {
+              n: 4, title: "Exact Milliseconds", color: "#f59e0b",
+              desc: "In the extremely rare case speed is still tied down to the whole second, the system checks exact millisecond timestamps as the final tiebreak — realistically almost impossible to also tie.",
+              example: null,
+            },
           ].map(s => (
-            <div key={s.n} className="flex gap-3 bg-white/[0.03] border border-white/[0.06] rounded-2xl p-3.5">
-              <div className="shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-black text-white" style={{ background: s.color }}>{s.n}</div>
-              <div>
-                <p className="text-white font-bold text-sm mb-0.5">{s.title}</p>
-                <p className="text-white/35 text-[11px] leading-relaxed">{s.desc}</p>
+            <div key={s.n} className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-3.5">
+              <div className="flex gap-3">
+                <div className="shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-black text-white" style={{ background: s.color }}>{s.n}</div>
+                <div>
+                  <p className="text-white font-bold text-sm mb-0.5">{s.title}</p>
+                  <p className="text-white/35 text-[11px] leading-relaxed">{s.desc}</p>
+                </div>
               </div>
+              {s.example && (
+                <p className="text-[10.5px] leading-relaxed mt-2.5 pl-10 pr-1 py-2 rounded-lg" style={{ background: `${s.color}14`, color: `${s.color}dd` }}>
+                  {s.example}
+                </p>
+              )}
             </div>
           ))}
         </div>
@@ -473,6 +496,7 @@ export default function QuizChampionship() {
   // ── LOBBY ───────────────────────────────────────────────────────────────────
   if (phase === "lobby" || phase === "starting") {
     return (
+      <>
       <div className="min-h-screen bg-[#080810] flex flex-col items-center justify-center p-4 relative overflow-hidden pb-28">
         <button onClick={() => navigate("/tournaments")} className="absolute top-5 left-4 text-white/30 hover:text-white text-xs font-bold uppercase tracking-widest transition-colors z-10">← Back</button>
         <div className="absolute top-5 right-4 z-10"><MusicToggle /></div>
@@ -512,7 +536,7 @@ export default function QuizChampionship() {
             {connected ? "Connected — Waiting for game start" : "Reconnecting..."}
           </div>
           {leaderboard.length > 0 && (
-            <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4 text-left">
+            <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4 text-left mb-4">
               <p className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-3">Players in Lobby</p>
               <div className="flex flex-wrap gap-2">
                 {leaderboard.slice(0, 12).map((e, i) => (
@@ -525,8 +549,13 @@ export default function QuizChampionship() {
               </div>
             </div>
           )}
+          <button onClick={() => setShowScoring(true)} className="w-full flex items-center justify-center gap-1.5 mt-1 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.07] text-white/40 hover:text-white/70 hover:bg-white/[0.05] transition-colors text-xs font-bold">
+            ⚖️ How Ranking Works
+          </button>
         </div>
       </div>
+      {showScoring && <ScoringExplainer onClose={() => setShowScoring(false)} />}
+      </>
     );
   }
 

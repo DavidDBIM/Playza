@@ -59,13 +59,19 @@ async function updateLeaderboard(tournamentId: string, io: SocketServer) {
 
   if (!rows?.length) return
 
-  // Rank by: rounds_survived → correct_answers → speed_score → speed_ms → random
+  // Rank by: rounds_survived → correct_answers → speed_score → speed_ms → user_id
+  // (that last one is a deterministic tiebreak, not random — reached only
+  // if two players are tied down to the millisecond, which in practice is
+  // vanishingly rare, but a comparator that returns a different value on
+  // every call, like the Math.random() this replaced, can break
+  // Array.prototype.sort's own correctness guarantees, not just "be
+  // arbitrary." See the chess tournament group tiebreak for the same fix.)
   const sorted = [...rows].sort((a, b) => {
     if ((b.rounds_survived ?? 0) !== (a.rounds_survived ?? 0)) return (b.rounds_survived ?? 0) - (a.rounds_survived ?? 0)
     if ((b.correct_answers ?? 0) !== (a.correct_answers ?? 0)) return (b.correct_answers ?? 0) - (a.correct_answers ?? 0)
     if ((b.speed_score ?? 0) !== (a.speed_score ?? 0)) return (b.speed_score ?? 0) - (a.speed_score ?? 0)
     if ((b.speed_ms ?? 0) !== (a.speed_ms ?? 0)) return (b.speed_ms ?? 0) - (a.speed_ms ?? 0)
-    return Math.random() - 0.5
+    return String(a.user_id).localeCompare(String(b.user_id))
   })
 
   const ranked = sorted.map((row, i) => ({ ...row, rank: i + 1 }))
@@ -140,7 +146,7 @@ async function endTournament(tournamentId: string, io: SocketServer, game: GameS
       if ((b.correct_answers ?? 0) !== (a.correct_answers ?? 0)) return (b.correct_answers ?? 0) - (a.correct_answers ?? 0)
       if ((b.speed_score ?? 0) !== (a.speed_score ?? 0)) return (b.speed_score ?? 0) - (a.speed_score ?? 0)
       if ((b.speed_ms ?? 0) !== (a.speed_ms ?? 0)) return (b.speed_ms ?? 0) - (a.speed_ms ?? 0)
-      return Math.random() - 0.5
+      return String(a.user_id).localeCompare(String(b.user_id))
     })
 
     const ranked = sorted.map((row, i) => ({ ...row, rank: i + 1 }))
@@ -393,7 +399,7 @@ async function revealAndAdvance(tournamentId: string, io: SocketServer, game: Ga
       .update({ current_round: nextRound, current_question: 0 })
       .eq('id', tournamentId)
 
-    setTimeout(() => sendNextQuestion(tournamentId, io, game), 8000)
+    setTimeout(() => sendNextQuestion(tournamentId, io, game), 20000)
   } else {
     game.currentQuestionIndex = nextQIndex
 
