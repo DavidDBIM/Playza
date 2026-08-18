@@ -9,6 +9,7 @@ import {
 import { Chess } from "chess.js";
 import type { Square } from "chess.js";
 import { Chessboard } from "react-chessboard";
+import type { ClearPremoves } from "react-chessboard";
 import {
   Trophy,
   Swords,
@@ -204,6 +205,23 @@ const ChessArena = ({ room, user, backTo = "/h2h", backLabel = "H2H ZONE", rende
   const serverSaysMyTurn = room.current_turn === user?.id;
   const isYourTurn = serverSaysMyTurn && !pendingMoveRef.current;
 
+  // ── Premove support ─────────────────────────────────────────────────────────
+  // react-chessboard already implements the full premove queue internally
+  // (drag a move while it's not your turn → it's held, visually highlighted,
+  // and automatically replayed through our own onPieceDrop the instant the
+  // position updates to make it your turn — same validation path as any
+  // other move, so an illegal premove is just silently discarded). We only
+  // need to: (1) allow dragging our own pieces outside our turn, (2) turn
+  // the feature on, (3) style the premove highlight to match the app.
+  const myColor: "w" | "b" = room.host_id === user?.id ? "w" : "b";
+  const isParticipant = !!user && (room.host_id === user.id || room.guest_id === user.id);
+  const canInteractWithBoard = phase === "playing" && room.status === "active" && !game.isGameOver() && isParticipant;
+  // Ref used only to clear a queued premove the instant the game actually
+  // ends (checkmate, resignation, timeout) — a premove queued a split
+  // second before the game ended should never quietly fire afterwards.
+  const chessboardRef = useRef<ClearPremoves>(null);
+  const [showPremoveHint, setShowPremoveHint] = useState(true);
+
   const confirmResign = useCallback(async () => {
     setIsResigning(true);
     try {
@@ -341,6 +359,16 @@ const ChessArena = ({ room, user, backTo = "/h2h", backLabel = "H2H ZONE", rende
       return () => clearTimeout(timeoutId);
     }
   }, [game, showWinnerDelayed]);
+
+  // A premove queued a split second before the game actually ended (mate,
+  // resignation, timeout) should never fire afterwards — arePremovesAllowed
+  // already stops that functionally, this just clears the visual highlight
+  // too so a finished board doesn't show a stale queued-move outline.
+  useEffect(() => {
+    if (!canInteractWithBoard) {
+      chessboardRef.current?.clearPremoves();
+    }
+  }, [canInteractWithBoard]);
 
   // Prevent body scrolling when winner modal is open
   useEffect(() => {
@@ -519,7 +547,7 @@ const ChessArena = ({ room, user, backTo = "/h2h", backLabel = "H2H ZONE", rende
   // visitor watching a live tournament match) default to White's
   // perspective, the conventional neutral view, rather than always
   // flipping to Black just because they don't match host_id.
-  const isParticipant = room.host_id === user?.id || room.guest_id === user?.id;
+  // (isParticipant itself is declared earlier, alongside myColor/canInteractWithBoard)
   const boardOrientation = room.guest_id === user?.id ? "black" : "white";
 
   // Board coordinates rendered ourselves (see below) instead of relying on
@@ -728,7 +756,7 @@ const ChessArena = ({ room, user, backTo = "/h2h", backLabel = "H2H ZONE", rende
   const blackMoveCount = fullMoveNum - 1;
 
   const history = game.history({ verbose: true });
-  const myColor = room.host_id === user?.id ? "w" : "b";
+  // (myColor itself is declared earlier, alongside canInteractWithBoard)
   const myMoveCount = myColor === "w" ? whiteMoveCount : blackMoveCount;
   const oppMoveCount = myColor === "w" ? blackMoveCount : whiteMoveCount;
 
@@ -1113,6 +1141,18 @@ const ChessArena = ({ room, user, backTo = "/h2h", backLabel = "H2H ZONE", rende
         </div>
       )}
 
+      {/* Premove discoverability — only shown while genuinely waiting on
+          the opponent, and only once per arena mount, so it reads as a
+          one-time tip rather than a recurring nag every single turn. */}
+      {!myTurn && isParticipant && !game.isGameOver() && canInteractWithBoard && showPremoveHint && (
+        <div className="flex items-center gap-1.5 justify-center px-3 py-1 md:col-start-1 md:row-start-3 -mt-1">
+          <span className="text-[9px] font-bold text-violet-400/70 text-center">
+            💡 Tip: drag your next move now — it'll play instantly once {oppUsername || "your opponent"} moves
+          </span>
+          <button onClick={() => setShowPremoveHint(false)} className="text-violet-400/40 hover:text-violet-400/70 text-[10px] font-black shrink-0">✕</button>
+        </div>
+      )}
+
 
       {/* ── Context Info Banner ── */}
       {/* Fixed-height wrapper: this cell always reserves the same amount of
@@ -1208,9 +1248,17 @@ const ChessArena = ({ room, user, backTo = "/h2h", backLabel = "H2H ZONE", rende
             )}
             <div className="relative z-1 w-full h-full">
               <Chessboard
+                ref={chessboardRef}
                 position={game.fen()}
                 boardOrientation={boardOrientation as "white" | "black"}
-                arePiecesDraggable={isYourTurn}
+                // Dragging is allowed any time the game is live, not just on
+                // your turn — isDraggablePiece below is what actually keeps
+                // you from ever touching your opponent's pieces, and reacts
+                // to whose turn it is only insofar as it gates the game
+                // being interactable at all (spectators, finished games).
+                arePiecesDraggable={canInteractWithBoard}
+                isDraggablePiece={({ piece }) => canInteractWithBoard && piece[0] === myColor}
+                arePremovesAllowed={canInteractWithBoard}
                 animationDuration={300}
                 showBoardNotation={false}
                 onPieceDrop={(sourceSquare, targetSquare) => {
@@ -1222,6 +1270,11 @@ const ChessArena = ({ room, user, backTo = "/h2h", backLabel = "H2H ZONE", rende
                 customPieces={customPieces}
                 customDarkSquareStyle={{ backgroundColor: "#4a2d6b" }}
                 customLightSquareStyle={{ backgroundColor: "#c9a96e" }}
+                // Premove highlight — a distinct violet rather than the
+                // library's default red, so it reads as "queued" rather
+                // than "danger," and matches the rest of the app's palette.
+                customPremoveDarkSquareStyle={{ backgroundColor: "rgba(124,58,237,0.55)" }}
+                customPremoveLightSquareStyle={{ backgroundColor: "rgba(168,85,247,0.55)" }}
                 customBoardStyle={{
                   borderRadius: "8px",
                   border: "6px solid #1a0a2e",
