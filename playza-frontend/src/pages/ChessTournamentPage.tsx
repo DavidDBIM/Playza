@@ -811,9 +811,13 @@ function TournamentDetailPage({ tournamentId, initialDetailTab }: {
           </div>
         )}
 
-        {/* Tabs */}
+        {/* Tabs — overflow-x-auto so 4 tabs (My Fixtures/Bracket/Standings/
+            Results) can scroll horizontally on a narrow phone instead of
+            overflowing past the screen edge or forcing the whole page to
+            scroll sideways. shrink-0 on each button stops their labels
+            from getting squeezed/wrapped as the row narrows. */}
         {(t.status === "active" || t.status === "completed") && (
-          <div className="flex gap-1 p-1 rounded-xl w-fit mb-5" style={{ background: "color-mix(in srgb, var(--foreground) 4%, transparent)" }}>
+          <div className="flex gap-1 p-1 rounded-xl w-full max-w-full overflow-x-auto mb-5" style={{ background: "color-mix(in srgb, var(--foreground) 4%, transparent)" }}>
             {[
               { id: "fixtures" as const, label: "My Fixtures" },
               { id: "bracket" as const, label: "Bracket" },
@@ -821,7 +825,7 @@ function TournamentDetailPage({ tournamentId, initialDetailTab }: {
               ...(t.status === "completed" ? [{ id: "results" as const, label: "🏆 Results" }] : []),
             ].map(tb => (
               <button key={tb.id} onClick={() => setTab(tb.id)}
-                className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${tab === tb.id ? "text-foreground" : "text-foreground/30 hover:text-foreground/50"}`}
+                className={`shrink-0 px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all whitespace-nowrap ${tab === tb.id ? "text-foreground" : "text-foreground/30 hover:text-foreground/50"}`}
                 style={tab === tb.id ? { background: "rgba(124,58,237,0.5)" } : {}}>
                 {tb.label}
               </button>
