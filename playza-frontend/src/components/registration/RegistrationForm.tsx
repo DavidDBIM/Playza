@@ -18,8 +18,12 @@ interface RegistrationFormProps {
   onClick: (value: string) => void;
 }
 
-// Common countries with dial codes — Nigeria first
+// Countries with dial codes — United States first (matches the platform's
+// primary market), rest ordered by rough population/usage size.
 const COUNTRIES = [
+  { code: "US", name: "United States",     dial: "+1",   flag: "🇺🇸" },
+  { code: "GB", name: "United Kingdom",    dial: "+44",  flag: "🇬🇧" },
+  { code: "CA", name: "Canada",            dial: "+1",   flag: "🇨🇦" },
   { code: "NG", name: "Nigeria",           dial: "+234", flag: "🇳🇬" },
   { code: "GH", name: "Ghana",             dial: "+233", flag: "🇬🇭" },
   { code: "KE", name: "Kenya",             dial: "+254", flag: "🇰🇪" },
@@ -33,9 +37,6 @@ const COUNTRIES = [
   { code: "ET", name: "Ethiopia",          dial: "+251", flag: "🇪🇹" },
   { code: "EG", name: "Egypt",             dial: "+20",  flag: "🇪🇬" },
   { code: "MA", name: "Morocco",           dial: "+212", flag: "🇲🇦" },
-  { code: "GB", name: "United Kingdom",    dial: "+44",  flag: "🇬🇧" },
-  { code: "US", name: "United States",     dial: "+1",   flag: "🇺🇸" },
-  { code: "CA", name: "Canada",            dial: "+1",   flag: "🇨🇦" },
   { code: "DE", name: "Germany",           dial: "+49",  flag: "🇩🇪" },
   { code: "FR", name: "France",            dial: "+33",  flag: "🇫🇷" },
   { code: "AE", name: "UAE",               dial: "+971", flag: "🇦🇪" },
@@ -74,8 +75,8 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
       return {
         username: "",
         email: "",
-        country: "NG",
-        dialCode: "+234",
+        country: "US",
+        dialCode: "+1",
         phone: "",
         password: "",
         confirmPassword: "",
@@ -169,274 +170,295 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
   };
 
   const inputCls = (hasError: boolean) =>
-    `w-full bg-slate-900/[0.03] dark:bg-white/[0.03] border rounded-2xl py-4 pl-12 pr-4 focus:ring-2 outline-none text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700 transition-all font-bold text-sm ${
+    `w-full bg-slate-50 border rounded-xl py-3 pl-11 pr-4 focus:ring-2 outline-none text-slate-900 placeholder:text-slate-400 transition-all font-bold text-sm ${
       hasError
-        ? "border-red-500/50 focus:ring-red-500/10"
-        : "border-slate-200/50 dark:border-white/5 focus:ring-primary/20 focus:border-primary/50"
+        ? "border-red-400 focus:ring-red-500/10"
+        : "border-slate-200 focus:ring-primary/20 focus:border-primary"
     }`;
 
   return (
-    <div className="w-full max-w-2xl mx-auto px-4 md:px-6">
+    <div className="w-full max-w-xl mx-auto px-4 md:px-6">
       <Link
         to="/"
-        className="mb-10 flex items-center gap-2 text-slate-500 hover:text-primary transition-all font-black uppercase tracking-[0.2em] text-[10px] group"
+        className="mb-4 flex items-center gap-2 text-slate-400 hover:text-primary transition-all font-black uppercase tracking-[0.2em] text-[10px] group"
       >
         <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" />
         Back to Arena
       </Link>
 
+      {/* Two bold glows behind the card — the signature move here isn't the
+          glow itself (that's the generic template), it's the sharp angled
+          strip cutting through the white card below, which the glow just
+          sets up as a backdrop. */}
       <div className="relative">
-        <div className="absolute -top-40 -left-40 w-96 h-96 bg-primary/5 blur-[120px] rounded-full pointer-events-none opacity-50" />
+        <div className="absolute -top-24 -left-24 w-72 h-72 bg-primary/25 blur-[100px] rounded-full pointer-events-none" />
+        <div className="absolute -top-10 -right-24 w-64 h-64 bg-fuchsia-500/20 blur-[100px] rounded-full pointer-events-none" />
 
-        <div className="text-center mb-8 relative z-10">
-          <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-2 tracking-tight uppercase">
-            Join <span className="text-primary italic">Playza</span>
-          </h1>
-          <p className="text-slate-500 dark:text-slate-400 text-xs md:text-sm">
-            Create your gaming profile and start competing.
-          </p>
-        </div>
+        {/* The card is explicitly white — not tied to the app's dark theme —
+            since a signup form is a trust surface and reads as crisper,
+            more premium, more "official" on white than blended into a dark
+            shell. */}
+        <div className="relative z-10 bg-white rounded-[2rem] shadow-2xl shadow-slate-900/10 border border-slate-100 overflow-hidden">
 
-        {formError && (
-          <div className="mb-5 flex items-start gap-3 bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 relative z-10">
-            <AlertCircle size={16} className="text-red-500 mt-0.5 shrink-0" />
-            <p className="text-red-500 text-xs font-semibold">{formError}</p>
-          </div>
-        )}
-
-        <form className="space-y-5 relative z-10" onSubmit={handleSubmit(onFormSubmit)}>
-
-          {/* Row 1: Username + Email */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div className="space-y-1.5">
-              <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 ml-1">Gaming Handle</label>
-              <div className="relative group">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-primary transition-colors" size={18} />
-                <input {...register("username")} className={inputCls(!!errors.username)} placeholder="AnthonyGamer" type="text" />
+          {/* Angled two-tone header strip — the one deliberate geometric
+              risk here, standing in for the generic centered-title-on-blur
+              treatment. Skewed via a clipped pseudo-shape, not a literal
+              rotated box, so the card's corners stay sharp. */}
+          <div className="relative px-6 pt-7 pb-5 overflow-hidden" style={{ background: "linear-gradient(115deg, #7c3aed 0%, #7c3aed 55%, #d946ef 100%)" }}>
+            <div className="absolute inset-0 opacity-[0.07]" style={{ backgroundImage: "repeating-linear-gradient(115deg, #fff 0px, #fff 1px, transparent 1px, transparent 14px)" }} />
+            <div className="relative flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight uppercase italic leading-none">
+                  Join Playza
+                </h1>
+                <p className="text-white/70 text-[11px] font-bold mt-1.5">
+                  Create your profile. Start competing today.
+                </p>
               </div>
-              {errors.username && <p className="text-[10px] text-red-500 font-bold ml-1 italic">{errors.username.message}</p>}
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 ml-1">Email Address</label>
-              <div className="relative group">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-primary transition-colors" size={18} />
-                <input {...register("email")} className={inputCls(!!errors.email)} placeholder="gamer@example.com" type="email" />
+              <div className="shrink-0 hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/15 border border-white/20">
+                <span className="text-[9px] font-black text-white uppercase tracking-widest">⚡ Free to join</span>
               </div>
-              {errors.email && <p className="text-[10px] text-red-500 font-bold ml-1 italic">{errors.email.message}</p>}
             </div>
           </div>
 
-          {/* Country selector */}
-          <div className="space-y-1.5">
-            <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 ml-1">Country</label>
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setShowCountryDropdown(v => !v)}
-                className="w-full flex items-center gap-3 bg-slate-900/[0.03] dark:bg-white/[0.03] border border-slate-200/50 dark:border-white/5 rounded-2xl py-4 px-4 text-left focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-              >
-                <span className="text-xl">{selectedCountry.flag}</span>
-                <span className="font-bold text-sm text-slate-900 dark:text-white flex-1">{selectedCountry.name}</span>
-                <ChevronDown size={16} className={`text-slate-400 transition-transform ${showCountryDropdown ? "rotate-180" : ""}`} />
-              </button>
+          <div className="px-6 pt-5 pb-6">
+            {formError && (
+              <div className="mb-4 flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+                <AlertCircle size={16} className="text-red-500 mt-0.5 shrink-0" />
+                <p className="text-red-600 text-xs font-semibold">{formError}</p>
+              </div>
+            )}
 
-              {showCountryDropdown && (
-                <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-white/10 rounded-2xl shadow-xl overflow-hidden">
-                  <div className="p-2 border-b border-slate-100 dark:border-white/5">
-                    <input
-                      type="text"
-                      value={countrySearch}
-                      onChange={e => setCountrySearch(e.target.value)}
-                      placeholder="Search country or dial code..."
-                      className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-white/5 border border-slate-200/50 dark:border-white/10 rounded-xl outline-none text-slate-900 dark:text-white placeholder:text-slate-400"
-                      autoFocus
-                    />
+            <form className="space-y-4" onSubmit={handleSubmit(onFormSubmit)}>
+
+              {/* Row 1: Username + Email */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                <div className="space-y-1">
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Gaming Handle</label>
+                  <div className="relative group">
+                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={17} />
+                    <input {...register("username")} className={inputCls(!!errors.username)} placeholder="AnthonyGamer" type="text" />
                   </div>
-                  <div className="max-h-48 overflow-y-auto">
-                    {filteredCountries.map(c => (
-                      <button
-                        key={c.code}
-                        type="button"
-                        onClick={() => selectCountry(c)}
-                        className={`w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-slate-50 dark:hover:bg-white/5 transition-colors ${selectedCountry.code === c.code ? "bg-primary/5" : ""}`}
-                      >
-                        <span className="text-lg">{c.flag}</span>
-                        <span className="text-sm font-bold text-slate-900 dark:text-white flex-1">{c.name}</span>
-                        <span className="text-xs font-black text-slate-400">{c.dial}</span>
-                      </button>
-                    ))}
-                    {filteredCountries.length === 0 && (
-                      <p className="text-center text-xs text-slate-400 py-4">No countries found</p>
+                  {errors.username && <p className="text-[10px] text-red-500 font-bold ml-1 italic">{errors.username.message}</p>}
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Email Address</label>
+                  <div className="relative group">
+                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={17} />
+                    <input {...register("email")} className={inputCls(!!errors.email)} placeholder="gamer@example.com" type="email" />
+                  </div>
+                  {errors.email && <p className="text-[10px] text-red-500 font-bold ml-1 italic">{errors.email.message}</p>}
+                </div>
+              </div>
+
+              {/* Row 2: Country + Phone, side by side — this used to be two
+                  full-width stacked rows, which was most of the reason the
+                  form couldn't fit on one screen. */}
+              <div className="grid grid-cols-[auto_1fr] gap-2.5">
+                <div className="space-y-1">
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Country</label>
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setShowCountryDropdown(v => !v)}
+                      className="h-[46px] flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl py-3 px-3 text-left focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all min-w-[92px]"
+                    >
+                      <span className="text-lg">{selectedCountry.flag}</span>
+                      <span className="font-black text-xs text-slate-900">{selectedCountry.dial}</span>
+                      <ChevronDown size={14} className={`text-slate-400 transition-transform shrink-0 ${showCountryDropdown ? "rotate-180" : ""}`} />
+                    </button>
+
+                    {showCountryDropdown && (
+                      <div className="absolute top-full left-0 mt-1 z-50 w-72 max-w-[calc(100vw-2.5rem)] bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden">
+                        <div className="p-2 border-b border-slate-100">
+                          <input
+                            type="text"
+                            value={countrySearch}
+                            onChange={e => setCountrySearch(e.target.value)}
+                            placeholder="Search country or dial code..."
+                            className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl outline-none text-slate-900 placeholder:text-slate-400"
+                            autoFocus
+                          />
+                        </div>
+                        <div className="max-h-56 overflow-y-auto">
+                          {filteredCountries.map(c => (
+                            <button
+                              key={c.code}
+                              type="button"
+                              onClick={() => selectCountry(c)}
+                              className={`w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-slate-50 transition-colors ${selectedCountry.code === c.code ? "bg-primary/5" : ""}`}
+                            >
+                              <span className="text-lg">{c.flag}</span>
+                              <span className="text-sm font-bold text-slate-900 flex-1">{c.name}</span>
+                              <span className="text-xs font-black text-slate-400">{c.dial}</span>
+                            </button>
+                          ))}
+                          {filteredCountries.length === 0 && (
+                            <p className="text-center text-xs text-slate-400 py-4">No countries found</p>
+                          )}
+                        </div>
+                      </div>
                     )}
                   </div>
+                  {/* Hidden inputs for form registration */}
+                  <input type="hidden" {...register("country")} />
+                  <input type="hidden" {...register("dialCode")} />
                 </div>
-              )}
-            </div>
-            {/* Hidden inputs for form registration */}
-            <input type="hidden" {...register("country")} />
-            <input type="hidden" {...register("dialCode")} />
-          </div>
 
-          {/* Phone with dial code prefix */}
-          <div className="space-y-1.5">
-            <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 ml-1">Phone Number</label>
-            <div className="flex gap-2">
-              {/* Dial code badge */}
-              <div className="flex items-center gap-1.5 px-3 rounded-2xl bg-slate-900/[0.03] dark:bg-white/[0.03] border border-slate-200/50 dark:border-white/5 shrink-0 text-sm font-black text-slate-700 dark:text-white min-w-[72px] justify-center">
-                <span className="text-base">{selectedCountry.flag}</span>
-                <span>{selectedCountry.dial}</span>
-              </div>
-              {/* Phone number input */}
-              <div className="relative group flex-1">
-                <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-primary transition-colors" size={18} />
-                <input
-                  {...register("phone")}
-                  className={inputCls(!!errors.phone)}
-                  placeholder="800 000 0000"
-                  type="tel"
-                  inputMode="numeric"
-                />
-              </div>
-            </div>
-            {errors.phone && <p className="text-[10px] text-red-500 font-bold ml-1 italic">{errors.phone.message}</p>}
-          </div>
-
-          {/* Row 2: Password + Confirm */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div className="space-y-1.5">
-              <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 ml-1">Password</label>
-              <div className="relative group">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-primary transition-colors" size={18} />
-                <input
-                  {...register("password")}
-                  className={`w-full bg-slate-900/[0.03] dark:bg-white/[0.03] border rounded-2xl py-4 pl-12 pr-12 focus:ring-2 outline-none text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700 transition-all font-bold text-sm ${errors.password ? "border-red-500/50 focus:ring-red-500/10" : "border-slate-200/50 dark:border-white/5 focus:ring-primary/20 focus:border-primary/50"}`}
-                  type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors">
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
-              <div className="mt-2 flex items-center gap-2 px-1">
-                <div className="flex-1 h-1 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
-                  <div className={`h-full transition-all duration-500 ${strengthColor}`} style={{ width: `${strength}%` }} />
-                </div>
-                <span className={`text-[9px] font-black uppercase tracking-tighter ${strengthColor.replace("bg-", "text-")}`}>{strengthLabel}</span>
-              </div>
-              {errors.password && <p className="text-[10px] text-red-500 font-bold ml-1 italic mt-1">{errors.password.message}</p>}
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 ml-1">Confirm Password</label>
-              <div className="relative group">
-                <Shield className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-primary transition-colors" size={18} />
-                <input
-                  {...register("confirmPassword")}
-                  className={`w-full bg-slate-900/[0.03] dark:bg-white/[0.03] border rounded-2xl py-4 pl-12 pr-4 focus:ring-2 outline-none text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700 transition-all font-bold text-sm ${confirmPassword && password !== confirmPassword ? "border-red-500/50 focus:ring-red-500/10" : "border-slate-200/50 dark:border-white/5 focus:ring-primary/20 focus:border-primary/50"}`}
-                  type="password"
-                  placeholder="••••••••"
-                />
-                {confirmPassword && (
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                    {password === confirmPassword ? <CheckCircle2 size={16} className="text-green-500" /> : <AlertCircle size={16} className="text-red-500" />}
+                <div className="space-y-1">
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Phone Number</label>
+                  <div className="relative group">
+                    <Smartphone className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={17} />
+                    <input
+                      {...register("phone")}
+                      className={inputCls(!!errors.phone)}
+                      placeholder="800 000 0000"
+                      type="tel"
+                      inputMode="numeric"
+                    />
                   </div>
-                )}
+                </div>
               </div>
-              {errors.confirmPassword && <p className="text-[10px] text-red-500 font-bold ml-1 italic">{errors.confirmPassword.message}</p>}
-            </div>
-          </div>
+              {errors.phone && <p className="text-[10px] text-red-500 font-bold ml-1 italic -mt-2.5">{errors.phone.message}</p>}
 
-          {/* Referral Code */}
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 ml-1 flex justify-between">
-              Referral Code <span className="opacity-40 font-normal italic">Optional</span>
-            </label>
-            <div className="relative group">
-              <input
-                {...register("referralCode")}
-                className={`w-full bg-slate-900/[0.03] dark:bg-white/[0.03] border rounded-2xl py-4 px-4 focus:ring-2 outline-none text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700 transition-all font-bold text-sm ${
-                  referralCodeValue && referralCodeValue.length >= 4
-                    ? validationData?.valid ? "border-green-500/50 focus:ring-green-500/10" : "border-red-500/50 focus:ring-red-500/10"
-                    : "border-slate-200/50 dark:border-white/5 focus:ring-primary/20 focus:border-primary/50"
-                }`}
-                type="text"
-                maxLength={20}
-                placeholder="Enter referral or promo code"
-                onInput={(e) => { e.currentTarget.value = e.currentTarget.value.toUpperCase(); }}
-              />
-              {referralCodeValue && referralCodeValue.length >= 4 && (
-                <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                  {isValidatingCode ? (
-                    <div className="size-3.5 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />
-                  ) : validationData?.valid ? (
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[9px] font-black text-green-500 uppercase tracking-tighter hidden md:inline">Referrer: {validationData.referrer}</span>
-                      <CheckCircle2 size={16} className="text-green-500" />
+              {/* Row 3: Password + Confirm — 2-up even on mobile now, since
+                  both fields are short enough to share a row at any width. */}
+              <div className="grid grid-cols-2 gap-3.5">
+                <div className="space-y-1">
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Password</label>
+                  <div className="relative group">
+                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={17} />
+                    <input
+                      {...register("password")}
+                      className={`w-full bg-slate-50 border rounded-xl py-3 pl-11 pr-10 focus:ring-2 outline-none text-slate-900 placeholder:text-slate-400 transition-all font-bold text-sm ${errors.password ? "border-red-400 focus:ring-red-500/10" : "border-slate-200 focus:ring-primary/20 focus:border-primary"}`}
+                      type={showPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                    />
+                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-900 transition-colors">
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-1.5 px-1 pt-0.5">
+                    <div className="flex-1 h-1 bg-slate-200 rounded-full overflow-hidden">
+                      <div className={`h-full transition-all duration-500 ${strengthColor}`} style={{ width: `${strength}%` }} />
                     </div>
-                  ) : (
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[9px] font-black text-red-500 uppercase tracking-tighter hidden md:inline">Invalid Link</span>
-                      <AlertCircle size={16} className="text-red-500" />
+                    <span className={`text-[8px] font-black uppercase tracking-tighter shrink-0 ${strengthColor.replace("bg-", "text-")}`}>{strengthLabel}</span>
+                  </div>
+                  {errors.password && <p className="text-[10px] text-red-500 font-bold ml-1 italic">{errors.password.message}</p>}
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Confirm</label>
+                  <div className="relative group">
+                    <Shield className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={17} />
+                    <input
+                      {...register("confirmPassword")}
+                      className={`w-full bg-slate-50 border rounded-xl py-3 pl-11 pr-9 focus:ring-2 outline-none text-slate-900 placeholder:text-slate-400 transition-all font-bold text-sm ${confirmPassword && password !== confirmPassword ? "border-red-400 focus:ring-red-500/10" : "border-slate-200 focus:ring-primary/20 focus:border-primary"}`}
+                      type="password"
+                      placeholder="••••••••"
+                    />
+                    {confirmPassword && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        {password === confirmPassword ? <CheckCircle2 size={15} className="text-green-500" /> : <AlertCircle size={15} className="text-red-500" />}
+                      </div>
+                    )}
+                  </div>
+                  {errors.confirmPassword && <p className="text-[10px] text-red-500 font-bold ml-1 italic">{errors.confirmPassword.message}</p>}
+                </div>
+              </div>
+
+              {/* Referral Code */}
+              <div className="space-y-1">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1 flex justify-between">
+                  Referral Code <span className="opacity-50 font-normal italic">Optional</span>
+                </label>
+                <div className="relative group">
+                  <input
+                    {...register("referralCode")}
+                    className={`w-full bg-slate-50 border rounded-xl py-3 px-4 focus:ring-2 outline-none text-slate-900 placeholder:text-slate-400 transition-all font-bold text-sm ${
+                      referralCodeValue && referralCodeValue.length >= 4
+                        ? validationData?.valid ? "border-green-400 focus:ring-green-500/10" : "border-red-400 focus:ring-red-500/10"
+                        : "border-slate-200 focus:ring-primary/20 focus:border-primary"
+                    }`}
+                    type="text"
+                    maxLength={20}
+                    placeholder="Enter referral or promo code"
+                    onInput={(e) => { e.currentTarget.value = e.currentTarget.value.toUpperCase(); }}
+                  />
+                  {referralCodeValue && referralCodeValue.length >= 4 && (
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                      {isValidatingCode ? (
+                        <div className="size-3.5 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />
+                      ) : validationData?.valid ? (
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[9px] font-black text-green-600 uppercase tracking-tighter hidden md:inline">Referrer: {validationData.referrer}</span>
+                          <CheckCircle2 size={15} className="text-green-500" />
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[9px] font-black text-red-500 uppercase tracking-tighter hidden md:inline">Invalid Link</span>
+                          <AlertCircle size={15} className="text-red-500" />
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
-              )}
-            </div>
-          </div>
-
-          {/* Terms */}
-          <div className="flex flex-col gap-2 pt-2">
-            <label htmlFor="terms" className="group/terms flex items-center gap-3 cursor-pointer p-1 rounded-lg select-none hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
-              <div className="relative shrink-0 flex items-center justify-center w-5 h-5">
-                <input {...register("acceptedTerms")} type="checkbox" id="terms" className="peer absolute opacity-0 w-0 h-0" />
-                <div className="absolute inset-0 rounded-md border-2 border-slate-300 dark:border-slate-600 peer-checked:border-primary peer-checked:bg-primary transition-all duration-300 flex items-center justify-center peer-focus-visible:ring-2 peer-focus-visible:ring-primary/50 group-hover/terms:border-primary/50">
-                  {useWatch({ control, name: "acceptedTerms" }) && <Check className="size-3.5 text-slate-950 font-black animate-in zoom-in duration-200" strokeWidth={4} />}
-                </div>
               </div>
-              <span className="text-[10px] md:text-xs font-medium text-slate-500 dark:text-slate-400 leading-normal flex-1">
-                I confirm I am over 18 and agree to the{" "}
-                <Link to="/terms" target="_blank" className="text-slate-700 dark:text-slate-300 font-bold hover:text-primary transition-colors hover:underline underline-offset-2" onClick={e => e.stopPropagation()}>Terms & Conditions</Link>
-                {" "}and{" "}
-                <Link to="/privacy" target="_blank" className="text-slate-700 dark:text-slate-300 font-bold hover:text-primary transition-colors hover:underline underline-offset-2" onClick={e => e.stopPropagation()}>Privacy Policy</Link>
-              </span>
-            </label>
-            {errors.acceptedTerms && <p className="text-[10px] text-red-500 font-bold ml-1 italic">{errors.acceptedTerms.message}</p>}
-          </div>
 
-          <div className="flex justify-center pt-2">
-            <Turnstile key={turnstileKey} onVerify={setCaptchaToken} />
-          </div>
+              {/* Terms */}
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="terms" className="group/terms flex items-center gap-3 cursor-pointer p-1 rounded-lg select-none hover:bg-slate-50 transition-colors">
+                  <div className="relative shrink-0 flex items-center justify-center w-5 h-5">
+                    <input {...register("acceptedTerms")} type="checkbox" id="terms" className="peer absolute opacity-0 w-0 h-0" />
+                    <div className="absolute inset-0 rounded-md border-2 border-slate-300 peer-checked:border-primary peer-checked:bg-primary transition-all duration-300 flex items-center justify-center peer-focus-visible:ring-2 peer-focus-visible:ring-primary/50 group-hover/terms:border-primary/50">
+                      {useWatch({ control, name: "acceptedTerms" }) && <Check className="size-3.5 text-white font-black animate-in zoom-in duration-200" strokeWidth={4} />}
+                    </div>
+                  </div>
+                  <span className="text-[10px] md:text-[11px] font-medium text-slate-500 leading-normal flex-1">
+                    I confirm I am over 18 and agree to the{" "}
+                    <Link to="/terms" target="_blank" className="text-slate-700 font-bold hover:text-primary transition-colors hover:underline underline-offset-2" onClick={e => e.stopPropagation()}>Terms & Conditions</Link>
+                    {" "}and{" "}
+                    <Link to="/privacy" target="_blank" className="text-slate-700 font-bold hover:text-primary transition-colors hover:underline underline-offset-2" onClick={e => e.stopPropagation()}>Privacy Policy</Link>
+                  </span>
+                </label>
+                {errors.acceptedTerms && <p className="text-[10px] text-red-500 font-bold ml-1 italic">{errors.acceptedTerms.message}</p>}
+              </div>
 
-          <div className="pt-4">
-            <Button
-              disabled={isPending || !isValid || (!!referralCodeValue && referralCodeValue.length >= 4 && validationData?.valid === false) || (!!import.meta.env.VITE_TURNSTILE_SITE_KEY && !captchaToken)}
-              className="w-full h-14 bg-primary text-black font-black uppercase tracking-widest rounded-xl shadow-lg shadow-primary/10 hover:shadow-primary/30 hover:-translate-y-0.5 transition-all group border-none relative overflow-hidden disabled:opacity-50 disabled:translate-y-0 disabled:shadow-none"
-              type="submit"
-            >
-              {isPending ? (
-                <div className="flex items-center gap-2">
-                  <div className="size-4 border-2 border-black/20 border-t-black rounded-full animate-spin" />
-                  <span>Creating Account...</span>
-                </div>
-              ) : (
-                <div className="flex items-center justify-center gap-2">
-                  <span>Launch Account</span>
-                  <ArrowRight className="group-hover:translate-x-1 transition-transform" size={18} />
-                </div>
-              )}
-            </Button>
-          </div>
+              <div className="flex justify-center">
+                <Turnstile key={turnstileKey} onVerify={setCaptchaToken} />
+              </div>
 
-          <div className="pt-6 text-center border-t border-slate-200 dark:border-white/5">
-            <p className="text-slate-400 dark:text-slate-500 text-xs">
-              Already part of the elite?
-              <button type="button" onClick={() => onClick("login")} className="ml-2 text-primary font-black hover:text-slate-900 dark:hover:text-white transition-colors underline underline-offset-4">
-                LOG IN
-              </button>
-            </p>
+              <Button
+                disabled={isPending || !isValid || (!!referralCodeValue && referralCodeValue.length >= 4 && validationData?.valid === false) || (!!import.meta.env.VITE_TURNSTILE_SITE_KEY && !captchaToken)}
+                className="w-full h-12 text-black font-black uppercase tracking-widest rounded-xl shadow-lg hover:-translate-y-0.5 transition-all group border-none relative overflow-hidden disabled:opacity-50 disabled:translate-y-0 disabled:shadow-none"
+                style={{ background: "linear-gradient(115deg, #a855f7, #d946ef)", boxShadow: "0 8px 20px -6px rgba(168,85,247,0.5)" }}
+                type="submit"
+              >
+                {isPending ? (
+                  <div className="flex items-center gap-2 text-white">
+                    <div className="size-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span>Creating Account...</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center gap-2 text-white">
+                    <span>Launch Account</span>
+                    <ArrowRight className="group-hover:translate-x-1 transition-transform" size={18} />
+                  </div>
+                )}
+              </Button>
+
+              <div className="pt-3 text-center border-t border-slate-100">
+                <p className="text-slate-400 text-xs">
+                  Already part of the elite?
+                  <button type="button" onClick={() => onClick("login")} className="ml-2 text-primary font-black hover:text-slate-900 transition-colors underline underline-offset-4">
+                    LOG IN
+                  </button>
+                </p>
+              </div>
+            </form>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );
