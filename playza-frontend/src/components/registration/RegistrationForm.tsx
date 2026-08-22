@@ -204,13 +204,23 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
               risk here, standing in for the generic centered-title-on-blur
               treatment. Skewed via a clipped pseudo-shape, not a literal
               rotated box, so the card's corners stay sharp. */}
-          <div className="relative px-6 pt-7 pb-5 overflow-hidden" style={{ background: "linear-gradient(115deg, #7c3aed 0%, #7c3aed 55%, #d946ef 100%)" }}>
+          <div className="relative px-6 pt-7 pb-6 overflow-hidden" style={{ background: "linear-gradient(115deg, #7c3aed 0%, #7c3aed 55%, #d946ef 100%)" }}>
             <div className="absolute inset-0 opacity-[0.07]" style={{ backgroundImage: "repeating-linear-gradient(115deg, #fff 0px, #fff 1px, transparent 1px, transparent 14px)" }} />
             <div className="relative flex items-center justify-between">
               <div>
-                <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight uppercase italic leading-none">
-                  Join Playza
-                </h1>
+                {/* "Playza" replaced by the actual wordmark — kept in its
+                    own sharp-cornered white chip (not the soft rounded-2xl
+                    used elsewhere) so it reads as an inset logo plate
+                    rather than a soft pill, and stays legible regardless
+                    of whatever's baked into the webp's background. */}
+                <div className="flex items-center gap-2.5">
+                  <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight uppercase italic leading-none">
+                    Join
+                  </h1>
+                  <div className="bg-white px-2 py-1 flex items-center" style={{ clipPath: "polygon(4px 0, 100% 0, calc(100% - 4px) 100%, 0 100%)" }}>
+                    <img src="/logo.webp" alt="Playza" className="h-5 md:h-6 w-auto object-contain" />
+                  </div>
+                </div>
                 <p className="text-white/70 text-[11px] font-bold mt-1.5">
                   Create your profile. Start competing today.
                 </p>
