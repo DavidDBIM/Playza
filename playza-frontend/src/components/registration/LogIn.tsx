@@ -87,6 +87,12 @@ const LogIn = ({ onClick }: LogInProps) => {
                 <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight uppercase italic leading-none">
                   Welcome Back
                 </h1>
+                {/* Same logo plate as the signup card — angled-cut corners,
+                    not a soft pill, sitting right under the headline since
+                    "Welcome Back" itself has no "Playza" text to swap out. */}
+                <div className="bg-white px-2 py-1 inline-flex items-center mt-2" style={{ clipPath: "polygon(4px 0, 100% 0, calc(100% - 4px) 100%, 0 100%)" }}>
+                  <img src="/logo.webp" alt="Playza" className="h-5 w-auto object-contain" />
+                </div>
                 <p className="text-white/70 text-[11px] font-bold mt-1.5">
                   Log in to your dashboard and active tournaments.
                 </p>
