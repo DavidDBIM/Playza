@@ -170,7 +170,7 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
   };
 
   const inputCls = (hasError: boolean) =>
-    `w-full bg-slate-50 border rounded-xl py-3 pl-11 pr-4 focus:ring-2 outline-none text-slate-900 placeholder:text-slate-400 transition-all font-bold text-sm ${
+    `w-full bg-slate-50 border rounded-xl py-3 pl-11 pr-4 focus:ring-2 outline-none text-[#0f172a] placeholder:text-[#94a3b8] transition-all font-bold text-sm ${
       hasError
         ? "border-red-400 focus:ring-red-500/10"
         : "border-slate-200 focus:ring-primary/20 focus:border-primary"
@@ -180,7 +180,7 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
     <div className="w-full max-w-xl mx-auto px-4 md:px-6">
       <Link
         to="/"
-        className="mb-4 flex items-center gap-2 text-slate-400 hover:text-primary transition-all font-black uppercase tracking-[0.2em] text-[10px] group"
+        className="mb-4 flex items-center gap-2 text-[#475569] hover:text-primary transition-all font-black uppercase tracking-[0.2em] text-[10px] group"
       >
         <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" />
         Back to Arena
@@ -244,18 +244,18 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
               {/* Row 1: Username + Email */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                 <div className="space-y-1">
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Gaming Handle</label>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-[#475569] ml-1">Gaming Handle</label>
                   <div className="relative group">
-                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={17} />
+                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#475569] group-focus-within:text-primary transition-colors" size={17} />
                     <input {...register("username")} className={inputCls(!!errors.username)} placeholder="AnthonyGamer" type="text" />
                   </div>
                   {errors.username && <p className="text-[10px] text-red-500 font-bold ml-1 italic">{errors.username.message}</p>}
                 </div>
 
                 <div className="space-y-1">
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Email Address</label>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-[#475569] ml-1">Email Address</label>
                   <div className="relative group">
-                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={17} />
+                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#475569] group-focus-within:text-primary transition-colors" size={17} />
                     <input {...register("email")} className={inputCls(!!errors.email)} placeholder="gamer@example.com" type="email" />
                   </div>
                   {errors.email && <p className="text-[10px] text-red-500 font-bold ml-1 italic">{errors.email.message}</p>}
@@ -267,7 +267,7 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
                   form couldn't fit on one screen. */}
               <div className="grid grid-cols-[auto_1fr] gap-2.5">
                 <div className="space-y-1">
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Country</label>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-[#475569] ml-1">Country</label>
                   <div className="relative">
                     <button
                       type="button"
@@ -275,8 +275,8 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
                       className="h-[46px] flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl py-3 px-3 text-left focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all min-w-[92px]"
                     >
                       <span className="text-lg">{selectedCountry.flag}</span>
-                      <span className="font-black text-xs text-slate-900">{selectedCountry.dial}</span>
-                      <ChevronDown size={14} className={`text-slate-400 transition-transform shrink-0 ${showCountryDropdown ? "rotate-180" : ""}`} />
+                      <span className="font-black text-xs text-[#0f172a]">{selectedCountry.dial}</span>
+                      <ChevronDown size={14} className={`text-[#475569] transition-transform shrink-0 ${showCountryDropdown ? "rotate-180" : ""}`} />
                     </button>
 
                     {showCountryDropdown && (
@@ -287,7 +287,7 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
                             value={countrySearch}
                             onChange={e => setCountrySearch(e.target.value)}
                             placeholder="Search country or dial code..."
-                            className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl outline-none text-slate-900 placeholder:text-slate-400"
+                            className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl outline-none text-[#0f172a] placeholder:text-[#94a3b8]"
                             autoFocus
                           />
                         </div>
@@ -300,12 +300,12 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
                               className={`w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-slate-50 transition-colors ${selectedCountry.code === c.code ? "bg-primary/5" : ""}`}
                             >
                               <span className="text-lg">{c.flag}</span>
-                              <span className="text-sm font-bold text-slate-900 flex-1">{c.name}</span>
-                              <span className="text-xs font-black text-slate-400">{c.dial}</span>
+                              <span className="text-sm font-bold text-[#0f172a] flex-1">{c.name}</span>
+                              <span className="text-xs font-black text-[#475569]">{c.dial}</span>
                             </button>
                           ))}
                           {filteredCountries.length === 0 && (
-                            <p className="text-center text-xs text-slate-400 py-4">No countries found</p>
+                            <p className="text-center text-xs text-[#475569] py-4">No countries found</p>
                           )}
                         </div>
                       </div>
@@ -317,9 +317,9 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Phone Number</label>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-[#475569] ml-1">Phone Number</label>
                   <div className="relative group">
-                    <Smartphone className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={17} />
+                    <Smartphone className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#475569] group-focus-within:text-primary transition-colors" size={17} />
                     <input
                       {...register("phone")}
                       className={inputCls(!!errors.phone)}
@@ -336,16 +336,16 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
                   both fields are short enough to share a row at any width. */}
               <div className="grid grid-cols-2 gap-3.5">
                 <div className="space-y-1">
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Password</label>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-[#475569] ml-1">Password</label>
                   <div className="relative group">
-                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={17} />
+                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#475569] group-focus-within:text-primary transition-colors" size={17} />
                     <input
                       {...register("password")}
-                      className={`w-full bg-slate-50 border rounded-xl py-3 pl-11 pr-10 focus:ring-2 outline-none text-slate-900 placeholder:text-slate-400 transition-all font-bold text-sm ${errors.password ? "border-red-400 focus:ring-red-500/10" : "border-slate-200 focus:ring-primary/20 focus:border-primary"}`}
+                      className={`w-full bg-slate-50 border rounded-xl py-3 pl-11 pr-10 focus:ring-2 outline-none text-[#0f172a] placeholder:text-[#94a3b8] transition-all font-bold text-sm ${errors.password ? "border-red-400 focus:ring-red-500/10" : "border-slate-200 focus:ring-primary/20 focus:border-primary"}`}
                       type={showPassword ? "text" : "password"}
                       placeholder="••••••••"
                     />
-                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-900 transition-colors">
+                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#475569] hover:text-[#0f172a] transition-colors">
                       {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
                   </div>
@@ -359,12 +359,12 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Confirm</label>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-[#475569] ml-1">Confirm</label>
                   <div className="relative group">
-                    <Shield className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={17} />
+                    <Shield className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#475569] group-focus-within:text-primary transition-colors" size={17} />
                     <input
                       {...register("confirmPassword")}
-                      className={`w-full bg-slate-50 border rounded-xl py-3 pl-11 pr-9 focus:ring-2 outline-none text-slate-900 placeholder:text-slate-400 transition-all font-bold text-sm ${confirmPassword && password !== confirmPassword ? "border-red-400 focus:ring-red-500/10" : "border-slate-200 focus:ring-primary/20 focus:border-primary"}`}
+                      className={`w-full bg-slate-50 border rounded-xl py-3 pl-11 pr-9 focus:ring-2 outline-none text-[#0f172a] placeholder:text-[#94a3b8] transition-all font-bold text-sm ${confirmPassword && password !== confirmPassword ? "border-red-400 focus:ring-red-500/10" : "border-slate-200 focus:ring-primary/20 focus:border-primary"}`}
                       type="password"
                       placeholder="••••••••"
                     />
@@ -380,13 +380,13 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
 
               {/* Referral Code */}
               <div className="space-y-1">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1 flex justify-between">
+                <label className="text-[10px] font-black uppercase tracking-widest text-[#475569] ml-1 flex justify-between">
                   Referral Code <span className="opacity-50 font-normal italic">Optional</span>
                 </label>
                 <div className="relative group">
                   <input
                     {...register("referralCode")}
-                    className={`w-full bg-slate-50 border rounded-xl py-3 px-4 focus:ring-2 outline-none text-slate-900 placeholder:text-slate-400 transition-all font-bold text-sm ${
+                    className={`w-full bg-slate-50 border rounded-xl py-3 px-4 focus:ring-2 outline-none text-[#0f172a] placeholder:text-[#94a3b8] transition-all font-bold text-sm ${
                       referralCodeValue && referralCodeValue.length >= 4
                         ? validationData?.valid ? "border-green-400 focus:ring-green-500/10" : "border-red-400 focus:ring-red-500/10"
                         : "border-slate-200 focus:ring-primary/20 focus:border-primary"
@@ -425,11 +425,11 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
                       {useWatch({ control, name: "acceptedTerms" }) && <Check className="size-3.5 text-white font-black animate-in zoom-in duration-200" strokeWidth={4} />}
                     </div>
                   </div>
-                  <span className="text-[10px] md:text-[11px] font-medium text-slate-500 leading-normal flex-1">
+                  <span className="text-[10px] md:text-[11px] font-medium text-[#475569] leading-normal flex-1">
                     I confirm I am over 18 and agree to the{" "}
-                    <Link to="/terms" target="_blank" className="text-slate-700 font-bold hover:text-primary transition-colors hover:underline underline-offset-2" onClick={e => e.stopPropagation()}>Terms & Conditions</Link>
+                    <Link to="/terms" target="_blank" className="text-[#334155] font-bold hover:text-primary transition-colors hover:underline underline-offset-2" onClick={e => e.stopPropagation()}>Terms & Conditions</Link>
                     {" "}and{" "}
-                    <Link to="/privacy" target="_blank" className="text-slate-700 font-bold hover:text-primary transition-colors hover:underline underline-offset-2" onClick={e => e.stopPropagation()}>Privacy Policy</Link>
+                    <Link to="/privacy" target="_blank" className="text-[#334155] font-bold hover:text-primary transition-colors hover:underline underline-offset-2" onClick={e => e.stopPropagation()}>Privacy Policy</Link>
                   </span>
                 </label>
                 {errors.acceptedTerms && <p className="text-[10px] text-red-500 font-bold ml-1 italic">{errors.acceptedTerms.message}</p>}
@@ -459,9 +459,9 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
               </Button>
 
               <div className="pt-3 text-center border-t border-slate-100">
-                <p className="text-slate-400 text-xs">
+                <p className="text-[#475569] text-xs">
                   Already part of the elite?
-                  <button type="button" onClick={() => onClick("login")} className="ml-2 text-primary font-black hover:text-slate-900 transition-colors underline underline-offset-4">
+                  <button type="button" onClick={() => onClick("login")} className="ml-2 text-primary font-black hover:text-[#0f172a] transition-colors underline underline-offset-4">
                     LOG IN
                   </button>
                 </p>

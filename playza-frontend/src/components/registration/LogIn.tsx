@@ -66,7 +66,7 @@ const LogIn = ({ onClick }: LogInProps) => {
     <div className="w-full max-w-md mx-auto px-4 md:px-6">
       <Link
         to="/"
-        className="mb-4 flex items-center gap-2 text-slate-400 hover:text-primary transition-all font-black uppercase tracking-[0.2em] text-[10px] group"
+        className="mb-4 flex items-center gap-2 text-[#475569] hover:text-primary transition-all font-black uppercase tracking-[0.2em] text-[10px] group"
       >
         <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" />
         Back to Arena
@@ -87,6 +87,12 @@ const LogIn = ({ onClick }: LogInProps) => {
                 <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight uppercase italic leading-none">
                   Welcome Back
                 </h1>
+                {/* Same logo plate as the signup card — angled-cut corners,
+                    not a soft pill, sitting right under the headline since
+                    "Welcome Back" itself has no "Playza" text to swap out. */}
+                <div className="bg-white px-2 py-1 inline-flex items-center mt-2" style={{ clipPath: "polygon(4px 0, 100% 0, calc(100% - 4px) 100%, 0 100%)" }}>
+                  <img src="/logo.webp" alt="Playza" className="h-5 w-auto object-contain" />
+                </div>
                 <p className="text-white/70 text-[11px] font-bold mt-1.5">
                   Log in to your dashboard and active tournaments.
                 </p>
@@ -100,19 +106,19 @@ const LogIn = ({ onClick }: LogInProps) => {
           <div className="px-6 pt-6 pb-6">
             <form className="space-y-4" onSubmit={handleSubmit}>
               <div className="space-y-1">
-                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                <label className="block text-[10px] font-black uppercase tracking-widest text-[#475569] ml-1">
                   Username or Email
                 </label>
                 <div className="relative group">
                   <User
-                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors"
+                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#475569] group-focus-within:text-primary transition-colors"
                     size={17}
                   />
                   <input
                     required
                     value={identifier}
                     onChange={(e) => setIdentifier(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-11 pr-4 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-slate-900 placeholder:text-slate-400 transition-all font-bold text-sm"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-11 pr-4 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-[#0f172a] placeholder:text-[#94a3b8] transition-all font-bold text-sm"
                     placeholder="Gaming handle or email"
                     type="text"
                     autoComplete="username"
@@ -122,7 +128,7 @@ const LogIn = ({ onClick }: LogInProps) => {
 
               <div className="space-y-1">
                 <div className="flex justify-between items-center ml-1">
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-[#475569]">
                     Password
                   </label>
                   <button
@@ -135,14 +141,14 @@ const LogIn = ({ onClick }: LogInProps) => {
                 </div>
                 <div className="relative group">
                   <Lock
-                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors"
+                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#475569] group-focus-within:text-primary transition-colors"
                     size={17}
                   />
                   <input
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-11 pr-10 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-slate-900 placeholder:text-slate-400 transition-all font-bold text-sm"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-11 pr-10 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-[#0f172a] placeholder:text-[#94a3b8] transition-all font-bold text-sm"
                     type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
                     autoComplete="current-password"
@@ -150,7 +156,7 @@ const LogIn = ({ onClick }: LogInProps) => {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-900 transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#475569] hover:text-[#0f172a] transition-colors"
                   >
                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
@@ -189,11 +195,11 @@ const LogIn = ({ onClick }: LogInProps) => {
             </form>
 
             <div className="pt-4 mt-1 border-t border-slate-100 text-center">
-              <p className="text-slate-400 text-xs font-medium tracking-tight">
+              <p className="text-[#475569] text-xs font-medium tracking-tight">
                 New to the platform?
                 <button
                   onClick={() => onClick("signup")}
-                  className="text-primary font-black hover:text-slate-900 ml-2 transition-colors uppercase tracking-widest text-[10px] underline underline-offset-4"
+                  className="text-primary font-black hover:text-[#0f172a] ml-2 transition-colors uppercase tracking-widest text-[10px] underline underline-offset-4"
                 >
                   CREATE ACCOUNT
                 </button>
