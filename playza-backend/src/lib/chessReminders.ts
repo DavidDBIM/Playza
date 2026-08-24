@@ -8,7 +8,7 @@ const resend = new Resend(process.env.RESEND_API_KEY)
 async function sendEmail(to: string, subject: string, html: string, text?: string) {
   try {
     await resend.emails.send({
-      from: 'Playza Tournaments <tournaments@playza.games>',
+      from: 'Playza <noreply@playza.games>',
       to, subject, html,
       // A plain-text part alongside the HTML makes this read as a genuine
       // transactional message to spam/promotions classifiers — HTML-only
@@ -20,33 +20,34 @@ async function sendEmail(to: string, subject: string, html: string, text?: strin
   }
 }
 
-// Shared shell for every chess tournament email — deliberately plain and
-// transactional-looking (white background, a single thin colored accent
-// bar, no gradients, no big emoji hero banners, small solid-color button)
-// instead of the marketing-style design used previously. Gmail's Promotions
-// classifier weighs visual style heavily; this reads much closer to a
-// receipt or a GitHub/Stripe-style notification than a promotional email.
-function transactionalShell(opts: { accentColor: string; bgTint: string; preheader: string; body: string; ctaLabel?: string; ctaUrl?: string }) {
-  const { accentColor, bgTint, preheader, body, ctaLabel, ctaUrl } = opts
+// Genuinely plain this time — the previous version of this comment already
+// claimed to avoid marketing styling, but the CSS below it still had a
+// full-bleed colored background, a button-styled CTA, and a "Manage
+// notification preferences" footer link. All three are real signals
+// Gmail's classifier associates specifically with bulk/marketing mail
+// (a preference-center link especially — genuine transactional mail like
+// "your order shipped" never has one, since it isn't a subscription).
+// This version: white background throughout, a plain text link instead of
+// a button, and a footer that states why you're getting the email instead
+// of offering to manage a subscription you didn't sign up for.
+function transactionalShell(opts: { accentColor: string; preheader: string; body: string; ctaLabel?: string; ctaUrl?: string; footerContext: string }) {
+  const { accentColor, preheader, body, ctaLabel, ctaUrl, footerContext } = opts
   return `
-  <div style="font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;max-width:520px;margin:auto;background:${bgTint};color:#1a1a1a;">
+  <div style="font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;max-width:520px;margin:auto;background:#ffffff;color:#1a1a1a;">
     <!-- Preheader: hidden preview text shown in the inbox list, before the subject reads as marketing copy -->
     <div style="display:none;max-height:0;overflow:hidden;opacity:0;">${preheader}</div>
-    <div style="border-top:3px solid ${accentColor};padding:20px 24px 4px;">
-      <p style="margin:0;font-size:13px;font-weight:700;color:#555;">Playza Tournaments</p>
+    <div style="padding:24px 24px 4px;">
+      <p style="margin:0;font-size:12px;font-weight:700;color:#888;">Playza</p>
     </div>
-    <div style="padding:8px 24px 24px;">
+    <div style="padding:8px 24px 20px;">
       ${body}
       ${ctaLabel && ctaUrl ? `
-      <p style="margin:20px 0 0;">
-        <a href="${ctaUrl}" style="display:inline-block;background:${accentColor};color:#ffffff;text-decoration:none;padding:10px 20px;border-radius:6px;font-weight:600;font-size:14px;">${ctaLabel}</a>
+      <p style="margin:18px 0 0;font-size:14px;">
+        <a href="${ctaUrl}" style="color:${accentColor};font-weight:700;">${ctaLabel} →</a>
       </p>` : ''}
     </div>
     <div style="padding:14px 24px;border-top:1px solid rgba(0,0,0,0.06);">
-      <p style="margin:0;font-size:11px;color:#999;">
-        Playza Games · This is a tournament notification for a match you're registered in.
-        <a href="https://playza.games/profile" style="color:#999;">Manage notification preferences</a>
-      </p>
+      <p style="margin:0;font-size:11px;color:#999;">Playza Games · ${footerContext}</p>
     </div>
   </div>`
 }
@@ -122,11 +123,11 @@ function registrationClosedHtml(username: string, t: any, drawTime: Date, drawDe
     </p>`
   return transactionalShell({
     accentColor: '#7c3aed',
-    bgTint: '#f5f3ff',
     preheader: `Registration for ${t.title} is closed — the draw happens ${drawDelayMinutes > 0 ? `in ${drawDelayMinutes} minutes` : 'now'}.`,
     body,
     ctaLabel: 'View tournament',
     ctaUrl: 'https://playza.games/tournaments',
+    footerContext: `Sent because you registered for ${t.title}.`,
   })
 }
 
@@ -160,11 +161,11 @@ function drawCompleteHtml(username: string, t: any, fixture: any) {
     ${fixture?.scheduled_at ? `<p style="font-size:14px;margin:8px 0 0;">Your first match is on <strong>${fmtDate(fixture.scheduled_at)}</strong>.</p>` : ''}`
   return transactionalShell({
     accentColor: '#2563eb',
-    bgTint: '#eff6ff',
     preheader: `Your first match in ${t.title} is against ${opponentName ?? 'your opponent'}.`,
     body,
     ctaLabel: 'View full bracket',
     ctaUrl: 'https://playza.games/tournaments',
+    footerContext: `Sent because you're registered in ${t.title}.`,
   })
 }
 
@@ -173,7 +174,6 @@ function matchReminderHtml(username: string, t: any, fixture: any, minutesLeft: 
     ? fixture?.player2?.username
     : fixture?.player1?.username
   const accentColor = minutesLeft <= 5 ? '#dc2626' : '#7c3aed'
-  const bgTint = minutesLeft <= 5 ? '#fef2f2' : '#f5f3ff'
   const body = `
     <p style="font-size:15px;line-height:1.6;margin:0 0 16px;">Hi ${username},</p>
     <p style="font-size:15px;line-height:1.6;margin:0 0 16px;">
@@ -189,11 +189,11 @@ function matchReminderHtml(username: string, t: any, fixture: any, minutesLeft: 
     </p>`
   return transactionalShell({
     accentColor,
-    bgTint,
     preheader: minutesLeft <= 5 ? 'Your chess match is starting now.' : `Your chess match starts in ${minutesLeft} minutes.`,
     body,
     ctaLabel: minutesLeft <= 5 ? 'Play now' : 'Open match',
     ctaUrl: 'https://playza.games/tournaments',
+    footerContext: `Sent because you have a match starting soon in ${t.title}.`,
   })
 }
 
@@ -206,11 +206,11 @@ function tournamentStartingHtml(username: string, t: any) {
     ${t.prize_pool > 0 ? `<p style="font-size:14px;color:#555;margin:0;">Prize pool: <strong style="color:#1a1a1a;">${t.prize_pool.toLocaleString()} ZA</strong></p>` : ''}`
   return transactionalShell({
     accentColor: '#16a34a',
-    bgTint: '#f0fdf4',
     preheader: `${t.title} starts in 30 minutes.`,
     body,
     ctaLabel: 'Open tournament',
     ctaUrl: 'https://playza.games/tournaments',
+    footerContext: `Sent because you're registered in ${t.title}.`,
   })
 }
 

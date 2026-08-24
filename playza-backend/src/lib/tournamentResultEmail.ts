@@ -6,7 +6,11 @@ const resend = new Resend(process.env.RESEND_API_KEY)
 async function sendEmail(to: string, subject: string, html: string, text?: string) {
   try {
     await resend.emails.send({
-      from: 'Playza Tournaments <tournaments@playza.games>',
+      // Matches the from-address already used by quizReminders.ts, rather
+      // than "Playza Tournaments" — a from-name that reads like a mailing
+      // list name is one of the signals Gmail's classifier weighs toward
+      // Promotions/Updates over Primary.
+      from: 'Playza <noreply@playza.games>',
       to, subject, html,
       // A plain-text part alongside the HTML makes this read as a genuine
       // transactional message to spam/promotions classifiers, same reasoning
@@ -18,31 +22,33 @@ async function sendEmail(to: string, subject: string, html: string, text?: strin
   }
 }
 
-// Same plain, transactional-looking shell used for reminder emails — kept as
-// its own small copy here (rather than importing from chessReminders.ts) so
-// this module has no dependency on the chess-specific reminder cron and can
-// be safely reused by quiz, and any future tournament type, without pulling
-// in chess-only imports.
-function transactionalShell(opts: { accentColor: string; bgTint: string; preheader: string; body: string; ctaLabel?: string; ctaUrl?: string }) {
-  const { accentColor, bgTint, preheader, body, ctaLabel, ctaUrl } = opts
+// Deliberately plain — this used to have a full-bleed colored background,
+// a large button-styled CTA, and a footer with "Manage notification
+// preferences" link. Every one of those is a real signal Gmail's
+// classifier associates with bulk/marketing mail specifically (colored
+// campaign-style background, prominent button CTA, and especially a
+// preference-center link — genuine transactional mail like "your order
+// shipped" never has an unsubscribe-style link, because it isn't a
+// subscription). None of that changes what the email says, only how
+// template-like it looks, which is exactly what pushes real account
+// notifications into Promotions/Updates instead of the primary inbox.
+function transactionalShell(opts: { accentColor: string; preheader: string; body: string; ctaLabel?: string; ctaUrl?: string; footerContext: string }) {
+  const { accentColor, preheader, body, ctaLabel, ctaUrl, footerContext } = opts
   return `
-  <div style="font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;max-width:520px;margin:auto;background:${bgTint};color:#1a1a1a;">
+  <div style="font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;max-width:520px;margin:auto;background:#ffffff;color:#1a1a1a;">
     <div style="display:none;max-height:0;overflow:hidden;opacity:0;">${preheader}</div>
-    <div style="border-top:3px solid ${accentColor};padding:20px 24px 4px;">
-      <p style="margin:0;font-size:13px;font-weight:700;color:#555;">Playza Tournaments</p>
+    <div style="padding:24px 24px 4px;">
+      <p style="margin:0;font-size:12px;font-weight:700;color:#888;">Playza</p>
     </div>
-    <div style="padding:8px 24px 24px;">
+    <div style="padding:8px 24px 20px;">
       ${body}
       ${ctaLabel && ctaUrl ? `
-      <p style="margin:20px 0 0;">
-        <a href="${ctaUrl}" style="display:inline-block;background:${accentColor};color:#ffffff;text-decoration:none;padding:10px 20px;border-radius:6px;font-weight:600;font-size:14px;">${ctaLabel}</a>
+      <p style="margin:18px 0 0;font-size:14px;">
+        <a href="${ctaUrl}" style="color:${accentColor};font-weight:700;">${ctaLabel} →</a>
       </p>` : ''}
     </div>
     <div style="padding:14px 24px;border-top:1px solid rgba(0,0,0,0.06);">
-      <p style="margin:0;font-size:11px;color:#999;">
-        Playza Games · This is a tournament notification for a tournament you took part in.
-        <a href="https://playza.games/profile" style="color:#999;">Manage notification preferences</a>
-      </p>
+      <p style="margin:0;font-size:11px;color:#999;">Playza Games · ${footerContext}</p>
     </div>
   </div>`
 }
@@ -79,15 +85,18 @@ export async function sendTournamentResultEmail(opts: TournamentResultEmailInput
 
   const won = prize > 0
   const accentColor = won ? '#16a34a' : '#7c3aed'
-  const bgTint = won ? '#f0fdf4' : '#faf5ff'
   const rankLabel = rank ? `${ordinal(rank)} place` : null
 
+  // Subject line emoji is one more thing that reads as "campaign" rather
+  // than "account notification" to Gmail's classifier — dropped here even
+  // though the body keeps a little personality, since the subject line
+  // carries more weight in that classification than body copy does.
   const subject = won
-    ? `🏆 You won ${prize} ZA in ${tournamentTitle}!`
+    ? `You won ${prize} ZA in ${tournamentTitle}`
     : `${tournamentTitle} has ended — here's your PZA reward`
 
   const headline = won
-    ? `Congratulations, ${username}! 🏆`
+    ? `Congratulations, ${username}!`
     : `${tournamentTitle} is over, ${username}`
 
   const body = `
@@ -113,11 +122,11 @@ export async function sendTournamentResultEmail(opts: TournamentResultEmailInput
 
   const html = transactionalShell({
     accentColor,
-    bgTint,
     preheader: won ? `You won ${prize} ZA in ${tournamentTitle}` : `${tournamentTitle} has ended — see your PZA reward`,
     body,
-    ctaLabel: won ? 'View Your Winnings' : 'Browse Tournaments',
+    ctaLabel: won ? 'View your winnings' : 'Browse tournaments',
     ctaUrl: tournamentUrl,
+    footerContext: `Sent because you took part in ${tournamentTitle}.`,
   })
 
   await sendEmail(to, subject, html)
@@ -215,11 +224,11 @@ export async function sendTiebreakBreakdownEmail(opts: TiebreakBreakdownEmailInp
 
   const html = transactionalShell({
     accentColor,
-    bgTint,
     preheader: `See the tiebreak breakdown for ${tournamentTitle}`,
     body,
-    ctaLabel: 'View Full Standings',
+    ctaLabel: 'View full standings',
     ctaUrl: tournamentUrl,
+    footerContext: `Sent because you were tied on points in ${tournamentTitle}.`,
   })
 
   await sendEmail(to, subject, html)
