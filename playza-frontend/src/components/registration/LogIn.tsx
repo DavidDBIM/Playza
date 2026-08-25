@@ -1,10 +1,15 @@
 import { useState } from "react";
-import { User, Lock, Loader2, Eye, EyeOff, ArrowRight, ArrowLeft, AlertCircle } from "lucide-react";
+import { User, Lock, Loader2, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { useLogin } from "@/hooks/auth/useLogin";
 import { useNavigate, useSearchParams, Link } from "react-router";
 import Turnstile from "@/components/common/Turnstile";
 
 import { useAuth } from "@/context/auth";
+
+const BRAND = "#00aeee"; // Playza's --primary, fixed rather than referencing
+// the CSS variable — that variable itself shifts value between light/dark
+// mode, and this card is deliberately locked to look identical regardless
+// of the site's theme toggle. A fixed hex keeps it that way.
 
 interface LogInProps {
   onClick: (value: string) => void;
@@ -63,150 +68,124 @@ const LogIn = ({ onClick }: LogInProps) => {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto px-4 md:px-6">
-      <Link
-        to="/"
-        className="mb-4 flex items-center gap-2 text-[#475569] hover:text-primary transition-all font-black uppercase tracking-[0.2em] text-[10px] group"
-      >
-        <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" />
-        Back to Arena
-      </Link>
-
-      {/* Same signature treatment as the signup card — angled violet→magenta
-          strip on white, not the app's dark shell, kept consistent across
-          both halves of the auth flow. */}
-      <div className="relative">
-        <div className="absolute -top-24 -left-20 w-64 h-64 bg-primary/25 blur-[100px] rounded-full pointer-events-none" />
-        <div className="absolute -top-10 -right-20 w-56 h-56 bg-fuchsia-500/20 blur-[100px] rounded-full pointer-events-none" />
-
-        <div className="relative z-10 bg-white rounded-[2rem] shadow-2xl shadow-slate-900/10 border border-slate-100 overflow-hidden">
-          <div className="relative px-6 pt-7 pb-5 overflow-hidden" style={{ background: "linear-gradient(115deg, #7c3aed 0%, #7c3aed 55%, #d946ef 100%)" }}>
-            <div className="absolute inset-0 opacity-[0.07]" style={{ backgroundImage: "repeating-linear-gradient(115deg, #fff 0px, #fff 1px, transparent 1px, transparent 14px)" }} />
-            <div className="relative flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight uppercase italic leading-none">
-                  Welcome Back
-                </h1>
-                {/* Same logo plate as the signup card — angled-cut corners,
-                    not a soft pill, sitting right under the headline since
-                    "Welcome Back" itself has no "Playza" text to swap out. */}
-                <div className="bg-white px-2 py-1 inline-flex items-center mt-2" style={{ clipPath: "polygon(4px 0, 100% 0, calc(100% - 4px) 100%, 0 100%)" }}>
-                  <img src="/logo.webp" alt="Playza" className="h-5 w-auto object-contain" />
-                </div>
-                <p className="text-white/70 text-[11px] font-bold mt-1.5">
-                  Log in to your dashboard and active tournaments.
-                </p>
-              </div>
-              <div className="shrink-0 hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/15 border border-white/20">
-                <span className="text-[9px] font-black text-white uppercase tracking-widest">🔒 Secure</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="px-6 pt-6 pb-6">
-            <form className="space-y-4" onSubmit={handleSubmit}>
-              <div className="space-y-1">
-                <label className="block text-[10px] font-black uppercase tracking-widest text-[#475569] ml-1">
-                  Username or Email
-                </label>
-                <div className="relative group">
-                  <User
-                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#475569] group-focus-within:text-primary transition-colors"
-                    size={17}
-                  />
-                  <input
-                    required
-                    value={identifier}
-                    onChange={(e) => setIdentifier(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-11 pr-4 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-[#0f172a] placeholder:text-[#94a3b8] transition-all font-bold text-sm"
-                    placeholder="Gaming handle or email"
-                    type="text"
-                    autoComplete="username"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <div className="flex justify-between items-center ml-1">
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-[#475569]">
-                    Password
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => onClick("forgot")}
-                    className="text-[10px] font-black uppercase tracking-widest text-primary hover:underline hover:brightness-110 transition-all"
-                  >
-                    Forgot Password?
-                  </button>
-                </div>
-                <div className="relative group">
-                  <Lock
-                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#475569] group-focus-within:text-primary transition-colors"
-                    size={17}
-                  />
-                  <input
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-11 pr-10 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-[#0f172a] placeholder:text-[#94a3b8] transition-all font-bold text-sm"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
-                    autoComplete="current-password"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#475569] hover:text-[#0f172a] transition-colors"
-                  >
-                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-              </div>
-
-              {error && (
-                <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
-                  <AlertCircle size={16} className="text-red-500 mt-0.5 shrink-0" />
-                  <p className="text-red-600 text-xs font-semibold">{error.message}</p>
-                </div>
-              )}
-
-              <div className="flex justify-center">
-                <Turnstile key={turnstileKey} onVerify={setCaptchaToken} />
-              </div>
-
-              <button
-                type="submit"
-                disabled={isPending || !identifier || !password || (!!import.meta.env.VITE_TURNSTILE_SITE_KEY && !captchaToken)}
-                className="w-full h-12 text-white font-black uppercase tracking-widest rounded-xl transition-all active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100 flex items-center justify-center gap-2 text-sm group border-none"
-                style={{ background: "linear-gradient(115deg, #a855f7, #d946ef)", boxShadow: "0 8px 20px -6px rgba(168,85,247,0.5)" }}
-              >
-                {isPending ? (
-                  <>
-                    <Loader2 size={18} className="animate-spin" />
-                    Authenticating...
-                  </>
-                ) : (
-                  <>
-                    Launch Arena
-                    <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-                  </>
-                )}
-              </button>
-            </form>
-
-            <div className="pt-4 mt-1 border-t border-slate-100 text-center">
-              <p className="text-[#475569] text-xs font-medium tracking-tight">
-                New to the platform?
-                <button
-                  onClick={() => onClick("signup")}
-                  className="text-primary font-black hover:text-[#0f172a] ml-2 transition-colors uppercase tracking-widest text-[10px] underline underline-offset-4"
-                >
-                  CREATE ACCOUNT
-                </button>
-              </p>
-            </div>
+    <div className="w-full max-w-md mx-auto px-4">
+      <div className="bg-white dark:bg-[#12101c] rounded-2xl shadow-sm border border-slate-200 dark:border-white/10 p-8">
+        {/* Centered logo badge — light violet circle, matches the
+            reference's icon treatment, using Playza's actual wordmark
+            scaled down to fit the circle. */}
+        <div className="flex justify-center mb-5">
+          <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ background: "rgba(0,174,238,0.12)" }}>
+            <img src="/logo.webp" alt="Playza" className="h-6 w-auto object-contain" />
           </div>
         </div>
+
+        <h1 className="text-center text-2xl font-bold text-[#0f172a] dark:text-white mb-1">
+          Welcome Back
+        </h1>
+        <p className="text-center text-sm text-[#64748b] dark:text-slate-500 mb-6">
+          Log in to your Playza account
+        </p>
+
+        <form className="space-y-5" onSubmit={handleSubmit}>
+          <div>
+            <label className="block text-sm font-medium text-[#334155] dark:text-slate-300 mb-1.5">
+              Username or Email <span style={{ color: BRAND }}>*</span>
+            </label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 text-[#94a3b8] dark:text-slate-600" size={16} />
+              <input
+                required
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                className="w-full border border-slate-300 dark:border-white/15 rounded-lg py-2.5 pl-9 pr-3 text-sm text-[#0f172a] dark:text-white placeholder:text-[#94a3b8] dark:placeholder:text-slate-600 outline-none transition-colors focus:border-[#00aeee]"
+                placeholder="Enter your username or email"
+                type="text"
+                autoComplete="username"
+              />
+            </div>
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-sm font-medium text-[#334155] dark:text-slate-300">
+                Password <span style={{ color: BRAND }}>*</span>
+              </label>
+            </div>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-[#94a3b8] dark:text-slate-600" size={16} />
+              <input
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full border border-slate-300 dark:border-white/15 rounded-lg py-2.5 pl-9 pr-10 text-sm text-[#0f172a] dark:text-white placeholder:text-[#94a3b8] dark:placeholder:text-slate-600 outline-none transition-colors focus:border-[#00aeee]"
+                type={showPassword ? "text" : "password"}
+                placeholder="Enter your password"
+                autoComplete="current-password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#94a3b8] dark:text-slate-600 hover:text-[#334155] dark:text-slate-300 transition-colors"
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+            <div className="text-right mt-1.5">
+              <button
+                type="button"
+                onClick={() => onClick("forgot")}
+                className="text-sm font-medium hover:underline"
+                style={{ color: BRAND }}
+              >
+                Forgot password?
+              </button>
+            </div>
+          </div>
+
+          {error && (
+            <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2.5">
+              <AlertCircle size={15} className="text-red-500 mt-0.5 shrink-0" />
+              <p className="text-red-600 text-xs">{error.message}</p>
+            </div>
+          )}
+
+          <div className="flex justify-center">
+            <Turnstile key={turnstileKey} onVerify={setCaptchaToken} />
+          </div>
+
+          <button
+            type="submit"
+            disabled={isPending || !identifier || !password || (!!import.meta.env.VITE_TURNSTILE_SITE_KEY && !captchaToken)}
+            className="w-full py-3 rounded-lg text-white font-semibold text-sm transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+            style={{ background: BRAND }}
+          >
+            {isPending ? (
+              <>
+                <Loader2 size={16} className="animate-spin" />
+                Logging in...
+              </>
+            ) : (
+              "Login"
+            )}
+          </button>
+        </form>
+
+        <p className="text-center text-sm text-[#475569] dark:text-slate-400 mt-6">
+          Don't have an account?{" "}
+          <button
+            onClick={() => onClick("signup")}
+            className="font-medium hover:underline"
+            style={{ color: BRAND }}
+          >
+            Sign up
+          </button>
+        </p>
+      </div>
+
+      <div className="text-center mt-4">
+        <Link to="/" className="text-xs text-[#94a3b8] dark:text-slate-600 hover:text-[#475569] dark:text-slate-400 transition-colors">
+          ← Back to Arena
+        </Link>
       </div>
     </div>
   );

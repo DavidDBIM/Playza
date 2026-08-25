@@ -2,10 +2,9 @@ import { useState, useEffect } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signupSchema, type SignupFormValues } from "@/schemas/auth.schema";
-import { Button } from "../ui/button";
 import {
-  User, Mail, Smartphone, Lock, Shield, ArrowRight, Eye, EyeOff,
-  CheckCircle2, Check, AlertCircle, ArrowLeft, ChevronDown,
+  User, Mail, Smartphone, Lock, Shield, Eye, EyeOff,
+  CheckCircle2, Check, AlertCircle, ChevronDown, Loader2,
 } from "lucide-react";
 
 import { useSignup } from "@/hooks/auth/useSignup";
@@ -170,305 +169,273 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
   };
 
   const inputCls = (hasError: boolean) =>
-    `w-full bg-slate-50 border rounded-xl py-3 pl-11 pr-4 focus:ring-2 outline-none text-[#0f172a] placeholder:text-[#94a3b8] transition-all font-bold text-sm ${
-      hasError
-        ? "border-red-400 focus:ring-red-500/10"
-        : "border-slate-200 focus:ring-primary/20 focus:border-primary"
+    `w-full border rounded-lg py-2.5 pl-9 pr-3 text-sm text-[#0f172a] dark:text-white placeholder:text-[#94a3b8] dark:placeholder:text-slate-600 outline-none transition-colors ${
+      hasError ? "border-red-400 focus:border-red-400" : "border-slate-300 dark:border-white/15 focus:border-[#00aeee]"
     }`;
 
   return (
-    <div className="w-full max-w-xl mx-auto px-4 md:px-6">
-      <Link
-        to="/"
-        className="mb-4 flex items-center gap-2 text-[#475569] hover:text-primary transition-all font-black uppercase tracking-[0.2em] text-[10px] group"
-      >
-        <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" />
-        Back to Arena
-      </Link>
+    <div className="w-full max-w-xl mx-auto px-4">
+      <div className="bg-white dark:bg-[#12101c] rounded-2xl shadow-sm border border-slate-200 dark:border-white/10 p-8">
+        {/* Centered logo badge — matches the login form's treatment, and
+            the reference image this was modeled on: one plain icon in a
+            light brand-tinted circle, not a colored header banner. */}
+        <div className="flex justify-center mb-5">
+          <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ background: "rgba(0,174,238,0.12)" }}>
+            <img src="/logo.webp" alt="Playza" className="h-6 w-auto object-contain" />
+          </div>
+        </div>
 
-      {/* Two bold glows behind the card — the signature move here isn't the
-          glow itself (that's the generic template), it's the sharp angled
-          strip cutting through the white card below, which the glow just
-          sets up as a backdrop. */}
-      <div className="relative">
-        <div className="absolute -top-24 -left-24 w-72 h-72 bg-primary/25 blur-[100px] rounded-full pointer-events-none" />
-        <div className="absolute -top-10 -right-24 w-64 h-64 bg-fuchsia-500/20 blur-[100px] rounded-full pointer-events-none" />
+        <h1 className="text-center text-2xl font-bold text-[#0f172a] dark:text-white mb-1">
+          Create Account
+        </h1>
+        <p className="text-center text-sm text-[#64748b] dark:text-slate-500 mb-6">
+          Join Playza and start competing today
+        </p>
 
-        {/* The card is explicitly white — not tied to the app's dark theme —
-            since a signup form is a trust surface and reads as crisper,
-            more premium, more "official" on white than blended into a dark
-            shell. */}
-        <div className="relative z-10 bg-white rounded-[2rem] shadow-2xl shadow-slate-900/10 border border-slate-100 overflow-hidden">
+        {formError && (
+          <div className="mb-4 flex items-start gap-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2.5">
+            <AlertCircle size={15} className="text-red-500 mt-0.5 shrink-0" />
+            <p className="text-red-600 text-xs">{formError}</p>
+          </div>
+        )}
 
-          {/* Angled two-tone header strip — the one deliberate geometric
-              risk here, standing in for the generic centered-title-on-blur
-              treatment. Skewed via a clipped pseudo-shape, not a literal
-              rotated box, so the card's corners stay sharp. */}
-          <div className="relative px-6 pt-7 pb-6 overflow-hidden" style={{ background: "linear-gradient(115deg, #7c3aed 0%, #7c3aed 55%, #d946ef 100%)" }}>
-            <div className="absolute inset-0 opacity-[0.07]" style={{ backgroundImage: "repeating-linear-gradient(115deg, #fff 0px, #fff 1px, transparent 1px, transparent 14px)" }} />
-            <div className="relative flex items-center justify-between">
-              <div>
-                {/* "Playza" replaced by the actual wordmark — kept in its
-                    own sharp-cornered white chip (not the soft rounded-2xl
-                    used elsewhere) so it reads as an inset logo plate
-                    rather than a soft pill, and stays legible regardless
-                    of whatever's baked into the webp's background. */}
-                <div className="flex items-center gap-2.5">
-                  <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight uppercase italic leading-none">
-                    Join
-                  </h1>
-                  <div className="bg-white px-2 py-1 flex items-center" style={{ clipPath: "polygon(4px 0, 100% 0, calc(100% - 4px) 100%, 0 100%)" }}>
-                    <img src="/logo.webp" alt="Playza" className="h-5 md:h-6 w-auto object-contain" />
-                  </div>
-                </div>
-                <p className="text-white/70 text-[11px] font-bold mt-1.5">
-                  Create your profile. Start competing today.
-                </p>
+        <form className="space-y-4" onSubmit={handleSubmit(onFormSubmit)}>
+
+          {/* Row 1: Username + Email */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-[#334155] dark:text-slate-300 mb-1.5">
+                Username <span style={{ color: BRAND }}>*</span>
+              </label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 text-[#94a3b8] dark:text-slate-600" size={16} />
+                <input {...register("username")} className={inputCls(!!errors.username)} placeholder="AnthonyGamer" type="text" />
               </div>
-              <div className="shrink-0 hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/15 border border-white/20">
-                <span className="text-[9px] font-black text-white uppercase tracking-widest">⚡ Free to join</span>
+              {errors.username && <p className="text-xs text-red-500 mt-1">{errors.username.message}</p>}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-[#334155] dark:text-slate-300 mb-1.5">
+                Email Address <span style={{ color: BRAND }}>*</span>
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-[#94a3b8] dark:text-slate-600" size={16} />
+                <input {...register("email")} className={inputCls(!!errors.email)} placeholder="Enter your email" type="email" />
               </div>
+              {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email.message}</p>}
             </div>
           </div>
 
-          <div className="px-6 pt-5 pb-6">
-            {formError && (
-              <div className="mb-4 flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
-                <AlertCircle size={16} className="text-red-500 mt-0.5 shrink-0" />
-                <p className="text-red-600 text-xs font-semibold">{formError}</p>
-              </div>
-            )}
+          {/* Row 2: Country + Phone, side by side */}
+          <div className="grid grid-cols-[auto_1fr] gap-3">
+            <div>
+              <label className="block text-sm font-medium text-[#334155] dark:text-slate-300 mb-1.5">Country</label>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowCountryDropdown(v => !v)}
+                  className="h-[42px] flex items-center gap-1.5 border border-slate-300 dark:border-white/15 rounded-lg py-2.5 px-3 text-left transition-colors focus:outline-none focus:border-[#00aeee] min-w-[90px]"
+                >
+                  <span className="text-lg">{selectedCountry.flag}</span>
+                  <span className="font-semibold text-sm text-[#0f172a] dark:text-white">{selectedCountry.dial}</span>
+                  <ChevronDown size={14} className={`text-[#64748b] dark:text-slate-500 transition-transform shrink-0 ${showCountryDropdown ? "rotate-180" : ""}`} />
+                </button>
 
-            <form className="space-y-4" onSubmit={handleSubmit(onFormSubmit)}>
-
-              {/* Row 1: Username + Email */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                <div className="space-y-1">
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-[#475569] ml-1">Gaming Handle</label>
-                  <div className="relative group">
-                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#475569] group-focus-within:text-primary transition-colors" size={17} />
-                    <input {...register("username")} className={inputCls(!!errors.username)} placeholder="AnthonyGamer" type="text" />
-                  </div>
-                  {errors.username && <p className="text-[10px] text-red-500 font-bold ml-1 italic">{errors.username.message}</p>}
-                </div>
-
-                <div className="space-y-1">
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-[#475569] ml-1">Email Address</label>
-                  <div className="relative group">
-                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#475569] group-focus-within:text-primary transition-colors" size={17} />
-                    <input {...register("email")} className={inputCls(!!errors.email)} placeholder="gamer@example.com" type="email" />
-                  </div>
-                  {errors.email && <p className="text-[10px] text-red-500 font-bold ml-1 italic">{errors.email.message}</p>}
-                </div>
-              </div>
-
-              {/* Row 2: Country + Phone, side by side — this used to be two
-                  full-width stacked rows, which was most of the reason the
-                  form couldn't fit on one screen. */}
-              <div className="grid grid-cols-[auto_1fr] gap-2.5">
-                <div className="space-y-1">
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-[#475569] ml-1">Country</label>
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onClick={() => setShowCountryDropdown(v => !v)}
-                      className="h-[46px] flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl py-3 px-3 text-left focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all min-w-[92px]"
-                    >
-                      <span className="text-lg">{selectedCountry.flag}</span>
-                      <span className="font-black text-xs text-[#0f172a]">{selectedCountry.dial}</span>
-                      <ChevronDown size={14} className={`text-[#475569] transition-transform shrink-0 ${showCountryDropdown ? "rotate-180" : ""}`} />
-                    </button>
-
-                    {showCountryDropdown && (
-                      <div className="absolute top-full left-0 mt-1 z-50 w-72 max-w-[calc(100vw-2.5rem)] bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden">
-                        <div className="p-2 border-b border-slate-100">
-                          <input
-                            type="text"
-                            value={countrySearch}
-                            onChange={e => setCountrySearch(e.target.value)}
-                            placeholder="Search country or dial code..."
-                            className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl outline-none text-[#0f172a] placeholder:text-[#94a3b8]"
-                            autoFocus
-                          />
-                        </div>
-                        <div className="max-h-56 overflow-y-auto">
-                          {filteredCountries.map(c => (
-                            <button
-                              key={c.code}
-                              type="button"
-                              onClick={() => selectCountry(c)}
-                              className={`w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-slate-50 transition-colors ${selectedCountry.code === c.code ? "bg-primary/5" : ""}`}
-                            >
-                              <span className="text-lg">{c.flag}</span>
-                              <span className="text-sm font-bold text-[#0f172a] flex-1">{c.name}</span>
-                              <span className="text-xs font-black text-[#475569]">{c.dial}</span>
-                            </button>
-                          ))}
-                          {filteredCountries.length === 0 && (
-                            <p className="text-center text-xs text-[#475569] py-4">No countries found</p>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  {/* Hidden inputs for form registration */}
-                  <input type="hidden" {...register("country")} />
-                  <input type="hidden" {...register("dialCode")} />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-[#475569] ml-1">Phone Number</label>
-                  <div className="relative group">
-                    <Smartphone className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#475569] group-focus-within:text-primary transition-colors" size={17} />
-                    <input
-                      {...register("phone")}
-                      className={inputCls(!!errors.phone)}
-                      placeholder="800 000 0000"
-                      type="tel"
-                      inputMode="numeric"
-                    />
-                  </div>
-                </div>
-              </div>
-              {errors.phone && <p className="text-[10px] text-red-500 font-bold ml-1 italic -mt-2.5">{errors.phone.message}</p>}
-
-              {/* Row 3: Password + Confirm — 2-up even on mobile now, since
-                  both fields are short enough to share a row at any width. */}
-              <div className="grid grid-cols-2 gap-3.5">
-                <div className="space-y-1">
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-[#475569] ml-1">Password</label>
-                  <div className="relative group">
-                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#475569] group-focus-within:text-primary transition-colors" size={17} />
-                    <input
-                      {...register("password")}
-                      className={`w-full bg-slate-50 border rounded-xl py-3 pl-11 pr-10 focus:ring-2 outline-none text-[#0f172a] placeholder:text-[#94a3b8] transition-all font-bold text-sm ${errors.password ? "border-red-400 focus:ring-red-500/10" : "border-slate-200 focus:ring-primary/20 focus:border-primary"}`}
-                      type={showPassword ? "text" : "password"}
-                      placeholder="••••••••"
-                    />
-                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#475569] hover:text-[#0f172a] transition-colors">
-                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                    </button>
-                  </div>
-                  <div className="flex items-center gap-1.5 px-1 pt-0.5">
-                    <div className="flex-1 h-1 bg-slate-200 rounded-full overflow-hidden">
-                      <div className={`h-full transition-all duration-500 ${strengthColor}`} style={{ width: `${strength}%` }} />
+                {showCountryDropdown && (
+                  <div className="absolute top-full left-0 mt-1 z-50 w-72 max-w-[calc(100vw-2.5rem)] bg-white dark:bg-[#12101c] border border-slate-200 dark:border-white/10 rounded-xl shadow-lg overflow-hidden">
+                    <div className="p-2 border-b border-slate-100 dark:border-white/5">
+                      <input
+                        type="text"
+                        value={countrySearch}
+                        onChange={e => setCountrySearch(e.target.value)}
+                        placeholder="Search country or dial code..."
+                        className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg outline-none text-[#0f172a] dark:text-white placeholder:text-[#94a3b8] dark:placeholder:text-slate-600"
+                        autoFocus
+                      />
                     </div>
-                    <span className={`text-[8px] font-black uppercase tracking-tighter shrink-0 ${strengthColor.replace("bg-", "text-")}`}>{strengthLabel}</span>
-                  </div>
-                  {errors.password && <p className="text-[10px] text-red-500 font-bold ml-1 italic">{errors.password.message}</p>}
-                </div>
-
-                <div className="space-y-1">
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-[#475569] ml-1">Confirm</label>
-                  <div className="relative group">
-                    <Shield className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#475569] group-focus-within:text-primary transition-colors" size={17} />
-                    <input
-                      {...register("confirmPassword")}
-                      className={`w-full bg-slate-50 border rounded-xl py-3 pl-11 pr-9 focus:ring-2 outline-none text-[#0f172a] placeholder:text-[#94a3b8] transition-all font-bold text-sm ${confirmPassword && password !== confirmPassword ? "border-red-400 focus:ring-red-500/10" : "border-slate-200 focus:ring-primary/20 focus:border-primary"}`}
-                      type="password"
-                      placeholder="••••••••"
-                    />
-                    {confirmPassword && (
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                        {password === confirmPassword ? <CheckCircle2 size={15} className="text-green-500" /> : <AlertCircle size={15} className="text-red-500" />}
-                      </div>
-                    )}
-                  </div>
-                  {errors.confirmPassword && <p className="text-[10px] text-red-500 font-bold ml-1 italic">{errors.confirmPassword.message}</p>}
-                </div>
-              </div>
-
-              {/* Referral Code */}
-              <div className="space-y-1">
-                <label className="text-[10px] font-black uppercase tracking-widest text-[#475569] ml-1 flex justify-between">
-                  Referral Code <span className="opacity-50 font-normal italic">Optional</span>
-                </label>
-                <div className="relative group">
-                  <input
-                    {...register("referralCode")}
-                    className={`w-full bg-slate-50 border rounded-xl py-3 px-4 focus:ring-2 outline-none text-[#0f172a] placeholder:text-[#94a3b8] transition-all font-bold text-sm ${
-                      referralCodeValue && referralCodeValue.length >= 4
-                        ? validationData?.valid ? "border-green-400 focus:ring-green-500/10" : "border-red-400 focus:ring-red-500/10"
-                        : "border-slate-200 focus:ring-primary/20 focus:border-primary"
-                    }`}
-                    type="text"
-                    maxLength={20}
-                    placeholder="Enter referral or promo code"
-                    onInput={(e) => { e.currentTarget.value = e.currentTarget.value.toUpperCase(); }}
-                  />
-                  {referralCodeValue && referralCodeValue.length >= 4 && (
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                      {isValidatingCode ? (
-                        <div className="size-3.5 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />
-                      ) : validationData?.valid ? (
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[9px] font-black text-green-600 uppercase tracking-tighter hidden md:inline">Referrer: {validationData.referrer}</span>
-                          <CheckCircle2 size={15} className="text-green-500" />
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[9px] font-black text-red-500 uppercase tracking-tighter hidden md:inline">Invalid Link</span>
-                          <AlertCircle size={15} className="text-red-500" />
-                        </div>
+                    <div className="max-h-56 overflow-y-auto">
+                      {filteredCountries.map(c => (
+                        <button
+                          key={c.code}
+                          type="button"
+                          onClick={() => selectCountry(c)}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+                          style={selectedCountry.code === c.code ? { background: "rgba(0,174,238,0.08)" } : {}}
+                        >
+                          <span className="text-lg">{c.flag}</span>
+                          <span className="text-sm font-medium text-[#0f172a] dark:text-white flex-1">{c.name}</span>
+                          <span className="text-xs font-semibold text-[#64748b] dark:text-slate-500">{c.dial}</span>
+                        </button>
+                      ))}
+                      {filteredCountries.length === 0 && (
+                        <p className="text-center text-xs text-[#64748b] dark:text-slate-500 py-4">No countries found</p>
                       )}
+                    </div>
+                  </div>
+                )}
+              </div>
+              {/* Hidden inputs for form registration */}
+              <input type="hidden" {...register("country")} />
+              <input type="hidden" {...register("dialCode")} />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-[#334155] dark:text-slate-300 mb-1.5">
+                Phone Number <span style={{ color: BRAND }}>*</span>
+              </label>
+              <div className="relative">
+                <Smartphone className="absolute left-3 top-1/2 -translate-y-1/2 text-[#94a3b8] dark:text-slate-600" size={16} />
+                <input
+                  {...register("phone")}
+                  className={inputCls(!!errors.phone)}
+                  placeholder="800 000 0000"
+                  type="tel"
+                  inputMode="numeric"
+                />
+              </div>
+            </div>
+          </div>
+          {errors.phone && <p className="text-xs text-red-500 -mt-2.5">{errors.phone.message}</p>}
+
+          {/* Row 3: Password + Confirm */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-[#334155] dark:text-slate-300 mb-1.5">
+                Password <span style={{ color: BRAND }}>*</span>
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-[#94a3b8] dark:text-slate-600" size={16} />
+                <input
+                  {...register("password")}
+                  className={`w-full border rounded-lg py-2.5 pl-9 pr-9 text-sm text-[#0f172a] dark:text-white placeholder:text-[#94a3b8] dark:placeholder:text-slate-600 outline-none transition-colors ${errors.password ? "border-red-400 focus:border-red-400" : "border-slate-300 dark:border-white/15 focus:border-[#00aeee]"}`}
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter your password"
+                />
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#94a3b8] dark:text-slate-600 hover:text-[#334155] dark:text-slate-300 transition-colors">
+                  {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                </button>
+              </div>
+              <div className="flex items-center gap-1.5 px-0.5 pt-1.5">
+                <div className="flex-1 h-1 bg-slate-200 rounded-full overflow-hidden">
+                  <div className={`h-full transition-all duration-500 ${strengthColor}`} style={{ width: `${strength}%` }} />
+                </div>
+                <span className={`text-[9px] font-semibold shrink-0 ${strengthColor.replace("bg-", "text-")}`}>{strengthLabel}</span>
+              </div>
+              {errors.password && <p className="text-xs text-red-500 mt-1">{errors.password.message}</p>}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-[#334155] dark:text-slate-300 mb-1.5">
+                Confirm <span style={{ color: BRAND }}>*</span>
+              </label>
+              <div className="relative">
+                <Shield className="absolute left-3 top-1/2 -translate-y-1/2 text-[#94a3b8] dark:text-slate-600" size={16} />
+                <input
+                  {...register("confirmPassword")}
+                  className={`w-full border rounded-lg py-2.5 pl-9 pr-8 text-sm text-[#0f172a] dark:text-white placeholder:text-[#94a3b8] dark:placeholder:text-slate-600 outline-none transition-colors ${confirmPassword && password !== confirmPassword ? "border-red-400 focus:border-red-400" : "border-slate-300 dark:border-white/15 focus:border-[#00aeee]"}`}
+                  type="password"
+                  placeholder="Confirm password"
+                />
+                {confirmPassword && (
+                  <div className="absolute right-2.5 top-1/2 -translate-y-1/2">
+                    {password === confirmPassword ? <CheckCircle2 size={15} className="text-green-500" /> : <AlertCircle size={15} className="text-red-500" />}
+                  </div>
+                )}
+              </div>
+              {errors.confirmPassword && <p className="text-xs text-red-500 mt-1">{errors.confirmPassword.message}</p>}
+            </div>
+          </div>
+
+          {/* Referral Code */}
+          <div>
+            <label className="flex justify-between text-sm font-medium text-[#334155] dark:text-slate-300 mb-1.5">
+              Referral Code <span className="text-[#94a3b8] dark:text-slate-600 font-normal">Optional</span>
+            </label>
+            <div className="relative">
+              <input
+                {...register("referralCode")}
+                className={`w-full border rounded-lg py-2.5 px-3 text-sm text-[#0f172a] dark:text-white placeholder:text-[#94a3b8] dark:placeholder:text-slate-600 outline-none transition-colors ${
+                  referralCodeValue && referralCodeValue.length >= 4
+                    ? validationData?.valid ? "border-green-400 focus:border-green-400" : "border-red-400 focus:border-red-400"
+                    : "border-slate-300 dark:border-white/15 focus:border-[#00aeee]"
+                }`}
+                type="text"
+                maxLength={20}
+                placeholder="Enter referral or promo code"
+                onInput={(e) => { e.currentTarget.value = e.currentTarget.value.toUpperCase(); }}
+              />
+              {referralCodeValue && referralCodeValue.length >= 4 && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                  {isValidatingCode ? (
+                    <div className="size-3.5 border-2 rounded-full animate-spin" style={{ borderColor: "rgba(0,174,238,0.2)", borderTopColor: BRAND }} />
+                  ) : validationData?.valid ? (
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] font-semibold text-green-600 hidden md:inline">Referrer: {validationData.referrer}</span>
+                      <CheckCircle2 size={15} className="text-green-500" />
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] font-semibold text-red-500 hidden md:inline">Invalid Link</span>
+                      <AlertCircle size={15} className="text-red-500" />
                     </div>
                   )}
                 </div>
-              </div>
-
-              {/* Terms */}
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="terms" className="group/terms flex items-center gap-3 cursor-pointer p-1 rounded-lg select-none hover:bg-slate-50 transition-colors">
-                  <div className="relative shrink-0 flex items-center justify-center w-5 h-5">
-                    <input {...register("acceptedTerms")} type="checkbox" id="terms" className="peer absolute opacity-0 w-0 h-0" />
-                    <div className="absolute inset-0 rounded-md border-2 border-slate-300 peer-checked:border-primary peer-checked:bg-primary transition-all duration-300 flex items-center justify-center peer-focus-visible:ring-2 peer-focus-visible:ring-primary/50 group-hover/terms:border-primary/50">
-                      {useWatch({ control, name: "acceptedTerms" }) && <Check className="size-3.5 text-white font-black animate-in zoom-in duration-200" strokeWidth={4} />}
-                    </div>
-                  </div>
-                  <span className="text-[10px] md:text-[11px] font-medium text-[#475569] leading-normal flex-1">
-                    I confirm I am over 18 and agree to the{" "}
-                    <Link to="/terms" target="_blank" className="text-[#334155] font-bold hover:text-primary transition-colors hover:underline underline-offset-2" onClick={e => e.stopPropagation()}>Terms & Conditions</Link>
-                    {" "}and{" "}
-                    <Link to="/privacy" target="_blank" className="text-[#334155] font-bold hover:text-primary transition-colors hover:underline underline-offset-2" onClick={e => e.stopPropagation()}>Privacy Policy</Link>
-                  </span>
-                </label>
-                {errors.acceptedTerms && <p className="text-[10px] text-red-500 font-bold ml-1 italic">{errors.acceptedTerms.message}</p>}
-              </div>
-
-              <div className="flex justify-center">
-                <Turnstile key={turnstileKey} onVerify={setCaptchaToken} />
-              </div>
-
-              <Button
-                disabled={isPending || !isValid || (!!referralCodeValue && referralCodeValue.length >= 4 && validationData?.valid === false) || (!!import.meta.env.VITE_TURNSTILE_SITE_KEY && !captchaToken)}
-                className="w-full h-12 text-black font-black uppercase tracking-widest rounded-xl shadow-lg hover:-translate-y-0.5 transition-all group border-none relative overflow-hidden disabled:opacity-50 disabled:translate-y-0 disabled:shadow-none"
-                style={{ background: "linear-gradient(115deg, #a855f7, #d946ef)", boxShadow: "0 8px 20px -6px rgba(168,85,247,0.5)" }}
-                type="submit"
-              >
-                {isPending ? (
-                  <div className="flex items-center gap-2 text-white">
-                    <div className="size-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    <span>Creating Account...</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center gap-2 text-white">
-                    <span>Launch Account</span>
-                    <ArrowRight className="group-hover:translate-x-1 transition-transform" size={18} />
-                  </div>
-                )}
-              </Button>
-
-              <div className="pt-3 text-center border-t border-slate-100">
-                <p className="text-[#475569] text-xs">
-                  Already part of the elite?
-                  <button type="button" onClick={() => onClick("login")} className="ml-2 text-primary font-black hover:text-[#0f172a] transition-colors underline underline-offset-4">
-                    LOG IN
-                  </button>
-                </p>
-              </div>
-            </form>
+              )}
+            </div>
           </div>
-        </div>
+
+          {/* Terms */}
+          <div>
+            <label htmlFor="terms" className="flex items-start gap-2.5 cursor-pointer select-none">
+              <div className="relative shrink-0 flex items-center justify-center w-[18px] h-[18px] mt-0.5">
+                <input {...register("acceptedTerms")} type="checkbox" id="terms" className="peer absolute opacity-0 w-0 h-0" />
+                <div className="absolute inset-0 rounded border-2 border-slate-300 dark:border-white/15 transition-all duration-200 flex items-center justify-center peer-checked:border-transparent" style={{ background: useWatch({ control, name: "acceptedTerms" }) ? BRAND : undefined }}>
+                  {useWatch({ control, name: "acceptedTerms" }) && <Check className="size-3 text-white" strokeWidth={4} />}
+                </div>
+              </div>
+              <span className="text-xs text-[#475569] dark:text-slate-400 leading-normal">
+                I confirm I am over 18 and agree to the{" "}
+                <Link to="/terms" target="_blank" className="font-medium hover:underline" style={{ color: BRAND }} onClick={e => e.stopPropagation()}>Terms & Conditions</Link>
+                {" "}and{" "}
+                <Link to="/privacy" target="_blank" className="font-medium hover:underline" style={{ color: BRAND }} onClick={e => e.stopPropagation()}>Privacy Policy</Link>
+              </span>
+            </label>
+            {errors.acceptedTerms && <p className="text-xs text-red-500 mt-1 ml-[26px]">{errors.acceptedTerms.message}</p>}
+          </div>
+
+          <div className="flex justify-center">
+            <Turnstile key={turnstileKey} onVerify={setCaptchaToken} />
+          </div>
+
+          <button
+            disabled={isPending || !isValid || (!!referralCodeValue && referralCodeValue.length >= 4 && validationData?.valid === false) || (!!import.meta.env.VITE_TURNSTILE_SITE_KEY && !captchaToken)}
+            className="w-full py-3 rounded-lg text-white font-semibold text-sm transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+            style={{ background: BRAND }}
+            type="submit"
+          >
+            {isPending ? (
+              <>
+                <Loader2 size={16} className="animate-spin" />
+                Creating account...
+              </>
+            ) : (
+              "Create Account"
+            )}
+          </button>
+        </form>
+
+        <p className="text-center text-sm text-[#475569] dark:text-slate-400 mt-6">
+          Already have an account?{" "}
+          <button type="button" onClick={() => onClick("login")} className="font-medium hover:underline" style={{ color: BRAND }}>
+            Log in
+          </button>
+        </p>
+      </div>
+
+      <div className="text-center mt-4">
+        <Link to="/" className="text-xs text-[#94a3b8] dark:text-slate-600 hover:text-[#475569] dark:text-slate-400 transition-colors">
+          ← Back to Arena
+        </Link>
       </div>
     </div>
   );
