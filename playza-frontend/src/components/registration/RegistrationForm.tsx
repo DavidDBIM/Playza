@@ -13,6 +13,10 @@ import { useValidateReferral } from "@/hooks/referral/useValidateReferral";
 import { Link, useLocation } from "react-router";
 import Turnstile from "@/components/common/Turnstile";
 
+const BRAND = "#00aeee"; // Playza's actual logo blue, sampled directly from
+// the real logo.webp pixels — fixed here rather than a theme CSS variable,
+// so it's identical in both the light and dark variants of this card.
+
 interface RegistrationFormProps {
   onClick: (value: string) => void;
 }
