@@ -1,19 +1,20 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { ArrowRight, Edit, ShieldCheck } from "lucide-react";
-import { Button } from "../ui/button";
+import { ShieldCheck, Loader2, AlertCircle } from "lucide-react";
 import { useVerifyOtp } from "@/hooks/auth/useVerifyOtp";
 import { useResendOtp } from "@/hooks/auth/useResendOtp";
 import { useRegistration } from "@/hooks/auth/useRegistration";
 import { useAuth } from "@/context/auth";
 import { useNavigate, useSearchParams } from "react-router";
 
+const BRAND = "#00aeee"; // Playza's actual logo blue — see LogIn.tsx for why
+// this is a fixed hex rather than a theme variable.
 
 interface OtpProps {
   onClick: (value: string) => void;
 }
 
 const OTP_LENGTH = 6;
-const RESEND_COOLDOWN = 120; 
+const RESEND_COOLDOWN = 120;
 
 const OTP = ({ onClick }: OtpProps) => {
   const { pendingEmail } = useRegistration();
@@ -34,7 +35,6 @@ const OTP = ({ onClick }: OtpProps) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-
   const startCountdown = useCallback(() => {
     const id = setInterval(() => {
       setSecondsLeft((s) => {
@@ -51,7 +51,7 @@ const OTP = ({ onClick }: OtpProps) => {
   useEffect(() => {
     const id = startCountdown();
     return () => clearInterval(id);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const formattedTime = `${String(Math.floor(secondsLeft / 60)).padStart(2, "0")}:${String(secondsLeft % 60).padStart(2, "0")}`;
@@ -60,7 +60,7 @@ const OTP = ({ onClick }: OtpProps) => {
   const handleChange = (index: number, value: string) => {
     if (!/^\d*$/.test(value)) return;
     const updated = [...digits];
-    updated[index] = value.slice(-1); 
+    updated[index] = value.slice(-1);
     setDigits(updated);
     if (value && index < OTP_LENGTH - 1) {
       inputRefs.current[index + 1]?.focus();
@@ -158,106 +158,86 @@ const OTP = ({ onClick }: OtpProps) => {
     : "your email";
 
   return (
-    <div className="w-full max-w-xl mx-auto px-6">
-      <div className="relative text-center">
-
-        <div className="bg-primary/5 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-10 border border-primary/20 shadow-inner group transition-all duration-500 hover:scale-110">
-          <ShieldCheck className="text-primary group-hover:drop-shadow-[0_0_8px_rgba(var(--primary),0.5)]" size={32} />
+    <div className="w-full max-w-md mx-auto px-4">
+      <div className="bg-white dark:bg-[#12101c] rounded-2xl shadow-sm border border-slate-200 dark:border-white/10 p-8 text-center">
+        <div className="flex justify-center mb-5">
+          <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ background: "rgba(0,174,238,0.12)" }}>
+            <ShieldCheck size={26} style={{ color: BRAND }} />
+          </div>
         </div>
 
-        <div className="mb-10">
-          <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-3 tracking-tighter uppercase font-display">
-            Verify Portal
-          </h1>
-          <p className="text-slate-500 dark:text-slate-400 text-xs md:text-sm leading-relaxed">
-            A 6-digit access code was sent to
-            <br />
-            <span className="text-primary font-black tracking-wider text-sm mt-1 inline-block">
-              {maskedEmail}
-            </span>
-          </p>
-        </div>
+        <h1 className="text-2xl font-bold text-[#0f172a] dark:text-white mb-1">
+          Verify Your Email
+        </h1>
+        <p className="text-sm text-[#64748b] dark:text-slate-400 mb-6">
+          A 6-digit code was sent to{" "}
+          <span className="font-semibold" style={{ color: BRAND }}>{maskedEmail}</span>
+        </p>
 
-        {/* Error banner */}
         {error && (
-          <div className="mb-6 bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3">
-            <p className="text-red-500 text-xs font-bold italic">{error}</p>
+          <div className="mb-5 flex items-start gap-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2.5 text-left">
+            <AlertCircle size={15} className="text-red-500 mt-0.5 shrink-0" />
+            <p className="text-red-600 text-xs">{error}</p>
           </div>
         )}
 
-        {/* OTP inputs */}
-        <div className="flex justify-center mb-10 ">
-          <fieldset className="flex gap-2 md:gap-3" onPaste={handlePaste}>
-            {digits.map((digit, i) => (
-              <input
-                key={i}
-                ref={(el) => {
-                  inputRefs.current[i] = el;
-                }}
-                value={digit}
-                onChange={(e) => handleChange(i, e.target.value)}
-                onKeyDown={(e) => handleKeyDown(i, e)}
-                required
-                inputMode="numeric"
-                className="w-11.5 h-16 md:w-16 md:h-20 text-center bg-slate-900/[0.03] dark:bg-white/[0.03] border-2 border-slate-200/50 dark:border-white/5 rounded-2xl focus:border-primary focus:ring-4 focus:ring-primary/10 text-xl md:text-3xl font-black text-primary transition-all outline-none placeholder:opacity-20"
-                aria-label={`Digit ${i + 1}`}
-                placeholder="0"
-                maxLength={1}
-                type="text"
-              />
-            ))}
-          </fieldset>
+        <fieldset className="flex justify-center gap-2 mb-6" onPaste={handlePaste}>
+          {digits.map((digit, i) => (
+            <input
+              key={i}
+              ref={(el) => {
+                inputRefs.current[i] = el;
+              }}
+              value={digit}
+              onChange={(e) => handleChange(i, e.target.value)}
+              onKeyDown={(e) => handleKeyDown(i, e)}
+              required
+              inputMode="numeric"
+              className="w-10 h-12 md:w-12 md:h-14 text-center border border-slate-300 dark:border-white/15 rounded-lg text-lg md:text-xl font-bold text-[#0f172a] dark:text-white outline-none transition-colors focus:border-[#00aeee]"
+              aria-label={`Digit ${i + 1}`}
+              placeholder="0"
+              maxLength={1}
+              type="text"
+            />
+          ))}
+        </fieldset>
+
+        <button
+          onClick={handleVerify}
+          disabled={!isComplete || isVerifying}
+          className="w-full py-3 rounded-lg text-white font-semibold text-sm transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+          style={{ background: BRAND }}
+        >
+          {isVerifying ? (
+            <>
+              <Loader2 size={16} className="animate-spin" />
+              Verifying...
+            </>
+          ) : (
+            "Verify"
+          )}
+        </button>
+
+        <div className="flex items-center justify-center gap-4 mt-5">
+          <div className="px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10">
+            <p className="text-xs font-semibold font-mono" style={{ color: BRAND }}>{formattedTime}</p>
+          </div>
+          <button
+            onClick={handleResend}
+            disabled={!canResend || isResending}
+            className="text-[#475569] dark:text-slate-400 hover:text-[#0f172a] dark:hover:text-white text-xs font-medium transition-colors disabled:opacity-40"
+          >
+            {isResending ? "Resending..." : "Resend Code"}
+          </button>
         </div>
 
-        <div className="space-y-6">
-          <Button
-            onClick={handleVerify}
-            disabled={!isComplete || isVerifying}
-            className="w-full h-15 bg-primary text-slate-950 text-sm md:text-base font-black uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-primary/10 hover:shadow-primary/30 hover:-translate-y-1 transition-all disabled:opacity-50 disabled:translate-y-0 group"
+        <div className="pt-5 mt-5 border-t border-slate-100 dark:border-white/5">
+          <button
+            onClick={() => onClick("signup")}
+            className="text-xs text-[#94a3b8] dark:text-slate-500 hover:text-[#475569] dark:hover:text-slate-300 transition-colors"
           >
-            {isVerifying ? (
-              <div className="flex items-center gap-2">
-                <div className="size-4 border-2 border-black/20 border-t-black rounded-full animate-spin" />
-                <span>Authenticating...</span>
-              </div>
-            ) : (
-              <div className="flex items-center justify-center gap-2">
-                <span>Verify Arena Auth</span>
-                <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-              </div>
-            )}
-          </Button>
-
-          <div className="flex flex-col items-center gap-6 pt-4">
-            <div className="flex items-center gap-6">
-              <div className="flex flex-col items-center">
-                <div className="bg-slate-100 dark:bg-slate-950/50 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/10">
-                  <p className="text-primary text-xs font-black font-mono">
-                    {formattedTime}
-                  </p>
-                </div>
-              </div>
-              <div className="h-10 w-px bg-slate-200 dark:border-white/5"></div>
-              <button
-                onClick={handleResend}
-                disabled={!canResend || isResending}
-                className="text-slate-500 dark:text-slate-400 hover:text-primary text-[10px] font-black uppercase tracking-widest transition-colors disabled:opacity-40"
-              >
-                {isResending ? "Retrying..." : "Resend Link"}
-              </button>
-            </div>
-
-            <button
-              onClick={() => onClick("signup")}
-              className="flex items-center gap-2 text-slate-400 hover:text-slate-900 dark:hover:text-white text-[10px] font-black uppercase tracking-[0.2em] transition-all pt-10 border-t border-slate-200/50 dark:border-white/5 w-full justify-center group"
-            >
-              <Edit
-                size={14}
-                className="group-hover:text-primary transition-colors group-hover:scale-110"
-              />
-              Modify Credentials
-            </button>
-          </div>
+            Wrong email? Go back
+          </button>
         </div>
       </div>
     </div>

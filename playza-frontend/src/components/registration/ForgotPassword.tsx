@@ -1,7 +1,10 @@
 import { useState } from "react";
-import { ArrowBigLeft, Loader2, MailCheck } from "lucide-react";
-import { RxReset } from "react-icons/rx";
+import { Mail, Loader2, MailCheck, AlertCircle } from "lucide-react";
 import { useForgotPassword } from "@/hooks/auth/useForgotPassword";
+
+const BRAND = "#00aeee"; // Playza's actual logo blue — see LogIn.tsx/
+// RegistrationForm.tsx for why this is a fixed hex rather than a theme
+// variable (keeps the card identical in light and dark mode).
 
 const ForgotPassword = ({ onClick }: { onClick: (value: string) => void }) => {
   const [email, setEmail] = useState("");
@@ -24,105 +27,99 @@ const ForgotPassword = ({ onClick }: { onClick: (value: string) => void }) => {
   };
 
   return (
-    <div className="w-full max-w-lg mx-auto px-6">
-      <div className="relative">
-        <div className="flex flex-col items-center text-center mb-10">
-          <div className="bg-primary/5 p-5 rounded-2xl mb-6 border border-primary/20 group transition-all duration-500 hover:scale-110">
-            {isSuccess ? (
-              <MailCheck className="text-primary group-hover:drop-shadow-[0_0_8px_rgba(var(--primary),0.5)]" size={32} />
-            ) : (
-              <RxReset className="text-primary text-3xl group-hover:drop-shadow-[0_0_8px_rgba(var(--primary),0.5)]" />
-            )}
+    <div className="w-full max-w-md mx-auto px-4">
+      <div className="bg-white dark:bg-[#12101c] rounded-2xl shadow-sm border border-slate-200 dark:border-white/10 p-8">
+        <div className="flex justify-center mb-5">
+          <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ background: "rgba(0,174,238,0.12)" }}>
+            {isSuccess ? <MailCheck size={26} style={{ color: BRAND }} /> : <Mail size={26} style={{ color: BRAND }} />}
           </div>
-          <h1 className="text-slate-900 dark:text-white text-2xl md:text-3xl font-black tracking-tight uppercase mb-3">
-            {isSuccess ? "Check Your Email" : "Reset Portal"}
-          </h1>
-          <p className="text-slate-500 dark:text-slate-400 text-xs md:text-sm font-medium leading-relaxed">
-            {isSuccess
-              ? `We've sent a password reset link to ${email}. Check your inbox or spam folder.`
-              : "No stress! Enter your email and we'll send you a secure link to get back in the game."}
-          </p>
         </div>
 
-        {!isSuccess && (
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 ml-1">
-                Email Address
+        <h1 className="text-center text-2xl font-bold text-[#0f172a] dark:text-white mb-1">
+          {isSuccess ? "Check Your Email" : "Forgot Password?"}
+        </h1>
+        <p className="text-center text-sm text-[#64748b] dark:text-slate-400 mb-6">
+          {isSuccess
+            ? `We've sent a password reset link to ${email}. Check your inbox or spam folder.`
+            : "No worries — enter your email and we'll send you a reset link."}
+        </p>
+
+        {!isSuccess ? (
+          <form className="space-y-5" onSubmit={handleSubmit}>
+            <div>
+              <label className="block text-sm font-medium text-[#334155] dark:text-slate-300 mb-1.5">
+                Email Address <span style={{ color: BRAND }}>*</span>
               </label>
-              <div className="relative group">
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-[#94a3b8] dark:text-slate-600" size={16} />
                 <input
                   required
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-slate-900/[0.03] dark:bg-white/[0.03] border border-slate-200/50 dark:border-white/5 rounded-2xl py-4 px-6 focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-700 transition-all font-bold text-sm"
-                  placeholder="Enter your gamer email"
+                  className="w-full border border-slate-300 dark:border-white/15 rounded-lg py-2.5 pl-9 pr-3 text-sm text-[#0f172a] dark:text-white placeholder:text-[#94a3b8] dark:placeholder:text-slate-600 outline-none transition-colors focus:border-[#00aeee]"
+                  placeholder="Enter your email"
                   autoComplete="email"
                 />
               </div>
             </div>
 
             {error && (
-              <p className="text-red-500 text-xs text-center font-bold italic">
-                {error.message}
-              </p>
+              <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2.5">
+                <AlertCircle size={15} className="text-red-500 mt-0.5 shrink-0" />
+                <p className="text-red-600 text-xs">{error.message}</p>
+              </div>
             )}
 
             <button
-              disabled={isPending}
-              className="w-full bg-primary hover:bg-primary/90 text-slate-950 font-black py-4.5 rounded-2xl transition-all shadow-xl shadow-primary/10 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 uppercase tracking-[0.2em] text-sm group"
+              disabled={isPending || !email}
+              className="w-full py-3 rounded-lg text-white font-semibold text-sm transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+              style={{ background: BRAND }}
               type="submit"
             >
               {isPending ? (
                 <>
-                  <Loader2 size={18} className="animate-spin" />
-                  Generating...
+                  <Loader2 size={16} className="animate-spin" />
+                  Sending...
                 </>
               ) : (
-                <>
-                  Request Arena Access
-                  <RxReset className="group-hover:rotate-180 transition-transform duration-700" size={18} />
-                </>
+                "Send Reset Link"
               )}
             </button>
 
-            <div className="flex justify-center pt-8 mt-10 border-t border-slate-200/50 dark:border-white/5">
-              <button
-                type="button"
-                onClick={() => onClick("login")}
-                className="group flex items-center gap-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all text-[10px] font-black uppercase tracking-[0.2em] cursor-pointer"
-              >
-                <ArrowBigLeft className="size-4 transition-transform group-hover:-translate-x-1" />
-                Back to Login
+            <p className="text-center text-sm text-[#475569] dark:text-slate-400">
+              Remembered your password?{" "}
+              <button type="button" onClick={() => onClick("login")} className="font-medium hover:underline" style={{ color: BRAND }}>
+                Log in
               </button>
-            </div>
+            </p>
           </form>
-        )}
-
-        {isSuccess && (
-          <div className="flex flex-col gap-5 pt-4">
+        ) : (
+          <div className="space-y-4">
             <button
               onClick={() => onClick("login")}
-              className="w-full bg-primary hover:bg-primary/90 text-slate-950 font-black py-4.5 rounded-2xl transition-all shadow-xl uppercase tracking-[0.2em] text-sm"
+              className="w-full py-3 rounded-lg text-white font-semibold text-sm"
+              style={{ background: BRAND }}
             >
               Back to Login
             </button>
-            <p className="text-[10px] text-slate-500 text-center font-black uppercase tracking-[0.2em]">
+            <p className="text-center text-sm text-[#475569] dark:text-slate-400">
               Didn't receive it?{" "}
-              <span
-                onClick={() => sendReset({ email })}
-                className="text-primary hover:text-white cursor-pointer ml-1 underline underline-offset-4"
-              >
-                Resend Now
-              </span>
+              <button onClick={() => sendReset({ email })} className="font-medium hover:underline" style={{ color: BRAND }}>
+                Resend
+              </button>
             </p>
           </div>
         )}
+      </div>
+
+      <div className="text-center mt-4">
+        <button onClick={() => onClick("login")} className="text-xs text-[#94a3b8] dark:text-slate-500 hover:text-[#475569] dark:hover:text-slate-300 transition-colors">
+          ← Back to Login
+        </button>
       </div>
     </div>
   );
 };
 
 export default ForgotPassword;
-
