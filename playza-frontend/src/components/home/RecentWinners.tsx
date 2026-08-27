@@ -35,13 +35,20 @@ const RecentWinners = () => {
             ({ id, username, game, amountWon }, i) => (
               <div
                 key={`${id}-${i}`}
-                className="relative flex items-center gap-2 md:gap-4 px-2 md:px-4 py-2 rounded-2xl glass-card border border-primary/20 bg-slate-900/40 dark:bg-slate-900/60 shrink-0"
+                className="relative flex items-center gap-2 md:gap-4 px-2 md:px-4 py-2 rounded-2xl glass-card border border-primary/20 bg-slate-900/95 shrink-0"
               >
-                {/* Content */}
+                {/* Content — these chips are a deliberately dark "live
+                    ticker" strip, same idea as the HeroBanner carousel:
+                    a self-contained dark card that sits on top of the page
+                    rather than blending into it. bg-slate-900/95 makes that
+                    intent hold regardless of whether the page itself is
+                    light or dark, so the light text below stays correct
+                    either way instead of relying on the page's ambient
+                    color to make the chip "dark enough." */}
                 <div className="flex justify-center gap-1">
                   <div className="flex items-center gap-2 text-[10px] md:text-xs leading-none pt-1">
-                    <span className="font-bold truncate max-w-30">{username}</span>
-                    <span className="italic opacity-80">won</span>
+                    <span className="font-bold truncate max-w-30 text-white">{username}</span>
+                    <span className="italic opacity-80 text-slate-300">won</span>
                     <div className="flex items-center gap-1">
                       <ZASymbol className="text-sm scale-75" />
                       <span className="font-extrabold text-sm md:text-base lg:text-lg text-emerald-400 font-mono tracking-tight leading-none">
@@ -51,11 +58,11 @@ const RecentWinners = () => {
                   </div>
                   
                   <div className="flex items-center justify-between gap-1 md:gap-4 mt-0.5">
-                    <span className="text-[10px] md:text-xs font-semibold uppercase tracking-widest truncate max-w-37.5">
+                    <span className="text-[10px] md:text-xs font-semibold uppercase tracking-widest truncate max-w-37.5 text-slate-300">
                       in {game}
                     </span>
-                    <div className="flex items-center gap-1.5 text-[9px] md:text-[10px] font-medium whitespace-nowrap bg-black/20 px-2 py-0.5 rounded-full">
-                      <Clock className="w-3 h-3 " />
+                    <div className="flex items-center gap-1.5 text-[9px] md:text-[10px] font-medium whitespace-nowrap bg-black/20 px-2 py-0.5 rounded-full text-slate-300">
+                      <Clock className="w-3 h-3 text-slate-400" />
                       <span>{randomTimes[i] || 1}m ago</span>
                     </div>
                   </div>

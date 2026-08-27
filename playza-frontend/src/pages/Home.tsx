@@ -62,7 +62,7 @@ const Home = () => {
   const hasGames = backendGames.length > 0;
 
   return (
-    <main className="flex-1 min-w-0 space-y-3 md:space-y-4 pb-2 md:pb-4">
+    <main className="flex-1 min-w-0 space-y-3 md:space-y-4 pb-2 md:pb-4 bg-white">
       <SEO
         title="Play Games, Win Real Money"
         description="The #1 competitive skill gaming platform. Play skill-based games, join tournaments, challenge friends in H2H matches, and win real ZA rewards instantly."
@@ -82,12 +82,12 @@ const Home = () => {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-[10px] md:text-xs lg:text-sm font-black uppercase tracking-tight">
+                <h3 className="text-[10px] md:text-xs lg:text-sm font-black uppercase tracking-tight text-[#0f172a]">
                   Active Rewards
                 </h3>
                 <span className="flex h-1.5 w-1.5 rounded-full bg-primary"></span>
               </div>
-              <p className="text-[10px] text-on-surface-variant font-bold opacity-80 uppercase tracking-widest hidden sm:block">
+              <p className="text-[10px] text-[#475569] font-bold opacity-80 uppercase tracking-widest hidden sm:block">
                 Claim your daily bonus • Current multi: 1.2x
               </p>
             </div>
@@ -104,12 +104,12 @@ const Home = () => {
       {isLoading ? (
         <div className="space-y-8 px-4">
           <div className="space-y-4">
-            <Skeleton className="h-8 w-48 bg-white/10" />
+            <Skeleton className="h-8 w-48 bg-slate-900/10" />
             <div className="flex gap-4 overflow-hidden">
               {[1, 2, 3, 4, 5, 6].map((j) => (
                 <Skeleton
                   key={j}
-                  className="h-48 w-40 md:w-64 shrink-0 rounded-2xl bg-white/10"
+                  className="h-48 w-40 md:w-64 shrink-0 rounded-2xl bg-slate-900/10"
                 />
               ))}
             </div>
