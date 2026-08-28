@@ -41,6 +41,7 @@ import chessTournamentRoutes from './modules/chess-tournament/chess-tournament.r
 import chessTournamentAdminRoutes from './modules/chess-tournament/chess-tournament.admin.routes'
 import sponsorsRoutes from './modules/quiz/quiz.sponsors.routes'
 import bannerRoutes from './modules/banner/banner.routes'
+import blogRoutes from './modules/blog/blog.routes'
 import referralRewardsRoutes from './modules/referral-rewards/referral-rewards.routes'
 import { setupQuizGateway } from './modules/quiz/quiz.gateway'
 import { setQuizAdminIo } from './modules/quiz/quiz.admin.routes'
@@ -110,6 +111,7 @@ app.use('/api/admin/quiz/sponsors', sponsorsRoutes)
 app.use('/api/chess-tournament', chessTournamentRoutes)
 app.use('/api/admin/chess-tournament', chessTournamentAdminRoutes)
 app.use('/api/banners', bannerRoutes)
+app.use('/api/blog', blogRoutes)
 app.use('/api/referral-rewards', referralRewardsRoutes)
 
 app.use((req, res) => {

@@ -330,6 +330,35 @@ create table if not exists notifications (
 
 alter table notifications enable row level security;
 
+-- BLOG POSTS
+create table if not exists blog_posts (
+  id uuid primary key default uuid_generate_v4(),
+  title text not null,
+  slug text unique not null,
+  excerpt text,
+  content text not null,
+  cover_image_url text,
+  author_name text default 'Playza Team',
+  tags jsonb default '[]'::jsonb,
+  is_published boolean default false,
+  published_at timestamptz,
+  view_count integer default 0,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create index if not exists idx_blog_posts_published on blog_posts (is_published, published_at desc);
+
+alter table blog_posts enable row level security;
+
+-- Atomic view counter (falls back to read-then-write in the service if this is missing)
+create or replace function increment_blog_view_count(post_id uuid)
+returns void as $$
+begin
+  update blog_posts set view_count = view_count + 1 where id = post_id;
+end;
+$$ language plpgsql;
+
 -- PUSH TOKENS (For Web Push Notifications)
 create table if not exists push_tokens (
   id uuid primary key default uuid_generate_v4(),

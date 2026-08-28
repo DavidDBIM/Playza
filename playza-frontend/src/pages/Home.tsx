@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import HeroBanner from "@/components/home/HeroBanner";
 import HowItWorks from "@/components/home/HowItWorks";
+import BlogMarquee from "@/components/home/BlogMarquee";
 import RecentWinners from "@/components/home/RecentWinners";
 import HomeGames from "@/components/home/HomeGames";
 import CTAReferral from "@/components/home/CTAReferral";
@@ -162,6 +163,7 @@ const Home = () => {
 
       <CTAReferral />
       <HowItWorks />
+      <BlogMarquee />
       <HomeFAQ />
     </main>
   );

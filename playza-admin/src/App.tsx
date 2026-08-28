@@ -28,6 +28,7 @@ import Feedback from "./pages/Feedback";
 import SecurityLogs from "./pages/SecurityLogs";
 import { SecurityWrapper } from "./components/auth/SecurityWrapper";
 import BannerSlides from "./pages/BannerSlides";
+import BlogPosts from "./pages/BlogPosts";
 import ReferralRewards from "./pages/ReferralRewards";
 
 const Placeholder = ({ name }: { name: string }) => (
@@ -72,6 +73,7 @@ const App: React.FC = () => {
               <Route path="chess-tournaments" element={<ChessTournaments />} />
               <Route path="sponsors" element={<Sponsors />} />
               <Route path="banner-slides" element={<BannerSlides />} />
+              <Route path="blog" element={<BlogPosts />} />
               <Route path="referral-rewards" element={<ReferralRewards />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
