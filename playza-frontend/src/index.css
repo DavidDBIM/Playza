@@ -247,6 +247,30 @@ html {
   text-rendering: optimizeLegibility;
 }
 
+/* ── Laptop-width auto-scale ──────────────────────────────────────────────
+   The desktop layout (paddings, gaps, card sizes) is tuned generously for
+   large monitors. On common laptop viewports (~1366–1536px logical width)
+   that reads as "too big" at 100% browser zoom — manually zooming out to
+   ~75% is exactly what fixes it, because it shrinks the whole render to
+   match the design's intended density. This does the same thing
+   automatically, only in that width range, so wide monitors (1600px+,
+   where max-w-400 already gives the design its full intended size) and
+   mobile/tablet layouts are untouched.
+   `zoom` is supported in all current major browsers (Chrome/Edge, Safari 15+,
+   Firefox 126+); unsupported browsers simply ignore it and fall back to
+   today's 100% behavior — no breakage either way. */
+@media (min-width: 1024px) and (max-width: 1440px) {
+  html {
+    zoom: 0.75;
+  }
+}
+
+@media (min-width: 1441px) and (max-width: 1600px) {
+  html {
+    zoom: 0.85;
+  }
+}
+
 .nav-item-link {
   will-change: color;
   transform: translateZ(0);
