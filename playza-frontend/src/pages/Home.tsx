@@ -4,11 +4,10 @@ import HowItWorks from "@/components/home/HowItWorks";
 import RecentWinners from "@/components/home/RecentWinners";
 import HomeGames from "@/components/home/HomeGames";
 import CTAReferral from "@/components/home/CTAReferral";
-import GamesMaintenance from "@/components/home/GamesMaintenance";
 import HomeFAQ from "@/components/home/HomeFAQ";
 import SEO from "@/components/SEO";
 
-import { Gift } from "lucide-react";
+import { Gift, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router";
 import { useGames } from "@/hooks/gamesession/useGameSession";
@@ -16,7 +15,14 @@ import type { Game } from "@/types/types";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const Home = () => {
-  const { data: gamesData, isLoading } = useGames();
+  // isError matters here — previously only isLoading was checked, so a
+  // genuine fetch failure (network blip, slow backend) looked identical to
+  // "there are truly zero active games" and both fell through to the same
+  // static "Arena Under Upgrades — 24H Remaining" block. That block never
+  // actually counted down; it was a hardcoded fallback screen, not a real
+  // maintenance-mode indicator, so it was showing up any time the games
+  // fetch merely hiccuped rather than during any real, deliberate outage.
+  const { data: gamesData, isLoading, isError, refetch, isRefetching } = useGames();
 
   const backendGames = useMemo(() => {
     const gamesList = Array.isArray(gamesData)
@@ -130,9 +136,29 @@ const Home = () => {
             <HomeGames games={backendGames} title="Explore All Games" />
           )}
         </>
-      ) : (
-        <GamesMaintenance />
-      )}
+      ) : isError ? (
+        // A real fetch failure — small and honest, with an actual retry
+        // (refetch(), not a full page reload) rather than a big alarming
+        // "under maintenance" block for what's usually just a network blip.
+        <div className="flex flex-col items-center gap-3 py-10 px-4 text-center">
+          <p className="text-sm text-[#475569] font-medium">
+            Couldn't load games right now — this is usually just a brief connection hiccup.
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => refetch()}
+            disabled={isRefetching}
+            className="gap-2"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isRefetching ? "animate-spin" : ""}`} />
+            {isRefetching ? "Retrying..." : "Retry"}
+          </Button>
+        </div>
+      ) : null /* Genuinely zero active games right now — the rest of the
+                   homepage (winners, tournaments, how it works, FAQ) still
+                   carries the page, so there's no need for a placeholder
+                   block here at all. */}
 
       <CTAReferral />
       <HowItWorks />
