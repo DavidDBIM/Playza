@@ -28,45 +28,47 @@ const Footer = ({ showAbout = true }: { showAbout?: boolean }) => {
 
       <div className="max-w-7xl mx-auto px-3 md:px-6 pb-4 md:pb-6 lg:pb-4 relative z-10">
         {showAbout && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-6 mb-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-6 mb-6">
             <div className="lg:col-span-5">
               <About />
             </div>
 
-            <div className="lg:col-span-3">
-              <h5 className="font-bold text-slate-900 dark:text-white mb-3 text-xs md:text-sm uppercase tracking-wide">
-                Quick Links
-              </h5>
-              <ul className="space-y-2">
-                {quickLinks.map((link) => (
-                  <li key={link.to}>
-                    <Link
-                      to={link.to}
-                      className="text-xs md:text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-primary transition-colors"
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            <div className="grid grid-cols-2 gap-4 lg:contents">
+              <div className="lg:col-span-3">
+                <h5 className="font-bold text-slate-900 dark:text-white mb-3 text-xs md:text-sm uppercase tracking-wide">
+                  Quick Links
+                </h5>
+                <ul className="space-y-2">
+                  {quickLinks.map((link) => (
+                    <li key={link.to}>
+                      <Link
+                        to={link.to}
+                        className="text-xs md:text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-primary transition-colors"
+                      >
+                        {link.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
 
-            <div className="lg:col-span-4">
-              <h5 className="font-bold text-slate-900 dark:text-white mb-3 text-xs md:text-sm uppercase tracking-wide">
-                Support
-              </h5>
-              <ul className="space-y-2">
-                {supportLinks.map((link) => (
-                  <li key={link.to}>
-                    <Link
-                      to={link.to}
-                      className="text-xs md:text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-primary transition-colors"
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+              <div className="lg:col-span-4">
+                <h5 className="font-bold text-slate-900 dark:text-white mb-3 text-xs md:text-sm uppercase tracking-wide">
+                  Support
+                </h5>
+                <ul className="space-y-2">
+                  {supportLinks.map((link) => (
+                    <li key={link.to}>
+                      <Link
+                        to={link.to}
+                        className="text-xs md:text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-primary transition-colors"
+                      >
+                        {link.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
           </div>
         )}

@@ -29,14 +29,14 @@ const About = () => {
       </p>
 
       {/* Trust points */}
-      <div className="flex flex-wrap gap-2 mb-4">
+      <div className="grid grid-cols-3 gap-1.5 mb-4">
         {trustPoints.map(({ icon: Icon, label }) => (
           <span
             key={label}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary/5 border border-primary/10 text-[10px] md:text-[11px] font-bold text-slate-700 dark:text-slate-300"
+            className="flex items-center justify-center gap-1 px-1.5 py-1.5 rounded-lg bg-primary/5 border border-primary/10 text-[9px] md:text-[11px] font-bold text-slate-700 dark:text-slate-300 text-center leading-tight"
           >
-            <Icon className="w-3.5 h-3.5 text-primary" />
-            {label}
+            <Icon className="w-3 h-3 md:w-3.5 md:h-3.5 text-primary shrink-0" />
+            <span className="truncate">{label}</span>
           </span>
         ))}
       </div>
