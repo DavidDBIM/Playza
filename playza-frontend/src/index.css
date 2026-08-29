@@ -363,6 +363,13 @@ body:is(.dark *),
   border: 1px solid rgba(217, 119, 6, 0.4);
 }
 
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #3713ec33 transparent;
+}
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
 .custom-scrollbar::-webkit-scrollbar-track {
   background: transparent;
 }
