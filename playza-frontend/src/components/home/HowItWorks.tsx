@@ -46,12 +46,12 @@ const TONE_STYLES = {
 
 const HowItWorks = () => {
   return (
-    <section className="relative py-8 md:py-14 px-2 md:px-0">
+    <section className="relative py-4 md:py-6 px-2 md:px-0">
       {/* Background decoration */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl h-full bg-primary/5 blur-[120px] pointer-events-none" />
 
       <div className="relative z-10 max-w-6xl mx-auto">
-        <div className="flex flex-col items-center text-center mb-8 md:mb-10 space-y-3">
+        <div className="flex flex-col items-center text-center mb-5 md:mb-6 space-y-2">
           <div className="inline-flex items-center px-2 md:px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-bold uppercase tracking-widest">
             Process
           </div>

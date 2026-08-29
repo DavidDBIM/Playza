@@ -1,4 +1,5 @@
 import { BsFacebook, BsTwitterX, BsInstagram, BsYoutube, BsMedium } from "react-icons/bs";
+import { Zap, ShieldCheck, Trophy } from "lucide-react";
 
 const socials = [
   { icon: BsFacebook, label: "Facebook", href: "https://web.facebook.com/Playzadotgames", color: "hover:bg-[#1877F2] hover:text-white" },
@@ -8,26 +9,41 @@ const socials = [
   { icon: BsYoutube, label: "YouTube", href: "https://youtube.com/@Playzadotgames", color: "hover:bg-[#FF0000] hover:text-white" },
 ];
 
+const trustPoints = [
+  { icon: Zap, label: "Instant Payouts" },
+  { icon: ShieldCheck, label: "Fair & Secure" },
+  { icon: Trophy, label: "Real Cash Prizes" },
+];
+
 const About = () => {
   return (
-    <div className="glass p-2 md:p-4 rounded-xl">
+    <div>
       <div className="flex items-center gap-2 mb-3">
-        <h3 className="font-heading text-base md:text-xl font-bold text-slate-900 dark:text-white">
-          About
-        </h3>
-        <img src="/logo.webp" alt="Playza" className="h-6 md:h-8 w-auto object-contain" />
+        <img src="/logo.webp" alt="Playza" className="h-7 md:h-9 w-auto object-contain" />
       </div>
-      <p className="text-slate-600 dark:text-slate-400 text-xs md:text-sm leading-relaxed mb-4">
-        PLAYZA is a leading competitive skill gaming platform. We
-        believe that gaming should be rewarding. Our mission is to provide a
-        secure, fair, and high-energy environment where talented players can
-        turn their gaming passion into real-world profit. With real-time
-        leaderboards and instant payouts, the arena is always live.
+
+      <p className="text-slate-600 dark:text-slate-400 text-xs md:text-sm leading-relaxed mb-4 max-w-md">
+        Playza is a competitive skill gaming platform where talent pays. Duel head-to-head, chase high scores
+        solo, or battle it out in live tournaments — every win drops straight into your wallet, with
+        real-time leaderboards keeping the arena live 24/7.
       </p>
+
+      {/* Trust points */}
+      <div className="flex flex-wrap gap-2 mb-4">
+        {trustPoints.map(({ icon: Icon, label }) => (
+          <span
+            key={label}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary/5 border border-primary/10 text-[10px] md:text-[11px] font-bold text-slate-700 dark:text-slate-300"
+          >
+            <Icon className="w-3.5 h-3.5 text-primary" />
+            {label}
+          </span>
+        ))}
+      </div>
 
       {/* Social */}
       <div>
-        <h5 className="font-bold text-slate-900 dark:text-white mb-2 text-sm uppercase tracking-wide">
+        <h5 className="font-bold text-slate-900 dark:text-white mb-2 text-xs md:text-sm uppercase tracking-wide">
           Follow Us
         </h5>
         <div className="flex flex-wrap gap-2">

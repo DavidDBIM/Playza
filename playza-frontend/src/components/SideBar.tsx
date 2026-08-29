@@ -26,7 +26,7 @@ const SideBar = () => {
         </h2>
       </div>
 
-      <nav className="space-y-1.5 flex-1 relative custom-scrollbar overflow-y-auto px-3">
+      <nav className="space-y-1.5 flex-1 relative custom-scrollbar overflow-y-auto pl-3 pr-4">
         {filteredNavItems.map(({ icon: Icon, label, path }) => (
           <NavLink
             to={path}

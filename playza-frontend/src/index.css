@@ -366,6 +366,7 @@ body:is(.dark *),
 .custom-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: #3713ec33 transparent;
+  scrollbar-gutter: stable;
 }
 .custom-scrollbar::-webkit-scrollbar {
   width: 5px;
