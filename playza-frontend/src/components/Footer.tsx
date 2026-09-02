@@ -22,7 +22,7 @@ const Footer = ({ showAbout = true }: { showAbout?: boolean }) => {
             <div className="flex items-center gap-2 mb-0.5">
               <img src="/logo.webp" alt="Playza" className="h-6 md:h-7 w-auto object-contain" />
               <p className="text-[11px] font-black text-slate-900 dark:text-white uppercase tracking-widest italic opacity-80">
-                © {year} PlayZa Arena
+                © {year} PlayZa Games Hub
               </p>
             </div>
             <p className="text-[10px] font-medium text-slate-400 dark:text-slate-500">
