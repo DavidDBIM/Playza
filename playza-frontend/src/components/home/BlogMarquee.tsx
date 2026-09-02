@@ -1,9 +1,94 @@
+import { useEffect, useRef } from "react";
 import { Link } from "react-router";
 import { Newspaper, ArrowRight } from "lucide-react";
 import { useBlogPosts } from "@/hooks/useBlog";
 
 const BlogMarquee = () => {
   const { data: posts = [], isLoading } = useBlogPosts(12);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Drag/interaction state — refs so the animation loop (below) always
+  // reads the latest value without needing to restart on every change.
+  const isDraggingRef = useRef(false);
+  const isPausedRef = useRef(false);
+  const startXRef = useRef(0);
+  const startScrollLeftRef = useRef(0);
+  const suppressClickRef = useRef(false);
+  const resumeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Auto-scroll loop — advances scrollLeft continuously and seamlessly
+  // wraps back once it passes the first copy of the (duplicated) list.
+  // Pauses whenever the user is hovering, dragging, or touch-scrolling.
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || posts.length === 0) return;
+
+    let rafId: number;
+    const speed = 0.45; // px/frame — roughly matches the old 45s CSS loop
+
+    const tick = () => {
+      if (!isDraggingRef.current && !isPausedRef.current) {
+        el.scrollLeft += speed;
+        const half = el.scrollWidth / 2;
+        if (half > 0 && el.scrollLeft >= half) {
+          el.scrollLeft -= half;
+        }
+      }
+      rafId = requestAnimationFrame(tick);
+    };
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
+  }, [posts.length]);
+
+  const scheduleResume = () => {
+    if (resumeTimeoutRef.current) clearTimeout(resumeTimeoutRef.current);
+    resumeTimeoutRef.current = setTimeout(() => {
+      isPausedRef.current = false;
+    }, 1200);
+  };
+
+  // Mouse-drag support for desktop — touch devices already get free
+  // left/right dragging from native overflow-x scrolling, so this only
+  // kicks in for mouse pointers.
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType !== "mouse") return;
+    const el = scrollRef.current;
+    if (!el) return;
+    isDraggingRef.current = true;
+    isPausedRef.current = true;
+    startXRef.current = e.clientX;
+    startScrollLeftRef.current = el.scrollLeft;
+    el.setPointerCapture(e.pointerId);
+    if (resumeTimeoutRef.current) clearTimeout(resumeTimeoutRef.current);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDraggingRef.current || e.pointerType !== "mouse") return;
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollLeft = startScrollLeftRef.current - (e.clientX - startXRef.current);
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType !== "mouse" || !isDraggingRef.current) return;
+    const el = scrollRef.current;
+    if (el) {
+      const moved = Math.abs(el.scrollLeft - startScrollLeftRef.current);
+      // Dragged far enough that this wasn't just a click — suppress the
+      // click that follows so it doesn't also navigate into the post.
+      suppressClickRef.current = moved > 5;
+    }
+    isDraggingRef.current = false;
+    scheduleResume();
+  };
+
+  const handleClickCapture = (e: React.MouseEvent) => {
+    if (suppressClickRef.current) {
+      e.preventDefault();
+      e.stopPropagation();
+      suppressClickRef.current = false;
+    }
+  };
 
   // Nothing published yet — don't show an empty/broken section on the homepage.
   if (!isLoading && posts.length === 0) return null;
@@ -33,12 +118,25 @@ const BlogMarquee = () => {
             ))}
           </div>
         ) : (
-          <div className="relative w-full overflow-hidden flex items-center rounded-2xl mask-horizontal-fade">
-            <div className="flex w-max items-stretch gap-3 py-1 blog-marquee">
+          <div
+            ref={scrollRef}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerLeave={handlePointerUp}
+            onMouseEnter={() => { isPausedRef.current = true; }}
+            onMouseLeave={() => { if (!isDraggingRef.current) scheduleResume(); }}
+            onTouchStart={() => { isPausedRef.current = true; }}
+            onTouchEnd={scheduleResume}
+            onClickCapture={handleClickCapture}
+            className="relative w-full overflow-x-auto scrollbar-hide flex items-center rounded-2xl mask-horizontal-fade cursor-grab active:cursor-grabbing select-none"
+          >
+            <div className="flex w-max items-stretch gap-3 py-1">
               {[...posts, ...posts].map((post, i) => (
                 <Link
                   key={`${post.id}-${i}`}
                   to={`/blog/${post.slug}`}
+                  draggable={false}
                   className="group flex items-center gap-3 w-64 md:w-72 shrink-0 p-2.5 rounded-2xl glass-card border border-black/5 dark:border-white/10 hover:border-primary/30 transition-colors"
                 >
                   {/* Small thumbnail — deliberately compact, not a big hero image */}
@@ -49,6 +147,7 @@ const BlogMarquee = () => {
                         alt={post.title}
                         className="w-full h-full object-cover"
                         loading="lazy"
+                        draggable={false}
                       />
                     ) : (
                       <Newspaper className="w-4.5 h-4.5 text-primary" />
