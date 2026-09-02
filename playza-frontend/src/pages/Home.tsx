@@ -4,11 +4,12 @@ import HowItWorks from "@/components/home/HowItWorks";
 import BlogMarquee from "@/components/home/BlogMarquee";
 import RecentWinners from "@/components/home/RecentWinners";
 import HomeGames from "@/components/home/HomeGames";
+import CategoryGamesRow from "@/components/home/CategoryGamesRow";
 import CTAReferral from "@/components/home/CTAReferral";
 import HomeFAQ from "@/components/home/HomeFAQ";
 import SEO from "@/components/SEO";
 
-import { Gift, RefreshCw } from "lucide-react";
+import { Gift, RefreshCw, Target, Swords, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router";
 import { useGames } from "@/hooks/gamesession/useGameSession";
@@ -25,31 +26,69 @@ const Home = () => {
   // fetch merely hiccuped rather than during any real, deliberate outage.
   const { data: gamesData, isLoading, isError, refetch, isRefetching } = useGames();
 
-  const backendGames = useMemo(() => {
-    const gamesList = Array.isArray(gamesData)
-      ? gamesData
-      : gamesData?.games || [];
+  // Raw list before any mode-based filtering — Tournaments/H2H/Solo Earn rows
+  // each need their own slice of this, so it's pulled out once and shared.
+  const rawGamesList = useMemo(() => {
+    return Array.isArray(gamesData) ? gamesData : gamesData?.games || [];
+  }, [gamesData]);
 
+  const mapGame = (g: Game): Game => ({
+    ...g,
+    thumbnail: g.thumbnail_url || g.thumbnail || "/games/placeholder.png",
+    entryFee: g.entry_fee || g.entryFee || 0,
+    platformFeePercentage:
+      g.platform_fee_percentage || g.platformFeePercentage || 10,
+    durationInSeconds: g.duration_seconds || g.durationInSeconds || 60,
+    iframeUrl: g.iframe_url || g.iframeUrl,
+    status: g.is_active ? "live" : "coming soon",
+    badge: g.badge || null,
+    sessions: g.sessions || [],
+  });
+
+  const backendGames = useMemo(() => {
     const isDev = window.location.hostname === 'localhost';
-    const filteredList = gamesList.filter((g: Game) => {
+    const filteredList = rawGamesList.filter((g: Game) => {
       const isActiveOrDev = g.is_active === true || isDev;
       const isNotSpecialMode = g.mode !== "Solo Earn" && g.mode !== "Head to Head";
       return isActiveOrDev && isNotSpecialMode;
     });
 
-    return filteredList.map((g: Game) => ({
-      ...g,
-      thumbnail: g.thumbnail_url || g.thumbnail || "/games/placeholder.png",
-      entryFee: g.entry_fee || g.entryFee || 0,
-      platformFeePercentage:
-        g.platform_fee_percentage || g.platformFeePercentage || 10,
-      durationInSeconds: g.duration_seconds || g.durationInSeconds || 60,
-      iframeUrl: g.iframe_url || g.iframeUrl,
-      status: g.is_active ? "live" : "coming soon",
-      badge: g.badge || null,
-      sessions: g.sessions || []
-    }));
-  }, [gamesData]);
+    return filteredList.map(mapGame);
+  }, [rawGamesList]);
+
+  // ── Explore Games sub-rows ────────────────────────────────────────────
+  // Tournaments: pulled from the same "Tournament" mode games already
+  // included in backendGames — only shown when one of them actually has a
+  // live/active session running (an active tournament), so the row
+  // disappears entirely when nothing is live.
+  const tournamentGames = useMemo(
+    () => backendGames.filter((g: Game) => g.mode === "Tournament"),
+    [backendGames],
+  );
+  const hasActiveTournament = useMemo(
+    () =>
+      tournamentGames.some((g: Game) =>
+        g.sessions?.some((s) => s.status === "active" || s.status === "live"),
+      ),
+    [tournamentGames],
+  );
+
+  // Head-to-Head and Solo Earn: excluded from backendGames above (they have
+  // their own dedicated pages), so pull them straight from the raw list —
+  // every active game in each mode is shown, regardless of live sessions.
+  const h2hGames = useMemo(() => {
+    const isDev = window.location.hostname === 'localhost';
+    return rawGamesList
+      .filter((g: Game) => g.mode === "Head to Head" && (g.is_active === true || isDev))
+      .map(mapGame);
+  }, [rawGamesList]);
+
+  const soloEarnGames = useMemo(() => {
+    const isDev = window.location.hostname === 'localhost';
+    return rawGamesList
+      .filter((g: Game) => g.mode === "Solo Earn" && (g.is_active === true || isDev))
+      .map(mapGame);
+  }, [rawGamesList]);
 
   const popularGames = useMemo(
     () => backendGames.filter((game: Game) => game.badge === "POPULAR").slice(0, 8),
@@ -67,6 +106,7 @@ const Home = () => {
   );
 
   const hasGames = backendGames.length > 0;
+  const hasExploreRows = hasActiveTournament || h2hGames.length > 0 || soloEarnGames.length > 0;
 
   return (
     <main className="flex-1 min-w-0 space-y-3 md:space-y-4 pb-2 md:pb-4 bg-background">
@@ -124,6 +164,42 @@ const Home = () => {
         </div>
       ) : hasGames ? (
         <>
+          {hasExploreRows && (
+            <div className="space-y-4 px-1">
+              <div>
+                <h2 className="font-heading text-lg md:text-2xl font-black uppercase tracking-tight">
+                  Explore Games
+                </h2>
+                <div className="h-1 w-12 bg-primary mt-1 rounded-full"></div>
+              </div>
+
+              {hasActiveTournament && (
+                <CategoryGamesRow
+                  games={tournamentGames}
+                  title="Tournaments"
+                  icon={Target}
+                  viewAllHref="/tournaments"
+                />
+              )}
+              {h2hGames.length > 0 && (
+                <CategoryGamesRow
+                  games={h2hGames}
+                  title="Head-to-Head"
+                  icon={Swords}
+                  viewAllHref="/h2h"
+                />
+              )}
+              {soloEarnGames.length > 0 && (
+                <CategoryGamesRow
+                  games={soloEarnGames}
+                  title="Solo Earn"
+                  icon={Star}
+                  viewAllHref="/solo-earn"
+                />
+              )}
+            </div>
+          )}
+
           {newestGames.length > 0 && (
             <HomeGames games={newestGames} title="Newest Games" />
           )}
