@@ -51,7 +51,7 @@ const HowItWorks = () => {
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl h-full bg-primary/5 blur-[120px] pointer-events-none" />
 
       <div className="relative z-10 max-w-6xl mx-auto">
-        <div className="flex flex-col items-center text-center mb-5 md:mb-6 space-y-2">
+        <div className="flex flex-col items-center text-center mb-4 md:mb-5 space-y-2">
           <div className="inline-flex items-center px-2 md:px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-bold uppercase tracking-widest">
             Process
           </div>
@@ -64,32 +64,36 @@ const HowItWorks = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
-          {STEPS.map((step) => {
-            const Icon = step.icon;
-            const tone = TONE_STYLES[step.tone];
-            return (
-              <div
-                key={step.num}
-                className="referral-card p-5 md:p-6 flex flex-col items-center text-center gap-4 border border-black/5 dark:border-white/5 rounded-2xl bg-white/50 dark:bg-slate-900/50"
-              >
-                <div className="relative shrink-0">
-                  <div
-                    className={`relative w-14 h-14 md:w-16 md:h-16 rounded-2xl flex items-center justify-center border ${tone.iconBox}`}
-                  >
-                    <Icon className={`text-2xl md:text-3xl ${tone.icon}`} />
+        {/* Auto-sliding marquee — a single row that loops on its own instead
+            of a grid that stacks to 4 full-height cards on mobile. */}
+        <div className="relative w-full overflow-hidden flex items-center rounded-2xl mask-horizontal-fade">
+          <div className="flex w-max items-stretch gap-4 py-1 howitworks-marquee">
+            {[...STEPS, ...STEPS].map((step, i) => {
+              const Icon = step.icon;
+              const tone = TONE_STYLES[step.tone];
+              return (
+                <div
+                  key={`${step.num}-${i}`}
+                  className="referral-card w-64 md:w-72 shrink-0 p-5 md:p-6 flex flex-col items-center text-center gap-4 border border-black/5 dark:border-white/5 rounded-2xl bg-white/50 dark:bg-slate-900/50"
+                >
+                  <div className="relative shrink-0">
+                    <div
+                      className={`relative w-14 h-14 md:w-16 md:h-16 rounded-2xl flex items-center justify-center border ${tone.iconBox}`}
+                    >
+                      <Icon className={`text-2xl md:text-3xl ${tone.icon}`} />
+                    </div>
+                    <div className="absolute -top-2 -right-2 w-6 h-6 step-badge backdrop-blur-md text-[10px]">
+                      {step.num}
+                    </div>
                   </div>
-                  <div className="absolute -top-2 -right-2 w-6 h-6 step-badge backdrop-blur-md text-[10px]">
-                    {step.num}
+                  <div className="space-y-1.5">
+                    <h4 className="text-sm md:text-base font-bold tracking-tight uppercase">{step.title}</h4>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{step.desc}</p>
                   </div>
                 </div>
-                <div className="space-y-1.5">
-                  <h4 className="text-sm md:text-base font-bold tracking-tight uppercase">{step.title}</h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{step.desc}</p>
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </div>
     </section>

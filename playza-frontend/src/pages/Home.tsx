@@ -9,7 +9,7 @@ import CTAReferral from "@/components/home/CTAReferral";
 import HomeFAQ from "@/components/home/HomeFAQ";
 import SEO from "@/components/SEO";
 
-import { Gift, RefreshCw, Target, Swords, Star } from "lucide-react";
+import { Gift, RefreshCw, Target, Swords, Star, Sparkles, TrendingUp, Flame, Gamepad2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router";
 import { useGames } from "@/hooks/gamesession/useGameSession";
@@ -201,16 +201,16 @@ const Home = () => {
           )}
 
           {newestGames.length > 0 && (
-            <HomeGames games={newestGames} title="Newest Games" />
+            <HomeGames games={newestGames} title="Newest Games" icon={Sparkles} />
           )}
           {popularGames.length > 0 && (
-            <HomeGames games={popularGames} title="Popular Games" />
+            <HomeGames games={popularGames} title="Popular Games" icon={TrendingUp} />
           )}
           {hottestGames.length > 0 && (
-            <HomeGames games={hottestGames} title="Hottest Games" />
+            <HomeGames games={hottestGames} title="Hottest Games" icon={Flame} />
           )}
           {backendGames.length > 0 && (
-            <HomeGames games={backendGames} title="Games" />
+            <HomeGames games={backendGames} title="Games" icon={Gamepad2} />
           )}
         </>
       ) : isError ? (

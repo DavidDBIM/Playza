@@ -422,6 +422,20 @@ body.modal-open {
   animation-play-state: paused;
 }
 
+@keyframes scroll-howitworks {
+  from { transform: translate3d(0,0,0); }
+  to   { transform: translate3d(-50%,0,0); }
+}
+
+.howitworks-marquee {
+  animation: scroll-howitworks 35s linear infinite;
+  will-change: transform;
+}
+
+.howitworks-marquee:hover {
+  animation-play-state: paused;
+}
+
 .glass-panel {
   background: rgba(255, 255, 255, 0.97);
   -webkit-backdrop-filter: blur(4px);
