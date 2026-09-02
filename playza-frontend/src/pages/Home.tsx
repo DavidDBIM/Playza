@@ -210,7 +210,7 @@ const Home = () => {
             <HomeGames games={hottestGames} title="Hottest Games" />
           )}
           {backendGames.length > 0 && (
-            <HomeGames games={backendGames} title="Explore All Games" />
+            <HomeGames games={backendGames} title="Games" />
           )}
         </>
       ) : isError ? (
