@@ -10,23 +10,28 @@ const socials = [
 
 const About = () => {
   return (
-    <div>
-      <div className="flex items-center gap-2 mb-3">
-        <img src="/logo.webp" alt="Playza" className="h-7 md:h-9 w-auto object-contain" />
+    // On mobile this stacks (logo/paragraph, then socials below) — same as
+    // before. On desktop it splits into two balanced columns instead of one
+    // narrow left-aligned block with a lot of empty space to the right.
+    <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-5 md:gap-10">
+      <div className="max-w-md">
+        <div className="flex items-center gap-2 mb-3">
+          <img src="/logo.webp" alt="Playza" className="h-7 md:h-9 w-auto object-contain" />
+        </div>
+
+        <p className="text-slate-600 dark:text-slate-400 text-xs md:text-sm leading-relaxed">
+          Playza is a competitive skill gaming platform where talent pays. Duel head-to-head, chase high scores
+          solo, or battle it out in live tournaments — every win drops straight into your wallet, with
+          real-time leaderboards keeping the arena live 24/7.
+        </p>
       </div>
 
-      <p className="text-slate-600 dark:text-slate-400 text-xs md:text-sm leading-relaxed mb-4 max-w-md">
-        Playza is a competitive skill gaming platform where talent pays. Duel head-to-head, chase high scores
-        solo, or battle it out in live tournaments — every win drops straight into your wallet, with
-        real-time leaderboards keeping the arena live 24/7.
-      </p>
-
       {/* Social */}
-      <div>
-        <h5 className="font-bold text-slate-900 dark:text-white mb-2 text-xs md:text-sm uppercase tracking-wide">
+      <div className="md:shrink-0 md:pt-1">
+        <h5 className="font-bold text-slate-900 dark:text-white mb-2 text-xs md:text-sm uppercase tracking-wide md:text-right">
           Follow Us
         </h5>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 md:justify-end">
           {socials.map(({ icon: Icon, label, href, color }) => (
             <a
               key={label}

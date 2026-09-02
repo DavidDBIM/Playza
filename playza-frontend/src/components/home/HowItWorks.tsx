@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { FaWallet } from "react-icons/fa";
 import { FaTrophy, FaGamepad } from "react-icons/fa6";
+import { MdStadium } from "react-icons/md";
 import { ArrowRight, Hand, Sparkle, Swords, Target, Trophy as TrophyLucide } from "lucide-react";
 
 const MODES = [
@@ -19,7 +20,7 @@ const STEPS = [
   },
   {
     num: "02",
-    icon: null,
+    icon: MdStadium,
     tone: "green" as const,
     title: "Pick Your Mode",
     desc: "Choose how you want to play",
