@@ -18,6 +18,13 @@ const GamesCard = (game: Game) => {
         : `/games/${slug}`;
 
   const displayStatus = (() => {
+    // "game_sessions" is a scheduled-rounds system (fixed start/end time) —
+    // meaningful for arcade/tournament games, but Head to Head matches are
+    // ad-hoc rooms created the moment two players queue up. A leftover
+    // scheduling row on an H2H game would otherwise show a false
+    // "UPCOMING" badge regardless of real activity, so that badge is
+    // simply not derived from sessions for this mode.
+    if (mode === "Head to Head") return null;
     if (sessions?.some(s => s.status === 'active' || s.status === 'live')) return 'live';
     if (sessions?.some(s => s.status === 'upcoming' || s.status === 'starting soon')) return 'upcoming';
     return null;
