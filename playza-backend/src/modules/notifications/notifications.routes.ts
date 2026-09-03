@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { getActiveBanners, registerPushToken } from './notifications.service'
+import { getActiveBanners, getNotificationsFeed, registerPushToken } from './notifications.service'
 import { requireAuth, AuthRequest } from '../../middleware/auth'
 
 const router = Router()
@@ -7,6 +7,18 @@ const router = Router()
 router.get('/banner', async (req, res) => {
   try {
     const data = await getActiveBanners()
+    res.json({ success: true, data })
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message })
+  }
+})
+
+// Powers the header bell / notification center — every notification an
+// admin has sent, not just the banner-eligible types.
+router.get('/feed', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit as string) || 20, 50)
+    const data = await getNotificationsFeed(limit)
     res.json({ success: true, data })
   } catch (err: any) {
     res.status(400).json({ success: false, message: err.message })

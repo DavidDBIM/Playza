@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
+import { useSearchParams } from "react-router";
 import { Sparkles, Loader2 } from "lucide-react"; 
 import { startSoloSession, endSoloSession } from '@/api/soloearn.api';
 import { useToast } from '@/context/toast';
@@ -45,6 +46,24 @@ const SoloEarn = () => {
     setSelectedGame(game);
     setView('setup');
   };
+
+  // Arrived via a direct game link (Explore → Solo Earn points at
+  // `/solo-earn?game=<id>` since this page has no per-game URL of its
+  // own) — jump straight into that game's setup step instead of leaving
+  // the user back at the hub to pick it again themselves.
+  const [searchParams] = useSearchParams();
+  const autoSelectedRef = useRef(false);
+  useEffect(() => {
+    if (autoSelectedRef.current) return;
+    const targetId = searchParams.get('game');
+    if (!targetId || liveSoloGames.length === 0) return;
+
+    const match = liveSoloGames.find(g => g.id === targetId);
+    if (match) {
+      autoSelectedRef.current = true;
+      handleSelectGame(match);
+    }
+  }, [searchParams, liveSoloGames]);
 
   const handleStartGame = async (stake: string) => {
     try {

@@ -3,7 +3,19 @@ import { Link } from "react-router";
 import { GiFlame } from "react-icons/gi";
 
 const GamesCard = (game: Game) => {
-  const { slug, title, thumbnail, sessions, badge } = game;
+  const { slug, title, thumbnail, sessions, badge, mode, id } = game;
+
+  // Head to Head and Solo Earn games have their own dedicated start flows
+  // (choose a mode / pre-game setup) instead of the generic game details
+  // page — sending them there instead of `/games/:slug` is what makes
+  // clicking a game from Explore actually start the same way it does from
+  // the H2H/Solo Earn hub, instead of landing somewhere that skips it.
+  const destination =
+    mode === "Head to Head"
+      ? `/h2h/${slug}`
+      : mode === "Solo Earn"
+        ? `/solo-earn?game=${id}`
+        : `/games/${slug}`;
 
   const displayStatus = (() => {
     if (sessions?.some(s => s.status === 'active' || s.status === 'live')) return 'live';
@@ -14,7 +26,7 @@ const GamesCard = (game: Game) => {
   return (
     <div className="group relative w-full max-w-36 md:max-w-44 lg:max-w-60 aspect-7/9 rounded-2xl overflow-hidden border border-slate-200 dark:border-white/5 shadow-xl transition-all duration-500 hover:shadow-primary/20 hover:scale-[1.02]">
       <Link
-        to={`/games/${slug}`}
+        to={destination}
         className="block w-full h-full relative"
       >
         {/* Main Thumbnail */}

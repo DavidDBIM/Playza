@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo, type ComponentType } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef, type ComponentType } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router';
 import { Zap, Swords, Trophy } from 'lucide-react';
 import H2HLobbySkeleton from '../skeletons/H2HLobbySkeleton';
@@ -23,6 +23,11 @@ interface H2HLobbyProps {
   onQuickMatch: (stake: number) => void;
   getWaitingRooms: () => Promise<WaitingRoom[]>;
   loading: boolean;
+  // Present only when the URL explicitly named a game (e.g. `/h2h/chess`,
+  // as linked from the Explore Games row) rather than the bare `/h2h` the
+  // sidebar nav uses — lets the lobby jump straight to that game's "Choose
+  // Mode" step instead of the general pick-a-game hub.
+  initialGameType?: string;
 }
 
 interface GameType {
@@ -35,7 +40,7 @@ interface GameType {
   comingSoon?: boolean;
 }
 
-const H2HLobby = ({ onCreate, onBotCreate, onJoin, onQuickMatch, getWaitingRooms, loading }: H2HLobbyProps) => {
+const H2HLobby = ({ onCreate, onBotCreate, onJoin, onQuickMatch, getWaitingRooms, loading, initialGameType }: H2HLobbyProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -160,6 +165,26 @@ const H2HLobby = ({ onCreate, onBotCreate, onJoin, onQuickMatch, getWaitingRooms
         thumbnailUrl: g.thumbnail_url || g.thumbnail
       }));
   }, [gamesData]);
+
+  // Arrived via a direct game link (e.g. clicking a game under Explore →
+  // Head-to-Head, which points at `/h2h/<slug>`) rather than the general
+  // hub — jump straight to that game's "Choose Mode" step instead of
+  // making the user pick it again from the full list. Guarded so it only
+  // fires once, and only when nothing else (an explicit view/join flow)
+  // already claimed the screen.
+  const autoOpenedRef = useRef(false);
+  useEffect(() => {
+    if (autoOpenedRef.current) return;
+    if (view !== 'hub') return;
+    if (location.state?.view) return;
+    if (!initialGameType || games.length === 0) return;
+
+    const match = games.find(g => g.id === initialGameType);
+    if (match) {
+      autoOpenedRef.current = true;
+      setSelectedGame(match);
+    }
+  }, [initialGameType, games, view, location.state]);
 
   if (gamesLoading || loading) return <H2HLobbySkeleton />;
 

@@ -1,5 +1,5 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { getActiveBannerApi, registerPushTokenApi } from "../../api/notifications.api";
+import { getActiveBannerApi, getNotificationsFeedApi, registerPushTokenApi } from "../../api/notifications.api";
 import type { RegisterPushPayload } from "../../api/notifications.api";
 
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
@@ -25,6 +25,20 @@ export const useActiveBanner = () => {
     staleTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchInterval: 2 * 60 * 1000, // pick up new banners posted by admin without a manual reload
+  });
+};
+
+// Powers the header notification-center bell — only enabled when logged in
+// (the caller passes `enabled`, mirroring how useActiveBanner is only ever
+// mounted behind an auth check).
+export const useNotificationsFeed = (enabled: boolean, limit = 20) => {
+  return useQuery({
+    queryKey: ["notifications", "feed", limit],
+    queryFn: () => getNotificationsFeedApi(limit),
+    enabled,
+    staleTime: 30 * 1000,
+    refetchOnWindowFocus: false,
+    refetchInterval: 60 * 1000, // pick up new admin notifications without a manual reload
   });
 };
 

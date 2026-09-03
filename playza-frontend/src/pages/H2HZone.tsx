@@ -36,7 +36,14 @@ import SEO from "@/components/SEO"
 
 const H2HZone = () => {
   const toast = useToast();
-  const { gameType = "chess", roomId } = useParams();
+  const params = useParams();
+  // Raw slug from the URL — undefined when the route matched bare `/h2h`
+  // (the sidebar nav link), only set when a specific game was linked to
+  // directly (e.g. `/h2h/chess` from the Explore Games row). Distinguishing
+  // the two matters: only the latter should jump straight to that game's
+  // "Choose Mode" step instead of the general hub.
+  const rawGameType = params.gameType;
+  const { gameType = "chess", roomId } = params;
   const navigate = useNavigate();
   const { user } = useAuth() as { user: UserProfile | null };
   const currentType = gameType as GameType;
@@ -167,6 +174,7 @@ const H2HZone = () => {
               onBotCreate={handleCreateBotRoom}
               onJoin={handleJoinRoom}
               onQuickMatch={handleQuickMatch}
+              initialGameType={rawGameType}
               getWaitingRooms={
                 gameType === "chess"
                   ? chessApi.getWaitingRooms
@@ -302,6 +310,7 @@ const H2HZone = () => {
                         onBotCreate={handleCreateBotRoom}
                         onJoin={handleJoinRoom}
                         onQuickMatch={handleQuickMatch}
+                        initialGameType={rawGameType}
                         getWaitingRooms={
                           gameType === "chess"
                             ? chessApi.getWaitingRooms

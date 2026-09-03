@@ -3,6 +3,7 @@ import { ArrowLeft, Calendar, Eye, User, Newspaper } from "lucide-react";
 import { useBlogPost } from "@/hooks/useBlog";
 import SEO from "@/components/SEO";
 import { Skeleton } from "@/components/ui/skeleton";
+import { linkifyText } from "@/utils/linkify";
 
 const formatDate = (iso: string | null) => {
   if (!iso) return "";
@@ -108,7 +109,7 @@ const BlogPost = () => {
       {/* Article body — paragraphs separated by blank lines in the admin editor */}
       <div className="prose prose-sm md:prose-base dark:prose-invert max-w-none space-y-4 text-sm md:text-base leading-relaxed text-slate-700 dark:text-slate-300">
         {post.content.split(/\n\s*\n/).map((paragraph, i) => (
-          <p key={i}>{paragraph}</p>
+          <p key={i}>{linkifyText(paragraph)}</p>
         ))}
       </div>
     </div>

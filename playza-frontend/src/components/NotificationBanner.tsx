@@ -4,6 +4,7 @@ import { IoClose } from 'react-icons/io5';
 import { useActiveBanner } from '../hooks/notifications/useNotifications';
 import { useNavigate } from 'react-router';
 import { useAuth } from '../context/auth';
+import { resolveNotificationLink, parseNotificationLink } from '../utils/notifications';
 
 // Inner component — only mounts when user is confirmed, preventing
 // useActiveBanner from firing for unauthenticated users
@@ -27,12 +28,7 @@ const NotificationBannerInner: React.FC = () => {
   };
 
   const handleAction = () => {
-    let targetUrl = banner?.link_url;
-    
-    // Check if the link is hidden in the content (Metadata Shift)
-    if (!targetUrl && banner?.content?.includes('[PLAYZA_LINK]')) {
-      targetUrl = banner.content.split('[PLAYZA_LINK]')[1].trim();
-    }
+    const targetUrl = resolveNotificationLink(banner || {});
 
     if (targetUrl) {
       // If it's a relative link (e.g. /games/chess), use navigate
@@ -89,7 +85,7 @@ const NotificationBannerInner: React.FC = () => {
               // Fallback if there's no image but somehow a banner is triggered
               <div className="p-10 text-center">
                 <h3 className="text-xl font-black text-foreground">{banner.title}</h3>
-                <p className="mt-2 text-muted-foreground">{banner.content}</p>
+                <p className="mt-2 text-muted-foreground">{parseNotificationLink(banner.content).text}</p>
               </div>
             )}
           </div>

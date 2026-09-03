@@ -15,6 +15,7 @@ import {
 import { useAuth } from "@/context/auth";
 import { ZASymbol } from "./currency/ZASymbol";
 import H2HNotification from "./h2h/H2HNotification";
+import NotificationCenter from "./NotificationCenter";
 import NotificationPrompt from "./NotificationPrompt";
 
 const Header = () => {
@@ -65,6 +66,7 @@ const Header = () => {
           ) : (
             <div className="flex items-center gap-2 md:gap-4">
               <div className="flex items-center gap-3 md:gap-4 pl-0 md:pl-4 border-slate-300 dark:border-slate-700">
+                <NotificationCenter />
                 <H2HNotification />
                 <div className="flex items-center gap-2 md:gap-3 bg-slate-900/10 dark:bg-white/5 px-2 py-1 md:px-4 md:py-1.5 rounded-full border border-primary/20">
                   <div className="flex items-center gap-1.5">

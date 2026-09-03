@@ -1,11 +1,24 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Link } from "react-router";
-import { Newspaper, ArrowRight } from "lucide-react";
+import { Newspaper, ArrowRight, Calendar } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
 import { useBlogPosts } from "@/hooks/useBlog";
+import { linkifyText } from "@/utils/linkify";
+
+// Below this count there isn't enough content to loop seamlessly — showing
+// the same 1-2 posts twice back-to-back just looks like a duplicate post
+// bug, so the list only gets doubled (for the infinite auto-scroll) once
+// there are enough real posts to make the loop invisible.
+const MIN_POSTS_TO_LOOP = 4;
 
 const BlogMarquee = () => {
   const { data: posts = [], isLoading } = useBlogPosts(12);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const shouldLoop = posts.length >= MIN_POSTS_TO_LOOP;
+  const displayPosts = useMemo(
+    () => (shouldLoop ? [...posts, ...posts] : posts),
+    [posts, shouldLoop],
+  );
 
   // Drag/interaction state — refs so the animation loop (below) always
   // reads the latest value without needing to restart on every change.
@@ -19,9 +32,10 @@ const BlogMarquee = () => {
   // Auto-scroll loop — advances scrollLeft continuously and seamlessly
   // wraps back once it passes the first copy of the (duplicated) list.
   // Pauses whenever the user is hovering, dragging, or touch-scrolling.
+  // Only runs at all when there are enough posts to loop seamlessly.
   useEffect(() => {
     const el = scrollRef.current;
-    if (!el || posts.length === 0) return;
+    if (!el || !shouldLoop) return;
 
     let rafId: number;
     const speed = 0.45; // px/frame — roughly matches the old 45s CSS loop
@@ -38,7 +52,7 @@ const BlogMarquee = () => {
     };
     rafId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafId);
-  }, [posts.length]);
+  }, [shouldLoop, posts.length]);
 
   const scheduleResume = () => {
     if (resumeTimeoutRef.current) clearTimeout(resumeTimeoutRef.current);
@@ -94,27 +108,26 @@ const BlogMarquee = () => {
   if (!isLoading && posts.length === 0) return null;
 
   return (
-    <section className="relative py-1 md:py-2 px-2 md:px-0">
+    <section className="relative py-3 md:py-4 px-2 md:px-0">
       <div className="relative z-10 max-w-6xl mx-auto">
-        {/* Header — matches the HowItWorks section header style */}
-        <div className="flex items-center gap-2 md:gap-3 px-1 mb-3">
-          <div className="w-8 h-8 md:w-9 md:h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
-            <Newspaper className="w-4 h-4 md:w-4.5 md:h-4.5 text-primary" />
+        {/* Header — sized to match the HowItWorks section header above it */}
+        <div className="flex flex-col items-center text-center mb-4 md:mb-5 space-y-2">
+          <div className="inline-flex items-center gap-1.5 px-2 md:px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-bold uppercase tracking-widest">
+            <Newspaper className="w-3 h-3" />
+            Blog
           </div>
-          <div className="min-w-0">
-            <h2 className="text-sm md:text-base font-black uppercase tracking-tight">
-              From the <span className="text-transparent bg-clip-text bg-linear-to-r from-primary to-accent">Blog</span>
-            </h2>
-            <p className="text-[10px] md:text-xs text-slate-500 dark:text-slate-400 font-medium">
-              Tips, updates, and stories from Playza
-            </p>
-          </div>
+          <h2 className="text-2xl md:text-3xl font-black tracking-tighter">
+            From the <span className="text-transparent bg-clip-text bg-linear-to-r from-primary to-accent">Blog</span>
+          </h2>
+          <p className="text-slate-500 dark:text-slate-400 text-xs md:text-sm max-w-xl">
+            Tips, updates, and stories from Playza.
+          </p>
         </div>
 
         {isLoading ? (
-          <div className="flex gap-3 overflow-hidden">
+          <div className="flex gap-4 overflow-hidden">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="w-64 h-20 rounded-2xl bg-slate-100 dark:bg-slate-800 animate-pulse shrink-0" />
+              <div key={i} className="w-72 md:w-80 h-28 rounded-2xl bg-slate-100 dark:bg-slate-800 animate-pulse shrink-0" />
             ))}
           </div>
         ) : (
@@ -129,18 +142,21 @@ const BlogMarquee = () => {
             onTouchStart={() => { isPausedRef.current = true; }}
             onTouchEnd={scheduleResume}
             onClickCapture={handleClickCapture}
-            className="relative w-full overflow-x-auto scrollbar-hide flex items-center rounded-2xl mask-horizontal-fade cursor-grab active:cursor-grabbing select-none"
+            className={`relative w-full overflow-x-auto scrollbar-hide flex items-stretch rounded-2xl select-none cursor-grab active:cursor-grabbing ${
+              shouldLoop ? "mask-horizontal-fade" : ""
+            }`}
           >
-            <div className="flex w-max items-stretch gap-3 py-1">
-              {[...posts, ...posts].map((post, i) => (
+            <div className="flex w-max items-stretch gap-4 py-1 px-1">
+              {displayPosts.map((post, i) => (
                 <Link
                   key={`${post.id}-${i}`}
                   to={`/blog/${post.slug}`}
                   draggable={false}
-                  className="group flex items-center gap-3 w-64 md:w-72 shrink-0 p-2.5 rounded-2xl glass-card border border-black/5 dark:border-white/10 hover:border-primary/30 transition-colors"
+                  className="group flex items-center gap-4 w-72 md:w-80 shrink-0 p-3.5 rounded-2xl glass-card border border-black/5 dark:border-white/10 hover:border-primary/30 transition-colors"
                 >
-                  {/* Small thumbnail — deliberately compact, not a big hero image */}
-                  <div className="w-11 h-11 md:w-12 md:h-12 rounded-xl overflow-hidden shrink-0 bg-primary/10 border border-primary/20 flex items-center justify-center">
+                  {/* Thumbnail — bigger than before so the card carries real
+                      visual weight next to the How It Works section above it */}
+                  <div className="w-16 h-16 md:w-18 md:h-18 rounded-xl overflow-hidden shrink-0 bg-primary/10 border border-primary/20 flex items-center justify-center">
                     {post.cover_image_url ? (
                       <img
                         src={post.cover_image_url}
@@ -150,20 +166,28 @@ const BlogMarquee = () => {
                         draggable={false}
                       />
                     ) : (
-                      <Newspaper className="w-4.5 h-4.5 text-primary" />
+                      <Newspaper className="w-6 h-6 text-primary" />
                     )}
                   </div>
 
-                  <div className="min-w-0 flex-1">
-                    <h3 className="text-xs md:text-sm font-bold leading-tight truncate">
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <h3 className="text-sm md:text-base font-bold leading-tight line-clamp-1">
                       {post.title}
                     </h3>
-                    <p className="text-[10px] md:text-[11px] text-slate-500 dark:text-slate-400 leading-tight line-clamp-1 mt-0.5">
-                      {post.excerpt}
-                    </p>
+                    {post.excerpt && (
+                      <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 leading-snug line-clamp-2">
+                        {linkifyText(post.excerpt)}
+                      </p>
+                    )}
+                    {post.published_at && (
+                      <p className="flex items-center gap-1 text-[10px] text-slate-400 dark:text-slate-500 font-medium pt-0.5">
+                        <Calendar className="w-3 h-3" />
+                        {formatDistanceToNow(new Date(post.published_at), { addSuffix: true })}
+                      </p>
+                    )}
                   </div>
 
-                  <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0" />
+                  <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0" />
                 </Link>
               ))}
             </div>
