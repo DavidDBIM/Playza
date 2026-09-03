@@ -9,6 +9,12 @@ import {
   getChessTournamentFixtures, getChessTournamentStandings, getChessTournamentResults,
   type ChessTournament, type TournamentFixture, type TournamentStanding, type TournamentResult,
 } from "@/api/chess-tournament.api";
+// Turns any URL or bare domain found inside admin-entered free text into a
+// clickable pill — moved to a shared util so blog posts can use it too.
+// Imported here (used directly further down) AND re-exported (since
+// Tournaments.tsx imports it from this file).
+import { linkifyText } from "@/utils/linkify";
+export { linkifyText };
 
 // ── Countdown ──────────────────────────────────────────────────────────────────
 function useCountdown(targetIso: string | null | undefined) {
@@ -34,11 +40,6 @@ function fmtTime(secs: number) {
   if (secs >= 60) return `${Math.floor(secs / 60)}m${secs % 60 > 0 ? `+${secs % 60}s` : ""}`;
   return `${secs}s`;
 }
-
-// Turns any URL or bare domain found inside admin-entered free text into a
-// clickable pill — moved to a shared util so blog posts can use it too.
-// Re-exported here since Tournaments.tsx imports it from this file.
-export { linkifyText } from "@/utils/linkify";
 
 const STATUS_CFG = {
   registration: { label: "Registration Open", dot: "#22c55e", glow: "rgba(34,197,94,0.25)" },
