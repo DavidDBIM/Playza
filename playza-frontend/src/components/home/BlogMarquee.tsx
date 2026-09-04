@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from "react";
-import { Link } from "react-router";
+import { useNavigate } from "react-router";
 import { Newspaper, ArrowRight, Calendar } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useBlogPosts } from "@/hooks/useBlog";
@@ -13,6 +13,7 @@ const MIN_POSTS_TO_LOOP = 4;
 
 const BlogMarquee = () => {
   const { data: posts = [], isLoading } = useBlogPosts(12);
+  const navigate = useNavigate();
   const scrollRef = useRef<HTMLDivElement>(null);
   const shouldLoop = posts.length >= MIN_POSTS_TO_LOOP;
   const displayPosts = useMemo(
@@ -148,11 +149,24 @@ const BlogMarquee = () => {
           >
             <div className="flex w-max items-stretch gap-4 py-1 px-1">
               {displayPosts.map((post, i) => (
-                <Link
+                // Not a <Link>/<a> — the excerpt can contain a real <a> via
+                // linkifyText, and an anchor nested inside another anchor is
+                // invalid HTML that browsers silently break (the outer one
+                // wins), which is exactly why links inside the excerpt looked
+                // clickable but did nothing. A clickable div with its own
+                // keyboard handling avoids the nesting entirely.
+                <div
                   key={`${post.id}-${i}`}
-                  to={`/blog/${post.slug}`}
-                  draggable={false}
-                  className="group flex items-center gap-4 w-72 md:w-80 shrink-0 p-3.5 rounded-2xl glass-card border border-black/5 dark:border-white/10 hover:border-primary/30 transition-colors"
+                  role="link"
+                  tabIndex={0}
+                  onClick={() => navigate(`/blog/${post.slug}`)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      navigate(`/blog/${post.slug}`);
+                    }
+                  }}
+                  className="group flex items-center gap-4 w-72 md:w-80 shrink-0 p-3.5 rounded-2xl glass-card border border-black/5 dark:border-white/10 hover:border-primary/30 transition-colors cursor-pointer"
                 >
                   {/* Thumbnail — bigger than before so the card carries real
                       visual weight next to the How It Works section above it */}
@@ -188,7 +202,7 @@ const BlogMarquee = () => {
                   </div>
 
                   <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0" />
-                </Link>
+                </div>
               ))}
             </div>
           </div>

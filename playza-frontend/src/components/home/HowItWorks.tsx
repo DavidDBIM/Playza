@@ -147,7 +147,7 @@ const HowItWorks = () => {
             return (
               <div
                 key={step.num}
-                className={`relative shrink-0 snap-center w-[86%] sm:w-72 rounded-3xl border-2 ${tone.border} bg-white dark:bg-slate-900 p-6 flex flex-col items-center text-center gap-4 overflow-hidden`}
+                className={`relative shrink-0 snap-center w-[86%] sm:w-72 rounded-3xl border-2 ${tone.border} bg-background dark:bg-slate-900 p-6 flex flex-col items-center text-center gap-4 overflow-hidden`}
               >
                 {/* Number badge */}
                 <div className={`absolute top-3 left-3 w-9 h-9 rounded-xl ${tone.badge} text-white flex items-center justify-center font-black text-sm shadow-md`}>

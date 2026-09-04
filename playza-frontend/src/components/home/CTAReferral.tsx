@@ -5,7 +5,7 @@ const CTAReferral = () => {
   return (
     <section className="relative overflow-hidden">
       <div className="w-full mx-auto @container">
-        <div className="relative overflow-hidden rounded-xl p-2 md:p-4 border border-black/10 dark:border-white/10 bg-slate-50/50 dark:bg-white/5">
+        <div className="relative overflow-hidden rounded-xl p-2 md:p-4 border border-black/10 dark:border-white/10 bg-background dark:bg-white/5">
           <div className="absolute -top-24 -right-24 w-64 h-64 rounded-full blur-[100px] opacity-20 pointer-events-none bg-primary" />
 
           <div className="flex flex-col lg:flex-row items-center justify-between gap-2 md:gap-12 relative z-10">
