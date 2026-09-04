@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { ArrowUpRight } from "lucide-react";
 
 // Turns any URL or bare domain (facebook.com, https://x.com/foo, www.site.io)
-// found inside admin-entered free text into a clickable pill, leaving
+// found inside admin-entered free text into a real, solid button, leaving
 // everything else exactly as written. Used anywhere admin-authored text
 // (tournament descriptions, blog post bodies, etc.) is rendered so admins
 // can safely drop plain links in without needing to hand-write markup.
@@ -35,12 +35,20 @@ export function linkifyText(text: string): ReactNode {
       // keep raw core as label
     }
     return (
+      // Kept inline (not block) so it stays valid inside a <p> wherever
+      // this renders — a block element inside a <p> is invalid HTML that
+      // browsers silently "fix" by splitting the paragraph, which broke
+      // things exactly like the earlier nested-anchor bug did.
       <span key={i}>
-        <a href={href} target="_blank" rel="noopener noreferrer nofollow" onClick={e => e.stopPropagation()}
-          className="inline-flex items-center gap-1 px-2.5 py-1 mx-0.5 rounded-full text-[10px] font-black align-middle transition-all hover:scale-105 hover:shadow-lg"
-          style={{ background: "linear-gradient(135deg, rgba(124,58,237,0.2), rgba(168,85,247,0.15))", color: "#c084fc", border: "1px solid rgba(168,85,247,0.3)" }}>
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer nofollow"
+          onClick={e => e.stopPropagation()}
+          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 mx-0.5 rounded-lg text-xs font-black uppercase tracking-wide align-middle bg-primary text-primary-foreground shadow-md hover:brightness-110 hover:shadow-lg active:scale-95 transition-all"
+        >
           {label}
-          <ArrowUpRight size={11} strokeWidth={2.5} />
+          <ArrowUpRight size={13} strokeWidth={2.75} />
         </a>
         {trailing}
       </span>
