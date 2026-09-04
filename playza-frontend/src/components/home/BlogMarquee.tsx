@@ -23,6 +23,7 @@ const BlogMarquee = () => {
 
   // Drag/interaction state — refs so the animation loop (below) always
   // reads the latest value without needing to restart on every change.
+  const isMouseDownRef = useRef(false);
   const isDraggingRef = useRef(false);
   const isPausedRef = useRef(false);
   const startXRef = useRef(0);
@@ -65,37 +66,62 @@ const BlogMarquee = () => {
   // Mouse-drag support for desktop — touch devices already get free
   // left/right dragging from native overflow-x scrolling, so this only
   // kicks in for mouse pointers.
+  //
+  // Deliberately NOT using setPointerCapture here: capturing the pointer
+  // on the scroll container redirects every subsequent event for that
+  // pointer — including the click itself — to the container, so a plain
+  // click on a card (or a link inside the excerpt) never reaches that
+  // element at all. Plain window listeners, added only while the mouse
+  // button is actually held, get the same "drag past the row's edges"
+  // robustness without hijacking ordinary clicks.
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (e.pointerType !== "mouse") return;
     const el = scrollRef.current;
     if (!el) return;
-    isDraggingRef.current = true;
-    isPausedRef.current = true;
+    isMouseDownRef.current = true;
+    isDraggingRef.current = false;
     startXRef.current = e.clientX;
     startScrollLeftRef.current = el.scrollLeft;
-    el.setPointerCapture(e.pointerId);
     if (resumeTimeoutRef.current) clearTimeout(resumeTimeoutRef.current);
+    window.addEventListener("pointermove", handleWindowPointerMove);
+    window.addEventListener("pointerup", handleWindowPointerUp);
   };
 
-  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!isDraggingRef.current || e.pointerType !== "mouse") return;
+  const handleWindowPointerMove = (e: PointerEvent) => {
+    if (!isMouseDownRef.current) return;
     const el = scrollRef.current;
     if (!el) return;
-    el.scrollLeft = startScrollLeftRef.current - (e.clientX - startXRef.current);
+    const delta = e.clientX - startXRef.current;
+    // Only counts as a drag once it's moved a few pixels — a plain click
+    // never crosses this, so it never touches scrollLeft or pauses anything.
+    if (!isDraggingRef.current && Math.abs(delta) > 4) {
+      isDraggingRef.current = true;
+      isPausedRef.current = true;
+    }
+    if (isDraggingRef.current) {
+      el.scrollLeft = startScrollLeftRef.current - delta;
+    }
   };
 
-  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (e.pointerType !== "mouse" || !isDraggingRef.current) return;
-    const el = scrollRef.current;
-    if (el) {
-      const moved = Math.abs(el.scrollLeft - startScrollLeftRef.current);
-      // Dragged far enough that this wasn't just a click — suppress the
-      // click that follows so it doesn't also navigate into the post.
-      suppressClickRef.current = moved > 5;
-    }
+  const handleWindowPointerUp = () => {
+    // Dragged far enough that this wasn't just a click — suppress the
+    // click that follows so it doesn't also navigate into a post.
+    if (isDraggingRef.current) suppressClickRef.current = true;
+    isMouseDownRef.current = false;
     isDraggingRef.current = false;
+    window.removeEventListener("pointermove", handleWindowPointerMove);
+    window.removeEventListener("pointerup", handleWindowPointerUp);
     scheduleResume();
   };
+
+  // In case the component unmounts mid-drag.
+  useEffect(() => {
+    return () => {
+      window.removeEventListener("pointermove", handleWindowPointerMove);
+      window.removeEventListener("pointerup", handleWindowPointerUp);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleClickCapture = (e: React.MouseEvent) => {
     if (suppressClickRef.current) {
@@ -135,9 +161,6 @@ const BlogMarquee = () => {
           <div
             ref={scrollRef}
             onPointerDown={handlePointerDown}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-            onPointerLeave={handlePointerUp}
             onMouseEnter={() => { isPausedRef.current = true; }}
             onMouseLeave={() => { if (!isDraggingRef.current) scheduleResume(); }}
             onTouchStart={() => { isPausedRef.current = true; }}
