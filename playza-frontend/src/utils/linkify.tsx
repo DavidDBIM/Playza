@@ -21,7 +21,15 @@ export function linkifyText(text: string): ReactNode {
     const trailingMatch = part.match(/[),.!?;:'"]+$/);
     const trailing = trailingMatch ? trailingMatch[0] : "";
     const core = trailing ? part.slice(0, -trailing.length) : part;
-    if (!core || !/[a-zA-Z]{2,}$/.test(core.replace(/\/[^\s]*$/, ""))) return <span key={i}>{part}</span>;
+    // Isolate just the domain to sanity-check it ends in real letters (not
+    // digits/punctuation). Strip the protocol and "www." first, THEN cut
+    // at the first remaining slash — stripping trailing "/path" directly
+    // on the full string (as this used to) also eats the "//" in
+    // "https://", leaving "https:" behind, which always fails the check
+    // and silently fell back to plain text for every https:// link.
+    const withoutScheme = core.replace(/^https?:\/\//i, "").replace(/^www\./i, "");
+    const domainOnly = withoutScheme.split("/")[0];
+    if (!core || !/[a-zA-Z]{2,}$/.test(domainOnly)) return <span key={i}>{part}</span>;
     const href = /^https?:\/\//i.test(core) ? core : `https://${core}`;
     // Show where the link actually goes rather than a generic "Click me" —
     // on a platform that moves real money, a link that doesn't disclose
