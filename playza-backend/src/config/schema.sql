@@ -315,6 +315,30 @@ create trigger ludo_rooms_updated_at before update on ludo_rooms
 
 alter table ludo_rooms enable row level security;
 
+-- DARTS (H2H)
+create table if not exists darts_rooms (
+  id uuid primary key default uuid_generate_v4(),
+  code text unique not null,
+  host_id uuid not null references users(id) on delete cascade,
+  guest_id uuid references users(id) on delete set null,
+  stake numeric(12, 2) default 0,
+  status text default 'waiting' check (status in ('waiting', 'active', 'finished', 'abandoned')),
+  starting_score int not null default 301, -- 501 / 401 / 301 / 201 / 101, chosen by the host
+  current_turn uuid references users(id) on delete set null, -- whose turn it is to throw
+  -- { hostScore, guestScore, turnStartScore, turnDarts: [{dx,dy,score,label,isDouble}],
+  --   turnNumber, lastEvent: { by, label, score, busted, checkout } | null }
+  game_state jsonb default '{}'::jsonb,
+  winner_id uuid references users(id) on delete set null,
+  turn_started_at timestamptz,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create trigger darts_rooms_updated_at before update on darts_rooms
+  for each row execute function update_updated_at();
+
+alter table darts_rooms enable row level security;
+
 -- NOTIFICATIONS
 create table if not exists notifications (
   id uuid primary key default uuid_generate_v4(),

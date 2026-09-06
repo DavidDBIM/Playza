@@ -6,6 +6,7 @@ import H2HWaitingRoom from "@/components/h2h/H2HWaitingRoom";
 // matter-js, phaser) are NOT bundled into the initial JS payload.
 // Each arena chunk is only fetched when the user actually enters that game room.
 const ChessArena = lazy(() => import("@/components/h2h/chess/ChessArena"));
+const DartsArena = lazy(() => import("@/components/h2h/darts/DartsArena"));
 const SpeedBattleArena = lazy(
   () => import("@/components/h2h/speed-battle/SpeedBattleArena"),
 );
@@ -289,6 +290,18 @@ const H2HZone = () => {
                         <EmojiPopArena
                           key={room.id}
                           room={room}
+                          user={user}
+                        />
+                      );
+                    if (gameType === "darts")
+                      return (
+                        <DartsArena
+                          key={room.id}
+                          room={
+                            room as unknown as React.ComponentProps<
+                              typeof DartsArena
+                            >["room"]
+                          }
                           user={user}
                         />
                       );

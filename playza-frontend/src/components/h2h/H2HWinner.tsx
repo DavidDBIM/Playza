@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { NavLink } from 'react-router';
+import { NavLink, useParams } from 'react-router';
 import type { UserProfile } from '@/context/auth';
 import { Medal } from 'lucide-react';
 import { ZASymbol } from '@/components/currency/ZASymbol';
@@ -32,6 +32,16 @@ const motivationalPhrases = [
 const randomPhrase = motivationalPhrases[Math.floor(Math.random() * motivationalPhrases.length)];
 
 const H2HWinner = ({ room, user, localWinnerId, isSyncing, backTo = "/h2h", backLabel = "H2H ZONE" }: H2HWinnerProps) => {
+  // Every H2H arena (chess, ludo, soccer, pool, emoji-pop) renders this
+  // screen while still on a route like /h2h/chess/<roomId> — so the game
+  // just played can be read straight from the URL instead of needing each
+  // of those 5 arena components to thread a prop down. "NEXT BATTLE"
+  // re-queues for THAT game (landing on /h2h/chess auto-opens its Choose
+  // Mode step) instead of dumping the user back at the generic hub, which
+  // is what both buttons did before — they were identical.
+  const { gameType } = useParams<{ gameType?: string }>();
+  const nextBattleTo = gameType ? `/h2h/${gameType}` : backTo;
+
   useEffect(() => {
     if (document.fullscreenElement) {
       document.exitFullscreen().catch(() => {});
@@ -113,7 +123,7 @@ const H2HWinner = ({ room, user, localWinnerId, isSyncing, backTo = "/h2h", back
         {/* Action Group */}
         <div className="flex flex-col md:flex-row gap-4 md:gap-6 justify-center px-4 md:px-0">
           <NavLink 
-            to={backTo}
+            to={nextBattleTo}
             className="flex-1 md:flex-none px-6 md:px-12 py-4 md:py-6 bg-white dark:bg-slate-950 border-2 md:border-[3px] border-primary text-primary font-headline font-black rounded-xl uppercase tracking-widest text-[10px] md:text-lg italic text-center shadow-lg active:translate-y-1 transition-all"
           >
             NEXT BATTLE

@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as chessApi from "@/api/chess.api";
+import * as dartsApi from "@/api/darts.api";
 import { speedBattleApi } from "@/api/speedbattle.api";
 import { wordScrambleApi } from "@/api/wordscramble.api";
 import { poolApi } from "@/api/poolApi";
@@ -9,7 +10,7 @@ import { emojipopApi } from "@/api/emojipop.api";
 import { supabase } from "@/config/supabase";
 import { useEffect } from "react";
 
-export type GameType = "chess" | "speed-battle" | "word-scramble" | "pool" | "arena-duel" | "ludo" | "soccer" | "emoji-pop";
+export type GameType = "chess" | "speed-battle" | "word-scramble" | "pool" | "arena-duel" | "ludo" | "soccer" | "emoji-pop" | "darts";
 
 export interface GameApi {
   getRoom?: (roomId: string) => Promise<unknown>;
@@ -28,6 +29,7 @@ export const getApiForGame = (gameType: GameType): GameApi => {
   if (gameType === "ludo") return ludoApi as unknown as GameApi;
   if (gameType === "soccer") return soccerApi as unknown as GameApi;
   if (gameType === "chess") return chessApi as unknown as GameApi;
+  if (gameType === "darts") return dartsApi as unknown as GameApi;
   if (gameType === "emoji-pop") return emojipopApi as unknown as GameApi;
   return chessApi as unknown as GameApi; // Fallback
 };
@@ -40,6 +42,7 @@ export const useWaitingRooms = (gameType: GameType) => {
       if (gameType === "ludo") return ludoApi.getWaitingRooms();
       if (gameType === "pool") return poolApi.listRooms();
       if (gameType === "soccer") return soccerApi.getWaitingRooms();
+      if (gameType === "darts") return dartsApi.getWaitingRooms();
       return [];
     },
     staleTime: 1000 * 15, // 15 seconds — realtime handles live updates
@@ -60,6 +63,8 @@ export const useH2HRoom = (roomId: string | undefined, gameType: GameType) => {
         ? "soccer_rooms"
         : gameType === "emoji-pop"
         ? "emojipop_rooms"
+        : gameType === "darts"
+        ? "darts_rooms"
         : "chess_rooms";
 
     const channel = supabase
@@ -94,6 +99,7 @@ export const useH2HRoom = (roomId: string | undefined, gameType: GameType) => {
       if (gameType === "chess") return chessApi.getChessRoom(roomId);
       if (gameType === "ludo") return ludoApi.getLudoRoom(roomId);
       if (gameType === "soccer") return soccerApi.getSoccerRoom(roomId);
+      if (gameType === "darts") return dartsApi.getDartsRoom(roomId);
 
       const api = getApiForGame(gameType);
       if (api.getRoom) {
@@ -120,6 +126,9 @@ export const useH2HMutations = (gameType: GameType) => {
       if (gameType === "chess") return chessApi.createChessRoom(stake);
       if (gameType === "ludo") return ludoApi.createLudoRoom(stake);
       if (gameType === "soccer") return soccerApi.createSoccerRoom(stake);
+      // Darts format (501/401/301/etc) isn't exposed in this shared
+      // stake-selection flow yet — defaults to the classic 301 game.
+      if (gameType === "darts") return dartsApi.createDartsRoom(stake, 301);
       if (!api.createRoom) throw new Error("Creation not supported for this game");
       return api.createRoom(stake);
     },
@@ -130,6 +139,7 @@ export const useH2HMutations = (gameType: GameType) => {
       if (gameType === "chess") return chessApi.createBotRoom(stake);
       if (gameType === "ludo") return ludoApi.createBotRoom(stake);
       if (gameType === "soccer") return soccerApi.createBotRoom(stake);
+      if (gameType === "darts") return dartsApi.createBotRoom(stake, 301);
       if (!api.createRoom) throw new Error("Bot match not supported for this game");
       return api.createRoom(stake, true, "medium");
     },
@@ -140,6 +150,7 @@ export const useH2HMutations = (gameType: GameType) => {
       if (gameType === "chess") return chessApi.joinChessRoom(code);
       if (gameType === "ludo") return ludoApi.joinLudoRoom(code);
       if (gameType === "soccer") return soccerApi.joinSoccerRoom(code);
+      if (gameType === "darts") return dartsApi.joinDartsRoom(code);
       if (!api.joinRoom) throw new Error("Joining by code not supported");
       return api.joinRoom(code);
     },
@@ -150,6 +161,7 @@ export const useH2HMutations = (gameType: GameType) => {
       if (gameType === "chess") return chessApi.findQuickMatch(stake);
       if (gameType === "ludo") return ludoApi.findQuickMatch(stake);
       if (gameType === "soccer") return soccerApi.findQuickMatch(stake);
+      if (gameType === "darts") return dartsApi.findQuickMatch(stake, 301);
       if (!api.findQuickMatch) throw new Error("Quick match not supported");
       return api.findQuickMatch(stake);
     },

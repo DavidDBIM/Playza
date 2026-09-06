@@ -1,4 +1,4 @@
-import { Swords, Trophy } from 'lucide-react';
+import { Swords, Zap, TrendingUp } from 'lucide-react';
 import { ZASymbol } from '@/components/currency/ZASymbol';
 import { timeAgo } from '@/utils/time-ago';
 import type { ChessRoom } from '@/types/chess';
@@ -110,56 +110,61 @@ const QuickMatchView = ({
                 </button>
               )}
               <div className="space-y-6 md:space-y-8">
-                <div className="space-y-3 md:space-y-4">
-                  <label className="text-[10px] uppercase tracking-[0.3em] text-slate-500 font-bold pl-1 italic block text-center">Arena Entry Stake</label>
-                  
-                  <div className="grid grid-cols-3 gap-2 md:gap-4">
+                {/* Stake card — one unified block (chips + custom input +
+                    prize preview) instead of separate loose pieces, matching
+                    the Solo Earn stake screen's visual language */}
+                <div className="glass-card border border-black/5 dark:border-white/10 rounded-2xl p-5 md:p-6 space-y-5 text-left">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 flex items-center gap-1.5">
+                    <Zap className="w-3 h-3 text-indigo-500" /> Arena Entry Stake
+                  </label>
+
+                  <div className="grid grid-cols-3 gap-2 md:gap-3">
                     {[100, 200, 500].map((val) => (
                       <button
                         key={val}
                         onClick={() => { setStakeValue(val); setCustomStake(''); }}
-                        className={`py-4 md:py-6 rounded-xl font-headline font-black text-lg md:text-2xl border-2 ${stakeValue === val && !customStake ? "bg-indigo-600 border-indigo-400 text-white" : "bg-black/5 dark:bg-white/5 border-transparent text-slate-700 dark:text-white/70"}`}
+                        className={`py-3 md:py-4 rounded-xl font-headline font-black text-base md:text-xl border-2 transition-all ${stakeValue === val && !customStake ? "bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-500/25" : "bg-black/5 dark:bg-white/5 border-transparent text-slate-700 dark:text-white/70 hover:border-indigo-500/30"}`}
                       >
                         {val}
                       </button>
                     ))}
                   </div>
 
-                  <div className="relative mt-4">
+                  <div className="relative">
                     <input
                       value={customStake}
                       onChange={(e) => setCustomStake(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 lg:px-6 lg:py-4 font-black text-lg lg:text-xl text-slate-900 dark:text-white focus:border-indigo-500 outline-none tracking-tighter italic text-center"
-                      placeholder="CUSTOM PRICE"
+                      className="w-full h-12 bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl pl-9 pr-4 font-black text-base text-slate-900 dark:text-white focus:border-indigo-500 outline-none tracking-tight text-center placeholder:font-normal placeholder:text-xs"
+                      placeholder="Custom amount"
                       type="number"
                     />
-                    <span className="-translate-y-1/2 absolute right-4 top-1/2 text-indigo-500">
-                      <ZASymbol />
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-500">
+                      <ZASymbol className="text-sm" />
                     </span>
                   </div>
-                </div>
 
-                <div className="bg-indigo-500/5 border border-indigo-500/10 rounded-xl p-4 md:p-6 flex items-center justify-between">
-                  <div className="flex flex-col items-center justify-center gap-3 md:gap-4">
-                    <div className="w-10 h-10 md:w-12 md:h-12 bg-black/5 dark:bg-white/5 rounded-lg md:rounded-xl flex items-center justify-center">
-                      <Trophy className="text-indigo-500 dark:text-indigo-400 w-4 h-4 md:w-5 md:h-5" />
+                  {/* Prize preview */}
+                  <div className="flex items-center justify-between rounded-xl bg-indigo-500/5 border border-indigo-500/15 p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-lg bg-indigo-500/10 flex items-center justify-center shrink-0">
+                        <TrendingUp className="w-4 h-4 text-indigo-500" />
+                      </div>
+                      <div>
+                        <span className="text-[9px] text-slate-500 font-black uppercase tracking-widest block leading-none mb-1">
+                          Winner Takes
+                        </span>
+                        <span className="text-lg font-black text-indigo-500 dark:text-indigo-400 flex items-center gap-1 leading-none">
+                          <ZASymbol className="text-sm" />
+                          {(parseInt(customStake) || stakeValue) * 2}
+                        </span>
+                      </div>
                     </div>
-                    <div>
-                      <span className="text-[8px] text-slate-500 font-black uppercase tracking-widest block">
-                         Potential Prize
+                    <div className="text-right">
+                      <span className="text-[9px] text-slate-500 font-black uppercase tracking-widest block leading-none mb-1">
+                        Est. Wait
                       </span>
-                      <span className="text-lg md:text-xl font-black text-indigo-500 dark:text-indigo-400 flex items-center gap-1 leading-none mt-1">
-                        {(parseInt(customStake) || stakeValue) * 2} <ZASymbol className="scale-75" />
-                      </span>
+                      <span className="text-xs font-black text-slate-400">{"< 10 SEC"}</span>
                     </div>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-[8px] text-slate-600 font-black uppercase tracking-tighter block">
-                      ESTIMATED WAIT
-                    </span>
-                    <span className="text-[10px] md:text-xs font-black text-slate-400">
-                      {"< 10 SEC"}
-                    </span>
                   </div>
                 </div>
               </div>

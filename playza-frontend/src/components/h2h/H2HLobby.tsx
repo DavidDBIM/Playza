@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef, type ComponentType } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router';
-import { Zap, Swords, Trophy } from 'lucide-react';
+import { Zap, Swords, Trophy, Target } from 'lucide-react';
 import H2HLobbySkeleton from '../skeletons/H2HLobbySkeleton';
 import { useGames } from '@/hooks/gamesession/useGameSession';
 
@@ -159,7 +159,7 @@ const H2HLobby = ({ onCreate, onBotCreate, onJoin, onQuickMatch, getWaitingRooms
       .map(g => ({
         id: g.slug,
         name: g.title,
-        icon: g.slug === 'arena-duel' ? Swords : g.slug === 'chess' ? Trophy : Zap,
+        icon: g.slug === 'arena-duel' ? Swords : g.slug === 'chess' ? Trophy : g.slug === 'darts' ? Target : Zap,
         players: (g.unique_players || 0).toString(),
         color: g.category === 'Action' ? 'from-orange-500 to-red-600' : 'from-indigo-500 to-purple-600',
         thumbnailUrl: g.thumbnail_url || g.thumbnail

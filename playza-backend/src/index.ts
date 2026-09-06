@@ -11,6 +11,7 @@ import { finalizeSessionAndPayout } from './modules/gamesession/gamesession.serv
 import { runQuizReminderJob, runQuizLifecycleJob, setQuizReminderIo } from './lib/quizReminders'
 import { runChessLifecycleJob, runChessReminderJob } from './lib/chessReminders'
 import { sweepAbandonedChessGames } from './modules/chess/chess.service'
+import { sweepAbandonedDartsGames } from './modules/darts/darts.service'
 
 import authRoutes from './modules/auth/auth.routes'
 import referralRoutes from './modules/referral/referral.routes'
@@ -22,6 +23,7 @@ import adminRoutes from './modules/admin/admin.routes'
 import adminRewardsRoutes from './modules/admin/rewards.routes'
 import walletRoutes from './modules/wallet/wallet.routes'
 import chessRoutes from './modules/chess/chess.routes'
+import dartsRoutes from './modules/darts/darts.routes'
 import profileRoutes from './modules/profile/profile.routes'
 import securityRoutes from './modules/security/security.routes'
 import speedbattleRoutes from './modules/speedbattle/speedbattle.routes'
@@ -92,6 +94,7 @@ app.use('/api/admin', adminRoutes)
 app.use('/api/admin/rewards', adminRewardsRoutes)
 app.use('/api/wallet', walletRoutes)
 app.use('/api/chess', chessRoutes)
+app.use('/api/darts', dartsRoutes)
 app.use('/api/profile', profileRoutes)
 app.use('/api/security', securityRoutes)
 app.use('/api/speedbattle', speedbattleRoutes)
@@ -172,6 +175,11 @@ cron.schedule('*/30 * * * *', async () => {
 // flow, for the rare case where nobody ever comes back to trigger it (every 5 minutes)
 cron.schedule('*/5 * * * *', async () => {
   await sweepAbandonedChessGames()
+})
+
+// Same safety net as chess's sweep, for darts H2H matches (every 5 minutes)
+cron.schedule('*/5 * * * *', async () => {
+  await sweepAbandonedDartsGames()
 })
 
 httpServer.listen(PORT, () => {
