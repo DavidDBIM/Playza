@@ -7,6 +7,7 @@ import HomeGames from "@/components/home/HomeGames";
 import CategoryGamesRow from "@/components/home/CategoryGamesRow";
 import CTAReferral from "@/components/home/CTAReferral";
 import HomeFAQ from "@/components/home/HomeFAQ";
+import HomeDocs from "@/components/home/HomeDocs";
 import SEO from "@/components/SEO";
 
 import { Gift, RefreshCw, Target, Swords, Star, Sparkles, TrendingUp, Flame, Gamepad2 } from "lucide-react";
@@ -241,6 +242,7 @@ const Home = () => {
       <HowItWorks />
       <BlogMarquee />
       <HomeFAQ />
+      <HomeDocs />
     </main>
   );
 };
