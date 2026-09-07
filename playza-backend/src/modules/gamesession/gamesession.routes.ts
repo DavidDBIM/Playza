@@ -64,6 +64,16 @@ router.get('/games', async (req, res) => {
   }
 })
 
+router.get('/recent-winners', async (req, res) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit as string) || 30, 50)
+    const winners = await GameSessionService.getRecentWinners(limit)
+    res.json({ success: true, winners })
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message })
+  }
+})
+
 router.get('/sessions/:slug/active', async (req, res) => {
   try {
     const result = await GameSessionService.getActiveSession(req.params.slug)
@@ -152,8 +162,3 @@ router.get('/sessions/:id/details', async (req, res) => {
 })
 
 export default router
-
-
-
-
-

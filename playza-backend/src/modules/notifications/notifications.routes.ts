@@ -18,7 +18,7 @@ router.get('/banner', async (req, res) => {
 router.get('/feed', requireAuth, async (req: AuthRequest, res) => {
   try {
     const limit = Math.min(parseInt(req.query.limit as string) || 20, 50)
-    const data = await getNotificationsFeed(limit)
+    const data = await getNotificationsFeed(limit, req.user!.id)
     res.json({ success: true, data })
   } catch (err: any) {
     res.status(400).json({ success: false, message: err.message })

@@ -33,6 +33,20 @@ export const useGames = () => {
   });
 };
 
+// Powers the homepage "Live Winners Arena" ticker with real wins across
+// every game type (H2H, Solo Earn, Tournament). Always just the most
+// recent N — polling naturally rolls older wins out of view as new ones
+// arrive, no client-side pruning needed.
+export const useRecentWinners = (limit = 30) => {
+  return useQuery({
+    queryKey: ["recent-winners", limit],
+    queryFn: () => GameSessionApi.getRecentWinners(limit),
+    staleTime: 20 * 1000,
+    refetchInterval: 30 * 1000,
+    refetchOnWindowFocus: false,
+  });
+};
+
 export const useActiveSession = (slug: string) => {
   const queryClient = useQueryClient();
 

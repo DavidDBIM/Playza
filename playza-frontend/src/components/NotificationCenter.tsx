@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Bell, Megaphone, Settings, Wallet, ShieldAlert, BellRing, Inbox } from "lucide-react";
+import { Bell, Megaphone, Settings, Wallet, ShieldAlert, BellRing, Inbox, Trophy, Newspaper, Gamepad2, Gift, ArrowDownToLine, ArrowUpFromLine, Users } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router";
 import {
@@ -25,12 +25,23 @@ const getReadIds = (): string[] => {
 };
 
 const TYPE_STYLES: Record<string, { icon: typeof Bell; className: string }> = {
+  // Admin broadcasts
   "System Update": { icon: Settings, className: "bg-slate-500/10 text-slate-600 dark:text-slate-300" },
   "Promotional Offer": { icon: Megaphone, className: "bg-pink-500/10 text-pink-600 dark:text-pink-400" },
   "Transactional": { icon: Wallet, className: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" },
   "Maintenance Alert": { icon: ShieldAlert, className: "bg-amber-500/10 text-amber-600 dark:text-amber-400" },
   "Login Banner": { icon: BellRing, className: "bg-primary/10 text-primary" },
   "Universal Announcement": { icon: Megaphone, className: "bg-primary/10 text-primary" },
+  // Auto-generated broadcasts (site-wide, triggered by DB events)
+  "New Blog": { icon: Newspaper, className: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400" },
+  "New Game": { icon: Gamepad2, className: "bg-violet-500/10 text-violet-600 dark:text-violet-400" },
+  "Tournament": { icon: Trophy, className: "bg-amber-500/10 text-amber-600 dark:text-amber-400" },
+  // Personal, per-user notifications
+  "welcome": { icon: Gift, className: "bg-primary/10 text-primary" },
+  "winning": { icon: Trophy, className: "bg-amber-500/10 text-amber-600 dark:text-amber-400" },
+  "deposit": { icon: ArrowDownToLine, className: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" },
+  "withdraw": { icon: ArrowUpFromLine, className: "bg-blue-500/10 text-blue-600 dark:text-blue-400" },
+  "referral": { icon: Users, className: "bg-pink-500/10 text-pink-600 dark:text-pink-400" },
 };
 
 const NotificationCenter = () => {

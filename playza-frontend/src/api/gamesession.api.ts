@@ -1,8 +1,21 @@
 import axiosInstance from "./axiosInstance";
 
+export interface RecentWinner {
+  id: string;
+  username: string;
+  game: string;
+  amountWon: number;
+  playedAt: string;
+}
+
 export const getGames = async () => {
   const response = await axiosInstance.get("/gamesession/games");
   return response.data;
+};
+
+export const getRecentWinners = async (limit = 30): Promise<RecentWinner[]> => {
+  const response = await axiosInstance.get("/gamesession/recent-winners", { params: { limit } });
+  return response.data.winners;
 };
 
 export const getActiveSession = async (slug: string) => {

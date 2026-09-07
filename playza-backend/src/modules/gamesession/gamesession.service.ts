@@ -850,3 +850,28 @@ export async function getSessionDetails(sessionId: string) {
     }
   }
 }
+
+// Powers the homepage "Live Winners Arena" ticker — a real feed across every
+// game type (H2H, Solo Earn, Tournament/Arena all write to this same
+// game_history table on a win), instead of the hardcoded fake list it used
+// to render. Always just the most recent N: as new wins come in, older ones
+// naturally fall out of this window without needing to delete anything.
+export async function getRecentWinners(limit: number = 30) {
+  const { data, error } = await supabase
+    .from('game_history')
+    .select('id, game_name, winnings, played_at, users(username)')
+    .eq('status', 'win')
+    .gt('winnings', 0)
+    .order('played_at', { ascending: false })
+    .limit(limit)
+
+  if (error) throw error
+
+  return (data || []).map((row: any) => ({
+    id: row.id,
+    username: row.users?.username || 'Player',
+    game: row.game_name,
+    amountWon: Number(row.winnings),
+    playedAt: row.played_at,
+  }))
+}

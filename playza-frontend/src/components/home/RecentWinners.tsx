@@ -1,14 +1,24 @@
-import { winners } from "@/constants/constants";
+import { useMemo } from "react";
+import { useRecentWinners } from "@/hooks/gamesession/useGameSession";
 import { Trophy, Clock } from "lucide-react";
 import { ZASymbol } from "../currency/ZASymbol";
-
-// Generate random times once per module load to ensure the component remains pure
-// and avoids both hydration mismatches and cascading render effects.
-const randomTimes = Array.from({ length: winners.length * 3 }, () => 
-  Math.max(1, Math.floor(Math.random() * 59))
-);
+import { formatDistanceToNowStrict } from "date-fns";
 
 const RecentWinners = () => {
+  // Real wins across every game type — H2H, Solo Earn, and Tournament/Arena
+  // all write to the same game_history table on a win, so this one feed
+  // covers all of them. Always the most recent 30 (server-capped); as new
+  // wins arrive via polling, older ones naturally age out of that window
+  // without any client-side deletion needed.
+  const { data: winners = [], isLoading } = useRecentWinners(30);
+
+  const displayWinners = useMemo(
+    () => (winners.length > 0 ? [...winners, ...winners] : []),
+    [winners],
+  );
+
+  // Nothing to show yet (no wins recorded) — don't render an empty/fake ticker.
+  if (!isLoading && winners.length === 0) return null;
 
   return (
     <div className="w-full flex flex-col gap-1.5 md:gap-2 py-1 relative z-10">
@@ -26,13 +36,17 @@ const RecentWinners = () => {
         </div>
       </div>
 
-      {/* Scrolling Container with Edge Fades */}
-      <div 
-        className="relative w-full overflow-hidden flex items-center rounded-2xl mask-horizontal-fade"
-      >
-        <div className="flex w-max items-center gap-2 md:gap-4 py-2 recent-winner">
-          {[...winners, ...winners].map(
-            ({ id, username, game, amountWon }, i) => (
+      {isLoading ? (
+        <div className="flex gap-2 md:gap-4 px-2 overflow-hidden">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-14 w-56 rounded-2xl bg-slate-800/50 animate-pulse shrink-0" />
+          ))}
+        </div>
+      ) : (
+        /* Scrolling Container with Edge Fades */
+        <div className="relative w-full overflow-hidden flex items-center rounded-2xl mask-horizontal-fade">
+          <div className="flex w-max items-center gap-2 md:gap-4 py-2 recent-winner">
+            {displayWinners.map(({ id, username, game, amountWon, playedAt }, i) => (
               <div
                 key={`${id}-${i}`}
                 className="relative flex items-center gap-2 md:gap-4 px-2 md:px-4 py-2 rounded-2xl glass-card border border-primary/20 bg-slate-900/95 shrink-0"
@@ -56,22 +70,22 @@ const RecentWinners = () => {
                       </span>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center justify-between gap-1 md:gap-4 mt-0.5">
                     <span className="text-[10px] md:text-xs font-semibold uppercase tracking-widest truncate max-w-37.5 text-slate-300">
                       in {game}
                     </span>
                     <div className="flex items-center gap-1.5 text-[9px] md:text-[10px] font-medium whitespace-nowrap bg-black/20 px-2 py-0.5 rounded-full text-slate-300">
                       <Clock className="w-3 h-3 text-slate-400" />
-                      <span>{randomTimes[i] || 1}m ago</span>
+                      <span>{formatDistanceToNowStrict(new Date(playedAt), { addSuffix: true })}</span>
                     </div>
                   </div>
                 </div>
               </div>
-            ),
-          )}
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

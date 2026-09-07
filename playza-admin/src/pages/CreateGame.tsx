@@ -125,7 +125,13 @@ const CreateGame: React.FC = () => {
     scoring: "",
   });
 
-  const isIframeUrlRequired = formData.mode !== "Head to Head" || formData.slug !== "chess";
+  // Native (non-iframe) H2H games render their own dedicated React arena
+  // instead of loading an iframe_url — chess was the first one built and
+  // got hardcoded here; darts is native too, so it needs the same exemption
+  // or the form blocks saving it entirely.
+  const isIframeUrlRequired =
+    formData.mode !== "Head to Head" ||
+    (formData.slug !== "chess" && formData.slug !== "darts");
 
   // Capabilities helpers
   const setCap = <K extends keyof GameCapabilities>(
