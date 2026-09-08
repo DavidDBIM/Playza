@@ -48,7 +48,7 @@ const QuizChampionship = lazy(() => import("./pages/games/QuizChampionship"));
 const SoloEarn = lazy(() => import("./pages/SoloEarn"));
 const Support = lazy(() => import("./pages/Support"));
 const FAQ = lazy(() => import("./pages/FAQ"));
-const DocPage = lazy(() => import("./pages/doc/DocPage"));
+const DocPage = lazy(() => import("./doc/DocPage"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
 
 
