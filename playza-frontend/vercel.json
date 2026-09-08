@@ -50,10 +50,6 @@
     }
   ],
   "rewrites": [
-    {
-      "source": "/doc/:path*",
-      "destination": "https://playza-docs.vercel.app/doc/:path*"
-    },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

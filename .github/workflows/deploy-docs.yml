@@ -1,0 +1,55 @@
+name: Build docs and deploy into playza-frontend
+
+# Runs automatically on every push to main — no local build step needed.
+# Builds this repo as a static site, then pushes the result into
+# playza-frontend's public/doc/ folder. Vercel is already watching that
+# repo for pushes, so it redeploys the main site automatically once this
+# lands — the whole chain (edit docs -> push -> live on playza.games/doc)
+# needs nothing but a normal GitHub push.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {} # lets you also trigger it manually from the Actions tab
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout playza-docs
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build static export
+        run: npm run build
+        # With output: 'export' in next.config.js, this produces an out/
+        # folder of plain HTML/CSS/JS — no server needed to serve it.
+
+      - name: Checkout main Playza repo (monorepo containing playza-frontend)
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ vars.MAIN_REPO }} # e.g. "DavidDBIM/Playza"
+          token: ${{ secrets.MAIN_REPO_TOKEN }}
+          path: main-repo
+
+      - name: Copy built docs into playza-frontend/public/doc
+        run: |
+          rm -rf main-repo/playza-frontend/public/doc
+          mkdir -p main-repo/playza-frontend/public/doc
+          cp -r out/. main-repo/playza-frontend/public/doc/
+
+      - name: Commit and push to the main repo
+        run: |
+          cd main-repo
+          git config user.name "playza-docs-bot"
+          git config user.email "actions@github.com"
+          git add playza-frontend/public/doc
+          git diff --staged --quiet && echo "No doc changes to deploy" && exit 0
+          git commit -m "docs: sync static build from playza-docs ($(date -u +%Y-%m-%dT%H:%M:%SZ))"
+          git push
