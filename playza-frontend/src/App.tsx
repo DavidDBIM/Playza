@@ -48,6 +48,7 @@ const QuizChampionship = lazy(() => import("./pages/games/QuizChampionship"));
 const SoloEarn = lazy(() => import("./pages/SoloEarn"));
 const Support = lazy(() => import("./pages/Support"));
 const FAQ = lazy(() => import("./pages/FAQ"));
+const DocPage = lazy(() => import("./pages/doc/DocPage"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
 
 
@@ -258,6 +259,8 @@ const AppContent = () => {
               <Route path="/loyalty" element={<Loyalty />} />
               <Route path="/support" element={<Support />} />
               <Route path="/faq" element={<FAQ />} />
+              <Route path="/doc" element={<DocPage />} />
+              <Route path="/doc/:section/:slug" element={<DocPage />} />
               <Route path="/blog/:slug" element={<BlogPost />} />
 
               <Route path="/profile" element={<Profile />}>

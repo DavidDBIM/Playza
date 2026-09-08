@@ -1,3 +1,4 @@
+import { Link } from "react-router";
 import { BookOpen, ChevronRight } from "lucide-react";
 
 const HomeDocs = () => {
@@ -15,19 +16,14 @@ const HomeDocs = () => {
             <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground dark:text-slate-500">How the platform actually works</p>
           </div>
         </div>
-        {/* Plain <a>, not react-router's <Link> — /doc is a separately
-            deployed site (playza-docs on Vercel) proxied in via a
-            vercel.json rewrite, not a route inside this app. A <Link>
-            would try to handle it client-side and 404 instead of ever
-            sending a real request for the rewrite to catch. */}
-        <a
-          href="/doc"
-          target="_blank"
-          rel="noopener noreferrer"
+        {/* /doc is a real route inside this app now (see App.tsx + DocPage),
+            so this is a normal react-router Link. */}
+        <Link
+          to="/doc"
           className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-1 hover:underline underline-offset-4 bg-primary/10 px-3 py-1.5 rounded-full border border-primary/20"
         >
           Read Docs <ChevronRight className="w-3 h-3" />
-        </a>
+        </Link>
       </div>
     </section>
   );

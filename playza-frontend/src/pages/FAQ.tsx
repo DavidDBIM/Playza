@@ -262,6 +262,24 @@ const FAQ = () => {
         ))}
       </div>
 
+      {/* Full Documentation */}
+      <div className="glass-card p-8 md:p-10 rounded-[2.5rem] border border-primary/20 text-center space-y-4 relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
+        <h3 className="text-xl md:text-2xl font-black uppercase tracking-tight text-foreground">Want the full picture?</h3>
+        <p className="text-sm text-muted-foreground font-medium max-w-md mx-auto">
+          Read the complete Playza documentation — how the platform, ZA currency, and every game mode actually work.
+        </p>
+        {/* /doc is now a real route inside this app (see App.tsx), so this
+            is a normal react-router Link — no more external proxy/rewrite
+            involved, so no reason to force a full page reload. */}
+        <Link
+          to="/doc"
+          className="inline-block px-10 py-4 rounded-2xl bg-primary text-primary-foreground font-black text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-transform shadow-xl shadow-primary/30"
+        >
+          Read Full Documentation
+        </Link>
+      </div>
+
       {/* Still need help? */}
       <div className="glass-card p-10 rounded-[2.5rem] border border-border dark:border-white/5 text-center space-y-6 relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
