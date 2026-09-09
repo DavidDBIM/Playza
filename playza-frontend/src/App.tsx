@@ -112,6 +112,7 @@ const AppContent = () => {
     (pathname.startsWith("/h2h") &&
       pathname.split("/").filter(Boolean).length >= 3);
   const isRegistrationPage = pathname.includes("/registration");
+  const isDocPage = pathname === "/doc" || pathname.startsWith("/doc/");
   const isSpinActive = searchParams.get("spin") === "true";
   const showFeedback = pathname === "/wallet" || pathname === "/";
 
@@ -200,7 +201,7 @@ const AppContent = () => {
               }`
         }
       >
-        {!isGameSessionPage && !isRegistrationPage && !isGamePlayPage && (
+        {!isGameSessionPage && !isRegistrationPage && !isGamePlayPage && !isDocPage && (
           <aside className="w-72 hidden lg:block sticky self-start top-24 h-[calc(100vh-8rem)] shrink-0">
             <SideBar />
           </aside>
@@ -277,7 +278,7 @@ const AppContent = () => {
       </div>
 
       {pathname === "/" && <Footer showAbout={true} />}
-      {!isRegistrationPage && !isGamePlayPage && !activeModal && !showVerificationModal && !isSpinActive && <NavFooter />}
+      {!isRegistrationPage && !isGamePlayPage && !activeModal && !showVerificationModal && !isSpinActive && !isDocPage && <NavFooter />}
     </div>
   );
 };

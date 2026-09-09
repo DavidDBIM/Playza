@@ -22,6 +22,11 @@ const DocPage = () => {
       ? getDocContent(section, slug)
       : null;
 
+  // The hero above already shows the page title, so strip a leading
+  // "# <title>" from the markdown body — otherwise every page showed its
+  // own title twice in a row, which read as sloppy rather than just dense.
+  const displayContent = content ? content.replace(/^\s*#\s+.+\n+/, "") : content;
+
   const pageTitle = isWelcome ? "Welcome to Playza" : activePage?.title || "Documentation";
 
   const flatIndex = DOCS_FLAT.findIndex((d) => d.section.slug === section && d.page.slug === slug);
@@ -131,7 +136,20 @@ const DocPage = () => {
               </p>
             )}
 
-            <article className="prose prose-sm md:prose-base dark:prose-invert max-w-none prose-headings:font-black prose-headings:tracking-tight prose-a:text-primary prose-a:font-semibold prose-a:no-underline hover:prose-a:underline prose-table:text-sm prose-img:rounded-xl prose-blockquote:border-primary/40 prose-blockquote:not-italic prose-code:text-primary prose-code:before:content-none prose-code:after:content-none prose-strong:text-foreground">
+            <article className="prose prose-sm md:prose-base dark:prose-invert max-w-none
+                prose-headings:font-black prose-headings:tracking-tight
+                prose-h2:mt-9 prose-h2:mb-3 prose-h2:pb-2 prose-h2:border-b prose-h2:border-border dark:prose-h2:border-white/10 prose-h2:text-lg md:prose-h2:text-xl
+                prose-h3:mt-6 prose-h3:mb-2 prose-h3:text-base md:prose-h3:text-lg
+                prose-p:leading-relaxed prose-p:my-4 prose-p:text-foreground/85
+                prose-a:text-primary prose-a:font-semibold prose-a:no-underline hover:prose-a:underline
+                prose-ul:my-4 prose-ol:my-4 prose-li:my-1.5 prose-li:leading-relaxed marker:text-primary/60
+                prose-table:text-sm prose-th:font-black prose-th:uppercase prose-th:tracking-wide prose-th:text-xs
+                prose-img:rounded-xl
+                prose-blockquote:border-l-4 prose-blockquote:border-primary/40 prose-blockquote:bg-primary/5 prose-blockquote:rounded-r-lg prose-blockquote:py-2 prose-blockquote:not-italic prose-blockquote:font-medium
+                prose-code:text-primary prose-code:bg-primary/10 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:font-semibold prose-code:before:content-none prose-code:after:content-none
+                prose-pre:bg-black/40 dark:prose-pre:bg-black/40
+                prose-strong:text-foreground prose-strong:font-black
+                prose-hr:border-border dark:prose-hr:border-white/10">
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 components={{
@@ -150,7 +168,7 @@ const DocPage = () => {
                   },
                 }}
               >
-                {content}
+                {displayContent}
               </ReactMarkdown>
             </article>
 
