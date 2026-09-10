@@ -9,17 +9,13 @@ Quick answers to the things players ask most.
 
 ### How do I sign up?
 
-Sign up at [playza.games](https://www.playza.games/). {/* TODO: list supported sign-up methods once finalized — email, phone, social. */}
+Sign up at [playza.games](https://www.playza.games/).
 
 ### How do I recover my account?
-
-{/* TODO: link to recovery flow. Cover lost phone, lost email, locked account. */}
 
 For account issues, email [Admin@playza.games](mailto:Admin@playza.games).
 
 ### How do I delete my account?
-
-{/* TODO: explain the deletion / closure path and what happens to unwithdrawn $ZA and unredeemed PZA Points. */}
 
 ## Wallet & $ZA
 
@@ -88,8 +84,6 @@ Check that you were in the **same contest** as the other player — different co
 Not yet — a dedicated mobile app is **coming soon**. The web experience at [playza.games](https://www.playza.games/) works on any modern browser, including mobile. Mobile optimisation is a **Q2 2026** roadmap item.
 
 ### The site keeps crashing / not loading
-
-{/* TODO: standard troubleshooting steps — clear cache, try another browser, restart device, contact support. */}
 
 ## Contact support
 

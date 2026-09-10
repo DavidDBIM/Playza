@@ -31,7 +31,6 @@ Playza takes a small, transparent platform fee on each paid contest. The rest of
 
 - 💻 **Web** — the primary Playza experience today: [playza.games](https://www.playza.games/)
 - 📱 **Mobile app** — *coming soon*
-- {/* TODO: add tablet / desktop client / embeddable widget details if any are on the roadmap */}
 
 ## Built for developers
 

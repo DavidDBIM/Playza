@@ -5,21 +5,21 @@ Build a game. Reach Playza's players. Share in the revenue.
 
 The Playza Developer Program is how independent studios and developers get their games in front of our audience — without having to build accounts, wallets, payments, or contest infrastructure.
 
-The developer docs live at [playza-docs.vercel.app](https://playza-docs.vercel.app) and are being expanded (**Q1 2026** milestone on our [roadmap](/doc/playza-gaming/roadmap)).
+These docs are actively being expanded with deeper developer-specific content (**Q1 2026** milestone on our [roadmap](/doc/playza-gaming/roadmap)).
 
 ## What you get
 
 | You provide | Playza provides |
 | --- | --- |
 | A great game | Player accounts |
-| | $ZA wallet + payments (Paystack, Opay, bank transfer) |
-| | Four contest formats: H2H, SoloEarn, Tournaments, Games |
-| | Prize pool algorithm (scales from 5 to 50,000 players) |
-| | Matchmaking + leaderboards |
-| | PZA Points loyalty engine |
-| | Distribution to our player base |
-| | Anti-cheat, fraud, and integrity |
-| | Customer support |
+| TBD | $ZA wallet + payments (Paystack, Opay, bank transfer) |
+| TBD | Four contest formats: H2H, SoloEarn, Tournaments, Games |
+| TBD | Prize pool algorithm (scales from 5 to 50,000 players) |
+| TBD | Matchmaking + leaderboards |
+| TBD | PZA Points loyalty engine |
+| TBD | Distribution to our player base |
+| TBD | Anti-cheat, fraud, and integrity |
+| TBD | Customer support |
 
 ## Who we're looking for
 
@@ -44,8 +44,6 @@ For a game to ship on Playza, it must be possible to run it as a **fair, skill-b
 
 Playza takes a transparent platform fee from each paid contest. The rest is split between **the prize pool** (paid to winners) and **the developer share**.
 
-{/* TODO: specify the exact developer revenue share (e.g., "developers receive X% of net contest revenue") once finalized. */}
-
 ## Marketplace on the horizon
 
 A full **Developer Marketplace** with self-serve SDK and publishing tools is planned for **Q3 2026** — see the [Roadmap](/doc/playza-gaming/roadmap).
@@ -53,7 +51,6 @@ A full **Developer Marketplace** with self-serve SDK and publishing tools is pla
 ## Support during build
 
 - Direct channel with the Playza team via [Admin@playza.games](mailto:Admin@playza.games)
-- {/* TODO: add developer Discord / Slack invite when the developer community channel is live */}
 
 ## Want to start?
 

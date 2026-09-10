@@ -3,8 +3,6 @@
 
 We back the studios building the games that excite our players.
 
-{/* TODO: confirm details and amounts for each track below. Numbers are illustrative placeholders. */}
-
 ## Funding tracks
 
 ### 🌱 Idea Grants
@@ -12,7 +10,7 @@ We back the studios building the games that excite our players.
 Small grants for early-stage developers with a great prototype.
 
 - **Stage:** Pre-launch
-- **Amount:** {/* TODO — e.g., "$X – $Y" */}
+- **Amount:** TBD
 - **What we expect:** A playable build, a clear contest format (H2H, SoloEarn, Tournament, or Games), and a plan to ship.
 
 ### 🚀 Launch Grants
@@ -20,7 +18,7 @@ Small grants for early-stage developers with a great prototype.
 Larger grants for studios ready to launch a Playza-native game.
 
 - **Stage:** Pre-launch / soft launch
-- **Amount:** {/* TODO */}
+- **Amount:** TBD
 - **What we expect:** Production-ready build, signed developer agreement, and 6-month roadmap.
 
 ### 💼 Strategic Investment
@@ -28,14 +26,14 @@ Larger grants for studios ready to launch a Playza-native game.
 For studios where it makes sense for Playza (or our network) to take a longer-term position.
 
 - **Stage:** Scaling, multi-title studios
-- **Amount:** {/* TODO */}
+- **Amount:** TBD
 - **What we expect:** Solid metrics from a launched title and a clear plan for what's next.
 
 ## How to apply
 
 1. **Apply** via [Submit Your Game](/doc/build-with-playza/submit-your-game) and mention funding interest.
 2. Alternatively, email [Admin@playza.games](mailto:Admin@playza.games) with the subject **"Grant / Investment Enquiry"**.
-3. We'll reach out within {/* TODO: turnaround, e.g., 2 weeks */} if we want to dig deeper.
+3. We'll reach out within if we want to dig deeper.
 4. If aligned, we'll move into a short diligence and term-sheet stage.
 
 ## What we look for
@@ -53,13 +51,12 @@ For studios where it makes sense for Playza (or our network) to take a longer-te
 
 ## FAQs
 
-**Do I have to be an existing Playza developer to apply?**  
+**Do I have to be an existing Playza developer to apply?**
 No — first-time studios are welcome.
 
-**Do I keep my IP?**  
+**Do I keep my IP?**
 Yes. Playza doesn't take ownership of your game's IP.
 
-**When will the Developer Marketplace be live?**  
+**When will the Developer Marketplace be live?**
 The full SDK and publishing marketplace is targeted for **Q3 2026** — see the [Roadmap](/doc/playza-gaming/roadmap). Until then, we onboard developers manually.
 
-{/* TODO: add a few more FAQs once finalized: equity vs. revenue share, geographic eligibility, etc. */}

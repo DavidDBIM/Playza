@@ -12,8 +12,6 @@ Playza is meant to be fun. If it stops being fun, we want to help.
 
 ## Tools available on the platform
 
-{/* TODO: confirm which of these are live and remove rows that aren't yet. */}
-
 | Tool | What it does |
 | --- | --- |
 | **Daily deposit limit** | Cap how much $ZA you can buy in a 24-hour period. |
@@ -44,10 +42,8 @@ If any of these resonate, take a break. The platform will still be here when you
 
 ## If you need help
 
-{/* TODO: localize this list of helplines by region. */}
-
-- **Nigeria** — {/* TODO: local helpline / support service */}
-- **International** — {/* TODO: e.g., BeGambleAware, GamCare, etc. */}
+- **Nigeria** —
+- **International** —
 
 ## A note for friends and family
 

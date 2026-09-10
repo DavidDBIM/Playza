@@ -38,5 +38,5 @@ Every format has its own hub with the games that support it:
 
 Have a game you'd love to see on Playza?
 
-- Players: tell us on any [community channel](/) (X, Facebook, Instagram, Medium, YouTube).
+- Players: tell us on any community channel (X, Facebook, Instagram, Medium, YouTube).
 - Developers: submit it via **[Submit Your Game](/doc/build-with-playza/submit-your-game)**.

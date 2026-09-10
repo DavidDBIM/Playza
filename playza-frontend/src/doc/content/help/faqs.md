@@ -5,7 +5,7 @@
 
 ### What is Playza?
 
-Playza is a **skill-based competitive gaming platform** where players compete across H2H, SoloEarn, Tournaments, and Games (leaderboards) using **$ZA**, our in-platform currency, and earn **PZA Points** for loyalty. See [Welcome](/) and [Key Summary](/doc/introduction/key-summary).
+Playza is a **skill-based competitive gaming platform** where players compete across H2H, SoloEarn, Tournaments, and Games (leaderboards) using **$ZA**, our in-platform currency, and earn **PZA Points** for loyalty. See [Welcome](/doc) and [Key Summary](/doc/introduction/key-summary).
 
 ### Is Playza a casino?
 

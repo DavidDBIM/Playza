@@ -12,9 +12,6 @@ The modern free-to-play gaming model is hugely successful — billions of player
 
 Playza is built around a simple question: **what if a player's skill and time could be rewarded in something that has real-world value to them?**
 
-{/* TODO: replace with a graphic that contrasts "traditional F2P" vs "Playza" */}
-![Inspiration comparison placeholder](/images/inspiration-compare.png)
-
 ## What we took from the best
 
 | Source of inspiration | What we borrowed |

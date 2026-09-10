@@ -29,12 +29,10 @@ If you're not sure, apply anyway — we're happy to help shape the contest forma
 
 📨 **Email:** [Admin@playza.games](mailto:Admin@playza.games) with the subject **"Game Submission"**
 
-{/* TODO: swap in a dedicated form (Tally / Typeform / Notion) or Discord intake link when available. */}
-
 ## What happens after you submit
 
-1. **Acknowledgement** within {/* TODO: e.g., 3 business days */}.
-2. **First review** within {/* TODO: e.g., 2 weeks */}, often including a short intro call.
+1. **Acknowledgement** within .
+2. **First review** within , often including a short intro call.
 3. If green-lit, we move to **technical integration** and **test contests** (see [Developer Program](/doc/build-with-playza/developer-program)).
 4. **Soft launch** → **full launch**.
 

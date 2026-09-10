@@ -53,49 +53,47 @@ This page lists the rules that apply across **every** Playza contest, plus point
 
 ## Scoring (per game)
 
-{/* TODO: for each of the 7 live games, add the game-specific scoring formula, tiebreakers, and time limit. */}
-
 ### 3D Stack Ball — Arcade
 
-- Scoring formula: {/* TODO */}
-- Tiebreakers: {/* TODO */}
-- Time limit: {/* TODO */}
+- Scoring formula: TBD
+- Tiebreakers: TBD
+- Time limit: TBD
 
 ### Emoji Pop Arena — Arcade
 
-- Scoring formula: {/* TODO */}
-- Tiebreakers: {/* TODO */}
-- Time limit: {/* TODO */}
+- Scoring formula: TBD
+- Tiebreakers: TBD
+- Time limit: TBD
 
 ### Bubble Shooter Blitz — Puzzle
 
-- Scoring formula: {/* TODO */}
-- Tiebreakers: {/* TODO */}
-- Time limit: {/* TODO */}
+- Scoring formula: TBD
+- Tiebreakers: TBD
+- Time limit: TBD
 
 ### 2048 Master — Puzzle
 
-- Scoring formula: {/* TODO */}
-- Tiebreakers: {/* TODO */}
-- Time limit: {/* TODO */}
+- Scoring formula: TBD
+- Tiebreakers: TBD
+- Time limit: TBD
 
 ### Chess — Strategy
 
-- Scoring formula: {/* TODO */}
-- Tiebreakers: {/* TODO */}
-- Time limit: {/* TODO */}
+- Scoring formula: TBD
+- Tiebreakers: TBD
+- Time limit: TBD
 
 ### Memory Playza — Puzzle
 
-- Scoring formula: {/* TODO */}
-- Tiebreakers: {/* TODO */}
-- Time limit: {/* TODO */}
+- Scoring formula: TBD
+- Tiebreakers: TBD
+- Time limit: TBD
 
 ### Playza Snake — Arcade
 
-- Scoring formula: {/* TODO */}
-- Tiebreakers: {/* TODO */}
-- Time limit: {/* TODO */}
+- Scoring formula: TBD
+- Tiebreakers: TBD
+- Time limit: TBD
 
 > As we add games, we add scoring details here. Each game's in-app **How to play** also includes its full rules.
 
@@ -108,7 +106,7 @@ This page lists the rules that apply across **every** Playza contest, plus point
 
 ## Disputes & reviews
 
-- If you think a contest outcome is wrong, open a dispute from the contest result screen within **{/* TODO: window, e.g., 48 hours */}**.
+- If you think a contest outcome is wrong, open a dispute from the contest result screen within TBD.
 - For urgent issues, email [Admin@playza.games](mailto:Admin@playza.games) with the contest ID.
 - Disputes are reviewed by the Playza team. We may look at game logs, scores, and device data to make a call.
 - Decisions on disputes are final.

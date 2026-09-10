@@ -24,7 +24,7 @@ Where Playza is going next.
 | **Expanded Game Catalog** | Ongoing | New titles added regularly across H2H, SoloEarn, and Tournaments |
 | **Multi-Currency Payments** | Q2 2026 | International payment support for players anywhere in the world |
 | **Referral Program** | Q1 2026 | Earn $ZA for every verified player you bring to the platform |
-| **Developer Docs** | Q1 2026 | Technical documentation live at [playza-docs.vercel.app](https://playza-docs.vercel.app) |
+| **Developer Docs** | Q1 2026 | Deeper developer-specific technical documentation |
 | **Mobile Optimisation** | Q2 2026 | Smoother experience across all screen sizes and devices |
 
 ## 🔭 Planned
