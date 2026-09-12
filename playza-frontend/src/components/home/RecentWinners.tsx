@@ -49,7 +49,7 @@ const RecentWinners = () => {
             {displayWinners.map(({ id, username, game, amountWon, playedAt }, i) => (
               <div
                 key={`${id}-${i}`}
-                className="relative flex items-center gap-2 md:gap-4 px-2 md:px-4 py-2 rounded-2xl glass-card border border-primary/20 bg-slate-900/95 shrink-0"
+                className="relative flex items-center gap-2 md:gap-4 px-2 md:px-4 py-2 rounded-2xl border border-primary/20 bg-slate-900/95 shadow-lg shrink-0"
               >
                 {/* Content — these chips are a deliberately dark "live
                     ticker" strip, same idea as the HeroBanner carousel:
