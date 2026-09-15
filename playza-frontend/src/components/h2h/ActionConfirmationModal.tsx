@@ -1,4 +1,4 @@
-import { ShieldCheck, AlertCircle } from 'lucide-react';
+import { ShieldCheck, AlertCircle, Loader2 } from 'lucide-react';
 import { ZASymbol } from '@/components/currency/ZASymbol';
 
 interface ActionConfirmationModalProps {
@@ -12,31 +12,35 @@ const ActionConfirmationModal = ({ confirmingAction, onCancel, onConfirm, isLoad
   if (!confirmingAction) return null;
 
   return (
-    <div className="fixed inset-0 z-200 flex items-center justify-center bg-slate-950/80 p-2">
-      <div className="w-full max-w-md bg-white dark:bg-slate-900 border-2 border-primary/30 rounded-xl p-4 md:p-6 space-y-6 md:space-y-8">
-        <div className="flex flex-col items-center text-center space-y-2 md:space-y-4">
-          <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-primary/10 flex items-center justify-center">
-            <ShieldCheck className="text-primary w-10 h-10 md:w-12 md:h-12" />
+    <div className="fixed inset-0 z-200 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
+      <div className="relative w-full max-w-md bg-white dark:bg-slate-950 border border-indigo-500/20 rounded-3xl p-6 md:p-8 space-y-6 overflow-hidden">
+        <div className="absolute -top-16 left-1/2 -translate-x-1/2 w-72 h-48 bg-indigo-500/25 blur-[80px] rounded-full pointer-events-none" />
+
+        <div className="relative flex flex-col items-center text-center space-y-3">
+          <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-indigo-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+            <ShieldCheck className="text-white w-9 h-9 md:w-10 md:h-10" />
           </div>
           <div>
-            <h2 className="text-lg md:text-xl lg:text-2xl font-black uppercase italic tracking-tighter text-slate-900 dark:text-white">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-500 dark:text-indigo-400 mb-1">
+              Last Step
+            </p>
+            <h2 className="text-xl md:text-2xl font-black uppercase italic tracking-tighter text-slate-900 dark:text-white">
               Authorize Entry
             </h2>
-            <div className="h-1 w-12 bg-primary/30 mx-auto mt-2 rounded-full"></div>
           </div>
         </div>
 
-        <div className="bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-2xl p-4 space-y-4 md:space-y-6">
-          <p className="text-[10px] md:text-xs text-slate-500 font-bold uppercase tracking-widest text-center leading-relaxed">
+        <div className="relative bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-2xl p-5 space-y-4">
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium text-center leading-relaxed">
             Wallet verification required. To enter this H2H battle, the room's
             entry fee will be deducted from your balance.
           </p>
 
-          <div className="flex items-center justify-center gap-3 py-2">
+          <div className="flex items-center justify-center gap-3 py-1">
             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-               Entry Fee:
+              Entry Fee:
             </span>
-            <span className="text-lg md:text-xl lg:text-3xl font-black text-indigo-500 italic">
+            <span className="text-2xl md:text-3xl font-black text-indigo-500 dark:text-indigo-400 italic flex items-center gap-1">
               {confirmingAction.stake > 0 ? (
                 <>
                   {confirmingAction.stake} <ZASymbol className="scale-125" />
@@ -47,26 +51,26 @@ const ActionConfirmationModal = ({ confirmingAction, onCancel, onConfirm, isLoad
             </span>
           </div>
 
-          <div className="flex items-center gap-2 text-[8px] md:text-[9px] text-amber-500 font-black uppercase justify-center bg-amber-500/5 py-2 rounded-lg border border-amber-500/10">
-            <AlertCircle size={14} />
+          <div className="flex items-center gap-2 text-[9px] text-amber-600 dark:text-amber-400 font-black uppercase justify-center bg-amber-500/10 py-2.5 rounded-xl border border-amber-500/20">
+            <AlertCircle size={14} className="shrink-0" />
             Match abandonment forfeits this stake
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="relative grid grid-cols-2 gap-3">
           <button
             onClick={onCancel}
-            className="py-4 rounded-xl font-black uppercase text-[10px] tracking-widest text-slate-500 active:bg-black/5 dark:active:bg-white/5"
+            className="py-3.5 rounded-xl font-black uppercase text-[10px] tracking-widest text-slate-500 hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
             disabled={isLoading}
-            className="py-4 bg-primary text-slate-950 rounded-xl font-black uppercase text-[10px] tracking-[0.2em] flex items-center justify-center gap-2 active:translate-y-1"
+            className="py-3.5 bg-indigo-500 hover:bg-indigo-600 disabled:opacity-60 text-white rounded-xl font-black uppercase text-[10px] tracking-[0.2em] flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/25 transition-colors active:scale-[0.98]"
           >
             {isLoading ? (
-              <div className="w-4 h-4 border-2 border-slate-900 border-t-transparent rounded-full animate-spin"></div>
+              <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
               "Agree & Join"
             )}
