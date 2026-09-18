@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import SEO from "@/components/SEO";
 import { ZASymbol } from "@/components/currency/ZASymbol";
-import { linkifyText } from "./ChessTournamentPage";
+import { linkifyText, linkifyTextCompact } from "./ChessTournamentPage";
 
 const STATUS = {
   active:       { label: "LIVE NOW",     short: "LIVE",     color: "#ef4444", bg: "rgba(239,68,68,0.12)",   border: "rgba(239,68,68,0.3)",   live: true  },
@@ -398,7 +398,7 @@ function TCard({ qt, featured, onRegistered }: { qt: QuizTournament; featured?: 
           <div style={{ padding: "12px 14px 14px", display: "flex", flexDirection: "column", flex: 1, gap: 9 }}>
             <div>
               <h3 style={{ fontSize: "clamp(12px,3vw,14px)", fontWeight: 700, color: "var(--foreground)", lineHeight: 1.3, margin: "0 0 3px", wordBreak: "break-word" }}>{qt.title}</h3>
-              {qt.description && <p style={{ fontSize: "clamp(10px,2.5vw,11px)", color: "var(--muted-foreground)", lineHeight: 1.4, margin: 0, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" } as any}>{linkifyText(qt.description)}</p>}
+              {qt.description && <p style={{ fontSize: "clamp(10px,2.5vw,11px)", color: "var(--muted-foreground)", lineHeight: 1.4, margin: 0, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" } as any}>{linkifyTextCompact(qt.description)}</p>}
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 5 }}>
               {[{ val: qt.prize_pool > 0 ? qt.prize_pool.toLocaleString() : "TBD", lbl: "ZA Prize" }, { val: maxPlayers ? qt.player_count + "/" + maxPlayers : qt.player_count.toString(), lbl: "Players" }, { val: qt.entry_fee > 0 ? qt.entry_fee + " ZA" : "Free", lbl: "Entry" }].map((s, i) => (

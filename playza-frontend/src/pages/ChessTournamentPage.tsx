@@ -13,8 +13,8 @@ import {
 // clickable pill — moved to a shared util so blog posts can use it too.
 // Imported here (used directly further down) AND re-exported (since
 // Tournaments.tsx imports it from this file).
-import { linkifyText } from "@/utils/linkify";
-export { linkifyText };
+import { linkifyText, linkifyTextCompact } from "@/utils/linkify";
+export { linkifyText, linkifyTextCompact };
 
 // ── Countdown ──────────────────────────────────────────────────────────────────
 function useCountdown(targetIso: string | null | undefined) {

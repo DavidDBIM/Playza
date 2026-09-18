@@ -399,6 +399,11 @@ body.modal-open {
   -webkit-overflow-scrolling: auto !important;
 }
 
+@keyframes shimmer {
+  0% { background-position: 0% center; }
+  100% { background-position: 200% center; }
+}
+
 @keyframes scroll-winner {
   from { transform: translate3d(0,0,0); }
   to   { transform: translate3d(-50%,0,0); }
