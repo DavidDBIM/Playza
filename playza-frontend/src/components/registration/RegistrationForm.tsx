@@ -11,7 +11,6 @@ import { useSignup } from "@/hooks/auth/useSignup";
 import { useRegistration } from "@/hooks/auth/useRegistration";
 import { useValidateReferral } from "@/hooks/referral/useValidateReferral";
 import { Link, useLocation } from "react-router";
-import Turnstile from "@/components/common/Turnstile";
 
 const BRAND = "#00aeee"; // Playza's actual logo blue, sampled directly from
 // the real logo.webp pixels — fixed here rather than a theme CSS variable,
@@ -52,8 +51,6 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
   const [countrySearch, setCountrySearch] = useState("");
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState(COUNTRIES[0]);
-  const [captchaToken, setCaptchaToken] = useState("");
-  const [turnstileKey, setTurnstileKey] = useState(0);
 
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
@@ -151,7 +148,6 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
       country: data.country,
       phone: `${data.dialCode}${data.phone}`,
       password: data.password,
-      captcha_token: captchaToken,
       ...(data.referralCode?.trim() ? { referral_code: data.referralCode.trim() } : {}),
     };
 
@@ -164,10 +160,6 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
       onError: (err: unknown) => {
         const error = err as { response?: { data?: { message?: string } }; message?: string };
         setFormError(error.response?.data?.message || error.message || "An error occurred during signup");
-        // Token is single-use — Cloudflare invalidates it the moment the
-        // backend checks it, so a fresh widget is needed for the retry.
-        setCaptchaToken("");
-        setTurnstileKey((k) => k + 1);
       },
     });
   };
@@ -407,12 +399,8 @@ const RegistrationForm = ({ onClick }: RegistrationFormProps) => {
             {errors.acceptedTerms && <p className="text-xs text-red-500 mt-1 ml-[26px]">{errors.acceptedTerms.message}</p>}
           </div>
 
-          <div className="flex justify-center">
-            <Turnstile key={turnstileKey} onVerify={setCaptchaToken} />
-          </div>
-
           <button
-            disabled={isPending || !isValid || (!!referralCodeValue && referralCodeValue.length >= 4 && validationData?.valid === false) || (!!import.meta.env.VITE_TURNSTILE_SITE_KEY && !captchaToken)}
+            disabled={isPending || !isValid || (!!referralCodeValue && referralCodeValue.length >= 4 && validationData?.valid === false)}
             className="w-full py-3 rounded-lg text-white font-semibold text-sm transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
             style={{ background: BRAND }}
             type="submit"

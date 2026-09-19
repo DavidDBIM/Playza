@@ -26,7 +26,8 @@ const FullGame = () => {
     // ALSO: Exclude "Solo Earn" and "Head to Head" as they have their own dedicated pages
     const gamesToUse = rawGames.filter((g: Game) => {
       const isActiveOrDev = g.is_active === true || isDev;
-      const isNotSpecialMode = g.mode !== "Solo Earn" && g.mode !== "Head to Head";
+      const isNotSpecialMode =
+        (g.mode !== "Solo Earn" && g.mode !== "Head to Head") || g.slug === "darts";
       return isActiveOrDev && isNotSpecialMode;
     });
 

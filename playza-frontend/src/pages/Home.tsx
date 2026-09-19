@@ -50,7 +50,8 @@ const Home = () => {
     const isDev = window.location.hostname === 'localhost';
     const filteredList = rawGamesList.filter((g: Game) => {
       const isActiveOrDev = g.is_active === true || isDev;
-      const isNotSpecialMode = g.mode !== "Solo Earn" && g.mode !== "Head to Head";
+      const isNotSpecialMode =
+        (g.mode !== "Solo Earn" && g.mode !== "Head to Head") || g.slug === "darts";
       return isActiveOrDev && isNotSpecialMode;
     });
 
