@@ -130,19 +130,22 @@ const SoloEarn = () => {
   return (
     <div className="w-full flex flex-col min-w-0 space-y-8 animate-in fade-in pb-24 md:pb-10">
 
-      {/* Hero */}
-      <header className="relative overflow-hidden rounded-3xl border border-emerald-500/20 bg-slate-950 px-5 md:px-8 py-10 md:py-14 text-center">
-        <div className="absolute -top-16 left-1/2 -translate-x-1/2 w-[420px] h-[260px] bg-emerald-500/30 blur-[90px] rounded-full pointer-events-none" />
+      {/* Hero — shrunk to match H2H's size, and the badge now gets the
+          same gradient shimmer + glow treatment H2H's badge has, just in
+          emerald instead of indigo, so both hubs feel consistent. */}
+      <header className="relative overflow-hidden rounded-3xl border border-emerald-500/20 bg-slate-950 px-5 md:px-8 py-6 md:py-8 text-center">
+        <div className="absolute -top-16 left-1/2 -translate-x-1/2 w-[420px] h-[220px] bg-emerald-500/30 blur-[90px] rounded-full pointer-events-none" />
 
-        <div className="relative space-y-4">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-[0.2em]">
+        <div className="relative space-y-3">
+          <div className="relative inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-500 bg-[length:200%_auto] animate-[shimmer_3s_linear_infinite] text-white text-[10px] font-black uppercase tracking-[0.2em] shadow-[0_0_20px_rgba(16,185,129,0.5)]">
             <span className="relative flex h-2 w-2">
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500 animate-pulse"></span>
+              <span className="absolute inline-flex h-full w-full rounded-full bg-white opacity-75 animate-ping"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
             </span>
             Solo Earn Challenges
           </div>
 
-          <h1 className="font-headline text-3xl md:text-5xl lg:text-6xl font-black tracking-tighter uppercase italic leading-tight text-white">
+          <h1 className="font-headline text-2xl md:text-4xl lg:text-5xl font-black tracking-tighter uppercase italic leading-tight text-white">
             Play Alone. <span className="text-emerald-400">Win Alone.</span>
           </h1>
 
@@ -150,26 +153,26 @@ const SoloEarn = () => {
             No opponent needed. Stake your entry, chase a high score, and multiply your earnings based on how well you play.
           </p>
 
-          <div className="flex items-center justify-center gap-2.5 flex-wrap pt-2">
-            <div className="flex items-center gap-2 bg-white/[0.04] border border-white/10 rounded-2xl px-4 py-2.5">
-              <Gamepad2 className="w-4 h-4 text-emerald-400" />
+          <div className="flex items-center justify-center gap-2 flex-wrap pt-1">
+            <div className="flex items-center gap-1.5 bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2">
+              <Gamepad2 className="w-3.5 h-3.5 text-emerald-400" />
               <div className="text-left">
-                <p className="text-white text-sm font-black leading-none">{liveSoloGames.length}</p>
-                <p className="text-slate-500 text-[8px] font-bold uppercase tracking-widest leading-none mt-1">Games Live</p>
+                <p className="text-white text-xs font-black leading-none">{liveSoloGames.length}</p>
+                <p className="text-slate-500 text-[7px] font-bold uppercase tracking-widest leading-none mt-1">Games Live</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 bg-white/[0.04] border border-white/10 rounded-2xl px-4 py-2.5">
-              <TrendingUp className="w-4 h-4 text-emerald-400" />
+            <div className="flex items-center gap-1.5 bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2">
+              <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
               <div className="text-left">
-                <p className="text-white text-sm font-black leading-none">2.0x</p>
-                <p className="text-slate-500 text-[8px] font-bold uppercase tracking-widest leading-none mt-1">Max Payout</p>
+                <p className="text-white text-xs font-black leading-none">2.0x</p>
+                <p className="text-slate-500 text-[7px] font-bold uppercase tracking-widest leading-none mt-1">Max Payout</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 bg-white/[0.04] border border-white/10 rounded-2xl px-4 py-2.5">
-              <Zap className="w-4 h-4 text-emerald-400" />
+            <div className="flex items-center gap-1.5 bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2">
+              <Zap className="w-3.5 h-3.5 text-emerald-400" />
               <div className="text-left">
-                <p className="text-white text-sm font-black leading-none">Instant</p>
-                <p className="text-slate-500 text-[8px] font-bold uppercase tracking-widest leading-none mt-1">Results</p>
+                <p className="text-white text-xs font-black leading-none">Instant</p>
+                <p className="text-slate-500 text-[7px] font-bold uppercase tracking-widest leading-none mt-1">Results</p>
               </div>
             </div>
           </div>
