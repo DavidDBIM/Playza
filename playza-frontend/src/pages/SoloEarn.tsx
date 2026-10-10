@@ -1,9 +1,11 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router";
-import { Sparkles, Loader2, Gamepad2, TrendingUp, Zap } from "lucide-react"; 
+import { Sparkles, Loader2, Gamepad2, TrendingUp, Wallet } from "lucide-react"; 
 import { startSoloSession, endSoloSession } from '@/api/soloearn.api';
 import { useToast } from '@/context/toast';
-import { useGames } from "@/hooks/gamesession/useGameSession";
+import { useGames, usePayoutStats } from "@/hooks/gamesession/useGameSession";
+import { AnimatedAmount } from "@/components/common/AnimatedAmount";
+import { ZASymbol } from "@/components/currency/ZASymbol";
 
 import type { Game } from '@/components/soloearn/types';
 import { SoloGameCard } from '@/components/soloearn/SoloGameCard';
@@ -18,6 +20,8 @@ import SEO from "@/components/SEO"
 const SoloEarn = () => {
   const toast = useToast();
   const { data: gamesData, isLoading } = useGames();
+  const { data: payoutStats } = usePayoutStats();
+  const totalPaidOut = payoutStats?.solo.total ?? 0;
   
   const [view, setView] = useState('hub');
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
@@ -169,10 +173,13 @@ const SoloEarn = () => {
               </div>
             </div>
             <div className="flex items-center gap-1.5 bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2">
-              <Zap className="w-3.5 h-3.5 text-emerald-400" />
+              <Wallet className="w-3.5 h-3.5 text-emerald-400" />
               <div className="text-left">
-                <p className="text-white text-xs font-black leading-none">Instant</p>
-                <p className="text-slate-500 text-[7px] font-bold uppercase tracking-widest leading-none mt-1">Results</p>
+                <p className="text-white text-xs font-black leading-none tabular-nums flex items-center gap-1">
+                  <ZASymbol className="text-[10px]" />
+                  <AnimatedAmount value={totalPaidOut} />
+                </p>
+                <p className="text-slate-500 text-[7px] font-bold uppercase tracking-widest leading-none mt-1">Total Payout</p>
               </div>
             </div>
           </div>
@@ -189,7 +196,12 @@ const SoloEarn = () => {
         {liveSoloGames.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
             {liveSoloGames.map(game => (
-              <SoloGameCard key={game.id} game={game} onSelect={handleSelectGame} />
+              <SoloGameCard
+                key={game.id}
+                game={game}
+                onSelect={handleSelectGame}
+                payout={payoutStats?.solo.byGame[game.title.trim().toLowerCase()] ?? 0}
+              />
             ))}
           </div>
         ) : (

@@ -3,7 +3,10 @@ import { Link } from "react-router";
 import { useAuth } from "@/context/auth";
 import { Button } from "@/components/ui/button";
 import { MdLogin, MdClose } from "react-icons/md";
-import { Swords, Zap, Play } from "lucide-react";
+import { Swords, Zap, Play, Wallet } from "lucide-react";
+import { usePayoutStats } from "@/hooks/gamesession/useGameSession";
+import { AnimatedAmount } from "@/components/common/AnimatedAmount";
+import { ZASymbol } from "@/components/currency/ZASymbol";
 
 interface GameType {
   id: string;
@@ -24,22 +27,20 @@ const LobbyHub = ({ games, setSelectedGame }: LobbyHubProps) => {
   const { user } = useAuth();
   const [showLoginModal, setShowLoginModal] = useState(false);
 
-  // Real numbers derived from the actual games list — not invented. Total
-  // players currently active across every H2H game, and how many of those
-  // games have any live activity right now.
-  const { totalPlayers, liveGameCount } = useMemo(() => {
-    let players = 0;
-    let liveGames = 0;
-    for (const g of games) {
-      if (g.comingSoon) continue;
-      const n = parseInt(g.players, 10);
-      if (!isNaN(n)) {
-        players += n;
-        if (n > 0) liveGames++;
-      }
-    }
-    return { totalPlayers: players, liveGameCount: liveGames };
-  }, [games]);
+  const { data: payoutStats } = usePayoutStats();
+  const totalPaidOut = payoutStats?.h2h.total ?? 0;
+
+  // Real number derived from the actual games list — total players currently
+  // active across every H2H game.
+  const totalPlayers = useMemo(
+    () =>
+      games.reduce((sum, g) => {
+        if (g.comingSoon) return sum;
+        const n = parseInt(g.players, 10);
+        return sum + (isNaN(n) ? 0 : n);
+      }, 0),
+    [games],
+  );
 
   const handleGameClick = (game: GameType) => {
     if (game.comingSoon) return;
@@ -87,10 +88,13 @@ const LobbyHub = ({ games, setSelectedGame }: LobbyHubProps) => {
               </div>
             </div>
             <div className="flex items-center gap-1.5 bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2">
-              <span className="w-3.5 h-3.5 flex items-center justify-center text-indigo-400 font-black text-xs">{liveGameCount}</span>
+              <Wallet className="w-3.5 h-3.5 text-indigo-400" />
               <div className="text-left">
-                <p className="text-white text-xs font-black leading-none">{liveGameCount} Live</p>
-                <p className="text-slate-500 text-[7px] font-bold uppercase tracking-widest leading-none mt-1">Games Active</p>
+                <p className="text-white text-xs font-black leading-none tabular-nums flex items-center gap-1">
+                  <ZASymbol className="text-[10px]" />
+                  <AnimatedAmount value={totalPaidOut} />
+                </p>
+                <p className="text-slate-500 text-[7px] font-bold uppercase tracking-widest leading-none mt-1">Total Payout</p>
               </div>
             </div>
             <div className="flex items-center gap-1.5 bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2">
@@ -109,8 +113,11 @@ const LobbyHub = ({ games, setSelectedGame }: LobbyHubProps) => {
           image-with-text-overlay treatment. */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6">
         {games.map((game) => {
-          const playerCount = parseInt(game.players, 10) || 0;
-          const isLive = !game.comingSoon && playerCount > 0;
+          // Every playable game is live; "Coming Soon" ones are the only
+          // exception. (Used to depend on players > 0, which left the
+          // badge off the cards whenever nobody happened to be online.)
+          const isLive = !game.comingSoon;
+          const gamePayout = payoutStats?.h2h.byGame[game.name.trim().toLowerCase()] ?? 0;
           return (
             <div
               key={game.id}
@@ -134,6 +141,14 @@ const LobbyHub = ({ games, setSelectedGame }: LobbyHubProps) => {
                     Live
                   </div>
                 ) : null}
+
+                {!game.comingSoon && (
+                  <div className="absolute bottom-2.5 left-2.5 flex items-center gap-1 bg-black/50 backdrop-blur-md text-white text-[9px] font-black px-2 py-1 rounded-full tabular-nums">
+                    <ZASymbol className="text-[9px]" />
+                    <AnimatedAmount value={gamePayout} format="compact" />
+                    <span className="text-indigo-300 font-bold">paid</span>
+                  </div>
+                )}
 
                 <div className="absolute bottom-2.5 right-2.5 flex items-center gap-1 bg-black/50 backdrop-blur-md text-indigo-300 text-[9px] font-black px-2 py-1 rounded-full">
                   {game.players} online

@@ -47,6 +47,18 @@ export const useRecentWinners = (limit = 30) => {
   });
 };
 
+// Total paid out to players, split by Solo Earn and Head-to-Head. Polled so the
+// counters on both hubs keep climbing as people get paid.
+export const usePayoutStats = () => {
+  return useQuery({
+    queryKey: ["payout-stats"],
+    queryFn: () => GameSessionApi.getPayoutStats(),
+    staleTime: 20 * 1000,
+    refetchInterval: 30 * 1000,
+    refetchOnWindowFocus: false,
+  });
+};
+
 export const useActiveSession = (slug: string) => {
   const queryClient = useQueryClient();
 

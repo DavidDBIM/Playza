@@ -1,7 +1,9 @@
 import type { GameProps } from "./types";
 import { Play, TrendingUp } from "lucide-react";
+import { AnimatedAmount } from "@/components/common/AnimatedAmount";
+import { ZASymbol } from "@/components/currency/ZASymbol";
 
-export const SoloGameCard = ({ game, onSelect }: GameProps) => (
+export const SoloGameCard = ({ game, onSelect, payout = 0 }: GameProps) => (
   <div
     onClick={() => onSelect?.(game)}
     className="group flex flex-col gap-3 cursor-pointer"
@@ -19,6 +21,13 @@ export const SoloGameCard = ({ game, onSelect }: GameProps) => (
       <div className="absolute top-2.5 left-2.5 flex items-center gap-1 bg-emerald-500 text-white text-[9px] font-black uppercase tracking-wide px-2 py-1 rounded-full shadow-lg">
         <TrendingUp className="w-2.5 h-2.5" />
         Up to 2.0x
+      </div>
+
+      {/* Total paid out on this game so far — ticks up as players earn */}
+      <div className="absolute bottom-2.5 left-2.5 flex items-center gap-1 bg-black/50 backdrop-blur-md text-white text-[9px] font-black px-2 py-1 rounded-full tabular-nums">
+        <ZASymbol className="text-[9px]" />
+        <AnimatedAmount value={payout} format="compact" />
+        <span className="text-emerald-300 font-bold">paid</span>
       </div>
 
       {/* Play Button Overlay */}

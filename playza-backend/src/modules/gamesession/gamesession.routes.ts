@@ -74,6 +74,15 @@ router.get('/recent-winners', async (req, res) => {
   }
 })
 
+router.get('/payout-stats', async (_req, res) => {
+  try {
+    const stats = await GameSessionService.getPayoutStats()
+    res.json({ success: true, ...stats })
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message })
+  }
+})
+
 router.get('/sessions/:slug/active', async (req, res) => {
   try {
     const result = await GameSessionService.getActiveSession(req.params.slug)

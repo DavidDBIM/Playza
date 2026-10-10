@@ -875,3 +875,76 @@ export async function getRecentWinners(limit: number = 30) {
     playedAt: row.played_at,
   }))
 }
+
+// ── Total payout stats ──────────────────────────────────────────────────
+// Powers the "Total Payout" counters on the Solo Earn and Head-to-Head hubs
+// (hero stat + per-game card pills). Everything is derived from game_history
+// wins, the same source as the Live Winners ticker, so the number only ever
+// goes up as people actually get paid.
+//   • Solo Earn rows are written as "Solo: <game title>".
+//   • H2H rows use the game's own name (Chess, Darts, Ludo, ...), so we match
+//     them against games whose mode is "Head to Head" — that keeps Arena /
+//     tournament payouts out of the H2H figure.
+// Summing every row on each request would get slow as history grows, so the
+// result is cached briefly in memory; the frontend polls well within that.
+type PayoutBucket = { total: number; byGame: Record<string, number> }
+type PayoutStats = { solo: PayoutBucket; h2h: PayoutBucket }
+
+const PAYOUT_CACHE_MS = 20 * 1000
+let payoutCache: { at: number; value: PayoutStats } | null = null
+
+export async function getPayoutStats(): Promise<PayoutStats> {
+  if (payoutCache && Date.now() - payoutCache.at < PAYOUT_CACHE_MS) {
+    return payoutCache.value
+  }
+
+  const { data: games, error: gamesErr } = await supabase
+    .from('games')
+    .select('title, mode')
+  if (gamesErr) throw gamesErr
+
+  const h2hTitles = new Set<string>(
+    (games ?? [])
+      .filter((g: any) => g.mode === 'Head to Head')
+      .map((g: any) => String(g.title).trim().toLowerCase())
+  )
+
+  const solo: PayoutBucket = { total: 0, byGame: {} }
+  const h2h: PayoutBucket = { total: 0, byGame: {} }
+
+  // PostgREST caps a response at 1000 rows, so page through the wins.
+  const PAGE = 1000
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await supabase
+      .from('game_history')
+      .select('game_name, winnings')
+      .eq('status', 'win')
+      .gt('winnings', 0)
+      .order('played_at', { ascending: true })
+      .range(from, from + PAGE - 1)
+    if (error) throw error
+    if (!data || data.length === 0) break
+
+    for (const row of data as any[]) {
+      const name = String(row.game_name ?? '').trim()
+      const amount = Number(row.winnings) || 0
+      if (!name || amount <= 0) continue
+
+      if (name.toLowerCase().startsWith('solo:')) {
+        const key = name.slice(5).trim().toLowerCase()
+        solo.total += amount
+        solo.byGame[key] = (solo.byGame[key] || 0) + amount
+      } else if (h2hTitles.has(name.toLowerCase())) {
+        const key = name.toLowerCase()
+        h2h.total += amount
+        h2h.byGame[key] = (h2h.byGame[key] || 0) + amount
+      }
+    }
+
+    if (data.length < PAGE) break
+  }
+
+  const value = { solo, h2h }
+  payoutCache = { at: Date.now(), value }
+  return value
+}

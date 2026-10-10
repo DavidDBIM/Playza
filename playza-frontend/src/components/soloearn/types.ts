@@ -16,5 +16,7 @@ export interface GameProps {
   onResult?: (multiplier?: number) => void;
   onPlayAgain?: () => void;
   stake?: string;
+  // Total paid out to players on this game so far (shown on the card).
+  payout?: number;
   multiplier?: number;
 }

@@ -8,6 +8,22 @@ export interface RecentWinner {
   playedAt: string;
 }
 
+export interface PayoutBucket {
+  total: number;
+  // keyed by lower-cased game title
+  byGame: Record<string, number>;
+}
+
+export interface PayoutStats {
+  solo: PayoutBucket;
+  h2h: PayoutBucket;
+}
+
+export const getPayoutStats = async (): Promise<PayoutStats> => {
+  const response = await axiosInstance.get("/gamesession/payout-stats");
+  return { solo: response.data.solo, h2h: response.data.h2h };
+};
+
 export const getGames = async () => {
   const response = await axiosInstance.get("/gamesession/games");
   return response.data;
