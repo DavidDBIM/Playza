@@ -878,20 +878,32 @@ export async function getRecentWinners(limit: number = 30) {
 
 // ── Total payout stats ──────────────────────────────────────────────────
 // Powers the "Total Payout" counters on the Solo Earn and Head-to-Head hubs
-// (hero stat + per-game card pills). Everything is derived from game_history
-// wins, the same source as the Live Winners ticker, so the number only ever
-// goes up as people actually get paid.
-//   • Solo Earn rows are written as "Solo: <game title>".
-//   • H2H rows use the game's own name (Chess, Darts, Ludo, ...), so we match
-//     them against games whose mode is "Head to Head" — that keeps Arena /
-//     tournament payouts out of the H2H figure.
-// Summing every row on each request would get slow as history grows, so the
-// result is cached briefly in memory; the frontend polls well within that.
+// (hero stat + per-game card pills). Totals only ever go up as people get paid.
+//
+// Everything is attributed by game SLUG, which never changes, and only then
+// translated to the game's *current* title for the frontend. Matching on the
+// title stored in game_history broke as soon as a game was renamed (old wins
+// stayed under the old name and the card showed 0).
+//   • Solo Earn  → soloearn_sessions (game_id = slug, payout, completed).
+//   • H2H        → game_history wins, where game_name is a fixed label written
+//                  by each game's service ("Chess", "8-Ball Pool", ...), mapped
+//                  to its slug below. Arena / tournament payouts stay out.
+// The result is cached briefly in memory so this stays cheap as history grows.
 type PayoutBucket = { total: number; byGame: Record<string, number> }
 type PayoutStats = { solo: PayoutBucket; h2h: PayoutBucket }
 
 const PAYOUT_CACHE_MS = 20 * 1000
 let payoutCache: { at: number; value: PayoutStats } | null = null
+
+// game_history.game_name written by each H2H service → that game's slug.
+// Add a line here when a new H2H game starts writing its own history label.
+const H2H_HISTORY_NAME_TO_SLUG: Record<string, string> = {
+  'chess': 'chess',
+  'darts': 'darts',
+  'ludo': 'ludo',
+  '8-ball pool': 'pool',
+  'emoji pop duel': 'emoji-pop',
+}
 
 export async function getPayoutStats(): Promise<PayoutStats> {
   if (payoutCache && Date.now() - payoutCache.at < PAYOUT_CACHE_MS) {
@@ -900,20 +912,47 @@ export async function getPayoutStats(): Promise<PayoutStats> {
 
   const { data: games, error: gamesErr } = await supabase
     .from('games')
-    .select('title, mode')
+    .select('title, slug, mode')
   if (gamesErr) throw gamesErr
 
-  const h2hTitles = new Set<string>(
-    (games ?? [])
-      .filter((g: any) => g.mode === 'Head to Head')
-      .map((g: any) => String(g.title).trim().toLowerCase())
-  )
+  const titleBySlug = new Map<string, string>()
+  const h2hSlugs = new Set<string>()
+  const slugByTitle = new Map<string, string>()
+  for (const g of (games ?? []) as any[]) {
+    const title = String(g.title).trim().toLowerCase()
+    titleBySlug.set(g.slug, title)
+    slugByTitle.set(title, g.slug)
+    if (g.mode === 'Head to Head') h2hSlugs.add(g.slug)
+  }
 
   const solo: PayoutBucket = { total: 0, byGame: {} }
   const h2h: PayoutBucket = { total: 0, byGame: {} }
+  const PAGE = 1000 // PostgREST caps a response at 1000 rows
 
-  // PostgREST caps a response at 1000 rows, so page through the wins.
-  const PAGE = 1000
+  // ── Solo Earn: every completed session that paid out ──
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await supabase
+      .from('soloearn_sessions')
+      .select('game_id, payout')
+      .eq('status', 'completed')
+      .gt('payout', 0)
+      .order('created_at', { ascending: true })
+      .range(from, from + PAGE - 1)
+    if (error) throw error
+    if (!data || data.length === 0) break
+
+    for (const row of data as any[]) {
+      const amount = Number(row.payout) || 0
+      if (amount <= 0) continue
+      solo.total += amount
+      // Current title when the game still exists; otherwise the slug itself.
+      const key = titleBySlug.get(row.game_id) ?? String(row.game_id).toLowerCase()
+      solo.byGame[key] = (solo.byGame[key] || 0) + amount
+    }
+    if (data.length < PAGE) break
+  }
+
+  // ── Head-to-Head: wins recorded in game_history ──
   for (let from = 0; ; from += PAGE) {
     const { data, error } = await supabase
       .from('game_history')
@@ -926,21 +965,18 @@ export async function getPayoutStats(): Promise<PayoutStats> {
     if (!data || data.length === 0) break
 
     for (const row of data as any[]) {
-      const name = String(row.game_name ?? '').trim()
+      const name = String(row.game_name ?? '').trim().toLowerCase()
       const amount = Number(row.winnings) || 0
-      if (!name || amount <= 0) continue
+      if (!name || amount <= 0 || name.startsWith('solo:')) continue
 
-      if (name.toLowerCase().startsWith('solo:')) {
-        const key = name.slice(5).trim().toLowerCase()
-        solo.total += amount
-        solo.byGame[key] = (solo.byGame[key] || 0) + amount
-      } else if (h2hTitles.has(name.toLowerCase())) {
-        const key = name.toLowerCase()
-        h2h.total += amount
-        h2h.byGame[key] = (h2h.byGame[key] || 0) + amount
-      }
+      // Known label → slug; otherwise assume the label is the game's title.
+      const slug = H2H_HISTORY_NAME_TO_SLUG[name] ?? slugByTitle.get(name)
+      if (!slug || !h2hSlugs.has(slug)) continue
+
+      const key = titleBySlug.get(slug)!
+      h2h.total += amount
+      h2h.byGame[key] = (h2h.byGame[key] || 0) + amount
     }
-
     if (data.length < PAGE) break
   }
 
