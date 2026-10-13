@@ -2,10 +2,11 @@ import { supabaseAdmin } from '../../config/supabase'
 import crypto from 'crypto'
 import { recordH2HRevenue } from '../gamesession/h2h.helper'
 
-// System bot participant — same convention chess/ludo/soccer use so a
+// System bot participant — same user row chess/ludo/pool use (a real UUID is
+// required: host_id/guest_id/current_turn/winner_id are uuid FKs to users) so a
 // bot-filled room can share the exact same status/winner_id/payout code
 // paths as a real two-human match.
-export const SYSTEM_BOT_ID = '00000000-0000-0000-0000-000000000bot'
+export const SYSTEM_BOT_ID = '00000000-0000-0000-0000-000000000000'
 
 const BOT_PERSONAS = [
   { username: 'DartsDre', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=dart1' },

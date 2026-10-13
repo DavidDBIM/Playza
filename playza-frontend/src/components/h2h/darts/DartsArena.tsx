@@ -6,7 +6,7 @@ import H2HWinner from "../H2HWinner";
 import { ZASymbol } from "@/components/currency/ZASymbol";
 import type { UserProfile } from "@/context/auth";
 
-const SYSTEM_BOT_ID = "00000000-0000-0000-0000-000000000bot";
+const SYSTEM_BOT_ID = "00000000-0000-0000-0000-000000000000";
 const SEGMENT_ORDER = [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5];
 const RING = { innerBull: 0.045, outerBull: 0.11, tripleIn: 0.56, tripleOut: 0.64, doubleIn: 0.92, doubleOut: 1.0 };
 

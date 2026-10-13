@@ -39,7 +39,7 @@ const CategoryGamesRow = ({ games, title, icon: Icon, viewAllHref }: CategoryGam
       <div className="overflow-hidden">
         <div className="flex overflow-x-auto scrollbar-hide scroll-smooth snap-x gap-1.5 snap-mandatory py-1">
           {games.map((game) => (
-            <div key={game.id} className="shrink-0 snap-start">
+            <div key={game.id} className="shrink-0 snap-start w-36 md:w-44 lg:w-60">
               <GamesCard {...game} />
             </div>
           ))}

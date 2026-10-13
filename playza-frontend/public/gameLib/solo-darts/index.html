@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+<title>Playza Darts – Solo Earn</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{width:100%;height:100%;overflow:hidden;background:#060814;color:#fff;
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;touch-action:manipulation;user-select:none}
+  #wrap{position:fixed;inset:0;display:flex;flex-direction:column}
+  #hud{display:flex;justify-content:space-between;gap:8px;padding:10px 12px 4px;flex:0 0 auto}
+  .chip{flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:14px;
+    padding:6px 8px;text-align:center}
+  .chip b{display:block;font-size:20px;font-weight:900;line-height:1.1;font-variant-numeric:tabular-nums}
+  .chip span{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#8b93b0;font-weight:700}
+  #mult b{color:#2de6aa}
+  #stage{flex:1;min-height:0;position:relative}
+  canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+  #hint{position:absolute;left:0;right:0;bottom:10px;text-align:center;font-size:11px;font-weight:800;
+    letter-spacing:.16em;text-transform:uppercase;color:#8b93b0;pointer-events:none}
+  #pop{position:absolute;left:50%;top:12%;transform:translateX(-50%);font-size:34px;font-weight:900;
+    font-style:italic;opacity:0;pointer-events:none;text-shadow:0 0 18px currentColor}
+  #pop.show{animation:pop .9s ease-out forwards}
+  @keyframes pop{0%{opacity:0;transform:translate(-50%,10px) scale(.7)}20%{opacity:1;transform:translate(-50%,0) scale(1.1)}
+    100%{opacity:0;transform:translate(-50%,-26px) scale(1)}}
+  #overlay{position:absolute;inset:0;background:rgba(6,8,20,.88);display:none;flex-direction:column;
+    align-items:center;justify-content:center;gap:10px;text-align:center;padding:24px;z-index:5}
+  #overlay.show{display:flex}
+  #overlay h1{font-size:30px;font-weight:900;font-style:italic;text-transform:uppercase}
+  #overlay p{color:#aab1cc;font-size:13px;max-width:320px;line-height:1.5}
+  #overlay .big{font-size:54px;font-weight:900;color:#2de6aa;font-variant-numeric:tabular-nums}
+  button{border:0;border-radius:999px;padding:12px 28px;font-size:13px;font-weight:900;letter-spacing:.12em;
+    text-transform:uppercase;background:#2de6aa;color:#062018;cursor:pointer}
+  button.ghost{background:transparent;color:#8b93b0;border:1px solid rgba(255,255,255,.15)}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="hud">
+    <div class="chip"><b id="dartsLeft">9</b><span>Darts left</span></div>
+    <div class="chip"><b id="total">0</b><span>Points</span></div>
+    <div class="chip" id="mult"><b id="multVal">0.00x</b><span>Multiplier</span></div>
+  </div>
+  <div id="stage">
+    <canvas id="c"></canvas>
+    <div id="pop"></div>
+    <div id="hint">Tap to throw when the crosshair is on target</div>
+    <div id="overlay">
+      <h1 id="ovTitle">Playza Darts</h1>
+      <div class="big" id="ovBig" style="display:none"></div>
+      <p id="ovText">9 darts. The crosshair drifts, so time your tap — you get 6 seconds per dart. Beat 160 points to win — 360 points pays the full 2.0x.</p>
+      <button id="ovBtn">Start</button>
+      <button class="ghost" id="ovExit" style="display:none">Exit</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  // ── Config ───────────────────────────────────────────────────────────
+  const TOTAL_DARTS = 9;           // 3 rounds of 3
+  const WIN_POINTS  = 160;         // multiplier hits 1.0x here (needs MORE than this to win)
+  const MAX_POINTS  = 360;         // multiplier hits 2.0x here
+  const ORDER = [20,1,18,4,13,6,10,15,2,17,3,19,7,16,8,11,14,9,12,5];
+  const R_BULL = .037, R_OUTER_BULL = .094, R_T_IN = .582, R_T_OUT = .629, R_D_IN = .953, R_D_OUT = 1;
+
+  const isSolo = new URLSearchParams(location.search).get('mode') === 'solo';
+  const post = (type, payload) => { try { window.parent && window.parent !== window && window.parent.postMessage({ type, payload }, '*'); } catch(e){} };
+
+  const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+  const $ = id => document.getElementById(id);
+
+  let W=0,H=0,cx=0,cy=0,R=0,dpr=1;
+  function resize(){
+    dpr = Math.min(window.devicePixelRatio||1, 2);
+    const r = cv.getBoundingClientRect();
+    W=r.width; H=r.height;
+    cv.width=W*dpr; cv.height=H*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
+    R = Math.min(W*.46, H*.44); cx=W/2; cy=H*.5;
+  }
+  addEventListener('resize', resize);
+
+  // ── State ────────────────────────────────────────────────────────────
+  let state = 'idle';            // idle | aiming | flying | done
+  let dartsThrown = 0, total = 0, t0 = 0;
+  let roundDarts = [];           // darts stuck on board this round
+  let flying = null;
+  let aim = {x:0,y:0};
+  let seed = Math.random()*1000;
+  const AIM_LIMIT = 6;           // seconds per dart — the dart auto-throws when time runs out
+  let aimStart = 0;
+  function setAiming(){ state='aiming'; aimStart=performance.now(); }
+
+  function multFor(p){
+    if (p <= 0) return 0;
+    if (p <= WIN_POINTS) return p / WIN_POINTS;
+    return Math.min(2, 1 + (p - WIN_POINTS) / (MAX_POINTS - WIN_POINTS));
+  }
+
+  // Crosshair drifts on a Lissajous path; each round is faster and wider.
+  function aimAt(t){
+    const round = Math.floor(dartsThrown/3);
+    const speed = 1 + round*.28;
+    const amp = R*(.62 + round*.06);
+    aim.x = cx + Math.sin(t*1.25*speed + seed)*amp*.9 + Math.sin(t*2.9*speed)*R*.1;
+    aim.y = cy + Math.sin(t*1.7*speed + seed*1.3)*amp*.9 + Math.cos(t*2.3*speed)*R*.1;
+  }
+
+  function scoreAt(x,y){
+    const dx=x-cx, dy=y-cy, r=Math.hypot(dx,dy)/R;
+    if (r>R_D_OUT) return {pts:0,label:'MISS',kind:'miss'};
+    if (r<=R_BULL) return {pts:50,label:'BULLSEYE',kind:'bull'};
+    if (r<=R_OUTER_BULL) return {pts:25,label:'25',kind:'outer'};
+    let ang = Math.atan2(dy,dx)*180/Math.PI + 90;      // 0° = top, clockwise
+    ang = ((ang+9)%360+360)%360;
+    const n = ORDER[Math.floor(ang/18)];
+    if (r>=R_T_IN && r<=R_T_OUT) return {pts:n*3,label:'TREBLE '+n,kind:'treble'};
+    if (r>=R_D_IN && r<=R_D_OUT) return {pts:n*2,label:'DOUBLE '+n,kind:'double'};
+    return {pts:n,label:String(n),kind:'single'};
+  }
+
+  // ── Drawing ──────────────────────────────────────────────────────────
+  const GREEN='#1fa463', RED='#d7344f', CREAM='#e8dcc0', BLACK='#1b1b26';
+  function wedge(r0,r1,a0,a1,fill){
+    ctx.beginPath(); ctx.arc(cx,cy,R*r1,a0,a1); ctx.arc(cx,cy,R*r0,a1,a0,true); ctx.closePath();
+    ctx.fillStyle=fill; ctx.fill();
+  }
+  function drawBoard(){
+    ctx.save();
+    ctx.shadowColor='rgba(80,120,255,.45)'; ctx.shadowBlur=30;
+    ctx.beginPath(); ctx.arc(cx,cy,R*1.08,0,Math.PI*2); ctx.fillStyle='#0b0b12'; ctx.fill();
+    ctx.restore();
+    for(let i=0;i<20;i++){
+      const a0=(-90-9+i*18)*Math.PI/180, a1=a0+18*Math.PI/180;
+      const dark=i%2===0, base=dark?BLACK:CREAM, ring=dark?RED:GREEN;
+      wedge(R_OUTER_BULL,R_T_IN,a0,a1,base);
+      wedge(R_T_IN,R_T_OUT,a0,a1,ring);
+      wedge(R_T_OUT,R_D_IN,a0,a1,base);
+      wedge(R_D_IN,R_D_OUT,a0,a1,ring);
+      // number
+      const am=(a0+a1)/2, nr=R*1.045;
+      ctx.fillStyle='#cfd6f5'; ctx.font='bold '+Math.max(9,R*.07)+'px system-ui';
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      if (R>90) ctx.fillText(ORDER[i], cx+Math.cos(am)*nr*1.0, cy+Math.sin(am)*nr*1.0);
+    }
+    ctx.beginPath(); ctx.arc(cx,cy,R*R_OUTER_BULL,0,Math.PI*2); ctx.fillStyle=GREEN; ctx.fill();
+    ctx.beginPath(); ctx.arc(cx,cy,R*R_BULL,0,Math.PI*2); ctx.fillStyle=RED; ctx.fill();
+    // wires
+    ctx.strokeStyle='rgba(190,200,230,.55)'; ctx.lineWidth=1;
+    [R_T_IN,R_T_OUT,R_D_IN,R_D_OUT,R_OUTER_BULL,R_BULL].forEach(r=>{ctx.beginPath();ctx.arc(cx,cy,R*r,0,Math.PI*2);ctx.stroke();});
+    for(let i=0;i<20;i++){
+      const a=(-90-9+i*18)*Math.PI/180;
+      ctx.beginPath(); ctx.moveTo(cx+Math.cos(a)*R*R_OUTER_BULL,cy+Math.sin(a)*R*R_OUTER_BULL);
+      ctx.lineTo(cx+Math.cos(a)*R*R_D_OUT,cy+Math.sin(a)*R*R_D_OUT); ctx.stroke();
+    }
+  }
+  function drawDart(x,y,scale,alpha){
+    ctx.save(); ctx.translate(x,y); ctx.scale(scale,scale); ctx.globalAlpha=alpha;
+    const L=R*.5;
+    ctx.strokeStyle='#d5dae6'; ctx.lineWidth=3; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(L*.3,-L*.55); ctx.stroke();
+    ctx.strokeStyle='#2de6aa'; ctx.lineWidth=7;
+    ctx.beginPath(); ctx.moveTo(L*.3,-L*.55); ctx.lineTo(L*.42,-L*.77); ctx.stroke();
+    ctx.fillStyle='#ff4670';
+    ctx.beginPath(); ctx.moveTo(L*.4,-L*.72); ctx.lineTo(L*.62,-L*.98); ctx.lineTo(L*.3,-L*.92); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(L*.4,-L*.72); ctx.lineTo(L*.18,-L*1.0); ctx.lineTo(L*.5,-L*.95); ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
+  function drawCross(){
+    ctx.save(); ctx.translate(aim.x,aim.y);
+    ctx.strokeStyle='#2de6aa'; ctx.lineWidth=2.5; ctx.shadowColor='#2de6aa'; ctx.shadowBlur=10;
+    const s=Math.max(14,R*.09);
+    ctx.beginPath(); ctx.arc(0,0,s,0,Math.PI*2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-s*1.6,0); ctx.lineTo(-s*.5,0); ctx.moveTo(s*.5,0); ctx.lineTo(s*1.6,0);
+    ctx.moveTo(0,-s*1.6); ctx.lineTo(0,-s*.5); ctx.moveTo(0,s*.5); ctx.lineTo(0,s*1.6); ctx.stroke();
+    ctx.restore();
+  }
+
+  let last=0;
+  function frame(ts){
+    const t=ts/1000, dt=Math.min(.05, t-last||.016); last=t;
+    ctx.clearRect(0,0,W,H);
+    drawBoard();
+    roundDarts.forEach(d=>drawDart(d.x,d.y,1,1));
+    if (state==='aiming'){
+      aimAt(t); drawCross();
+      const left = AIM_LIMIT - (performance.now()-aimStart)/1000;
+      $('hint').textContent = left>0 ? `Tap to throw · ${Math.ceil(left)}s` : '';
+      if (left<=0) throwDart();
+    }
+    if (state==='flying' && flying){
+      flying.p += dt/.28;
+      const k=Math.min(flying.p,1), e=1-Math.pow(1-k,3);
+      drawDart(flying.x,flying.y,2.4-1.4*e,.35+.65*e);
+      if (k>=1) landDart();
+    }
+    requestAnimationFrame(frame);
+  }
+
+  // ── Game flow ────────────────────────────────────────────────────────
+  function updateHud(){
+    $('dartsLeft').textContent = TOTAL_DARTS - dartsThrown;
+    $('total').textContent = total;
+    const m = multFor(total);
+    $('multVal').textContent = m.toFixed(2)+'x';
+    post('SCORE_UPDATE', { multiplier: m });
+  }
+  function popText(txt,color){
+    const p=$('pop'); p.textContent=txt; p.style.color=color; p.classList.remove('show'); void p.offsetWidth; p.classList.add('show');
+  }
+
+  function throwDart(){
+    if (state!=='aiming') return;
+    // a little human wobble so a perfectly timed tap still isn't a guaranteed hit
+    const j=R*.035;
+    flying={x:aim.x+(Math.random()-.5)*2*j, y:aim.y+(Math.random()-.5)*2*j, p:0};
+    state='flying';
+  }
+  function landDart(){
+    const res=scoreAt(flying.x,flying.y);
+    roundDarts.push({x:flying.x,y:flying.y});
+    dartsThrown++; total+=res.pts; flying=null;
+    const colors={miss:'#8b93b0',single:'#fff',double:'#ff4670',treble:'#ffb020',outer:'#2de6aa',bull:'#ff4670'};
+    popText(res.pts?`${res.label}  +${res.pts}`:'MISS', colors[res.kind]);
+    updateHud();
+    if (dartsThrown>=TOTAL_DARTS){ state='done'; setTimeout(finish,900); return; }
+    if (dartsThrown%3===0){
+      state='idle';
+      setTimeout(()=>{ roundDarts=[]; setAiming(); },700);   // clear board between rounds
+    } else setAiming();
+  }
+
+  function finish(){
+    const m = multFor(total);
+    const won = m>1;
+    $('ovTitle').textContent = won ? 'Nice shooting!' : 'Not enough';
+    $('ovBig').style.display='block'; $('ovBig').textContent = total+' pts';
+    $('ovText').textContent = won
+      ? `You scored ${total} points — a ${Math.min(m,2).toFixed(2)}x payout.`
+      : `You scored ${total} points. You needed more than ${WIN_POINTS} to win.`;
+    $('ovBtn').style.display = isSolo ? 'none' : '';
+    $('ovBtn').textContent='Play again'; $('ovExit').style.display = 'none';
+    $('overlay').classList.add('show');
+    if (isSolo) setTimeout(()=>post('GAME_OVER',{multiplier:m}),1600);
+  }
+
+  function start(){
+    dartsThrown=0; total=0; roundDarts=[]; flying=null; seed=Math.random()*1000;
+    t0=performance.now(); updateHud();
+    $('overlay').classList.remove('show'); $('ovBig').style.display='none';
+    setAiming();
+  }
+
+  // input
+  cv.addEventListener('pointerdown', e=>{ e.preventDefault(); throwDart(); });
+  addEventListener('keydown', e=>{ if(e.code==='Space'){ e.preventDefault(); throwDart(); } });
+  $('ovBtn').addEventListener('click', start);
+  $('ovExit').addEventListener('click', ()=>post('EXIT_GAME'));
+
+  resize(); updateHud();
+  if (isSolo){            // staked session is already running — start straight away
+    start();
+  } else {
+    $('ovBtn').textContent='Start'; $('overlay').classList.add('show');
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
