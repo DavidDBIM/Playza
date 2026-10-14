@@ -75,6 +75,9 @@ interface GameState {
   lastEvent: { by: string; label: string; score: number; busted: boolean; checkout: boolean; dx: number; dy: number } | null
   bot?: { username: string }   // present only in bot rooms
   botWon?: boolean             // set when the bot wins (winner_id stays NULL)
+  // The darts of the turn that just ended — lets the other player's screen replay
+  // them one by one (essential for the bot, which plays its whole turn at once).
+  lastTurn?: { by: 'host' | 'guest'; darts: ThrowResult[]; busted: boolean; turnNumber: number }
 }
 
 function initialState(startingScore: number): GameState {
@@ -88,36 +91,52 @@ function initialState(startingScore: number): GameState {
   }
 }
 
-// Simple heuristic bot aim: go for the checkout double when it's on, the
-// bullseye when the score is out of normal checkout range, otherwise the
-// highest-value area of the board (triple 20) — then scatter around that
-// intended point by a moderate, fixed skill radius. Not adaptive, but
-// competent enough to be worth playing.
+// Bot aim. It plays a sensible game — triple 20 while the score is high, then
+// a single that leaves a double, then the double itself (and the bull on 50) —
+// and scatters around the intended point with a gaussian "hand wobble".
+// BOT_WOBBLE is tuned (by simulation against flick-throwing humans) so an
+// average human flick wins roughly half the matches and a sharper one wins more.
+const BOT_WOBBLE = 0.22 // standard deviation per axis, in board radii
+
+function gaussian(): number {
+  let u = 0, v = 0
+  while (u === 0) u = Math.random()
+  while (v === 0) v = Math.random()
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v)
+}
+
 function botAimPoint(remaining: number): { dx: number; dy: number } {
   let targetAngleDeg = 0 // 0deg = top = segment 20's center
-  let targetRadius = (RING.tripleIn + RING.tripleOut) / 2 // aim for triple-20 by default
+  let targetRadius = (RING.tripleIn + RING.tripleOut) / 2 // triple 20 by default
 
-  if (remaining <= 40 && remaining % 2 === 0 && remaining > 0) {
-    // Go for the double of half the remaining score
-    const doubleNum = remaining / 2
-    const idx = SEGMENT_ORDER.indexOf(doubleNum)
+  const aimSingle = (n: number) => {
+    const idx = SEGMENT_ORDER.indexOf(n)
+    if (idx !== -1) {
+      targetAngleDeg = idx * 18
+      targetRadius = (RING.outerBull + RING.tripleIn) / 2 + 0.1 // middle of the big single area
+    }
+  }
+
+  if (remaining > 60) {
+    // keep scoring: triple 20
+  } else if (remaining > 40) {
+    aimSingle(remaining - 40) // leave 40 (double 20) — never aim at a score that would bust
+  } else if (remaining === 50) {
+    targetRadius = RING.innerBull / 2
+  } else if (remaining % 2 === 0 && remaining > 0) {
+    const idx = SEGMENT_ORDER.indexOf(remaining / 2) // go for the checkout double
     if (idx !== -1) {
       targetAngleDeg = idx * 18
       targetRadius = (RING.doubleIn + RING.doubleOut) / 2
     }
-  } else if (remaining === 50) {
-    targetRadius = RING.innerBull / 2
+  } else {
+    aimSingle(1) // odd number: take a 1 to leave an even score
   }
 
-  const skillDeviation = 0.09 // fixed moderate wobble, in normalized board units
-  const jitterAngle = Math.random() * Math.PI * 2
-  const jitterMag = Math.random() * skillDeviation
   const rad = (targetAngleDeg * Math.PI) / 180
-  const baseX = targetRadius * Math.sin(rad)
-  const baseY = -targetRadius * Math.cos(rad)
   return {
-    dx: baseX + Math.cos(jitterAngle) * jitterMag,
-    dy: baseY + Math.sin(jitterAngle) * jitterMag,
+    dx: targetRadius * Math.sin(rad) + gaussian() * BOT_WOBBLE,
+    dy: -targetRadius * Math.cos(rad) + gaussian() * BOT_WOBBLE,
   }
 }
 
@@ -398,6 +417,11 @@ export async function submitThrow(roomId: string, userId: string, dx: number, dy
   const isHost = room.host_id === userId
   const state: GameState = room.game_state
 
+  // The landing point comes from the client: reject junk and keep it on a sane range.
+  if (!Number.isFinite(dx) || !Number.isFinite(dy)) throw new Error('Invalid throw')
+  dx = Math.max(-1.6, Math.min(1.6, dx))
+  dy = Math.max(-1.6, Math.min(1.6, dy))
+
   const result = resolveThrow(state, isHost, dx, dy)
 
   // Checkout — game over immediately.
@@ -412,6 +436,7 @@ export async function submitThrow(roomId: string, userId: string, dx: number, dy
   if (result.turnOver) {
     // Hand the turn to the other player and reset the per-turn bookkeeping.
     nextTurn = isHost ? effectiveGuest(room) : room.host_id
+    state.lastTurn = { by: isHost ? 'host' : 'guest', darts: [...state.turnDarts], busted: result.busted, turnNumber: state.turnNumber }
     state.turnStartScore = isHost ? state.hostScore : state.guestScore
     state.turnDarts = []
     state.turnNumber += 1
@@ -473,12 +498,14 @@ async function playBotTurn(roomId: string) {
 
   let turnOver = false
   let checkout = false
+  let busted = false
   while (!turnOver) {
     const remaining = isHostBot ? state.hostScore : state.guestScore
     const { dx, dy } = botAimPoint(remaining)
     const result = resolveThrow(state, isHostBot, dx, dy)
     turnOver = result.turnOver
     checkout = result.checkout
+    busted = result.busted
     if (checkout) break
   }
 
@@ -490,6 +517,7 @@ async function playBotTurn(roomId: string) {
   }
 
   const nextTurn = isHostBot ? effectiveGuest(room) : room.host_id
+  state.lastTurn = { by: isHostBot ? 'host' : 'guest', darts: [...state.turnDarts], busted, turnNumber: state.turnNumber }
   state.turnStartScore = isHostBot ? state.hostScore : state.guestScore
   state.turnDarts = []
   state.turnNumber += 1

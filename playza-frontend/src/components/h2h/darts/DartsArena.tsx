@@ -1,16 +1,25 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { submitDartsThrow, resignDartsGame } from "@/api/darts.api";
 import { useToast } from "@/context/toast";
-import { Loader2, Flag } from "lucide-react";
+import { Flag } from "lucide-react";
 import H2HWinner from "../H2HWinner";
 import { ZASymbol } from "@/components/currency/ZASymbol";
 import type { UserProfile } from "@/context/auth";
 
+// ── Board geometry — identical to the server's scoring (darts.service.ts) ──
 const SYSTEM_BOT_ID = "00000000-0000-0000-0000-000000000000";
 const SEGMENT_ORDER = [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5];
 const RING = { innerBull: 0.045, outerBull: 0.11, tripleIn: 0.56, tripleOut: 0.64, doubleIn: 0.92, doubleOut: 1.0 };
 
+// ── Throw physics — the same flick as Solo Earn Darts ──────────────────────
+// Swipe direction aims left/right, swipe speed sets height. No randomness:
+// the same swipe always lands in the same place.
+const SWEET_SPEED = 2.0; // screen-heights per second that lands at bullseye height
+const HEIGHT_GAIN = 0.55; // board radii of height per 1 screen-height/s
+const MIN_SPEED = 0.6;
+
 interface DartHit { dx: number; dy: number; score: number; label: string; isDouble: boolean }
+interface LastTurn { by: "host" | "guest"; darts: DartHit[]; busted: boolean; turnNumber: number }
 interface DartsGameState {
   hostScore: number;
   guestScore: number;
@@ -18,6 +27,7 @@ interface DartsGameState {
   turnDarts: DartHit[];
   turnNumber: number;
   lastEvent: { by: "host" | "guest"; label: string; score: number; busted: boolean; checkout: boolean; dx: number; dy: number } | null;
+  lastTurn?: LastTurn;
 }
 interface DartsRoom {
   id: string;
@@ -33,403 +43,441 @@ interface DartsRoom {
   guest?: { id: string; username: string; avatar_url: string | null } | null;
   game_state: DartsGameState;
 }
+interface DartsArenaProps { room: DartsRoom; user: UserProfile | null }
 
-interface DartsArenaProps {
-  room: DartsRoom;
-  user: UserProfile | null;
-}
+interface Mark { dx: number; dy: number; until?: number }
+interface Fly { x0: number; y0: number; x1: number; y1: number; t0: number; dur: number; mine: boolean; onLand: () => void }
 
-// Same normalized scoring geometry as the Solo Earn game and the backend —
-// used here purely for the LOCAL aim/animation preview. The score that
-// actually counts always comes back from the server's own recomputation.
 function scoreAt(dx: number, dy: number) {
   const dist = Math.sqrt(dx * dx + dy * dy);
-  if (dist > RING.doubleOut) return { score: 0, label: "MISS", isDouble: false };
-  if (dist <= RING.innerBull) return { score: 50, label: "BULLSEYE", isDouble: true };
-  if (dist <= RING.outerBull) return { score: 25, label: "OUTER BULL", isDouble: false };
+  if (dist > RING.doubleOut) return { score: 0, label: "MISS" };
+  if (dist <= RING.innerBull) return { score: 50, label: "BULLSEYE" };
+  if (dist <= RING.outerBull) return { score: 25, label: "OUTER BULL" };
   let angle = (Math.atan2(dx, -dy) * 180) / Math.PI;
   if (angle < 0) angle += 360;
-  const idx = Math.floor(((angle + 9) % 360) / 18);
-  const num = SEGMENT_ORDER[idx];
-  if (dist >= RING.tripleIn && dist <= RING.tripleOut) return { score: num * 3, label: `TRIPLE ${num}`, isDouble: false };
-  if (dist >= RING.doubleIn && dist <= RING.doubleOut) return { score: num * 2, label: `DOUBLE ${num}`, isDouble: true };
-  return { score: num, label: `SINGLE ${num}`, isDouble: false };
+  const num = SEGMENT_ORDER[Math.floor(((angle + 9) % 360) / 18)];
+  if (dist >= RING.tripleIn && dist <= RING.tripleOut) return { score: num * 3, label: `TREBLE ${num}` };
+  if (dist >= RING.doubleIn && dist <= RING.doubleOut) return { score: num * 2, label: `DOUBLE ${num}` };
+  return { score: num, label: `${num}` };
 }
 
-function polar(cx: number, cy: number, r: number, deg: number): [number, number] {
-  const rad = (deg * Math.PI) / 180;
-  return [cx + r * Math.sin(rad), cy - r * Math.cos(rad)];
-}
+const popColor = (score: number, label: string) =>
+  label === "MISS" ? "#94a3b8" : label === "BULLSEYE" || label.startsWith("TREBLE") ? "#fbbf24" : label.startsWith("DOUBLE") || score >= 25 ? "#fb7185" : "#ffffff";
 
 export default function DartsArena({ room, user }: DartsArenaProps) {
   const toast = useToast();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
-  const [dims, setDims] = useState({ w: 320, h: 420 });
+  const [dims, setDims] = useState({ w: 360, h: 520 });
 
   const isHost = room.host_id === user?.id;
+  const myKey: "host" | "guest" = isHost ? "host" : "guest";
   const myScore = isHost ? room.game_state.hostScore : room.game_state.guestScore;
   const oppScore = isHost ? room.game_state.guestScore : room.game_state.hostScore;
   const opponent = isHost ? room.guest : room.host;
   const isBotOpponent = room.guest_id === SYSTEM_BOT_ID;
+  const oppName = opponent?.username || (isBotOpponent ? "Bot" : "Opponent");
   const myTurn = room.current_turn === user?.id && room.status === "active";
   const dartsThrownThisTurn = room.game_state.turnDarts?.length || 0;
+  const turnPoints = (room.game_state.turnDarts || []).reduce((s, d) => s + d.score, 0);
 
-  const [phase, setPhase] = useState<"aiming" | "timing" | "flying">("aiming");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [toastMsg, setToastMsg] = useState<{ text: string; kind: string } | null>(null);
-  const aimPointer = useRef<{ x: number; y: number } | null>(null);
-  const flyingDart = useRef<{ startX: number; startY: number; endX: number; endY: number; t0: number; dur: number } | null>(null);
-  const precisionPos = useRef(50);
-  const precisionStart = useRef(0);
-  const lastSeenEvent = useRef<DartsGameState["lastEvent"]>(null);
-  const stuckMarks = useRef<{ dx: number; dy: number }[]>([]);
+  const [phase, setPhaseState] = useState<"idle" | "drag" | "fly" | "submit">("idle");
+  const [replaying, setReplaying] = useState(false);
+  const [pop, setPop] = useState<{ id: number; text: string; color: string } | null>(null);
+  const [banner, setBanner] = useState<string | null>(null);
 
-  // ── Resize ──
-  useEffect(() => {
-    const resize = () => {
-      const el = wrapRef.current;
-      if (!el) return;
-      setDims({ w: el.clientWidth, h: el.clientHeight });
-    };
-    resize();
-    window.addEventListener("resize", resize);
-    return () => window.removeEventListener("resize", resize);
+  // everything the animation loop needs lives in refs so it never reads stale state
+  const phaseRef = useRef<"idle" | "drag" | "fly" | "submit">("idle");
+  const setPhase = (p: "idle" | "drag" | "fly" | "submit") => { phaseRef.current = p; setPhaseState(p); };
+  const live = useRef({ myTurn: false, active: false });
+  const geom = useRef({ cx: 0, cy: 0, R: 0, sx: 0, sy: 0, W: 0, H: 0, dpr: 1 });
+  const boardImg = useRef<HTMLCanvasElement | null>(null);
+  const drag = useRef<{ x0: number; y0: number; x: number; y: number; samples: { x: number; y: number; t: number }[] } | null>(null);
+  const liveSpeed = useRef(0);
+  const fly = useRef<Fly | null>(null);
+  const serverMarks = useRef<Mark[]>([]);
+  const pending = useRef<Mark[]>([]);
+  const linger = useRef<Mark[]>([]);
+  const replayMarks = useRef<Mark[]>([]);
+  const ghost = useRef<{ x: number; y: number } | null>(null);
+  const prevTurnDarts = useRef<DartHit[]>([]);
+  const replayUntil = useRef(0);
+  const seenTurn = useRef<string | null>(null);
+  const seenEvent = useRef<DartsGameState["lastEvent"]>(null);
+  const timers = useRef<number[]>([]);
+  const popId = useRef(0);
+  const onLandMine = useRef<(x: number, y: number) => void>(() => {});
+
+  const showPop = useCallback((text: string, color: string) => {
+    popId.current += 1;
+    setPop({ id: popId.current, text, color });
   }, []);
 
-  const boardGeometry = useCallback(() => {
-    const { w, h } = dims;
-    const cx = w / 2;
-    const cy = h * 0.42;
-    const R = Math.min(w * 0.42, h * 0.32);
-    return { cx, cy, R };
+  useEffect(() => { live.current = { myTurn, active: room.status === "active" }; }, [myTurn, room.status]);
+  useEffect(() => () => { timers.current.forEach(clearTimeout); }, []);
+
+  // ── Size ──
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    const measure = () => setDims({ w: el.clientWidth, h: el.clientHeight });
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  // ── Layout + pre-rendered board (drawn once at device resolution = razor sharp) ──
+  useEffect(() => {
+    const { w: W, h: H } = dims;
+    const dpr = Math.min(window.devicePixelRatio || 1, 3);
+    const R = Math.min(W * 0.375, H * 0.3);
+    const cx = W / 2, cy = Math.max(R * 1.2, H * 0.34);
+    const u = Math.max(R, 120) / 170;
+    geom.current = { cx, cy, R, W, H, dpr, sx: W / 2, sy: H - 145 * u - 14 };
+
+    const pad = R * 0.28, size = Math.ceil((R + pad) * 2);
+    const bc = document.createElement("canvas");
+    bc.width = Math.ceil(size * dpr); bc.height = Math.ceil(size * dpr);
+    const b = bc.getContext("2d")!;
+    b.scale(dpr, dpr);
+    const c = size / 2;
+    const wedge = (r0: number, r1: number, a0: number, a1: number, fill: string) => {
+      b.beginPath(); b.arc(c, c, R * r1, a0, a1); b.arc(c, c, R * r0, a1, a0, true); b.closePath(); b.fillStyle = fill; b.fill();
+    };
+    b.beginPath(); b.arc(c, c, R * 1.2, 0, Math.PI * 2); b.fillStyle = "#0a0a10"; b.fill();
+    b.lineWidth = 2; b.strokeStyle = "#2c3350"; b.stroke();
+    for (let i = 0; i < 20; i++) {
+      const a0 = ((-90 - 9 + i * 18) * Math.PI) / 180, a1 = a0 + (18 * Math.PI) / 180, dark = i % 2 === 0;
+      const base = dark ? "#16161f" : "#eadfc4", ring = dark ? "#d3314c" : "#1b9a5e";
+      wedge(RING.outerBull, RING.tripleIn, a0, a1, base);
+      wedge(RING.tripleIn, RING.tripleOut, a0, a1, ring);
+      wedge(RING.tripleOut, RING.doubleIn, a0, a1, base);
+      wedge(RING.doubleIn, RING.doubleOut, a0, a1, ring);
+    }
+    b.beginPath(); b.arc(c, c, R * RING.outerBull, 0, Math.PI * 2); b.fillStyle = "#1b9a5e"; b.fill();
+    b.beginPath(); b.arc(c, c, R * RING.innerBull, 0, Math.PI * 2); b.fillStyle = "#d3314c"; b.fill();
+    b.strokeStyle = "rgba(205,212,235,.75)"; b.lineWidth = Math.max(0.8, R / 260);
+    [RING.innerBull, RING.outerBull, RING.tripleIn, RING.tripleOut, RING.doubleIn, RING.doubleOut].forEach((r) => { b.beginPath(); b.arc(c, c, R * r, 0, Math.PI * 2); b.stroke(); });
+    for (let i = 0; i < 20; i++) {
+      const a = ((-90 - 9 + i * 18) * Math.PI) / 180;
+      b.beginPath(); b.moveTo(c + Math.cos(a) * R * RING.outerBull, c + Math.sin(a) * R * RING.outerBull);
+      b.lineTo(c + Math.cos(a) * R, c + Math.sin(a) * R); b.stroke();
+    }
+    b.fillStyle = "#f2f4ff"; b.font = `800 ${Math.max(10, R * 0.085)}px system-ui, sans-serif`; b.textAlign = "center"; b.textBaseline = "middle";
+    for (let i = 0; i < 20; i++) {
+      const am = ((-90 + i * 18) * Math.PI) / 180;
+      b.fillText(String(SEGMENT_ORDER[i]), c + Math.cos(am) * R * 1.1, c + Math.sin(am) * R * 1.1);
+    }
+    boardImg.current = bc;
   }, [dims]);
 
-  // ── Reflect my own thrown darts this turn as stuck markers ──
+  // ── Server marks / lingering darts ──
   useEffect(() => {
-    if (room.current_turn === user?.id || dartsThrownThisTurn === 0) {
-      // My turn just started, or the turn just reset — clear old marks.
+    const next = room.game_state.turnDarts || [];
+    const prev = prevTurnDarts.current;
+    if (next.length < prev.length) {
+      // a turn just ended — keep its darts (including my last, still pending) on the board for a moment
+      const until = performance.now() + 1400;
+      linger.current = [...prev, ...pending.current].map((d) => ({ dx: d.dx, dy: d.dy, until }));
     }
-    stuckMarks.current = room.game_state.turnDarts?.map((d) => ({ dx: d.dx, dy: d.dy })) || [];
-  }, [room.game_state.turnDarts, room.current_turn, user?.id, dartsThrownThisTurn]);
+    prevTurnDarts.current = next;
+    serverMarks.current = next.map((d) => ({ dx: d.dx, dy: d.dy }));
+    pending.current = [];
+  }, [room.game_state.turnDarts, room.game_state.turnNumber]);
 
-  // ── Show a toast + replay the opponent's dart when a new event arrives ──
+  // ── Opponent's darts ──
+  const flyOpponentDart = useCallback((dx: number, dy: number, delay: number, label: string, score: number, last: { busted?: boolean }) => {
+    const id = window.setTimeout(() => {
+      const g = geom.current;
+      fly.current = {
+        x0: g.W / 2 + (Math.random() - 0.5) * g.W * 0.25, y0: -20,
+        x1: g.cx + dx * g.R, y1: g.cy + dy * g.R,
+        t0: performance.now(), dur: 420, mine: false,
+        onLand: () => {
+          replayMarks.current.push({ dx, dy });
+          showPop(`${oppName}: ${label}${score ? ` +${score}` : ""}`, popColor(score, label));
+          if (last.busted) window.setTimeout(() => { setBanner("BUST!"); window.setTimeout(() => setBanner(null), 1400); }, 450);
+          if (navigator.vibrate) navigator.vibrate(12);
+        },
+      };
+    }, delay);
+    timers.current.push(id);
+  }, [oppName, showPop]);
+
+  // Bot plays a whole turn at once on the server — replay its darts one by one.
+  useEffect(() => {
+    const lt = room.game_state.lastTurn;
+    if (!lt) return;
+    const key = `${lt.turnNumber}-${lt.by}`;
+    if (seenTurn.current === null) { seenTurn.current = key; return; } // don't replay on first load
+    if (seenTurn.current === key) return;
+    seenTurn.current = key;
+    if (!isBotOpponent || lt.by === myKey) return;
+
+    const STEP = 900;
+    replayMarks.current = [];
+    lt.darts.forEach((d, i) => flyOpponentDart(d.dx, d.dy, 350 + i * STEP, d.label, d.score, { busted: lt.busted && i === lt.darts.length - 1 }));
+    const total = 350 + lt.darts.length * STEP + 600;
+    replayUntil.current = performance.now() + total;
+    setReplaying(true);
+    const id = window.setTimeout(() => {
+      setReplaying(false);
+      const until = performance.now() + 900;
+      linger.current = replayMarks.current.map((m) => ({ ...m, until }));
+      replayMarks.current = [];
+    }, total);
+    timers.current.push(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [room.game_state.lastTurn]);
+
+  // Human opponent: replay each dart as it arrives.
   useEffect(() => {
     const evt = room.game_state.lastEvent;
     if (!evt) return;
-    if (lastSeenEvent.current === evt) return;
-    lastSeenEvent.current = evt;
-
-    const mine = (evt.by === "host") === isHost;
-    if (mine) return; // I already saw my own throw animate locally when I threw it
-
-    const { cx, cy, R } = boardGeometry();
-    flyingDart.current = {
-      startX: dims.w / 2, startY: dims.h - 60,
-      endX: cx + evt.dx * R, endY: cy + evt.dy * R,
-      t0: performance.now(), dur: 300,
-    };
-    setTimeout(() => {
-      setToastMsg({
-        text: evt.checkout ? `${evt.label}! CHECKOUT!` : evt.busted ? "OPPONENT BUST!" : `${evt.label} = ${evt.score}`,
-        kind: evt.checkout ? "perfect" : evt.busted ? "bad" : evt.score >= 40 ? "perfect" : evt.score > 0 ? "good" : "bad",
-      });
-      setTimeout(() => setToastMsg(null), 1000);
-    }, 320);
+    if (seenEvent.current === null) { seenEvent.current = evt; return; }
+    if (seenEvent.current === evt) return;
+    seenEvent.current = evt;
+    if (isBotOpponent || evt.by === myKey) return;
+    flyOpponentDart(evt.dx, evt.dy, 0, evt.label, evt.score, { busted: evt.busted });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [room.game_state.lastEvent]);
 
-  // ── Drawing ──
-  const drawWedge = (ctx: CanvasRenderingContext2D, cx: number, cy: number, rInner: number, rOuter: number, startDeg: number, endDeg: number, color: string) => {
-    ctx.beginPath();
-    const steps = 5;
-    for (let s = 0; s <= steps; s++) {
-      const deg = startDeg + ((endDeg - startDeg) * s) / steps;
-      const [x, y] = polar(cx, cy, rOuter, deg);
-      s === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-    }
-    for (let s = 0; s <= steps; s++) {
-      const deg = endDeg - ((endDeg - startDeg) * s) / steps;
-      const [x, y] = polar(cx, cy, rInner, deg);
-      ctx.lineTo(x, y);
-    }
-    ctx.closePath();
-    ctx.fillStyle = color;
-    ctx.fill();
+  // ── Throwing ──
+  const handleLand = useCallback((x: number, y: number) => {
+    const { cx, cy, R } = geom.current;
+    const dx = (x - cx) / R, dy = (y - cy) / R;
+    const res = scoreAt(dx, dy);
+    pending.current.push({ dx, dy });
+    ghost.current = { x, y };
+    showPop(res.score ? `${res.label}  +${res.score}` : "MISS", popColor(res.score, res.label));
+    if (navigator.vibrate) navigator.vibrate(res.score >= 40 ? [15, 30, 15] : 12);
+    setPhase("submit");
+    submitDartsThrow(room.id, dx, dy)
+      .then((data) => {
+        const evt = data?.game_state?.lastEvent;
+        if (evt?.busted && evt.by === myKey) { setBanner("BUST!"); window.setTimeout(() => setBanner(null), 1500); }
+      })
+      .catch((err) => toast.error(err instanceof Error ? err.message : "Throw failed"))
+      .finally(() => setPhase("idle"));
+  }, [room.id, toast, showPop, myKey]);
+  useEffect(() => { onLandMine.current = handleLand; }, [handleLand]);
+
+  const flickVelocity = (samples: { x: number; y: number; t: number }[]) => {
+    if (samples.length < 2) return { vx: 0, vy: 0, speed: 0 };
+    const last = samples[samples.length - 1];
+    let first = samples[0];
+    for (let i = samples.length - 2; i >= 0; i--) { first = samples[i]; if (last.t - samples[i].t >= 110) break; }
+    const dt = Math.max(16, last.t - first.t) / 1000;
+    const H = geom.current.H || 1;
+    const vx = (last.x - first.x) / dt / H, vy = (last.y - first.y) / dt / H;
+    return { vx, vy, speed: Math.hypot(vx, vy) };
   };
 
-  const drawDartIcon = (ctx: CanvasRenderingContext2D, x: number, y: number, angleDeg: number, scale: number) => {
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate((angleDeg * Math.PI) / 180);
-    ctx.scale(scale, scale);
-    ctx.strokeStyle = "#cbd5e1"; ctx.lineWidth = 2.5;
-    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, 16); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(0, -4); ctx.lineTo(-3, 3); ctx.lineTo(3, 3); ctx.closePath();
-    ctx.fillStyle = "#e5e7eb"; ctx.fill();
-    ctx.fillStyle = "#3b82f6";
-    ctx.beginPath(); ctx.moveTo(-6, 14); ctx.lineTo(0, 8); ctx.lineTo(6, 14); ctx.lineTo(0, 22); ctx.closePath(); ctx.fill();
-    ctx.restore();
+  const canThrow = () => live.current.myTurn && live.current.active && phaseRef.current === "idle" && performance.now() >= replayUntil.current;
+  const pt = (e: React.PointerEvent) => { const r = canvasRef.current!.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top, t: performance.now() }; };
+
+  const onDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!canThrow()) return;
+    e.preventDefault();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    const p = pt(e);
+    drag.current = { x0: p.x, y0: p.y, x: p.x, y: p.y, samples: [p] };
+    liveSpeed.current = 0;
+    setPhase("drag");
+  };
+  const onMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    const d = drag.current;
+    if (phaseRef.current !== "drag" || !d) return;
+    const p = pt(e);
+    d.x = p.x; d.y = p.y; d.samples.push(p);
+    if (d.samples.length > 40) d.samples.shift();
+    liveSpeed.current = flickVelocity(d.samples).speed;
+  };
+  const onUp = () => {
+    const d = drag.current;
+    if (phaseRef.current !== "drag" || !d) return;
+    drag.current = null;
+    const v = flickVelocity(d.samples);
+    if (v.speed < MIN_SPEED || v.vy >= 0) { showPop("Flick UP faster", "#94a3b8"); setPhase("idle"); return; }
+    const { cy, R, sx, sy } = geom.current;
+    const theta = Math.atan2(v.vx, -v.vy);
+    const x1 = sx + Math.tan(Math.max(-1.2, Math.min(1.2, theta))) * (sy - cy);
+    const y1 = cy + (SWEET_SPEED - v.speed) * HEIGHT_GAIN * R;
+    fly.current = { x0: sx, y0: sy, x1, y1, t0: performance.now(), dur: 380, mine: true, onLand: () => onLandMine.current(x1, y1) };
+    setPhase("fly");
   };
 
+  // ── Render loop ──
   useEffect(() => {
-    let rafId: number;
+    let raf = 0;
+    const draw = (ctx: CanvasRenderingContext2D, x: number, y: number, s: number, angle: number) => {
+      const { R } = geom.current;
+      const u = Math.max(R, 120) / 170;
+      ctx.save(); ctx.translate(x, y); ctx.rotate(angle); ctx.scale(s, s);
+      ctx.lineCap = "round";
+      ctx.strokeStyle = "#e9edf7"; ctx.lineWidth = 2.2 * u; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, 26 * u); ctx.stroke();
+      const g = ctx.createLinearGradient(-5 * u, 0, 5 * u, 0);
+      g.addColorStop(0, "#7b8499"); g.addColorStop(0.5, "#e6eaf3"); g.addColorStop(1, "#6a7388");
+      ctx.fillStyle = g; ctx.beginPath(); ctx.roundRect(-4.6 * u, 24 * u, 9.2 * u, 44 * u, 3 * u); ctx.fill();
+      ctx.strokeStyle = "rgba(0,0,0,.35)"; ctx.lineWidth = 0.8 * u;
+      for (let i = 0; i < 7; i++) { ctx.beginPath(); ctx.moveTo(-4.6 * u, (30 + i * 5.2) * u); ctx.lineTo(4.6 * u, (30 + i * 5.2) * u); ctx.stroke(); }
+      ctx.strokeStyle = "#cfd5e4"; ctx.lineWidth = 2 * u; ctx.beginPath(); ctx.moveTo(0, 68 * u); ctx.lineTo(0, 86 * u); ctx.stroke();
+      const fl = (sign: number, col: string) => { ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(0, 84 * u); ctx.lineTo(sign * 17 * u, 100 * u); ctx.lineTo(sign * 13 * u, 122 * u); ctx.lineTo(0, 112 * u); ctx.closePath(); ctx.fill(); };
+      fl(-1, "#c9254a"); fl(1, "#ff4f78");
+      ctx.fillStyle = "#2de6aa"; ctx.beginPath(); ctx.moveTo(0, 84 * u); ctx.lineTo(2.2 * u, 84 * u); ctx.lineTo(2.2 * u, 118 * u); ctx.lineTo(0, 112 * u); ctx.closePath(); ctx.fill();
+      ctx.restore();
+    };
+
     const loop = (now: number) => {
       const canvas = canvasRef.current;
-      if (canvas) {
-        const dpr = Math.min(window.devicePixelRatio || 1, 2);
-        if (canvas.width !== dims.w * dpr) {
-          canvas.width = dims.w * dpr;
-          canvas.height = dims.h * dpr;
-          canvas.style.width = dims.w + "px";
-          canvas.style.height = dims.h + "px";
-        }
+      const bi = boardImg.current;
+      const { cx, cy, R, W, H, dpr, sx, sy } = geom.current;
+      if (canvas && bi && W > 0) {
+        if (canvas.width !== Math.round(W * dpr)) { canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr); }
         const ctx = canvas.getContext("2d")!;
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        ctx.clearRect(0, 0, dims.w, dims.h);
+        ctx.clearRect(0, 0, W, H);
 
-        const { cx, cy, R } = boardGeometry();
+        ctx.save(); ctx.shadowColor = "rgba(70,110,255,.38)"; ctx.shadowBlur = 36;
+        const half = bi.width / dpr / 2;
+        ctx.drawImage(bi, cx - half, cy - half, half * 2, half * 2);
+        ctx.restore();
 
-        const glow = ctx.createRadialGradient(cx, cy, R * 0.8, cx, cy, R * 1.25);
-        glow.addColorStop(0, "rgba(59,130,246,0.16)");
-        glow.addColorStop(1, "rgba(59,130,246,0)");
-        ctx.fillStyle = glow;
-        ctx.beginPath(); ctx.arc(cx, cy, R * 1.25, 0, Math.PI * 2); ctx.fill();
-
-        ctx.beginPath(); ctx.arc(cx, cy, R * 1.06, 0, Math.PI * 2);
-        ctx.fillStyle = "#0f1420"; ctx.fill();
-        ctx.lineWidth = 2; ctx.strokeStyle = "rgba(59,130,246,0.4)"; ctx.stroke();
-
-        const SINGLE_A = "#f4ede0", SINGLE_B = "#161616", RING_A = "#e11d2e", RING_B = "#0d8a3c";
-        for (let i = 0; i < 20; i++) {
-          const startDeg = i * 18 - 9, endDeg = i * 18 + 9, even = i % 2 === 0;
-          const singleColor = even ? SINGLE_B : SINGLE_A, ringColor = even ? RING_A : RING_B;
-          drawWedge(ctx, cx, cy, R * RING.outerBull, R * RING.tripleIn, startDeg, endDeg, singleColor);
-          drawWedge(ctx, cx, cy, R * RING.tripleIn, R * RING.tripleOut, startDeg, endDeg, ringColor);
-          drawWedge(ctx, cx, cy, R * RING.tripleOut, R * RING.doubleIn, startDeg, endDeg, singleColor);
-          drawWedge(ctx, cx, cy, R * RING.doubleIn, R * RING.doubleOut, startDeg, endDeg, ringColor);
-        }
-        ctx.strokeStyle = "rgba(0,0,0,0.5)"; ctx.lineWidth = 1.2;
-        for (let i = 0; i < 20; i++) {
-          const deg = i * 18 - 9;
-          const [x1, y1] = polar(cx, cy, R * RING.outerBull, deg);
-          const [x2, y2] = polar(cx, cy, R * RING.doubleOut, deg);
-          ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
-        }
-        ctx.beginPath(); ctx.arc(cx, cy, R * RING.outerBull, 0, Math.PI * 2); ctx.fillStyle = "#0d8a3c"; ctx.fill();
-        ctx.beginPath(); ctx.arc(cx, cy, R * RING.innerBull, 0, Math.PI * 2); ctx.fillStyle = "#e11d2e"; ctx.fill();
-        ctx.beginPath(); ctx.arc(cx, cy, R * RING.doubleOut, 0, Math.PI * 2);
-        ctx.lineWidth = 2; ctx.strokeStyle = "rgba(0,0,0,0.6)"; ctx.stroke();
-
-        ctx.font = `700 ${Math.max(10, R * 0.09)}px 'Space Grotesk', sans-serif`;
-        ctx.fillStyle = "rgba(255,255,255,0.85)"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-        for (let i = 0; i < 20; i++) {
-          const [x, y] = polar(cx, cy, R * 1.14, i * 18);
-          ctx.fillText(String(SEGMENT_ORDER[i]), x, y);
+        // previous throw marker so you can calibrate
+        if (ghost.current && live.current.myTurn && (phaseRef.current === "idle" || phaseRef.current === "drag")) {
+          ctx.strokeStyle = "rgba(255,255,255,.5)"; ctx.lineWidth = 1.2; ctx.setLineDash([3, 3]);
+          ctx.beginPath(); ctx.arc(ghost.current.x, ghost.current.y, R * 0.035, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
         }
 
-        // Stuck darts this turn
-        stuckMarks.current.forEach((m) => drawDartIcon(ctx, cx + m.dx * R, cy + m.dy * R, -40, 1));
+        // darts stuck in the board (tip exactly on the landing point)
+        const stuck = (m: Mark, alpha: number) => { ctx.globalAlpha = alpha; draw(ctx, cx + m.dx * R, cy + m.dy * R, 0.42, 0); ctx.globalAlpha = 1; };
+        serverMarks.current.forEach((m) => stuck(m, 1));
+        pending.current.forEach((m) => stuck(m, 1));
+        replayMarks.current.forEach((m) => stuck(m, 1));
+        linger.current = linger.current.filter((m) => (m.until ?? 0) > now);
+        linger.current.forEach((m) => stuck(m, Math.min(1, ((m.until ?? 0) - now) / 400)));
 
-        // Crosshair while aiming (only when it's my turn)
-        if (myTurn && phase === "aiming" && aimPointer.current) {
-          const { x, y } = aimPointer.current;
-          ctx.strokeStyle = "rgba(255,255,255,0.85)"; ctx.lineWidth = 1.5;
-          ctx.beginPath(); ctx.moveTo(x - 14, y); ctx.lineTo(x - 4, y); ctx.moveTo(x + 4, y); ctx.lineTo(x + 14, y); ctx.stroke();
-          ctx.beginPath(); ctx.moveTo(x, y - 14); ctx.lineTo(x, y - 4); ctx.moveTo(x, y + 4); ctx.lineTo(x, y + 14); ctx.stroke();
-          ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fillStyle = "#3b82f6"; ctx.fill();
+        // flying dart
+        const f = fly.current;
+        if (f) {
+          const k = Math.min((now - f.t0) / f.dur, 1), e = 1 - Math.pow(1 - k, 2.2);
+          const x = f.x0 + (f.x1 - f.x0) * e;
+          const y = f.y0 + (f.y1 - f.y0) * e - (f.mine ? Math.sin(Math.PI * k) * H * 0.07 : 0);
+          if (f.mine) draw(ctx, x, y, 1.05 - 0.63 * e, ((f.x1 - f.x0) / W) * 0.25);
+          else draw(ctx, x, y, 0.9 - 0.48 * e, Math.PI);
+          if (k >= 1) { fly.current = null; f.onLand(); }
         }
 
-        // Flying dart (mine or opponent's replay)
-        if (flyingDart.current) {
-          const f = flyingDart.current;
-          const t = Math.min(1, (now - f.t0) / f.dur);
-          const ease = 1 - Math.pow(1 - t, 3);
-          const x = f.startX + (f.endX - f.startX) * ease;
-          const y = f.startY + (f.endY - f.startY) * ease;
-          const angle = (Math.atan2(f.endY - f.startY, f.endX - f.startX) * 180) / Math.PI + 90;
-          drawDartIcon(ctx, x, y, angle, 0.6 + 0.4 * ease);
-          if (t >= 1) flyingDart.current = null;
+        // dart in hand
+        if (live.current.myTurn && (phaseRef.current === "idle" || phaseRef.current === "drag") && now >= replayUntil.current) {
+          let x = sx, y = sy;
+          const d = drag.current;
+          if (phaseRef.current === "drag" && d) {
+            x = sx + (d.x - d.x0); y = sy + Math.max(-H * 0.5, Math.min(H * 0.06, d.y - d.y0));
+          }
+          draw(ctx, x, y, 1.05, 0);
+          if (phaseRef.current === "drag") {
+            const gw = Math.min(W * 0.5, 240), gh = 8, gx = (W - gw) / 2, gy = H - 16, max = SWEET_SPEED * 2;
+            ctx.fillStyle = "rgba(255,255,255,.1)"; ctx.beginPath(); ctx.roundRect(gx, gy, gw, gh, 4); ctx.fill();
+            ctx.fillStyle = "rgba(45,230,170,.45)"; ctx.fillRect(gx + gw * ((SWEET_SPEED - 0.12) / max), gy, gw * (0.24 / max), gh);
+            const frac = Math.min(1, liveSpeed.current / max);
+            ctx.fillStyle = Math.abs(liveSpeed.current - SWEET_SPEED) < 0.12 ? "#2de6aa" : "#fff";
+            ctx.beginPath(); ctx.roundRect(gx, gy, Math.max(4, gw * frac), gh, 4); ctx.fill();
+          }
         }
       }
-      rafId = requestAnimationFrame(loop);
+      raf = requestAnimationFrame(loop);
     };
-    rafId = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(rafId);
-  }, [dims, boardGeometry, myTurn, phase]);
-
-  // ── Precision meter animation ──
-  const precisionRafId = useRef<number>(0);
-  const runPrecisionMeter = useCallback((now: number) => {
-    const period = Math.max(560, 900 - room.game_state.turnNumber * 12);
-    const t = (now - precisionStart.current) % period;
-    const frac = t / period;
-    precisionPos.current = 50 + 50 * Math.sin(frac * Math.PI * 2);
-    const marker = document.getElementById("darts-precision-marker");
-    if (marker) marker.style.left = `calc(${precisionPos.current}% - 2px)`;
-    precisionRafId.current = requestAnimationFrame(runPrecisionMeter);
-  }, [room.game_state.turnNumber]);
-
-  const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    if (!myTurn || isSubmitting || room.status !== "active") return;
-    const rect = canvasRef.current!.getBoundingClientRect();
-    const x = e.clientX - rect.left, y = e.clientY - rect.top;
-
-    if (phase === "aiming") {
-      aimPointer.current = { x, y };
-      setPhase("timing");
-      precisionStart.current = performance.now();
-      precisionRafId.current = requestAnimationFrame(runPrecisionMeter);
-      return;
-    }
-    if (phase === "timing") {
-      cancelAnimationFrame(precisionRafId.current);
-      const distFromCenter = Math.abs(precisionPos.current - 50);
-      const precision = 1 - distFromCenter / 50;
-      const { R } = boardGeometry();
-      const maxDeviation = R * 0.5;
-      const deviation = maxDeviation * Math.pow(1 - precision, 2);
-      const randomAngle = Math.random() * Math.PI * 2;
-      const landX = aimPointer.current!.x + Math.cos(randomAngle) * deviation;
-      const landY = aimPointer.current!.y + Math.sin(randomAngle) * deviation;
-
-      setPhase("flying");
-      const { cx, cy } = boardGeometry();
-      flyingDart.current = {
-        startX: dims.w / 2, startY: dims.h - 60,
-        endX: landX, endY: landY,
-        t0: performance.now(), dur: 300,
-      };
-
-      setTimeout(async () => {
-        const { R: r2 } = boardGeometry();
-        const dx = (landX - cx) / r2, dy = (landY - cy) / r2;
-        const preview = scoreAt(dx, dy);
-        setToastMsg({ text: `${preview.label} = ${preview.score}`, kind: preview.score >= 40 ? "perfect" : preview.score > 0 ? "good" : "bad" });
-        setTimeout(() => setToastMsg(null), 900);
-
-        setIsSubmitting(true);
-        try {
-          await submitDartsThrow(room.id, dx, dy);
-        } catch (err) {
-          toast.error(err instanceof Error ? err.message : "Throw failed");
-        } finally {
-          setIsSubmitting(false);
-          setPhase("aiming");
-          aimPointer.current = null;
-        }
-      }, 320);
-    }
-  };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, []);
 
   const handleResign = async () => {
-    try {
-      await resignDartsGame(room.id);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to resign");
-    }
+    try { await resignDartsGame(room.id); } catch (err) { toast.error(err instanceof Error ? err.message : "Failed to resign"); }
   };
 
   if (room.status === "finished") {
-    return (
-      <H2HWinner
-        room={room as never}
-        user={user}
-        localWinnerId={room.winner_id}
-        isSyncing={false}
-      />
-    );
+    return <H2HWinner room={room as never} user={user} localWinnerId={room.winner_id} isSyncing={false} />;
   }
 
+  // while the opponent's darts are being replayed it is visually THEIR turn, even though the server already passed it back
+  const myTurnLive = myTurn && !replaying;
+  const oppActive = room.status === "active" && !myTurnLive;
+  const statusText = myTurnLive
+    ? phase === "submit" ? "Throwing…" : "Your throw"
+    : replaying ? `${oppName} is throwing…` : `${oppName}'s turn`;
+  const prize = Math.round(room.stake * 1.8 * 100) / 100;
+
+  const PlayerCard = ({ name, score, active, you, avatar }: { name: string; score: number; active: boolean; you?: boolean; avatar?: string | null }) => (
+    <div className={`flex-1 min-w-0 rounded-2xl p-3 border transition-all ${active ? "bg-indigo-500/15 border-indigo-400/60 shadow-[0_0_24px_rgba(99,102,241,0.35)]" : "bg-white/5 border-white/10"}`}>
+      <div className="flex items-center gap-2 mb-1.5">
+        <div className="w-7 h-7 shrink-0 rounded-full overflow-hidden bg-slate-700 flex items-center justify-center text-[11px] font-black text-white">
+          {avatar ? <img src={avatar} alt="" className="w-full h-full object-cover" /> : (isBotOpponent && !you ? "🤖" : name.charAt(0).toUpperCase())}
+        </div>
+        <p className={`text-[10px] font-black uppercase tracking-widest truncate ${you ? "text-indigo-300" : "text-slate-300"}`}>{you ? "You" : name}</p>
+      </div>
+      <p className="font-headline text-3xl font-black text-white leading-none tabular-nums">{score}</p>
+    </div>
+  );
+
   return (
-    <div className="w-full max-w-2xl mx-auto space-y-3">
-      {/* Score header */}
-      <div className="flex items-center justify-between gap-3 px-1">
-        <div className="flex-1 bg-black/5 dark:bg-white/5 rounded-xl p-3 border border-black/5 dark:border-white/10">
-          <p className="text-[9px] font-black uppercase tracking-widest text-primary mb-1">You</p>
-          <p className="font-headline text-2xl md:text-3xl font-black">{myScore}</p>
+    <div className="w-full max-w-md mx-auto space-y-3 select-none">
+      <style>{`@keyframes dartsPop{0%{opacity:0;transform:translate(-50%,10px) scale(.7)}18%{opacity:1;transform:translate(-50%,0) scale(1.08)}100%{opacity:0;transform:translate(-50%,-34px) scale(1)}}
+@keyframes dartsBanner{0%{opacity:0;transform:translate(-50%,-50%) scale(.6) rotate(-6deg)}20%{opacity:1;transform:translate(-50%,-50%) scale(1.1) rotate(-3deg)}100%{opacity:0;transform:translate(-50%,-50%) scale(1) rotate(-3deg)}}`}</style>
+
+      {/* Scoreboard */}
+      <div className="flex items-stretch gap-2">
+        <PlayerCard name="You" score={myScore} active={myTurnLive} you avatar={user?.avatarUrl} />
+        <div className="flex flex-col items-center justify-center shrink-0 px-1">
+          <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Pot</span>
+          <span className="font-black text-sm text-white flex items-center gap-0.5"><ZASymbol className="text-xs" />{prize}</span>
+          <span className="text-[8px] font-bold uppercase tracking-widest text-slate-500 mt-0.5">to win</span>
         </div>
-        <div className="text-center shrink-0 px-2">
-          <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Stake</p>
-          <p className="font-black text-sm flex items-center gap-0.5"><ZASymbol className="text-xs" />{room.stake}</p>
-        </div>
-        <div className="flex-1 bg-black/5 dark:bg-white/5 rounded-xl p-3 border border-black/5 dark:border-white/10 text-right">
-          <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">{opponent?.username || (isBotOpponent ? "Bot" : "Opponent")}</p>
-          <p className="font-headline text-2xl md:text-3xl font-black">{oppScore}</p>
-        </div>
+        <PlayerCard name={oppName} score={oppScore} active={oppActive} avatar={opponent?.avatar_url} />
       </div>
 
-      <div className="flex items-center justify-center gap-3">
-        <div className="flex gap-1.5">
+      {/* Turn strip */}
+      <div className="flex items-center justify-between px-1">
+        <div className="flex items-center gap-1.5">
           {[0, 1, 2].map((i) => (
-            <span
-              key={i}
-              className={`w-2 h-2 rounded-full border ${
-                i < dartsThrownThisTurn && myTurn ? "bg-primary border-primary" : "bg-transparent border-slate-400/40"
-              }`}
-            />
+            <span key={i} className={`h-1.5 w-7 rounded-full transition-colors ${myTurnLive ? (i < dartsThrownThisTurn ? "bg-slate-600" : "bg-indigo-400") : "bg-slate-700"}`} />
           ))}
         </div>
-        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-          {myTurn ? (isSubmitting ? "Throwing..." : "Your Throw") : `Waiting for ${opponent?.username || "opponent"}...`}
-        </span>
+        <span className={`text-[10px] font-black uppercase tracking-widest ${myTurnLive ? "text-indigo-300" : "text-slate-400"}`}>{statusText}</span>
+        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 tabular-nums">{myTurn && dartsThrownThisTurn > 0 ? `+${turnPoints}` : `Rd ${room.game_state.turnNumber}`}</span>
       </div>
 
       {/* Board */}
-      <div ref={wrapRef} className="relative w-full h-[380px] md:h-[440px] rounded-2xl overflow-hidden bg-[#030712] border border-black/5 dark:border-white/10">
+      <div ref={wrapRef} className="relative w-full h-[min(64vh,540px)] min-h-[420px] rounded-3xl overflow-hidden bg-[#05060f] border border-white/10">
         <canvas
           ref={canvasRef}
           className="absolute inset-0 w-full h-full touch-none"
-          style={{ cursor: myTurn && !isSubmitting ? "crosshair" : "default" }}
-          onPointerDown={handlePointerDown}
-          onPointerMove={(e) => {
-            if (!myTurn || phase !== "aiming") return;
-            const rect = canvasRef.current!.getBoundingClientRect();
-            aimPointer.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-          }}
+          style={{ cursor: myTurn && phase === "idle" ? "grab" : "default", width: "100%", height: "100%" }}
+          onPointerDown={onDown}
+          onPointerMove={onMove}
+          onPointerUp={onUp}
+          onPointerCancel={onUp}
         />
 
-        {myTurn && phase === "timing" && (
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[84%] max-w-[320px] text-center">
-            <div className="relative h-5 rounded-full bg-white/10 border border-white/15 overflow-hidden">
-              <div className="absolute inset-y-0 left-[12%] right-[12%] rounded bg-red-500/25" />
-              <div className="absolute inset-y-0 left-[28%] right-[28%] rounded bg-green-500/30" />
-              <div className="absolute inset-y-0 left-[44%] right-[44%] rounded bg-amber-400 shadow-[0_0_14px_rgba(251,191,36,0.6)]" />
-              <div id="darts-precision-marker" className="absolute -top-1 w-1 h-7 rounded bg-white shadow-[0_0_10px_rgba(255,255,255,0.7)]" style={{ left: "50%" }} />
-            </div>
-            <p className="mt-2 text-[10px] font-black tracking-widest text-white/60">TAP TO STOP — LAND IN THE CENTER</p>
+        {pop && (
+          <div key={pop.id} className="pointer-events-none absolute left-1/2 top-[42%] whitespace-nowrap text-2xl md:text-3xl font-black italic"
+            style={{ color: pop.color, textShadow: "0 0 18px currentColor, 0 2px 0 rgba(0,0,0,.6)", animation: "dartsPop 1s ease-out forwards" }}>
+            {pop.text}
           </div>
         )}
-
-        {myTurn && phase === "aiming" && !isSubmitting && (
-          <p className="absolute top-4 left-1/2 -translate-x-1/2 text-[11px] font-black tracking-widest text-white/35">
-            TAP THE BOARD TO AIM
-          </p>
+        {banner && (
+          <div className="pointer-events-none absolute left-1/2 top-1/2 px-6 py-2 rounded-xl bg-red-600 text-white text-3xl font-black italic tracking-wider shadow-2xl"
+            style={{ animation: "dartsBanner 1.4s ease-out forwards" }}>{banner}</div>
         )}
 
-        {toastMsg && (
-          <div
-            className={`absolute top-16 left-1/2 -translate-x-1/2 px-5 py-2 rounded-full text-sm font-black tracking-wide backdrop-blur-md border ${
-              toastMsg.kind === "perfect" ? "border-amber-400 text-amber-400" : toastMsg.kind === "good" ? "border-green-400 text-green-400" : "border-red-400 text-red-400"
-            } bg-black/70`}
-          >
-            {toastMsg.text}
-          </div>
-        )}
-
-        {!myTurn && room.status === "active" && !isBotOpponent && (
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-2 text-white/50">
-            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            <span className="text-[11px] font-black tracking-widest">OPPONENT'S TURN</span>
-          </div>
-        )}
+        <div className="pointer-events-none absolute left-0 right-0 bottom-2 text-center text-[11px] font-black uppercase tracking-[0.14em] text-slate-400">
+          {myTurn && phase === "idle" && !replaying ? "Flick the dart up to throw" : ""}
+        </div>
       </div>
 
       <div className="flex justify-center">
-        <button
-          onClick={handleResign}
-          className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-red-500 transition-colors py-2 px-4"
-        >
+        <button onClick={handleResign} className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-red-400 transition-colors py-2 px-4">
           <Flag className="w-3 h-3" /> Resign Match
         </button>
       </div>
