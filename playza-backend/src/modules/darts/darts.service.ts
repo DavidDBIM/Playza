@@ -2,11 +2,19 @@ import { supabaseAdmin } from '../../config/supabase'
 import crypto from 'crypto'
 import { recordH2HRevenue } from '../gamesession/h2h.helper'
 
-// System bot participant — same user row chess/ludo/pool use (a real UUID is
-// required: host_id/guest_id/current_turn/winner_id are uuid FKs to users) so a
-// bot-filled room can share the exact same status/winner_id/payout code
-// paths as a real two-human match.
+// System bot participant. The bot is NOT a row in `users`, so it can never be
+// written into the uuid foreign-key columns (guest_id / current_turn /
+// winner_id) — same approach chess uses. In the database a bot room simply has
+// guest_id = NULL and the bot's persona stored in game_state.bot. This
+// constant is only the in-memory/API sentinel: getRoom() presents a bot room to
+// the frontend with guest_id = SYSTEM_BOT_ID, and toDb() turns it back into
+// NULL before anything is saved.
 export const SYSTEM_BOT_ID = '00000000-0000-0000-0000-000000000000'
+
+const toDb = (id: string | null | undefined) => (id === SYSTEM_BOT_ID ? null : id ?? null)
+// The guest of a room, resolving a bot room's NULL guest to the bot sentinel.
+const effectiveGuest = (room: any): string | null =>
+  room.guest_id ?? (room.game_state?.bot ? SYSTEM_BOT_ID : null)
 
 const BOT_PERSONAS = [
   { username: 'DartsDre', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=dart1' },
@@ -65,6 +73,8 @@ interface GameState {
   turnDarts: ThrowResult[]
   turnNumber: number
   lastEvent: { by: string; label: string; score: number; busted: boolean; checkout: boolean; dx: number; dy: number } | null
+  bot?: { username: string }   // present only in bot rooms
+  botWon?: boolean             // set when the bot wins (winner_id stays NULL)
 }
 
 function initialState(startingScore: number): GameState {
@@ -220,12 +230,12 @@ export async function createBotRoom(userId: string, stakeValue: number, starting
     .insert({
       code,
       host_id: userId,
-      guest_id: SYSTEM_BOT_ID,
+      guest_id: null, // bot is not a users row — identified by game_state.bot
       stake,
       status: 'active',
       starting_score: startingScore,
       current_turn: userId, // human throws first
-      game_state: initialState(startingScore),
+      game_state: { ...initialState(startingScore), bot: { username: bot.username } },
       turn_started_at: new Date().toISOString(),
     })
     .select()
@@ -276,13 +286,29 @@ export async function getRoom(roomId: string, userId: string | null) {
   const isParticipant = room.host_id === userId || room.guest_id === userId
   if (!isParticipant) throw new Error('Unauthorized access')
 
+  // Present a bot room to the frontend as if the bot were a normal guest.
+  const botInfo = (room as any).game_state?.bot
+  if (!room.guest_id && botInfo) {
+    return {
+      ...room,
+      guest_id: SYSTEM_BOT_ID,
+      guest: { id: SYSTEM_BOT_ID, username: botInfo.username, avatar_url: null },
+      winner_id: room.winner_id ?? ((room as any).game_state?.botWon ? SYSTEM_BOT_ID : null),
+    }
+  }
   return room
 }
 
 async function handleDartsGameOver(roomId: string, winnerId: string | null, stake: number) {
+  const patch: Record<string, unknown> = { status: 'finished', winner_id: toDb(winnerId) }
+  if (winnerId === SYSTEM_BOT_ID) {
+    // winner_id is NULL for a bot win (and for a draw), so flag it in game_state
+    const { data: cur } = await supabaseAdmin.from('darts_rooms').select('game_state').eq('id', roomId).single()
+    patch.game_state = { ...(cur?.game_state ?? {}), botWon: true }
+  }
   const { data: room, error: updateErr } = await supabaseAdmin
     .from('darts_rooms')
-    .update({ status: 'finished', winner_id: winnerId })
+    .update(patch)
     .eq('id', roomId)
     .eq('status', 'active')
     .select('host_id, guest_id')
@@ -385,7 +411,7 @@ export async function submitThrow(roomId: string, userId: string, dx: number, dy
   let nextTurn = room.current_turn
   if (result.turnOver) {
     // Hand the turn to the other player and reset the per-turn bookkeeping.
-    nextTurn = isHost ? room.guest_id : room.host_id
+    nextTurn = isHost ? effectiveGuest(room) : room.host_id
     state.turnStartScore = isHost ? state.hostScore : state.guestScore
     state.turnDarts = []
     state.turnNumber += 1
@@ -416,7 +442,7 @@ export async function submitThrow(roomId: string, userId: string, dx: number, dy
           }
         }
       } else {
-        const winnerId = hostProgress > guestProgress ? room.host_id : room.guest_id
+        const winnerId = hostProgress > guestProgress ? room.host_id : effectiveGuest(room)
         await handleDartsGameOver(roomId, winnerId, room.stake)
       }
       return { ...(await getRoom(roomId, userId)) }
@@ -425,7 +451,7 @@ export async function submitThrow(roomId: string, userId: string, dx: number, dy
 
   await supabaseAdmin
     .from('darts_rooms')
-    .update({ game_state: state, current_turn: nextTurn, turn_started_at: new Date().toISOString() })
+    .update({ game_state: state, current_turn: toDb(nextTurn), turn_started_at: new Date().toISOString() })
     .eq('id', roomId)
 
   // If it's now the bot's turn, play its whole turn out immediately so the
@@ -443,7 +469,7 @@ async function playBotTurn(roomId: string) {
   if (!room || room.status !== 'active') return
 
   const state: GameState = room.game_state
-  const isHostBot = room.host_id === SYSTEM_BOT_ID
+  const isHostBot = room.host_id === SYSTEM_BOT_ID   // always false today: the bot is the guest
 
   let turnOver = false
   let checkout = false
@@ -457,13 +483,13 @@ async function playBotTurn(roomId: string) {
   }
 
   if (checkout) {
-    const winnerId = isHostBot ? room.host_id : room.guest_id
+    const winnerId = isHostBot ? room.host_id : effectiveGuest(room)
     await supabaseAdmin.from('darts_rooms').update({ game_state: state }).eq('id', roomId)
     await handleDartsGameOver(roomId, winnerId, room.stake)
     return
   }
 
-  const nextTurn = isHostBot ? room.guest_id : room.host_id
+  const nextTurn = isHostBot ? effectiveGuest(room) : room.host_id
   state.turnStartScore = isHostBot ? state.hostScore : state.guestScore
   state.turnDarts = []
   state.turnNumber += 1
@@ -472,7 +498,7 @@ async function playBotTurn(roomId: string) {
     const hostProgress = (room.starting_score - state.hostScore) / room.starting_score
     const guestProgress = (room.starting_score - state.guestScore) / room.starting_score
     await supabaseAdmin.from('darts_rooms').update({ game_state: state }).eq('id', roomId)
-    const winnerId = hostProgress === guestProgress ? null : hostProgress > guestProgress ? room.host_id : room.guest_id
+    const winnerId = hostProgress === guestProgress ? null : hostProgress > guestProgress ? room.host_id : effectiveGuest(room)
     if (winnerId) await handleDartsGameOver(roomId, winnerId, room.stake)
     else await supabaseAdmin.from('darts_rooms').update({ status: 'finished', winner_id: null }).eq('id', roomId).eq('status', 'active')
     return
@@ -480,7 +506,7 @@ async function playBotTurn(roomId: string) {
 
   await supabaseAdmin
     .from('darts_rooms')
-    .update({ game_state: state, current_turn: nextTurn, turn_started_at: new Date().toISOString() })
+    .update({ game_state: state, current_turn: toDb(nextTurn), turn_started_at: new Date().toISOString() })
     .eq('id', roomId)
 }
 
