@@ -19,7 +19,7 @@
   #tag{position:absolute;left:0;right:0;top:8px;text-align:center;font-size:10px;font-weight:900;letter-spacing:.2em;
     text-transform:uppercase;color:#ffb020;pointer-events:none}
   #hint{position:absolute;left:0;right:0;bottom:8px;text-align:center;font-size:11px;font-weight:800;letter-spacing:.14em;
-    text-transform:uppercase;color:#8b93b0;pointer-events:none}
+    text-transform:uppercase;color:#9aa3bf;pointer-events:none;text-shadow:0 1px 2px #000}
   #pop{position:absolute;left:50%;top:46%;transform:translateX(-50%);font-size:30px;font-weight:900;font-style:italic;
     white-space:nowrap;opacity:0;pointer-events:none;text-shadow:0 0 18px currentColor,0 2px 0 rgba(0,0,0,.6)}
   #pop.show{animation:pop 1s ease-out forwards}
@@ -66,6 +66,417 @@
 </div>
 
 <script>
+// ── Shared realistic board + dart renderer (same as the H2H arena) ──
+// Shared photoreal-ish dartboard + dart renderer (Canvas 2D).
+// Used by the H2H arena (React) and inlined into the Solo Earn Darts game.
+const SEGMENT_ORDER = [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5];
+const TAU = Math.PI * 2;
+const rad = (deg) => (deg * Math.PI) / 180;
+function rng(seed) {
+    let s = seed >>> 0;
+    return () => { s ^= s << 13; s >>>= 0; s ^= s >> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; };
+}
+// ── The board, pre-rendered once at device resolution ─────────────────────
+function buildBoardImage(R, ring, dpr) {
+    const half = Math.ceil(R * 1.42);
+    const size = half * 2;
+    const cv = document.createElement("canvas");
+    cv.width = Math.ceil(size * dpr);
+    cv.height = Math.ceil(size * dpr);
+    const b = cv.getContext("2d", { willReadFrequently: true });
+    b.scale(dpr, dpr);
+    const c = half;
+    const u = R / 170;
+    // soft contact shadow on the wall
+    b.save();
+    b.shadowColor = "rgba(0,0,0,.65)";
+    b.shadowBlur = 26 * u;
+    b.shadowOffsetY = 12 * u;
+    b.shadowOffsetX = 5 * u;
+    b.beginPath();
+    b.arc(c, c, R * 1.2, 0, TAU);
+    b.fillStyle = "#08080b";
+    b.fill();
+    b.restore();
+    // black catch-ring (rubberised surround)
+    const surround = b.createRadialGradient(c - R * 0.5, c - R * 0.55, R * 0.2, c, c, R * 1.25);
+    surround.addColorStop(0, "#2b2d36");
+    surround.addColorStop(0.55, "#14151a");
+    surround.addColorStop(1, "#050507");
+    b.beginPath();
+    b.arc(c, c, R * 1.2, 0, TAU);
+    b.fillStyle = surround;
+    b.fill();
+    // bevelled outer edge
+    const edge = b.createLinearGradient(c - R, c - R, c + R, c + R);
+    edge.addColorStop(0, "rgba(255,255,255,.55)");
+    edge.addColorStop(0.5, "rgba(255,255,255,.04)");
+    edge.addColorStop(1, "rgba(0,0,0,.7)");
+    b.lineWidth = 2.2 * u;
+    b.strokeStyle = edge;
+    b.beginPath();
+    b.arc(c, c, R * 1.195, 0, TAU);
+    b.stroke();
+    // segments (sisal colours)
+    const wedge = (r0, r1, a0, a1, fill) => {
+        b.beginPath();
+        b.arc(c, c, R * r1, a0, a1);
+        b.arc(c, c, R * r0, a1, a0, true);
+        b.closePath();
+        b.fillStyle = fill;
+        b.fill();
+    };
+    for (let i = 0; i < 20; i++) {
+        const a0 = rad(-90 - 9 + i * 18), a1 = a0 + rad(18), dark = i % 2 === 0;
+        const base = dark ? "#16161a" : "#e9d9ac";
+        const ringCol = dark ? "#c41e2f" : "#12844a";
+        wedge(ring.outerBull, ring.tripleIn, a0, a1, base);
+        wedge(ring.tripleIn, ring.tripleOut, a0, a1, ringCol);
+        wedge(ring.tripleOut, ring.doubleIn, a0, a1, base);
+        wedge(ring.doubleIn, ring.doubleOut, a0, a1, ringCol);
+    }
+    b.beginPath();
+    b.arc(c, c, R * ring.outerBull, 0, TAU);
+    b.fillStyle = "#12844a";
+    b.fill();
+    b.beginPath();
+    b.arc(c, c, R * ring.innerBull, 0, TAU);
+    b.fillStyle = "#c41e2f";
+    b.fill();
+    // sisal grain — per-pixel noise inside the playing surface
+    const w = cv.width, h = cv.height;
+    const img = b.getImageData(0, 0, w, h);
+    const d = img.data;
+    const rnd = rng(1234567);
+    const cc = c * dpr, rr = R * ring.doubleOut * dpr;
+    const rr2 = rr * rr;
+    for (let y = 0; y < h; y++) {
+        const dy = y - cc;
+        for (let x = 0; x < w; x++) {
+            const dx = x - cc;
+            if (dx * dx + dy * dy > rr2)
+                continue;
+            const i = (y * w + x) * 4;
+            const lum = (d[i] + d[i + 1] + d[i + 2]) / 765;
+            const n = (rnd() - 0.5) * (22 + lum * 26);
+            d[i] = Math.max(0, Math.min(255, d[i] + n));
+            d[i + 1] = Math.max(0, Math.min(255, d[i + 1] + n));
+            d[i + 2] = Math.max(0, Math.min(255, d[i + 2] + n));
+        }
+    }
+    b.putImageData(img, 0, 0);
+    // sisal fibres
+    b.save();
+    b.beginPath();
+    b.arc(c, c, R * ring.doubleOut, 0, TAU);
+    b.clip();
+    const fr = rng(98765);
+    const fibres = Math.floor(R * R * 0.22);
+    b.lineWidth = Math.max(0.5, 0.55 * u);
+    for (let i = 0; i < fibres; i++) {
+        const ang = fr() * TAU, rd = Math.sqrt(fr()) * R;
+        const x = c + Math.cos(ang) * rd, y = c + Math.sin(ang) * rd;
+        const dir = ang + (fr() - 0.5) * 1.2, len = (1.5 + fr() * 4) * u;
+        b.strokeStyle = fr() > 0.5 ? "rgba(255,255,255,.07)" : "rgba(0,0,0,.10)";
+        b.beginPath();
+        b.moveTo(x, y);
+        b.lineTo(x + Math.cos(dir) * len, y + Math.sin(dir) * len);
+        b.stroke();
+    }
+    b.restore();
+    // raised metal wires (shadow, body, highlight)
+    const wireW = Math.max(0.9, R / 215);
+    const wire = (path) => {
+        b.save();
+        b.translate(0.9 * u, 1.3 * u);
+        b.lineWidth = wireW * 1.9;
+        b.strokeStyle = "rgba(0,0,0,.5)";
+        path();
+        b.stroke();
+        b.restore();
+        b.lineWidth = wireW;
+        b.strokeStyle = "#b9bfca";
+        path();
+        b.stroke();
+        b.save();
+        b.translate(-0.35 * u, -0.45 * u);
+        b.lineWidth = wireW * 0.45;
+        b.strokeStyle = "rgba(255,255,255,.85)";
+        path();
+        b.stroke();
+        b.restore();
+    };
+    [ring.innerBull, ring.outerBull, ring.tripleIn, ring.tripleOut, ring.doubleIn, ring.doubleOut].forEach((r) => wire(() => { b.beginPath(); b.arc(c, c, R * r, 0, TAU); }));
+    for (let i = 0; i < 20; i++) {
+        const a = rad(-90 - 9 + i * 18);
+        wire(() => { b.beginPath(); b.moveTo(c + Math.cos(a) * R * ring.outerBull, c + Math.sin(a) * R * ring.outerBull); b.lineTo(c + Math.cos(a) * R * ring.doubleOut, c + Math.sin(a) * R * ring.doubleOut); });
+    }
+    // glossy bull
+    const gloss = b.createRadialGradient(c - R * 0.012, c - R * 0.016, 0, c, c, R * ring.innerBull);
+    gloss.addColorStop(0, "rgba(255,255,255,.55)");
+    gloss.addColorStop(0.5, "rgba(255,255,255,.08)");
+    gloss.addColorStop(1, "rgba(0,0,0,.25)");
+    b.beginPath();
+    b.arc(c, c, R * ring.innerBull * 0.98, 0, TAU);
+    b.fillStyle = gloss;
+    b.fill();
+    // numbers on the black ring
+    b.textAlign = "center";
+    b.textBaseline = "middle";
+    b.font = `800 ${Math.max(11, R * 0.105)}px "Arial Narrow", "Helvetica Neue", Arial, system-ui, sans-serif`;
+    for (let i = 0; i < 20; i++) {
+        const am = rad(-90 + i * 18);
+        const x = c + Math.cos(am) * R * 1.1, y = c + Math.sin(am) * R * 1.1;
+        b.fillStyle = "rgba(0,0,0,.8)";
+        b.fillText(String(SEGMENT_ORDER[i]), x + 0.8 * u, y + 1.1 * u);
+        b.fillStyle = "#f4f5f8";
+        b.fillText(String(SEGMENT_ORDER[i]), x, y);
+    }
+    // room lighting: bright upper-left, falling off to the lower-right
+    b.save();
+    b.beginPath();
+    b.arc(c, c, R * 1.2, 0, TAU);
+    b.clip();
+    const light = b.createRadialGradient(c - R * 0.45, c - R * 0.55, R * 0.1, c - R * 0.2, c - R * 0.25, R * 1.5);
+    light.addColorStop(0, "rgba(255,255,255,.20)");
+    light.addColorStop(0.5, "rgba(255,255,255,0)");
+    light.addColorStop(1, "rgba(0,0,0,.34)");
+    b.fillStyle = light;
+    b.fillRect(0, 0, size, size);
+    b.restore();
+    return cv;
+}
+function boardHalf(img, dpr) { return img.width / dpr / 2; }
+// ── Wall / spotlight behind the board ─────────────────────────────────────
+function drawWall(ctx, W, H, cx, cy, R) {
+    const g = ctx.createRadialGradient(cx, cy - R * 0.1, R * 0.3, cx, cy, Math.max(W, H) * 0.95);
+    g.addColorStop(0, "#2d3548");
+    g.addColorStop(0.45, "#171c2b");
+    g.addColorStop(1, "#070912");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+    ctx.strokeStyle = "rgba(255,255,255,.025)";
+    ctx.lineWidth = 1;
+    for (let x = W / 6; x < W; x += W / 6) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, H);
+        ctx.stroke();
+    }
+    const fl = ctx.createLinearGradient(0, H * 0.62, 0, H);
+    fl.addColorStop(0, "rgba(0,0,0,0)");
+    fl.addColorStop(1, "rgba(0,0,0,.45)");
+    ctx.fillStyle = fl;
+    ctx.fillRect(0, H * 0.62, W, H * 0.38);
+}
+// ── A shaded, metallic dart seen from BEHIND, the way you hold it ──────────
+// Anchor (x,y) is the TIP; the dart points up/away from the camera, so the
+// body narrows toward the tip (perspective) and the four flights fan out
+// around the rear of the shaft.
+function cyl(ctx, x0, x1, stops) {
+    const g = ctx.createLinearGradient(x0, 0, x1, 0);
+    stops.forEach(([o, col]) => g.addColorStop(o, col));
+    return g;
+}
+function drawDart3D(ctx, x, y, s, angle, R, tint = "me", shadow = true) {
+    const u = (R / 170) * s;
+    const dark = tint === "me" ? "#a30f33" : "#0f48b0";
+    const mid = tint === "me" ? "#e11d48" : "#1d7be8";
+    const light = tint === "me" ? "#ff6b92" : "#58c8ff";
+    const persp = (d) => 0.52 + 0.48 * (d / 150); // things nearer the camera look bigger
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(angle);
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    if (shadow) {
+        ctx.save();
+        ctx.fillStyle = "rgba(0,0,0,.30)";
+        ctx.beginPath();
+        ctx.ellipse(10 * u, 150 * u, 30 * u, 9 * u, 0, 0, TAU);
+        ctx.fill();
+        ctx.restore();
+    }
+    // far fins first (they sit behind the shaft)
+    const FIN_L = 31 * u, RX = 0.82, RY = 0.5, FY = 126 * u;
+    const fins = [225, 315, 135, 45].map((deg, k) => ({ deg, k }));
+    const drawFin = (deg, k) => {
+        const th = rad(deg), fx = Math.cos(th) * FIN_L * RX, fy = FY + Math.sin(th) * FIN_L * RY;
+        const nx = -Math.sin(th), ny = Math.cos(th); // perpendicular
+        const wmid = FIN_L * 0.30;
+        const mx = Math.cos(th) * FIN_L * RX * 0.45, my = FY + Math.sin(th) * FIN_L * RY * 0.45;
+        ctx.beginPath();
+        ctx.moveTo(0, FY);
+        ctx.lineTo(mx + nx * wmid * RX, my + ny * wmid * RY);
+        ctx.lineTo(fx, fy);
+        ctx.lineTo(mx - nx * wmid * RX, my - ny * wmid * RY);
+        ctx.closePath();
+        const g = ctx.createLinearGradient(0, FY, fx, fy);
+        const farSide = Math.sin(th) < 0;
+        g.addColorStop(0, farSide ? dark : mid);
+        g.addColorStop(1, k % 2 ? light : (farSide ? mid : light));
+        ctx.fillStyle = g;
+        ctx.fill();
+        ctx.strokeStyle = "rgba(255,255,255,.35)";
+        ctx.lineWidth = 0.8 * u;
+        ctx.stroke();
+        ctx.strokeStyle = "rgba(0,0,0,.22)";
+        ctx.lineWidth = 0.7 * u;
+        ctx.beginPath();
+        ctx.moveTo(0, FY);
+        ctx.lineTo(fx * 0.92, FY + (fy - FY) * 0.92);
+        ctx.stroke();
+    };
+    fins.slice(0, 2).forEach((f) => drawFin(f.deg, f.k));
+    // shaft
+    const sw = (d) => 3.7 * u * persp(d);
+    ctx.beginPath();
+    ctx.moveTo(-sw(100) / 2, 96 * u);
+    ctx.lineTo(sw(126) / 2 * -1, FY);
+    ctx.lineTo(sw(126) / 2, FY);
+    ctx.lineTo(sw(100) / 2, 96 * u);
+    ctx.closePath();
+    ctx.fillStyle = cyl(ctx, -3 * u, 3 * u, [[0, dark], [0.45, light], [1, dark]]);
+    ctx.fill();
+    // barrel — widens toward the camera
+    const bw = (d) => (4.4 + 5.4 * (d / 100)) * u * persp(d);
+    const barrel = () => {
+        ctx.beginPath();
+        ctx.moveTo(-bw(26) / 2, 26 * u);
+        ctx.quadraticCurveTo(-bw(60) / 2 - 0.6 * u, 62 * u, -bw(100) / 2, 100 * u);
+        ctx.lineTo(bw(100) / 2, 100 * u);
+        ctx.quadraticCurveTo(bw(60) / 2 + 0.6 * u, 62 * u, bw(26) / 2, 26 * u);
+        ctx.closePath();
+    };
+    barrel();
+    ctx.fillStyle = cyl(ctx, -7 * u, 7 * u, [[0, "#12151b"], [0.22, "#59627a"], [0.45, "#eef1f8"], [0.6, "#98a2b8"], [0.85, "#262c38"], [1, "#101319"]]);
+    ctx.fill();
+    ctx.save();
+    barrel();
+    ctx.clip();
+    for (let yy = 30; yy < 100; yy += 3.6) {
+        const half = bw(yy) / 2 + 2 * u, bow = 1.3 * u * persp(yy);
+        ctx.strokeStyle = "rgba(0,0,0,.55)";
+        ctx.lineWidth = 0.7 * u;
+        ctx.beginPath();
+        ctx.moveTo(-half, yy * u);
+        ctx.quadraticCurveTo(0, yy * u + bow * 2, half, yy * u);
+        ctx.stroke();
+        ctx.strokeStyle = "rgba(255,255,255,.28)";
+        ctx.lineWidth = 0.5 * u;
+        ctx.beginPath();
+        ctx.moveTo(-half, (yy + 1.5) * u);
+        ctx.quadraticCurveTo(0, (yy + 1.5) * u + bow * 2, half, (yy + 1.5) * u);
+        ctx.stroke();
+    }
+    [46, 84].forEach((yy) => {
+        const half = bw(yy) / 2 + 1 * u;
+        ctx.fillStyle = cyl(ctx, -half, half, [[0, "#6b4a12"], [0.45, "#ffe6a0"], [1, "#6b4a12"]]);
+        ctx.fillRect(-half, yy * u, half * 2, 2.8 * u);
+    });
+    ctx.restore();
+    // steel point (small, far away)
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(-1.2 * u, 27 * u);
+    ctx.lineTo(1.2 * u, 27 * u);
+    ctx.closePath();
+    ctx.fillStyle = cyl(ctx, -1.4 * u, 1.4 * u, [[0, "#6c7488"], [0.45, "#ffffff"], [1, "#68708a"]]);
+    ctx.fill();
+    // near fins on top of the shaft
+    fins.slice(2).forEach((f) => drawFin(f.deg, f.k));
+    // rear cap
+    ctx.fillStyle = cyl(ctx, -3 * u, 3 * u, [[0, "#555d72"], [0.5, "#f2f5fb"], [1, "#4a5266"]]);
+    ctx.beginPath();
+    ctx.arc(0, FY, 3 * u, 0, TAU);
+    ctx.fill();
+    ctx.restore();
+}
+// A dart stuck in the board, seen from the thrower's side: tip in the hole, barrel angled toward you.
+function drawStuckDart(ctx, x, y, R, alpha, tint) {
+    const u = R / 170;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    const hole = ctx.createRadialGradient(x, y, 0, x, y, 4.5 * u);
+    hole.addColorStop(0, "rgba(0,0,0,.9)");
+    hole.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = hole;
+    ctx.beginPath();
+    ctx.arc(x, y, 4.5 * u, 0, TAU);
+    ctx.fill();
+    // cast shadow of the barrel on the sisal
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(-0.5);
+    ctx.fillStyle = "rgba(0,0,0,.28)";
+    ctx.beginPath();
+    ctx.ellipse(3 * u, 20 * u, 3.2 * u, 22 * u, 0, 0, TAU);
+    ctx.fill();
+    ctx.restore();
+    drawDart3D(ctx, x, y, 0.42, 0, R, tint, false);
+    ctx.restore();
+}
+// ── Which region a landing point is in, as a highlightable path ───────────
+function drawHitHighlight(ctx, cx, cy, R, ring, dx, dy, age) {
+    const dist = Math.hypot(dx, dy);
+    if (dist > ring.doubleOut || age >= 1)
+        return;
+    const a = (1 - age);
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    ctx.fillStyle = `rgba(255,236,160,${0.42 * a * (0.6 + 0.4 * Math.sin(age * 22))})`;
+    ctx.strokeStyle = `rgba(255,220,120,${0.9 * a})`;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    if (dist <= ring.innerBull) {
+        ctx.arc(cx, cy, R * ring.innerBull, 0, TAU);
+    }
+    else if (dist <= ring.outerBull) {
+        ctx.arc(cx, cy, R * ring.outerBull, 0, TAU);
+        ctx.arc(cx, cy, R * ring.innerBull, 0, TAU, true);
+    }
+    else {
+        let ang = (Math.atan2(dx, -dy) * 180) / Math.PI;
+        if (ang < 0)
+            ang += 360;
+        const idx = Math.floor(((ang + 9) % 360) / 18);
+        const a0 = rad(-90 - 9 + idx * 18), a1 = a0 + rad(18);
+        const [r0, r1] = dist < ring.tripleIn ? [ring.outerBull, ring.tripleIn] : dist <= ring.tripleOut ? [ring.tripleIn, ring.tripleOut] : dist < ring.doubleIn ? [ring.tripleOut, ring.doubleIn] : [ring.doubleIn, ring.doubleOut];
+        ctx.arc(cx, cy, R * r1, a0, a1);
+        ctx.arc(cx, cy, R * r0, a1, a0, true);
+        ctx.closePath();
+    }
+    ctx.fill("evenodd");
+    ctx.stroke();
+    ctx.restore();
+}
+// Impact ripple + sparks
+function drawImpact(ctx, x, y, R, age, big) {
+    if (age >= 1)
+        return;
+    const u = R / 170, a = 1 - age;
+    ctx.save();
+    ctx.strokeStyle = `rgba(255,255,255,${0.75 * a})`;
+    ctx.lineWidth = 2 * u;
+    ctx.beginPath();
+    ctx.arc(x, y, (5 + age * 26) * u, 0, TAU);
+    ctx.stroke();
+    if (big) {
+        ctx.strokeStyle = `rgba(255,214,102,${a})`;
+        ctx.lineWidth = 2 * u;
+        for (let i = 0; i < 10; i++) {
+            const ang = (i / 10) * TAU + 0.3, r0 = (8 + age * 20) * u, r1 = (14 + age * 38) * u;
+            ctx.beginPath();
+            ctx.moveTo(x + Math.cos(ang) * r0, y + Math.sin(ang) * r0);
+            ctx.lineTo(x + Math.cos(ang) * r1, y + Math.sin(ang) * r1);
+            ctx.stroke();
+        }
+    }
+    ctx.restore();
+}
+
+</script>
+<script>
 (() => {
   'use strict';
   // ── Rules ─────────────────────────────────────────────────────────────
@@ -78,6 +489,7 @@
   // ── Real dartboard geometry (fractions of the board's outer radius) ────
   const ORDER = [20,1,18,4,13,6,10,15,2,17,3,19,7,16,8,11,14,9,12,5];
   const R_BULL=.037, R_OUTER_BULL=.094, R_T_IN=.582, R_T_OUT=.629, R_D_IN=.953, R_D_OUT=1;
+  const RING = { innerBull:R_BULL, outerBull:R_OUTER_BULL, tripleIn:R_T_IN, tripleOut:R_T_OUT, doubleIn:R_D_IN, doubleOut:R_D_OUT };
 
   // ── Throw physics (all deterministic — no random wobble) ───────────────
   // Flick direction → left/right. Flick speed → height. Speeds are measured in
@@ -85,7 +497,8 @@
   const SWEET_SPEED = 2.0;         // speed that lands at the bullseye height
   const HEIGHT_GAIN = 0.55;        // board-radii of height per 1 screen-height/s of speed
   const SIDE_GAIN   = 1.0;         // 1.0 = the dart lands exactly where your swipe points on the board
-  const MIN_SPEED   = 0.6;         // slower than this isn't a throw
+  const MIN_SPEED   = 0.6;
+  const HAND_SCALE  = 1.4;         // the dart you hold is drawn large — the camera sits right behind it         // slower than this isn't a throw
 
   const isSolo = new URLSearchParams(location.search).get('mode') === 'solo';
   const post = (type, payload) => { try { if (window.parent && window.parent !== window) window.parent.postMessage({ type, payload }, '*'); } catch (e) {} };
@@ -100,52 +513,14 @@
     W = r.width; H = r.height;
     cv.width = Math.round(W*dpr); cv.height = Math.round(H*dpr);
     ctx.setTransform(dpr,0,0,dpr,0,0);
-    R  = Math.min(W*.375, H*.30);
-    cx = W/2; cy = Math.max(R*1.18, H*.34);
-    sx = W/2; sy = H - 145*(Math.max(R,120)/170) - 14;   // tip of the dart in hand (body hangs below it)
-    buildBoard();
+    R  = Math.max(56, Math.min(W*.4, (H-76)/3.85));           // board + held dart must fit any phone
+    cx = W/2; cy = R*1.25 + 8;
+    sx = W/2; sy = H - 150*(R/170)*HAND_SCALE - 40;                       // tip of the dart in hand (body hangs below it)
+    boardCanvas = buildBoardImage(R, RING, dpr);
   }
 
-  // ── Pre-render the board once, at device resolution, so it is razor sharp ──
   let boardCanvas = null;
-  function buildBoard(){
-    const pad = R*.22, size = Math.ceil((R+pad)*2);
-    boardCanvas = document.createElement('canvas');
-    boardCanvas.width = Math.ceil(size*dpr); boardCanvas.height = Math.ceil(size*dpr);
-    const b = boardCanvas.getContext('2d'); b.scale(dpr,dpr);
-    const c = size/2;
-    const wedge = (r0,r1,a0,a1,fill)=>{ b.beginPath(); b.arc(c,c,R*r1,a0,a1); b.arc(c,c,R*r0,a1,a0,true); b.closePath(); b.fillStyle=fill; b.fill(); };
-    // surround
-    b.beginPath(); b.arc(c,c,R*1.2,0,Math.PI*2); b.fillStyle='#0a0a10'; b.fill();
-    b.lineWidth=2; b.strokeStyle='#2c3350'; b.stroke();
-    for(let i=0;i<20;i++){
-      const a0=(-90-9+i*18)*Math.PI/180, a1=a0+18*Math.PI/180, dark=i%2===0;
-      const base = dark ? '#16161f' : '#eadfc4';
-      const ring = dark ? '#d3314c' : '#1b9a5e';
-      wedge(R_OUTER_BULL,R_T_IN,a0,a1,base);
-      wedge(R_T_IN,R_T_OUT,a0,a1,ring);
-      wedge(R_T_OUT,R_D_IN,a0,a1,base);
-      wedge(R_D_IN,R_D_OUT,a0,a1,ring);
-    }
-    b.beginPath(); b.arc(c,c,R*R_OUTER_BULL,0,Math.PI*2); b.fillStyle='#1b9a5e'; b.fill();
-    b.beginPath(); b.arc(c,c,R*R_BULL,0,Math.PI*2); b.fillStyle='#d3314c'; b.fill();
-    // wires
-    b.strokeStyle='rgba(205,212,235,.75)'; b.lineWidth=Math.max(.8,R/260);
-    [R_BULL,R_OUTER_BULL,R_T_IN,R_T_OUT,R_D_IN,R_D_OUT].forEach(r=>{ b.beginPath(); b.arc(c,c,R*r,0,Math.PI*2); b.stroke(); });
-    for(let i=0;i<20;i++){
-      const a=(-90-9+i*18)*Math.PI/180;
-      b.beginPath(); b.moveTo(c+Math.cos(a)*R*R_OUTER_BULL,c+Math.sin(a)*R*R_OUTER_BULL);
-      b.lineTo(c+Math.cos(a)*R*R_D_OUT,c+Math.sin(a)*R*R_D_OUT); b.stroke();
-    }
-    // numbers
-    b.fillStyle='#f2f4ff'; b.font='800 '+Math.max(10,R*.085)+'px system-ui, sans-serif';
-    b.textAlign='center'; b.textBaseline='middle';
-    for(let i=0;i<20;i++){
-      const am=(-90+i*18)*Math.PI/180, nr=R*1.1;
-      b.fillText(ORDER[i], c+Math.cos(am)*nr, c+Math.sin(am)*nr);
-    }
-    boardCanvas._half = size/2;
-  }
+  let hits = [];
 
   // ── Exact scoring from the point the dart tip lands ────────────────────
   function scoreAt(x,y){
@@ -167,36 +542,13 @@
   }
 
   // ── Darts ──────────────────────────────────────────────────────────────
-  // Dart drawn pointing up the screen with its tip at (x,y).
-  function drawDart(x,y,s,angle){
-    ctx.save(); ctx.translate(x,y); ctx.rotate(angle||0); ctx.scale(s,s);
-    const u = Math.max(R,120)/170;                      // size unit
-    // shaft (steel tip → barrel → flight)
-    ctx.lineCap='round';
-    ctx.strokeStyle='#e9edf7'; ctx.lineWidth=2.2*u;       // needle
-    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,26*u); ctx.stroke();
-    const g = ctx.createLinearGradient(-5*u,0,5*u,0);     // barrel
-    g.addColorStop(0,'#7b8499'); g.addColorStop(.5,'#e6eaf3'); g.addColorStop(1,'#6a7388');
-    ctx.fillStyle=g; ctx.beginPath(); ctx.roundRect(-4.6*u,24*u,9.2*u,44*u,3*u); ctx.fill();
-    ctx.strokeStyle='rgba(0,0,0,.35)'; ctx.lineWidth=.8*u;       // grip rings
-    for(let i=0;i<7;i++){ ctx.beginPath(); ctx.moveTo(-4.6*u,(30+i*5.2)*u); ctx.lineTo(4.6*u,(30+i*5.2)*u); ctx.stroke(); }
-    ctx.strokeStyle='#cfd5e4'; ctx.lineWidth=2*u;                // stem
-    ctx.beginPath(); ctx.moveTo(0,68*u); ctx.lineTo(0,86*u); ctx.stroke();
-    // flights
-    const fl=(sign,col)=>{ ctx.fillStyle=col; ctx.beginPath();
-      ctx.moveTo(0,84*u); ctx.lineTo(sign*17*u,100*u); ctx.lineTo(sign*13*u,122*u); ctx.lineTo(0,112*u); ctx.closePath(); ctx.fill(); };
-    fl(-1,'#c9254a'); fl(1,'#ff4f78');
-    ctx.fillStyle='#2de6aa'; ctx.beginPath(); ctx.moveTo(0,84*u); ctx.lineTo(2.2*u,84*u); ctx.lineTo(2.2*u,118*u); ctx.lineTo(0,112*u); ctx.closePath(); ctx.fill();
-    ctx.restore();
-  }
-
   // ── Game state ─────────────────────────────────────────────────────────
   let phase = 'intro';            // intro | ready | drag | fly | between | done
   let warmupLeft = WARMUP_DARTS, thrown = 0, total = 0, inWarmup = true;
   let stuck = [];                 // darts sticking in the board this round {x,y,born}
   let fly = null, ghost = null;
   let drag = null;                // {x0,y0,x,y,samples:[]}
-  let liveSpeed = 0, readyAt = 0;
+  let liveSpeed = 0, readyAt = 0, handScale = HAND_SCALE;
 
   function updateHud(){
     $('dartsLeft').textContent = inWarmup ? warmupLeft : SCORED_DARTS - thrown;
@@ -230,11 +582,12 @@
     if (phase!=='drag' || !drag) return;
     e && e.preventDefault();
     const v = flickVelocity(drag.samples);
+    const offX = drag.x - drag.x0;
     drag=null;
     if (v.speed < MIN_SPEED || v.vy >= 0){          // not a real upward flick → keep the dart
       popText('Flick UP faster','#8b93b0'); setReady(); return;
     }
-    throwDart(v);
+    throwDart(v, offX);
   };
   cv.addEventListener('pointerup', release);
   cv.addEventListener('pointercancel', release);
@@ -250,12 +603,12 @@
     return {vx,vy,speed:Math.hypot(vx,vy)};
   }
 
-  function throwDart(v){
+  function throwDart(v, offX){
     // direction of the flick → sideways aim; speed → height. Fully deterministic.
     const theta = Math.atan2(v.vx, -v.vy);                           // 0 = straight up
     const tx = sx + Math.tan(Math.max(-1.2,Math.min(1.2,theta)))*(sy-cy)*SIDE_GAIN;   // lands where the swipe points
     const ty = cy + (SWEET_SPEED - v.speed)*HEIGHT_GAIN*R;
-    fly = {x0:sx,y0:sy,x1:tx,y1:ty,t0:performance.now(),dur:380,speed:v.speed};
+    fly = {x0:sx+(offX||0),y0:sy,x1:tx,y1:ty,t0:performance.now(),dur:380,speed:v.speed,s0:handScale};
     phase='fly';
   }
 
@@ -264,6 +617,7 @@
     const res=scoreAt(x,y);
     stuck.push({x,y,born:performance.now(),miss:res.pts===0&&Math.hypot(x-cx,y-cy)>R});
     ghost={x,y};
+    hits.push({dx:(x-cx)/R,dy:(y-cy)/R,x,y,t0:performance.now(),big:res.pts>=40});
     const colors={miss:'#8b93b0',single:'#fff',double:'#ff4f78',treble:'#ffb020',outer:'#2de6aa',bull:'#ff4f78'};
     let msg = res.pts ? `${res.label}  +${inWarmup?0:res.pts}` : 'MISS';
     if (inWarmup){ msg += spd>SWEET_SPEED+.35 ? ' · too hard' : spd<SWEET_SPEED-.35 ? ' · too soft' : ''; }
@@ -322,10 +676,13 @@
 
   function frame(now){
     ctx.clearRect(0,0,W,H);
-    // board
-    ctx.save(); ctx.shadowColor='rgba(70,110,255,.35)'; ctx.shadowBlur=36;
-    ctx.drawImage(boardCanvas, cx-boardCanvas._half, cy-boardCanvas._half, boardCanvas._half*2, boardCanvas._half*2);
-    ctx.restore();
+    drawWall(ctx,W,H,cx,cy,R);
+    const half = boardHalf(boardCanvas,dpr);
+    ctx.drawImage(boardCanvas, cx-half, cy-half, half*2, half*2);
+
+    // flash the region that was just hit
+    hits = hits.filter(h=>now-h.t0<1000);
+    hits.forEach(h=>{ drawHitHighlight(ctx,cx,cy,R,RING,h.dx,h.dy,(now-h.t0)/1000); drawImpact(ctx,h.x,h.y,R,(now-h.t0)/650,h.big); });
 
     // marker of the previous throw so players can calibrate
     if (ghost && (phase==='ready'||phase==='drag')){
@@ -336,23 +693,32 @@
     // darts stuck in the board — drawn with the tip exactly on the landing point
     stuck.forEach(d=>{
       if (d.miss) return;
-      const age=Math.min((now-d.born)/280,1), shake=Math.sin(age*18)*(1-age)*.05;
-      drawDart(d.x,d.y,.42,shake);
+      drawStuckDart(ctx,d.x,d.y,R,1,'me');
     });
 
     // flying dart (grows smaller as it travels away, with a slight arc)
     if (phase==='fly' && fly){
-      const k=Math.min((now-fly.t0)/fly.dur,1), e=1-Math.pow(1-k,2.2);
-      const x=fly.x0+(fly.x1-fly.x0)*e, y=fly.y0+(fly.y1-fly.y0)*e - Math.sin(Math.PI*k)*H*.07;
-      drawDart(x,y,1.05-.63*e,(fly.x1-fly.x0)/W*.25);
+      const k=Math.min((now-fly.t0)/fly.dur,1);
+      const at=kk=>{ const e=1-Math.pow(1-kk,2.2); return {e, x:fly.x0+(fly.x1-fly.x0)*e, y:fly.y0+(fly.y1-fly.y0)*e - Math.sin(Math.PI*kk)*H*.07}; };
+      const tilt=(fly.x1-fly.x0)/W*.25;
+      [.16,.08].forEach((lag,i)=>{ if(k-lag<=0) return; const t=at(k-lag); ctx.globalAlpha=.16-i*.07; drawDart3D(ctx,t.x,t.y,fly.s0-(fly.s0-.36)*t.e,tilt,R,'me',false); ctx.globalAlpha=1; });
+      const cur=at(k);
+      drawDart3D(ctx,cur.x,cur.y,fly.s0-(fly.s0-.36)*cur.e,tilt,R,'me');
       if (k>=1) land();
     }
 
     // dart in hand
     if (phase==='ready'||phase==='drag'){
-      let x=sx, y=sy;
-      if (phase==='drag' && drag){ x=sx+(drag.x-drag.x0); y=sy+Math.max(-H*.5,Math.min(H*.06,drag.y-drag.y0)); }
-      drawDart(x,y,1.05,0);
+      let x=sx, y=sy, sc=HAND_SCALE, tilt=0;
+      if (phase==='drag' && drag){
+        x=sx+(drag.x-drag.x0); y=sy+Math.max(-H*.5,Math.min(H*.025,drag.y-drag.y0));
+        const pull=Math.max(0,Math.min(1,(drag.y-drag.y0)/(H*.18)));   // pulling back brings the dart toward the camera
+        sc=HAND_SCALE+pull*.3; tilt=(drag.x-drag.x0)/W*.35;
+      } else {
+        const t=now/1000; x=sx+Math.sin(t*1.6)*2.2; y=sy+Math.sin(t*2.1)*1.8; tilt=Math.sin(t*1.3)*.015;   // idle sway
+      }
+      handScale=sc;
+      drawDart3D(ctx,x,y,sc,tilt,R,'me');
       if (phase==='drag') powerGauge();
       if (phase==='ready' && !inWarmup){
         const left=TIME_LIMIT-(now-readyAt)/1000;

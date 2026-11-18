@@ -78,6 +78,19 @@ interface GameState {
   // The darts of the turn that just ended — lets the other player's screen replay
   // them one by one (essential for the bot, which plays its whole turn at once).
   lastTurn?: { by: 'host' | 'guest'; darts: ThrowResult[]; busted: boolean; turnNumber: number }
+  // Turn-by-turn log for the scoreboard sheet (most recent 40 turns).
+  history?: { by: 'host' | 'guest'; turnNumber: number; darts: { score: number; label: string }[]; busted: boolean; remaining: number }[]
+}
+
+function logTurn(state: GameState, by: 'host' | 'guest', busted: boolean) {
+  const entry = {
+    by,
+    turnNumber: state.turnNumber,
+    darts: state.turnDarts.map((d) => ({ score: d.score, label: d.label })),
+    busted,
+    remaining: by === 'host' ? state.hostScore : state.guestScore,
+  }
+  state.history = [...(state.history ?? []), entry].slice(-40)
 }
 
 function initialState(startingScore: number): GameState {
@@ -437,6 +450,7 @@ export async function submitThrow(roomId: string, userId: string, dx: number, dy
     // Hand the turn to the other player and reset the per-turn bookkeeping.
     nextTurn = isHost ? effectiveGuest(room) : room.host_id
     state.lastTurn = { by: isHost ? 'host' : 'guest', darts: [...state.turnDarts], busted: result.busted, turnNumber: state.turnNumber }
+    logTurn(state, isHost ? 'host' : 'guest', result.busted)
     state.turnStartScore = isHost ? state.hostScore : state.guestScore
     state.turnDarts = []
     state.turnNumber += 1
@@ -518,6 +532,7 @@ async function playBotTurn(roomId: string) {
 
   const nextTurn = isHostBot ? effectiveGuest(room) : room.host_id
   state.lastTurn = { by: isHostBot ? 'host' : 'guest', darts: [...state.turnDarts], busted, turnNumber: state.turnNumber }
+  logTurn(state, isHostBot ? 'host' : 'guest', busted)
   state.turnStartScore = isHostBot ? state.hostScore : state.guestScore
   state.turnDarts = []
   state.turnNumber += 1
